@@ -5,7 +5,7 @@ import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/billing/start
- * Body: { restaurantId, plan: "GOLD" | "PREMIUM" }
+ * Body: { restaurantId, plan: "SILVER" | "GOLD" | "PREMIUM" }
  *
  * Crea una suscripcion recurrente en MercadoPago para upgrade de plan.
  */

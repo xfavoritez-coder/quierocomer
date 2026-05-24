@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const { restaurantId, plan } = await req.json();
   if (!restaurantId) return NextResponse.json({ error: "missing restaurantId" }, { status: 400 });
 
-  const validPlans = ["FREE", "GOLD", "PREMIUM"] as const;
+  const validPlans = ["FREE", "SILVER", "GOLD", "PREMIUM"] as const;
   const selectedPlan = validPlans.includes(plan) ? plan : "FREE";
 
   const restaurant = await prisma.restaurant.findUnique({
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
-  const planLabel = selectedPlan === "PREMIUM" ? "Premium (14 días gratis)" : selectedPlan === "GOLD" ? "Gold (14 días gratis)" : "Gratis";
+  const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (14 dias gratis)`;
 
   if (ownerEmail) {
     sendAdminEmail({

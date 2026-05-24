@@ -255,15 +255,13 @@ function formatDateCL(d: string | null) {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 }
 
-function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "GOLD" | "PREMIUM"; onClose: () => void }) {
-  // initialTab gana — viene del PlanGate cuando el usuario clickea una feature bloqueada.
-  // Si el plan actual del usuario coincide con el initialTab, abrimos el OTRO tab para
-  // mostrarle el upgrade real (ej: usuario Gold ve feature Premium → abre Premium).
-  // Fallback: si no hay initialTab, abrimos el plan actual (o Gold si es FREE).
-  const defaultTab: "GOLD" | "PREMIUM" = initialTab
-    ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab)
-    : (plan === "FREE" ? "GOLD" : plan as any);
-  const [tab, setTab] = useState<"GOLD" | "PREMIUM">(defaultTab);
+function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "SILVER" | "GOLD" | "PREMIUM"; onClose: () => void }) {
+  const PAID_TABS = ["SILVER", "GOLD", "PREMIUM"] as const;
+  type PaidTab = typeof PAID_TABS[number];
+  const defaultTab: PaidTab = initialTab
+    ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab) as PaidTab
+    : (plan === "FREE" ? "SILVER" : plan as any);
+  const [tab, setTab] = useState<PaidTab>(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [status, setStatus] = useState<BillingStatus | null>(null);
@@ -336,24 +334,30 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
       <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0", position: "sticky", top: 0, background: "#fff", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
-          {(["GOLD", "PREMIUM"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              flex: 1, padding: "16px 0", border: "none", cursor: "pointer",
-              fontFamily: FD, fontSize: "0.88rem", fontWeight: 700, background: "transparent",
-              color: tab === t ? (t === "PREMIUM" ? "#7c3aed" : "#92400e") : "#ccc",
-              borderBottom: tab === t ? `3px solid ${t === "PREMIUM" ? "#7c3aed" : "#F4A623"}` : "3px solid transparent",
-            }}>
-              {t === "GOLD" ? "⭐ Gold" : "💎 Premium"}
-              {plan === t && <span style={{ marginLeft: 6, fontSize: "0.6rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: t === "PREMIUM" ? "#F3E8FF" : "#FFF8E7", color: t === "PREMIUM" ? "#7c3aed" : "#92400e" }}>Tu plan</span>}
-            </button>
-          ))}
+          {PAID_TABS.map(t => {
+            const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : "#475569";
+            const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : "#94a3b8";
+            const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : "#F1F5F9";
+            const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🥈";
+            return (
+              <button key={t} onClick={() => setTab(t)} style={{
+                flex: 1, padding: "14px 0", border: "none", cursor: "pointer",
+                fontFamily: FD, fontSize: "0.82rem", fontWeight: 700, background: "transparent",
+                color: tab === t ? tabColor : "#ccc",
+                borderBottom: tab === t ? `3px solid ${tabBorder}` : "3px solid transparent",
+              }}>
+                {tabIcon} {t.charAt(0) + t.slice(1).toLowerCase()}
+                {plan === t && <span style={{ marginLeft: 4, fontSize: "0.55rem", fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: tabBg, color: tabColor }}>Tu plan</span>}
+              </button>
+            );
+          })}
         </div>
 
         <div style={{ padding: "20px 24px 24px" }}>
           {/* Current plan indicator + billing status */}
           {isCurrentPlan && (
-            <div style={{ textAlign: "center", marginBottom: 14, padding: "10px 16px", background: tab === "PREMIUM" ? "#F3E8FF" : "#FFF8E7", borderRadius: 10 }}>
-              <p style={{ fontFamily: FD, fontSize: "0.82rem", fontWeight: 600, color: tab === "PREMIUM" ? "#7c3aed" : "#92400e", margin: 0 }}>
+            <div style={{ textAlign: "center", marginBottom: 14, padding: "10px 16px", background: tab === "PREMIUM" ? "#F3E8FF" : tab === "GOLD" ? "#FFF8E7" : "#F1F5F9", borderRadius: 10 }}>
+              <p style={{ fontFamily: FD, fontSize: "0.82rem", fontWeight: 600, color: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#92400e" : "#475569", margin: 0 }}>
                 ✓ Este es tu plan actual
               </p>
               {inTrial && status?.trialEndsAt && (
@@ -398,22 +402,31 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
           </div>
 
           {/* Features */}
+          {(() => {
+            const accentColor = tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#64748b";
+            const bgColor = tab === "PREMIUM" ? "#FAFAFE" : tab === "GOLD" ? "#FFFCF5" : "#F8FAFC";
+            const borderColor = tab === "PREMIUM" ? "#e9d5ff" : tab === "GOLD" ? "#fde68a" : "#cbd5e1";
+            return (
           <div style={{
-            background: tab === "PREMIUM" ? "#FAFAFE" : "#FFFCF5",
+            background: bgColor,
             borderRadius: 12, padding: "14px 16px", marginBottom: 18,
-            border: `1px solid ${tab === "PREMIUM" ? "#e9d5ff" : "#fde68a"}`,
+            border: `1px solid ${borderColor}`,
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {PLAN_INHERITS_FROM[tab] && (
               <PlanFeatureRow
-                text={PLAN_INHERITS_FROM[tab]}
-                tip={`Incluye todas las funciones del plan ${tab === "PREMIUM" ? "Gold" : "Gratis"}`}
-                color={tab === "PREMIUM" ? "#7c3aed" : "#F4A623"}
+                text={PLAN_INHERITS_FROM[tab] || ""}
+                tip={`Incluye todas las funciones del plan anterior`}
+                color={accentColor}
               />
+              )}
               {features.map(f => (
-                <PlanFeatureRow key={f.text} text={f.text} tip={f.tip} color={tab === "PREMIUM" ? "#7c3aed" : "#F4A623"} />
+                <PlanFeatureRow key={f.text} text={f.text} tip={f.tip} color={accentColor} />
               ))}
             </div>
           </div>
+            );
+          })()}
 
           {/* CTA */}
           {!isCurrentPlan ? (
@@ -422,14 +435,14 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               disabled={submitting || !restaurantId}
               style={{
                 display: "block", width: "100%", padding: "14px 20px", borderRadius: 999, textAlign: "center",
-                background: submitting ? "#ccc" : tab === "PREMIUM" ? "#7c3aed" : "#F4A623",
+                background: submitting ? "#ccc" : tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
                 color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
                 textDecoration: "none", marginBottom: 8, border: "none",
                 cursor: submitting ? "wait" : "pointer",
-                boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : "0 4px 16px rgba(244,166,35,0.3)",
+                boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {submitting ? "Redirigiendo a Webpay…" : "Empezar prueba gratis 7 días"}
+              {submitting ? "Redirigiendo a Webpay…" : "Empezar prueba gratis 14 días"}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>

@@ -1,6 +1,7 @@
 "use client";
 
-import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan } from "@/lib/plans";
+import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan as PlanKey } from "@/lib/plans";
+type Plan = PlanKey;
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -55,11 +56,11 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
         }}>
           <div style={{
             width: 72, height: 72, borderRadius: "50%",
-            background: needed === "PREMIUM" ? "linear-gradient(135deg, #F3E8FF, #E9D5FF)" : "linear-gradient(135deg, #FFF8E7, #FFEDD0)",
+            background: needed === "PREMIUM" ? "linear-gradient(135deg, #F3E8FF, #E9D5FF)" : needed === "GOLD" ? "linear-gradient(135deg, #FFF8E7, #FFEDD0)" : "linear-gradient(135deg, #F1F5F9, #E2E8F0)",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem",
             boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
           }}>
-            {needed === "PREMIUM" ? "💎" : "⭐"}
+            {needed === "PREMIUM" ? "💎" : needed === "GOLD" ? "⭐" : "🥈"}
           </div>
           <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "#1a1a1a", margin: 0, textAlign: "center" }}>
             {featureInfo?.title || `Plan ${info.label}`}
@@ -69,11 +70,11 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
           </p>
           <button style={{
             marginTop: 6, padding: "12px 28px", borderRadius: 999, border: "none",
-            background: needed === "PREMIUM" ? "#7c3aed" : "#F4A623",
+            background: needed === "PREMIUM" ? "#7c3aed" : needed === "GOLD" ? "#F4A623" : "#64748b",
             color: "#fff", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer",
-            boxShadow: needed === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : "0 4px 16px rgba(244,166,35,0.3)",
+            boxShadow: needed === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : needed === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
           }}>
-            {needed === "PREMIUM" ? "Pasarme a Premium →" : "Desbloquear con Gold →"}
+            {`Desbloquear con ${info.label} →`}
           </button>
         </div>
       </div>

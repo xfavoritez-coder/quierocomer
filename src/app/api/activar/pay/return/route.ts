@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMPSubscription } from "@/lib/billing/mercadopago";
-import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS } from "@/lib/billing/plans-config";
+import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
   }
 
   const appPlan = planFromFlowId(restaurant.pendingMpPlanId) || "PREMIUM";
-  const planKey = appPlan as "GOLD" | "PREMIUM";
+  const planKey = appPlan as Exclude<PlanKey, "FREE">;
   const chargeGross = grossOf(FLOW_PLANS[planKey].amountNet);
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
@@ -106,8 +106,8 @@ export async function GET(req: NextRequest) {
     purpose: "admin_new_activation",
   }).catch(() => {});
 
-  // Traduccion para Premium
-  if (appPlan === "PREMIUM") {
+  // Traduccion para Gold y Premium (multilang feature)
+  if (appPlan === "GOLD" || appPlan === "PREMIUM") {
     import("@/lib/ai/translateContent").then(({ translateAllForRestaurant }) => {
       translateAllForRestaurant(restaurant.id)
         .then(() => prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: false } }))

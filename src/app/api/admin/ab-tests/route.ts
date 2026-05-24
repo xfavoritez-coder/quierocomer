@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       deepStats = new Map();
       const deepEvents = await prisma.$queryRaw`
         SELECT metadata FROM "StatEvent"
-        WHERE "eventType" = ${deepConversionEvent}
+        WHERE "eventType"::text = ${deepConversionEvent}
         AND metadata->>'abExperiment' = ${expCfg.slug}
       ` as { metadata: any }[];
       for (const e of deepEvents) {

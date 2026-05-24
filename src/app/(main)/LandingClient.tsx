@@ -380,30 +380,59 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               ))}
             </div>
           </div>
-          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 16, maxWidth: 1000, margin: "0 auto" }}>
+          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, maxWidth: 1100, margin: "0 auto" }}>
             {/* GRATIS */}
-            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 28 }}>
-              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gratis</p>
-              <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
-              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Para siempre</p>
-              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20, marginTop: 12 }}>Empezar gratis</a>
-              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <p style={{ fontFamily: F, fontSize: 13, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.FREE}</p>
+            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 24 }}>
+              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gratis</p>
+              <p style={{ fontFamily: F, fontSize: 32, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
+              <p style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>Para siempre</p>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar gratis</a>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.FREE}</p>
                 {PLAN_FEATURES_DISPLAY.FREE.map((f) => (
-                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
+                ))}
+              </div>
+            </div>
+            {/* SILVER */}
+            <div style={{ background: "linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)", border: "1.5px solid #cbd5e1", borderRadius: 16, padding: 24 }}>
+              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#475569", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Silver</p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
+                <span style={{ fontFamily: F, fontSize: 32, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>
+                  ${(billingMode === "anual" ? planAnnualNetMonthly("SILVER") : planNetAmount("SILVER")).toLocaleString("es-CL")}
+                </span>
+                <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>/mes</span>
+                <span style={{ fontSize: 11, color: "#bbb", fontWeight: 400, marginLeft: 2 }}>neto</span>
+              </div>
+              {billingMode === "anual" && (
+                <>
+                  <p style={{ fontSize: 11, color: "#999", margin: "2px 0 0" }}>${planAnnualNetTotal("SILVER").toLocaleString("es-CL")} anual</p>
+                  <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, color: "#16a34a", background: "#dcfce7", padding: "2px 8px", borderRadius: 999, margin: "4px 0" }}>Ahorras ${(planNetAmount("SILVER") * 12 - planAnnualNetTotal("SILVER")).toLocaleString("es-CL")}/año</span>
+                </>
+              )}
+              {billingMode === "mensual" ? (
+                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 14 dias gratis</a>
+              ) : (
+                <a href={annualWhatsappUrl("Silver")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
+              )}
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.SILVER}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
+                {PLAN_FEATURES_DISPLAY.SILVER.map((f) => (
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
             {/* GOLD */}
-            <div style={{ background: "linear-gradient(180deg, #FFFDF5 0%, #FFF8E7 100%)", borderRadius: 16, padding: 28, position: "relative", border: `2px solid ${BRAND}` }}>
+            <div style={{ background: "linear-gradient(180deg, #FFFDF5 0%, #FFF8E7 100%)", borderRadius: 16, padding: 24, position: "relative", border: `2px solid ${BRAND}` }}>
               <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: BRAND, color: "#fff", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 12px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
-              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#92400e", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gold</p>
+              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#92400e", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gold</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>
+                <span style={{ fontFamily: F, fontSize: 32, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>
                   ${(billingMode === "anual" ? planAnnualNetMonthly("GOLD") : planNetAmount("GOLD")).toLocaleString("es-CL")}
                 </span>
-                <span style={{ fontSize: 16, color: "#999", fontWeight: 500 }}>/mes</span>
-                <span style={{ fontSize: 12, color: "#bbb", fontWeight: 400, marginLeft: 2 }}>neto</span>
+                <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>/mes</span>
+                <span style={{ fontSize: 11, color: "#bbb", fontWeight: 400, marginLeft: 2 }}>neto</span>
               </div>
               {billingMode === "anual" && (
                 <>
@@ -412,27 +441,27 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </>
               )}
               {billingMode === "mensual" ? (
-                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20, marginTop: 12 }}>Empezar prueba gratis 7 días</a>
+                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 14 dias gratis</a>
               ) : (
-                <a href={annualWhatsappUrl("Gold")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20, marginTop: 12 }}>Contactar para plan anual</a>
+                <a href={annualWhatsappUrl("Gold")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}
-              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <p style={{ fontFamily: F, fontSize: 13, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Silver</div>
                 {PLAN_FEATURES_DISPLAY.GOLD.map((f) => (
-                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
             {/* PREMIUM */}
-            <div style={{ background: "linear-gradient(180deg, #F5F0FF 0%, #EDE5FF 100%)", border: "2px solid #c4b5fd", borderRadius: 16, padding: 28 }}>
-              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#6d28d9", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
+            <div style={{ background: "linear-gradient(180deg, #F5F0FF 0%, #EDE5FF 100%)", border: "2px solid #c4b5fd", borderRadius: 16, padding: 24 }}>
+              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#6d28d9", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#1a1a1a" }}>
+                <span style={{ fontFamily: F, fontSize: 32, fontWeight: 700, letterSpacing: "-1px", color: "#1a1a1a" }}>
                   ${(billingMode === "anual" ? planAnnualNetMonthly("PREMIUM") : planNetAmount("PREMIUM")).toLocaleString("es-CL")}
                 </span>
-                <span style={{ fontSize: 16, color: "#6b7280", fontWeight: 500 }}>/mes</span>
-                <span style={{ fontSize: 12, color: "#a0a0b0", fontWeight: 400, marginLeft: 2 }}>neto</span>
+                <span style={{ fontSize: 14, color: "#6b7280", fontWeight: 500 }}>/mes</span>
+                <span style={{ fontSize: 11, color: "#a0a0b0", fontWeight: 400, marginLeft: 2 }}>neto</span>
               </div>
               {billingMode === "anual" && (
                 <>
@@ -441,15 +470,15 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </>
               )}
               {billingMode === "mensual" ? (
-                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20, marginTop: 12 }}>Empezar prueba gratis 7 días</a>
+                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 14 dias gratis</a>
               ) : (
-                <a href={annualWhatsappUrl("Premium")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20, marginTop: 12 }}>Contactar para plan anual</a>
+                <a href={annualWhatsappUrl("Premium")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}
-              <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <p style={{ fontFamily: F, fontSize: 13, color: "#555", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.PREMIUM}</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> Todo del plan Gold</div>
+              <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontFamily: F, fontSize: 12, color: "#555", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.PREMIUM}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#444" }}><Check /> Todo del plan Gold</div>
                 {PLAN_FEATURES_DISPLAY.PREMIUM.map((f) => (
-                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#444" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
@@ -564,9 +593,12 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           .lnd-hero-grid > div:first-child > div:last-of-type { justify-content: center; }
           .lnd-features-grid { grid-template-columns: 1fr !important; }
           .lnd-testimonials-grid { grid-template-columns: 1fr !important; }
-          .lnd-plans-grid { grid-template-columns: 1fr !important; }
+          .lnd-plans-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .lnd-impl-grid { grid-template-columns: 1fr !important; }
           .lnd-footer-top { grid-template-columns: 1fr !important; text-align: center; }
+        }
+        @media (max-width: 520px) {
+          .lnd-plans-grid { grid-template-columns: 1fr !important; }
         }
         @media (min-width: 769px) {
           .lnd-nav-mobile { display: none !important; }

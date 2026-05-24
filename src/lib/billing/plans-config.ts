@@ -1,143 +1,93 @@
 /**
- * Configuracion de los 3 planes pagos de QuieroComer en Flow.
- * Los planIds se usan tanto en Flow como en nuestra DB para identificar el plan.
+ * Billing & Flow configuration.
  *
- * IVA: los precios se almacenan en valor NETO. El cobro mensual incluye 19% IVA,
- * por lo que el monto que se cobra via Flow (y que debe estar configurado en
- * el dashboard de Flow para cada planId) es el monto BRUTO = neto * 1.19.
- *
- * Para sincronizar los precios brutos en Flow, ejecuta:
- *   npx tsx scripts/setup-flow-plans.ts
+ * Plan definitions, prices, and features live in plans-central.ts.
+ * This file adds Flow-specific billing config, vendor commissions,
+ * and billing field validation on top of the central source.
  */
-import type { RestaurantPlan } from "@prisma/client";
+import {
+  PLANS,
+  PLAN_ORDER,
+  PAID_PLANS,
+  IVA_RATE,
+  TRIAL_DAYS,
+  GRACE_DAYS,
+  ivaOf,
+  grossOf,
+  type PlanKey,
+} from "./plans-central";
 
-export const TRIAL_DAYS = 14;
-export const GRACE_DAYS = 7;
+// Re-export central constants so existing consumers don't break
+export { PLANS, PLAN_ORDER, PAID_PLANS, IVA_RATE, TRIAL_DAYS, GRACE_DAYS, ivaOf, grossOf };
+export type { PlanKey };
 
-export const IVA_RATE = 0.19;
-
-/** IVA en CLP enteros, redondeado al peso. */
-export function ivaOf(amountNet: number): number {
-  return Math.round(amountNet * IVA_RATE);
-}
-
-/** Monto bruto (neto + IVA) en CLP enteros. */
-export function grossOf(amountNet: number): number {
-  return amountNet + ivaOf(amountNet);
-}
+// --- Flow billing plans ---
 
 export type FlowPlanConfig = {
-  planId: string;          // identificador unico en Flow
-  name: string;            // nombre que ve el comercio
-  amountNet: number;       // CLP, neto (sin IVA)
-  appPlan: Exclude<RestaurantPlan, "FREE">; // FREE no se cobra
+  planId: string;
+  name: string;
+  amountNet: number;
+  appPlan: Exclude<PlanKey, "FREE">;
 };
 
-// Solo planes pagos. FREE es el default gratuito sin Flow.
-export const FLOW_PLANS: Record<Exclude<RestaurantPlan, "FREE">, FlowPlanConfig> = {
-  GOLD:    { planId: "qc_gold_monthly",    name: "QuieroComer Gold",    amountNet: 35000, appPlan: "GOLD" },
-  PREMIUM: { planId: "qc_premium_monthly", name: "QuieroComer Premium", amountNet: 49900, appPlan: "PREMIUM" },
+export const FLOW_PLANS: Record<Exclude<PlanKey, "FREE">, FlowPlanConfig> = {
+  SILVER:  { planId: "qc_silver_monthly",  name: "QuieroComer Silver",  amountNet: PLANS.SILVER.priceMonthly,  appPlan: "SILVER" },
+  GOLD:    { planId: "qc_gold_monthly",    name: "QuieroComer Gold",    amountNet: PLANS.GOLD.priceMonthly,    appPlan: "GOLD" },
+  PREMIUM: { planId: "qc_premium_monthly", name: "QuieroComer Premium", amountNet: PLANS.PREMIUM.priceMonthly, appPlan: "PREMIUM" },
 };
 
-// Precio promocional para activación desde demo (primer mes)
-export const ACTIVATION_PROMO: Partial<Record<Exclude<RestaurantPlan, "FREE">, { amountNet: number; label: string }>> = {
+// Precio promocional para activacion desde demo (primer mes)
+export const ACTIVATION_PROMO: Partial<Record<Exclude<PlanKey, "FREE">, { amountNet: number; label: string }>> = {
   PREMIUM: { amountNet: 4900, label: "$4.900 primer mes" },
 };
 
-/** Retorna precio neto promo si existe para el plan, o null. */
-export function activationPromoAmount(plan: Exclude<RestaurantPlan, "FREE">): number | null {
+export function activationPromoAmount(plan: Exclude<PlanKey, "FREE">): number | null {
   return ACTIVATION_PROMO[plan]?.amountNet ?? null;
 }
 
-export function planFromFlowId(planId: string): RestaurantPlan | null {
+export function planFromFlowId(planId: string): PlanKey | null {
   for (const cfg of Object.values(FLOW_PLANS)) {
     if (cfg.planId === planId) return cfg.appPlan;
   }
   return null;
 }
 
-// ─── Display: textos visibles en landing y panel ───────────────────────
-// Single source of truth para precios + features + taglines.
-// Todos los componentes (LandingClient, PlanModal,
-// suscripcion page) deben leer de aqui. No duplicar.
-
-export type PlanKey = "FREE" | "GOLD" | "PREMIUM";
+// --- Display: textos visibles en landing y panel ---
+// Now reads from plans-central. Re-exported for backward compatibility.
 
 export type PlanFeatureItem = { text: string; tip: string };
 
-export const PLAN_LABELS: Record<PlanKey, string> = {
-  FREE: "Gratis",
-  GOLD: "Gold",
-  PREMIUM: "Premium",
-};
+export const PLAN_LABELS: Record<PlanKey, string> = Object.fromEntries(
+  PLAN_ORDER.map((k) => [k, PLANS[k].label])
+) as Record<PlanKey, string>;
 
-export const PLAN_TAGLINES: Record<PlanKey, string> = {
-  FREE: "Carta digital con QR para empezar a vender",
-  GOLD: "Para destacar tus platos y entender a tus clientes",
-  PREMIUM: "Para vender mas sin levantar un dedo",
-};
+export const PLAN_TAGLINES: Record<PlanKey, string> = Object.fromEntries(
+  PLAN_ORDER.map((k) => [k, PLANS[k].tagline])
+) as Record<PlanKey, string>;
 
-/** Texto que se muestra como primer feature al heredar todo del plan inferior. */
-export const PLAN_INHERITS_FROM: Record<Exclude<PlanKey, "FREE">, string> = {
-  GOLD: "Todo lo del plan Gratis",
-  PREMIUM: "Todo del plan Gold",
-};
+export const PLAN_INHERITS_FROM: Partial<Record<PlanKey, string>> = Object.fromEntries(
+  PLAN_ORDER.filter((k) => PLANS[k].inheritsFrom).map((k) => [k, PLANS[k].inheritsFrom!])
+) as Partial<Record<PlanKey, string>>;
 
-export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = {
-  FREE: [
-    { text: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante. Sin app, sin descargas." },
-    { text: "2 vistas de carta", tip: "Muestra tu carta en vista Lista o Esencial para que elijas la que mejor represente tu local." },
-    { text: "Panel autoadministrable", tip: "Editas tu carta cuando quieras desde tu celular o computador: precios, fotos, descripciones, modificadores. Los cambios se ven al instante." },
-  ],
-  GOLD: [
-    { text: "El Genio incluido 🧞", tip: "El Genio reordena tu carta segun los gustos de cada cliente: dieta, restricciones y alergenos." },
-    { text: "Destaca platos estrella", tip: "Marca tus platos mas vendidos para que aparezcan primero en el hero." },
-    { text: "Ofertas y promociones", tip: "Publica descuentos que se muestran automaticamente en la carta." },
-    { text: "Estadisticas basicas", tip: "Visitantes, sesiones, platos mas vistos y duracion promedio." },
-    { text: "Anuncios en la carta", tip: "Banner de novedades visible al abrir la carta." },
-  ],
-  PREMIUM: [
-    { text: "Multilenguaje (ES · EN · PT)", tip: "Carta traducida automaticamente al idioma del cliente." },
-    { text: "Estadisticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, busquedas y estadisticas del garzon." },
-    { text: "Llamar al garzon", tip: "El cliente toca un boton y el garzon recibe la notificacion push al instante." },
-    { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa." },
-    { text: "Cumpleaños automáticos", tip: "Cada cliente recibe un correo con un regalo personalizado el dia de su cumpleaños. Ves quien lo abrió y si realmente vino al local." },
-    { text: "Email marketing", tip: "Envia correos masivos a tus clientes con plantillas listas: ofertas, novedades, reactivacion." },
-    { text: "Clientes ilimitados + CSV", tip: "Ve todos los registrados y exporta la lista." },
-    { text: "Integracion con Toteat", tip: "Sincronizamos ventas reales con la carta. Dashboard en vivo y badges como 'lo mas pedido hoy'." },
-  ],
-};
+export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = Object.fromEntries(
+  PLAN_ORDER.map((k) => [k, PLANS[k].featureDisplay])
+) as Record<PlanKey, PlanFeatureItem[]>;
 
 /** Devuelve precio NETO mensual del plan. FREE = 0. */
 export function planNetAmount(plan: PlanKey): number {
-  if (plan === "FREE") return 0;
-  return FLOW_PLANS[plan].amountNet;
+  return PLANS[plan].priceMonthly;
 }
 
-// ─── Comisiones de vendedores ──────────────────────────────────────────
-// Single source of truth para comisiones del programa de vendedores.
-// Se calculan sobre el precio NETO del plan.
-//
-// Reglas:
-// - Plan Gratis: sin comision.
-// - Cliente entra DIRECTO mensual a Gold/Premium: 100% del primer mes + 50% del segundo.
-// - Cliente entra DIRECTO anual a Gold/Premium: 3 meses del precio mensual.
-// - Cliente entra Gratis y luego hace UPGRADE a Gold/Premium: 50% del plan, una vez.
+// --- Comisiones de vendedores ---
 
 export const VENDOR_COMMISSION = {
-  /** Fraccion del plan neto pagada al vendedor por cierre directo mensual, mes 1. */
   directFirstMonthRate: 1.0,
-  /** Fraccion del plan neto pagada al vendedor por cierre directo mensual, mes 2. */
   directSecondMonthRate: 0.5,
-  /** Meses del precio mensual pagados al vendedor por cierre directo anual. */
   directAnnualMonths: 3,
-  /** Fraccion del plan neto pagada al vendedor cuando un cliente Gratis hace upgrade. */
   upgradeFromFreeRate: 0.5,
-  /** Comision en CLP cuando el cierre fue en plan Gratis. */
   freeAmount: 0,
 } as const;
 
-/** Comision por cerrar un cliente directo en plan mensual. */
 export function vendorCommissionDirect(plan: Exclude<PlanKey, "FREE">): {
   firstMonth: number;
   secondMonth: number;
@@ -149,19 +99,16 @@ export function vendorCommissionDirect(plan: Exclude<PlanKey, "FREE">): {
   return { firstMonth, secondMonth, total: firstMonth + secondMonth };
 }
 
-/** Comision por cerrar un cliente directo en plan anual. */
 export function vendorCommissionAnnual(plan: Exclude<PlanKey, "FREE">): number {
   return planNetAmount(plan) * VENDOR_COMMISSION.directAnnualMonths;
 }
 
-/** Comision por upgrade desde Gratis hacia un plan pago. Pago unico. */
 export function vendorCommissionUpgrade(plan: Exclude<PlanKey, "FREE">): number {
   return Math.round(planNetAmount(plan) * VENDOR_COMMISSION.upgradeFromFreeRate);
 }
 
-// ─── Datos de facturacion ──────────────────────────────────────────────
+// --- Datos de facturacion ---
 
-/** Lista de campos de facturacion requeridos para emitir factura electronica. */
 export const REQUIRED_BILLING_FIELDS = [
   "billingCompanyName",
   "billingRut",
@@ -182,7 +129,6 @@ export function missingBillingFields(
   });
 }
 
-/** Valida formato de RUT chileno (con dv, con o sin puntos/guion). */
 export function isValidRut(rut: string): boolean {
   if (!rut) return false;
   const clean = rut.replace(/[.\s]/g, "").replace(/-/g, "").toUpperCase();
@@ -202,7 +148,6 @@ export function isValidRut(rut: string): boolean {
   return expected === dv;
 }
 
-/** Formatea RUT en formato chileno estandar: 12.345.678-9 */
 export function formatRut(rut: string): string {
   const clean = rut.replace(/[.\s-]/g, "").toUpperCase();
   if (clean.length < 2) return rut;
@@ -212,21 +157,14 @@ export function formatRut(rut: string): string {
   return `${formatted}-${dv}`;
 }
 
-// ─── Precios anuales ─────────────────────────────────────────────────
-// Precios fijos mensualizados al contratar anual (2 meses gratis aprox).
-
-const ANNUAL_MONTHLY_NET: Record<Exclude<PlanKey, "FREE">, number> = {
-  GOLD: 29900,
-  PREMIUM: 39900,
-};
+// --- Precios anuales ---
 
 /** Precio NETO mensualizado del plan anual. FREE = 0. */
 export function planAnnualNetMonthly(plan: PlanKey): number {
-  if (plan === "FREE") return 0;
-  return ANNUAL_MONTHLY_NET[plan];
+  return PLANS[plan].priceAnnualMonthly;
 }
 
-/** Total NETO anual (mensualizado × 12). FREE = 0. */
+/** Total NETO anual (mensualizado x 12). FREE = 0. */
 export function planAnnualNetTotal(plan: PlanKey): number {
   return planAnnualNetMonthly(plan) * 12;
 }

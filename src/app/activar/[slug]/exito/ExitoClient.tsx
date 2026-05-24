@@ -15,7 +15,7 @@ function getInitials(name: string) {
   return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-const PLAN_NAMES: Record<string, string> = { FREE: "Gratis", GOLD: "Gold", PREMIUM: "Premium" };
+const PLAN_NAMES: Record<string, string> = { FREE: "Gratis", SILVER: "Silver", GOLD: "Gold", PREMIUM: "Premium" };
 
 const STEPS = [
   { icon: "📸", title: "Sube tus fotos reales", desc: "Reemplaza las fotos de referencia con fotos reales de tus platos." },
@@ -25,13 +25,15 @@ const STEPS = [
 
 export default function ExitoClient({ restaurant, plan, stillProcessing }: Props) {
   const [show, setShow] = useState(false);
-  const isPaid = plan === "GOLD" || plan === "PREMIUM";
+  const isPaid = plan === "GOLD";
+  const isTrial = plan === "SILVER" || plan === "PREMIUM";
+  const PLAN_PRICES: Record<string, number> = { SILVER: 19900, GOLD: 35000, PREMIUM: 49900 };
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
     if (isPaid) {
-      trackPurchase(plan, plan === "GOLD" ? 29900 : 49900);
-    } else {
+      trackPurchase(plan, PLAN_PRICES[plan] || 35000);
+    } else if (isTrial) {
       trackStartTrial(plan);
     }
   }, []);
@@ -75,7 +77,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
           {/* Titulo */}
           <h1 className="exito-title">
-            {isPaid
+            {isPaid || isTrial
               ? <>Tu plan <em>{PLAN_NAMES[plan] || plan}</em> está activo</>
               : <>Tu carta está <em>activa</em></>
             }
@@ -83,7 +85,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
           <p className="exito-subtitle">
             {restaurant.name} ya tiene su carta digital funcionando.
-            {isPaid && plan === "GOLD" && <><br /><span style={{ fontSize: 12, opacity: 0.5 }}>Plan Gold activo</span></>}
+            {isTrial && <><br /><span style={{ fontSize: 12, opacity: 0.5 }}>14 días de prueba gratis</span></>}
           </p>
 
           {/* Próximos pasos */}

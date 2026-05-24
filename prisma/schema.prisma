@@ -381,6 +381,7 @@ model RestaurantOwner {
 
 enum RestaurantPlan {
   FREE
+  SILVER
   GOLD
   PREMIUM
 }

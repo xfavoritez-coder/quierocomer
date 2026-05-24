@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Body inválido" }, { status: 400 }); }
 
   const { restaurantId, plan, skipPromo } = body;
-  if (!restaurantId || !plan || !(plan === "GOLD" || plan === "PREMIUM")) {
+  if (!restaurantId || !plan || !(plan === "SILVER" || plan === "GOLD" || plan === "PREMIUM")) {
     return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
   }
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No hay email del dueño. Contacta soporte." }, { status: 400 });
   }
 
-  const planKey = plan as "GOLD" | "PREMIUM";
+  const planKey = plan as "SILVER" | "GOLD" | "PREMIUM";
   const planConfig = FLOW_PLANS[planKey];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 

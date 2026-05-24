@@ -35,8 +35,8 @@ export async function getExperimentVariantsWithStats(
   // Pull all events tagged with this experiment. Volume is small (one row per
   // Use raw query to avoid Prisma enum validation issues with new event types
   const events = await prisma.$queryRaw`
-    SELECT "eventType", metadata FROM "StatEvent"
-    WHERE "eventType" IN (${impressionEventType}, ${conversionEventType})
+    SELECT "eventType"::text, metadata FROM "StatEvent"
+    WHERE "eventType"::text IN (${impressionEventType}, ${conversionEventType})
     AND metadata->>'abExperiment' = ${experimentSlug}
   ` as { eventType: string; metadata: any }[];
 

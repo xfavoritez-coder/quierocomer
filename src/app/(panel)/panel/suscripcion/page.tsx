@@ -279,7 +279,7 @@ export default function SuscripcionPage() {
           <div>
             <p style={{ fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em" }}>Plan actual</p>
             <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 700, color: "var(--adm-text)", margin: "2px 0 0" }}>
-              {status.plan === "PREMIUM" ? "Premium" : status.plan === "GOLD" ? "Gold" : "Gratis"}
+              {PLAN_LABELS[status.plan as PlanKey] || "Gratis"}
             </p>
           </div>
           <span style={{

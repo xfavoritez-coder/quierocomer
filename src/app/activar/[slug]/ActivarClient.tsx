@@ -146,7 +146,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [confirmPlan, setConfirmPlan] = useState<"GOLD" | "PREMIUM" | null>(null);
+  const [confirmPlan, setConfirmPlan] = useState<"SILVER" | "GOLD" | "PREMIUM" | null>(null);
   const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     }
   }, []);
 
-  const handleActivar = async (plan: "FREE" | "GOLD" | "PREMIUM") => {
+  const handleActivar = async (plan: "FREE" | "SILVER" | "GOLD" | "PREMIUM") => {
     // Gold requiere pago → mostrar modal de confirmación
     if (plan === "GOLD" && !confirmPlan) {
       setConfirmPlan("GOLD");
@@ -201,8 +201,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     setError("");
 
     try {
-      if (plan === "FREE" || plan === "PREMIUM") {
-        // Free y Premium (trial 14 días) → sin pago
+      // Free y planes con trial (Silver, Premium) → sin pago inmediato
+      if (plan === "FREE" || plan === "SILVER" || plan === "PREMIUM") {
         const endpoint = plan === "FREE" ? "/api/activar/free" : "/api/activar/trial";
         const res = await fetch(endpoint, {
           method: "POST",
@@ -503,17 +503,39 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               )}
             </article>
 
+            <article className="plan">
+              <h3>Silver</h3>
+              <div className="plan-price">14 días gratis</div>
+              <span className="strike">Luego $19.900/mes + IVA</span>
+              <p>Para destacar tu carta y medir resultados.</p>
+              <div className="checks">
+                <div>✓ Todo lo del plan Gratis</div>
+                <div>✓ 3 vistas de carta <span className="tip">i<span className="tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
+                <div>✓ Dark / Light mode <span className="tip">i<span className="tip-text">Elige el tema que mejor represente tu local</span></span></div>
+                <div>✓ Destacar platos estrella <span className="tip">i<span className="tip-text">Resalta visualmente los platos que mas te conviene vender</span></span></div>
+                <div>✓ Ofertas y promociones <span className="tip">i<span className="tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
+                <div>✓ Estadísticas básicas <span className="tip">i<span className="tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
+              </div>
+              {!done ? (
+                <button className="plan-btn" disabled={loading} onClick={() => handleActivar("SILVER")}>
+                  {loading && selectedPlan === "SILVER" ? "Activando..." : "Probar gratis 14 días"}
+                </button>
+              ) : selectedPlan === "SILVER" ? (
+                <div className="done-msg"><p>Activado.</p></div>
+              ) : (
+                <button className="plan-btn" disabled>Activar Silver</button>
+              )}
+            </article>
+
             <article className="plan gold">
               <h3>Gold</h3>
               <div className="plan-price">$35.000<small>/mes + IVA</small></div>
               <p>Para crecer tu restaurante.</p>
               <div className="checks">
-                <div>✓ Todo lo del plan Gratis</div>
-                <div>✓ El Genio IA <span className="tip">i<span className="tip-text">Un asistente inteligente que reordena tu carta según los gustos de cada cliente</span></span></div>
-                <div>✓ Ofertas y promociones <span className="tip">i<span className="tip-text">Crea ofertas temporales que aparecen directo en la carta de tus clientes</span></span></div>
-                <div>✓ Vistas Lista + Galería <span className="tip">i<span className="tip-text">Dos formas de mostrar tu carta: lista clásica y galería con fotos grandes</span></span></div>
-                <div>✓ Estadísticas de tu carta <span className="tip">i<span className="tip-text">Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios</span></span></div>
-                <div>✓ Anuncios dentro de la carta <span className="tip">i<span className="tip-text">Destaca platos o muestra banners promocionales que tus clientes ven al navegar</span></span></div>
+                <div>✓ Todo lo del plan Silver</div>
+                <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
+                <div>✓ Multilenguaje (ES / EN / PT) <span className="tip">i<span className="tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
+                <div>✓ Productos sugeridos <span className="tip">i<span className="tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("GOLD")}>
@@ -534,13 +556,10 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <p>Para restaurantes que quieren vender más.</p>
               <div className="checks">
                 <div>✓ Todo lo de Gold</div>
-                <div>✓ Vistas Lista + Galería + Impact <span className="tip">i<span className="tip-text">Tres diseños distintos para tu carta: lista clásica, galería con fotos y la vista Impact con hero de platos destacados</span></span></div>
-                <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Platos más vistos, horarios pico, tendencias semanales y comparativas</span></span></div>
                 <div>✓ Botón llamar garzón <span className="tip">i<span className="tip-text">Tus clientes llaman al garzón desde la carta con un toque, sin levantar la mano</span></span></div>
-                <div>✓ Carta en varios idiomas <span className="tip">i<span className="tip-text">Tu carta se traduce automáticamente a inglés, portugués y más. Ideal para turistas</span></span></div>
-                <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
-                <div>✓ Clientes ilimitados <span className="tip">i<span className="tip-text">Registra todos los clientes que escanean tu carta, sin límite</span></span></div>
+                <div>✓ Clientes captados <span className="tip">i<span className="tip-text">Ve todos los clientes que han interactuado con tu carta</span></span></div>
                 <div>✓ Email marketing <span className="tip">i<span className="tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
+                <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
                 <div>✓ Integración con Toteat <span className="tip">i<span className="tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
               </div>
               {!done ? (
