@@ -105,11 +105,14 @@ export default function InformeSemanalPage() {
               )}
             </div>
 
-            {l.slug && (
-              <div style={{ marginTop: 6 }}>
+            <div style={{ marginTop: 6, display: "flex", gap: 12 }}>
+              {l.slug && (
                 <a href={`/qr/${l.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Ver carta</a>
-              </div>
-            )}
+              )}
+              {l.slug && (
+                <a href={`/api/admin/informe-semanal/preview?slug=${l.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#3b82f6", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Ver email</a>
+              )}
+            </div>
           </div>
         ))}
 
