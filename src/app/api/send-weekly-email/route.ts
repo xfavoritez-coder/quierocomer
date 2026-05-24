@@ -192,7 +192,23 @@ export async function GET(req: NextRequest) {
       name: d.name, count: d.opens, photo: d.photo || null,
     }));
 
-    const insight = await generateSingleInsight(restaurant.id, restaurant.name);
+    // Try generating a fresh insight; fall back to the latest active one from DB;
+    // last resort: build a basic tip from top-viewed data
+    let insight = await generateSingleInsight(restaurant.id, restaurant.name);
+    if (!insight) {
+      const stored = await prisma.genioInsight.findFirst({
+        where: { restaurantId: restaurant.id, status: "active" },
+        orderBy: { priority: "asc" },
+        select: { title: true, body: true },
+      });
+      if (stored) insight = stored;
+    }
+    if (!insight && topViewed.length > 0) {
+      insight = {
+        title: `${topViewed[0].name} lidera tu carta`,
+        body: `Con ${topViewed[0].count} vistas esta semana, es tu plato estrella. Asegúrate de que tenga buena foto y esté marcado como destacado para aprovechar su potencial.`,
+      };
+    }
 
     emailHtml = buildWeeklyEmailHtml({
       ownerName,

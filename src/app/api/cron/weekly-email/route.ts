@@ -183,12 +183,18 @@ export async function GET(req: NextRequest) {
           name: d.name, count: d.opens, photo: d.photo || null,
         }));
 
-        // Fetch the top-priority active insight for this restaurant
-        const topInsight = await prisma.genioInsight.findFirst({
+        // Fetch the top-priority active insight; fallback to basic tip from data
+        let topInsight: { title: string; body: string } | null = await prisma.genioInsight.findFirst({
           where: { restaurantId: r.id, status: "active" },
           orderBy: { priority: "asc" },
           select: { title: true, body: true },
         });
+        if (!topInsight && topViewed.length > 0) {
+          topInsight = {
+            title: `${topViewed[0].name} lidera tu carta`,
+            body: `Con ${topViewed[0].count} vistas esta semana, es tu plato estrella. Asegúrate de que tenga buena foto y esté marcado como destacado para aprovechar su potencial.`,
+          };
+        }
 
         emailHtml = buildWeeklyEmailHtml({
           ownerName,
