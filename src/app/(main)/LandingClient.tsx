@@ -388,7 +388,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <p style={{ fontSize: 12, color: "#999", marginBottom: 6 }}>Para siempre</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar gratis</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.FREE}</p>
+                {PLAN_TAGLINES.FREE && <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.FREE}</p>}
                 {PLAN_FEATURES_DISPLAY.FREE.map((f) => (
                   <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
@@ -416,7 +416,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <a href={annualWhatsappUrl("Silver")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}
               <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.SILVER}</p>
+                {PLAN_TAGLINES.SILVER && <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.SILVER}</p>}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
                 {PLAN_FEATURES_DISPLAY.SILVER.map((f) => (
                   <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
@@ -446,7 +446,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <a href={annualWhatsappUrl("Gold")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>
+                {PLAN_TAGLINES.GOLD && <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Silver</div>
                 {PLAN_FEATURES_DISPLAY.GOLD.map((f) => (
                   <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
@@ -475,7 +475,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <a href={annualWhatsappUrl("Premium")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}
               <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <p style={{ fontFamily: F, fontSize: 12, color: "#555", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.PREMIUM}</p>
+                {PLAN_TAGLINES.PREMIUM && <p style={{ fontFamily: F, fontSize: 12, color: "#555", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.PREMIUM}</p>}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#444" }}><Check /> Todo del plan Gold</div>
                 {PLAN_FEATURES_DISPLAY.PREMIUM.map((f) => (
                   <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#444" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>

@@ -53,7 +53,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
   FREE: {
     key: "FREE",
     label: "Gratis",
-    tagline: "Carta digital con QR para empezar",
+    tagline: "",
     priceMonthly: 0,
     priceAnnualMonthly: 0,
     trialDays: 0,
@@ -73,7 +73,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
   SILVER: {
     key: "SILVER",
     label: "Silver",
-    tagline: "Ofertas, anuncios y estadisticas para crecer",
+    tagline: "",
     priceMonthly: 19900,
     priceAnnualMonthly: 16900,
     trialDays: 0,
@@ -99,7 +99,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
   GOLD: {
     key: "GOLD",
     label: "Gold",
-    tagline: "Multilenguaje, estadisticas avanzadas y venta cruzada",
+    tagline: "",
     priceMonthly: 35000,
     priceAnnualMonthly: 29900,
     trialDays: 0,
@@ -124,7 +124,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
   PREMIUM: {
     key: "PREMIUM",
     label: "Premium",
-    tagline: "Todo incluido: garzon, clientes, marketing y Toteat",
+    tagline: "",
     priceMonthly: 49900,
     priceAnnualMonthly: 39900,
     trialDays: 14,

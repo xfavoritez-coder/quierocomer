@@ -121,7 +121,6 @@ export default function PlanesClient() {
           <article className="qc-plan">
             <h3>Gratis</h3>
             <div className="qc-plan-price">$0</div>
-            <p>Para comenzar.</p>
             <div className="qc-checks">
               <div>✓ Carta digital con QR <span className="qc-tip">i<span className="qc-tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
               <div>✓ 2 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Vista Free y vista Esencial para elegir la que mejor represente tu local</span></span></div>
@@ -134,7 +133,6 @@ export default function PlanesClient() {
           <article className="qc-plan qc-silver">
             <h3>Silver</h3>
             <div className="qc-plan-price">$19.900<small>/mes + IVA</small></div>
-            <p>Ofertas, anuncios y estadisticas para crecer.</p>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Gratis</div>
               <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
@@ -150,7 +148,6 @@ export default function PlanesClient() {
           <article className="qc-plan qc-featured">
             <h3>Gold</h3>
             <div className="qc-plan-price">$35.000<small>/mes + IVA</small></div>
-            <p>Multilenguaje, estadísticas avanzadas y venta cruzada.</p>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Silver</div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
@@ -165,7 +162,6 @@ export default function PlanesClient() {
             <h3>Premium</h3>
             <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 dias sin costo</div>
-            <p>Todo incluido: garzon, clientes, marketing y Toteat.</p>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
               <div>✓ Llamar al garzon <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzon recibe la notificación push</span></span></div>

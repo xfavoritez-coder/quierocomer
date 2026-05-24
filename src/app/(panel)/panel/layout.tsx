@@ -380,9 +380,9 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
 
           {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <p style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
+            {PLAN_TAGLINES[tab] && <p style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
               {PLAN_TAGLINES[tab]}
-            </p>
+            </p>}
             {(() => {
               const net = planNetAmount(tab);
               const iva = ivaOf(net);

@@ -65,7 +65,7 @@ function PlanCard({ planKey, anual }: { planKey: PlanKey; anual: boolean }) {
             ? `/mes + IVA · $${annualTotal.toLocaleString("es-CL")}/año`
             : "/mes + IVA"}
       </div>
-      <p className="pm-desc">{plan.tagline}</p>
+      {plan.tagline && <p className="pm-desc">{plan.tagline}</p>}
       {plan.inheritsFrom && <div className="pm-inherits">{plan.inheritsFrom}</div>}
       <ul className="pm-features">
         {plan.featureDisplay.map(({ text, tip }, i) => (

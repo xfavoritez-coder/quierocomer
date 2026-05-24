@@ -488,7 +488,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <article className="plan">
               <h3>Gratis</h3>
               <div className="plan-price">$0</div>
-              <p>Para comenzar.</p>
               <div className="checks">
                 <div>✓ Carta digital con QR <span className="tip">i<span className="tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
                 <div>✓ Vista Lista <span className="tip">i<span className="tip-text">Tus platos organizados por categoría en formato lista clásico</span></span></div>
@@ -509,7 +508,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <article className="plan silver">
               <h3>Silver</h3>
               <div className="plan-price">$19.900<small>/mes + IVA</small></div>
-              <p>Para destacar tu carta y medir resultados.</p>
               <div className="checks">
                 <div>✓ Todo lo del plan Gratis</div>
                 <div>✓ 3 vistas de carta <span className="tip">i<span className="tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
@@ -532,7 +530,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <article className="plan gold">
               <h3>Gold</h3>
               <div className="plan-price">$35.000<small>/mes + IVA</small></div>
-              <p>Para crecer tu restaurante.</p>
               <div className="checks">
                 <div>✓ Todo lo del plan Silver</div>
                 <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
@@ -554,7 +551,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <div className="badge-trial">14 días gratis</div>
               <h3>Premium</h3>
               <div className="plan-price">$49.900<small>/mes + IVA</small></div>
-              <p>Para restaurantes que quieren vender más.</p>
               <div className="checks">
                 <div>✓ Todo lo de Gold</div>
                 <div>✓ Botón llamar garzón <span className="tip">i<span className="tip-text">Tus clientes llaman al garzón desde la carta con un toque, sin levantar la mano</span></span></div>
