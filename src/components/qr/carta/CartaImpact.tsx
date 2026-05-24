@@ -1302,7 +1302,7 @@ export default function CartaImpact({
                   <div style={{ position: "absolute", left: 18, right: 18, bottom: 30, zIndex: 2, maxWidth: 200 }}>
                     <h3 style={{
                       margin: "0 0 14px", fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif",
-                      fontSize: 34, lineHeight: 0.85, letterSpacing: "0.5px",
+                      fontSize: 36, lineHeight: 0.85, letterSpacing: "0.5px",
                       textShadow: "0 6px 28px rgba(0,0,0,0.9)", color: "white",
                       overflow: "hidden", textOverflow: "ellipsis",
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any,
