@@ -145,11 +145,18 @@ function resolveMenuUrl(cartaUrl: string, providerName?: string | null): string 
     const url = new URL(cartaUrl);
     const path = url.pathname.replace(/\/$/, "");
 
+    // Clean tracking params that can interfere with fetching
+    for (const p of ["fbclid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
+      url.searchParams.delete(p);
+    }
+
     // Justo: menu lives at /pedir
     if (providerName === "Justo" && !path.includes("/pedir")) {
       url.pathname = "/pedir";
       return url.toString();
     }
+
+    return url.toString();
   } catch {}
   return cartaUrl;
 }
