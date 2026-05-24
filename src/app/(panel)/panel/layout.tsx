@@ -442,7 +442,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {submitting ? "Redirigiendo a Webpay…" : "Empezar prueba gratis 14 días"}
+              {submitting ? "Redirigiendo a Webpay…" : tab === "PREMIUM" ? "Empezar prueba gratis 14 días" : `Suscribirse a ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>

@@ -411,7 +411,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </>
               )}
               {billingMode === "mensual" ? (
-                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 14 dias gratis</a>
+                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Elegir Silver</a>
               ) : (
                 <a href={annualWhatsappUrl("Silver")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}
@@ -441,7 +441,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </>
               )}
               {billingMode === "mensual" ? (
-                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 14 dias gratis</a>
+                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Elegir Gold</a>
               ) : (
                 <a href={annualWhatsappUrl("Gold")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}

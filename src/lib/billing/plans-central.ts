@@ -76,7 +76,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     tagline: "Ofertas, anuncios y estadisticas para crecer",
     priceMonthly: 19900,
     priceAnnualMonthly: 16900,
-    trialDays: 14,
+    trialDays: 0,
     features: new Set([
       "genio", "modifiers",
       "view_gallery", "view_feed", "view_space", "view_selector",
@@ -92,7 +92,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     ],
     inheritsFrom: "Todo lo del plan Gratis",
     isFeatured: false,
-    ctaText: "Comenzar 14 dias gratis",
+    ctaText: "Elegir Silver",
     flowPlanId: "qc_silver_monthly",
   },
 
@@ -102,7 +102,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     tagline: "Multilenguaje, estadisticas avanzadas y venta cruzada",
     priceMonthly: 35000,
     priceAnnualMonthly: 29900,
-    trialDays: 14,
+    trialDays: 0,
     features: new Set([
       "genio", "modifiers",
       "view_gallery", "view_feed", "view_space", "view_selector",
@@ -117,7 +117,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     ],
     inheritsFrom: "Todo lo del plan Silver",
     isFeatured: true,
-    ctaText: "Comenzar 14 dias gratis",
+    ctaText: "Elegir Gold",
     flowPlanId: "qc_gold_monthly",
   },
 
@@ -139,7 +139,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     ]),
     featureDisplay: [
       { text: "Llamar al garzon", tip: "El cliente toca un boton y el garzon recibe la notificacion push." },
-      { text: "Clientes captados", tip: "Ve todos los clientes que han interactuado con tu carta." },
+      { text: "Clientes capturados", tip: "Ve todos los clientes capturados: correos, cumpleaños, preferencias y más." },
       { text: "Email marketing", tip: "Envia campañas de email a tu base de clientes." },
       { text: "Cumpleaños automaticos", tip: "Enviamos invitaciones especiales a clientes de cumpleaños." },
       { text: "Integracion Toteat", tip: "Sincroniza ventas reales con la carta. Dashboard en vivo." },

@@ -133,9 +133,6 @@ export default function PlanesClient() {
 
           <article className="qc-plan qc-silver">
             <h3>Silver</h3>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <span style={{ background: "#475569", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 dias gratis</span>
-            </div>
             <div className="qc-plan-price">$19.900<small>/mes + IVA</small></div>
             <p>Ofertas, anuncios y estadisticas para crecer.</p>
             <div className="qc-checks">
@@ -147,7 +144,7 @@ export default function PlanesClient() {
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
               <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
             </div>
-            <button className="qc-plan-btn" onClick={() => openModal("SILVER")}>Probar gratis 14 dias</button>
+            <button className="qc-plan-btn" onClick={() => openModal("SILVER")}>Elegir Silver</button>
           </article>
 
           <article className="qc-plan qc-featured">
@@ -168,13 +165,14 @@ export default function PlanesClient() {
             <h3>Premium</h3>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
               <span style={{ background: "#7c3aed", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 dias gratis</span>
+              <span style={{ fontSize: 14, color: "#888", textDecoration: "line-through" }}>$49.900/mes</span>
             </div>
-            <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
+            <div className="qc-plan-price">$49.900<small>/mes + IVA despues del trial</small></div>
             <p>Todo incluido: garzon, clientes, marketing y Toteat.</p>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
               <div>✓ Llamar al garzon <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzon recibe la notificación push</span></span></div>
-              <div>✓ Clientes captados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes que han interactuado con tu carta</span></span></div>
+              <div>✓ Clientes capturados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
               <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos invitaciones especiales a clientes de cumpleaños</span></span></div>
               <div>✓ Integración Toteat <span className="qc-tip">i<span className="qc-tip-text">Sincroniza ventas reales con la carta. Dashboard en vivo</span></span></div>

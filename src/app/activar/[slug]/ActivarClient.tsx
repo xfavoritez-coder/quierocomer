@@ -100,6 +100,8 @@ h1 em { color: var(--amber); font-style: italic; }
 .benefit.highlight { border-color: rgba(255,178,45,.34); background: linear-gradient(135deg, rgba(255,178,45,.13), rgba(255,255,255,.03)), #111; }
 .plans { display: grid; gap: 14px; }
 .plan { border-radius: 25px; padding: 20px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10); position: relative; }
+.plan.silver { border-color: rgba(148,163,184,.3); }
+.plan.silver h3 { color: #94a3b8; }
 .plan.gold { border-color: rgba(255,178,45,.22); }
 .plan.gold h3 { color: var(--amber); }
 .plan.featured { border-color: rgba(255,178,45,.55); background: linear-gradient(135deg, rgba(255,178,45,.13), rgba(255,255,255,.035)), #0c0c0c; box-shadow: 0 0 32px rgba(255,178,45,.10); }
@@ -190,9 +192,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   }, []);
 
   const handleActivar = async (plan: "FREE" | "SILVER" | "GOLD" | "PREMIUM") => {
-    // Gold requiere pago → mostrar modal de confirmación
-    if (plan === "GOLD" && !confirmPlan) {
-      setConfirmPlan("GOLD");
+    // Silver/Gold requieren pago → mostrar modal de confirmación
+    if ((plan === "SILVER" || plan === "GOLD") && !confirmPlan) {
+      setConfirmPlan(plan);
       return;
     }
 
@@ -201,8 +203,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     setError("");
 
     try {
-      // Free y planes con trial (Silver, Premium) → sin pago inmediato
-      if (plan === "FREE" || plan === "SILVER" || plan === "PREMIUM") {
+      // Free y Premium (trial 14 días) → sin pago inmediato
+      if (plan === "FREE" || plan === "PREMIUM") {
         const endpoint = plan === "FREE" ? "/api/activar/free" : "/api/activar/trial";
         const res = await fetch(endpoint, {
           method: "POST",
@@ -214,7 +216,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         return;
       }
 
-      // Gold → pago via MercadoPago
+      // Silver / Gold → pago via MercadoPago
       const res = await fetch("/api/activar/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -503,10 +505,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               )}
             </article>
 
-            <article className="plan">
+            <article className="plan silver">
               <h3>Silver</h3>
-              <div className="plan-price">14 días gratis</div>
-              <span className="strike">Luego $19.900/mes + IVA</span>
+              <div className="plan-price">$19.900<small>/mes + IVA</small></div>
               <p>Para destacar tu carta y medir resultados.</p>
               <div className="checks">
                 <div>✓ Todo lo del plan Gratis</div>
@@ -518,7 +519,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("SILVER")}>
-                  {loading && selectedPlan === "SILVER" ? "Activando..." : "Probar gratis 14 días"}
+                  {loading && selectedPlan === "SILVER" ? "Activando..." : "Activar Silver"}
                 </button>
               ) : selectedPlan === "SILVER" ? (
                 <div className="done-msg"><p>Activado.</p></div>
@@ -557,7 +558,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <div className="checks">
                 <div>✓ Todo lo de Gold</div>
                 <div>✓ Botón llamar garzón <span className="tip">i<span className="tip-text">Tus clientes llaman al garzón desde la carta con un toque, sin levantar la mano</span></span></div>
-                <div>✓ Clientes captados <span className="tip">i<span className="tip-text">Ve todos los clientes que han interactuado con tu carta</span></span></div>
+                <div>✓ Clientes capturados <span className="tip">i<span className="tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
                 <div>✓ Email marketing <span className="tip">i<span className="tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
                 <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
                 <div>✓ Integración con Toteat <span className="tip">i<span className="tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
