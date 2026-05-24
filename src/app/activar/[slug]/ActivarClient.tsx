@@ -107,6 +107,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .plan.featured { border-color: rgba(255,178,45,.55); background: linear-gradient(135deg, rgba(255,178,45,.13), rgba(255,255,255,.035)), #0c0c0c; box-shadow: 0 0 32px rgba(255,178,45,.10); }
 .plan.featured h3 { color: var(--amber); }
 .badge { position: absolute; right: 16px; top: 16px; border-radius: 999px; padding: 7px 10px; color: #ffd38a; background: rgba(255,178,45,.14); font-size: 10px; font-weight: 950; }
+.badge-trial { position: absolute; right: 16px; top: 16px; border-radius: 999px; padding: 7px 12px; color: #fff; background: #dc2626; font-size: 10px; font-weight: 950; letter-spacing: .3px; }
 .plan h3 { margin: 0 0 10px; font-family: Georgia, serif; font-size: 24px; font-weight: 400; color: var(--cream); }
 .plan-price { font-size: 30px; font-weight: 950; margin-bottom: 8px; }
 .plan-price small { font-size: 12px; color: var(--cream-soft); }
@@ -550,10 +551,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             </article>
 
             <article className="plan featured">
-              <div className="badge">Más elegido</div>
+              <div className="badge-trial">14 días gratis</div>
               <h3>Premium</h3>
-              <div className="plan-price">14 días gratis</div>
-              <span className="strike">Luego $49.900/mes + IVA</span>
+              <div className="plan-price">$49.900<small>/mes + IVA</small></div>
               <p>Para restaurantes que quieren vender más.</p>
               <div className="checks">
                 <div>✓ Todo lo de Gold</div>
