@@ -370,25 +370,42 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           `}} />
           <div className="po-content">
             <div className="po-top">
-              <div className="po-eyebrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="#c4b5fd" style={{ flexShrink: 0 }}><path d="M6 3h12l5 8-11 13L1 11l5-8zm2.3 1.5L5.2 9.7h3.3l1.5-5.2H8.3zm7.4 0h-1.7l1.5 5.2h3.3L15.7 4.5zM12 5.3L10.6 9.7h2.8L12 5.3zm-6.5 5.7l6.5 8.1 6.5-8.1H5.5z"/></svg> Plan Premium</div>
-              <div className="po-pill">🎁 14 días gratis</div>
+              <div className="po-pill">🎁 14 días gratis · sin tarjeta</div>
             </div>
 
-            <h2>Activa y publica tu <span>nueva carta</span></h2>
+            <h2>Tu carta está lista, solo falta <span>publicarla</span></h2>
 
-            <div className="po-value">
-              <div className="po-orb">🚀</div>
-              <p className="po-vtext">Sin tarjeta, sin compromiso. Activamos tu carta <strong>de inmediato</strong>.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>3 vistas de carta para tus clientes</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Código QR listo para imprimir</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Estadísticas de lo que miran tus clientes</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Traducción automática a varios idiomas</span>
+              </div>
             </div>
 
             {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
             {!done ? (
               <button className="po-cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-                {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar carta gratis"}
+                {loading && selectedPlan === "PREMIUM" ? "Publicando..." : "Publicar mi carta"}
               </button>
             ) : (
-              <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
+              <div className="done-msg"><p>Publicada. Redirigiendo...</p></div>
             )}
+
+            <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 12, margin: 0 }}>
+              Sin pagos, sin compromisos. Puedes desactivar cuando quieras.
+            </p>
 
           </div>
         </div>
