@@ -67,7 +67,7 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
 export default function SubirCartaClient() {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
-  const [abTitle, setAbTitle] = useState("Sube tu carta y mira {cómo queda}");
+  const [abTitle, setAbTitle] = useState("");
   const abIds = useRef<{ titleId: string | null; ctaId: string | null }>({ titleId: null, ctaId: null });
   useEffect(() => {
     fetch("/api/subircarta/ab").then(r => r.json()).then(d => {
@@ -341,7 +341,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>{parseAbText(abTitle)}</h1>
+            <h1 style={{ opacity: abTitle ? 1 : 0, transition: "opacity 0.3s ease" }}>{parseAbText(abTitle)}</h1>
           </div>
 
           <div className="form-side centered-form">
