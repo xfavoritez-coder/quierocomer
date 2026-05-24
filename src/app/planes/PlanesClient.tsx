@@ -148,7 +148,6 @@ export default function PlanesClient() {
           </article>
 
           <article className="qc-plan qc-featured">
-            <div className="qc-badge">Recomendado</div>
             <h3>Gold</h3>
             <div className="qc-plan-price">$35.000<small>/mes + IVA</small></div>
             <p>Multilenguaje, estadísticas avanzadas y venta cruzada.</p>
@@ -162,12 +161,9 @@ export default function PlanesClient() {
           </article>
 
           <article className="qc-plan qc-premium">
+            <div className="qc-badge" style={{ background: "rgba(124,58,237,.15)", color: "#a78bfa" }}>14 dias gratis</div>
             <h3>Premium</h3>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <span style={{ background: "#7c3aed", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 dias gratis</span>
-              <span style={{ fontSize: 14, color: "#888", textDecoration: "line-through" }}>$49.900/mes</span>
-            </div>
-            <div className="qc-plan-price">$49.900<small>/mes + IVA despues del trial</small></div>
+            <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
             <p>Todo incluido: garzon, clientes, marketing y Toteat.</p>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
