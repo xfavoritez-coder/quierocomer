@@ -16,12 +16,12 @@ interface KnowledgeEntry {
 }
 
 async function getKnowledge(): Promise<KnowledgeEntry[]> {
-  const record = await (prisma as any).statEvent.findFirst({
-    where: { eventType: "BOT_KNOWLEDGE" },
-    orderBy: { createdAt: "desc" },
-    select: { metadata: true },
-  });
-  return (record?.metadata as any)?.entries || [];
+  try {
+    const records = await prisma.$queryRaw`
+      SELECT metadata FROM "StatEvent" WHERE "eventType" = 'BOT_KNOWLEDGE' ORDER BY "createdAt" DESC LIMIT 1
+    ` as any[];
+    return records[0]?.metadata?.entries || [];
+  } catch { return []; }
 }
 
 export async function GET(req: NextRequest) {
@@ -42,9 +42,11 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(entries)) return NextResponse.json({ error: "entries required" }, { status: 400 });
 
   // Upsert: delete old, create new
-  await (prisma as any).statEvent.deleteMany({ where: { eventType: "BOT_KNOWLEDGE" } });
-  await (prisma as any).statEvent.create({
-    data: { eventType: "BOT_KNOWLEDGE", metadata: { entries } },
+  await prisma.$executeRaw`DELETE FROM "StatEvent" WHERE "eventType" = 'BOT_KNOWLEDGE'`;
+  const id = `bot_${Date.now()}`;
+  await prisma.$executeRaw`INSERT INTO "StatEvent" (id, "eventType", metadata, "createdAt") VALUES (${id}, 'BOT_KNOWLEDGE', ${JSON.stringify({ entries })}::jsonb, NOW())`.catch(() => {
+    // Fallback if raw fails
+    (prisma as any).statEvent.create({ data: { eventType: "BOT_KNOWLEDGE", metadata: { entries } } }).catch(() => {});
   });
 
   return NextResponse.json({ ok: true, count: entries.length });
