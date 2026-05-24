@@ -26,29 +26,24 @@ export async function extractCanva(cartaUrl: string): Promise<ExtractionResult> 
     console.log("[Canva] Jina failed, will try screenshot");
   }
 
-  // Extract image URLs from Jina markdown (Canva renders pages as images)
-  // Upgrade thumbnails to full resolution (Canva CDN supports height/width params)
-  const imageUrls = [...content.matchAll(/!\[.*?\]\((https:\/\/media\.canva\.com\/[^\)]+)\)/g)]
-    .map(m => m[1].replace(/height:\d+/, "height:1600").replace(/width:\d+/, "width:1200"));
-  console.log("[Canva] Found", imageUrls.length, "Canva page images");
-
-  // Canva image URLs are temporary (expire in minutes) — download immediately
-  if (imageUrls.length > 0) {
-    console.log("[Canva] Downloading Canva page images immediately (URLs expire)");
-    const images = await downloadImages(imageUrls.slice(0, 5));
-    if (images.length > 0) {
-      console.log("[Canva] Downloaded", images.length, "images, sending to Vision");
-      return extractFromImageBuffers(images, apiKey);
-    }
-  }
-
-  // Check if Jina got meaningful text content (prices)
+  // Check if Jina got meaningful text content (prices) — prefer text over Vision
   const pricePattern = /\$[\d.,]+|\d{3,6}/g;
   const prices = (content.match(pricePattern) || []).length;
 
   if (content.length > 500 && prices >= 3) {
     console.log("[Canva] Using text extraction (", prices, "prices found)");
     return extractFromText(content.slice(0, 40000), apiKey, cleanUrl);
+  }
+
+  // Fallback: try Vision with Canva page images
+  const imageUrls = [...content.matchAll(/!\[.*?\]\((https:\/\/media\.canva\.com\/[^\)]+)\)/g)]
+    .map(m => m[1].replace(/height:\d+/, "height:1600").replace(/width:\d+/, "width:1200"));
+  if (imageUrls.length > 0) {
+    console.log("[Canva] Text insufficient, trying", imageUrls.length, "images with Vision");
+    const images = await downloadImages(imageUrls.slice(0, 4));
+    if (images.length > 0) {
+      return extractFromImageBuffers(images, apiKey);
+    }
   }
 
   // Last fallback: screenshot
