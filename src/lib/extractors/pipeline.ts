@@ -333,10 +333,14 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       throw new Error("No dishes extracted from the menu");
     }
 
-    // Validate extraction quality — if too few dishes or no prices, flag for review
+    // Validate extraction quality — only reject if truly empty
     const dishesWithPrice = extraction.dishes.filter(d => d.price > 0);
-    if (extraction.dishes.length < 3 || dishesWithPrice.length === 0) {
+    if (extraction.dishes.length < 3) {
       throw new Error(`Low quality extraction: ${extraction.dishes.length} dishes, ${dishesWithPrice.length} with price`);
+    }
+    // Log warning but don't reject if no prices (some menus/flyers don't have prices)
+    if (dishesWithPrice.length === 0) {
+      console.log(`[Pipeline] Warning: ${extraction.dishes.length} dishes but 0 with price — accepting anyway`);
     }
 
     // Save preview to lead (for confirmation page)
