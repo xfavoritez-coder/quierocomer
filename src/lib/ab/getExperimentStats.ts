@@ -33,14 +33,12 @@ export async function getExperimentVariantsWithStats(
   if (!experiment) return { experiment: null, variants: [] };
 
   // Pull all events tagged with this experiment. Volume is small (one row per
-  // modal impression / save) so an in-memory aggregation is fine.
-  const events = await prisma.statEvent.findMany({
-    where: {
-      eventType: { in: [impressionEventType, conversionEventType] as any },
-      metadata: { path: ["abExperiment"], equals: experimentSlug },
-    },
-    select: { eventType: true, metadata: true },
-  });
+  // Use raw query to avoid Prisma enum validation issues with new event types
+  const events = await prisma.$queryRaw`
+    SELECT "eventType", metadata FROM "StatEvent"
+    WHERE "eventType" IN (${impressionEventType}, ${conversionEventType})
+    AND metadata->>'abExperiment' = ${experimentSlug}
+  ` as { eventType: string; metadata: any }[];
 
   const stats = new Map<string, { impressions: number; conversions: number }>();
   for (const e of events) {
