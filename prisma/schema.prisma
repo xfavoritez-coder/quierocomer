@@ -1405,6 +1405,26 @@ model EmailLog {
   @@index([status, createdAt])
 }
 
+// ─── Support / Contact messages ───────────────────────────────────────
+
+model SupportMessage {
+  id          String   @id @default(cuid())
+  source      String   // "contacto" | "panel_soporte"
+  name        String?
+  email       String
+  phone       String?
+  message     String
+  restaurantSlug String?
+  ownerId     String?
+  read        Boolean  @default(false)
+  repliedAt   DateTime?
+  replyText   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([read, createdAt])
+}
+
 // ─── Marketing ────────────────────────────────────────────────────────
 
 model Segment {

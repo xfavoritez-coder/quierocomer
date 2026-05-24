@@ -52,6 +52,15 @@ export async function POST(request: Request) {
           status: "sent",
         },
       }),
+      prisma.supportMessage.create({
+        data: {
+          source: "contacto",
+          name: nombre || null,
+          email,
+          phone: telefono || null,
+          message: mensaje || "Solicitud de demo",
+        },
+      }),
     ]);
 
     return NextResponse.json({ ok: true });

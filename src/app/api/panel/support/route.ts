@@ -9,7 +9,10 @@ export async function POST(req: Request) {
   const panelId = cookieStore.get("panel_id")?.value;
   if (!token || !panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const owner = await prisma.restaurantOwner.findUnique({ where: { id: panelId }, select: { id: true, name: true, email: true } });
+  const owner = await prisma.restaurantOwner.findUnique({
+    where: { id: panelId },
+    select: { id: true, name: true, email: true, restaurants: { select: { slug: true }, take: 1 } },
+  });
   if (!owner) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { message } = await req.json();
@@ -18,20 +21,32 @@ export async function POST(req: Request) {
   }
 
   try {
-    await resend.emails.send({
-      from: "QuieroComer Soporte <soporte@quierocomer.cl>",
-      to: "hola@quierocomer.cl",
-      replyTo: owner.email,
-      subject: `[Soporte Panel] ${owner.name || owner.email}`,
-      html: `
-        <div style="font-family:system-ui,sans-serif;max-width:600px">
-          <p><strong>De:</strong> ${owner.name || "Sin nombre"} (${owner.email})</p>
-          <p><strong>Owner ID:</strong> ${owner.id}</p>
-          <hr style="border:none;border-top:1px solid #eee;margin:16px 0" />
-          <p style="white-space:pre-wrap;line-height:1.6">${message.trim()}</p>
-        </div>
-      `,
-    });
+    await Promise.all([
+      resend.emails.send({
+        from: "QuieroComer Soporte <soporte@quierocomer.cl>",
+        to: "hola@quierocomer.cl",
+        replyTo: owner.email,
+        subject: `[Soporte Panel] ${owner.name || owner.email}`,
+        html: `
+          <div style="font-family:system-ui,sans-serif;max-width:600px">
+            <p><strong>De:</strong> ${owner.name || "Sin nombre"} (${owner.email})</p>
+            <p><strong>Owner ID:</strong> ${owner.id}</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:16px 0" />
+            <p style="white-space:pre-wrap;line-height:1.6">${message.trim()}</p>
+          </div>
+        `,
+      }),
+      prisma.supportMessage.create({
+        data: {
+          source: "panel_soporte",
+          name: owner.name || null,
+          email: owner.email,
+          message: message.trim(),
+          ownerId: owner.id,
+          restaurantSlug: owner.restaurants[0]?.slug || null,
+        },
+      }),
+    ]);
   } catch (e) {
     console.error("[support] email error:", e);
     return NextResponse.json({ error: "Error al enviar" }, { status: 500 });
