@@ -9,7 +9,7 @@ interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
-  purpose?: string; // password_reset, welcome, etc.
+  purpose?: string;
 }
 
 export async function sendAdminEmail({ to, subject, html, purpose = "other" }: SendEmailOptions) {
@@ -25,14 +25,12 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
       throw new Error(errorMsg);
     }
 
-    // Log success
     const log = await prisma.emailLog.create({
       data: { to, subject, purpose, status: "sent" },
     }).catch(() => null);
     return { ...data, logId: log?.id };
   } catch (err) {
     if (!(err instanceof Error && err.message.startsWith("Resend"))) {
-      // Only log if not already logged above
       const errorMsg = err instanceof Error ? err.message : String(err);
       await prisma.emailLog.create({
         data: { to, subject, purpose, status: "failed", errorMsg },
@@ -42,338 +40,227 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
   }
 }
 
-/** Wrap content in the branded admin email template */
+// ─── Light email template ─────────────────────────────────────────────
+// All emails use this base. Warm beige tones, table-based, email-safe.
+
+const GOLD = "#e8930a";
+const BASE_URL = "https://quierocomer.cl";
+
+/** Wrap arbitrary HTML content in the branded light template */
 export function adminEmailTemplate(content: string): string {
-  return `<html><head><meta charset="UTF-8"></head><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
-<div style="max-width:640px;margin:0 auto;padding:40px 16px">
-<div style="text-align:center;margin-bottom:16px">
-<p style="font-size:32px;margin:0">🧞</p>
-</div>
-<div style="background-color:#2d1a08;border-radius:20px;border:1px solid rgba(232,168,76,0.25);padding:36px 36px">
-${content}
-</div>
-<div style="text-align:center;margin-top:32px">
-<p style="color:#5a4028;font-size:12px">Hecho con 💛 y mucha hambre · QuieroComer.cl</p>
-</div>
-</div></body></html>`;
+  return wrap(`<tr><td style="padding-bottom:16px;">${content}</td></tr>`);
 }
 
-/** Password reset email */
+function wrap(content: string): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td align="center" style="padding-bottom:24px;">
+    <img src="${BASE_URL}/landing/logo.png" alt="QuieroComer" width="28" height="28" style="width:28px;height:28px;margin:0 auto 8px;display:block;" />
+    <span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span>
+  </td></tr>
+
+  ${content}
+
+  <tr><td style="padding-top:24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:16px 0 0;">
+    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.cl</a>
+    <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+function card(content: string, accent = false): string {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${accent ? "#fffbf3" : "#f9f6f0"};border:1px solid ${accent ? `${GOLD}33` : "#e8dcc4"};border-radius:14px;margin-bottom:16px;">
+    <tr><td style="padding:16px 18px;">${content}</td></tr>
+  </table>`;
+}
+
+function btn(href: string, label: string, primary = true): string {
+  return `<table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
+    <a href="${href}" style="display:inline-block;${primary ? `background:${GOLD};color:#fff;` : `background:#fffaf1;color:#6c4d22;border:1px solid #e8dcc4;`}font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">${label}</a>
+  </td></tr></table>`;
+}
+
+function label(text: string): string {
+  return `<div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">${text}</div>`;
+}
+
+function field(name: string, value: string): string {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:10px;margin-bottom:6px;">
+    <tr><td style="padding:10px 14px;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#92400e;margin-bottom:3px;">${name}</div>
+      <div style="font-size:14px;color:#111;font-weight:700;word-break:break-word;">${value}</div>
+    </td></tr>
+  </table>`;
+}
+
+// ─── Email templates ──────────────────────────────────────────────────
+
 export function resetPasswordEmailHtml(name: string, resetLink: string): string {
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">Recuperar contraseña</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px">
-  Hola ${name}, recibiste este email porque solicitaste recuperar tu contraseña del panel de QuieroComer.
-  Si no fuiste tú, ignora este mensaje.
-</p>
-<div style="text-align:center;margin-bottom:24px">
-  <a href="${resetLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Restablecer contraseña
-  </a>
-</div>
-<p style="color:#5a4028;font-size:13px;line-height:1.6;margin-bottom:0">
-  Este link expira en 1 hora. Si no hace efecto, solicita uno nuevo desde el panel.
-</p>`);
+  return wrap(`
+  <tr><td style="padding-bottom:20px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Recuperar contraseña</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
+    Hola ${name}, recibiste este email porque solicitaste recuperar tu contraseña. Si no fuiste tu, ignora este mensaje.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${btn(resetLink, "Restablecer contraseña")}</td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Este link expira en 1 hora.</td></tr>
+  `);
 }
 
-/** Welcome email for new owners */
 export function welcomeOwnerEmailHtml(name: string, email: string, password: string, qrLink: string | null, panelLink: string): string {
-  const step = (n: number, title: string, body: string) => `
-<div style="margin-bottom:28px">
-  <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px"><tr>
-    <td width="38" valign="top" style="padding-top:1px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">${n}</td>
-      </tr></table>
-    </td>
-    <td valign="top" style="color:#FFD600;font-size:15px;font-weight:bold">${title}</td>
-  </tr></table>
-  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0">${body}</p>
-</div>`;
-
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:28px;text-align:center">¡Todo listo, ${name}! 🎉</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px">
-  Tu carta QR ya está funcionando. Solo debes seguir los 3 siguientes pasos para dejar todo listo y comenzar a aumentar tus ventas.
-</p>
-
-${step(1, "Revisa tu carta", `Mira cómo se ve tu menú y que esté todo bien en${qrLink ? ` <a href="${qrLink}" style="color:#FFD600;text-decoration:underline">${qrLink.replace("https://", "")}</a>` : " tu link QR"}.`)}
-
-<div style="margin-bottom:28px">
-  <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px"><tr>
-    <td width="38" valign="top" style="padding-top:1px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">2</td>
-      </tr></table>
-    </td>
-    <td valign="top" style="color:#FFD600;font-size:15px;font-weight:bold">Ajusta lo que necesites</td>
-  </tr></table>
-  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 12px">Entra a tu panel con los siguientes accesos y corrige lo que haga falta.</p>
-  <div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:16px 18px">
-    <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px">Tus datos de acceso</p>
-    <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Email:</strong> ${email}</p>
-    <p style="color:#c0a060;font-size:15px;margin:0"><strong>Contraseña:</strong> ${password}</p>
-  </div>
-</div>
-
-${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e imprimir el código QR. Ponlo en cada mesa y listo.")}
-
-<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px">🎁 Bonus</p>
-  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0">
-    Estás en el plan <strong>Gratis</strong>. Cuando quieras, prueba <strong>7 días gratis</strong> el plan Gold o Premium para desbloquear estadísticas, ofertas, multilenguaje y más. Sin compromiso. Cancelas cuando quieras.
-  </p>
-</div>
-
-<div style="text-align:center">
-  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Entrar a mi panel →
-  </a>
-</div>`);
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎉</span></td></tr>
+  <tr><td style="padding-bottom:16px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Todo listo, ${name}</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Tu carta QR ya esta funcionando. Sigue estos pasos para dejar todo listo.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Tus datos de acceso")}
+    ${field("Email", email)}
+    ${field("Contraseña", password)}
+    <div style="font-size:11px;color:#927955;margin-top:8px;">Te recomendamos cambiar la contraseña en tu primer ingreso.</div>
+  `, true)}</td></tr>
+  ${qrLink ? `<tr><td style="padding-bottom:8px;">${btn(qrLink, "Ver mi carta →")}</td></tr>` : ""}
+  <tr><td style="padding-bottom:16px;">${btn(panelLink, "Entrar al panel", false)}</td></tr>
+  `);
 }
 
-/**
- * Email de entrega al dueño con trial activo. Le explica que tiene N dias
- * gratis para inscribir su tarjeta y mantener el plan pagado.
- */
 export function handoffOwnerEmailHtml(
-  name: string,
-  email: string,
-  password: string,
-  qrLink: string | null,
-  panelLink: string,
-  planLabel: string,
-  trialDays: number,
+  name: string, email: string, password: string,
+  qrLink: string | null, panelLink: string, planLabel: string, trialDays: number,
 ): string {
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Bienvenido, ${name}! 🎉</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
-  Tu carta digital ya está funcionando. Te activamos el plan <strong style="color:#FFD600">${planLabel}</strong> con <strong style="color:#FFD600">${trialDays} días gratis</strong> para que la pruebes con tus clientes reales.
-</p>
-
-<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px">🔑 Tu acceso al panel</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Email:</strong> ${email}</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 12px"><strong>Contraseña:</strong> ${password}</p>
-  <p style="color:#c0a060;font-size:13px;margin:0;opacity:0.85">Te pediremos cambiarla en el primer login.</p>
-</div>
-
-<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">⏰ Para no perder tu plan</p>
-  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 8px">
-    Tienes <strong style="color:#FFD600">${trialDays} días</strong> para inscribir tu tarjeta y completar tus datos de facturación. Después de eso, el cobro mensual se hace automático.
-  </p>
-  <p style="color:#c0a060;font-size:14px;line-height:1.6;margin:0;opacity:0.85">
-    Si no inscribes tarjeta en ${trialDays} días, tu plan baja a Gratis (la carta sigue funcionando, pero pierdes funciones avanzadas).
-  </p>
-</div>
-
-<div style="text-align:center;margin-top:24px;display:flex;flex-direction:column;gap:12px">
-  ${qrLink ? `<a href="${qrLink}" style="display:inline-block;background:#FFD600;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;margin-bottom:10px">
-    Ver mi carta digital →
-  </a>` : ""}
-  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Entrar a mi panel →
-  </a>
-</div>`);
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎉</span></td></tr>
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Bienvenido, ${name}</h1>
+  </td></tr>
+  <tr><td style="text-align:center;padding-bottom:20px;">
+    <span style="background:#fff3d8;color:#9a5a00;font-size:12px;font-weight:800;padding:6px 12px;border-radius:50px;">✨ ${planLabel} · ${trialDays} dias gratis</span>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
+    Tu carta digital ya esta funcionando con el plan <strong>${planLabel}</strong>. Tienes <strong>${trialDays} dias gratis</strong> para probarla con tus clientes reales.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Tus datos de acceso")}
+    ${field("Email", email)}
+    ${field("Contraseña", password)}
+  `, true)}</td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Para no perder tu plan")}
+    <div style="font-size:14px;color:#7a6547;line-height:1.6;">Inscribe tu tarjeta antes de que terminen los ${trialDays} dias. Si no lo haces, tu plan baja a Gratis.</div>
+  `)}</td></tr>
+  ${qrLink ? `<tr><td style="padding-bottom:8px;">${btn(qrLink, "Ver mi carta →")}</td></tr>` : ""}
+  <tr><td style="padding-bottom:16px;">${btn(panelLink, "Entrar al panel", false)}</td></tr>
+  `);
 }
 
-/**
- * Email de entrega para locales en plan FREE. Sin info de trial ni
- * urgencia — solo bienvenida con credenciales y enlaces.
- */
 export function handoffFreeEmailHtml(
-  name: string,
-  email: string,
-  password: string,
-  qrLink: string,
-  panelLink: string,
-  restaurantName: string,
+  name: string, email: string, password: string,
+  qrLink: string, panelLink: string, restaurantName: string,
 ): string {
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Bienvenido, ${name}! 🎉</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
-  Tu carta digital de <strong style="color:#FFD600">${restaurantName}</strong> ya está lista. Tus clientes la van a poder ver escaneando el código QR.
-</p>
-
-<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px">🔑 Tu acceso al panel</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Email:</strong> ${email}</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 12px"><strong>Contraseña:</strong> ${password}</p>
-  <p style="color:#c0a060;font-size:13px;margin:0;opacity:0.85">Te pediremos cambiarla en el primer login.</p>
-</div>
-
-<p style="color:#c0a060;font-size:14px;line-height:1.6;margin-bottom:24px">
-  Estás en el plan <strong style="color:#FFD600">Gratis</strong>. Cuando quieras, desde el panel puedes probar 7 días gratis los planes Gold o Premium para desbloquear estadísticas, ofertas, multilenguaje y mucho más.
-</p>
-
-<div style="text-align:center;margin-top:24px">
-  <a href="${qrLink}" style="display:inline-block;background:#FFD600;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;margin-bottom:10px">
-    Ver mi carta digital →
-  </a>
-</div>
-<div style="text-align:center;margin-top:6px">
-  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Entrar a mi panel →
-  </a>
-</div>`);
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎉</span></td></tr>
+  <tr><td style="padding-bottom:16px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Bienvenido, ${name}</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Tu carta digital de <strong>${restaurantName}</strong> ya esta lista.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Tus datos de acceso")}
+    ${field("Email", email)}
+    ${field("Contraseña", password)}
+  `, true)}</td></tr>
+  <tr><td style="padding-bottom:8px;">${btn(qrLink, "Ver mi carta →")}</td></tr>
+  <tr><td style="padding-bottom:16px;">${btn(panelLink, "Entrar al panel", false)}</td></tr>
+  `);
 }
 
-/**
- * Email al dueño cuando activa un plan pago desde /activar (pago exitoso).
- */
 export function planActivatedEmailHtml(
-  firstName: string,
-  restaurantName: string,
-  planLabel: string,
-  amountPaid: string,
-  nextChargeDate: string,
-  nextChargeAmount: string,
-  panelLink: string,
-  qrLink: string,
+  firstName: string, restaurantName: string, planLabel: string,
+  amountPaid: string, nextChargeDate: string, nextChargeAmount: string,
+  panelLink: string, qrLink: string,
 ): string {
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Plan ${planLabel} activado! 🎉</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
-  ${firstName}, tu carta de <strong style="color:#FFD600">${restaurantName}</strong> ya está funcionando con el plan <strong style="color:#FFD600">${planLabel}</strong>.
-</p>
-
-<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px">💳 Detalle del pago</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Cobrado hoy:</strong> ${amountPaid}</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Próximo cobro:</strong> ${nextChargeDate}</p>
-  <p style="color:#c0a060;font-size:15px;margin:0"><strong>Monto mensual:</strong> ${nextChargeAmount}</p>
-</div>
-
-<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">Próximos pasos</p>
-  <ol style="color:#c0a060;font-size:14px;line-height:1.8;margin:0 0 0 18px;padding:0">
-    <li>Sube tus fotos reales desde el panel</li>
-    <li>Personaliza precios, descripciones y categorías</li>
-    <li>Imprime tu código QR y ponlo en las mesas</li>
-  </ol>
-</div>
-
-<div style="text-align:center;margin-top:24px">
-  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;margin-bottom:10px">
-    Entrar a mi panel →
-  </a>
-</div>
-<div style="text-align:center;margin-top:8px">
-  <a href="${qrLink}" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver mi carta digital</a>
-</div>
-
-<p style="color:#c0a060;font-size:13px;line-height:1.6;margin:20px 0 0;text-align:center;opacity:0.8">
-  Puedes cancelar o cambiar de plan cuando quieras desde tu panel.<br>¿Dudas? Responde este email.
-</p>`);
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎉</span></td></tr>
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Plan ${planLabel} activado</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    ${firstName}, tu carta de <strong>${restaurantName}</strong> ya funciona con el plan <strong>${planLabel}</strong>.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Detalle del pago")}
+    ${field("Cobrado hoy", amountPaid)}
+    ${field("Proximo cobro", nextChargeDate)}
+    ${field("Monto mensual", nextChargeAmount)}
+  `, true)}</td></tr>
+  <tr><td style="padding-bottom:8px;">${btn(panelLink, "Entrar al panel")}</td></tr>
+  <tr><td style="padding-bottom:16px;">${btn(qrLink, "Ver mi carta", false)}</td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Puedes cancelar o cambiar de plan cuando quieras desde tu panel.</td></tr>
+  `);
 }
 
-/**
- * Email al dueño cuando activa el plan gratis desde /activar.
- */
-export function freeActivatedEmailHtml(
-  firstName: string,
-  restaurantName: string,
-  panelLink: string,
-  qrLink: string,
-  credentials?: { email: string; password: string },
-): string {
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Tu carta está activa! 🎉</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
-  ${firstName}, tu carta de <strong style="color:#FFD600">${restaurantName}</strong> ya está lista para que tus clientes la escaneen.
-</p>
-
-${credentials ? `
-<div style="background:#1a1a2e;border:1px solid #3a3a5a;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 12px">Tus datos de acceso al panel</p>
-  <p style="color:#c0a060;font-size:14px;margin:0 0 6px"><strong style="color:#e0d0b0">Email:</strong> ${credentials.email}</p>
-  <p style="color:#c0a060;font-size:14px;margin:0"><strong style="color:#e0d0b0">Contraseña:</strong> ${credentials.password}</p>
-</div>
-` : ""}
-
-<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">Próximos pasos</p>
-  <ol style="color:#c0a060;font-size:14px;line-height:1.8;margin:0 0 0 18px;padding:0">
-    <li>Sube tus fotos reales desde el panel</li>
-    <li>Personaliza precios, descripciones y categorías</li>
-    <li>Imprime tu código QR y ponlo en las mesas</li>
-  </ol>
-</div>
-
-<div style="text-align:center;margin-top:24px">
-  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;margin-bottom:10px">
-    Entrar a mi panel →
-  </a>
-</div>
-<div style="text-align:center;margin-top:8px">
-  <a href="${qrLink}" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver mi carta digital</a>
-</div>
-
-<p style="color:#c0a060;font-size:13px;line-height:1.6;margin:20px 0 0;text-align:center;opacity:0.8">
-  Estás en el plan Gratis. Cuando quieras más, activa Premium desde tu panel.
-</p>`);
-}
-
-/**
- * Email interno al admin cuando un restaurante activa un plan.
- */
 export function adminNewActivationEmailHtml(
-  restaurantName: string,
-  planLabel: string,
-  amountCharged: string,
-  ownerEmail: string,
-  slug: string,
+  restaurantName: string, planLabel: string,
+  amountCharged: string, ownerEmail: string, slug: string,
 ): string {
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">Nuevo cliente activó ${planLabel}</h2>
-<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:20px">
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Restaurant:</strong> <span style="color:#FFD600">${restaurantName}</span></p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Plan:</strong> ${planLabel}</p>
-  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Cobrado:</strong> ${amountCharged}</p>
-  <p style="color:#c0a060;font-size:15px;margin:0"><strong>Email dueño:</strong> ${ownerEmail}</p>
-</div>
-<div style="text-align:center">
-  <a href="https://quierocomer.cl/qr/${slug}" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver carta</a>
-  &nbsp;·&nbsp;
-  <a href="https://quierocomer.cl/admin/funnel" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver funnel</a>
-</div>`);
+  return wrap(`
+  <tr><td style="padding-bottom:16px;">
+    <h1 style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Nuevo cliente activo ${planLabel}</h1>
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${field("Restaurante", restaurantName)}
+    ${field("Plan", planLabel)}
+    ${field("Cobrado", amountCharged)}
+    ${field("Email dueño", ownerEmail)}
+  `)}</td></tr>
+  <tr><td style="text-align:center;font-size:13px;">
+    <a href="${BASE_URL}/qr/${slug}" style="color:${GOLD};font-weight:700;text-decoration:none;">Ver carta</a>
+    &nbsp;·&nbsp;
+    <a href="${BASE_URL}/admin/funnel" style="color:${GOLD};font-weight:700;text-decoration:none;">Ver funnel</a>
+  </td></tr>
+  `);
 }
 
-/**
- * Email recordatorio cuando el trial está por vencer (≤ 2 días).
- * Se manda una sola vez (cron usa trialReminderSentAt para no duplicar).
- */
 export function trialEndingSoonEmailHtml(
-  firstName: string,
-  restaurantName: string,
-  daysLeft: number,
-  panelLink: string,
-  facturacionLink: string,
+  firstName: string, restaurantName: string,
+  daysLeft: number, panelLink: string, facturacionLink: string,
 ): string {
-  const dayLabel = daysLeft === 1 ? "1 día" : `${daysLeft} días`;
-  return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px">⏰ ${firstName}, ${daysLeft === 1 ? "te queda 1 día" : `quedan ${daysLeft} días`} de prueba</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
-  Tu plan en <strong style="color:#FFD600">${restaurantName}</strong> vence en <strong style="color:#FFD600">${dayLabel}</strong>. Si no inscribes tu tarjeta antes, tu plan baja a Gratis y pierdes las funciones avanzadas (estadísticas, ofertas, multilenguaje, etc.).
-</p>
-
-<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">Cómo evitarlo</p>
-  <ol style="color:#c0a060;font-size:14px;line-height:1.7;margin:0 0 0 18px;padding:0">
-    <li>Completa tus datos de facturación (RUT, razón social)</li>
-    <li>Inscribe tu tarjeta en Webpay (1 sola vez)</li>
-    <li>Listo — el cobro mensual sale automático</li>
-  </ol>
-</div>
-
-<div style="text-align:center;margin-top:24px">
-  <a href="${facturacionLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Inscribir tarjeta ahora →
-  </a>
-</div>
-
-<p style="color:#c0a060;font-size:13px;line-height:1.6;margin:20px 0 0;text-align:center;opacity:0.8">
-  ¿Dudas? Responde este email y te ayudamos.
-</p>`);
+  const dayLabel = daysLeft === 1 ? "1 dia" : `${daysLeft} dias`;
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">⏰</span></td></tr>
+  <tr><td style="padding-bottom:16px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">
+      ${firstName}, te ${daysLeft === 1 ? "queda 1 dia" : `quedan ${daysLeft} dias`} de prueba
+    </h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
+    Tu plan en <strong>${restaurantName}</strong> vence en <strong>${dayLabel}</strong>. Si no inscribes tu tarjeta, tu plan baja a Gratis y pierdes las funciones avanzadas.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Como evitarlo")}
+    <div style="font-size:14px;color:#7a6547;line-height:1.8;">
+      1. Completa tus datos de facturacion<br/>
+      2. Inscribe tu tarjeta (1 sola vez)<br/>
+      3. Listo — el cobro mensual sale automatico
+    </div>
+  `)}</td></tr>
+  <tr><td style="padding-bottom:16px;">${btn(facturacionLink, "Inscribir tarjeta ahora")}</td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">¿Dudas? Responde este email y te ayudamos.</td></tr>
+  `);
 }
