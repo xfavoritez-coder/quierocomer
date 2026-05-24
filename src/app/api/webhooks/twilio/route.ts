@@ -80,8 +80,20 @@ export async function POST(req: NextRequest) {
       content: m.body,
     }));
 
-    // 4. Generate AI reply
-    const reply = await generateWhatsAppReply(body.trim(), conversationHistory, context);
+    // 4. Load bot knowledge base
+    let knowledgeEntries: { topic: string; content: string }[] = [];
+    try {
+      const kRecord = await (prisma as any).statEvent.findFirst({
+        where: { eventType: "BOT_KNOWLEDGE" },
+        orderBy: { createdAt: "desc" },
+        select: { metadata: true },
+      });
+      const entries = (kRecord?.metadata as any)?.entries || [];
+      knowledgeEntries = entries.filter((e: any) => e.enabled !== false);
+    } catch {}
+
+    // 5. Generate AI reply
+    const reply = await generateWhatsAppReply(body.trim(), conversationHistory, context, knowledgeEntries);
 
     // 5. Send reply via Twilio
     let replySid: string | null = null;

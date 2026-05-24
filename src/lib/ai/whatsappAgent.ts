@@ -49,9 +49,16 @@ export async function generateWhatsAppReply(
   inboundMessage: string,
   history: ConversationMessage[],
   context: RestaurantContext,
+  knowledgeEntries?: { topic: string; content: string }[],
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return "Gracias por tu mensaje. Te contactaremos pronto.";
+
+  // Build custom knowledge block from admin-defined entries
+  let knowledgeBlock = "";
+  if (knowledgeEntries && knowledgeEntries.length > 0) {
+    knowledgeBlock = "\n\nCONOCIMIENTO ADICIONAL:\n" + knowledgeEntries.map(e => `[${e.topic}]\n${e.content}`).join("\n\n");
+  }
 
   let contextBlock = "";
   if (context.restaurantName) {
@@ -80,7 +87,7 @@ ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}`;
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 300,
-        system: SYSTEM_PROMPT + contextBlock,
+        system: SYSTEM_PROMPT + knowledgeBlock + contextBlock,
         messages,
       }),
       signal: AbortSignal.timeout(10000),

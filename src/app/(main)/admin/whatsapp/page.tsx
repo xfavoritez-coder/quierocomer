@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<string, { color: string; label: string }> = {
 };
 
 export default function WhatsAppPage() {
-  const [tab, setTab] = useState<"sent" | "chats">("chats");
+  const [tab, setTab] = useState<"sent" | "chats" | "config">("chats");
   const [leads, setLeads] = useState<WaLead[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -37,16 +37,43 @@ export default function WhatsAppPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatContext, setChatContext] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [knowledge, setKnowledge] = useState<{ id: string; topic: string; content: string; enabled: boolean }[]>([]);
+  const [newTopic, setNewTopic] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [savingKnowledge, setSavingKnowledge] = useState(false);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/admin/whatsapp").then(r => r.json()),
       fetch("/api/admin/whatsapp/conversations").then(r => r.json()),
-    ]).then(([wa, conv]) => {
+      fetch("/api/admin/whatsapp/knowledge").then(r => r.json()),
+    ]).then(([wa, conv, kb]) => {
       setLeads(wa.leads || []); setStats(wa.stats || null);
       setConversations(conv.conversations || []);
+      setKnowledge(kb.entries || []);
     }).finally(() => setLoading(false));
   }, []);
+
+  const saveKnowledge = async (entries: typeof knowledge) => {
+    setSavingKnowledge(true);
+    await fetch("/api/admin/whatsapp/knowledge", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entries }),
+    });
+    setKnowledge(entries);
+    setSavingKnowledge(false);
+  };
+
+  const addEntry = () => {
+    if (!newTopic.trim() || !newContent.trim()) return;
+    const entry = { id: Date.now().toString(), topic: newTopic.trim(), content: newContent.trim(), enabled: true };
+    const updated = [...knowledge, entry];
+    saveKnowledge(updated);
+    setNewTopic(""); setNewContent("");
+  };
+
+  const removeEntry = (id: string) => saveKnowledge(knowledge.filter(e => e.id !== id));
+  const toggleEntry = (id: string) => saveKnowledge(knowledge.map(e => e.id === id ? { ...e, enabled: !e.enabled } : e));
 
   const openChat = async (phone: string) => {
     setSelectedPhone(phone);
@@ -101,7 +128,12 @@ export default function WhatsAppPage() {
           padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
           background: tab === "sent" ? "#3b82f6" : "#1a1a1a", color: tab === "sent" ? "#fff" : "#888",
           fontSize: 13, fontWeight: 700,
-        }}>Mensajes enviados ({leads.length})</button>
+        }}>Enviados ({leads.length})</button>
+        <button onClick={() => setTab("config")} style={{
+          padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+          background: tab === "config" ? "#F4A623" : "#1a1a1a", color: tab === "config" ? "#fff" : "#888",
+          fontSize: 13, fontWeight: 700,
+        }}>Configurar IA</button>
       </div>
 
       {/* Conversations tab */}
@@ -197,6 +229,78 @@ export default function WhatsAppPage() {
             );
           })}
           {leads.length === 0 && <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay mensajes enviados.</div>}
+        </div>
+      )}
+
+      {/* Config tab */}
+      {tab === "config" && (
+        <div>
+          <p style={{ color: "#888", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
+            Agrega temas y respuestas que el bot debe conocer. Cuando un dueño pregunte sobre alguno de estos temas, el bot usará esta información para responder.
+          </p>
+
+          {/* Existing entries */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+            {knowledge.map(e => (
+              <div key={e.id} style={{
+                background: "#1a1a1a", borderRadius: 12, padding: "14px 16px",
+                border: `1px solid ${e.enabled ? "#2a2a2a" : "rgba(239,68,68,0.2)"}`,
+                opacity: e.enabled ? 1 : 0.5,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#F4A623" }}>{e.topic}</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => toggleEntry(e.id)} style={{
+                      fontSize: 10, padding: "3px 8px", borderRadius: 6, border: "none", cursor: "pointer",
+                      background: e.enabled ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)",
+                      color: e.enabled ? "#22c55e" : "#ef4444",
+                    }}>{e.enabled ? "Activo" : "Inactivo"}</button>
+                    <button onClick={() => removeEntry(e.id)} style={{
+                      fontSize: 10, padding: "3px 8px", borderRadius: 6, border: "none", cursor: "pointer",
+                      background: "rgba(239,68,68,0.12)", color: "#ef4444",
+                    }}>Eliminar</button>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: "#aaa", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{e.content}</p>
+              </div>
+            ))}
+            {knowledge.length === 0 && (
+              <div style={{ padding: 24, textAlign: "center", color: "#555", fontSize: 13 }}>
+                No hay instrucciones configuradas. El bot responde con conocimiento general de QuieroComer.
+              </div>
+            )}
+          </div>
+
+          {/* Add new entry */}
+          <div style={{ background: "#111", borderRadius: 14, padding: "16px 18px", border: "1px solid #222" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>Agregar tema</div>
+            <input
+              type="text" placeholder="Tema (ej: Planes, Sección Clientes, Cómo subir fotos...)"
+              value={newTopic} onChange={e => setNewTopic(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #333",
+                background: "#0a0a0a", color: "#ddd", fontSize: 14, marginBottom: 8, outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <textarea
+              placeholder="Qué debe responder el bot cuando pregunten sobre este tema..."
+              value={newContent} onChange={e => setNewContent(e.target.value)}
+              rows={4}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #333",
+                background: "#0a0a0a", color: "#ddd", fontSize: 14, marginBottom: 10, outline: "none",
+                resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box",
+              }}
+            />
+            <button onClick={addEntry} disabled={!newTopic.trim() || !newContent.trim() || savingKnowledge} style={{
+              padding: "10px 20px", borderRadius: 10, border: "none", cursor: "pointer",
+              background: "#F4A623", color: "#0a0a0a", fontSize: 14, fontWeight: 700,
+              opacity: (!newTopic.trim() || !newContent.trim()) ? 0.4 : 1,
+            }}>
+              {savingKnowledge ? "Guardando..." : "Agregar"}
+            </button>
+          </div>
         </div>
       )}
     </div>
