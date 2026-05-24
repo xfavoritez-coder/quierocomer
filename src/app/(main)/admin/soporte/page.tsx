@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
+
+interface Reply {
+  id: string;
+  from: string;
+  text: string;
+  createdAt: string;
+}
 
 interface Message {
   id: string;
@@ -19,6 +26,7 @@ interface Message {
   repliedAt: string | null;
   replyText: string | null;
   createdAt: string;
+  replies: Reply[];
 }
 
 function timeAgo(dateStr: string): string {
@@ -33,7 +41,7 @@ function timeAgo(dateStr: string): string {
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("es-CL", {
-    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
   });
 }
 
@@ -44,17 +52,32 @@ export default function SoportePage() {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [filter, setFilter] = useState<"all" | "unread" | "replied">("all");
+  const threadRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     fetch("/api/admin/soporte")
       .then(r => r.json())
-      .then(d => setMessages(d.messages || []))
+      .then(d => {
+        setMessages(d.messages || []);
+        // Refresh selected if open
+        if (selected) {
+          const updated = (d.messages || []).find((m: Message) => m.id === selected.id);
+          if (updated) setSelected(updated);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [selected]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, []);
+
+  // Scroll to bottom of thread when selected changes
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }
+  }, [selected]);
 
   const markRead = async (msg: Message) => {
     if (msg.read) return;
@@ -68,7 +91,7 @@ export default function SoportePage() {
 
   const handleSelect = (msg: Message) => {
     setSelected(msg);
-    setReplyText(msg.replyText || "");
+    setReplyText("");
     markRead(msg);
   };
 
@@ -82,10 +105,8 @@ export default function SoportePage() {
         body: JSON.stringify({ messageId: selected.id, replyText: replyText.trim() }),
       });
       if (res.ok) {
-        setMessages(prev => prev.map(m =>
-          m.id === selected.id ? { ...m, read: true, repliedAt: new Date().toISOString(), replyText: replyText.trim() } : m
-        ));
-        setSelected(prev => prev ? { ...prev, repliedAt: new Date().toISOString(), replyText: replyText.trim() } : null);
+        setReplyText("");
+        load(); // Reload to get updated thread
       }
     } finally { setSending(false); }
   };
@@ -97,8 +118,12 @@ export default function SoportePage() {
   });
 
   const unreadCount = messages.filter(m => !m.read).length;
+  const lastActivity = (msg: Message) => {
+    if (msg.replies.length > 0) return msg.replies[msg.replies.length - 1].createdAt;
+    return msg.createdAt;
+  };
 
-  if (loading) return <div style={{ padding: 24, color: "var(--adm-text3)", fontFamily: F }}>Cargando mensajes...</div>;
+  if (loading && messages.length === 0) return <div style={{ padding: 24, color: "var(--adm-text3)", fontFamily: F }}>Cargando mensajes...</div>;
 
   return (
     <div style={{ maxWidth: 1200, display: "flex", gap: 0, height: "calc(100vh - 80px)", overflow: "hidden" }}>
@@ -108,22 +133,15 @@ export default function SoportePage() {
         width: 380, minWidth: 380, borderRight: "1px solid var(--adm-card-border)",
         display: "flex", flexDirection: "column", overflow: "hidden",
       }}>
-        {/* Header */}
         <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--adm-card-border)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <h1 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-accent)", margin: 0 }}>
               Soporte
               {unreadCount > 0 && (
-                <span style={{
-                  marginLeft: 8, fontSize: "0.7rem", fontWeight: 700, padding: "3px 8px",
-                  borderRadius: 50, background: "#dc2626", color: "#fff",
-                }}>{unreadCount}</span>
+                <span style={{ marginLeft: 8, fontSize: "0.7rem", fontWeight: 700, padding: "3px 8px", borderRadius: 50, background: "#dc2626", color: "#fff" }}>{unreadCount}</span>
               )}
             </h1>
-            <button onClick={load} style={{
-              padding: "5px 12px", background: "transparent", border: "1px solid var(--adm-card-border)",
-              borderRadius: 8, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer",
-            }}>Actualizar</button>
+            <button onClick={load} style={{ padding: "5px 12px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}>Actualizar</button>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
             {(["all", "unread", "replied"] as const).map(f => (
@@ -139,176 +157,159 @@ export default function SoportePage() {
           </div>
         </div>
 
-        {/* List */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           {filtered.length === 0 ? (
-            <p style={{ padding: 20, textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.82rem" }}>
-              No hay mensajes.
-            </p>
-          ) : filtered.map(msg => (
-            <div
-              key={msg.id}
-              onClick={() => handleSelect(msg)}
-              style={{
-                padding: "14px 18px",
-                borderBottom: "1px solid var(--adm-card-border)",
-                cursor: "pointer",
-                background: selected?.id === msg.id ? "rgba(244,166,35,0.06)" : !msg.read ? "rgba(244,166,35,0.03)" : "transparent",
-                transition: "background 0.15s",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {!msg.read && <div style={{ width: 7, height: 7, borderRadius: "50%", background: GOLD, flexShrink: 0 }} />}
-                  <span style={{
-                    fontFamily: F, fontSize: "0.82rem", fontWeight: msg.read ? 500 : 700,
-                    color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200,
-                  }}>
-                    {msg.name || msg.email.split("@")[0]}
+            <p style={{ padding: 20, textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.82rem" }}>No hay mensajes.</p>
+          ) : filtered.map(msg => {
+            const hasNewReply = msg.replies.some(r => r.from === "customer") && !msg.read;
+            return (
+              <div
+                key={msg.id}
+                onClick={() => handleSelect(msg)}
+                style={{
+                  padding: "14px 18px", borderBottom: "1px solid var(--adm-card-border)",
+                  cursor: "pointer",
+                  background: selected?.id === msg.id ? "rgba(244,166,35,0.06)" : !msg.read ? "rgba(244,166,35,0.03)" : "transparent",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {!msg.read && <div style={{ width: 7, height: 7, borderRadius: "50%", background: hasNewReply ? "#dc2626" : GOLD, flexShrink: 0 }} />}
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: msg.read ? 500 : 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
+                      {msg.name || msg.email.split("@")[0]}
+                    </span>
+                  </div>
+                  <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", flexShrink: 0 }}>
+                    {timeAgo(lastActivity(msg))}
                   </span>
                 </div>
-                <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", flexShrink: 0 }}>
-                  {timeAgo(msg.createdAt)}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{
+                    padding: "2px 6px", borderRadius: 4, fontSize: "0.6rem", fontWeight: 700, fontFamily: F,
+                    background: msg.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : "rgba(244,166,35,0.1)",
+                    color: msg.source === "panel_soporte" ? "#7c3aed" : GOLD,
+                  }}>
+                    {msg.source === "panel_soporte" ? "Panel" : "Contacto"}
+                  </span>
+                  {msg.replies.length > 0 && (
+                    <span style={{ fontSize: "0.6rem", color: "var(--adm-text3)", fontFamily: F }}>
+                      {msg.replies.length} {msg.replies.length === 1 ? "respuesta" : "respuestas"}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {msg.replies.length > 0 ? msg.replies[msg.replies.length - 1].text.substring(0, 60) : msg.message.substring(0, 80)}
+                </p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                <span style={{
-                  padding: "2px 6px", borderRadius: 4, fontSize: "0.6rem", fontWeight: 700, fontFamily: F,
-                  background: msg.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : "rgba(244,166,35,0.1)",
-                  color: msg.source === "panel_soporte" ? "#7c3aed" : GOLD,
-                }}>
-                  {msg.source === "panel_soporte" ? "Panel" : "Contacto"}
-                </span>
-                {msg.repliedAt && (
-                  <span style={{ fontSize: "0.6rem", color: "#16a34a", fontWeight: 600, fontFamily: F }}>✓ Respondido</span>
-                )}
-              </div>
-              <p style={{
-                fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: 0,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>
-                {msg.message.substring(0, 80)}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Right: Detail + Reply */}
+      {/* Right: Thread + Reply */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {!selected ? (
-          <div style={{
-            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-            flexDirection: "column", gap: 8, color: "var(--adm-text3)",
-          }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, color: "var(--adm-text3)" }}>
             <span style={{ fontSize: "2.5rem" }}>📬</span>
             <p style={{ fontFamily: F, fontSize: "0.9rem" }}>Selecciona un mensaje</p>
           </div>
         ) : (
           <>
-            {/* Message detail */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-              {/* Header */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
-                <div>
-                  <h2 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
-                    {selected.name || selected.email.split("@")[0]}
-                  </h2>
-                  <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
-                    {selected.email}
-                    {selected.phone && <> · {selected.phone}</>}
-                  </p>
-                  {selected.restaurantSlug && (
-                    <p style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "4px 0 0" }}>
-                      Local: {selected.restaurantSlug}
-                    </p>
-                  )}
-                </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <span style={{
-                    padding: "4px 10px", borderRadius: 50, fontSize: "0.68rem", fontWeight: 700, fontFamily: F,
-                    background: selected.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : "rgba(244,166,35,0.1)",
-                    color: selected.source === "panel_soporte" ? "#7c3aed" : GOLD,
-                  }}>
-                    {selected.source === "panel_soporte" ? "Panel Soporte" : "Formulario Contacto"}
-                  </span>
-                  <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
-                    {formatDate(selected.createdAt)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Message bubble */}
-              <div style={{
-                background: "var(--adm-input, #f5f5f5)", borderRadius: "4px 16px 16px 16px",
-                padding: "16px 18px", marginBottom: 20, maxWidth: "85%",
-              }}>
-                <p style={{
-                  fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text)",
-                  lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap",
-                }}>
-                  {selected.message}
+            {/* Header */}
+            <div style={{ padding: "16px 28px", borderBottom: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>
+                  {selected.name || selected.email.split("@")[0]}
+                </h2>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>
+                  {selected.email}{selected.phone ? ` · ${selected.phone}` : ""}
+                  {selected.restaurantSlug ? ` · ${selected.restaurantSlug}` : ""}
                 </p>
               </div>
+              <span style={{
+                padding: "4px 10px", borderRadius: 50, fontSize: "0.68rem", fontWeight: 700, fontFamily: F,
+                background: selected.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : "rgba(244,166,35,0.1)",
+                color: selected.source === "panel_soporte" ? "#7c3aed" : GOLD,
+              }}>
+                {selected.source === "panel_soporte" ? "Panel" : "Contacto"}
+              </span>
+            </div>
 
-              {/* Reply bubble (if already replied) */}
-              {selected.repliedAt && selected.replyText && (
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+            {/* Thread */}
+            <div ref={threadRef} style={{ flex: 1, overflowY: "auto", padding: "20px 28px" }}>
+              {/* Original message */}
+              <div style={{ maxWidth: "80%", marginBottom: 16 }}>
+                <div style={{ fontSize: "0.65rem", color: "var(--adm-text3)", marginBottom: 4, fontFamily: F }}>
+                  {selected.name || selected.email.split("@")[0]} · {formatDate(selected.createdAt)}
+                </div>
+                <div style={{
+                  background: "var(--adm-input, #222)", borderRadius: "4px 16px 16px 16px",
+                  padding: "14px 16px", fontSize: "0.85rem", color: "var(--adm-text)",
+                  lineHeight: 1.6, whiteSpace: "pre-wrap", fontFamily: FB,
+                }}>
+                  {selected.message}
+                </div>
+              </div>
+
+              {/* Replies */}
+              {selected.replies.map((r, i) => (
+                <div key={i} style={{
+                  maxWidth: "80%", marginBottom: 16,
+                  alignSelf: r.from === "admin" ? "flex-end" : "flex-start",
+                  marginLeft: r.from === "admin" ? "auto" : 0,
+                }}>
                   <div style={{
-                    background: `${GOLD}18`, border: `1px solid ${GOLD}33`,
-                    borderRadius: "16px 4px 16px 16px", padding: "16px 18px", maxWidth: "85%",
+                    fontSize: "0.65rem", marginBottom: 4, fontFamily: F,
+                    color: r.from === "admin" ? GOLD : "var(--adm-text3)",
+                    textAlign: r.from === "admin" ? "right" : "left",
                   }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: GOLD, fontFamily: F }}>Tu respuesta</span>
-                      <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)", fontFamily: FB }}>
-                        {formatDate(selected.repliedAt)}
-                      </span>
-                    </div>
-                    <p style={{
-                      fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text)",
-                      lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap",
-                    }}>
-                      {selected.replyText}
-                    </p>
+                    {r.from === "admin" ? "Tu" : (selected.name || selected.email.split("@")[0])} · {formatDate(r.createdAt)}
+                  </div>
+                  <div style={{
+                    background: r.from === "admin" ? `${GOLD}18` : "var(--adm-input, #222)",
+                    border: r.from === "admin" ? `1px solid ${GOLD}33` : "none",
+                    borderRadius: r.from === "admin" ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
+                    padding: "14px 16px", fontSize: "0.85rem", color: "var(--adm-text)",
+                    lineHeight: 1.6, whiteSpace: "pre-wrap", fontFamily: FB,
+                  }}>
+                    {r.text}
                   </div>
                 </div>
-              )}
+              ))}
             </div>
 
             {/* Reply box */}
-            <div style={{
-              borderTop: "1px solid var(--adm-card-border)", padding: "16px 28px",
-              background: "var(--adm-card)",
-            }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>
-                {selected.repliedAt ? "Enviar otra respuesta" : "Responder"} a {selected.email}
-              </p>
+            <div style={{ borderTop: "1px solid var(--adm-card-border)", padding: "14px 28px", background: "var(--adm-card)" }}>
               <div style={{ display: "flex", gap: 8 }}>
                 <textarea
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
                   placeholder="Escribe tu respuesta..."
-                  rows={3}
+                  rows={2}
+                  onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleReply(); }}
                   style={{
-                    flex: 1, padding: "12px 14px", background: "var(--adm-input, #f5f5f5)",
+                    flex: 1, padding: "10px 14px", background: "var(--adm-input, #222)",
                     border: "1px solid var(--adm-card-border)", borderRadius: 12,
                     fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)",
-                    resize: "vertical", outline: "none", minHeight: 60,
+                    resize: "none", outline: "none",
                   }}
                 />
                 <button
                   onClick={handleReply}
                   disabled={sending || !replyText.trim()}
                   style={{
-                    padding: "12px 20px", background: GOLD, color: "#fff", border: "none",
-                    borderRadius: 12, fontFamily: F, fontSize: "0.8rem", fontWeight: 700,
+                    padding: "10px 18px", background: GOLD, color: "#fff", border: "none",
+                    borderRadius: 12, fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
                     cursor: sending ? "wait" : "pointer", opacity: !replyText.trim() ? 0.4 : 1,
                     alignSelf: "flex-end", whiteSpace: "nowrap",
                   }}
                 >
-                  {sending ? "Enviando..." : "Enviar ✉️"}
+                  {sending ? "..." : "Enviar"}
                 </button>
               </div>
+              <p style={{ fontSize: "0.62rem", color: "var(--adm-text3)", margin: "6px 0 0", fontFamily: FB }}>
+                Ctrl+Enter para enviar · Se envia como email con diseño QuieroComer
+              </p>
             </div>
           </>
         )}

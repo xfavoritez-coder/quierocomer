@@ -1419,10 +1419,23 @@ model SupportMessage {
   read        Boolean  @default(false)
   repliedAt   DateTime?
   replyText   String?
+  replyToken  String?  @unique
   createdAt   DateTime @default(now())
+  replies     SupportReply[]
 
   @@index([createdAt])
   @@index([read, createdAt])
+}
+
+model SupportReply {
+  id        String   @id @default(cuid())
+  messageId String
+  message   SupportMessage @relation(fields: [messageId], references: [id])
+  from      String   // "admin" | "customer"
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([messageId, createdAt])
 }
 
 // ─── Marketing ────────────────────────────────────────────────────────

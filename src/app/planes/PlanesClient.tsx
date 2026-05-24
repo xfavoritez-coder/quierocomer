@@ -161,9 +161,10 @@ export default function PlanesClient() {
           </article>
 
           <article className="qc-plan qc-premium">
-            <div className="qc-badge" style={{ background: "rgba(124,58,237,.15)", color: "#a78bfa" }}>14 dias gratis</div>
+            <div className="qc-badge" style={{ background: "#dc2626", color: "#fff" }}>14 dias gratis</div>
             <h3>Premium</h3>
             <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
+            <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 dias sin costo</div>
             <p>Todo incluido: garzon, clientes, marketing y Toteat.</p>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
