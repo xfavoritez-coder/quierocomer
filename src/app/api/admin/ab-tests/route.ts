@@ -109,8 +109,13 @@ export async function GET(req: NextRequest) {
       slots: slotData,
       currentBest: winning,
     });
-    } catch (e) {
-      console.error(`[AB Tests] Error loading experiment ${expCfg.slug}:`, e);
+    } catch (e: any) {
+      console.error(`[AB Tests] Error loading experiment ${expCfg.slug}:`, e?.message || e);
+      // Still add experiment with empty data so it shows in admin
+      const exp = await prisma.abExperiment.findUnique({ where: { slug: expCfg.slug } }).catch(() => null);
+      if (exp) {
+        out.push({ slug: exp.slug, name: exp.name, isActive: exp.isActive, slots: {}, currentBest: {} });
+      }
     }
   }
 
