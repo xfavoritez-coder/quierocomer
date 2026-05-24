@@ -27,7 +27,9 @@ export async function extractCanva(cartaUrl: string): Promise<ExtractionResult> 
   }
 
   // Extract image URLs from Jina markdown (Canva renders pages as images)
-  const imageUrls = [...content.matchAll(/!\[.*?\]\((https:\/\/media\.canva\.com\/[^\)]+)\)/g)].map(m => m[1]);
+  // Upgrade thumbnails to full resolution (Canva CDN supports height/width params)
+  const imageUrls = [...content.matchAll(/!\[.*?\]\((https:\/\/media\.canva\.com\/[^\)]+)\)/g)]
+    .map(m => m[1].replace(/height:\d+/, "height:1600").replace(/width:\d+/, "width:1200"));
   console.log("[Canva] Found", imageUrls.length, "Canva page images");
 
   // Canva image URLs are temporary (expire in minutes) — download immediately
