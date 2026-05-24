@@ -233,8 +233,19 @@ Reglas:
   };
 }
 
+/** Clean tracking params from URL */
+function cleanTrackingParams(url: string): string {
+  try {
+    const u = new URL(url);
+    for (const p of ["fbclid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) u.searchParams.delete(p);
+    return u.toString();
+  } catch { return url; }
+}
+
 /** Extract menu data based on detected provider */
 async function extractMenu(cartaUrl: string, providerName: string | null, extractionConfig?: any): Promise<ExtractionResult> {
+  // Clean tracking params before any extraction
+  cartaUrl = cleanTrackingParams(cartaUrl);
   // Route to the correct extractor
   switch (providerName) {
     case "Justo":
