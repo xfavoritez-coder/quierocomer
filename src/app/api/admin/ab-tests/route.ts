@@ -76,6 +76,7 @@ export async function GET(req: NextRequest) {
         wins.set(activeVariants[0].id, N);
       }
 
+      const totalSlotImpressions = slotVariants.reduce((s, v) => s + v.impressions, 0);
       slotData[slot] = slotVariants
         .sort((a, b) => (b.impressions === 0 && a.impressions === 0 ? 0 : (b.conversions / Math.max(b.impressions, 1)) - (a.conversions / Math.max(a.impressions, 1))))
         .map((v) => {
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
             conversions: v.conversions,
             conversionRate: cr,
             deepConversions: deepStats?.get(v.id) || 0,
-            trafficSharePct: v.isActive ? Math.round(((wins.get(v.id) || 0) / N) * 100) : 0,
+            trafficSharePct: v.isActive && totalSlotImpressions > 0 ? Math.round((v.impressions / totalSlotImpressions) * 100) : 0,
           };
         });
     }
