@@ -27,26 +27,8 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Fetch Twilio message statuses for recent messages (last 7 days)
-    let twilioStatuses: Record<string, string> = {};
-    try {
-      const SID = process.env.TWILIO_ACCOUNT_SID;
-      const TOKEN = process.env.TWILIO_AUTH_TOKEN;
-      if (SID && TOKEN) {
-        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
-        const res = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json?From=whatsapp%3A${encodeURIComponent(process.env.TWILIO_WHATSAPP_FROM?.replace("whatsapp:", "") || "")}&DateSent%3E=${weekAgo}&PageSize=200`,
-          { headers: { "Authorization": "Basic " + Buffer.from(`${SID}:${TOKEN}`).toString("base64") } },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          for (const msg of (data.messages || [])) {
-            const phone = msg.to?.replace("whatsapp:", "") || "";
-            twilioStatuses[phone] = msg.status; // queued, sent, delivered, read, failed, undelivered
-          }
-        }
-      }
-    } catch {}
+    // Skip Twilio API call to avoid timeouts — status comes from DB now
+    const twilioStatuses: Record<string, string> = {};
 
     // Enrich leads with Twilio delivery status
     const enriched = leads.map(l => {
