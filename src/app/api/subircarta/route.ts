@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { cartaType, cartaUrl } = body;
+    const { cartaType, cartaUrl, abIds } = body;
 
     if (cartaType !== "LINK") {
       return NextResponse.json(
@@ -194,6 +194,20 @@ export async function POST(req: Request) {
     getCity(ip).then((city) => {
       if (city) prisma.lead.update({ where: { id: lead.id }, data: { city } }).catch(() => {});
     });
+
+    // Track A/B deep conversion: lead created successfully
+    if (abIds?.titleId) {
+      const evId = `sc_lead_${lead.id}`;
+      prisma.$executeRaw`
+        INSERT INTO "StatEvent" (id, "eventType", metadata, "createdAt")
+        VALUES (${evId}, 'SUBIRCARTA_LEAD_CREATED', ${JSON.stringify({
+          abExperiment: "subircarta-hero",
+          titleId: abIds.titleId,
+          ctaId: abIds.ctaId,
+          leadId: lead.id,
+        })}::jsonb, NOW())
+      `.catch(() => {});
+    }
 
     return NextResponse.json({ id: lead.id, detectedProviderId });
   } catch (error) {

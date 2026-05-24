@@ -7,7 +7,7 @@ import { sampleBeta } from "@/lib/ab/sampling";
 const EXPERIMENTS: { slug: string; impressionEvent: string; conversionEvent: string; deepConversionEvent?: string }[] = [
   { slug: "birthday-modal", impressionEvent: "BIRTHDAY_MODAL_AUTO_SHOWN", conversionEvent: "BIRTHDAY_SAVED" },
   { slug: "landing-hero", impressionEvent: "LANDING_VIEWED", conversionEvent: "LANDING_CTA_CLICK", deepConversionEvent: "LANDING_LEAD_CREATED" },
-  { slug: "subircarta-hero", impressionEvent: "SUBIRCARTA_VIEWED", conversionEvent: "SUBIRCARTA_CARTA_UPLOADED" },
+  { slug: "subircarta-hero", impressionEvent: "SUBIRCARTA_VIEWED", conversionEvent: "SUBIRCARTA_CARTA_UPLOADED", deepConversionEvent: "SUBIRCARTA_LEAD_CREATED" },
 ];
 
 /**

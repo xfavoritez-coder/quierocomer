@@ -89,6 +89,26 @@ export async function POST(req: NextRequest) {
       if (city) prisma.lead.update({ where: { id: lead.id }, data: { city } }).catch(() => {});
     });
 
+    // Track A/B deep conversion: lead created from file upload
+    const abIdsRaw = formData.get("abIds") as string | null;
+    if (abIdsRaw) {
+      try {
+        const abIds = JSON.parse(abIdsRaw);
+        if (abIds.titleId) {
+          const evId = `sc_lead_${lead.id}`;
+          prisma.$executeRaw`
+            INSERT INTO "StatEvent" (id, "eventType", metadata, "createdAt")
+            VALUES (${evId}, 'SUBIRCARTA_LEAD_CREATED', ${JSON.stringify({
+              abExperiment: "subircarta-hero",
+              titleId: abIds.titleId,
+              ctaId: abIds.ctaId,
+              leadId: lead.id,
+            })}::jsonb, NOW())
+          `.catch(() => {});
+        }
+      } catch {}
+    }
+
     return NextResponse.json({ id: lead.id, cartaFileUrl: urlData.publicUrl, cartaType });
   } catch (error) {
     console.error("[SubirCarta Upload] Error:", error);

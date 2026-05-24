@@ -124,49 +124,62 @@ export default function PlanesClient() {
             <p>Para comenzar.</p>
             <div className="qc-checks">
               <div>✓ Carta digital con QR <span className="qc-tip">i<span className="qc-tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
-              <div>✓ Vista Lista <span className="qc-tip">i<span className="qc-tip-text">Tus platos organizados por categoría en formato lista clásico</span></span></div>
-              <div>✓ Panel para editar tu carta <span className="qc-tip">i<span className="qc-tip-text">Cambia platos, precios, fotos y categorías cuando quieras</span></span></div>
-              <div>✓ Hasta 10 clientes captados <span className="qc-tip">i<span className="qc-tip-text">Captura datos de hasta 10 clientes que escanean tu carta</span></span></div>
+              <div>✓ 2 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Vista Free y vista Esencial para elegir la que mejor represente tu local</span></span></div>
+              <div>✓ Genio IA incluido <span className="qc-tip">i<span className="qc-tip-text">El Genio reordena tu carta segun los gustos de cada cliente</span></span></div>
+              <div>✓ Panel autoadministrable <span className="qc-tip">i<span className="qc-tip-text">Edita platos, precios y fotos desde tu celular</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("FREE")}>Comenzar gratis</button>
           </article>
 
-          <article className="qc-plan qc-gold">
-            <h3>Gold</h3>
-            <div className="qc-plan-price">$35.000<small>/mes + IVA</small></div>
-            <p>Para crecer tu restaurante.</p>
+          <article className="qc-plan qc-silver">
+            <h3>Silver</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <span style={{ background: "#475569", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 dias gratis</span>
+            </div>
+            <div className="qc-plan-price">$19.900<small>/mes + IVA</small></div>
+            <p>Ofertas, anuncios y estadisticas para crecer.</p>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Gratis</div>
-              <div>✓ El Genio IA <span className="qc-tip">i<span className="qc-tip-text">Un asistente inteligente que reordena tu carta según los gustos de cada cliente</span></span></div>
-              <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales que aparecen directo en la carta de tus clientes</span></span></div>
-              <div>✓ Vistas Lista + Galería <span className="qc-tip">i<span className="qc-tip-text">Dos formas de mostrar tu carta: lista clásica y galería con fotos grandes</span></span></div>
-              <div>✓ Estadísticas de tu carta <span className="qc-tip">i<span className="qc-tip-text">Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios</span></span></div>
-              <div>✓ Anuncios dentro de la carta <span className="qc-tip">i<span className="qc-tip-text">Destaca platos o muestra banners promocionales que tus clientes ven al navegar</span></span></div>
+              <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
+              <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema que mejor represente tu local</span></span></div>
+              <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que mas te conviene vender</span></span></div>
+              <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
+              <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
+              <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
+            </div>
+            <button className="qc-plan-btn" onClick={() => openModal("SILVER")}>Probar gratis 14 dias</button>
+          </article>
+
+          <article className="qc-plan qc-featured">
+            <div className="qc-badge">Recomendado</div>
+            <h3>Gold</h3>
+            <div className="qc-plan-price">$35.000<small>/mes + IVA</small></div>
+            <p>Multilenguaje, estadísticas avanzadas y venta cruzada.</p>
+            <div className="qc-checks">
+              <div>✓ Todo lo del plan Silver</div>
+              <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
+              <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
+              <div>✓ Productos sugeridos <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("GOLD")}>Elegir Gold</button>
           </article>
 
-          <article className="qc-plan qc-featured">
-            <div className="qc-badge">Más elegido</div>
+          <article className="qc-plan qc-premium">
             <h3>Premium</h3>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <span style={{ background: "#dc2626", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 días gratis</span>
-              <span style={{ fontSize: 14, color: "#888", textDecoration: "line-through" }}>$49.900/mes</span>
+              <span style={{ background: "#7c3aed", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 dias gratis</span>
             </div>
-            <div className="qc-plan-price">$49.900<small>/mes + IVA después del trial</small></div>
-            <p>Para restaurantes que quieren vender más.</p>
+            <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
+            <p>Todo incluido: garzon, clientes, marketing y Toteat.</p>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
-              <div>✓ Vistas Lista + Galería + Impact <span className="qc-tip">i<span className="qc-tip-text">Tres diseños distintos para tu carta: lista clásica, galería con fotos y la vista Impact</span></span></div>
-              <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Platos más vistos, horarios pico, tendencias semanales y comparativas</span></span></div>
-              <div>✓ Botón llamar garzón <span className="qc-tip">i<span className="qc-tip-text">Tus clientes llaman al garzón desde la carta con un toque</span></span></div>
-              <div>✓ Carta en varios idiomas <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente a inglés, portugués y más</span></span></div>
-              <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
-              <div>✓ Clientes captados ilimitados <span className="qc-tip">i<span className="qc-tip-text">Registra todos los clientes que escanean tu carta, sin límite</span></span></div>
-              <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
-              <div>✓ Integración con Toteat <span className="qc-tip">i<span className="qc-tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
+              <div>✓ Llamar al garzon <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzon recibe la notificación push</span></span></div>
+              <div>✓ Clientes captados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes que han interactuado con tu carta</span></span></div>
+              <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
+              <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos invitaciones especiales a clientes de cumpleaños</span></span></div>
+              <div>✓ Integración Toteat <span className="qc-tip">i<span className="qc-tip-text">Sincroniza ventas reales con la carta. Dashboard en vivo</span></span></div>
             </div>
-            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 días</button>
+            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 dias</button>
           </article>
         </div>
 
@@ -187,7 +200,7 @@ export default function PlanesClient() {
 
             <div style={{ textAlign: "center", marginBottom: 20 }}>
               <div style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: "#E8A33D", fontWeight: 700, marginBottom: 8 }}>
-                {modalPlan === "FREE" ? "Plan Gratis" : modalPlan === "GOLD" ? "Plan Gold" : "Plan Premium"}
+                {modalPlan === "FREE" ? "Plan Gratis" : modalPlan === "SILVER" ? "Plan Silver" : modalPlan === "GOLD" ? "Plan Gold" : "Plan Premium"}
               </div>
               <h2 style={{ fontFamily: "Georgia,serif", fontSize: 24, fontWeight: 400, color: "#E8DDC8", margin: 0 }}>Crea tu cuenta</h2>
               <p style={{ fontSize: 13, color: "#9B8E7A", marginTop: 6 }}>En 30 segundos tienes tu carta lista para agregar tus platos.</p>
@@ -275,5 +288,11 @@ body{background:#0A0908!important;color:#E8DDC8!important;font-family:'Inter',sa
 .pl-hero-wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 20px;text-align:center;display:flex;flex-direction:column;align-items:center}
 @media(min-width:700px){.pl-mobile-br{display:none}}
 @media(max-width:699px){.pl-hero-wrap{text-align:left;align-items:flex-start}}
-@media(min-width:768px){.qc-plans{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:768px){.qc-plans{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:960px) and (min-width:768px){.qc-plans{grid-template-columns:repeat(2,1fr)}}
+.qc-plan.qc-silver{border-color:rgba(148,163,184,.3)}
+.qc-plan.qc-silver h3{color:#94a3b8}
+.qc-plan.qc-premium{border-color:rgba(196,181,253,.4);background:rgba(124,58,237,.06)}
+.qc-plan.qc-premium h3{color:#a78bfa}
+.qc-plan.qc-premium .qc-plan-price{color:#a78bfa}
 `;
