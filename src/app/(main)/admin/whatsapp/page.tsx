@@ -43,15 +43,22 @@ export default function WhatsAppPage() {
   const [savingKnowledge, setSavingKnowledge] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/admin/whatsapp").then(r => r.json()),
-      fetch("/api/admin/whatsapp/conversations").then(r => r.json()),
-      fetch("/api/admin/whatsapp/knowledge").then(r => r.json()),
-    ]).then(([wa, conv, kb]) => {
-      setLeads(wa.leads || []); setStats(wa.stats || null);
-      setConversations(conv.conversations || []);
-      setKnowledge(kb.entries || []);
-    }).finally(() => setLoading(false));
+    const load = async () => {
+      try {
+        const wa = await fetch("/api/admin/whatsapp").then(r => r.json()).catch(() => ({ leads: [], stats: null }));
+        setLeads(wa.leads || []); setStats(wa.stats || null);
+      } catch {}
+      try {
+        const conv = await fetch("/api/admin/whatsapp/conversations").then(r => r.json()).catch(() => ({ conversations: [] }));
+        setConversations(conv.conversations || []);
+      } catch {}
+      try {
+        const kb = await fetch("/api/admin/whatsapp/knowledge").then(r => r.json()).catch(() => ({ entries: [] }));
+        setKnowledge(kb.entries || []);
+      } catch {}
+      setLoading(false);
+    };
+    load();
   }, []);
 
   const saveKnowledge = async (entries: typeof knowledge) => {
