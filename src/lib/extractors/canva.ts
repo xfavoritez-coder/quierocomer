@@ -103,10 +103,10 @@ async function downloadImages(urls: string[]): Promise<ImageBuffer[]> {
       const buffer = Buffer.from(await res.arrayBuffer());
       if (buffer.length < 500) return;
       // Resize large images to reduce payload for Claude
-      let finalBuffer = buffer;
+      let finalBuffer: Buffer = buffer;
       try {
         const sharp = (await import("sharp")).default;
-        finalBuffer = await sharp(buffer).resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer();
+        finalBuffer = await sharp(buffer).resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer() as Buffer;
       } catch {}
       results.push({ data: finalBuffer, mediaType: "image/jpeg" });
       console.log(`[Canva] Downloaded image ${results.length}: ${(buffer.length / 1024).toFixed(0)}KB`);

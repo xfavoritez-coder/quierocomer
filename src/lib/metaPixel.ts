@@ -54,7 +54,7 @@ export function trackCartaInfo() {
 
 /** Carta lista — el restaurante tiene su carta digital activa */
 export function trackCartaReady() {
-  fbq("Purchase", { content_name: "Carta Digital", currency: "CLP", value: 0 });
+  fbq("Purchase", { content_name: "Carta Digital", currency: "CLP", value: 1 });
 }
 
 /** Contact form submitted */
