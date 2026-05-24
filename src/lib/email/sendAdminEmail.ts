@@ -26,10 +26,10 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
     }
 
     // Log success
-    await prisma.emailLog.create({
+    const log = await prisma.emailLog.create({
       data: { to, subject, purpose, status: "sent" },
-    }).catch(() => {});
-    return data;
+    }).catch(() => null);
+    return { ...data, logId: log?.id };
   } catch (err) {
     if (!(err instanceof Error && err.message.startsWith("Resend"))) {
       // Only log if not already logged above

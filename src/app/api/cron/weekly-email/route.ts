@@ -218,14 +218,38 @@ export async function GET(req: NextRequest) {
       }
       if (recipients.length === 0) continue;
 
-      // Send to all
+      // Send to all with tracking
+      const baseUrl = "https://quierocomer.cl";
       for (const to of recipients) {
-        await sendAdminEmail({
-          to,
-          subject: `Tu semana en ${r.name}`,
-          html: emailHtml,
-          purpose: "weekly_summary",
-        });
+        // Pre-create log to get ID for tracking
+        const log = await prisma.emailLog.create({
+          data: { to, subject: `Tu semana en ${r.name}`, purpose: "weekly_summary", status: "pending" },
+        }).catch(() => null);
+        const eid = log?.id || "";
+
+        // Inject tracking pixel and wrap panel link with click tracker
+        let trackedHtml = emailHtml;
+        if (eid) {
+          const openPixel = `<img src="${baseUrl}/api/funnel/track/weekly-open?eid=${eid}" width="1" height="1" style="display:none" />`;
+          trackedHtml = trackedHtml.replace("</body>", `${openPixel}</body>`);
+          // Wrap panel URL with click tracker
+          trackedHtml = trackedHtml.replace(
+            /href="(https:\/\/quierocomer\.cl\/panel[^"]*)"/g,
+            `href="${baseUrl}/api/funnel/track/weekly-click?eid=${eid}&url=$1"`
+          );
+        }
+
+        try {
+          await sendAdminEmail({
+            to,
+            subject: `Tu semana en ${r.name}`,
+            html: trackedHtml,
+            purpose: "weekly_summary",
+          });
+          if (log) await prisma.emailLog.update({ where: { id: log.id }, data: { status: "sent" } }).catch(() => {});
+        } catch {
+          if (log) await prisma.emailLog.update({ where: { id: log.id }, data: { status: "failed" } }).catch(() => {});
+        }
       }
 
       sent++;
