@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendAdminEmail, freeActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
+import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
 export async function POST(req: NextRequest) {
   const { restaurantId, plan } = await req.json();
@@ -65,7 +66,14 @@ export async function POST(req: NextRequest) {
     sendAdminEmail({
       to: ownerEmail,
       subject: `${restaurant.name} · Tu carta está activa`,
-      html: freeActivatedEmailHtml(ownerName, restaurant.name!, panelLink, qrLink, { email: ownerEmail, password: `${restaurant.slug}2026` }),
+      html: activationWelcomeEmailHtml({
+        ownerName: ownerName.split(" ")[0],
+        restaurantName: restaurant.name!,
+        panelLink,
+        qrLink,
+        credentials: { email: ownerEmail, password: `${restaurant.slug}2026` },
+        planLabel,
+      }),
       purpose: "trial_activated",
     }).catch(() => {});
   }
