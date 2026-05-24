@@ -33,7 +33,7 @@ export async function extractCanva(cartaUrl: string): Promise<ExtractionResult> 
   // Canva image URLs are temporary (expire in minutes) — download immediately
   if (imageUrls.length > 0) {
     console.log("[Canva] Downloading Canva page images immediately (URLs expire)");
-    const images = await downloadImages(imageUrls.slice(0, 8));
+    const images = await downloadImages(imageUrls.slice(0, 5));
     if (images.length > 0) {
       console.log("[Canva] Downloaded", images.length, "images, sending to Vision");
       return extractFromImageBuffers(images, apiKey);
@@ -100,9 +100,13 @@ async function downloadImages(urls: string[]): Promise<ImageBuffer[]> {
       if (!res.ok) return;
       const buffer = Buffer.from(await res.arrayBuffer());
       if (buffer.length < 500) return;
-      const ct = res.headers.get("content-type") || "image/png";
-      const mediaType = ct.includes("jpeg") || ct.includes("jpg") ? "image/jpeg" : "image/png";
-      results.push({ data: buffer, mediaType });
+      // Resize large images to reduce payload for Claude
+      let finalBuffer = buffer;
+      try {
+        const sharp = (await import("sharp")).default;
+        finalBuffer = await sharp(buffer).resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer();
+      } catch {}
+      results.push({ data: finalBuffer, mediaType: "image/jpeg" });
       console.log(`[Canva] Downloaded image ${results.length}: ${(buffer.length / 1024).toFixed(0)}KB`);
     } catch {
       console.log(`[Canva] Failed to download: ${url.slice(0, 60)}`);
