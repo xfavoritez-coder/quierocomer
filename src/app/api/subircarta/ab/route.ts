@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getExperimentVariantsWithStats } from "@/lib/ab/getExperimentStats";
+import { getExperimentVariantsWithStats, ExperimentVariant } from "@/lib/ab/getExperimentStats";
 import { pickByThompsonSampling } from "@/lib/ab/sampling";
 
 export const dynamic = "force-dynamic";
@@ -12,12 +12,24 @@ const DEFAULTS = {
   ctaText: "Comenzar →",
 };
 
-export async function GET(req: NextRequest) {
-  const { experiment, variants } = await getExperimentVariantsWithStats(
+// Cache stats for 60s to avoid querying StatEvent on every page load
+let cachedData: { experiment: any; variants: ExperimentVariant[] } | null = null;
+let cachedAt = 0;
+const CACHE_TTL = 60_000;
+
+async function getCachedExperiment() {
+  if (cachedData && Date.now() - cachedAt < CACHE_TTL) return cachedData;
+  cachedData = await getExperimentVariantsWithStats(
     EXPERIMENT_SLUG,
     "SUBIRCARTA_VIEWED",
     "SUBIRCARTA_CARTA_UPLOADED",
   );
+  cachedAt = Date.now();
+  return cachedData;
+}
+
+export async function GET(req: NextRequest) {
+  const { experiment, variants } = await getCachedExperiment();
 
   if (!experiment || !experiment.isActive) {
     return NextResponse.json({

@@ -41,12 +41,17 @@ export async function POST(req: NextRequest) {
   const { entries } = await req.json();
   if (!Array.isArray(entries)) return NextResponse.json({ error: "entries required" }, { status: 400 });
 
-  // Upsert: delete old, create new
-  await prisma.$executeRaw`DELETE FROM "StatEvent" WHERE "eventType" = 'BOT_KNOWLEDGE'`;
+  // Need a real restaurantId to satisfy FK — grab first restaurant
+  const anyRestaurant = await prisma.restaurant.findFirst({ select: { id: true } });
+  if (!anyRestaurant) return NextResponse.json({ error: "No hay restaurantes en el sistema" }, { status: 500 });
+
   const id = `bot_${Date.now()}`;
-  await prisma.$executeRaw`INSERT INTO "StatEvent" (id, "eventType", metadata, "createdAt") VALUES (${id}, 'BOT_KNOWLEDGE', ${JSON.stringify({ entries })}::jsonb, NOW())`.catch(() => {
-    // Fallback if raw fails
-    (prisma as any).statEvent.create({ data: { eventType: "BOT_KNOWLEDGE", metadata: { entries } } }).catch(() => {});
+  const meta = JSON.stringify({ entries });
+  await prisma.$transaction(async (tx) => {
+    // Insert first — if this fails, nothing gets deleted
+    await tx.$executeRaw`INSERT INTO "StatEvent" (id, "restaurantId", "sessionId", "eventType", metadata, "createdAt") VALUES (${id}, ${anyRestaurant.id}, 'bot', 'BOT_KNOWLEDGE', ${meta}::jsonb, NOW())`;
+    // Only delete old entries after successful insert
+    await tx.$executeRaw`DELETE FROM "StatEvent" WHERE "eventType" = 'BOT_KNOWLEDGE' AND id != ${id}`;
   });
 
   return NextResponse.json({ ok: true, count: entries.length });

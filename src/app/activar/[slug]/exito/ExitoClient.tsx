@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
-import { trackPurchase, trackStartTrial } from "@/lib/metaPixel";
+import { trackStartTrial } from "@/lib/metaPixel";
 
 interface Props {
   restaurant: { name: string; slug: string; logoUrl: string | null };
@@ -15,7 +15,6 @@ function getInitials(name: string) {
   return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-const PLAN_NAMES: Record<string, string> = { FREE: "Gratis", SILVER: "Silver", GOLD: "Gold", PREMIUM: "Premium" };
 
 const STEPS = [
   { icon: "📸", title: "Sube tus fotos reales", desc: "Reemplaza las fotos de referencia con fotos reales de tus platos." },
@@ -25,17 +24,10 @@ const STEPS = [
 
 export default function ExitoClient({ restaurant, plan, stillProcessing }: Props) {
   const [show, setShow] = useState(false);
-  const isPaid = plan === "GOLD";
-  const isTrial = plan === "SILVER" || plan === "PREMIUM";
-  const PLAN_PRICES: Record<string, number> = { SILVER: 14900, GOLD: 29900, PREMIUM: 49900 };
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
-    if (isPaid) {
-      trackPurchase(plan, PLAN_PRICES[plan] || 35000);
-    } else if (isTrial) {
-      trackStartTrial(plan);
-    }
+    trackStartTrial("PREMIUM");
   }, []);
 
   return (
@@ -77,16 +69,22 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
           {/* Titulo */}
           <h1 className="exito-title">
-            {isPaid || isTrial
-              ? <>Tu plan <em>{PLAN_NAMES[plan] || plan}</em> está activo</>
-              : <>Tu carta está <em>activa</em></>
-            }
+            Tu carta fue publicada con <em>éxito</em>
           </h1>
 
           <p className="exito-subtitle">
             {restaurant.name} ya tiene su carta digital funcionando.
-            {isTrial && <><br /><span style={{ fontSize: 12, opacity: 0.5 }}>14 días de prueba gratis</span></>}
           </p>
+
+          {/* Banner regalo Premium */}
+          <div className="exito-gift">
+            <div className="exito-gift-icon">🎁</div>
+            <div className="exito-gift-title">Te regalamos 14 dias de Premium</div>
+            <p className="exito-gift-desc">
+              Explora todas las funciones avanzadas: estadisticas, clientes capturados, email marketing y mas.
+              Al terminar, tu carta sigue activa en el plan Gratis — sin cobros.
+            </p>
+          </div>
 
           {/* Próximos pasos */}
           <div className="exito-steps">
@@ -132,7 +130,11 @@ body { background: var(--black) !important; color: var(--cream) !important; font
 .exito-check { margin: 0 auto 18px; width: 48px; height: 48px; }
 .exito-title { font-family: Georgia, serif; font-size: clamp(28px,6vw,38px); font-weight: 400; line-height: 1.1; margin-bottom: 12px; }
 .exito-title em { color: var(--amber); font-style: italic; }
-.exito-subtitle { color: var(--cream-soft); font-size: 15px; line-height: 1.5; margin-bottom: 28px; }
+.exito-subtitle { color: var(--cream-soft); font-size: 15px; line-height: 1.5; margin-bottom: 20px; }
+.exito-gift { background: radial-gradient(circle at 50% 100%, rgba(232,163,61,.12), transparent 60%), rgba(255,255,255,.03); border: 1px solid rgba(232,163,61,.25); border-radius: 20px; padding: 20px; margin-bottom: 24px; text-align: center; }
+.exito-gift-icon { font-size: 32px; margin-bottom: 8px; }
+.exito-gift-title { font-family: Georgia, serif; font-size: 20px; font-weight: 400; color: var(--amber); margin-bottom: 8px; }
+.exito-gift-desc { font-size: 13px; color: var(--cream-soft); line-height: 1.5; margin: 0; }
 .exito-steps { text-align: left; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 20px; padding: 20px; margin-bottom: 24px; }
 .exito-steps-title { font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); margin-bottom: 14px; text-align: center; }
 .exito-step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05); }

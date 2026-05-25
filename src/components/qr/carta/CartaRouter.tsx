@@ -261,7 +261,7 @@ export default function CartaRouter(props: Props) {
               position: "fixed", inset: 0, zIndex: 9999, pointerEvents: "none",
               background: document.body.getAttribute("data-onboarding-flash") === "white" ? "white" : "black",
               opacity: demoFading === "flash" ? 1 : 0,
-              transition: demoFading === "reveal" ? "opacity 0.6s ease-out" : "opacity 0.08s ease-in",
+              transition: demoFading === "reveal" ? "opacity 0.35s ease-out" : "opacity 0.06s ease-in",
             }} />
           )}
         </div>

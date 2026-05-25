@@ -139,8 +139,6 @@ export default function PlanesClient() {
               <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema que mejor represente tu local</span></span></div>
               <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que mas te conviene vender</span></span></div>
               <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
-              <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
-              <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("SILVER")}>Elegir Silver</button>
           </article>
@@ -150,8 +148,8 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$29.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Silver</div>
+              <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
-              <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
               <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
               <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
             </div>
@@ -165,10 +163,11 @@ export default function PlanesClient() {
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
+              <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
               <div>✓ Llamar al garzón <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzón recibe la notificación push</span></span></div>
               <div>✓ Clientes capturados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
-              <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos invitaciones especiales a clientes de cumpleaños</span></span></div>
+              <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante</span></span></div>
               <div>✓ Integración Toteat <span className="qc-tip">i<span className="qc-tip-text">Sincroniza ventas reales con la carta. Dashboard en vivo</span></span></div>
               <div>✓ Idiomas adicionales <span className="qc-tip">i<span className="qc-tip-text">Agrega idiomas extra: francés, italiano, alemán, chino y más</span></span></div>
             </div>

@@ -78,7 +78,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .secure { margin-top: 13px; text-align: center; color: var(--gray-warm); font-size: 12px; }
 .divider { height: 1px; background: rgba(255,255,255,.08); margin: 32px 0 24px; }
 .section-title { text-align: center; margin: 0 0 7px; font-family: Georgia, serif; font-size: 26px; font-weight: 400; }
-.section-sub { text-align: center; color: var(--gray-warm); margin: 0 auto 18px; font-size: 13px; line-height: 1.4; }
+.section-sub { text-align: center; color: var(--gray-warm); opacity: 0.7; margin: 0 auto 18px; font-size: 13px; line-height: 1.4; }
 .venues { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .venue { min-height: 155px; padding: 15px; border-radius: 20px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); text-align: center; }
 .venue-logo { width: 48px; height: 48px; margin: 0 auto 10px; border-radius: 15px; display: grid; place-items: center; font-size: 12px; font-weight: 950; overflow: hidden; background: #151515; border: 1px solid rgba(255,255,255,.1); color: var(--amber); }
@@ -149,7 +149,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [confirmPlan, setConfirmPlan] = useState<"SILVER" | "GOLD" | "PREMIUM" | null>(null);
   const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
@@ -178,67 +177,26 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
   const [error, setError] = useState("");
 
-  // Mostrar error si vuelve de pago fallido
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("pago") === "error") {
-      const reason = params.get("reason") || "";
-      setError(reason === "charge_failed"
-        ? "No se pudo procesar el cobro. Intenta nuevamente."
-        : "No se pudo completar el pago. Intenta nuevamente.");
-      params.delete("pago"); params.delete("reason");
-      const clean = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
-      window.history.replaceState({}, "", clean);
-    }
-  }, []);
 
-  const handleActivar = async (plan: "FREE" | "SILVER" | "GOLD" | "PREMIUM") => {
-    // Silver/Gold requieren pago → mostrar modal de confirmación
-    if ((plan === "SILVER" || plan === "GOLD") && !confirmPlan) {
-      setConfirmPlan(plan);
-      return;
-    }
-
+  const handleActivar = async () => {
     setLoading(true);
-    setSelectedPlan(plan);
+    setSelectedPlan("PREMIUM");
     setError("");
 
     try {
-      // Free y Premium (trial 14 días) → sin pago inmediato
-      if (plan === "FREE" || plan === "PREMIUM") {
-        const endpoint = plan === "FREE" ? "/api/activar/free" : "/api/activar/trial";
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restaurantId: restaurant.id, plan }),
-        });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Error"); }
-        window.location.href = `/activar/${restaurant.slug}/exito?plan=${plan}`;
-        return;
-      }
-
-      // Silver / Gold → pago via MercadoPago
-      const res = await fetch("/api/activar/pay", {
+      const res = await fetch("/api/activar/trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: restaurant.id, plan }),
+        body: JSON.stringify({ restaurantId: restaurant.id, plan: "PREMIUM" }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error || "Error iniciando pago");
-
-      window.location.href = data.url;
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Error"); }
+      window.location.href = `/activar/${restaurant.slug}/exito?plan=PREMIUM`;
     } catch (err: any) {
       setError(err?.message || "Hubo un error. Intenta nuevamente.");
       setLoading(false);
-      setConfirmPlan(null);
     }
   };
 
-  const PLAN_PRICING: Record<string, { label: string; neto: number; iva: number; total: number; promo?: { neto: number; iva: number; total: number } }> = {
-    SILVER: { label: "Silver", neto: 14900, iva: 2831, total: 17731 },
-    GOLD: { label: "Gold", neto: 29900, iva: 5681, total: 35581 },
-    PREMIUM: { label: "Premium", neto: 49900, iva: 9481, total: 59381, promo: { neto: 4900, iva: 931, total: 5831 } },
-  };
 
   return (
     <>
@@ -374,10 +332,10 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           `}} />
           <div className="po-content">
             <div className="po-top">
-              <div className="po-pill">🎁 14 días gratis · sin tarjeta</div>
+              <div className="po-pill">Plan gratis · empieza ahora</div>
             </div>
 
-            <h2>Tu carta está lista, solo falta <span>publicarla</span></h2>
+            <h2>Tu carta está lista, solo falta <span>activarla</span></h2>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -400,8 +358,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
             {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
             {!done ? (
-              <button className="po-cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-                {loading && selectedPlan === "PREMIUM" ? "Publicando..." : "Publicar mi carta"}
+              <button className="po-cta" disabled={loading} onClick={() => handleActivar()}>
+                {loading ? "Activando..." : "Activar mi carta gratis"}
               </button>
             ) : (
               <div className="done-msg"><p>Publicada. Redirigiendo...</p></div>
@@ -415,29 +373,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         </div>
         </div>{/* end activation-flow */}
         </section>{/* end hero */}
-
-        <div className="divider" />
-
-        {/* Venues */}
-        <section>
-          <h2 className="section-title">Restaurantes que ya tienen su carta activa</h2>
-          <p className="section-sub" style={{ fontSize: 15 }}>Cartas reales funcionando con QuieroComer.</p>
-          <div className="venues">
-            {activeVenues.map((v, i) => {
-              const plan = ((v as any).plan || "PREMIUM").toLowerCase();
-              return (
-                <a href={`/qr/${v.slug}`} target="_blank" rel="noopener" key={i} className="venue" style={{ textDecoration: "none", color: "inherit" }}>
-                  <div className="venue-logo">
-                    {v.logoUrl ? <img src={v.logoUrl} alt={v.name} /> : getInitials(v.name)}
-                  </div>
-                  <div className="stars">★★★★★</div>
-                  <strong>{v.name}</strong>
-                  <span className={`venue-badge venue-badge-${plan}`}>{plan}</span>
-                </a>
-              );
-            })}
-          </div>
-        </section>
 
         <div className="divider" />
 
@@ -481,99 +416,25 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
         <div className="divider" />
 
-        {/* Plans */}
+        {/* Venues */}
         <section>
-          <p className="section-sub" id="planes" style={{ fontSize: 15 }}>Cambia cuando quieras. Sin permanencia.</p>
-
-          <div className="plans">
-            <article className="plan">
-              <h3>Gratis</h3>
-              <div className="plan-price">$0</div>
-              <div className="checks">
-                <div>✓ Carta digital con QR <span className="tip">i<span className="tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
-                <div>✓ Vista Lista <span className="tip">i<span className="tip-text">Tus platos organizados por categoría en formato lista clásico</span></span></div>
-                <div>✓ Panel para editar tu carta <span className="tip">i<span className="tip-text">Cambia platos, precios, fotos y categorías cuando quieras, sin depender de nadie</span></span></div>
-                <div>✓ Hasta 10 clientes registrados <span className="tip">i<span className="tip-text">Captura datos de hasta 10 clientes que escanean tu carta</span></span></div>
-              </div>
-              {!done ? (
-                <button className="plan-btn" disabled={loading} onClick={() => handleActivar("FREE")}>
-                  {loading && selectedPlan === "FREE" ? "Activando..." : "Elegir Gratis"}
-                </button>
-              ) : selectedPlan === "FREE" ? (
-                <div className="done-msg"><p>Activado.</p></div>
-              ) : (
-                <button className="plan-btn" disabled>Elegir Gratis</button>
-              )}
-            </article>
-
-            <article className="plan silver">
-              <h3>Silver</h3>
-              <div className="plan-price">$14.900<small>/mes + IVA</small></div>
-              <div className="checks">
-                <div>✓ Todo lo del plan Gratis</div>
-                <div>✓ 3 vistas de carta <span className="tip">i<span className="tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
-                <div>✓ Dark / Light mode <span className="tip">i<span className="tip-text">Elige el tema que mejor represente tu local</span></span></div>
-                <div>✓ Destacar platos estrella <span className="tip">i<span className="tip-text">Resalta visualmente los platos que más te conviene vender</span></span></div>
-                <div>✓ Ofertas y promociones <span className="tip">i<span className="tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
-                <div>✓ Estadísticas básicas <span className="tip">i<span className="tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
-              </div>
-              {!done ? (
-                <button className="plan-btn" disabled={loading} onClick={() => handleActivar("SILVER")}>
-                  {loading && selectedPlan === "SILVER" ? "Activando..." : "Activar Silver"}
-                </button>
-              ) : selectedPlan === "SILVER" ? (
-                <div className="done-msg"><p>Activado.</p></div>
-              ) : (
-                <button className="plan-btn" disabled>Activar Silver</button>
-              )}
-            </article>
-
-            <article className="plan gold">
-              <h3>Gold</h3>
-              <div className="plan-price">$29.900<small>/mes + IVA</small></div>
-              <div className="checks">
-                <div>✓ Todo lo del plan Silver</div>
-                <div>✓ Anuncios en carta <span className="tip">i<span className="tip-text">Banner de novedades visible al abrir la carta</span></span></div>
-                <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
-                <div>✓ Multilenguaje (ES / EN / PT) <span className="tip">i<span className="tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
-                <div>✓ Cross-selling <span className="tip">i<span className="tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
-              </div>
-              {!done ? (
-                <button className="plan-btn" disabled={loading} onClick={() => handleActivar("GOLD")}>
-                  {loading && selectedPlan === "GOLD" ? "Activando..." : "Activar Gold"}
-                </button>
-              ) : selectedPlan === "GOLD" ? (
-                <div className="done-msg"><p>Activado.</p></div>
-              ) : (
-                <button className="plan-btn" disabled>Activar Gold</button>
-              )}
-            </article>
-
-            <article className="plan featured">
-              <div className="badge-trial">14 días gratis</div>
-              <h3>Premium</h3>
-              <div className="plan-price">$49.900<small>/mes + IVA</small></div>
-              <div className="checks">
-                <div>✓ Todo lo de Gold</div>
-                <div>✓ Botón llamar garzón <span className="tip">i<span className="tip-text">Tus clientes llaman al garzón desde la carta con un toque, sin levantar la mano</span></span></div>
-                <div>✓ Clientes capturados <span className="tip">i<span className="tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
-                <div>✓ Email marketing <span className="tip">i<span className="tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
-                <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
-                <div>✓ Integración con Toteat <span className="tip">i<span className="tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
-                <div>✓ Idiomas adicionales <span className="tip">i<span className="tip-text">Agrega idiomas extra: francés, italiano, alemán, chino y más</span></span></div>
-              </div>
-              {!done ? (
-                <button className="plan-btn" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-                  {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Probar gratis 14 días"}
-                </button>
-              ) : selectedPlan === "PREMIUM" ? (
-                <div className="done-msg"><p>Activado.</p></div>
-              ) : (
-                <button className="plan-btn" disabled>Activar Premium</button>
-              )}
-            </article>
+          <h2 className="section-title">Restaurantes que ya tienen su carta activa</h2>
+          <p className="section-sub" style={{ fontSize: 15 }}>Cartas reales funcionando con QuieroComer.</p>
+          <div className="venues">
+            {activeVenues.map((v, i) => {
+              const plan = ((v as any).plan || "PREMIUM").toLowerCase();
+              return (
+                <a href={`/qr/${v.slug}`} target="_blank" rel="noopener" key={i} className="venue" style={{ textDecoration: "none", color: "inherit" }}>
+                  <div className="venue-logo">
+                    {v.logoUrl ? <img src={v.logoUrl} alt={v.name} /> : getInitials(v.name)}
+                  </div>
+                  <div className="stars">★★★★★</div>
+                  <strong>{v.name}</strong>
+                  <span className={`venue-badge venue-badge-${plan}`}>{plan}</span>
+                </a>
+              );
+            })}
           </div>
-
         </section>
 
         {/* Final CTA */}
@@ -585,12 +446,12 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         }}>
           <h2 className="section-title" style={{ marginBottom: 8 }}>Lleva tu restaurante al siguiente nivel</h2>
           <p style={{ color: "var(--cream-soft)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.5 }}>
-            Activa tu carta hoy y comienza a usarla cuando quieras.
+            Activa tu plan gratis y comienza a usar tu nueva carta.
           </p>
           {!done ? (
             <button
               disabled={loading}
-              onClick={() => handleActivar("PREMIUM")}
+              onClick={() => handleActivar()}
               style={{
                 width: "100%", maxWidth: 300, border: "2px solid var(--amber)", borderRadius: 999,
                 padding: "14px 20px", background: "transparent", color: "var(--amber)",
@@ -598,7 +459,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar gratis"}
+              {loading ? "Activando..." : "Activar mi carta gratis"}
             </button>
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo a tu panel...</p></div>
@@ -611,72 +472,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         Creado en Santiago, Chile
       </div>
 
-      {/* Modal resumen de pago */}
-      {confirmPlan && (() => {
-        const p = PLAN_PRICING[confirmPlan];
-        const isPromo = !!p.promo;
-        const charge = isPromo ? p.promo! : p;
-        return (
-          <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.75)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => { if (!loading) setConfirmPlan(null); }}>
-            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,.1)", borderRadius: 24, width: "100%", maxWidth: 380, padding: "28px 24px", position: "relative" }} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setConfirmPlan(null)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer" }}>×</button>
-
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: "#E8A33D", fontWeight: 700, marginBottom: 8 }}>Resumen de pago</div>
-                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "#E8DDC8", margin: 0 }}>Plan {p.label}</h3>
-              </div>
-
-              <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 16, padding: "16px 18px", marginBottom: 16 }}>
-                {isPromo && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#E8A33D" }}>
-                    <span>Primer mes (promo)</span>
-                    <span style={{ fontWeight: 700 }}>${charge.neto.toLocaleString("es-CL")}</span>
-                  </div>
-                )}
-                {!isPromo && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#C9BBA0" }}>
-                    <span>Mensualidad</span>
-                    <span style={{ fontWeight: 700 }}>${charge.neto.toLocaleString("es-CL")}</span>
-                  </div>
-                )}
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#888" }}>
-                  <span>IVA (19%)</span>
-                  <span>${charge.iva.toLocaleString("es-CL")}</span>
-                </div>
-                <div style={{ borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "#E8DDC8" }}>
-                  <span>Total</span>
-                  <span>${charge.total.toLocaleString("es-CL")} CLP</span>
-                </div>
-              </div>
-
-              {isPromo && (
-                <div style={{ fontSize: 12, color: "#888", textAlign: "center", marginBottom: 14 }}>
-                  Después del primer mes: ${p.neto.toLocaleString("es-CL")} + IVA/mes
-                </div>
-              )}
-
-              <div style={{ fontSize: 12, color: "#888", textAlign: "center", marginBottom: 16 }}>
-                Serás redirigido a MercadoPago para completar tu pago de forma segura.
-              </div>
-
-              {error && <div style={{ color: "#e85d5d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>{error}</div>}
-
-              <button
-                disabled={loading}
-                onClick={() => handleActivar(confirmPlan)}
-                style={{ width: "100%", padding: 15, background: "linear-gradient(135deg,#ffc44f,#f3a333)", color: "#100b03", border: "none", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: loading ? "wait" : "pointer", opacity: loading ? 0.6 : 1, boxShadow: "0 12px 28px rgba(245,164,51,.22)" }}
-              >
-                {loading ? "Redirigiendo a MercadoPago..." : `Pagar $${charge.total.toLocaleString("es-CL")} CLP`}
-              </button>
-
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "#666" }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                Pago 100% seguro · vía <svg width="12" height="12" viewBox="0 0 48 48" style={{ display: "inline", verticalAlign: "-2px", marginLeft: 3 }}><circle cx="24" cy="24" r="24" fill="#009ee3"/><path d="M15.8 19.5c0-1 .4-1.9 1-2.6a3.7 3.7 0 0 1 2.7-1.1c1 0 1.9.4 2.6 1.1.7.7 1.1 1.6 1.1 2.6v8.9h-7.4v-8.9zm9.8 0c0-1 .4-1.9 1.1-2.6a3.7 3.7 0 0 1 2.6-1.1c1 0 2 .4 2.7 1.1.7.7 1 1.6 1 2.6v8.9h-7.4v-8.9z" fill="#fff"/></svg> MercadoPago
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </>
   );
 }

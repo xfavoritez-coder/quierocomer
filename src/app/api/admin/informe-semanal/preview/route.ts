@@ -82,17 +82,57 @@ export async function GET(req: NextRequest) {
   const totalVisits = metrics.totalVisitors;
   const prevVisits = prevMetrics.totalVisitors || 1;
   const visitsDelta = Math.round(((totalVisits - prevVisits) / prevVisits) * 100);
+  const newClients = metrics.birthdaysSaved || 0;
+  const prevClients = prevMetrics.birthdaysSaved || 0;
+  const clientsDelta = prevClients > 0 ? Math.round(((newClients - prevClients) / prevClients) * 100) : 0;
   const topViewed = (topDishes?.dishes || []).slice(0, 3).map((d: any) => ({
     name: d.name, count: d.opens, photo: d.photo || null,
   }));
 
+  // Least viewed dishes
+  const leastViewedRaw = await prisma.statEvent.groupBy({
+    by: ["dishId"],
+    where: { restaurantId: r.id, createdAt: { gte: oneWeekAgo }, dishId: { not: null }, eventType: "DISH_VIEW" },
+    _count: { dishId: true },
+    orderBy: { _count: { dishId: "asc" } },
+    take: 3,
+  });
+  const leastDishIds = leastViewedRaw.map(d => d.dishId!);
+  const leastDishes = leastDishIds.length > 0
+    ? await prisma.dish.findMany({ where: { id: { in: leastDishIds } }, select: { id: true, name: true } })
+    : [];
+  const leastViewed = leastViewedRaw.map(d => {
+    const dish = leastDishes.find(dd => dd.id === d.dishId);
+    return { name: dish?.name || "Desconocido", count: d._count.dishId };
+  });
+
+  // Insight (same logic as cron)
+  let insight: { title: string; body: string } | undefined = await prisma.genioInsight.findFirst({
+    where: { restaurantId: r.id, status: "active" },
+    orderBy: { priority: "asc" },
+    select: { title: true, body: true },
+  }) ?? undefined;
+  if (!insight && topViewed.length > 0) {
+    insight = {
+      title: `${topViewed[0].name} lidera tu carta`,
+      body: `Con ${topViewed[0].count} vistas esta semana, es tu plato estrella. Asegúrate de que tenga buena foto y esté marcado como destacado para aprovechar su potencial.`,
+    };
+  }
+  if (!insight) {
+    insight = {
+      title: "Pon tu QR en las mesas",
+      body: "Cuantas más personas escaneen tu carta, mejores datos tendrás para tomar decisiones. Imprime el QR desde tu panel y ponlo visible en cada mesa.",
+    };
+  }
+
   const html = buildWeeklyEmailHtml({
     ownerName, restaurantName: r.name, logoUrl: r.logoUrl,
     weekLabel: `${weekStart} – ${weekEnd}`,
-    totalVisits, visitsDelta, newClients: 0, clientsDelta: 0,
-    topViewed, leastViewed: [], visitsByHour,
+    totalVisits, visitsDelta, newClients, clientsDelta,
+    topViewed, leastViewed, visitsByHour,
     panelUrl: "https://quierocomer.cl/panel",
     slug: r.slug!, isDemo: false,
+    insight,
   });
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });

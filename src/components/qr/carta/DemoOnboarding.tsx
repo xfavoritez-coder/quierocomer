@@ -41,15 +41,15 @@ const STEPS: Step[] = [
   },
   {
     icon: "📸",
-    title: "Así quedaría tu carta",
-    body: "", // set dynamically based on allPhotosReferential
+    title: "Fotos referenciales",
+    body: "Pusimos algunas fotos referenciales para que veas como se verá tu carta.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },
   {
     icon: "✨",
     title: "¿Sin fotos? No hay problema",
-    body: "Tienes 3 vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos pero con los poderes de una carta QR inteligente.",
+    body: "Tienes 3 vistas. Esta se llama \"Esencial\", muestra tu carta sin fotos, pero con los poderes de una QR inteligente.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },
@@ -62,8 +62,8 @@ const STEPS: Step[] = [
   },
   {
     icon: "🌍",
-    title: "Traducimos tu carta",
-    body: "Dejamos tus primeros platos en inglés para que lo veas. Al activar, se traduce completa a varios idiomas.",
+    title: "Tu carta en varios idiomas",
+    body: "Dejamos tus primeros platos en inglés para que lo veas. Al activar, se traduce completa.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
@@ -81,9 +81,19 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
   const [minimizing, setMinimizing] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const collapseCount = useRef(0);
   const [exiting, setExiting] = useState(false);
   const [gone, setGone] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Auto-expand after being collapsed for a while
+  useEffect(() => {
+    if (!collapsed) return;
+    const delay = collapseCount.current <= 1 ? 8000 : 15000;
+    const t = setTimeout(() => setCollapsed(false), delay);
+    return () => clearTimeout(t);
+  }, [collapsed]);
 
   // Drag state
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -371,14 +381,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     ...(step === 4 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
     ...(step === 5 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
   } : baseStep;
-  const stepBody = step === 1
-    ? (showcaseMode
-      ? "Todas sus secciones y categorías. Esta vista se llama \"Lista\"."
-      : allPhotosReferential
-        ? "Pusimos fotos referenciales en los primeros platos para que veas cómo se vería. Al activar, podrás subir tus propias fotos."
-        : hasReferentialPhotos
-          ? "Pusimos algunas fotos referenciales para que veas cómo se vería. Al activar, podrás subir las tuyas."
-          : "Si algo no se guardó como está en tu carta actual, no te preocupes, esto es una muestra. Luego podrás editar desde tu panel.")
+  const stepBody = step === 1 && showcaseMode
+    ? "Todas sus secciones y categorías. Esta vista se llama \"Lista\"."
     : current.body;
   const isLast = step === STEPS.length - 1;
 
@@ -388,7 +392,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     : { x: 300, y: 600 };
 
   // Toast always uses light style for contrast against dark carta
-  const isLightStep = step >= 2;
+  const isLightStep = step === 1 || step >= 3;
 
   // ═══ Minimized state — FAB genio + toast above it ═══
   if (minimized) {
@@ -410,7 +414,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         transition: exiting ? "opacity 0.35s ease" : "none",
       }}>
         {/* Toast above FAB */}
-        <div style={{
+        {!collapsed && <div style={{
           background: isLightStep ? "rgba(255,255,255,0.97)" : "rgba(14,14,14,0.96)",
           border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,178,45,0.15)",
           borderRadius: 16,
@@ -419,9 +423,22 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           maxWidth: 300,
           width: 300,
           transition: "background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease",
+          position: "relative",
         }}>
-          {/* Top row: title + expand */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          {/* Minimize button — top left corner */}
+          <button onClick={() => { collapseCount.current++; setCollapsed(true); }} style={{
+            position: "absolute", top: -10, left: -10, zIndex: 1,
+            width: 26, height: 26, borderRadius: "50%",
+            background: isLightStep ? "#fff" : "#1a1a1a",
+            border: isLightStep ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,178,45,0.25)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            color: isLightStep ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)",
+            fontSize: 16, fontWeight: 700, lineHeight: 1,
+          }} title="Minimizar">‒</button>
+
+          {/* Title */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
             <p style={{
               fontFamily: "var(--font-dm, sans-serif)",
               fontSize: "1rem", fontWeight: 700, color: isLightStep ? "#1a1a1a" : "#fff",
@@ -484,33 +501,48 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
               }}>{current.buttonLabel || "Siguiente"}</button>
             </div>
           </div>
-        </div>
+        </div>}
 
-        {/* FAB genio — tap to bounce during onboarding */}
+        {/* FAB genio — tap to expand toast when collapsed */}
         <div
-          onClick={(e) => {
-            const el = e.currentTarget;
-            el.style.animation = "none";
-            void el.offsetWidth;
-            el.style.animation = "genioBounce 0.4s ease, genioPulse 2s ease-in-out infinite 0.4s";
+          onClick={() => {
+            setCollapsed(c => { if (!c) collapseCount.current++; return !c; });
           }}
           style={{
             width: 52, height: 52, borderRadius: "50%",
             background: "rgba(14,14,14,0.95)",
-            border: "1px solid rgba(255,178,45,0.25)",
+            border: collapsed ? "1.5px solid rgba(255,178,45,0.5)" : "1px solid rgba(255,178,45,0.25)",
             display: "flex", alignItems: "center", justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-            animation: "genioPulse 2s ease-in-out infinite",
+            boxShadow: collapsed ? "0 4px 20px rgba(255,178,45,0.25)" : "0 4px 20px rgba(0,0,0,0.4)",
+            animation: collapsed ? "genioPulseActive 1.5s ease-in-out infinite" : "genioPulse 2s ease-in-out infinite",
+            position: "relative",
           }}
         >
           <span style={{ fontSize: 22 }}>🧞</span>
+          {collapsed && (
+            <span style={{
+              position: "absolute", top: -2, right: -2,
+              width: 14, height: 14, borderRadius: "50%",
+              background: "#ffb22d",
+              border: "2px solid #0e0e0e",
+              animation: "genioDotPulse 2s ease-in-out infinite",
+            }} />
+          )}
         </div>
 
         <style>{`
           @keyframes genioPulse {
             0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
             50% { box-shadow: 0 4px 20px rgba(255,178,45,0.3); }
+          }
+          @keyframes genioPulseActive {
+            0%, 100% { box-shadow: 0 4px 20px rgba(255,178,45,0.15); transform: scale(1); }
+            50% { box-shadow: 0 4px 24px rgba(255,178,45,0.4); transform: scale(1.06); }
+          }
+          @keyframes genioDotPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
           }
           @keyframes genioBounce {
             0% { transform: scale(1); }

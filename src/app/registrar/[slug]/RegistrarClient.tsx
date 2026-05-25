@@ -47,7 +47,7 @@ const PLAN_INFO: Record<string, { label: string; price: string; priceSub: string
     features: [
       { icon: "🌍", title: "Carta en varios idiomas", desc: "Español, inglés y portugués automáticos para turistas." },
       { icon: "📊", title: "Descubre qué vende más", desc: "Platos más vistos, horarios de mayor demanda y tendencias semanales." },
-{ icon: "🎂", title: "Cumpleaños automáticos", desc: "Registramos automáticamente sus cumpleaños y les enviamos una invitación especial ese día." },
+{ icon: "🎂", title: "Cumpleaños automáticos", desc: "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante." },
       { icon: "✉️", title: "Email marketing", desc: "Envía campañas y novedades a todos tus clientes." },
     ],
   },

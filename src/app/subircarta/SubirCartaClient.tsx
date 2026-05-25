@@ -67,11 +67,11 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
 export default function SubirCartaClient() {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
-  const [abTitle, setAbTitle] = useState("");
+  const [abTitle, setAbTitle] = useState("Sube tu carta y mira cómo queda");
   const abIds = useRef<{ titleId: string | null; ctaId: string | null }>({ titleId: null, ctaId: null });
   useEffect(() => {
     fetch("/api/subircarta/ab").then(r => r.json()).then(d => {
-      setAbTitle(d.titleText || "Sube gratis tu carta y ve cómo mejora.");
+      setAbTitle(d.titleText || "Sube tu carta y mira cómo queda");
       abIds.current = { titleId: d.titleId || null, ctaId: d.ctaId || null };
       // Track impression
       fetch("/api/qr/stat-events", {
@@ -291,7 +291,16 @@ export default function SubirCartaClient() {
             body: formData,
             signal: safeTimeout(30000),
           });
-          const data = await res.json();
+          let data: any;
+          try {
+            data = await res.json();
+          } catch {
+            const errorMsg = res.status === 413
+              ? "El archivo supera el tamaño permitido (máximo 10MB). Intenta con un archivo más liviano."
+              : `Error del servidor (${res.status}). Intenta de nuevo.`;
+            trackFunnelEvent(leadId || "", "upload_error", { file: i + 1, of: total, error: errorMsg, fileName: filesToUpload[i].name });
+            setError(errorMsg); setUploadProgress(""); return;
+          }
           if (!res.ok) {
             trackFunnelEvent(leadId || data.id, "upload_error", { file: i + 1, of: total, error: data.error, fileName: filesToUpload[i].name });
             setError(data.error || `Error al subir ${filesToUpload[i].name}`); setUploadProgress(""); return;

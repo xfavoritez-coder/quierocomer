@@ -178,38 +178,14 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
-      {/* CURVE DIVIDER */}
-      <div className="curve-divider">
-        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="curve-svg">
-          <path d="M0,0 C360,50 1080,50 1440,0 L1440,120 L0,120 Z" fill="var(--black-soft)" />
-        </svg>
+      {/* DIVIDER */}
+      <div style={{ height: 1, background: "rgba(232,163,61,.1)", position: "relative" }}>
         <div className="curve-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </div>
 
-      {/* LOGOS */}
-      <section className="logos-band" data-track="Logos">
-        <div className="logos-eyebrow">Ya han transformado su carta</div>
-        <div className="logos-scroller">
-          <div className="logos-track">
-            {duplicatedLogos.map((l, i) => (
-              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-chip">
-                {l.logoUrl ? (
-                  <img src={l.logoUrl} alt={l.name} />
-                ) : (
-                  <div className="logo-init" style={{ background: l.color }}>{l.initials}</div>
-                )}
-                <span>{l.name}</span>
-                <span>→</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-      {/* PAINS */}
+      {/* PAINS — oculto temporalmente
       <section className="pains" data-track="Problemas">
         <div className="container">
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
@@ -243,6 +219,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           </div>
         </div>
       </section>
+      */}
 
       {/* ASÍ FUNCIONA */}
       <section className="how-it-works" data-track="Como funciona">
@@ -273,7 +250,6 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                   <h3>La transformamos online</h3>
                   <ul>
                     <li>En segundos con IA</li>
-                    <li>Te mostramos cómo queda</li>
                   </ul>
                 </div>
               </div>
@@ -286,7 +262,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">3</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Mejoras toda la experiencia</h3>
+                  <h3>Te mostramos como queda</h3>
                   <ul>
                     <li>Creamos algo único para ti y tu restaurante</li>
                   </ul>
@@ -312,8 +288,25 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </a>
       </div>
 
-      {/* MIENTRAS TÚ ATIENDES */}
-
+      {/* LOGOS */}
+      <section className="logos-band" data-track="Logos">
+        <div className="logos-eyebrow">Ya han transformado su carta</div>
+        <div className="logos-scroller">
+          <div className="logos-track">
+            {duplicatedLogos.map((l, i) => (
+              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-chip">
+                {l.logoUrl ? (
+                  <img src={l.logoUrl} alt={l.name} />
+                ) : (
+                  <div className="logo-init" style={{ background: l.color }}>{l.initials}</div>
+                )}
+                <span>{l.name}</span>
+                <span>→</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* FAQ */}
       <section className="faq" data-track="FAQ">
@@ -343,9 +336,9 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FINAL CTA */}
       <section className="final-cta" id="cta" data-track="CTA final">
         <div className="container">
-          <h2>Lleva la atención de tu restaurante al siguiente nivel</h2>
+          <h2>Transforma tu carta en una herramienta que venda</h2>
           <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Subir carta gratis →</a>
+          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Transformar mi carta gratis →</a>
         </div>
       </section>
 
@@ -388,7 +381,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Cross-selling", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
                 ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
-                ["Cumpleaños automáticos", "Enviamos invitaciones especiales a clientes de cumpleaños para que lo celebren en tu restaurante"],
+                ["Cumpleaños automáticos", "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante"],
                 ["Clientes ilimitados", "Sin límite de clientes registrados"],
                 ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
                 ["Integración Toteat", "Sincroniza tu carta con el POS Toteat y cruza datos reales de venta con comportamiento de usuario"],
@@ -472,8 +465,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
 .curve-divider{position:relative;height:100px;margin-top:-100px;z-index:3}
 .curve-svg{position:absolute;bottom:0;left:0;width:100%;height:100px}
-.curve-icon{position:absolute;left:50%;top:25%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;border:1.5px solid var(--amber);background:rgba(10,9,8,.9);display:flex;align-items:center;justify-content:center;color:var(--amber);z-index:4}
-.logos-band{background:var(--black-soft);border-top:none;border-bottom:none;padding:10px 0 20px;text-align:center;overflow:hidden;max-width:100vw}
+.curve-icon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;border:1.5px solid var(--amber);background:rgba(10,9,8,.9);display:flex;align-items:center;justify-content:center;color:var(--amber);z-index:4}
+.logos-band{background:var(--black-soft);border-top:none;border-bottom:none;padding:48px 0 48px;text-align:center;overflow:hidden;max-width:100vw}
 .logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(150,140,130,.7);font-weight:600;margin-bottom:22px}
 .logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}
 @media(hover:hover){.logos-track:hover{animation-play-state:paused}}
@@ -513,7 +506,7 @@ section{position:relative}
 .pain-text{padding:32px 32px 32px 0}
 .pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:block;margin-bottom:6px}
 .pain-card h3{font-size:27px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:400;font-family:var(--font-display);font-style:italic;color:var(--cream)}
-.pain-card p{color:var(--cream-soft);font-size:17px}
+.pain-card p{color:var(--cream-soft);font-size:17px;opacity:0.5}
 .pain-quote{font-family:var(--font-display);font-style:italic;color:#D4782A!important;font-size:24px!important;line-height:1.2;margin:0 0 10px}
 .how-it-works{padding:40px 0 80px;background:var(--black);position:relative}
 .hiw-eyebrow{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:18px;text-align:center}
