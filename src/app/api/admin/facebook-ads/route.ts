@@ -150,9 +150,18 @@ export async function GET(req: NextRequest) {
       if (sessionVisitedSubircarta(s)) hourly[clHour].subircarta++;
     }
 
-    // Daily breakdown
+    // Daily breakdown — always last 30 days regardless of filter
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+    const dailySessions = await prisma.adSession.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      select: { createdAt: true, converted: true, bounced: true, userAgent: true, maxScroll: true, interactions: true },
+      orderBy: { createdAt: "asc" },
+    });
     const daily: Record<string, { visits: number; converted: number; bounced: number }> = {};
-    for (const s of filteredSessions) {
+    for (const s of dailySessions) {
+      const ua = s.userAgent || "";
+      const isGhost = /FBAN|FBAV|FB_IAB|Instagram/i.test(ua) && s.maxScroll === 0 && s.interactions <= 2;
+      if (isGhost) continue;
       const day = s.createdAt.toISOString().slice(0, 10);
       if (!daily[day]) daily[day] = { visits: 0, converted: 0, bounced: 0 };
       daily[day].visits++;
