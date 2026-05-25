@@ -739,6 +739,17 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           const FAIL_TEMPLATE = "HX0bdab227710250fd28be04263845fb99";
           if (SID && TOKEN) {
             const phone = lead.whatsapp.startsWith("+") ? lead.whatsapp : `+${lead.whatsapp}`;
+
+            // Anti-loop: don't send if we already sent a WA to this phone in the last 24h
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentWa = await prisma.lead.findFirst({
+              where: { whatsapp: lead.whatsapp, whatsappSentAt: { gte: oneDayAgo } },
+              select: { id: true },
+            });
+            if (recentWa) {
+              console.log(`[Pipeline] Skipping fail WA to ${phone} — already sent in last 24h`);
+            } else {
+
             const ownerName = (lead.ownerName || "").split(" ")[0] || "Hola";
             const params: Record<string, string> = {
               From: FROM,
@@ -759,6 +770,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             } else {
               console.log(`[Pipeline] Fail template WA error: ${data.error_message || data.message}`);
             }
+
+            } // end anti-loop else
           }
         }
       } catch {}
