@@ -46,11 +46,18 @@ export function getDishPhotoUrl(url: string | null | undefined, size: "thumb" | 
   return optimizedUnsplashUrl(rawUrl, size);
 }
 
+const UTM = "utm_source=quierocomer&utm_medium=referral";
+
+function withUtm(url: string): string {
+  if (!url) return url;
+  return url + (url.includes("?") ? "&" : "?") + UTM;
+}
+
 export interface UnsplashPhoto {
   url: string;           // optimized URL (raw + params) — hotlinked to images.unsplash.com
   rawUrl: string;        // urls.raw — base URL without params
   photographer: string;  // user.name
-  profileUrl: string;    // user.links.html
+  profileUrl: string;    // user.links.html (with UTM referral params)
   unsplashId: string;    // photo id
   downloadLocation: string; // links.download_location
 }
@@ -88,7 +95,7 @@ export async function searchUnsplashPhoto(query: string, timeoutMs = 5000): Prom
       url: optimizedUnsplashUrl(rawUrl, "card"),
       rawUrl,
       photographer: photo.user?.name || "Unknown",
-      profileUrl: photo.user?.links?.html || "https://unsplash.com",
+      profileUrl: withUtm(photo.user?.links?.html || "https://unsplash.com"),
       unsplashId: photo.unsplashId || photo.id,
       downloadLocation: photo.links?.download_location || "",
     };
@@ -121,7 +128,7 @@ export async function fetchRandomUnsplashPhotos(query: string, count: number, ti
         url: rawUrl ? optimizedUnsplashUrl(rawUrl, "card") : p.urls?.regular,
         rawUrl: rawUrl || p.urls?.regular,
         photographer: p.user?.name || "Unknown",
-        profileUrl: p.user?.links?.html || "https://unsplash.com",
+        profileUrl: withUtm(p.user?.links?.html || "https://unsplash.com"),
         unsplashId: p.id,
         downloadLocation: p.links?.download_location || "",
       };

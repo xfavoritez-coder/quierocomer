@@ -387,7 +387,7 @@ function DishSlide({
               if (credit?.photographer) {
                 return (
                   <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 400, letterSpacing: "0.01em", textShadow: "0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)" }}>
-                    Foto: <a href={`${credit.profileUrl}?utm_source=quierocomer&utm_medium=referral`} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "underline" }}>{credit.photographer}</a> / <a href="https://unsplash.com/?utm_source=quierocomer&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "underline" }}>Unsplash</a>
+                    Foto: <a href={credit.profileUrl.includes("utm_source") ? credit.profileUrl : `${credit.profileUrl}?utm_source=quierocomer&utm_medium=referral`} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "underline" }}>{credit.photographer}</a> / <a href="https://unsplash.com/?utm_source=quierocomer&utm_medium=referral" target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "underline" }}>Unsplash</a>
                   </span>
                 );
               }
