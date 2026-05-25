@@ -93,13 +93,25 @@ ${trimmedText}`;
   const data = await claudeRes.json();
   const responseText = data.content?.[0]?.text || "";
 
-  const match = responseText.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No JSON found in Claude response");
+  // If response was truncated (max_tokens hit), try to find the last complete JSON
+  const stopReason = data.stop_reason;
+  let jsonCandidate = responseText;
+  if (stopReason === "end_turn") {
+    const match = responseText.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON found in Claude response");
+    jsonCandidate = match[0];
+  } else {
+    // Truncated — find the opening brace and take everything after it
+    const braceIdx = responseText.indexOf("{");
+    if (braceIdx === -1) throw new Error("No JSON found in truncated Claude response");
+    jsonCandidate = responseText.slice(braceIdx);
+    console.log(`[Document] Claude response truncated (stop_reason: ${stopReason}), attempting JSON repair on ${jsonCandidate.length} chars`);
+  }
 
   let parsed: any;
-  try { parsed = JSON.parse(match[0]); } catch {
+  try { parsed = JSON.parse(jsonCandidate); } catch {
     // Robust truncated JSON repair
-    let jsonStr = match[0]
+    let jsonStr = jsonCandidate
       .replace(/,\s*\{[^}]*$/, "")
       .replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "")
       .replace(/,\s*"[^"]*$/, "")
