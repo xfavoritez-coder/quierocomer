@@ -132,7 +132,7 @@ export default function PlanesClient() {
 
           <article className="qc-plan qc-silver">
             <h3>Silver</h3>
-            <div className="qc-plan-price">$19.900<small>/mes + IVA</small></div>
+            <div className="qc-plan-price">$14.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Gratis</div>
               <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
@@ -147,7 +147,7 @@ export default function PlanesClient() {
 
           <article className="qc-plan qc-featured">
             <h3>Gold</h3>
-            <div className="qc-plan-price">$35.000<small>/mes + IVA</small></div>
+            <div className="qc-plan-price">$29.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Silver</div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
@@ -169,6 +169,7 @@ export default function PlanesClient() {
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
               <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos invitaciones especiales a clientes de cumpleaños</span></span></div>
               <div>✓ Integración Toteat <span className="qc-tip">i<span className="qc-tip-text">Sincroniza ventas reales con la carta. Dashboard en vivo</span></span></div>
+              <div>✓ Idiomas adicionales <span className="qc-tip">i<span className="qc-tip-text">Agrega idiomas extra: francés, italiano, alemán, chino y más</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 dias</button>
           </article>

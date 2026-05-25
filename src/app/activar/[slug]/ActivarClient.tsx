@@ -235,7 +235,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   };
 
   const PLAN_PRICING: Record<string, { label: string; neto: number; iva: number; total: number; promo?: { neto: number; iva: number; total: number } }> = {
-    GOLD: { label: "Gold", neto: 35000, iva: 6650, total: 41650 },
+    SILVER: { label: "Silver", neto: 14900, iva: 2831, total: 17731 },
+    GOLD: { label: "Gold", neto: 29900, iva: 5681, total: 35581 },
     PREMIUM: { label: "Premium", neto: 49900, iva: 9481, total: 59381, promo: { neto: 4900, iva: 931, total: 5831 } },
   };
 
@@ -507,7 +508,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
             <article className="plan silver">
               <h3>Silver</h3>
-              <div className="plan-price">$19.900<small>/mes + IVA</small></div>
+              <div className="plan-price">$14.900<small>/mes + IVA</small></div>
               <div className="checks">
                 <div>✓ Todo lo del plan Gratis</div>
                 <div>✓ 3 vistas de carta <span className="tip">i<span className="tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
@@ -529,7 +530,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
             <article className="plan gold">
               <h3>Gold</h3>
-              <div className="plan-price">$35.000<small>/mes + IVA</small></div>
+              <div className="plan-price">$29.900<small>/mes + IVA</small></div>
               <div className="checks">
                 <div>✓ Todo lo del plan Silver</div>
                 <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
@@ -558,6 +559,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 <div>✓ Email marketing <span className="tip">i<span className="tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
                 <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
                 <div>✓ Integración con Toteat <span className="tip">i<span className="tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
+                <div>✓ Idiomas adicionales <span className="tip">i<span className="tip-text">Agrega idiomas extra: francés, italiano, alemán, chino y más</span></span></div>
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("PREMIUM")}>

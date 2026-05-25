@@ -27,7 +27,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
   const [show, setShow] = useState(false);
   const isPaid = plan === "GOLD";
   const isTrial = plan === "SILVER" || plan === "PREMIUM";
-  const PLAN_PRICES: Record<string, number> = { SILVER: 19900, GOLD: 35000, PREMIUM: 49900 };
+  const PLAN_PRICES: Record<string, number> = { SILVER: 14900, GOLD: 29900, PREMIUM: 49900 };
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
