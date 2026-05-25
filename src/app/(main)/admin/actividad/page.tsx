@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface Local {
   id: string;
@@ -203,6 +203,9 @@ export default function ActividadPage() {
                     }}>Entrar al panel</a>
                   </div>
 
+                  {/* Activity Timeline */}
+                  <ActivityTimeline restaurantId={local.id} />
+
                   {/* Activation date */}
                   <div style={{ fontSize: 11, color: "#555", marginTop: 10 }}>
                     Activado: {new Date(local.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
@@ -228,6 +231,95 @@ function Metric({ label, value, color }: { label: string; value: number; color?:
     <div style={{ background: "#111", borderRadius: 8, padding: "10px 12px", border: "1px solid #222" }}>
       <div style={{ fontSize: 18, fontWeight: 700, color: color || "#fff" }}>{value}</div>
       <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{label}</div>
+    </div>
+  );
+}
+
+const ACTION_LABELS: Record<string, { icon: string; label: string; color: string }> = {
+  panel_login: { icon: "🔑", label: "Inició sesión", color: "#3b82f6" },
+  dish_edit: { icon: "✏️", label: "Editó plato", color: "#F4A623" },
+  dish_create: { icon: "➕", label: "Creó plato", color: "#22c55e" },
+  dish_delete: { icon: "🗑️", label: "Eliminó plato", color: "#ef4444" },
+  photo_upload: { icon: "📸", label: "Subió foto", color: "#8b5cf6" },
+  category_edit: { icon: "📂", label: "Editó categoría", color: "#F4A623" },
+  category_create: { icon: "📁", label: "Creó categoría", color: "#22c55e" },
+  promo_create: { icon: "🏷️", label: "Creó oferta", color: "#ec4899" },
+  promo_edit: { icon: "🏷️", label: "Editó oferta", color: "#F4A623" },
+  settings_change: { icon: "⚙️", label: "Cambió ajustes", color: "#6b7280" },
+  announcement_create: { icon: "📢", label: "Creó anuncio", color: "#22c55e" },
+};
+
+interface Activity {
+  id: string;
+  action: string;
+  details: any;
+  createdAt: string;
+}
+
+function ActivityTimeline({ restaurantId }: { restaurantId: string }) {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const load = useCallback((append = false) => {
+    setLoading(true);
+    const url = `/api/admin/actividad/${restaurantId}?limit=20${cursor && append ? `&cursor=${cursor}` : ""}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(d => {
+        setActivities(prev => append ? [...prev, ...(d.activities || [])] : (d.activities || []));
+        setCursor(d.nextCursor);
+        setHasMore(!!d.nextCursor);
+        setLoaded(true);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [restaurantId, cursor]);
+
+  useEffect(() => { if (!loaded) load(); }, [loaded]);
+
+  if (!loaded && loading) return <div style={{ marginTop: 14, fontSize: 12, color: "#666" }}>Cargando actividad...</div>;
+
+  if (loaded && activities.length === 0) {
+    return <div style={{ marginTop: 14, fontSize: 12, color: "#555", fontStyle: "italic" }}>Sin actividad registrada aún.</div>;
+  }
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+        Actividad reciente
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        {activities.map((a, i) => {
+          const cfg = ACTION_LABELS[a.action] || { icon: "•", label: a.action, color: "#888" };
+          const d = a.details || {};
+          const time = new Date(a.createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+          return (
+            <div key={a.id} style={{ display: "flex", gap: 10, padding: "8px 0", borderLeft: "2px solid #2a2a2a", marginLeft: 6, paddingLeft: 14, position: "relative" }}>
+              <div style={{ position: "absolute", left: -5, top: 10, width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 13 }}>{cfg.icon}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#ddd" }}>{cfg.label}</span>
+                  {d.dishName && <span style={{ fontSize: 11, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {d.dishName}</span>}
+                  {d.fields && <span style={{ fontSize: 10, color: "#555" }}>({d.fields.join(", ")})</span>}
+                </div>
+                <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>{time}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {hasMore && (
+        <button onClick={() => load(true)} disabled={loading} style={{
+          marginTop: 8, padding: "6px 14px", background: "transparent", border: "1px solid #333",
+          borderRadius: 8, fontSize: 11, color: "#888", cursor: "pointer",
+        }}>
+          {loading ? "Cargando..." : "Ver más"}
+        </button>
+      )}
     </div>
   );
 }

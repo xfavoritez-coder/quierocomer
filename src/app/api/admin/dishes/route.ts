@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
 import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 import { translateDish } from "@/lib/ai/translateContent";
+import { logActivity } from "@/lib/admin/logActivity";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -128,6 +129,7 @@ export async function POST(req: NextRequest) {
       include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
     });
 
+    logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
     return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult });
   } catch (e) {
     console.error("[Admin dishes POST]", e);

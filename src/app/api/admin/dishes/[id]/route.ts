@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
 import { translateDish } from "@/lib/ai/translateContent";
+import { logActivity } from "@/lib/admin/logActivity";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -102,6 +103,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
+    // Track activity
+    const changes = Object.keys(body).filter(k => k !== "restaurantId");
+    logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes });
+
     return NextResponse.json(dish);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
@@ -123,7 +128,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await assertOwnsRestaurant(req, existing.restaurantId);
 
     // Soft delete: mark as inactive + set deletedAt
-    await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() } });
+    const deleted = await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() }, select: { name: true } });
+    logActivity(existing.restaurantId, "dish_delete", { dishId: id, dishName: deleted.name });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);

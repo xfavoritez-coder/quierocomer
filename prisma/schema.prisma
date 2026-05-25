@@ -1406,6 +1406,20 @@ model EmailLog {
   @@index([status, createdAt])
 }
 
+// ─── Panel Activity Log ───────────────────────────────────────────────
+
+model PanelActivity {
+  id           String   @id @default(cuid())
+  restaurantId String
+  ownerId      String?
+  action       String   // dish_edit, dish_create, dish_delete, photo_upload, category_edit, promo_create, settings_change, panel_login, panel_visit, etc.
+  details      Json?    // { dishName: "...", field: "price", from: 8990, to: 9990 }
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([createdAt])
+}
+
 // ─── Support / Contact messages ───────────────────────────────────────
 
 model SupportMessage {

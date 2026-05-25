@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
+import { logActivity } from "@/lib/admin/logActivity";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
         mustChangePassword: owner.mustChangePassword,
       });
       setPanelCookies(response, token, owner.role, owner.id);
+      if (owner.restaurants[0]) logActivity(owner.restaurants[0].id, "panel_login", { email: owner.email }, owner.id);
       return response;
     }
 
