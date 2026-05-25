@@ -210,19 +210,6 @@ export async function POST(req: Request) {
       if (city) prisma.lead.update({ where: { id: lead.id }, data: { city } }).catch(() => {});
     });
 
-    // Track A/B deep conversion: lead created successfully
-    if (abIds?.titleId) {
-      const evId = `sc_lead_${lead.id}`;
-      prisma.$executeRaw`
-        INSERT INTO "StatEvent" (id, "eventType", metadata, "createdAt")
-        VALUES (${evId}, 'SUBIRCARTA_LEAD_CREATED', ${JSON.stringify({
-          abExperiment: "subircarta-hero",
-          titleId: abIds.titleId,
-          ctaId: abIds.ctaId,
-          leadId: lead.id,
-        })}::jsonb, NOW())
-      `.catch(() => {});
-    }
 
     return NextResponse.json({ id: lead.id, detectedProviderId });
   } catch (error) {

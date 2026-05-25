@@ -4,10 +4,10 @@ import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { getExperimentVariantsWithStats } from "@/lib/ab/getExperimentStats";
 import { sampleBeta } from "@/lib/ab/sampling";
 
-const EXPERIMENTS: { slug: string; impressionEvent: string; conversionEvent: string; deepConversionEvent?: string }[] = [
+const EXPERIMENTS: { slug: string; impressionEvent: string; conversionEvent: string; deepConversionEvent?: string; countDeliveredLeads?: boolean }[] = [
   { slug: "birthday-modal", impressionEvent: "BIRTHDAY_MODAL_AUTO_SHOWN", conversionEvent: "BIRTHDAY_SAVED" },
   { slug: "landing-hero", impressionEvent: "LANDING_VIEWED", conversionEvent: "LANDING_CTA_CLICK", deepConversionEvent: "LANDING_LEAD_CREATED" },
-  { slug: "subircarta-hero", impressionEvent: "SUBIRCARTA_VIEWED", conversionEvent: "SUBIRCARTA_CARTA_UPLOADED", deepConversionEvent: "SUBIRCARTA_LEAD_CREATED" },
+  { slug: "subircarta-hero", impressionEvent: "SUBIRCARTA_VIEWED", conversionEvent: "SUBIRCARTA_CARTA_UPLOADED", countDeliveredLeads: true },
 ];
 
 /**
@@ -32,17 +32,46 @@ export async function GET(req: NextRequest) {
     );
     if (!experiment) continue;
 
-    // Deep conversions (leads created from landing)
-    const deepConversionEvent = expCfg.deepConversionEvent;
+    // Deep conversions
     let deepStats: Map<string, number> | null = null;
-    if (deepConversionEvent) {
+
+    if (expCfg.deepConversionEvent) {
+      // Standard: count from a separate StatEvent type (e.g. LANDING_LEAD_CREATED)
       deepStats = new Map();
       const deepEvents = await prisma.$queryRaw`
         SELECT metadata FROM "StatEvent"
-        WHERE "eventType"::text = ${deepConversionEvent}
+        WHERE "eventType"::text = ${expCfg.deepConversionEvent}
         AND metadata->>'abExperiment' = ${expCfg.slug}
       ` as { metadata: any }[];
       for (const e of deepEvents) {
+        const m = e.metadata as any;
+        if (!m) continue;
+        for (const slot of ["title", "subtitle", "cta"]) {
+          const id = m[`${slot}Id`];
+          if (id) deepStats.set(id, (deepStats.get(id) || 0) + 1);
+        }
+      }
+    } else if (expCfg.countDeliveredLeads) {
+      // For subircarta: count delivered leads per variant by matching
+      // SUBIRCARTA_CARTA_UPLOADED timestamps to leads that delivered
+      deepStats = new Map();
+      const uploadEvents = await prisma.$queryRaw`
+        SELECT metadata, "createdAt" FROM "StatEvent"
+        WHERE "eventType"::text = ${expCfg.conversionEvent}
+        AND metadata->>'abExperiment' = ${expCfg.slug}
+      ` as { metadata: any; createdAt: Date }[];
+
+      // Get all delivered leads
+      const deliveredLeads = await prisma.lead.findMany({
+        where: { cartaStatus: { in: ["DELIVERED", "READY"] } },
+        select: { createdAt: true },
+      });
+      const deliveredTimestamps = new Set(deliveredLeads.map(l => Math.floor(l.createdAt.getTime() / 5000))); // 5s buckets
+
+      for (const e of uploadEvents) {
+        const bucket = Math.floor(new Date(e.createdAt).getTime() / 5000);
+        // Check if a lead was delivered within the same 5-second window
+        if (!deliveredTimestamps.has(bucket) && !deliveredTimestamps.has(bucket - 1) && !deliveredTimestamps.has(bucket + 1)) continue;
         const m = e.metadata as any;
         if (!m) continue;
         for (const slot of ["title", "subtitle", "cta"]) {

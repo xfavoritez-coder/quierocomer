@@ -253,6 +253,12 @@ export async function GET(req: NextRequest) {
             body: `Con ${topViewed[0].count} vistas esta semana, es tu plato estrella. Asegúrate de que tenga buena foto y esté marcado como destacado para aprovechar su potencial.`,
           };
         }
+        if (!topInsight) {
+          topInsight = {
+            title: "Pon tu QR en las mesas",
+            body: "Cuantas más personas escaneen tu carta, mejores datos tendrás para tomar decisiones. Imprime el QR desde tu panel y ponlo visible en cada mesa.",
+          };
+        }
 
         emailHtml = buildWeeklyEmailHtml({
           ownerName,
