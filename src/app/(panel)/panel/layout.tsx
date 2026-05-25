@@ -321,7 +321,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
 
   const handleCancel = async () => {
     if (!restaurantId || cancelling) return;
-    if (!window.confirm("¿Seguro que quieres cancelar tu suscripción? Mantendrás acceso hasta el final del periodo pagado.")) return;
+    if (!window.confirm("¿Seguro que quieres cancelar tu plan? Mantendrás acceso hasta el final del periodo pagado.")) return;
     setCancelling(true);
     try {
       const res = await fetch("/api/billing/cancel", {
@@ -335,7 +335,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
         setCancelling(false);
         return;
       }
-      toast.success("Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
+      toast.success("Plan cancelado. Mantienes acceso hasta el final del periodo.");
       setTimeout(() => window.location.reload(), 1200);
     } catch {
       toast.error("Error de conexión");
@@ -382,12 +382,12 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               </p>
               {inTrial && status?.trialEndsAt && (
                 <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#666", margin: "4px 0 0" }}>
-                  Estás en prueba gratis · Primer cobro: {formatDateCL(status.trialEndsAt)}
+                  Prueba gratis hasta el {formatDateCL(status.trialEndsAt)}
                 </p>
               )}
               {isActive && status?.currentPeriodEnd && (
                 <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#666", margin: "4px 0 0" }}>
-                  Próximo cobro: {formatDateCL(status.currentPeriodEnd)}
+                  Activo hasta el {formatDateCL(status.currentPeriodEnd)}
                 </p>
               )}
               {isCanceled && status?.currentPeriodEnd && (
@@ -479,7 +479,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 padding: "10px 0", border: "1px solid #fca5a5", borderRadius: 999, marginBottom: 8,
               }}
             >
-              {cancelling ? "Cancelando…" : "Cancelar suscripción"}
+              {cancelling ? "Cancelando…" : "Cancelar plan"}
             </button>
           )}
           <button onClick={onClose} style={{ display: "block", width: "100%", background: "none", border: "none", color: "#999", fontFamily: FD, fontSize: "0.82rem", cursor: "pointer", padding: "8px 0" }}>

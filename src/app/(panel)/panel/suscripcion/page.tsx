@@ -316,7 +316,7 @@ export default function SuscripcionPage() {
               Estás en periodo de prueba
             </p>
             <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>
-              Primer cobro: <strong style={{ color: "var(--adm-text)" }}>{formatDate(status.trialEndsAt)}</strong> · {formatCLP(monthlyGross)} (IVA incluido)
+              Prueba gratis hasta el <strong style={{ color: "var(--adm-text)" }}>{formatDate(status.trialEndsAt)}</strong>
             </p>
           </div>
         )}
@@ -324,7 +324,7 @@ export default function SuscripcionPage() {
         {!isExempt && status.subscriptionStatus === "ACTIVE" && status.currentPeriodEnd && (
           <div style={{ background: "rgba(56,189,248,.06)", border: "1px solid rgba(56,189,248,.15)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.85rem", color: "var(--adm-text2)", margin: 0 }}>
-              Próximo cobro: <strong style={{ color: "var(--adm-text)" }}>{formatDate(status.currentPeriodEnd)}</strong> · {formatCLP(monthlyGross)} (IVA incluido)
+              Plan activo hasta el <strong style={{ color: "var(--adm-text)" }}>{formatDate(status.currentPeriodEnd)}</strong>
             </p>
           </div>
         )}
@@ -360,7 +360,7 @@ export default function SuscripcionPage() {
         {!isExempt && isCanceled && status.currentPeriodEnd && (
           <div style={{ background: "rgba(251,191,36,.06)", border: "1px solid rgba(251,191,36,.2)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.9rem", color: "#fbbf24", margin: "0 0 4px", fontWeight: 700 }}>
-              Suscripción cancelada
+              Plan cancelado
             </p>
             <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>
               Mantienes acceso hasta el {formatDate(status.currentPeriodEnd)}. Después tu plan vuelve a Gratis.
@@ -449,7 +449,7 @@ export default function SuscripcionPage() {
                   Tarjeta vía Webpay
                 </p>
                 <p style={{ fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                  Inscrita en Flow.cl · cobro automático mensual
+                  Registrada en Flow.cl
                 </p>
               </div>
             </div>
@@ -504,7 +504,7 @@ export default function SuscripcionPage() {
             fontFamily: "var(--font-display)", fontSize: "0.82rem", fontWeight: 600,
             cursor: actioning ? "wait" : "pointer",
           }}>
-            {actioning ? "Cancelando…" : "Cancelar mi suscripción"}
+            {actioning ? "Cancelando…" : "Cancelar mi plan"}
           </button>
         </Card>
       )}
@@ -512,9 +512,8 @@ export default function SuscripcionPage() {
       {/* ─── Info footer ─────────────────────── */}
       <Card style={{ background: "rgba(255,255,255,.02)" }}>
         <p style={{ fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.7 }}>
-          Los cobros se hacen automáticamente cada mes con la tarjeta inscrita en Webpay.
-          El monto incluye IVA (19%). Puedes cancelar en cualquier momento.
-          Si tu tarjeta falla, reintentamos durante 7 días antes de bajar el plan a Gratis.
+          El pago es mensual y manual — no se cobra automáticamente.
+          Cuando tu periodo vence, puedes renovar desde aquí. Si no renuevas, tu plan vuelve a Gratis.
         </p>
       </Card>
     </div>

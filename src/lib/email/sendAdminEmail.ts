@@ -169,7 +169,7 @@ export function handoffOwnerEmailHtml(
   `, true)}</td></tr>
   <tr><td style="padding-bottom:16px;">${card(`
     ${label("Para no perder tu plan")}
-    <div style="font-size:14px;color:#7a6547;line-height:1.6;">Inscribe tu tarjeta antes de que terminen los ${trialDays} dias. Si no lo haces, tu plan baja a Gratis.</div>
+    <div style="font-size:14px;color:#7a6547;line-height:1.6;">Tienes ${trialDays} días para probar todas las funciones. Al terminar, puedes pagar desde tu panel para mantener el plan.</div>
   `)}</td></tr>
   ${qrLink ? `<tr><td style="padding-bottom:8px;">${btn(qrLink, "Ver mi carta →")}</td></tr>` : ""}
   <tr><td style="padding-bottom:16px;">${btn(panelLink, "Entrar al panel", false)}</td></tr>
@@ -214,8 +214,8 @@ export function planActivatedEmailHtml(
   <tr><td style="padding-bottom:16px;">${card(`
     ${label("Detalle del pago")}
     ${field("Cobrado hoy", amountPaid)}
-    ${field("Proximo cobro", nextChargeDate)}
-    ${field("Monto mensual", nextChargeAmount)}
+    ${field("Plan activo hasta", nextChargeDate)}
+    ${field("Valor mensual", nextChargeAmount)}
   `, true)}</td></tr>
   <tr><td style="padding-bottom:8px;">${btn(panelLink, "Entrar al panel")}</td></tr>
   <tr><td style="padding-bottom:16px;">${btn(qrLink, "Ver mi carta", false)}</td></tr>
@@ -258,17 +258,17 @@ export function trialEndingSoonEmailHtml(
     </h1>
   </td></tr>
   <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
-    Tu plan en <strong>${restaurantName}</strong> vence en <strong>${dayLabel}</strong>. Si no inscribes tu tarjeta, tu plan baja a Gratis y pierdes las funciones avanzadas.
+    Tu plan en <strong>${restaurantName}</strong> vence en <strong>${dayLabel}</strong>. Si no renuevas, tu plan baja a Gratis y pierdes las funciones avanzadas.
   </td></tr>
   <tr><td style="padding-bottom:16px;">${card(`
-    ${label("Como evitarlo")}
+    ${label("Cómo renovar")}
     <div style="font-size:14px;color:#7a6547;line-height:1.8;">
-      1. Completa tus datos de facturacion<br/>
-      2. Inscribe tu tarjeta (1 sola vez)<br/>
-      3. Listo — el cobro mensual sale automatico
+      1. Entra a tu panel<br/>
+      2. Ve a Suscripción<br/>
+      3. Paga tu siguiente mes
     </div>
   `)}</td></tr>
-  <tr><td style="padding-bottom:16px;">${btn(facturacionLink, "Inscribir tarjeta ahora")}</td></tr>
+  <tr><td style="padding-bottom:16px;">${btn(panelLink, "Ir a mi panel")}</td></tr>
   <tr><td style="font-size:12px;color:#b8a888;text-align:center;">¿Dudas? Responde este email y te ayudamos.</td></tr>
   `);
 }
