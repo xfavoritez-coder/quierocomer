@@ -235,7 +235,7 @@ function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
     }}>
       <span style={{ fontSize: 18 }}>🎁</span>
       <span style={{ flex: 1 }}>
-        Prueba <strong>Gold gratis por 7 días</strong> y desbloquea estadísticas, ofertas, multilenguaje y más.
+        Mejora tu carta con <strong>Silver desde $14.900/mes</strong> y desbloquea estadísticas, ofertas, vistas y más.
       </span>
       <button onClick={handleClick} style={{
         padding: "6px 14px", border: "none", borderRadius: 999,
@@ -331,9 +331,9 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)" }}>
         {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0", position: "sticky", top: 0, background: "#fff", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)", position: "sticky", top: 0, background: "var(--adm-bg, #fff)", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
           {PAID_TABS.map(t => {
             const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : "#475569";
             const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : "#94a3b8";
@@ -390,12 +390,17 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
               return (
                 <>
-                  <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>{fmt(net)}</span>
-                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes neto</span>
-                  <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#666", margin: "4px 0 0" }}>
-                    + IVA 19% ({fmt(iva)}) = <strong style={{ color: "#1a1a1a" }}>{fmt(gross)}</strong> total mensual
+                  <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{fmt(net)}</span>
+                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>/mes neto</span>
+                  <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "var(--adm-text2, #666)", margin: "4px 0 0" }}>
+                    + IVA 19% ({fmt(iva)}) = <strong style={{ color: "var(--adm-text, #1a1a1a)" }}>{fmt(gross)}</strong> total mensual
                   </p>
-                  <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "#bbb", margin: "2px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
+                  <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "2px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
+                  {tab === "PREMIUM" && (
+                    <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(124,58,237,0.1)", borderRadius: 8, border: "1px solid rgba(124,58,237,0.2)" }}>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#7c3aed" }}>14 dias gratis para probar</span>
+                    </div>
+                  )}
                 </>
               );
             })()}
@@ -404,8 +409,8 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
           {/* Features */}
           {(() => {
             const accentColor = tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#64748b";
-            const bgColor = tab === "PREMIUM" ? "#FAFAFE" : tab === "GOLD" ? "#FFFCF5" : "#F8FAFC";
-            const borderColor = tab === "PREMIUM" ? "#e9d5ff" : tab === "GOLD" ? "#fde68a" : "#cbd5e1";
+            const bgColor = tab === "PREMIUM" ? "rgba(124,58,237,0.06)" : tab === "GOLD" ? "rgba(244,166,35,0.06)" : "rgba(100,116,139,0.06)";
+            const borderColor = tab === "PREMIUM" ? "rgba(124,58,237,0.15)" : tab === "GOLD" ? "rgba(244,166,35,0.15)" : "rgba(100,116,139,0.15)";
             return (
           <div style={{
             background: bgColor,
@@ -552,7 +557,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     if (!billing) return;
     if (billing === "success") {
       const plan = params.get("plan");
-      toast.success(`Suscripción activada${plan ? ` (${plan})` : ""} · 7 días gratis`);
+      toast.success(`Suscripción activada${plan ? ` (${plan})` : ""}`);
     } else if (billing === "error") {
       const reason = params.get("reason");
       toast.error(`No se pudo completar la inscripción${reason ? ` (${reason})` : ""}. Intenta de nuevo.`);
