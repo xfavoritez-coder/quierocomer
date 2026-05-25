@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { buildWeeklyEmailHtml } from "@/lib/email/weeklyEmailHtml";
+import { buildTrialWeek1Html, buildTrialWeek2Html } from "@/app/api/preview-email/weekly-trial/route";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
 import { generateInsights } from "@/lib/genio/generateInsights";
 import { chileHourOf } from "@/lib/toteat/timezone";
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
   const restaurants = await prisma.restaurant.findMany({
     where: { isActive: true },
     select: {
-      id: true, name: true, slug: true, logoUrl: true, isDemo: true,
+      id: true, name: true, slug: true, logoUrl: true, isDemo: true, createdAt: true, trialEndsAt: true,
       weeklyEmailEnabled: true,
       owner: { select: { name: true, email: true } },
       teamMembers: {
@@ -91,17 +92,75 @@ export async function GET(req: NextRequest) {
 
     try {
       const ownerName = r.owner.name?.split(" ")[0] || "Hola";
-      let emailHtml: string;
+      let emailHtml: string = "";
+      let emailSubject = `Tu semana en ${r.name}`;
 
-      if (r.isDemo) {
-        // Demo restaurants: use fake data based on their real dishes
+      // Route to the right email based on restaurant state
+      if (!r.isDemo) {
+        const sessionCount = await prisma.session.count({
+          where: { restaurantId: r.id, startedAt: { gte: oneWeekAgo } },
+        });
+        const daysActive = Math.floor((now.getTime() - new Date(r.createdAt).getTime()) / 86400000);
+
+        if (daysActive < 7) {
+          // Week 1: "Así será tu informe semanal" — preview con datos fake
+          const dishes = await prisma.dish.findMany({
+            where: { restaurantId: r.id, isActive: true },
+            select: { name: true },
+            orderBy: { position: "asc" },
+            take: 5,
+          });
+          const cats = await prisma.category.count({ where: { restaurantId: r.id, isActive: true } });
+          const trialEnd = r.trialEndsAt ? Math.max(0, Math.ceil((new Date(r.trialEndsAt).getTime() - now.getTime()) / 86400000)) : 14;
+          emailHtml = buildTrialWeek1Html({
+            ownerName,
+            restaurantName: r.name,
+            logoUrl: r.logoUrl,
+            daysLeft: trialEnd,
+            totalDishes: dishes.length,
+            categories: cats,
+            topDishes: dishes.slice(0, 3).map(d => d.name),
+            panelUrl: `https://quierocomer.cl/panel`,
+            slug: r.slug,
+          });
+          emailSubject = `${r.name} · Tu primera semana`;
+          console.log(`[weekly-email] ${r.name}: Week 1 trial email (${daysActive}d active, ${sessionCount} sessions)`);
+
+        } else if (daysActive < 21 && sessionCount < 10) {
+          // Week 2+: motivacional con checklist de progreso
+          const totalDishes = await prisma.dish.count({ where: { restaurantId: r.id, isActive: true } });
+          const photosUploaded = await prisma.dish.count({ where: { restaurantId: r.id, photos: { isEmpty: false }, isPhotoReferential: false } });
+          const dishesEdited = await prisma.dish.count({ where: { restaurantId: r.id, updatedAt: { gt: r.createdAt } } });
+          const trialEnd = r.trialEndsAt ? Math.max(0, Math.ceil((new Date(r.trialEndsAt).getTime() - now.getTime()) / 86400000)) : 0;
+          emailHtml = buildTrialWeek2Html({
+            ownerName,
+            restaurantName: r.name,
+            logoUrl: r.logoUrl,
+            daysLeft: trialEnd,
+            totalVisits: sessionCount,
+            photosUploaded,
+            dishesEdited,
+            totalDishes,
+            panelUrl: `https://quierocomer.cl/panel`,
+            slug: r.slug,
+          });
+          emailSubject = `${r.name} · ¿Cómo va tu carta?`;
+          console.log(`[weekly-email] ${r.name}: Week 2 motivational (${daysActive}d active, ${sessionCount} sessions)`);
+
+        } else {
+          // Normal: has enough data — fall through to real email below
+        }
+      } // end !r.isDemo routing
+
+      // If emailHtml was set by trial routing, skip to send
+      if (!emailHtml && r.isDemo) {
+        // Demo restaurants: fake data preview
         const dishes = await prisma.dish.findMany({
           where: { restaurantId: r.id, isActive: true },
           select: { name: true, photos: true },
           orderBy: { position: "asc" },
           take: 5,
         });
-
         const topViewed = dishes.slice(0, 3).map((d, i) => ({
           name: d.name, count: [42, 35, 28][i] || 20, photo: d.photos?.[0] || null,
         }));
@@ -119,7 +178,6 @@ export async function GET(req: NextRequest) {
             ? `Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero y veas cómo aumenta tu venta.`
             : "Al activar empezarás a ver datos reales de cómo interactúan tus clientes con tu carta.",
         };
-
         emailHtml = buildWeeklyEmailHtml({
           ownerName,
           restaurantName: r.name,
@@ -137,7 +195,7 @@ export async function GET(req: NextRequest) {
           isDemo: true,
           insight: demoInsight,
         });
-      } else {
+      } else if (!emailHtml) {
         // Real restaurants: use actual data
         const [metrics, prevMetrics, topDishes] = await Promise.all([
           getVisitorMetrics(r.id, oneWeekAgo, now),
@@ -229,7 +287,7 @@ export async function GET(req: NextRequest) {
       for (const to of recipients) {
         // Pre-create log to get ID for tracking
         const log = await prisma.emailLog.create({
-          data: { to, subject: `Tu semana en ${r.name}`, purpose: "weekly_summary", status: "pending" },
+          data: { to, subject: emailSubject, purpose: "weekly_summary", status: "pending" },
         }).catch(() => null);
         const eid = log?.id || "";
 
@@ -248,7 +306,7 @@ export async function GET(req: NextRequest) {
         try {
           await sendAdminEmail({
             to,
-            subject: `Tu semana en ${r.name}`,
+            subject: emailSubject,
             html: trackedHtml,
             purpose: "weekly_summary",
           });
