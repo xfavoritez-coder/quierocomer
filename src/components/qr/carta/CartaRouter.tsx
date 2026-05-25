@@ -209,8 +209,10 @@ export default function CartaRouter(props: Props) {
     const promos: any[] = props.marketingPromos || [];
     const promoMap = new Map<string, number>();
     for (const p of promos) {
-      if (p.status !== "ACTIVE" || !p.promoPrice || !p.dishIds?.length) continue;
-      for (const did of p.dishIds) {
+      if (!p.promoPrice) continue;
+      // marketingPromos have dishes: [{id, name, ...}] not dishIds
+      const ids: string[] = p.dishIds || (p.dishes || []).map((d: any) => d.id);
+      for (const did of ids) {
         if (!promoMap.has(did)) promoMap.set(did, p.promoPrice);
       }
     }
