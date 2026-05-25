@@ -740,7 +740,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       >
         {!isDemo && (
           <>
-            <UpgradeBanner restaurantId={selectedRestaurantId} />
+            {/* UpgradeBanner removed — no plan upsell banners in panel */}
           </>
         )}
         {children}
