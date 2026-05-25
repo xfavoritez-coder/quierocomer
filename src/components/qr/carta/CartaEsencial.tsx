@@ -13,7 +13,6 @@ import { groupDishesByCategory, isGeniePick } from "./utils/dishHelpers";
 import { getCarouselMode, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
 import DishDetailEsencial from "./DishDetailEsencial";
 import FabSpeedDial from "./FabSpeedDial";
-import PromoCompact from "./PromoCompact";
 import GenioFab from "./GenioFab";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -735,11 +734,64 @@ export default function CartaEsencial({
 
       {/* ══════ OFERTAS ══════ */}
       {marketingPromos && marketingPromos.length > 0 && (
-        <section id="esencial-cat-promos" style={{ padding: "0 18px 16px" }}>
-          <PromoCompact promos={marketingPromos} onViewDish={(dishId) => {
-            const dish = dishes.find(d => d.id === dishId);
-            if (dish) setSelectedDish(dish);
-          }} />
+        <section id="esencial-cat-promos" style={{ padding: "0 18px 20px" }}>
+          <div style={{
+            padding: "16px 20px", borderRadius: 16,
+            background: C.heroBg, border: `1px solid ${C.line}`,
+          }}>
+            <div style={{
+              display: "inline-block", fontSize: 10, fontWeight: 800, letterSpacing: ".18em",
+              textTransform: "uppercase", color: C.paper, background: C.gold,
+              padding: "4px 10px", borderRadius: 50, marginBottom: 12,
+            }}>
+              Ofertas
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {marketingPromos.map((p: any) => {
+                const dish = p.dishes?.[0];
+                const pct = p.originalPrice && p.promoPrice
+                  ? Math.round(((p.originalPrice - p.promoPrice) / p.originalPrice) * 100)
+                  : null;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { if (dish) { const d = dishes.find((dd: any) => dd.id === dish.id); if (d) setSelectedDish(d); } }}
+                    style={{
+                      width: "100%", background: "none", border: "none", cursor: "pointer",
+                      textAlign: "left", padding: "10px 0",
+                      borderBottom: `1px solid ${C.line}`,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, lineHeight: 1.2 }}>{p.name}</div>
+                        {p.description && (
+                          <div style={{ fontSize: 13, color: C.muted, marginTop: 3, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.description}</div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexShrink: 0, marginLeft: 12 }}>
+                        {p.originalPrice && (
+                          <span style={{ fontSize: 13, color: C.muted, textDecoration: "line-through" }}>
+                            ${p.originalPrice.toLocaleString("es-CL")}
+                          </span>
+                        )}
+                        {p.promoPrice && (
+                          <span style={{ fontSize: 18, fontWeight: 800, color: C.gold }}>
+                            ${p.promoPrice.toLocaleString("es-CL")}
+                          </span>
+                        )}
+                        {pct && (
+                          <span style={{ fontSize: 11, fontWeight: 800, color: C.paper, background: C.gold, padding: "2px 7px", borderRadius: 6 }}>
+                            -{pct}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </section>
       )}
 
