@@ -756,6 +756,11 @@ function DishListCard({
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><DishPlaceholderIcon size={28} /></div>
         )}
         {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
+        {dish.discountPrice && dish.discountPrice < dish.price && (
+          <span style={{ position: "absolute", top: isNew ? 26 : 6, left: 6, fontSize: "9px", fontWeight: 800, color: "white", background: "var(--carta-accent, #F4A623)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>
+            -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}%
+          </span>
+        )}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={24} top={6} right={6} />
       </div>
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>

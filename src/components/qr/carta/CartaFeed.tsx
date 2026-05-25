@@ -298,15 +298,15 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
             </div>
           )}
 
-          {/* Discount badge top-right */}
+          {/* Discount badge top-left */}
           {hasDiscount && (
             <span style={{
-              position: "absolute", top: 10, right: 10,
-              fontSize: 10, fontWeight: 700, color: "#fff",
-              background: "#16a34a", padding: "3px 8px", borderRadius: 5,
-              letterSpacing: "0.2px",
+              position: "absolute", top: isNew ? 34 : 10, left: 10,
+              fontSize: 11, fontWeight: 800, color: "#fff",
+              background: "var(--carta-accent, #F4A623)", padding: "4px 10px", borderRadius: 50,
+              letterSpacing: "0.3px",
             }}>
-              -{Math.round(100 - (dish.discountPrice! / dish.price) * 100)}%
+              -{Math.round(100 - (dish.discountPrice! / dish.price) * 100)}% OFF
             </span>
           )}
         </div>
@@ -345,7 +345,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
         <div style={{ flexShrink: 0 }}>
           {hasDiscount ? (
             <div style={{ textAlign: "right" }}>
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 600, color: "#16a34a", letterSpacing: "-0.2px" }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 600, color: "var(--carta-accent, #F4A623)", letterSpacing: "-0.2px" }}>
                 ${dish.discountPrice!.toLocaleString("es-CL")}
               </span>
               <br />

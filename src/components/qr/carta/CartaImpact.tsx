@@ -213,8 +213,20 @@ function ImpactHeroSlider({
             overflow: "hidden",
           }}>{d.description}</p>
         )}
-        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--carta-accent)", letterSpacing: "-0.8px" }}>
-          ${(d.discountPrice || d.price)?.toLocaleString("es-CL") ?? ""}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {d.discountPrice && d.discountPrice < d.price && (
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>
+              -{Math.round(((d.price - d.discountPrice) / d.price) * 100)}%
+            </span>
+          )}
+          <span style={{ fontSize: 22, fontWeight: 800, color: "var(--carta-accent)", letterSpacing: "-0.8px" }}>
+            ${(d.discountPrice || d.price)?.toLocaleString("es-CL") ?? ""}
+          </span>
+          {d.discountPrice && d.discountPrice < d.price && (
+            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>
+              ${d.price?.toLocaleString("es-CL")}
+            </span>
+          )}
         </div>
         {heroDishes.length > 1 && (
           <div style={{ display: "flex", gap: 7, marginTop: 17 }}>
@@ -417,8 +429,20 @@ function FeaturedSection({
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
                     }}>{f.description}</p>
                   )}
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "var(--carta-accent)", letterSpacing: "-0.5px" }}>
-                    ${(f.discountPrice || f.price)?.toLocaleString("es-CL") ?? ""}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {f.discountPrice && f.discountPrice < f.price && (
+                      <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 8px", borderRadius: 50 }}>
+                        -{Math.round(((f.price - f.discountPrice) / f.price) * 100)}%
+                      </span>
+                    )}
+                    <span style={{ fontSize: 18, fontWeight: 800, color: "var(--carta-accent)", letterSpacing: "-0.5px" }}>
+                      ${(f.discountPrice || f.price)?.toLocaleString("es-CL") ?? ""}
+                    </span>
+                    {f.discountPrice && f.discountPrice < f.price && (
+                      <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>
+                        ${f.price?.toLocaleString("es-CL")}
+                      </span>
+                    )}
                   </div>
                 </div>
               </article>
@@ -573,6 +597,11 @@ function ImpactDishCard({
           }}>{dish.description}</p>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          {dish.discountPrice && dish.discountPrice < dish.price && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "2px 8px", borderRadius: 50 }}>
+              -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}%
+            </span>
+          )}
           <b style={{ color: "var(--carta-accent)", fontSize: 16 }}>
             ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? ""}
           </b>

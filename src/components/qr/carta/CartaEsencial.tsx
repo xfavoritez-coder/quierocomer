@@ -880,8 +880,14 @@ export default function CartaEsencial({
                       fontSize: 16, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase",
                       color: C.ink, lineHeight: 1.3, flex: 1, minWidth: 0,
                       fontFamily: "system-ui, -apple-system, sans-serif",
+                      display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
                     }}>
                       {dish.name}
+                      {dish.discountPrice && dish.discountPrice < dish.price && (
+                        <span style={{ fontSize: 10, fontWeight: 800, color: C.paper, background: C.gold, padding: "2px 8px", borderRadius: 50, letterSpacing: "0.05em", textTransform: "none" }}>
+                          -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}%
+                        </span>
+                      )}
                     </span>
                     <span style={{
                       fontSize: 15, fontWeight: 500, color: C.ink, flexShrink: 0, whiteSpace: "nowrap",

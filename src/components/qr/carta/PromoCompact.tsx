@@ -81,7 +81,7 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
               )}
               <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                 {p.promoPrice && (
-                  <span style={{ fontSize: 18, fontWeight: 900, color: "var(--carta-accent, #F4A623)" }}>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: "var(--carta-accent, #F4A623)" }}>
                     ${p.promoPrice.toLocaleString("es-CL")}
                   </span>
                 )}
