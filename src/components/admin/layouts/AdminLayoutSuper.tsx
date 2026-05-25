@@ -31,6 +31,9 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
 
   const isActive = (h: string) => h === "/admin" ? pathname === "/admin" : pathname.startsWith(h);
 
+  // Close mobile menu on route change
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+
   useEffect(() => {
     fetch("/api/admin/soporte")
       .then(r => r.ok ? r.json() : null)

@@ -740,12 +740,15 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           if (SID && TOKEN) {
             const phone = lead.whatsapp.startsWith("+") ? lead.whatsapp : `+${lead.whatsapp}`;
 
-            // Anti-loop: don't send if we already sent a WA to this phone in the last 24h
+            // Anti-loop: don't send if we already sent a fail WA to this phone in the last 24h
             const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const recentWa = await prisma.lead.findFirst({
-              where: { whatsapp: lead.whatsapp, whatsappSentAt: { gte: oneDayAgo } },
-              select: { id: true },
+            const recentLeads = await prisma.lead.findMany({
+              where: { whatsapp: lead.whatsapp, createdAt: { gte: oneDayAgo } },
+              select: { events: true },
             });
+            const recentWa = recentLeads.some(l =>
+              Array.isArray(l.events) && (l.events as any[]).some((e: any) => e.action === "wa_fail_template_sent")
+            );
             if (recentWa) {
               console.log(`[Pipeline] Skipping fail WA to ${phone} — already sent in last 24h`);
             } else {
@@ -765,7 +768,14 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             });
             const data = await res.json();
             if (data.sid) {
-              await prisma.lead.update({ where: { id: leadId }, data: { whatsappSentAt: new Date() } });
+              // Don't set whatsappSentAt — that field is for "carta ready" WA only.
+              // Track the fail WA in events instead so admin can see it.
+              await prisma.lead.update({
+                where: { id: leadId },
+                data: {
+                  events: [...(Array.isArray(lead.events) ? (lead.events as any[]) : []), { ts: new Date().toISOString(), action: "wa_fail_template_sent" }] as any,
+                },
+              });
               console.log(`[Pipeline] Sent fail template WA to ${phone}`);
             } else {
               console.log(`[Pipeline] Fail template WA error: ${data.error_message || data.message}`);
