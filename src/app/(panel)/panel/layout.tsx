@@ -283,6 +283,24 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
     if (!restaurantId || submitting) return;
     setSubmitting(true);
     try {
+      // Premium: activate 14-day trial directly (no MercadoPago)
+      if (tab === "PREMIUM") {
+        const res = await fetch("/api/billing/start-trial", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "No se pudo activar la prueba");
+          setSubmitting(false);
+          return;
+        }
+        toast.success("¡Premium activado! 14 días gratis.");
+        setTimeout(() => window.location.reload(), 1200);
+        return;
+      }
+      // Silver/Gold: go through MercadoPago
       const res = await fetch("/api/billing/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -296,7 +314,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
       }
       window.location.href = data.url;
     } catch {
-      toast.error("Error de conexion");
+      toast.error("Error de conexión");
       setSubmitting(false);
     }
   };
@@ -395,7 +413,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
                   {tab === "PREMIUM" && (
                     <div style={{ marginTop: 10, padding: "8px 14px", background: "#dc2626", borderRadius: 8 }}>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>14 dias gratis para probar</span>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>14 días gratis para probar</span>
                     </div>
                   )}
                 </>
@@ -444,7 +462,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {tab === "PREMIUM" ? "Empezar prueba gratis 14 dias" : `Suscribirse a ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "PREMIUM" ? "Empezar prueba gratis 14 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
@@ -489,22 +507,22 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               <div style={{ background: "var(--adm-input, #f5f5f5)", border: "1px solid var(--adm-card-border, #eee)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
                 {isPremiumTrial ? (
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#7c3aed", fontWeight: 600 }}>
-                      <span>Primeros 14 dias</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#7c3aed", fontWeight: 700 }}>
+                      <span>Primeros 14 días</span>
                       <span>$0</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12, color: "var(--adm-text3, #888)" }}>
-                      <span>Despues del trial</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--adm-text2, #555)" }}>
+                      <span>Después del trial</span>
                       <span>{fmt(net)} + IVA /mes</span>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "var(--adm-text, #333)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "var(--adm-text, #333)" }}>
                       <span>Mensualidad</span>
                       <span style={{ fontWeight: 700 }}>{fmt(net)}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "var(--adm-text3, #888)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "var(--adm-text2, #555)" }}>
                       <span>IVA (19%)</span>
                       <span>{fmt(iva)}</span>
                     </div>
@@ -516,10 +534,10 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 )}
               </div>
 
-              <div style={{ fontSize: 12, color: "var(--adm-text3, #888)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
+              <div style={{ fontSize: 13, color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
                 {isPremiumTrial
-                  ? "No se te cobra nada hoy. Seras redirigido a MercadoPago para registrar tu tarjeta."
-                  : "Seras redirigido a MercadoPago para completar tu pago de forma segura."
+                  ? "No se te cobra nada. Tu periodo de prueba de 14 días se activa de inmediato."
+                  : "Serás redirigido a MercadoPago para completar tu pago."
                 }
               </div>
 
@@ -533,13 +551,15 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   cursor: submitting ? "wait" : "pointer",
                 }}
               >
-                {submitting ? "Redirigiendo..." : isPremiumTrial ? "Comenzar trial gratis" : `Pagar ${fmt(gross)}`}
+                {submitting ? (isPremiumTrial ? "Activando..." : "Redirigiendo...") : isPremiumTrial ? "Activar 14 días gratis" : `Pagar ${fmt(gross)}`}
               </button>
 
+              {!isPremiumTrial && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "var(--adm-text3, #888)" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                Pago seguro via MercadoPago
+                Pago seguro vía MercadoPago
               </div>
+              )}
             </div>
           );
         })()}
@@ -560,8 +580,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     const tag = () => {
       document.querySelectorAll("button").forEach(btn => {
         const bg = getComputedStyle(btn).backgroundColor;
-        if (bg === "rgb(244, 166, 35)" && !btn.classList.contains("qc-gold-btn")) {
-          btn.classList.add("qc-gold-btn");
+        if (bg === "rgb(244, 166, 35)") {
+          if (!btn.classList.contains("qc-gold-btn")) btn.classList.add("qc-gold-btn");
+        } else {
+          if (btn.classList.contains("qc-gold-btn")) btn.classList.remove("qc-gold-btn");
         }
       });
     };

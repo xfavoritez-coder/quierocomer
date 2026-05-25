@@ -513,7 +513,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 <div>✓ Todo lo del plan Gratis</div>
                 <div>✓ 3 vistas de carta <span className="tip">i<span className="tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
                 <div>✓ Dark / Light mode <span className="tip">i<span className="tip-text">Elige el tema que mejor represente tu local</span></span></div>
-                <div>✓ Destacar platos estrella <span className="tip">i<span className="tip-text">Resalta visualmente los platos que mas te conviene vender</span></span></div>
+                <div>✓ Destacar platos estrella <span className="tip">i<span className="tip-text">Resalta visualmente los platos que más te conviene vender</span></span></div>
                 <div>✓ Ofertas y promociones <span className="tip">i<span className="tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
                 <div>✓ Estadísticas básicas <span className="tip">i<span className="tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               </div>
@@ -533,6 +533,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <div className="plan-price">$29.900<small>/mes + IVA</small></div>
               <div className="checks">
                 <div>✓ Todo lo del plan Silver</div>
+                <div>✓ Anuncios en carta <span className="tip">i<span className="tip-text">Banner de novedades visible al abrir la carta</span></span></div>
                 <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
                 <div>✓ Multilenguaje (ES / EN / PT) <span className="tip">i<span className="tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
                 <div>✓ Productos sugeridos <span className="tip">i<span className="tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>

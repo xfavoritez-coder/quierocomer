@@ -57,6 +57,7 @@ export default function Paso2Client() {
   const [planesOpen, setPlanesOpen] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
+  const formSectionRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // Force scroll to top — blast through every timing slot Next.js might use to restore scroll
@@ -172,9 +173,9 @@ export default function Paso2Client() {
   useEffect(() => {
     if (!animDone) return;
     const t = setTimeout(() => {
-      const el = formRef.current;
+      const el = formSectionRef.current;
       if (el) {
-        const top = el.getBoundingClientRect().top + window.scrollY - 90;
+        const top = el.getBoundingClientRect().top + window.scrollY - 24;
         window.scrollTo({ top, behavior: "smooth" });
       }
       setTimeout(() => firstInputRef.current?.focus(), 400);
@@ -401,7 +402,7 @@ export default function Paso2Client() {
 
             {/* Form — hidden until animation completes, then slides up */}
             {animDone && (
-            <div className="form-section form-reveal">
+            <div ref={formSectionRef} className="form-section form-reveal">
               <div className="form-title">
                 <h2>¿Dónde te la enviamos?</h2>
                 <p className="form-sub">Déjanos tus datos para enviar tu carta viva lista.</p>

@@ -16,6 +16,7 @@ import {
   PreApprovalPlan,
   PreApproval,
   Preference,
+  Payment,
 } from "mercadopago";
 
 import {
@@ -358,5 +359,35 @@ export async function createMPPreference(
     id: result.id,
     initPoint: result.init_point ?? "",
     sandboxInitPoint: result.sandbox_init_point ?? "",
+  };
+}
+
+// ─── Payment (verificar pago único) ──────────────────────────────────
+
+export type MPPaymentResult = {
+  id: number;
+  status: string;
+  statusDetail: string;
+  externalReference: string;
+  transactionAmount: number;
+  payerEmail: string;
+};
+
+/**
+ * Obtiene el estado de un pago por su ID.
+ */
+export async function getMPPayment(paymentId: string | number): Promise<MPPaymentResult> {
+  const config = initMercadoPago();
+  const paymentClient = new Payment(config);
+
+  const result = await paymentClient.get({ id: Number(paymentId) });
+
+  return {
+    id: result.id ?? Number(paymentId),
+    status: result.status ?? "unknown",
+    statusDetail: result.status_detail ?? "",
+    externalReference: result.external_reference ?? "",
+    transactionAmount: result.transaction_amount ?? 0,
+    payerEmail: result.payer?.email ?? "",
   };
 }

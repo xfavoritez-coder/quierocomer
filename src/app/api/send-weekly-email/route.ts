@@ -252,6 +252,7 @@ export async function GET(req: NextRequest) {
     subject: `Tu semana en ${restaurant.name}`,
     html: trackedHtml,
     purpose: "weekly_summary",
+    skipLog: true,
   });
 
   // Update log status

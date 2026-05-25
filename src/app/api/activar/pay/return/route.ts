@@ -1,40 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMPSubscription } from "@/lib/billing/mercadopago";
+import { getMPPayment } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
- * GET /api/activar/pay/return?preapproval_id=...&external_reference=...
+ * GET /api/activar/pay/return?payment_id=...&status=...&plan=...
  *
- * MercadoPago redirige aqui despues de que el usuario completa
- * el registro de su tarjeta en la suscripcion.
+ * MercadoPago redirige aquí después de que el usuario completa el pago único.
  */
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
-  const preapprovalId = params.get("preapproval_id");
+  const paymentId = params.get("payment_id") || params.get("collection_id");
+  const paymentStatus = params.get("status") || params.get("collection_status");
+  const planParam = params.get("plan");
   const externalReference = params.get("external_reference");
 
-  if (!preapprovalId && !externalReference) {
+  if (!paymentId && !externalReference) {
     return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
   }
 
+  // Verificar pago en MercadoPago
+  let mpPayment;
+  if (paymentId) {
+    try {
+      mpPayment = await getMPPayment(paymentId);
+    } catch (err: any) {
+      console.error("[activar/pay/return] getMPPayment falló:", err?.message);
+    }
+  }
+
   // Buscar restaurant
-  let restaurant;
-  if (externalReference) {
-    restaurant = await prisma.restaurant.findUnique({
-      where: { id: externalReference },
-      include: { owner: { select: { email: true, name: true } } },
-    });
+  const restaurantId = mpPayment?.externalReference || externalReference;
+  if (!restaurantId) {
+    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
   }
-  if (!restaurant && preapprovalId) {
-    restaurant = await prisma.restaurant.findFirst({
-      where: { mpSubscriptionId: preapprovalId },
-      include: { owner: { select: { email: true, name: true } } },
-    });
-  }
+
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    include: { owner: { select: { email: true, name: true } } },
+  });
 
   if (!restaurant || !restaurant.pendingMpPlanId) {
     return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
@@ -45,23 +52,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${restaurant.plan}`);
   }
 
-  // Verificar estado de la suscripcion en MP
-  if (preapprovalId) {
-    try {
-      const mpSub = await getMPSubscription(preapprovalId);
-      if (mpSub.status !== "authorized" && mpSub.status !== "pending") {
-        await prisma.restaurant.update({ where: { id: restaurant.id }, data: { pendingMpPlanId: null } });
-        const hasLead = await prisma.lead.findFirst({ where: { generatedSlug: restaurant.slug }, select: { id: true } });
-        const errorPage = hasLead ? "activar" : "registrar";
-        return NextResponse.redirect(`${baseUrl}/${errorPage}/${restaurant.slug}?pago=error&reason=subscription_rejected`);
-      }
-    } catch (err: any) {
-      console.error("[activar/pay/return] getMPSubscription falló:", err?.message);
-      // Continuamos — MP ya redirigió con éxito
-    }
+  // Verificar estado del pago
+  if (mpPayment && mpPayment.status !== "approved" && paymentStatus !== "approved") {
+    await prisma.restaurant.update({ where: { id: restaurant.id }, data: { pendingMpPlanId: null } });
+    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}?pago=error&reason=payment_rejected`);
   }
 
-  const appPlan = planFromFlowId(restaurant.pendingMpPlanId) || "PREMIUM";
+  const appPlan = (planFromFlowId(restaurant.pendingMpPlanId) || planParam || "PREMIUM") as "SILVER" | "GOLD" | "PREMIUM";
   const planKey = appPlan as Exclude<PlanKey, "FREE">;
   const chargeGross = grossOf(FLOW_PLANS[planKey].amountNet);
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -72,10 +69,10 @@ export async function GET(req: NextRequest) {
       where: { id: restaurant.id },
       data: {
         isDemo: false, plan: appPlan, subscriptionStatus: "ACTIVE",
-        mpSubscriptionId: preapprovalId || null,
-        flowPlanId: restaurant.pendingMpPlanId,
+        mpPlanId: restaurant.pendingMpPlanId,
         currentPeriodEnd: periodEnd, lastPaymentAt: new Date(),
         pendingMpPlanId: null, weeklyEmailEnabled: true,
+        mpSubscriptionId: null, // No hay suscripción recurrente
       },
     }),
     prisma.dish.updateMany({ where: { restaurantId: restaurant.id, isPhotoReferential: true }, data: { photos: [], isPhotoReferential: false, photoCredits: [] } }),
@@ -106,7 +103,7 @@ export async function GET(req: NextRequest) {
     purpose: "admin_new_activation",
   }).catch(() => {});
 
-  // Traduccion para Gold y Premium (multilang feature)
+  // Traducción para Gold y Premium (multilang feature)
   if (appPlan === "GOLD" || appPlan === "PREMIUM") {
     import("@/lib/ai/translateContent").then(({ translateAllForRestaurant }) => {
       translateAllForRestaurant(restaurant.id)

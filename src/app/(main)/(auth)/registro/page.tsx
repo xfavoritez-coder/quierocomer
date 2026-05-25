@@ -100,7 +100,7 @@ function RegistroContent() {
       const effectiveConcurso = concursoId;
       if (effectiveRef && res.userId && effectiveRef !== res.userId) {
         const refName = await fetch(`/api/usuarios/by-refcode?code=${encodeURIComponent(effectiveRef)}`).then(r => r.ok ? r.json() : null).then(d => d?.nombre).catch(() => null);
-        msg = refName ? `Activa tu cuenta desde tu correo para sumarle 3 puntos a ${refName} y ganar tu tambien 3 puntos.` : "Activa tu cuenta desde tu correo — ambos ganan 3 puntos automaticamente.";
+        msg = refName ? `Activa tu cuenta desde tu correo para sumarle 3 puntos a ${refName} y ganar tú también 3 puntos.` : "Activa tu cuenta desde tu correo — ambos ganan 3 puntos automáticamente.";
         if (effectiveConcurso) redirectToPath = `/concursos/${effectiveConcurso}`;
       }
       setRefMsg(msg); setSuccess(true);

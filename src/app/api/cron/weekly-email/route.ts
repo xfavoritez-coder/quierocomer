@@ -315,6 +315,7 @@ export async function GET(req: NextRequest) {
             subject: emailSubject,
             html: trackedHtml,
             purpose: "weekly_summary",
+            skipLog: true,
           });
           if (log) await prisma.emailLog.update({ where: { id: log.id }, data: { status: "sent" } }).catch(() => {});
         } catch {

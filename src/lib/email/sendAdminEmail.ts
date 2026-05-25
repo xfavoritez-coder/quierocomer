@@ -10,27 +10,35 @@ interface SendEmailOptions {
   subject: string;
   html: string;
   purpose?: string;
+  /** Skip creating an emailLog (caller already created one, e.g. cron jobs with tracking) */
+  skipLog?: boolean;
 }
 
-export async function sendAdminEmail({ to, subject, html, purpose = "other" }: SendEmailOptions) {
+export async function sendAdminEmail({ to, subject, html, purpose = "other", skipLog }: SendEmailOptions) {
   try {
     const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, headers: { "Content-Type": "text/html; charset=UTF-8" } });
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);
       console.error("Resend error:", errorMsg);
-      await prisma.emailLog.create({
-        data: { to, subject, purpose, status: "failed", errorMsg },
-      }).catch(() => {});
+      if (!skipLog) {
+        await prisma.emailLog.create({
+          data: { to, subject, purpose, status: "failed", errorMsg },
+        }).catch(() => {});
+      }
       throw new Error(errorMsg);
     }
 
-    const log = await prisma.emailLog.create({
-      data: { to, subject, purpose, status: "sent" },
-    }).catch(() => null);
-    return { ...data, logId: log?.id };
+    let logId: string | undefined;
+    if (!skipLog) {
+      const log = await prisma.emailLog.create({
+        data: { to, subject, purpose, status: "sent" },
+      }).catch(() => null);
+      logId = log?.id;
+    }
+    return { ...data, logId };
   } catch (err) {
-    if (!(err instanceof Error && err.message.startsWith("Resend"))) {
+    if (!skipLog && !(err instanceof Error && err.message.startsWith("Resend"))) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       await prisma.emailLog.create({
         data: { to, subject, purpose, status: "failed", errorMsg },

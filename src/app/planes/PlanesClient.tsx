@@ -150,6 +150,7 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$29.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Silver</div>
+              <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
               <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
               <div>✓ Productos sugeridos <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
@@ -158,13 +159,13 @@ export default function PlanesClient() {
           </article>
 
           <article className="qc-plan qc-premium">
-            <div className="qc-badge" style={{ background: "#dc2626", color: "#fff" }}>14 dias gratis</div>
+            <div className="qc-badge" style={{ background: "#dc2626", color: "#fff" }}>14 días gratis</div>
             <h3>Premium</h3>
             <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
-            <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 dias sin costo</div>
+            <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
-              <div>✓ Llamar al garzon <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzon recibe la notificación push</span></span></div>
+              <div>✓ Llamar al garzón <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzón recibe la notificación push</span></span></div>
               <div>✓ Clientes capturados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
               <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos invitaciones especiales a clientes de cumpleaños</span></span></div>
