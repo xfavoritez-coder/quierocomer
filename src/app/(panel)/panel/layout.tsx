@@ -348,6 +348,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               }}>
                 {tabIcon} {t.charAt(0) + t.slice(1).toLowerCase()}
                 {plan === t && <span style={{ marginLeft: 4, fontSize: "0.55rem", fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: tabBg, color: tabColor }}>Tu plan</span>}
+                {t === "PREMIUM" && plan !== "PREMIUM" && <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#dc2626", color: "#fff" }}>14d gratis</span>}
               </button>
             );
           })}

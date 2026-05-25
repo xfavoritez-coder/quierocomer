@@ -36,49 +36,47 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
 
   if (!blur) return null;
 
-  // Dispatch al PlanModal del layout — reusa el flujo correcto con Flow
-  // (no WhatsApp). Pasa la pestaña que el usuario necesita destrabar.
   const openModal = () => {
     window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: needed } }));
   };
 
-  return (
-    <>
-      <div style={{ position: "relative", cursor: "pointer" }} onClick={openModal}>
-        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", maxHeight: 420, overflow: "hidden", minHeight: 340 }}>
-          {children}
-        </div>
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 12,
-          background: "rgba(255,255,255,0.6)", borderRadius: 16, padding: 32,
-        }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: "50%",
-            background: needed === "PREMIUM" ? "linear-gradient(135deg, #F3E8FF, #E9D5FF)" : needed === "GOLD" ? "linear-gradient(135deg, #FFF8E7, #FFEDD0)" : "linear-gradient(135deg, #F1F5F9, #E2E8F0)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-          }}>
-            {needed === "PREMIUM" ? "💎" : needed === "GOLD" ? "⭐" : "🥈"}
-          </div>
-          <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "#1a1a1a", margin: 0, textAlign: "center" }}>
-            {featureInfo?.title || `Plan ${info.label}`}
-          </p>
-          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#666", margin: 0, textAlign: "center", maxWidth: 300, lineHeight: 1.5 }}>
-            {featureInfo?.cta || `Disponible en el plan ${info.label}`}
-          </p>
-          <button style={{
-            marginTop: 6, padding: "12px 28px", borderRadius: 999, border: "none",
-            background: needed === "PREMIUM" ? "#7c3aed" : needed === "GOLD" ? "#F4A623" : "#64748b",
-            color: "#fff", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer",
-            boxShadow: needed === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : needed === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
-          }}>
-            {`Desbloquear con ${info.label} →`}
-          </button>
-        </div>
-      </div>
+  const accentColor = needed === "PREMIUM" ? "#7c3aed" : needed === "GOLD" ? "#F4A623" : "#64748b";
 
-    </>
+  return (
+    <div style={{ position: "relative", cursor: "pointer" }} onClick={openModal}>
+      <div style={{ filter: "blur(4px)", opacity: 0.4, pointerEvents: "none", userSelect: "none", maxHeight: 420, overflow: "hidden", minHeight: 340 }}>
+        {children}
+      </div>
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 12,
+        background: "var(--adm-gate-bg, rgba(255,255,255,0.6))",
+        borderRadius: 16, padding: 32,
+      }}>
+        <div style={{
+          width: 64, height: 64, borderRadius: "50%",
+          background: `${accentColor}18`,
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem",
+          border: `2px solid ${accentColor}30`,
+        }}>
+          {needed === "PREMIUM" ? "💎" : needed === "GOLD" ? "⭐" : "🥈"}
+        </div>
+        <p style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)", margin: 0, textAlign: "center" }}>
+          {featureInfo?.title || `Plan ${info.label}`}
+        </p>
+        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2, #666)", margin: 0, textAlign: "center", maxWidth: 300, lineHeight: 1.5 }}>
+          {featureInfo?.cta || `Disponible en el plan ${info.label}`}
+        </p>
+        <button style={{
+          marginTop: 6, padding: "12px 28px", borderRadius: 999, border: "none",
+          background: accentColor, color: "#fff",
+          fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer",
+          boxShadow: `0 4px 16px ${accentColor}40`,
+        }}>
+          {`Desbloquear con ${info.label} →`}
+        </button>
+      </div>
+    </div>
   );
 }

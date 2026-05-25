@@ -243,6 +243,7 @@
   --adm-card-shadow: none;
   --adm-select-bg: #1a1a1a;
   --adm-toggle-off: #444444;
+  --adm-gate-bg: rgba(14,14,14,0.75);
 }
 .theme-light {
   --adm-bg: #FFFFFF;
