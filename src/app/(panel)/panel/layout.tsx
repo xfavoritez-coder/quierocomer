@@ -99,13 +99,13 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
 function PlanFeatureRow({ text, tip, color }: { text: string; tip: string; color: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>
-        <span style={{ color, fontSize: "0.82rem", flexShrink: 0 }}>✓</span>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "#444", flex: 1 }}>{text}</span>
-        <span style={{ width: 15, height: 15, borderRadius: "50%", background: open ? "#1a1a1a" : "#e8e3d8", color: open ? "#fff" : "#888", fontSize: "8px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>i</span>
+    <div style={{ padding: "4px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>
+        <span style={{ color, fontSize: "0.9rem", flexShrink: 0 }}>✓</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.88rem", color: "var(--adm-text, #333)", flex: 1 }}>{text}</span>
+        <span style={{ width: 16, height: 16, borderRadius: "50%", background: open ? `${color}` : "var(--adm-input, #e8e3d8)", color: open ? "#fff" : "var(--adm-text3, #888)", fontSize: "9px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>i</span>
       </div>
-      {open && <p style={{ margin: "4px 0 2px 20px", fontSize: "0.78rem", color: "#888", lineHeight: 1.45 }}>{tip}</p>}
+      {open && <p style={{ margin: "6px 0 2px 24px", fontSize: "0.82rem", color: "var(--adm-text2, #888)", lineHeight: 1.5 }}>{tip}</p>}
     </div>
   );
 }
@@ -349,7 +349,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               }}>
                 {tabIcon} {t.charAt(0) + t.slice(1).toLowerCase()}
                 {plan === t && <span style={{ marginLeft: 4, fontSize: "0.55rem", fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: tabBg, color: tabColor }}>Tu plan</span>}
-                {t === "PREMIUM" && plan !== "PREMIUM" && <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#dc2626", color: "#fff" }}>14d gratis</span>}
+                {t === "PREMIUM" && plan !== "PREMIUM" && <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#dc2626", color: "#fff" }}>Gratis</span>}
               </button>
             );
           })}
@@ -414,7 +414,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
             borderRadius: 12, padding: "14px 16px", marginBottom: 18,
             border: `1px solid ${borderColor}`,
           }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {PLAN_INHERITS_FROM[tab] && (
               <PlanFeatureRow
                 text={PLAN_INHERITS_FROM[tab] || ""}
