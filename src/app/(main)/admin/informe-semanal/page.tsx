@@ -10,10 +10,13 @@ interface EmailEntry {
   openedAt?: string | null; clickedAt?: string | null;
 }
 
+type Filter = "all" | "opened" | "not_opened" | "clicked" | "failed";
+
 export default function InformeSemanalPage() {
   const [logs, setLogs] = useState<EmailEntry[]>([]);
   const [stats, setStats] = useState<{ total: number; sent: number; failed: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     fetch("/api/admin/informe-semanal")
@@ -57,16 +60,23 @@ export default function InformeSemanalPage() {
       </h1>
 
       {stats && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))", gap: 8, marginBottom: 20 }}>
-          <StatCard label="Enviados" value={stats.sent} color="#3b82f6" />
-          <StatCard label="Abiertos" value={opened} color="#22c55e" />
-          <StatCard label="Click" value={clicked} color="#F4A623" />
-          <StatCard label="Fallidos" value={stats.failed} color="#ef4444" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))", gap: 8, marginBottom: 16 }}>
+          <StatCard label="Enviados" value={stats.sent} color="#3b82f6" active={filter === "all"} onClick={() => setFilter("all")} />
+          <StatCard label="Abiertos" value={opened} color="#22c55e" active={filter === "opened"} onClick={() => setFilter("opened")} />
+          <StatCard label="No abiertos" value={stats.sent - opened} color="#888" active={filter === "not_opened"} onClick={() => setFilter("not_opened")} />
+          <StatCard label="Click" value={clicked} color="#F4A623" active={filter === "clicked"} onClick={() => setFilter("clicked")} />
+          <StatCard label="Fallidos" value={stats.failed} color="#ef4444" active={filter === "failed"} onClick={() => setFilter("failed")} />
         </div>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {logs.map(l => (
+        {logs.filter(l => {
+          if (filter === "opened") return !!l.openedAt;
+          if (filter === "not_opened") return l.status === "sent" && !l.openedAt;
+          if (filter === "clicked") return !!l.clickedAt;
+          if (filter === "failed") return l.status === "failed";
+          return true;
+        }).map(l => (
           <div key={l.id} style={{
             background: "#1a1a1a", borderRadius: 12, padding: "12px 16px",
             border: `1px solid ${l.clickedAt ? "rgba(244,166,35,0.2)" : l.openedAt ? "rgba(34,197,94,0.2)" : "#2a2a2a"}`,
@@ -124,11 +134,19 @@ export default function InformeSemanalPage() {
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+function StatCard({ label, value, color, active, onClick }: { label: string; value: number; color: string; active?: boolean; onClick?: () => void }) {
   return (
-    <div style={{ background: "#1a1a1a", borderRadius: 10, padding: "12px 14px", border: "1px solid #2a2a2a" }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: active ? "rgba(255,255,255,0.08)" : "#1a1a1a",
+        borderRadius: 10, padding: "12px 14px",
+        border: active ? `1px solid ${color}` : "1px solid #2a2a2a",
+        cursor: "pointer", transition: "border-color 0.15s",
+      }}
+    >
       <div style={{ fontSize: 20, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 11, color: active ? "#ccc" : "#888", marginTop: 2 }}>{label}</div>
     </div>
   );
 }

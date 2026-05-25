@@ -434,36 +434,41 @@ function DishSlide({
             <h2 style={{ fontSize: "32px", fontWeight: 800, color: "var(--carta-detail-heading)", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
             </h2>
-            <div style={{ marginTop: 6 }}>
-              {dish.discountPrice ? (
-                <>
-                  <span className="line-through" style={{ color: "var(--carta-text3)", fontSize: "13px", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
-                  <span style={{ color: "var(--carta-detail-price)", fontSize: "17px" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
-                </>
-              ) : (
+            {dish.discountPrice ? (
+              <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ background: "linear-gradient(135deg, #16a34a, #15803d)", color: "#fff", fontSize: "0.78rem", fontWeight: 800, padding: "5px 12px", borderRadius: 8, whiteSpace: "nowrap", letterSpacing: "0.3px" }}>
+                  -{discountPercent}% OFERTA
+                </span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <span className="line-through" style={{ color: "var(--carta-text3)", fontSize: "14px" }}>${dish.price.toLocaleString("es-CL")}</span>
+                  <span style={{ color: "#16a34a", fontSize: "22px", fontWeight: 800 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginTop: 6 }}>
                 <span style={{ color: "var(--carta-detail-price)", fontSize: "17px" }}>${dish.price.toLocaleString("es-CL")}</span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-          {/* Badge — only one: Recomendado wins over Popular */}
-          {(isRec || popularDishIds?.has(dish.id)) && (
-            <div style={{ flexShrink: 0 }}>
-              {isRec ? (
-                <button
-                  onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
-                  style={{ background: "var(--carta-badge-bg)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
-                >
-                  ⭐ Recomendado
-                </button>
-              ) : (
-                <button
-                  onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
-                  style={{ background: "var(--carta-badge-bg)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
-                >
-                  🔥 Popular hoy
-                </button>
-              )}
-            </div>
+          {/* Badge — Recomendado or Popular (only when no discount) */}
+          {!discountPercent && (isRec || popularDishIds?.has(dish.id)) && (
+          <div style={{ flexShrink: 0 }}>
+            {isRec ? (
+              <button
+                onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
+                style={{ background: "var(--carta-badge-bg)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                ⭐ Recomendado
+              </button>
+            ) : (
+              <button
+                onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
+                style={{ background: "var(--carta-badge-bg)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                🔥 Popular hoy
+              </button>
+            )}
+          </div>
           )}
         </div>
 

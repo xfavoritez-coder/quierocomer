@@ -8,6 +8,7 @@ import {
   authErrorResponse,
   isSuperAdmin,
 } from "@/lib/adminAuth";
+import { logActivity } from "@/lib/admin/logActivity";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
         : undefined,
     };
     const promo = await prisma.promotion.create({ data: promoData, include: { modifierTemplates: { select: { id: true, name: true } } } });
+    logActivity(restaurantId, "promo_create", { promoId: promo.id, name, promoPrice, originalPrice });
     return NextResponse.json({ promotion: promo });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
@@ -156,6 +158,7 @@ export async function PUT(req: NextRequest) {
       },
       include: { modifierTemplates: { select: { id: true, name: true } } },
     });
+    logActivity(existing.restaurantId, "promo_edit", { promoId: id, name: promo.name, status: promo.status });
     return NextResponse.json({ promotion: promo });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);

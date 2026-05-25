@@ -17,7 +17,7 @@ const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; ico
   campaigns: { title: "Email marketing", desc: "Envía promos y novedades directo al correo de tus clientes.", icon: Mail },
   multilang: { title: "Carta en varios idiomas", desc: "Turistas leen tu menú en su idioma. Automático.", icon: Globe },
   clients_full: { title: "Clientes capturados", desc: "Emails, cumpleaños, preferencias. Exporta y usa donde quieras.", icon: Users },
-  suggestions: { title: "Productos sugeridos", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", icon: UtensilsCrossed },
+  suggestions: { title: "Cross-selling", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", icon: UtensilsCrossed },
 };
 
 interface Props {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+import { logActivity } from "@/lib/admin/logActivity";
 
 /** GET — list announcements for a restaurant */
 export async function GET(req: NextRequest) {
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    logActivity(restaurantId, "announcement_create", { announcementId: announcement.id, text: text.trim() });
     return NextResponse.json({ ok: true, announcement });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);

@@ -507,13 +507,9 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               <div style={{ background: "var(--adm-input, #f5f5f5)", border: "1px solid var(--adm-card-border, #eee)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
                 {isPremiumTrial ? (
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "#7c3aed", fontWeight: 700 }}>
-                      <span>Primeros 14 días</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 16, color: "#7c3aed", fontWeight: 800 }}>
+                      <span>14 días gratis</span>
                       <span>$0</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--adm-text2, #555)" }}>
-                      <span>Después del trial</span>
-                      <span>{fmt(net)} + IVA /mes</span>
                     </div>
                   </>
                 ) : (
@@ -603,17 +599,27 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     return () => window.removeEventListener("scroll", onScroll);
   }, [isDemoEarly]);
 
-  // ═══ Panel navigation tracking (demo leads) — must be before early returns ═══
+  // ═══ Panel navigation tracking — must be before early returns ═══
   const prevPathRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isDemoEarly || !selectedRestEarly?.slug) return;
-    const slug = selectedRestEarly.slug;
     const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
-    if (prevPathRef.current !== pathname) {
-      trackFunnelEventBySlug(slug, "panel_visit", { section });
-      prevPathRef.current = pathname;
+    if (prevPathRef.current === pathname) return;
+    prevPathRef.current = pathname;
+
+    // Demo leads: funnel tracking
+    if (isDemoEarly && selectedRestEarly?.slug) {
+      trackFunnelEventBySlug(selectedRestEarly.slug, "panel_visit", { section });
     }
-  }, [pathname, isDemoEarly, selectedRestEarly?.slug]);
+
+    // All restaurants: activity log
+    if (selectedRestaurantId) {
+      fetch("/api/panel/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, action: "panel_visit", details: { section } }),
+      }).catch(() => {});
+    }
+  }, [pathname, isDemoEarly, selectedRestEarly?.slug, selectedRestaurantId]);
 
   useEffect(() => {
     if (!isDemoEarly || !selectedRestEarly?.slug) return;

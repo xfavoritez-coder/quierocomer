@@ -22,7 +22,7 @@ export type Feature =
   | "stats_advanced"      // Estadisticas avanzadas (sesiones, recorridos)
   | "multilang"           // Multilenguaje (ES/EN/PT)
   | "waiter"              // Llamar al garzon
-  | "suggestions"         // Productos sugeridos (cross-sell)
+  | "suggestions"         // Cross-selling (cross-sell)
   | "campaigns"           // Email marketing
   | "automations"         // Cumpleanos automaticos
   | "clients_full"        // Clientes captados
@@ -113,7 +113,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente." },
-      { text: "Productos sugeridos", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
+      { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
     ],
     inheritsFrom: "Todo lo del plan Silver",
     isFeatured: true,

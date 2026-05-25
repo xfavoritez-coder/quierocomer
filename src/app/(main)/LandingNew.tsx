@@ -386,7 +386,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes + IVA · $478.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
-                ["Productos sugeridos", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
+                ["Cross-selling", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
                 ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
                 ["Cumpleaños automáticos", "Enviamos invitaciones especiales a clientes de cumpleaños para que lo celebren en tu restaurante"],
                 ["Clientes ilimitados", "Sin límite de clientes registrados"],

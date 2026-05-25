@@ -247,6 +247,8 @@ const ACTION_LABELS: Record<string, { icon: string; label: string; color: string
   promo_edit: { icon: "🏷️", label: "Editó oferta", color: "#F4A623" },
   settings_change: { icon: "⚙️", label: "Cambió ajustes", color: "#6b7280" },
   announcement_create: { icon: "📢", label: "Creó anuncio", color: "#22c55e" },
+  category_delete: { icon: "🗑️", label: "Eliminó categoría", color: "#ef4444" },
+  panel_visit: { icon: "👁️", label: "Visitó sección", color: "#6366f1" },
 };
 
 interface Activity {
@@ -304,6 +306,8 @@ function ActivityTimeline({ restaurantId }: { restaurantId: string }) {
                   <span style={{ fontSize: 13 }}>{cfg.icon}</span>
                   <span style={{ fontSize: 12, fontWeight: 600, color: "#ddd" }}>{cfg.label}</span>
                   {d.dishName && <span style={{ fontSize: 11, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {d.dishName}</span>}
+                  {d.name && !d.dishName && <span style={{ fontSize: 11, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {d.name}</span>}
+                  {d.section && <span style={{ fontSize: 11, color: "#888" }}>· {d.section}</span>}
                   {d.fields && <span style={{ fontSize: 10, color: "#555" }}>({d.fields.join(", ")})</span>}
                 </div>
                 <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>{time}</div>

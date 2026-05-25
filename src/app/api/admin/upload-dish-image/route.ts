@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkAdminAuth } from "@/lib/adminAuth";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
+import { logActivity } from "@/lib/admin/logActivity";
 
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -75,6 +76,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+
+    logActivity(localId, "photo_upload", { dishName, fileName, originalSize, optimizedSize });
 
     return NextResponse.json({
       url: urlData.publicUrl,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { translateCategory } from "@/lib/ai/translateContent";
+import { logActivity } from "@/lib/admin/logActivity";
 
 const ENTRY_KW = ["entrada", "compartir", "appetizer", "starter", "antipast", "aperitivo", "piqueo", "snack", "para picar", "tapas"];
 const DRINK_KW = ["bebida", "bebestible", "trago", "cerveza", "jugo", "vino", "cocktail", "cóctel", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "infusion", "agua", "drink"];
@@ -66,6 +67,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    logActivity(restaurantId, "category_create", { categoryId: category.id, name });
+
     // Translate category name to en/pt in background
     translateCategory(category.id).catch((e) => console.error("[translate cat]", e));
 
@@ -98,6 +101,7 @@ export async function PUT(req: NextRequest) {
     if (dishType !== undefined) data.dishType = dishType;
 
     const updated = await prisma.category.update({ where: { id }, data });
+    logActivity(existing.restaurantId, "category_edit", { categoryId: id, name: updated.name, fields: Object.keys(data) });
 
     // Re-translate if name changed
     if (name !== undefined) {
@@ -140,6 +144,7 @@ export async function DELETE(req: NextRequest) {
     // Delete soft-deleted dishes first to clear foreign key constraints
     await prisma.dish.deleteMany({ where: { categoryId: id, isActive: false } });
     await prisma.category.delete({ where: { id } });
+    logActivity(existing.restaurantId, "category_delete", { categoryId: id, name: existing.name });
     return NextResponse.json({ success: true });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);

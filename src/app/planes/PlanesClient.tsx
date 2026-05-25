@@ -153,7 +153,7 @@ export default function PlanesClient() {
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
               <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
-              <div>✓ Productos sugeridos <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
+              <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("GOLD")}>Elegir Gold</button>
           </article>
