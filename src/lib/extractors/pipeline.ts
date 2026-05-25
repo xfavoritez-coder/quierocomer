@@ -325,9 +325,14 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       fileConfig = configProvider?.extractionConfig || null;
     }
 
+    // Direct PDF links (e.g. .pdf URLs) → treat as document, not scrape
+    const isDirectPdf = !isFileUpload && lead.cartaUrl && /\.pdf(\?|$)/i.test(lead.cartaUrl);
+
     const extraction = isFileUpload
       ? (isDocument ? await extractFromDocument(lead.cartaFileUrl!, fileConfig) : await extractFromImage(lead.cartaFileUrl!))
-      : await extractMenu(lead.cartaUrl!, providerName, providerConfig);
+      : isDirectPdf
+        ? await extractFromDocument(lead.cartaUrl!, null)
+        : await extractMenu(lead.cartaUrl!, providerName, providerConfig);
 
     if (extraction.dishes.length === 0) {
       throw new Error("No dishes extracted from the menu");
