@@ -264,6 +264,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
   const [tab, setTab] = useState<PaidTab>(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmTab, setConfirmTab] = useState<PaidTab | null>(null);
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const FD = "var(--font-display)";
   const FB2 = "var(--font-body)";
@@ -331,7 +332,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)", position: "relative", overflow: "hidden" }}>
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)", position: "sticky", top: 0, background: "var(--adm-bg, #fff)", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
           {PAID_TABS.map(t => {
@@ -386,17 +387,12 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
             </p>}
             {(() => {
               const net = planNetAmount(tab);
-              const iva = ivaOf(net);
-              const gross = grossOf(net);
               const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
               return (
                 <>
                   <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{fmt(net)}</span>
-                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>/mes neto</span>
-                  <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "var(--adm-text2, #666)", margin: "4px 0 0" }}>
-                    + IVA 19% ({fmt(iva)}) = <strong style={{ color: "var(--adm-text, #1a1a1a)" }}>{fmt(gross)}</strong> total mensual
-                  </p>
-                  <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "2px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
+                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>+ IVA /mes</span>
+                  <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
                   {tab === "PREMIUM" && (
                     <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(124,58,237,0.1)", borderRadius: 8, border: "1px solid rgba(124,58,237,0.2)" }}>
                       <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#7c3aed" }}>14 dias gratis para probar</span>
@@ -437,18 +433,18 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
           {/* CTA */}
           {!isCurrentPlan ? (
             <button
-              onClick={handleSubscribe}
-              disabled={submitting || !restaurantId}
+              onClick={() => setConfirmTab(tab)}
+              disabled={!restaurantId}
               style={{
                 display: "block", width: "100%", padding: "14px 20px", borderRadius: 999, textAlign: "center",
-                background: submitting ? "#ccc" : tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
+                background: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
                 color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
                 textDecoration: "none", marginBottom: 8, border: "none",
-                cursor: submitting ? "wait" : "pointer",
+                cursor: "pointer",
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {submitting ? "Redirigiendo a Webpay…" : tab === "PREMIUM" ? "Empezar prueba gratis 14 días" : `Suscribirse a ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "PREMIUM" ? "Empezar prueba gratis 14 dias" : `Suscribirse a ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
@@ -472,6 +468,81 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
             Cerrar
           </button>
         </div>
+
+        {/* Confirmation overlay */}
+        {confirmTab && (() => {
+          const net = planNetAmount(confirmTab);
+          const iva = ivaOf(net);
+          const gross = grossOf(net);
+          const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
+          const isPremiumTrial = confirmTab === "PREMIUM";
+          const planLabel = confirmTab.charAt(0) + confirmTab.slice(1).toLowerCase();
+          return (
+            <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "var(--adm-bg, #fff)", borderRadius: 24, display: "flex", flexDirection: "column", justifyContent: "center", padding: "28px 24px" }}>
+              <button onClick={() => setConfirmTab(null)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: 20, cursor: "pointer" }}>←</button>
+
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#64748b", fontWeight: 700, marginBottom: 8, fontFamily: FD }}>Resumen</div>
+                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Plan {planLabel}</h3>
+              </div>
+
+              <div style={{ background: "var(--adm-input, #f5f5f5)", border: "1px solid var(--adm-card-border, #eee)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+                {isPremiumTrial ? (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#7c3aed", fontWeight: 600 }}>
+                      <span>Primeros 14 dias</span>
+                      <span>$0</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12, color: "var(--adm-text3, #888)" }}>
+                      <span>Despues del trial</span>
+                      <span>{fmt(net)} + IVA /mes</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "var(--adm-text, #333)" }}>
+                      <span>Mensualidad</span>
+                      <span style={{ fontWeight: 700 }}>{fmt(net)}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "var(--adm-text3, #888)" }}>
+                      <span>IVA (19%)</span>
+                      <span>{fmt(iva)}</span>
+                    </div>
+                    <div style={{ borderTop: "1px solid var(--adm-card-border, #ddd)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "var(--adm-text, #1a1a1a)" }}>
+                      <span>Total mensual</span>
+                      <span>{fmt(gross)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div style={{ fontSize: 12, color: "var(--adm-text3, #888)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
+                {isPremiumTrial
+                  ? "No se te cobra nada hoy. Seras redirigido a MercadoPago para registrar tu tarjeta."
+                  : "Seras redirigido a MercadoPago para completar tu pago de forma segura."
+                }
+              </div>
+
+              <button
+                onClick={handleSubscribe}
+                disabled={submitting}
+                style={{
+                  width: "100%", padding: 15, border: "none", borderRadius: 999,
+                  background: submitting ? "#ccc" : tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
+                  color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
+                  cursor: submitting ? "wait" : "pointer",
+                }}
+              >
+                {submitting ? "Redirigiendo..." : isPremiumTrial ? "Comenzar trial gratis" : `Pagar ${fmt(gross)}`}
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "var(--adm-text3, #888)" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Pago seguro via MercadoPago
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
