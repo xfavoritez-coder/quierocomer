@@ -1,22 +1,23 @@
 "use client";
 
 import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan as PlanKey } from "@/lib/plans";
+import { Tag, Megaphone, BarChart3, Globe, Bell, Mail, Cake, Users, UtensilsCrossed } from "lucide-react";
 type Plan = PlanKey;
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
-const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: string; cta: string }>> = {
-  promotions: { title: "Ofertas y promociones", desc: "Crea ofertas temporales que aparecen directo en la carta de tus clientes.", cta: "Haz que tus promos se vean" },
-  announcements: { title: "Anuncios en la carta", desc: "Lo primero que ven tus clientes al abrir la carta. Novedades, eventos, horarios.", cta: "Tu mensaje en la carta" },
-  stats_basic: { title: "Estadisticas de tu carta", desc: "Qué platos miran, qué ignoran y a qué hora llega más gente. Datos reales.", cta: "Descubre qué funciona y qué no" },
-  stats_advanced: { title: "Estadisticas avanzadas", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", cta: "Ve lo que otros no ven" },
-  waiter: { title: "Llamar al garzon", desc: "Tu cliente toca un botón y el garzón lo sabe al instante. Cero esperas.", cta: "El garzón siempre atento" },
-  automations: { title: "Cumpleaños automaticos", desc: "Bienvenida, cumpleaños, reactivación. Se envían solos, tú no haces nada.", cta: "Haz que tus clientes vuelvan sin esfuerzo" },
-  campaigns: { title: "Email marketing", desc: "Envía promos, novedades y lanzamientos directo al correo de quienes ya te conocen.", cta: "Llega a todos tus clientes con un click" },
-  multilang: { title: "Carta en varios idiomas", desc: "Turistas leen tu menú en su idioma. Automático.", cta: "Abre tu carta al mundo" },
-  clients_full: { title: "Clientes capturados", desc: "Emails, cumpleaños, preferencias. Exporta y usa donde quieras.", cta: "Tu base completa" },
-  suggestions: { title: "Productos sugeridos", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", cta: "Venta cruzada automatica" },
+const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; icon: typeof Tag }>> = {
+  promotions: { title: "Ofertas y promociones", desc: "Crea ofertas temporales que aparecen directo en la carta de tus clientes.", icon: Tag },
+  announcements: { title: "Anuncios en la carta", desc: "Lo primero que ven tus clientes al abrir la carta. Novedades, eventos, horarios.", icon: Megaphone },
+  stats_basic: { title: "Estadisticas", desc: "Qué platos miran, qué ignoran y a qué hora llega más gente.", icon: BarChart3 },
+  stats_advanced: { title: "Estadisticas avanzadas", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", icon: BarChart3 },
+  waiter: { title: "Llamar al garzon", desc: "Tu cliente toca un botón y el garzón lo sabe al instante.", icon: Bell },
+  automations: { title: "Cumpleaños automaticos", desc: "Se envían solos, tú no haces nada.", icon: Cake },
+  campaigns: { title: "Email marketing", desc: "Envía promos y novedades directo al correo de tus clientes.", icon: Mail },
+  multilang: { title: "Carta en varios idiomas", desc: "Turistas leen tu menú en su idioma. Automático.", icon: Globe },
+  clients_full: { title: "Clientes capturados", desc: "Emails, cumpleaños, preferencias. Exporta y usa donde quieras.", icon: Users },
+  suggestions: { title: "Productos sugeridos", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", icon: UtensilsCrossed },
 };
 
 interface Props {
@@ -33,7 +34,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
 
   const needed = requiredPlan(feature);
   const info = PLAN_INFO[needed];
-  const featureInfo = FEATURE_DESCRIPTIONS[feature];
+  const cfg = FEATURE_CONFIG[feature];
 
   if (!blur) return null;
 
@@ -42,22 +43,28 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
   };
 
   const accentColor = needed === "PREMIUM" ? "#7c3aed" : needed === "GOLD" ? "#F4A623" : "#64748b";
+  const Icon = cfg?.icon || Tag;
 
   return (
     <div>
-      {/* Visible header */}
+      {/* Section header with icon — visible, not blurred */}
       <div style={{ marginBottom: 16 }}>
-        <h2 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)", margin: "0 0 4px" }}>
-          {featureInfo?.title || `Plan ${info.label}`}
-        </h2>
+        <h1 style={{
+          fontFamily: F, fontSize: "1.2rem", fontWeight: 700,
+          color: "var(--adm-text, #1a1a1a)", margin: "0 0 4px",
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <Icon size={20} color="var(--adm-text3, #888)" />
+          {cfg?.title || `Plan ${info.label}`}
+        </h1>
         <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2, #666)", margin: 0, lineHeight: 1.5 }}>
-          {featureInfo?.desc || `Disponible en el plan ${info.label}`}
+          {cfg?.desc || `Disponible en el plan ${info.label}`}
         </p>
       </div>
 
       {/* Blurred content + CTA overlay */}
       <div style={{ position: "relative", cursor: "pointer" }} onClick={openModal}>
-        <div style={{ filter: "blur(4px)", opacity: 0.3, pointerEvents: "none", userSelect: "none", maxHeight: 300, overflow: "hidden" }}>
+        <div style={{ filter: "blur(3px)", opacity: 0.3, pointerEvents: "none", userSelect: "none", maxHeight: 300, overflow: "hidden" }}>
           {children}
         </div>
         <div style={{
