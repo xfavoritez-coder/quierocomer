@@ -394,8 +394,8 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>+ IVA /mes</span>
                   <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
                   {tab === "PREMIUM" && (
-                    <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(124,58,237,0.1)", borderRadius: 8, border: "1px solid rgba(124,58,237,0.2)" }}>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#7c3aed" }}>14 dias gratis para probar</span>
+                    <div style={{ marginTop: 10, padding: "8px 14px", background: "#dc2626", borderRadius: 8 }}>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>14 dias gratis para probar</span>
                     </div>
                   )}
                 </>
@@ -482,7 +482,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               <button onClick={() => setConfirmTab(null)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: 20, cursor: "pointer" }}>←</button>
 
               <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#64748b", fontWeight: 700, marginBottom: 8, fontFamily: FD }}>Resumen</div>
+                <div style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: confirmTab === "PREMIUM" ? "#7c3aed" : confirmTab === "GOLD" ? "#F4A623" : "#64748b", fontWeight: 700, marginBottom: 8, fontFamily: FD }}>Resumen</div>
                 <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Plan {planLabel}</h3>
               </div>
 
@@ -528,7 +528,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 disabled={submitting}
                 style={{
                   width: "100%", padding: 15, border: "none", borderRadius: 999,
-                  background: submitting ? "#ccc" : tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
+                  background: submitting ? "#ccc" : confirmTab === "PREMIUM" ? "#7c3aed" : confirmTab === "GOLD" ? "#F4A623" : "#475569",
                   color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
                   cursor: submitting ? "wait" : "pointer",
                 }}
