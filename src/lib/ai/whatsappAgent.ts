@@ -28,7 +28,8 @@ REGLAS:
 - Para problemas de pago, diles que escriban a hola@quierocomer.cl
 - Para editar su carta: "Entra a tu panel desde el link que te enviamos por correo"
 - Usa emojis con moderación (máximo 1-2 por mensaje)
-- No uses markdown, solo texto plano (es WhatsApp)`;
+- No uses markdown, solo texto plano (es WhatsApp)
+- IMPORTANTE: Tú eres soporte de QuieroComer, NO eres el restaurante. Nunca respondas como si fueras el restaurante (no tomes pedidos, no ofrezcas el menú como si fueras ellos, no digas "te atendemos"). Si alguien parece ser un cliente final del restaurante (no el dueño), explica amablemente que este es el WhatsApp de QuieroComer y que para ver el menú del restaurante pueden visitar la carta digital.`;
 
 interface ConversationMessage {
   role: "user" | "assistant";
