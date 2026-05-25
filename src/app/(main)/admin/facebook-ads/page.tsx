@@ -537,6 +537,57 @@ export default function FacebookAdsPage() {
             );
           })()}
 
+          {/* Daily 30 days */}
+          {(() => {
+            const days = Object.entries(daily || {}).map(([d, v]) => [d, v] as [string, { visits: number; converted: number; bounced: number }]).sort((a, b) => a[0].localeCompare(b[0]));
+            if (days.length === 0) return null;
+            const totalAll = days.reduce((s, [, d]) => s + d.visits, 0);
+            const maxD = Math.max(...days.map(([, d]) => d.visits), 1);
+            return (
+              <div className="fb-section">
+                <div className="fb-section-title" style={{ marginBottom: 20 }}>Sesiones por dia — ultimos 30 dias ({totalAll})</div>
+                <div className="fb-hourly-wrap">
+                  <div className="fb-hourly" style={{ minWidth: Math.max(days.length * 22, 500), height: 160 }}>
+                    {days.map(([day, d]) => {
+                      const barH = Math.max((d.visits / maxD) * 110, d.visits > 0 ? 8 : 3);
+                      const convH = d.converted > 0 ? Math.max((d.converted / d.visits) * barH, 4) : 0;
+                      const label = day.slice(5); // MM-DD
+                      const dayNum = parseInt(day.slice(8));
+                      const isToday = day === new Date().toISOString().slice(0, 10);
+                      return (
+                        <div key={day} className="fb-hour-col" style={{ minWidth: 18 }}>
+                          {d.converted > 0 && <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 800 }}>{d.converted}</span>}
+                          {d.visits > 0 && !d.converted && <span style={{ fontSize: 10, color: "#999", fontWeight: 700 }}>{d.visits}</span>}
+                          <div className="fb-hour-bar" style={{
+                            height: barH,
+                            display: "flex", flexDirection: "column", justifyContent: "flex-end",
+                            border: isToday ? "2px solid #F4A623" : "none",
+                            boxShadow: isToday ? "0 0 8px rgba(244,166,35,.3)" : "none",
+                            background: d.visits === 0 ? "#1a1a1a" : undefined,
+                            overflow: "hidden", position: "relative",
+                          }}>
+                            {d.visits > 0 && <>
+                              <div style={{ flex: d.visits - d.converted, background: "#3b82f6", width: "100%" }} />
+                              {convH > 0 && <div style={{ flex: d.converted, background: "#22c55e", width: "100%" }} />}
+                            </>}
+                            {d.visits > 0 && barH >= 22 && <span style={{ position: "absolute", top: 2, left: 0, right: 0, fontSize: 9, fontWeight: 700, color: "#fff", textAlign: "center" }}>{d.visits}</span>}
+                          </div>
+                          <span className="fb-hour-label" style={{ color: isToday ? "#F4A623" : dayNum === 1 ? "#aaa" : "#555", fontWeight: isToday ? 800 : dayNum === 1 ? 600 : 400, fontSize: 9 }}>
+                            {dayNum === 1 || days.indexOf(days.find(x => x[0] === day)!) === 0 ? label : dayNum}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 8 }}>
+                  <span style={{ fontSize: 10, color: "#3b82f6" }}>● Visitas</span>
+                  <span style={{ fontSize: 10, color: "#22c55e" }}>● Conversiones</span>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Campaign bars */}
           {sortedCampaigns.length > 0 && (() => {
             const maxVis = Math.max(...sortedCampaigns.map(([, c]) => c.visits), 1);
