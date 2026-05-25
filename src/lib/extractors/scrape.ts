@@ -235,6 +235,11 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const content = cleaned.length > cfgMaxChars ? cleaned.slice(0, cfgMaxChars) : cleaned;
   console.log("[Scraper] Trimmed to:", content.length, `(max: ${cfgMaxChars})`, "| Calling Claude...");
 
+  // Detect if source is a PDF (text may be scrambled/unordered)
+  const isPdf = /\.pdf(\?|$)/i.test(cartaUrl) || content.includes("Number of Pages:");
+  const pdfHint = isPdf ? `
+IMPORTANTE — TEXTO DE PDF: El contenido viene de un PDF con formato visual. Los nombres de platos y precios pueden estar SEPARADOS o DESORDENADOS en el texto. Debes reconstruir la carta asociando cada plato con su precio correcto por contexto y proximidad. No te rindas si el texto parece confuso — analiza todo el contenido completo y extrae todos los platos que puedas encontrar.` : "";
+
   const result = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
 URL: ${cartaUrl}
 Contenido:
@@ -251,7 +256,7 @@ REGLAS IMPORTANTES:
 - NO dejes price en 0 si hay un precio visible en la página
 - diet: "VEGAN" si tiene marcas veganas (🌿/V/vegan), "VEGETARIAN" si vegetariano, "OMNIVORE" si no hay indicador
 - isSpicy: true si tiene marcas de picante (🌶️/spicy/picante)
-- SOLO JSON, sin texto adicional.`);
+- SOLO JSON, sin texto adicional.${pdfHint}`);
 
   console.log("[Scraper] Claude response length:", result.length);
   const parsed = parseJSON(result);
