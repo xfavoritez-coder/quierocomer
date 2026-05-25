@@ -229,12 +229,33 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Pre-create log for tracking
+  const baseUrl = "https://quierocomer.cl";
+  const log = await prisma.emailLog.create({
+    data: { to: toParam, subject: `Tu semana en ${restaurant.name}`, purpose: "weekly_summary", status: "pending" },
+  }).catch(() => null);
+  const eid = log?.id || "";
+
+  // Inject tracking pixel + click wrapper
+  let trackedHtml = emailHtml;
+  if (eid) {
+    const openPixel = `<img src="${baseUrl}/api/funnel/track/weekly-open?eid=${eid}" width="1" height="1" style="display:none" />`;
+    trackedHtml = trackedHtml.replace("</body>", `${openPixel}</body>`);
+    trackedHtml = trackedHtml.replace(
+      /href="(https:\/\/quierocomer\.cl\/panel[^"]*)"/g,
+      `href="${baseUrl}/api/funnel/track/weekly-click?eid=${eid}&url=$1"`
+    );
+  }
+
   await sendAdminEmail({
     to: toParam,
     subject: `Tu semana en ${restaurant.name}`,
-    html: emailHtml,
+    html: trackedHtml,
     purpose: "weekly_summary",
   });
+
+  // Update log status
+  if (log) await prisma.emailLog.update({ where: { id: log.id }, data: { status: "sent" } }).catch(() => {});
 
   return NextResponse.json({ ok: true, to: toParam, restaurant: restaurant.name, isDemo: restaurant.isDemo });
 }
