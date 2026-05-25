@@ -13,6 +13,7 @@ import { groupDishesByCategory, isGeniePick } from "./utils/dishHelpers";
 import { getCarouselMode, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
 import DishDetailEsencial from "./DishDetailEsencial";
 import FabSpeedDial from "./FabSpeedDial";
+import PromoCompact from "./PromoCompact";
 import GenioFab from "./GenioFab";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -730,6 +731,16 @@ export default function CartaEsencial({
             Limpiar filtros
           </button>
         </div>
+      )}
+
+      {/* ══════ OFERTAS ══════ */}
+      {marketingPromos && marketingPromos.length > 0 && (
+        <section id="esencial-cat-promos" style={{ padding: "0 18px 16px" }}>
+          <PromoCompact promos={marketingPromos} onViewDish={(dishId) => {
+            const dish = dishes.find(d => d.id === dishId);
+            if (dish) setSelectedDish(dish);
+          }} />
+        </section>
       )}
 
       {/* ══════ DISH CATEGORIES + CARDS ══════ */}

@@ -42,7 +42,7 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
             key={p.id}
             onClick={() => { if (dish && onViewDish) onViewDish(dish.id); }}
             style={{
-              width: "100%", height: 130, borderRadius: 18, overflow: "hidden", position: "relative",
+              width: "100%", height: 150, borderRadius: 18, overflow: "hidden", position: "relative",
               background: "#111", display: "flex", border: "none", cursor: "pointer", textAlign: "left",
             }}
           >
@@ -81,12 +81,12 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
               )}
               <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                 {p.promoPrice && (
-                  <span style={{ fontSize: 14, fontWeight: 900, color: "var(--carta-accent, #F4A623)" }}>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: "var(--carta-accent, #F4A623)" }}>
                     ${p.promoPrice.toLocaleString("es-CL")}
                   </span>
                 )}
                 {p.originalPrice && p.promoPrice && (
-                  <del style={{ fontSize: 11, color: "#666" }}>
+                  <del style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}>
                     ${p.originalPrice.toLocaleString("es-CL")}
                   </del>
                 )}
