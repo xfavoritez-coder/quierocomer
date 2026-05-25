@@ -103,7 +103,7 @@ function PlanFeatureRow({ text, tip, color }: { text: string; tip: string; color
       <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>
         <span style={{ color, fontSize: "0.9rem", flexShrink: 0 }}>✓</span>
         <span style={{ fontFamily: "var(--font-body)", fontSize: "0.88rem", color: "var(--adm-text, #333)", flex: 1 }}>{text}</span>
-        <span style={{ width: 16, height: 16, borderRadius: "50%", background: open ? `${color}` : "var(--adm-input, #e8e3d8)", color: open ? "#fff" : "var(--adm-text3, #888)", fontSize: "9px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>i</span>
+        <span style={{ width: 20, height: 20, borderRadius: "50%", background: open ? `${color}` : `${color}20`, color: open ? "#fff" : color, fontSize: "11px", fontWeight: 800, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s", border: `1px solid ${color}30` }}>i</span>
       </div>
       {open && <p style={{ margin: "6px 0 2px 24px", fontSize: "0.82rem", color: "var(--adm-text2, #888)", lineHeight: 1.5 }}>{tip}</p>}
     </div>
@@ -341,7 +341,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
             const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : "#F1F5F9";
             const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🥈";
             return (
-              <button key={t} onClick={() => setTab(t)} style={{
+              <button key={t} onClick={() => { setTab(t); setConfirmTab(null); }} style={{
                 flex: 1, padding: "14px 0", border: "none", cursor: "pointer",
                 fontFamily: FD, fontSize: "0.82rem", fontWeight: 700, background: "transparent",
                 color: tab === t ? tabColor : "#ccc",
