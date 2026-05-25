@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Sparkles, List, BookOpen, Rocket, LayoutGrid } from "lucide-react";
 import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
@@ -202,7 +202,26 @@ export default function CartaRouter(props: Props) {
 
   const readyKey = readyKeyRef.current;
   const activeHH = getActiveHappyHour(props.happyHours || []);
-  const pricedDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
+  const hhDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
+
+  // Inject promo discountPrice for dishes in active marketing promotions
+  const pricedDishes = useMemo(() => {
+    const promos: any[] = props.marketingPromos || [];
+    const promoMap = new Map<string, number>();
+    for (const p of promos) {
+      if (p.status !== "ACTIVE" || !p.promoPrice || !p.dishIds?.length) continue;
+      for (const did of p.dishIds) {
+        if (!promoMap.has(did)) promoMap.set(did, p.promoPrice);
+      }
+    }
+    if (promoMap.size === 0) return hhDishes;
+    return hhDishes.map((d: any) => {
+      if (d.discountPrice) return d;
+      const pp = promoMap.get(d.id);
+      if (!pp) return d;
+      return { ...d, discountPrice: pp };
+    });
+  }, [hhDishes, props.marketingPromos]);
 
   // Apply demo genio reorder: push vegan dishes to top
   const orderedDishes = (() => {
