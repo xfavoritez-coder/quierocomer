@@ -556,7 +556,7 @@ export default function FacebookAdsPage() {
                       const isToday = day === new Date().toISOString().slice(0, 10);
                       return (
                         <div key={day} className="fb-hour-col" style={{ minWidth: 18 }}>
-                          {d.converted > 0 && <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 800 }}>{d.converted}</span>}
+                          {d.converted > 0 && <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 800 }}>{Math.round((d.converted / d.visits) * 100)}%</span>}
                           {d.visits > 0 && !d.converted && <span style={{ fontSize: 10, color: "#999", fontWeight: 700 }}>{d.visits}</span>}
                           <div className="fb-hour-bar" style={{
                             height: barH,
