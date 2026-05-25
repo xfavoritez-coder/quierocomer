@@ -84,7 +84,7 @@ ${trimmedText}`;
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 16000,
+      max_tokens: 32000,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -98,13 +98,30 @@ ${trimmedText}`;
 
   let parsed: any;
   try { parsed = JSON.parse(match[0]); } catch {
-    // Try to fix truncated JSON
-    let jsonStr = match[0].replace(/,\s*\{[^}]*$/, "").replace(/,\s*$/, "");
+    // Robust truncated JSON repair
+    let jsonStr = match[0]
+      .replace(/,\s*\{[^}]*$/, "")
+      .replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "")
+      .replace(/,\s*"[^"]*$/, "")
+      .replace(/,\s*$/, "");
+    const quoteCount = (jsonStr.match(/(?<!\\)"/g) || []).length;
+    if (quoteCount % 2 !== 0) jsonStr += '"';
     let o = 0, c = 0; for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
     for (let i = 0; i < o - c; i++) jsonStr += "]";
     let oo = 0, cc = 0; for (const ch of jsonStr) { if (ch === "{") oo++; if (ch === "}") cc++; }
     for (let i = 0; i < oo - cc; i++) jsonStr += "}";
-    parsed = JSON.parse(jsonStr);
+    try { parsed = JSON.parse(jsonStr); } catch {
+      // Last resort: find longest valid JSON prefix
+      for (let end = jsonStr.length; end > 100; end--) {
+        let attempt = jsonStr.slice(0, end);
+        const bk = (attempt.match(/\[/g) || []).length - (attempt.match(/\]/g) || []).length;
+        const br = (attempt.match(/\{/g) || []).length - (attempt.match(/\}/g) || []).length;
+        for (let i = 0; i < bk; i++) attempt += "]";
+        for (let i = 0; i < br; i++) attempt += "}";
+        try { parsed = JSON.parse(attempt); break; } catch {}
+      }
+      if (!parsed) throw new Error("Could not repair truncated JSON");
+    }
   }
 
   // Fetch Unsplash photos
@@ -166,7 +183,7 @@ async function extractPdfWithVision(buffer: Buffer, apiKey: string): Promise<Ext
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-beta": "pdfs-2024-09-25", "content-type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 16000,
+      max_tokens: 32000,
       messages: [{
         role: "user",
         content: [
