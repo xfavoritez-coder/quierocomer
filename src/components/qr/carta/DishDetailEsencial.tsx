@@ -215,6 +215,14 @@ export default function DishDetailEsencial({
 
           {/* Price */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+          {dish.discountPrice && dish.discountPrice < dish.price && (
+            <span style={{
+              fontSize: 11, fontWeight: 800, color: C.paper, background: C.gold,
+              padding: "3px 10px", borderRadius: 50, letterSpacing: "0.05em",
+            }}>
+              -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}% OFERTA
+            </span>
+          )}
           {dish.discountPrice && (
             <span style={{
               fontFamily: "Georgia, serif", fontSize: 14,
@@ -225,7 +233,7 @@ export default function DishDetailEsencial({
           )}
           <span style={{
             fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: 20, fontWeight: 500, color: C.ink,
+            fontSize: 20, fontWeight: 500, color: dish.discountPrice ? C.gold : C.ink,
           }}>
             ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
           </span>

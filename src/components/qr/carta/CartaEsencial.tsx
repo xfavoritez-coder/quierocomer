@@ -642,6 +642,69 @@ export default function CartaEsencial({
         </section>
       )}
 
+      {/* ══════ OFERTAS ══════ */}
+      {marketingPromos && marketingPromos.length > 0 && (
+        <section id="esencial-cat-promos" style={{ padding: "10px 18px 0" }}>
+          <div style={{
+            padding: "16px 20px", borderRadius: 16,
+            background: C.heroBg, border: `1px solid ${C.line}`,
+          }}>
+            <div style={{
+              display: "inline-block", fontSize: 10, fontWeight: 800, letterSpacing: ".18em",
+              textTransform: "uppercase", color: C.paper, background: C.gold,
+              padding: "4px 10px", borderRadius: 50, marginBottom: 12,
+            }}>
+              Ofertas
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {marketingPromos.map((p: any, idx: number) => {
+                const dish = p.dishes?.[0];
+                const pct = p.originalPrice && p.promoPrice
+                  ? Math.round(((p.originalPrice - p.promoPrice) / p.originalPrice) * 100)
+                  : null;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { if (dish) { const d = dishes.find((dd: any) => dd.id === dish.id); if (d) setSelectedDish(d); } }}
+                    style={{
+                      width: "100%", background: "none", border: "none", cursor: "pointer",
+                      textAlign: "left", padding: "10px 0",
+                      borderBottom: idx < marketingPromos.length - 1 ? `1px solid ${C.line}` : "none",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, lineHeight: 1.2 }}>{p.name}</div>
+                        {p.description && (
+                          <div style={{ fontSize: 13, color: C.muted, marginTop: 3, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.description}</div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexShrink: 0, marginLeft: 12 }}>
+                        {p.originalPrice && (
+                          <span style={{ fontSize: 13, color: C.muted, textDecoration: "line-through" }}>
+                            ${p.originalPrice.toLocaleString("es-CL")}
+                          </span>
+                        )}
+                        {p.promoPrice && (
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.gold }}>
+                            ${p.promoPrice.toLocaleString("es-CL")}
+                          </span>
+                        )}
+                        {pct && (
+                          <span style={{ fontSize: 11, fontWeight: 800, color: C.paper, background: C.gold, padding: "2px 7px", borderRadius: 6 }}>
+                            -{pct}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ══════ CATEGORY PILLS ══════ */}
       <nav ref={catScrollRef} style={{
         position: onboardingActive ? "relative" : "sticky", top: onboardingActive ? undefined : ((restaurant as any).isDemo ? 115 : 0), zIndex: 15,
@@ -732,69 +795,6 @@ export default function CartaEsencial({
         </div>
       )}
 
-      {/* ══════ OFERTAS ══════ */}
-      {marketingPromos && marketingPromos.length > 0 && (
-        <section id="esencial-cat-promos" style={{ padding: "0 18px 20px" }}>
-          <div style={{
-            padding: "16px 20px", borderRadius: 16,
-            background: C.heroBg, border: `1px solid ${C.line}`,
-          }}>
-            <div style={{
-              display: "inline-block", fontSize: 10, fontWeight: 800, letterSpacing: ".18em",
-              textTransform: "uppercase", color: C.paper, background: C.gold,
-              padding: "4px 10px", borderRadius: 50, marginBottom: 12,
-            }}>
-              Ofertas
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {marketingPromos.map((p: any) => {
-                const dish = p.dishes?.[0];
-                const pct = p.originalPrice && p.promoPrice
-                  ? Math.round(((p.originalPrice - p.promoPrice) / p.originalPrice) * 100)
-                  : null;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => { if (dish) { const d = dishes.find((dd: any) => dd.id === dish.id); if (d) setSelectedDish(d); } }}
-                    style={{
-                      width: "100%", background: "none", border: "none", cursor: "pointer",
-                      textAlign: "left", padding: "10px 0",
-                      borderBottom: `1px solid ${C.line}`,
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, lineHeight: 1.2 }}>{p.name}</div>
-                        {p.description && (
-                          <div style={{ fontSize: 13, color: C.muted, marginTop: 3, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.description}</div>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexShrink: 0, marginLeft: 12 }}>
-                        {p.originalPrice && (
-                          <span style={{ fontSize: 13, color: C.muted, textDecoration: "line-through" }}>
-                            ${p.originalPrice.toLocaleString("es-CL")}
-                          </span>
-                        )}
-                        {p.promoPrice && (
-                          <span style={{ fontSize: 18, fontWeight: 800, color: C.gold }}>
-                            ${p.promoPrice.toLocaleString("es-CL")}
-                          </span>
-                        )}
-                        {pct && (
-                          <span style={{ fontSize: 11, fontWeight: 800, color: C.paper, background: C.gold, padding: "2px 7px", borderRadius: 6 }}>
-                            -{pct}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ══════ DISH CATEGORIES + CARDS ══════ */}
       {grouped.map(({ category, dishes: catDishes }) => (
         <section key={category.id} id={`esencial-cat-${category.id}`} style={{ padding: "0 18px 24px" }}>
@@ -843,10 +843,22 @@ export default function CartaEsencial({
                   }}
                 >
                   {/* highlight badges */}
-                  {(isHighlight || isPopular) && (
+                  {(isHighlight || isPopular || (dish.discountPrice && dish.discountPrice < dish.price)) && (
                     <div style={{
                       display: "flex", alignItems: "center", gap: 6, marginBottom: 4,
                     }}>
+                      {dish.discountPrice && dish.discountPrice < dish.price && (
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          padding: "3px 10px", borderRadius: 50,
+                          background: C.gold, color: C.paper,
+                          fontSize: 10, fontWeight: 800,
+                          letterSpacing: ".05em", textTransform: "uppercase",
+                          fontFamily: "system-ui, sans-serif",
+                        }}>
+                          -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}% OFF
+                        </span>
+                      )}
                       {isHighlight && (
                         <span style={{
                           display: "inline-flex", alignItems: "center", gap: 4,
@@ -880,14 +892,8 @@ export default function CartaEsencial({
                       fontSize: 16, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase",
                       color: C.ink, lineHeight: 1.3, flex: 1, minWidth: 0,
                       fontFamily: "system-ui, -apple-system, sans-serif",
-                      display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
                     }}>
                       {dish.name}
-                      {dish.discountPrice && dish.discountPrice < dish.price && (
-                        <span style={{ fontSize: 10, fontWeight: 800, color: C.paper, background: C.gold, padding: "2px 8px", borderRadius: 50, letterSpacing: "0.05em", textTransform: "none" }}>
-                          -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}%
-                        </span>
-                      )}
                     </span>
                     <span style={{
                       fontSize: 15, fontWeight: 500, color: C.ink, flexShrink: 0, whiteSpace: "nowrap",

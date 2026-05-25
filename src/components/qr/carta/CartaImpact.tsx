@@ -215,7 +215,7 @@ function ImpactHeroSlider({
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {d.discountPrice && d.discountPrice < d.price && (
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "4px 11px", borderRadius: 50 }}>
               -{Math.round(((d.price - d.discountPrice) / d.price) * 100)}%
             </span>
           )}
@@ -431,7 +431,7 @@ function FeaturedSection({
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {f.discountPrice && f.discountPrice < f.price && (
-                      <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 8px", borderRadius: 50 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>
                         -{Math.round(((f.price - f.discountPrice) / f.price) * 100)}%
                       </span>
                     )}
@@ -598,7 +598,7 @@ function ImpactDishCard({
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
           {dish.discountPrice && dish.discountPrice < dish.price && (
-            <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "2px 8px", borderRadius: 50 }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>
               -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}%
             </span>
           )}

@@ -302,8 +302,8 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
           {hasDiscount && (
             <span style={{
               position: "absolute", top: isNew ? 34 : 10, left: 10,
-              fontSize: 11, fontWeight: 800, color: "#fff",
-              background: "var(--carta-accent, #F4A623)", padding: "4px 10px", borderRadius: 50,
+              fontSize: 13, fontWeight: 800, color: "#fff",
+              background: "var(--carta-accent, #F4A623)", padding: "4px 12px", borderRadius: 50,
               letterSpacing: "0.3px",
             }}>
               -{Math.round(100 - (dish.discountPrice! / dish.price) * 100)}% OFF

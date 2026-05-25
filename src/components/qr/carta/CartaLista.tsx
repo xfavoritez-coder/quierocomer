@@ -757,7 +757,7 @@ function DishListCard({
         )}
         {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
         {dish.discountPrice && dish.discountPrice < dish.price && (
-          <span style={{ position: "absolute", top: isNew ? 26 : 6, left: 6, fontSize: "9px", fontWeight: 800, color: "white", background: "var(--carta-accent, #F4A623)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>
+          <span style={{ position: "absolute", top: isNew ? 26 : 6, left: 6, fontSize: "11px", fontWeight: 800, color: "white", background: "var(--carta-accent, #F4A623)", padding: "3px 9px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>
             -{Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)}%
           </span>
         )}
