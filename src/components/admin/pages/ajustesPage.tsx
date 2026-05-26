@@ -36,8 +36,8 @@ const ACCENT_OPTIONS = [
 ];
 
 const VIEW_OPTIONS = [
-  { value: "lista", label: "Lista", icon: List },
   { value: "esencial", label: "Esencial", icon: FileText },
+  { value: "lista", label: "Lista", icon: List },
   { value: "impact", label: "Impact", icon: Rocket },
 ];
 
@@ -62,7 +62,8 @@ function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void })
 }
 
 export default function AjustesPage() {
-  const { selectedRestaurantId } = useAdminSession();
+  const { selectedRestaurantId, restaurants } = useAdminSession();
+  const currentRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
   const { activePlan } = usePanelSession();
   const [data, setData] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,6 +122,50 @@ export default function AjustesPage() {
     <div style={{ maxWidth: 640 }}>
       <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Settings size={20} color="var(--adm-text3)" /> Ajustes</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura las opciones de tu carta y local</p>
+
+      {/* Link de la carta */}
+      {currentRestaurant?.slug && (
+        <div style={{
+          background: "linear-gradient(135deg, rgba(244,166,35,.08), rgba(244,166,35,.03))",
+          border: "1px solid rgba(244,166,35,.2)",
+          borderRadius: 16, padding: "18px 20px", marginBottom: 16,
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: "rgba(244,166,35,.12)", display: "grid", placeItems: "center",
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>Tu carta</p>
+            <a
+              href={`https://quierocomer.cl/qr/${currentRestaurant.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontFamily: FB, fontSize: "0.85rem", color: GOLD, textDecoration: "none", wordBreak: "break-all", fontWeight: 600 }}
+            >
+              quierocomer.cl/qr/{currentRestaurant.slug}
+            </a>
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(`https://quierocomer.cl/qr/${currentRestaurant.slug}`);
+              toast.success("Link copiado");
+            }}
+            style={{
+              padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+              background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.75rem", fontWeight: 700,
+              flexShrink: 0, whiteSpace: "nowrap",
+            }}
+          >
+            Copiar
+          </button>
+        </div>
+      )}
 
       {/* Vista por defecto — FIRST */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
