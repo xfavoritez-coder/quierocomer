@@ -416,13 +416,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             )}
           </div>
         </div>
-        ) : (clientes?.totalSessions ?? 0) < 3 ? null : (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
-          <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-            Aún no tenemos suficiente información sobre tus clientes. A medida que usen tu carta, aquí aparecerán sus preferencias y perfiles.
-          </p>
-        </div>
-        )}
+        ) : null}
       </div>
 
       {/* ═══ Búsqueda top — Categoría favorita movida al HeroKpi 4 (mini) ═══ */}

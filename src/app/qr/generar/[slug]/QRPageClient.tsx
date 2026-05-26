@@ -8,21 +8,24 @@ interface Props {
   restaurant: { id: string; slug: string; name: string; logoUrl: string | null; qrToken: string | null };
 }
 
-type Size = "small" | "medium" | "large";
+type Size = "small" | "medium" | "large" | "custom";
 
 // QR size = the actual QR code. Padding = margin between QR and cut lines.
 const PADDING_MM = 5; // 5mm margin around QR inside cut lines
 
-const SIZE_CONFIG: Record<Size, { label: string; desc: string; qrMm: number }> = {
-  small: { label: "Pequeño", desc: "5×5 cm — para pegar en la mesa", qrMm: 50 },
-  medium: { label: "Mediano", desc: "8×8 cm — tent card de mesa", qrMm: 80 },
-  large: { label: "Grande", desc: "12×12 cm — para pared o vitrina", qrMm: 120 },
+const SIZE_CONFIG: Record<string, { label: string; desc: string; qrMm: number }> = {
+  small: { label: "Pequeño", desc: "5×5 cm", qrMm: 50 },
+  medium: { label: "Mediano", desc: "8×8 cm", qrMm: 80 },
+  large: { label: "Grande", desc: "12×12 cm", qrMm: 120 },
+  custom: { label: "Personalizado", desc: "", qrMm: 0 },
 };
 
 const BASE_URL = "https://quierocomer.cl";
 
 export default function QRPageClient({ restaurant }: Props) {
   const [size, setSize] = useState<Size>("medium");
+  const [customMm, setCustomMm] = useState(70);
+  const [customInput, setCustomInput] = useState("7");
   const [quantity, setQuantity] = useState(4);
   const [quantityInput, setQuantityInput] = useState("4");
   const [generating, setGenerating] = useState(false);
@@ -83,11 +86,55 @@ export default function QRPageClient({ restaurant }: Props) {
 
   const finalQr = restaurant.logoUrl ? qrWithLogo || qrPreview : qrPreview;
 
+  const getQrMm = () => size === "custom" ? customMm : SIZE_CONFIG[size].qrMm;
+
+  const downloadImage = async () => {
+    if (!finalQr) return;
+    const qrMm = getQrMm();
+    const pxPerMm = 4; // ~96 DPI scale for good quality
+    const padding = PADDING_MM * pxPerMm;
+    const qrPx = qrMm * pxPerMm;
+    const cellPx = qrPx + padding * 2;
+    const cols = Math.min(quantity, Math.max(1, Math.floor(Math.sqrt(quantity))));
+    const rows = Math.ceil(quantity / cols);
+    const canvas = document.createElement("canvas");
+    canvas.width = cols * cellPx;
+    canvas.height = rows * cellPx;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const qrImg = new Image();
+    qrImg.src = finalQr;
+    await new Promise((r) => (qrImg.onload = r));
+
+    let placed = 0;
+    for (let r = 0; r < rows && placed < quantity; r++) {
+      for (let c = 0; c < cols && placed < quantity; c++) {
+        const x = c * cellPx + padding;
+        const y = r * cellPx + padding;
+        ctx.drawImage(qrImg, x, y, qrPx, qrPx);
+        // Dashed cut lines
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = "#ccc";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(c * cellPx, r * cellPx, cellPx, cellPx);
+        placed++;
+      }
+    }
+
+    const dataUrl = canvas.toDataURL("image/png");
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(`<html><head><title>QR ${restaurant.name}</title><style>body{margin:0;background:#f5f5f5;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:system-ui,sans-serif}img{max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}a{display:inline-block;margin-top:16px;padding:12px 28px;background:#F4A623;color:#fff;border-radius:50px;text-decoration:none;font-weight:700;font-size:14px}</style></head><body><img src="${dataUrl}" alt="QR"/><a href="${dataUrl}" download="QR-${restaurant.slug}-x${quantity}.png">Descargar imagen</a></body></html>`);
+      w.document.close();
+    }
+  };
+
   const generatePDF = async () => {
     setGenerating(true);
     try {
-      const cfg = SIZE_CONFIG[size];
-      const qrMm = cfg.qrMm;
+      const qrMm = getQrMm();
       const labelHeight = showLabel ? 6 : 0;
       const cellMm = qrMm + PADDING_MM * 2 + labelHeight; // total cell = QR + padding + label
       const pageW = 210, pageH = 297, margin = 10;
@@ -157,8 +204,7 @@ export default function QRPageClient({ restaurant }: Props) {
   };
 
   const perPage = (() => {
-    const cfg = SIZE_CONFIG[size];
-    const cellMm = cfg.qrMm + PADDING_MM * 2 + (showLabel ? 6 : 0);
+    const cellMm = getQrMm() + PADDING_MM * 2 + (showLabel ? 6 : 0);
     return Math.floor((210 - 20) / cellMm) * Math.floor((297 - 20) / cellMm);
   })();
 
@@ -174,7 +220,7 @@ export default function QRPageClient({ restaurant }: Props) {
               {restaurant.name}
             </h1>
           </div>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#999" }}>Genera tu código QR para imprimir</p>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#999" }}>Genera gratis tu código QR para imprimir</p>
         </div>
 
         {/* QR Preview */}
@@ -186,27 +232,40 @@ export default function QRPageClient({ restaurant }: Props) {
             {restaurant.logoUrl && (
               <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "#bbb", marginTop: 8 }}>QR con logo de tu local</p>
             )}
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#999", marginTop: 6 }}>
+              <a href={`${BASE_URL}/qr/${restaurant.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", textDecoration: "none", wordBreak: "break-all" }}>{BASE_URL}/qr/{restaurant.slug}</a>
+            </p>
           </div>
         )}
 
         {/* Size + Quantity (single step, no design selector) */}
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Tamaño del QR</h2>
-        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-          {(["small", "medium", "large"] as Size[]).map((s) => {
+        <div style={{ display: "flex", gap: 8, marginBottom: size === "custom" ? 10 : 24, flexWrap: "wrap" }}>
+          {(["small", "medium", "large", "custom"] as Size[]).map((s) => {
             const cfg = SIZE_CONFIG[s];
             return (
               <button key={s} onClick={() => setSize(s)} style={{
-                flex: 1, padding: "14px 8px", textAlign: "center",
+                flex: s === "custom" ? "1 1 100%" : 1, padding: "14px 8px", textAlign: "center",
                 background: size === s ? "#FFF4E0" : "white",
                 border: size === s ? "2px solid #F4A623" : "1px solid #eee",
                 borderRadius: 14, cursor: "pointer",
               }}>
                 <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#0e0e0e", fontWeight: 600, margin: 0 }}>{cfg.label}</p>
-                <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#999", margin: "4px 0 0" }}>{cfg.qrMm / 10}×{cfg.qrMm / 10} cm</p>
+                {s !== "custom" && <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#999", margin: "4px 0 0" }}>{cfg.qrMm / 10}×{cfg.qrMm / 10} cm</p>}
               </button>
             );
           })}
         </div>
+        {size === "custom" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+            <input type="number" min={3} max={20} step={0.5} value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              onBlur={() => { const n = Math.max(3, Math.min(20, parseFloat(customInput) || 7)); setCustomMm(Math.round(n * 10)); setCustomInput(String(n)); }}
+              style={{ flex: 1, padding: "14px 16px", background: "white", border: "1px solid #eee", borderRadius: 12, fontSize: "1.1rem", color: "#0e0e0e", textAlign: "center", outline: "none", fontFamily: "var(--font-display)", boxSizing: "border-box" }}
+            />
+            <span style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#999" }}>cm</span>
+          </div>
+        )}
 
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>¿Cuántos?</h2>
         <input type="number" min={1} max={50} value={quantityInput} onChange={(e) => setQuantityInput(e.target.value)} onBlur={() => { const n = Math.max(1, Math.min(50, parseInt(quantityInput) || 1)); setQuantity(n); setQuantityInput(String(n)); }}
@@ -216,23 +275,14 @@ export default function QRPageClient({ restaurant }: Props) {
           {perPage} por hoja · {Math.ceil(quantity / perPage)} {Math.ceil(quantity / perPage) === 1 ? "página" : "páginas"} A4
         </p>
 
-        {/* Show label toggle */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 20, padding: "12px 16px", background: "white", borderRadius: 12, border: "1px solid #eee" }}>
-          <div>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>Texto &ldquo;Ver carta&rdquo;</p>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#999", margin: "2px 0 0" }}>Aparece debajo del QR</p>
-          </div>
-          <button onClick={() => setShowLabel(!showLabel)} style={{
-            width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
-            background: showLabel ? "#F4A623" : "#ddd", transition: "background 0.2s",
-          }}>
-            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3, left: showLabel ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button onClick={generatePDF} disabled={generating} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.95rem", fontWeight: 700, cursor: generating ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generating ? 0.6 : 1 }}>
+            {generating ? "Generando..." : "Imprimir PDF"}
+          </button>
+          <button onClick={downloadImage} disabled={!finalQr} style={{ padding: "14px 20px", background: "white", color: "#0e0e0e", border: "1px solid #eee", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>
+            Imagen
           </button>
         </div>
-
-        <button onClick={generatePDF} disabled={generating} style={{ width: "100%", marginTop: 20, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.95rem", fontWeight: 700, cursor: generating ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generating ? 0.6 : 1 }}>
-          {generating ? "Generando..." : "Descargar PDF"}
-        </button>
 
         {/* Footer */}
         <div style={{ textAlign: "center", marginTop: 40 }}>

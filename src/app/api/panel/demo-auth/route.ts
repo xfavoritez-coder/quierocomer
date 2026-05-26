@@ -50,7 +50,9 @@ export async function GET(req: NextRequest) {
     data: { panelVisitedAt: new Date() },
   }).catch(() => {});
 
-  const response = NextResponse.redirect(new URL("/panel", req.url));
+  const nextPage = req.nextUrl.searchParams.get("next");
+  const redirectTo = nextPage ? `/panel/${nextPage}` : "/panel";
+  const response = NextResponse.redirect(new URL(redirectTo, req.url));
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
   response.cookies.set("panel_role", ownerRole, { ...base, httpOnly: true });
   response.cookies.set("panel_id", ownerId, { ...base, httpOnly: true });

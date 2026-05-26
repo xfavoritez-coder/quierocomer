@@ -198,7 +198,6 @@ export default function PanelDashboard() {
       </p>
       <style>{`@media (min-width: 768px) { .panel-greeting { display: block !important; } }`}</style>
 
-      {!isDemo && <TrialBanner restaurantId={selectedRestaurantId} plan={restSettings?.plan} trialEndsAt={restSettings?.trialEndsAt} subscriptionStatus={restSettings?.subscriptionStatus} />}
 
       {/* ═══ Setup checklist ═══ */}
       {!isDemo && restSettings && (() => {

@@ -97,6 +97,11 @@ ${planLabel ? `
     Entrar al panel
   </a>
 </td></tr>
+<tr><td style="text-align:center;padding-bottom:8px">
+  <a href="${panelLink}&next=qr" style="display:block;background:#fffaf1;color:#e8930a;font-size:14px;font-weight:700;padding:14px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
+    🖨️ Mi código QR gratis
+  </a>
+</td></tr>
 <tr><td style="padding-bottom:22px"></td></tr>
 </table>
 

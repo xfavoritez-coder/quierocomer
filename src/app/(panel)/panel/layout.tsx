@@ -187,15 +187,15 @@ export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTri
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontWeight: 700, margin: 0, fontSize: "0.88rem" }}>
           {daysLeft === null
-            ? `Estás disfrutando tu plan ${planLabel}`
+            ? `Plan ${planLabel}`
             : daysLeft === 0
               ? "Tu prueba termina hoy"
               : daysLeft === 1
                 ? "Te queda 1 día de prueba"
-                : `Disfruta tu plan ${planLabel} · ${daysLeft} días restantes`}
+                : `Plan ${planLabel} · ${daysLeft} días gratis`}
         </p>
         <p className="trial-sub" style={{ margin: "2px 0 0", fontSize: "0.78rem", opacity: 0.7 }}>
-          {isUrgent ? "Activa tu suscripción para no perder las funciones." : "Todas las funciones desbloqueadas."}
+          {isUrgent ? "Activa tu suscripción para no perder las funciones." : "Luego de los días gratis tu plan pasa a Gratis. No pierdes nada, puedes seguir usando nuestro servicio."}
         </p>
       </div>
     </div>

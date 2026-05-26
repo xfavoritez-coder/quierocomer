@@ -311,12 +311,12 @@ export default function SuscripcionPage() {
         )}
 
         {!isExempt && inTrial && status.trialEndsAt && (
-          <div style={{ background: "rgba(74,222,128,.06)", border: "1px solid rgba(74,222,128,.15)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
-            <p style={{ fontSize: "0.9rem", color: "#4ade80", margin: "0 0 4px", fontWeight: 700 }}>
-              Estás en periodo de prueba
+          <div style={{ background: "rgba(168,85,247,.06)", border: "1px solid rgba(168,85,247,.2)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
+            <p style={{ fontSize: "0.9rem", color: "#a855f7", margin: "0 0 4px", fontWeight: 700 }}>
+              🎁 Te regalamos Premium hasta el {formatDate(status.trialEndsAt)}
             </p>
-            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>
-              Prueba gratis hasta el <strong style={{ color: "var(--adm-text)" }}>{formatDate(status.trialEndsAt)}</strong>
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              Tu plan base es <strong style={{ color: "var(--adm-text)" }}>Gratis</strong>. Estás disfrutando todas las funciones Premium como regalo. Al terminar, tu carta sigue activa en el plan Gratis sin cobros.
             </p>
           </div>
         )}
@@ -382,32 +382,36 @@ export default function SuscripcionPage() {
               <p style={{ fontSize: "0.92rem", color: "var(--adm-text)", margin: "2px 0 0", fontWeight: 600 }}>{formatDate(status.currentPeriodEnd)}</p>
             </div>
           )}
-          <div>
-            <p style={{ fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em" }}>Cobro mensual</p>
-            <p style={{ fontSize: "0.92rem", color: "var(--adm-text)", margin: "2px 0 0", fontWeight: 600 }}>
-              {monthlyNet > 0 ? formatCLP(monthlyGross) : isExempt ? "Sin costo" : "—"}
-            </p>
-            {monthlyNet > 0 && (
-              <p style={{ fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                {formatCLP(monthlyNet)} neto + {formatCLP(monthlyIva)} IVA
-              </p>
-            )}
-          </div>
-          <div>
-            <p style={{ fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em" }}>Pasarela</p>
-            <p style={{ fontSize: "0.92rem", color: "var(--adm-text)", margin: "2px 0 0", fontWeight: 600 }}>{status.hasSubscription ? "Flow.cl (Webpay)" : "—"}</p>
-          </div>
+          {status.hasSubscription && (
+            <>
+              <div>
+                <p style={{ fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em" }}>Cobro mensual</p>
+                <p style={{ fontSize: "0.92rem", color: "var(--adm-text)", margin: "2px 0 0", fontWeight: 600 }}>
+                  {monthlyNet > 0 ? formatCLP(monthlyGross) : isExempt ? "Sin costo" : "—"}
+                </p>
+                {monthlyNet > 0 && (
+                  <p style={{ fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                    {formatCLP(monthlyNet)} neto + {formatCLP(monthlyIva)} IVA
+                  </p>
+                )}
+              </div>
+              <div>
+                <p style={{ fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em" }}>Pasarela</p>
+                <p style={{ fontSize: "0.92rem", color: "var(--adm-text)", margin: "2px 0 0", fontWeight: 600 }}>Flow.cl (Webpay)</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Actions */}
         <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16, marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {!isExempt && isFree && (
+          {!isExempt && (isFree || inTrial) && (
             <button onClick={handleUpgrade} style={{
               flex: 1, minWidth: 200, padding: "13px 18px",
               background: `linear-gradient(135deg, #ffc44f, ${GOLD})`, color: "#100b03",
               border: "none", borderRadius: 999, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 800, cursor: "pointer",
             }}>
-              Mejorar plan
+              Ver planes
             </button>
           )}
           {!isExempt && hasActiveSub && (
@@ -509,13 +513,6 @@ export default function SuscripcionPage() {
         </Card>
       )}
 
-      {/* ─── Info footer ─────────────────────── */}
-      <Card style={{ background: "rgba(255,255,255,.02)" }}>
-        <p style={{ fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.7 }}>
-          El pago es mensual y manual — no se cobra automáticamente.
-          Cuando tu periodo vence, puedes renovar desde aquí. Si no renuevas, tu plan vuelve a Gratis.
-        </p>
-      </Card>
     </div>
   );
 }

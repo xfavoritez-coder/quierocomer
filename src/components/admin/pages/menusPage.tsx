@@ -1558,7 +1558,7 @@ export default function AdminMenus() {
                   {d.photos?.[0] ? (
                     <img src={d.photos[0]} alt="" onClick={() => setPhotoModal(d.photos[0])} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", cursor: "zoom-in", display: "block" }} />
                   ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: 8, background: "var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "var(--adm-text3)" }}>🍽️</div>
+                    <div onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ width: 56, height: 56, borderRadius: 8, background: "var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "var(--adm-text3)", cursor: "pointer" }}>🍽️</div>
                   )}
                   {/* Badge destacado en la foto */}
                   {isRec && (

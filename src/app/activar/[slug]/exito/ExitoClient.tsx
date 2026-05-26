@@ -69,20 +69,19 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
           {/* Titulo */}
           <h1 className="exito-title">
-            Tu carta fue publicada con <em>éxito</em>
+            Tu carta fue activada y publicada con <em>éxito</em>
           </h1>
 
           <p className="exito-subtitle">
-            {restaurant.name} ya tiene su carta digital funcionando.
+            Ya puedes comenzar a usarla.
           </p>
 
           {/* Banner regalo Premium */}
           <div className="exito-gift">
             <div className="exito-gift-icon">🎁</div>
-            <div className="exito-gift-title">Te regalamos 14 dias de Premium</div>
+            <div className="exito-gift-title">Tienes 14 dias de Premium gratis</div>
             <p className="exito-gift-desc">
-              Explora todas las funciones avanzadas: estadisticas, clientes capturados, email marketing y mas.
-              Al terminar, tu carta sigue activa en el plan Gratis — sin cobros.
+              Te hemos activado un regalo de 14 dias de plan Premium. Al terminar, tu carta seguirá activa en el plan Gratis — sin cobros.
             </p>
           </div>
 
@@ -132,7 +131,8 @@ body { background: var(--black) !important; color: var(--cream) !important; font
 .exito-title em { color: var(--amber); font-style: italic; }
 .exito-subtitle { color: var(--cream-soft); font-size: 15px; line-height: 1.5; margin-bottom: 20px; }
 .exito-gift { background: radial-gradient(circle at 50% 100%, rgba(232,163,61,.12), transparent 60%), rgba(255,255,255,.03); border: 1px solid rgba(232,163,61,.25); border-radius: 20px; padding: 20px; margin-bottom: 24px; text-align: center; }
-.exito-gift-icon { font-size: 32px; margin-bottom: 8px; }
+.exito-gift-icon { font-size: 32px; margin-bottom: 8px; filter: drop-shadow(0 0 8px rgba(232,163,61,.6)) drop-shadow(0 0 20px rgba(232,163,61,.3)); animation: giftGlow 2s ease-in-out infinite; }
+@keyframes giftGlow { 0%,100% { filter: drop-shadow(0 0 8px rgba(232,163,61,.5)) drop-shadow(0 0 20px rgba(232,163,61,.2)); } 50% { filter: drop-shadow(0 0 12px rgba(232,163,61,.8)) drop-shadow(0 0 28px rgba(232,163,61,.4)); } }
 .exito-gift-title { font-family: Georgia, serif; font-size: 20px; font-weight: 400; color: var(--amber); margin-bottom: 8px; }
 .exito-gift-desc { font-size: 13px; color: var(--cream-soft); line-height: 1.5; margin: 0; }
 .exito-steps { text-align: left; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 20px; padding: 20px; margin-bottom: 24px; }
