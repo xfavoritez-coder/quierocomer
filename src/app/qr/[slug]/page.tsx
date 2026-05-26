@@ -156,6 +156,13 @@ export default async function CartaPage({
     announcements: activeAnnouncements,
   };
 
+  // Fetch lead data for DemoBanner inline form (only if demo)
+  const leadData = (restaurant as any).isDemo ? await prisma.lead.findFirst({
+    where: { generatedSlug: slug },
+    select: { ownerName: true, email: true, whatsapp: true },
+    orderBy: { createdAt: "desc" },
+  }) : null;
+
   const colorMode = (restaurant as any).cartaColorMode || "LIGHT";
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
   const accentColor = (restaurant as any).cartaAccentColor || null;
@@ -197,7 +204,7 @@ export default async function CartaPage({
       )}
       {(restaurant as any).isDemo && !isShowcase && (
         <>
-          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} context="carta" />
+          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} />
           <DemoOnboarding restaurantSlug={slug} onboardingDone={(restaurant as any).demoOnboardingDone} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} />
         </>
       )}

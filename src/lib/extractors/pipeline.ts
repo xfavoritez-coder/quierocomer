@@ -613,49 +613,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
-    // Send email with carta link (priority dishes translated, full backfill on activation)
+    // Email removed — now sent as a single unified email when the owner enters their panel (activation).
+    // Mark as DELIVERED for funnel tracking.
     if (lead.email && translationOk) {
-      try {
-        const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
-        const { cartaReadyEmailHtml } = await import("@/lib/email/cartaReadyEmailHtml");
-        const ownerName = lead.ownerName || "Hola";
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-        const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
-        const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
-        const activarUrl = `${baseUrl}/activar/${restaurant.slug}`;
-        // Try to build auto-login URL if owner exists
-        let panelUrl = `${baseUrl}/panel`;
-        try {
-          const owner = await prisma.restaurantOwner.findFirst({
-            where: { restaurants: { some: { id: restaurant.id } }, status: "ACTIVE" },
-            select: { id: true },
-          });
-          if (owner) {
-            const { buildAutoLoginUrl } = await import("@/lib/email/autoLoginUrl");
-            panelUrl = buildAutoLoginUrl(baseUrl, owner.id);
-          }
-        } catch {}
-
-        await sendAdminEmail({
-          to: lead.email,
-          subject: `Tu nueva carta ${restaurant.name} está lista`,
-          purpose: "funnel_carta_ready",
-          html: cartaReadyEmailHtml({
-            ownerName,
-            restaurantName: restaurant.name,
-            logoUrl: restaurant.logoUrl,
-            dishCount: createdDishes.length,
-            clickUrl,
-            openPixel,
-            activarUrl,
-            panelUrl,
-          }),
-        });
-        await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
-        console.log(`[Pipeline] Email sent to ${lead.email}`);
-      } catch (emailErr) {
-        console.error("[Pipeline] Email failed:", emailErr);
-      }
+      await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } }).catch(() => {});
     }
 
     // Send WhatsApp alongside email

@@ -4,7 +4,7 @@ import { sendAdminEmail, adminNewActivationEmailHtml } from "@/lib/email/sendAdm
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
 export async function POST(req: NextRequest) {
-  const { restaurantId, plan } = await req.json();
+  const { restaurantId, plan, ownerName: newOwnerName, email: newEmail, whatsapp: newWhatsapp } = await req.json();
   if (!restaurantId) return NextResponse.json({ error: "missing restaurantId" }, { status: 400 });
 
   const validPlans = ["FREE", "SILVER", "GOLD", "PREMIUM"] as const;
@@ -22,6 +22,20 @@ export async function POST(req: NextRequest) {
     data: { isDemo: false },
   });
   if (count === 0) return NextResponse.json({ error: "already activated" }, { status: 409 });
+
+  // Update owner data if provided (from inline form)
+  if (newOwnerName || newEmail || newWhatsapp) {
+    const ownerUpdate: Record<string, string> = {};
+    if (newOwnerName?.trim()) ownerUpdate.name = newOwnerName.trim();
+    if (newEmail?.trim()) ownerUpdate.email = newEmail.trim().toLowerCase();
+    if (newWhatsapp?.trim()) ownerUpdate.whatsapp = newWhatsapp.trim();
+    if (Object.keys(ownerUpdate).length > 0) {
+      await prisma.restaurantOwner.updateMany({
+        where: { restaurants: { some: { id: restaurantId } } },
+        data: ownerUpdate,
+      }).catch(() => {});
+    }
+  }
 
   if (selectedPlan === "FREE") {
     await prisma.restaurant.update({
@@ -54,9 +68,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Send activation email with credentials
-  const ownerEmail = restaurant.owner?.email;
-  const ownerName = restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
+  // Re-fetch owner data in case it was updated
+  const freshOwner = await prisma.restaurantOwner.findFirst({
+    where: { restaurants: { some: { id: restaurantId } } },
+    select: { email: true, name: true },
+  });
+  const ownerEmail = freshOwner?.email || restaurant.owner?.email;
+  const ownerName = freshOwner?.name || restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;

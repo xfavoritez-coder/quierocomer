@@ -221,9 +221,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             )}
           </div>
           <div className="eyebrow">Carta de {restaurant.name}</div>
-          <h1>{ownerName ? `${ownerName}, ¿` : "¿"}Listo para activar tu <em>nueva</em> carta?</h1>
+          <h1>{ownerName ? `${ownerName}, tu` : "Tu"} <em>nueva</em> carta está lista</h1>
           <p className="subtitle">
-            No es solo una carta bonita. Es una herramienta para mejorar la experiencia de tu restaurant, vender más y entender mejor a tus clientes.
+            Revísala, edítala y cuando estés listo, comparte el QR en tus mesas. Tu carta es privada hasta que tú decidas compartirla.
           </p>
 
           {/* Phone + arrow + offer flow */}
@@ -332,41 +332,41 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           `}} />
           <div className="po-content">
             <div className="po-top">
-              <div className="po-pill">Plan gratis · empieza ahora</div>
+              <div className="po-pill">Gratis · tu carta es privada</div>
             </div>
 
-            <h2>Tu carta está lista, solo falta <span>activarla</span></h2>
+            <h2>Entra a tu panel y <span>edítala</span></h2>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>3 vistas de carta para tus clientes</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Edita platos, precios y fotos desde tu panel</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Código QR listo para imprimir</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Tu carta es privada hasta que compartas el QR</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Estadísticas de lo que miran tus clientes</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Código QR gratis para imprimir cuando estés listo</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Traducción automática a varios idiomas</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Sin compromisos, sin pagos</span>
               </div>
             </div>
 
             {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
             {!done ? (
               <button className="po-cta" disabled={loading} onClick={() => handleActivar()}>
-                {loading ? "Activando..." : "Activar mi carta gratis"}
+                {loading ? "Preparando tu panel..." : "Entrar a mi panel"}
               </button>
             ) : (
-              <div className="done-msg"><p>Publicada. Redirigiendo...</p></div>
+              <div className="done-msg"><p>Listo. Redirigiendo...</p></div>
             )}
 
             <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 12, margin: 0 }}>
-              Sin pagos, sin compromisos. Puedes desactivar cuando quieras.
+              Gratis. Tu carta no se publica hasta que compartas el QR.
             </p>
 
           </div>
@@ -444,9 +444,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           background: "radial-gradient(circle at top, rgba(232,163,61,.14), transparent 60%), rgba(255,255,255,.03)",
           border: "1px solid rgba(232,163,61,.2)",
         }}>
-          <h2 className="section-title" style={{ marginBottom: 8 }}>Lleva tu restaurante al siguiente nivel</h2>
+          <h2 className="section-title" style={{ marginBottom: 8 }}>Tu carta te está esperando</h2>
           <p style={{ color: "var(--cream-soft)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.5 }}>
-            Activa tu plan gratis y comienza a usar tu nueva carta.
+            Entra a tu panel, revisa tus platos y cuando estés listo comparte el QR.
           </p>
           {!done ? (
             <button
@@ -459,10 +459,10 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading ? "Activando..." : "Activar mi carta gratis"}
+              {loading ? "Preparando tu panel..." : "Entrar a mi panel"}
             </button>
           ) : (
-            <div className="done-msg"><p>Activado. Redirigiendo a tu panel...</p></div>
+            <div className="done-msg"><p>Listo. Redirigiendo a tu panel...</p></div>
           )}
         </div>
       </main>

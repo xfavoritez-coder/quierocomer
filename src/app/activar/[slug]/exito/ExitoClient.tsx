@@ -17,9 +17,8 @@ function getInitials(name: string) {
 
 
 const STEPS = [
-  { icon: "📸", title: "Sube tus fotos reales", desc: "Reemplaza las fotos de referencia con fotos reales de tus platos." },
-  { icon: "✏️", title: "Personaliza tu carta", desc: "Ajusta precios, descripciones y categorías desde el panel." },
-  { icon: "🖨️", title: "Imprime tu QR", desc: "Descarga e imprime el código QR para las mesas de tu local." },
+  { icon: "✏️", title: "Revisa y corrige tus platos", desc: "Ajusta nombres, precios y descripciones desde tu panel." },
+  { icon: "🖨️", title: "Comparte tu QR cuando esté lista", desc: "Descarga gratis e imprime el código QR para las mesas de tu local." },
 ];
 
 export default function ExitoClient({ restaurant, plan, stillProcessing }: Props) {
@@ -54,9 +53,9 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
             }
           </div>
 
-          {/* Check animado */}
-          <div className="exito-check">
-            <svg width="48" height="48" viewBox="0 0 48 48">
+          {/* Titulo con check inline */}
+          <h1 className="exito-title" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+            <svg width="24" height="24" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
               <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(232,163,61,.2)" strokeWidth="2" />
               <circle cx="24" cy="24" r="22" fill="none" stroke="#E8A33D" strokeWidth="2.5"
                 strokeDasharray="138" strokeDashoffset={show ? "0" : "138"}
@@ -65,15 +64,11 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
                 strokeDasharray="30" strokeDashoffset={show ? "0" : "30"}
                 style={{ transition: "stroke-dashoffset 0.5s ease 0.9s" }} />
             </svg>
-          </div>
-
-          {/* Titulo */}
-          <h1 className="exito-title">
-            Tu carta fue activada y publicada con <em>éxito</em>
+            <span>Ya tienes acceso a tu <em>panel</em></span>
           </h1>
 
           <p className="exito-subtitle">
-            Ya puedes comenzar a usarla.
+            Tu carta es privada. Revísala, edítala y cuando esté lista comparte el QR.
           </p>
 
           {/* Banner regalo Premium */}
@@ -126,7 +121,6 @@ body { background: var(--black) !important; color: var(--cream) !important; font
 .exito-card.show { opacity: 1; transform: translateY(0); }
 .exito-resto-logo { width: 68px; height: 68px; margin: 0 auto 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 950; font-size: 18px; color: var(--amber); overflow: hidden; background: #111; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
 .exito-resto-logo img { width: 100%; height: 100%; object-fit: cover; }
-.exito-check { margin: 0 auto 18px; width: 48px; height: 48px; }
 .exito-title { font-family: Georgia, serif; font-size: clamp(28px,6vw,38px); font-weight: 400; line-height: 1.1; margin-bottom: 12px; }
 .exito-title em { color: var(--amber); font-style: italic; }
 .exito-subtitle { color: var(--cream-soft); font-size: 15px; line-height: 1.5; margin-bottom: 20px; }

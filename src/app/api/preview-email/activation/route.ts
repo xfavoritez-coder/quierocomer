@@ -8,10 +8,10 @@ export async function GET() {
   const html = activationWelcomeEmailHtml({
     ownerName: "Daniel",
     restaurantName: "Sushi Master",
-    panelLink: "https://quierocomer.cl/panel",
+    panelLink: "https://quierocomer.cl/api/panel/demo-auth?slug=sushi-master",
     qrLink: "https://quierocomer.cl/qr/sushi-master",
     credentials: { email: "dc_daniel_carrizo@hotmail.com", password: "sushi-master2026" },
-    planLabel: "Plan Gold activo",
+    planLabel: "Premium (14 dias gratis)",
   });
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
@@ -41,7 +41,7 @@ export function activationWelcomeEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:430px;margin:0 auto;padding:24px 16px 32px">
 <tr><td>
 
-<!-- Celebration icon -->
+<!-- Icon -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:16px">
   <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
@@ -54,24 +54,11 @@ export function activationWelcomeEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#fffaf1;border-radius:28px;border:1px solid #ead7b7;box-shadow:0 24px 70px rgba(70,45,10,0.10)">
 <tr><td style="padding:28px 22px 24px">
 
-<!-- Eyebrow badge -->
-${planLabel ? `
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:16px">
-  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-    <td style="background:#fff3d8;color:#9a5a00;font-size:12px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;padding:8px 13px;border-radius:50px">
-      ✨ ${planLabel}
-    </td>
-  </tr></table>
-</td></tr>
-</table>
-` : ""}
-
 <!-- Title -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:10px">
-<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:35px;line-height:1.02;letter-spacing:-0.03em;margin:0;color:#111111">
-  ${restaurantName}<br/>ya está listo
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:32px;line-height:1.08;letter-spacing:-0.03em;margin:0;color:#111111">
+  ${restaurantName}<br/>Tu panel está listo
 </h1>
 </td></tr>
 </table>
@@ -80,29 +67,36 @@ ${planLabel ? `
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:22px">
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${ownerName}, tu nueva carta QR Inteligente está lista. Ya puedes mostrársela al mundo.
+  ${ownerName}, tu carta de ${restaurantName} ya está creada. Entra a tu panel para revisarla, editarla y dejarla a tu gusto.
+</p>
+<p style="font-size:13px;color:#a08a68;line-height:1.5;margin:10px 0 0">
+  Tu carta es privada — nadie la ve hasta que tú compartas el QR en tus mesas.
 </p>
 </td></tr>
 </table>
 
-<!-- Primary CTA -->
+<!-- Primary CTA: Panel -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:12px">
-  <a href="${qrLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
-    Ver cómo se ve mi carta →
+  <a href="${panelLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
+    Entrar a mi panel →
   </a>
 </td></tr>
 <tr><td style="text-align:center;padding-bottom:8px">
-  <a href="${panelLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
-    Entrar al panel
-  </a>
-</td></tr>
-<tr><td style="text-align:center;padding-bottom:8px">
-  <a href="${panelLink}&next=qr" style="display:block;background:#fffaf1;color:#e8930a;font-size:14px;font-weight:700;padding:14px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
-    🖨️ Mi código QR gratis
+  <a href="${qrLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
+    Ver cómo se ve mi carta
   </a>
 </td></tr>
 <tr><td style="padding-bottom:22px"></td></tr>
+</table>
+
+<!-- Gift banner -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5eef8;border:1px solid #d8b4fe;border-radius:18px;margin-bottom:22px">
+<tr><td style="padding:18px 18px;text-align:center">
+  <p style="font-size:20px;margin:0 0 6px">🎁</p>
+  <p style="font-size:15px;font-weight:800;color:#7c3aed;margin:0 0 6px">Te regalamos 14 dias de Premium</p>
+  <p style="font-size:13px;color:#6b5b8a;line-height:1.5;margin:0">Todas las funciones avanzadas disponibles. Al terminar, tu carta seguirá activa en el plan Gratis.</p>
+</td></tr>
 </table>
 
 ${credentials ? `
@@ -142,7 +136,7 @@ ${credentials ? `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
   <tr>
     <td style="padding:12px 14px">
-      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta pública</p>
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta</p>
       <a href="${qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
     </td>
   </tr>
@@ -156,19 +150,7 @@ ${credentials ? `
 <!-- Steps card -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:rgba(255,255,255,0.44);border:1px solid #ead7b7;border-radius:24px">
 <tr><td style="padding:20px 18px 18px">
-  <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:900;color:#e78d00;margin:0 0 6px">Completa tu carta</p>
-
-  <!-- Progress bar -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:18px">
-  <tr>
-    <td style="padding:6px 0">
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height:7px;background:#eadcc2;border-radius:50px">
-      <tr><td style="width:33%;background:#f29a00;border-radius:50px;height:7px"></td><td></td></tr>
-      </table>
-    </td>
-    <td style="width:80px;text-align:right;color:#8a724f;font-size:12px;font-weight:700;padding-left:8px">1 de 3</td>
-  </tr>
-  </table>
+  <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:900;color:#e78d00;margin:0 0 18px;text-align:center">Próximos pasos</p>
 
   <!-- Step 1 -->
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding-bottom:13px">
@@ -179,8 +161,8 @@ ${credentials ? `
       </tr></table>
     </td>
     <td style="vertical-align:top;padding-left:4px">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Mira cómo quedó tu carta</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Revísala tal como la verán tus clientes al escanear el QR.</p>
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Revisa y corrige tus platos</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Ajusta nombres, precios y descripciones desde tu panel.</p>
     </td>
   </tr>
   </table>
@@ -194,8 +176,8 @@ ${credentials ? `
       </tr></table>
     </td>
     <td style="vertical-align:top;padding-left:4px">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Revisa tus platos</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Edita textos, precios y descripciones. Todo se actualiza al instante.</p>
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Sube tus fotos reales</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Reemplaza las fotos de referencia con fotos de tus platos.</p>
     </td>
   </tr>
   </table>
@@ -209,8 +191,8 @@ ${credentials ? `
       </tr></table>
     </td>
     <td style="vertical-align:top;padding-left:4px">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Imprime tu QR y ponlo en las mesas</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Descarga el código desde el panel y comienza a usarlo en tu local.</p>
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Comparte tu QR cuando estés listo</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Descarga e imprime el código QR para las mesas de tu local.</p>
     </td>
   </tr>
   </table>
@@ -222,7 +204,7 @@ ${credentials ? `
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding:18px 8px 0">
 <p style="color:#927955;font-size:12px;line-height:1.5;margin:0">
-  Tu carta ya está creada. Ahora puedes mejorarla, activarla en tus mesas y empezar a medir qué miran tus clientes.
+  Tu carta ya está creada. Edítala a tu gusto y comparte el QR cuando estés listo.
 </p>
 </td></tr>
 </table>
