@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   description: "Restaurantes reales que ya usan QuieroComer para vender más.",
 };
 
-const REAL_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza"];
+const REAL_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "el-menu-de-la-esquina"];
 
 export default async function ClientesPage() {
-  const [restaurants, totalDishes, totalCategories] = await Promise.all([
+  const [restaurants, totalDishes, totalCategories, totalSessions, totalDishViews] = await Promise.all([
     prisma.restaurant.findMany({
       where: { slug: { in: REAL_SLUGS }, isActive: true },
       select: {
@@ -20,8 +20,10 @@ export default async function ClientesPage() {
         _count: { select: { dishes: { where: { isActive: true } }, categories: { where: { isActive: true } } } },
       },
     }),
-    prisma.dish.count({ where: { isActive: true } }),
-    prisma.category.count({ where: { isActive: true } }),
+    prisma.dish.count({ where: { isActive: true, restaurant: { slug: { in: REAL_SLUGS } } } }),
+    prisma.category.count({ where: { isActive: true, restaurant: { slug: { in: REAL_SLUGS } } } }),
+    prisma.session.count({ where: { restaurant: { slug: { in: REAL_SLUGS } } } }),
+    prisma.statEvent.count({ where: { eventType: "DISH_VIEW", restaurant: { slug: { in: REAL_SLUGS } } } }),
   ]);
 
   const clients = REAL_SLUGS.map((slug) => {
@@ -35,5 +37,5 @@ export default async function ClientesPage() {
     } : null;
   }).filter(Boolean) as { name: string; slug: string; logoUrl: string | null; dishes: number; categories: number }[];
 
-  return <ClientesClient clients={clients} totalDishes={totalDishes} totalCategories={totalCategories} />;
+  return <ClientesClient clients={clients} totalDishes={totalDishes} totalCategories={totalCategories} totalSessions={totalSessions} totalDishViews={totalDishViews} />;
 }

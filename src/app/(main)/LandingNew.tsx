@@ -19,6 +19,7 @@ const RESTAURANTS: [string, string][] = [
   ["horusvegan", "Horus Vegan"],
   ["juana-la-brava", "Juana la Brava"],
   ["alleria-pizza", "Alleria Pizza"],
+  ["el-menu-de-la-esquina", "El Menú de la Esquina"],
 ];
 
 const AB_DEFAULTS = {

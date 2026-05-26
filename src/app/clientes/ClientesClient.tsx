@@ -63,10 +63,10 @@ interface Client {
   categories: number;
 }
 
-export default function ClientesClient({ clients, totalDishes, totalCategories }: { clients: Client[]; totalDishes: number; totalCategories: number }) {
+export default function ClientesClient({ clients, totalDishes, totalCategories, totalSessions, totalDishViews }: { clients: Client[]; totalDishes: number; totalCategories: number; totalSessions: number; totalDishViews: number }) {
+  const [countSessions, setCountSessions] = useState(0);
+  const [countDishViews, setCountDishViews] = useState(0);
   const [countDishes, setCountDishes] = useState(0);
-  const [countCats, setCountCats] = useState(0);
-  const [countLangs, setCountLangs] = useState(0);
   const animated = useRef(false);
 
   useEffect(() => {
@@ -77,13 +77,13 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
     const tick = () => {
       const t = Math.min((Date.now() - start) / duration, 1);
       const ease = 1 - Math.pow(1 - t, 3);
+      setCountSessions(Math.round(ease * totalSessions));
+      setCountDishViews(Math.round(ease * totalDishViews));
       setCountDishes(Math.round(ease * totalDishes));
-      setCountCats(Math.round(ease * totalCategories));
-      setCountLangs(Math.round(ease * 3));
       if (t < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }, [totalDishes, totalCategories]);
+  }, [totalSessions, totalDishViews, totalDishes]);
 
   const PHOTOS = [
     "https://images.unsplash.com/photo-1611143669185-af224c5e3252?auto=format&fit=crop&w=900&q=80",
@@ -123,7 +123,7 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
           <div className="cl-hero-glow" />
           <div className="cl-hero-content">
             <div className="cl-eyebrow">Clientes</div>
-            <h1 className="cl-h1">Restaurantes reales, <span className="cl-italic-gold">resultados reales.</span></h1>
+            <h1 className="cl-h1">Locales reales, <span className="cl-italic-gold">resultados reales.</span></h1>
             <p className="cl-hero-copy">Ya confían en nosotros para que sus clientes disfruten más cada vez que abren la carta.</p>
           </div>
         </header>
@@ -131,28 +131,28 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
         {/* Badges */}
         <div className="cl-badges">
           <div className="cl-badge-item">
-            <span className="cl-badge-num">{clients.length}+</span>
-            <span className="cl-badge-label">Restaurantes activos</span>
+            <span className="cl-badge-num">{countSessions.toLocaleString("es-CL")}+</span>
+            <span className="cl-badge-label">Sesiones</span>
           </div>
           <div className="cl-badge-sep" />
           <div className="cl-badge-item">
-            <span className="cl-badge-num">3</span>
-            <span className="cl-badge-label">Idiomas</span>
+            <span className="cl-badge-num">{countDishViews.toLocaleString("es-CL")}+</span>
+            <span className="cl-badge-label">Platos vistos</span>
           </div>
           <div className="cl-badge-sep" />
           <div className="cl-badge-item">
-            <span className="cl-badge-num">60s</span>
-            <span className="cl-badge-label">Para subir tu carta</span>
+            <span className="cl-badge-num">{countDishes.toLocaleString("es-CL")}+</span>
+            <span className="cl-badge-label">Platos publicados</span>
           </div>
         </div>
 
         {/* Clients */}
         <section className="cl-section cl-section-center">
-          <h2 className="cl-h2">Restaurantes que ya <span className="cl-italic-gold">venden más</span></h2>
-          <p className="cl-section-sub">Toca cualquier carta para ver cómo se ve QuieroComer funcionando en restaurantes reales.</p>
+          <h2 className="cl-h2">Conoce sus <span className="cl-italic-gold">cartas en vivo</span></h2>
+          <p className="cl-section-sub">Toca cualquier carta para ver cómo se ve QuieroComer funcionando en locales reales.</p>
 
           <div className="cl-simple-grid">
-            {clients.slice(0, 4).map((c) => (
+            {clients.map((c) => (
               <a key={c.slug} href={`/qr/${c.slug}?from=clientes`} target="_blank" rel="noopener" className="cl-simple-card">
                 <div className="cl-simple-logo">
                   {c.logoUrl ? <img src={c.logoUrl} alt={c.name} /> : <span>{c.name.split(" ").map(w => w[0]).join("").slice(0, 2)}</span>}
@@ -170,7 +170,7 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
 
         {/* CTA */}
         <section className="cl-cta">
-          <h2 className="cl-h2">Tu restaurante también puede <span className="cl-italic-gold">verse así.</span></h2>
+          <h2 className="cl-h2">Tu local también puede <span className="cl-italic-gold">verse así.</span></h2>
           <p>Sube tu carta. Nosotros hacemos el resto.</p>
           <a className="cl-primary-btn" href="/subircarta">Subir mi carta ahora →</a>
         </section>
