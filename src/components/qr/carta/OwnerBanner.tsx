@@ -21,9 +21,9 @@ export default function OwnerBanner({ restaurantName, restaurantSlug, restaurant
 
   // Check if owner is logged in via panel cookie
   useEffect(() => {
-    const hasPanelCookie = document.cookie.split(";").some(c => c.trim().startsWith("panel_demo="));
-    const hasPanelToken = document.cookie.split(";").some(c => c.trim().startsWith("panel_token="));
-    if (hasPanelCookie || hasPanelToken) {
+    const cookies = document.cookie.split(";").map(c => c.trim());
+    const isLogged = cookies.some(c => c.startsWith("panel_demo=")) || cookies.some(c => c.startsWith("panel_logged="));
+    if (isLogged) {
       setTimeout(() => setVisible(true), 800);
       // Fetch today's visits
       fetch(`/api/qr/stats-mini?restaurantId=${restaurantId}`)

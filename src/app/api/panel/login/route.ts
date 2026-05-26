@@ -18,6 +18,7 @@ function setPanelCookies(
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
   response.cookies.set("panel_role", role, { ...base, httpOnly: true });
   response.cookies.set("panel_id", id, { ...base, httpOnly: true });
+  response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
 }
 
 export async function POST(req: NextRequest) {
