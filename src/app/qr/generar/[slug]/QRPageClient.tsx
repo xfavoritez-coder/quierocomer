@@ -32,6 +32,7 @@ export default function QRPageClient({ restaurant }: Props) {
   const [qrPreview, setQrPreview] = useState<string>("");
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
   const [showLabel, setShowLabel] = useState(true);
+  const [showLogo, setShowLogo] = useState(!!restaurant.logoUrl);
 
   const qrUrl = restaurant.qrToken
     ? `${BASE_URL}/qr/${restaurant.slug}?t=${restaurant.qrToken}`
@@ -84,7 +85,7 @@ export default function QRPageClient({ restaurant }: Props) {
     gen();
   }, [qrUrl, restaurant.logoUrl]);
 
-  const finalQr = restaurant.logoUrl ? qrWithLogo || qrPreview : qrPreview;
+  const finalQr = showLogo && restaurant.logoUrl ? qrWithLogo || qrPreview : qrPreview;
 
   const getQrMm = () => size === "custom" ? customMm : SIZE_CONFIG[size].qrMm;
 
@@ -147,7 +148,7 @@ export default function QRPageClient({ restaurant }: Props) {
       const qrHi = await QRCode.toDataURL(qrUrl, { width: 1200, margin: 1, errorCorrectionLevel: "H", color: { dark: "#0e0e0e", light: "#ffffff" } });
 
       let qrFinal = qrHi;
-      if (restaurant.logoUrl) {
+      if (showLogo && restaurant.logoUrl) {
         const canvas = document.createElement("canvas");
         canvas.width = 1200; canvas.height = 1200;
         const ctx = canvas.getContext("2d")!;
@@ -230,7 +231,18 @@ export default function QRPageClient({ restaurant }: Props) {
               <img src={finalQr} alt="QR Preview" style={{ width: 180, height: 180 }} />
             </div>
             {restaurant.logoUrl && (
-              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "#bbb", marginTop: 8 }}>QR con logo de tu local</p>
+              <button onClick={() => setShowLogo(l => !l)} style={{
+                marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "8px 16px", borderRadius: 10, cursor: "pointer",
+                background: showLogo ? "#FFF4E0" : "white",
+                border: showLogo ? "1.5px solid #F4A623" : "1px solid #eee",
+                fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 600,
+                color: showLogo ? "#0e0e0e" : "#999",
+                transition: "all 0.2s",
+              }}>
+                <img src={restaurant.logoUrl} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }} />
+                {showLogo ? "Con logo ✓" : "Agregar logo"}
+              </button>
             )}
             <p style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#999", marginTop: 6 }}>
               <a href={`${BASE_URL}/qr/${restaurant.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", textDecoration: "none", wordBreak: "break-all" }}>{BASE_URL}/qr/{restaurant.slug}</a>
