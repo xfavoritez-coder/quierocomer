@@ -180,6 +180,14 @@ export async function extractQuickPreview(cartaUrl: string, providerName?: strin
   const cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
   const content = cleaned.slice(0, 4000);
 
+  // Quick gastronomy check
+  const lower = content.toLowerCase();
+  const gastronomySignals = ["menú", "menu", "plato", "precio", "carta", "restauran", "comida", "cocina", "entrante", "postre", "bebida", "ensalada", "carne", "pollo", "pescado", "sushi", "pizza", "burger", "sandwich", "empanada", "ceviche", "parrilla", "asado", "grill", "café", "coffee", "appetizer", "dessert", "drink", "entree", "dish", "order", "delivery", "$"];
+  const matchCount = gastronomySignals.filter(s => lower.includes(s)).length;
+  if (matchCount < 2) {
+    throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
+  }
+
   console.log("[QuickPreview] Calling Haiku with", content.length, "chars...");
   const result = await callClaude(`Extrae los primeros 5 platos de este menú de restaurante con su categoría.
 URL: ${cartaUrl}
@@ -234,6 +242,15 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   console.log("[Scraper] Cleaned length:", cleaned.length, isMarkdown ? "(markdown, no cleaning)" : "(HTML cleaned)");
   const content = cleaned.length > cfgMaxChars ? cleaned.slice(0, cfgMaxChars) : cleaned;
   console.log("[Scraper] Trimmed to:", content.length, `(max: ${cfgMaxChars})`, "| Calling Claude...");
+
+  // Quick gastronomy check — reject pages that clearly aren't restaurant menus
+  const lower = content.toLowerCase();
+  const gastronomySignals = ["menú", "menu", "plato", "precio", "carta", "restauran", "comida", "cocina", "entrante", "postre", "bebida", "ensalada", "carne", "pollo", "pescado", "sushi", "pizza", "burger", "sandwich", "empanada", "ceviche", "parrilla", "asado", "grill", "café", "coffee", "appetizer", "dessert", "drink", "entree", "dish", "order", "delivery", "$"];
+  const matchCount = gastronomySignals.filter(s => lower.includes(s)).length;
+  if (matchCount < 2) {
+    console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Rejecting.`);
+    throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
+  }
 
   // Detect if source is a PDF (text may be scrambled/unordered)
   const isPdf = /\.pdf(\?|$)/i.test(cartaUrl) || content.includes("Number of Pages:");

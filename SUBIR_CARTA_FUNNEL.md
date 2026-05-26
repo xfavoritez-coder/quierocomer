@@ -16,6 +16,12 @@ El endpoint `/api/panel/demo-auth?slug=xxx` permite entrar al panel de CUALQUIER
 
 **Archivos afectados:** ver grep de `demo-auth` en `src/**/*.{ts,tsx}` — ~14 archivos
 
+## Reintentar con mismo email si lead falló
+
+Hoy si un lead falla (link no gastronómico, error de procesamiento, etc.) el usuario no puede crear otra carta con el mismo email. Debería poder reintentar.
+
+**Fix:** En la API de subircarta (paso 2), si ya existe un lead con ese email y tiene `cartaStatus: FAILED`, permitir crear uno nuevo (o actualizar el link del existente y reprocesar).
+
 ## Parte 2 — Banner owner logueado
 
 Banner flotante para dueños logueados viendo su carta. Ya implementado (`OwnerBanner.tsx`).

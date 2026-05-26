@@ -23,7 +23,7 @@ export default async function ActivarPage({ params }: { params: Promise<{ slug: 
       },
     }),
     prisma.restaurant.findMany({
-      where: { slug: { in: ["hand-roll", "horusvegan", "alleria-pizza", "juana-la-brava"] }, logoUrl: { not: null } },
+      where: { slug: { in: ["hand-roll", "horusvegan", "alleria-pizza", "juana-la-brava", "el-menu-de-la-esquina"] }, logoUrl: { not: null } },
       select: { name: true, slug: true, logoUrl: true, plan: true },
     }),
   ]);

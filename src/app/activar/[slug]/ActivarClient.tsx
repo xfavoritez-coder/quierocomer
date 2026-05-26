@@ -418,7 +418,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
         {/* Venues */}
         <section>
-          <h2 className="section-title">Restaurantes que ya tienen su carta activa</h2>
+          <h2 className="section-title">Locales reales que ya usan QuieroComer</h2>
           <p className="section-sub" style={{ fontSize: 15 }}>Cartas reales funcionando con QuieroComer.</p>
           <div className="venues">
             {activeVenues.map((v, i) => {
