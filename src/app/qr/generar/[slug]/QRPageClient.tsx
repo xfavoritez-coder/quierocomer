@@ -245,9 +245,12 @@ export default function QRPageClient({ restaurant }: Props) {
                 {showLogo ? "Con logo ✓" : "Agregar logo"}
               </button>
             )}
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#999", marginTop: 6 }}>
-              <a href={`${BASE_URL}/qr/${restaurant.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", textDecoration: "none", wordBreak: "break-all" }}>{BASE_URL}/qr/{restaurant.slug}</a>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#bbb", marginTop: 10 }}>
+              Este QR apunta a:
             </p>
+            <a href={`${BASE_URL}/qr/${restaurant.slug}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#F4A623", textDecoration: "none", wordBreak: "break-all", fontWeight: 600 }}>
+              {BASE_URL}/qr/{restaurant.slug}
+            </a>
           </div>
         )}
 
