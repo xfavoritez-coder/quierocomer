@@ -114,7 +114,7 @@ const dict = {
     gGreatThanks: "¡Genial! Gracias 🙌", gThanksImprove: "Gracias, lo mejoraré 🧞",
     gStepOf: "Paso {step} de 2", gResult: "✨ Resultado",
     gRemoveSelection: "Quitar selección", gLikeBtn: "Me gusta 👆",
-    gVeganDishesForYou: "{n} opciones veganas para ti 🌿", gVeganSubtitle: "Toca un plato para verlo en la carta", gMyVeganOptions: "Mis platos veganos ↑",
+    gVeganDishesForYou: "{n} opciones veganas para ti 🌿", gVeganSubtitle: "", gMyVeganOptions: "Mis platos veganos ↑",
     gVegetarianDishesForYou: "{n} opciones vegetarianas para ti 🥗", gVegetarianSubtitle: "Incluye opciones veganas y vegetarianas", gMyVegetarianOptions: "Mis platos vegetarianos ↑",
     gGlutenFreeDishesForYou: "{n} opciones sin gluten para ti 🌾", gGlutenFreeSubtitle: "Platos libres de gluten en esta carta", gMyGlutenFreeOptions: "Mis platos sin gluten ↑",
   },

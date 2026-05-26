@@ -109,7 +109,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "multilang", "suggestions",
     ]),
     featureDisplay: [
-      { text: "Estadísticas básicas", tip: "Visitas, platos más vistos y duración promedio." },
+      { text: "Estadísticas", tip: "Visitas, platos más vistos y duración promedio." },
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente." },
       { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },

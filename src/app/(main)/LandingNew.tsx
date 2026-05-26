@@ -278,30 +278,19 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       </section>
 
 
-      {/* MID CTA */}
-      <div style={{ textAlign: "center", padding: "66px 20px", background: "linear-gradient(180deg, rgba(232,163,61,.06), rgba(232,163,61,.02))", borderTop: "1px solid rgba(232,163,61,.1)", borderBottom: "1px solid rgba(232,163,61,.1)" }}>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px,4vw,32px)", color: "var(--cream-soft)", lineHeight: 1.3, marginBottom: 18 }}>
-          ¿Quieres ver cómo <span style={{ color: "var(--amber)", fontStyle: "italic" }}>queda?</span>
-        </p>
-        <a href={subircartaHref} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", border: "1px solid rgba(232,163,61,.35)", background: "rgba(232,163,61,.08)", color: "var(--cream)", fontSize: 14, fontWeight: 600, textDecoration: "none", letterSpacing: ".02em", transition: ".25s" }}>
-          Sube tu carta <span style={{ color: "var(--amber)" }}>→</span>
-        </a>
-      </div>
-
       {/* LOGOS */}
       <section className="logos-band" data-track="Logos">
-        <div className="logos-eyebrow">Ya han transformado su carta</div>
-        <div className="logos-scroller">
-          <div className="logos-track">
-            {duplicatedLogos.map((l, i) => (
-              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-chip">
+        <div className="container">
+          <p className="logos-eyebrow">Ya usan QuieroComer</p>
+          <div className="logos-grid">
+            {logoChips.map((l, i) => (
+              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
                 {l.logoUrl ? (
-                  <img src={l.logoUrl} alt={l.name} />
+                  <img src={l.logoUrl} alt={l.name} className="logo-grid-img" />
                 ) : (
-                  <div className="logo-init" style={{ background: l.color }}>{l.initials}</div>
+                  <div className="logo-grid-init" style={{ background: l.color }}>{l.initials}</div>
                 )}
-                <span>{l.name}</span>
-                <span>→</span>
+                <span className="logo-grid-name">{l.name}</span>
               </a>
             ))}
           </div>
@@ -373,7 +362,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
                 ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
                 ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"],
-                ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
+                ["Estadísticas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
                 ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
               <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes + IVA · $478.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
@@ -466,17 +455,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .curve-divider{position:relative;height:100px;margin-top:-100px;z-index:3}
 .curve-svg{position:absolute;bottom:0;left:0;width:100%;height:100px}
 .curve-icon{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;border:1.5px solid var(--amber);background:rgba(10,9,8,.9);display:flex;align-items:center;justify-content:center;color:var(--amber);z-index:4}
-.logos-band{background:var(--black-soft);border-top:none;border-bottom:none;padding:48px 0 48px;text-align:center;overflow:hidden;max-width:100vw}
-.logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(150,140,130,.7);font-weight:600;margin-bottom:22px}
-.logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}
-@media(hover:hover){.logos-track:hover{animation-play-state:paused}}
-.logos-scroller{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,transparent,black 12%,black 88%,transparent);scrollbar-width:none}
-.logos-scroller::-webkit-scrollbar{display:none}
-.logo-chip{display:inline-flex;align-items:center;gap:14px;padding:17px 28px;border:1px solid var(--gray-deep);background:rgba(20,18,16,.7);text-decoration:none;color:var(--cream-soft);cursor:pointer}
-.logo-chip img,.logo-chip .logo-init{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.logos-band{background:var(--black-soft);border-top:none;border-bottom:none;padding:48px 0 48px;text-align:center}
+.logos-eyebrow{font-family:var(--font-display);font-size:clamp(22px,4vw,30px);color:var(--cream);font-weight:400;margin-bottom:32px}
+.logos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;max-width:700px;margin:0 auto}
+.logo-grid-item{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border:1px solid var(--gray-deep);border-radius:16px;background:rgba(20,18,16,.5);text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s}
+.logo-grid-item:hover{border-color:rgba(232,163,61,.3);transform:translateY(-2px)}
+.logo-grid-img,.logo-grid-init{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0}
 .logo-init{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
-.logo-chip span{font-family:var(--font-display);font-size:20px;font-style:italic;white-space:nowrap}
-.logo-chip span:last-child{color:var(--amber)}
+.logo-grid-name{font-family:var(--font-display);font-size:13px;color:var(--cream-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.logo-grid-init{display:grid;place-items:center;font-size:16px;font-weight:700;color:var(--cream);border:1px solid var(--gray-deep)}
 @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 section{position:relative}
 .problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.75),rgba(10,9,8,.75)),url('/landing/444.jpg');background-size:cover;background-position:center}

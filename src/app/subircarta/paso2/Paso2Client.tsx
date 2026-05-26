@@ -185,7 +185,7 @@ export default function Paso2Client() {
 
   const handleSubmit = async () => {
     if (loading) return;
-    if (!localName.trim() || !ownerName.trim() || !email.trim() || !whatsapp.trim()) {
+    if (!localName.trim() || !ownerName.trim() || !email.trim()) {
       setError("Completa todos los campos.");
       return;
     }
@@ -220,8 +220,8 @@ export default function Paso2Client() {
 
     const rawWa = whatsapp.trim();
     const normalizedWa = rawWa ? normalizePhone(rawWa) : null;
-    if (!normalizedWa) {
-      setError("Ingresa un número de WhatsApp válido.");
+    if (rawWa && !normalizedWa) {
+      setError("El número de WhatsApp no es válido.");
       setLoading(false);
       return;
     }

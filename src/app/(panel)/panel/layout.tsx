@@ -255,16 +255,16 @@ function formatDateCL(d: string | null) {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 }
 
-function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "SILVER" | "GOLD" | "PREMIUM"; onClose: () => void }) {
-  const PAID_TABS = ["SILVER", "GOLD", "PREMIUM"] as const;
-  type PaidTab = typeof PAID_TABS[number];
-  const defaultTab: PaidTab = initialTab
-    ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab) as PaidTab
-    : (plan === "FREE" ? "SILVER" : plan as any);
-  const [tab, setTab] = useState<PaidTab>(defaultTab);
+function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "SILVER" | "GOLD" | "PREMIUM"; onClose: () => void }) {
+  const ALL_TABS = ["FREE", "SILVER", "GOLD", "PREMIUM"] as const;
+  type TabKey = typeof ALL_TABS[number];
+  const defaultTab: TabKey = initialTab
+    ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab) as TabKey
+    : "FREE";
+  const [tab, setTab] = useState<TabKey>(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [confirmTab, setConfirmTab] = useState<PaidTab | null>(null);
+  const [confirmTab, setConfirmTab] = useState<TabKey | null>(null);
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const FD = "var(--font-display)";
   const FB2 = "var(--font-body)";
@@ -353,21 +353,21 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)", position: "relative", overflow: "hidden" }}>
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)", position: "sticky", top: 0, background: "var(--adm-bg, #fff)", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
-          {PAID_TABS.map(t => {
-            const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : "#475569";
-            const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : "#94a3b8";
-            const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : "#F1F5F9";
-            const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🥈";
+          {ALL_TABS.map(t => {
+            const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : t === "SILVER" ? "#475569" : "#22c55e";
+            const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : t === "SILVER" ? "#94a3b8" : "#22c55e";
+            const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : t === "SILVER" ? "#F1F5F9" : "#F0FDF4";
+            const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : t === "SILVER" ? "🥈" : "🆓";
+            const tabLabel = t === "FREE" ? "Gratis" : t.charAt(0) + t.slice(1).toLowerCase();
             return (
               <button key={t} onClick={() => { setTab(t); setConfirmTab(null); }} style={{
                 flex: 1, padding: "14px 0", border: "none", cursor: "pointer",
-                fontFamily: FD, fontSize: "0.82rem", fontWeight: 700, background: "transparent",
+                fontFamily: FD, fontSize: "0.75rem", fontWeight: 700, background: "transparent",
                 color: tab === t ? tabColor : "#ccc",
                 borderBottom: tab === t ? `3px solid ${tabBorder}` : "3px solid transparent",
               }}>
-                {tabIcon} {t.charAt(0) + t.slice(1).toLowerCase()}
-                {plan === t && <span style={{ marginLeft: 4, fontSize: "0.55rem", fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: tabBg, color: tabColor }}>Tu plan</span>}
-                {t === "PREMIUM" && plan !== "PREMIUM" && <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#dc2626", color: "#fff" }}>Gratis</span>}
+                {tabIcon} {tabLabel}
+                {plan === t && <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: tabBg, color: tabColor }}>Actual</span>}
               </button>
             );
           })}
@@ -408,10 +408,10 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
               return (
                 <>
-                  <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{fmt(net)}</span>
-                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>+ IVA /mes</span>
-                  <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
-                  {tab === "PREMIUM" && (
+                  <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{net === 0 ? "$0" : fmt(net)}</span>
+                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>{net === 0 ? "para siempre" : "+ IVA /mes"}</span>
+                  {net > 0 && <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>}
+                  {tab === "PREMIUM" && !inTrial && plan !== "PREMIUM" && (
                     <div style={{ marginTop: 10, padding: "8px 14px", background: "#dc2626", borderRadius: 8 }}>
                       <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>14 días gratis para probar</span>
                     </div>
@@ -462,7 +462,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {tab === "PREMIUM" ? "Empezar prueba gratis 14 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial ? "Empezar prueba gratis 14 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>

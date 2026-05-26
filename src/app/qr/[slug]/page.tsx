@@ -14,6 +14,7 @@ import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
+import OwnerBanner from "@/components/qr/carta/OwnerBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
 import DemoBirthdayBanner from "@/components/qr/carta/DemoBirthdayBanner";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
@@ -201,6 +202,9 @@ export default async function CartaPage({
             --carta-promo-bg: linear-gradient(135deg, ${accentColor}0F 0%, ${accentColor}08 100%);
           }
         `}} />
+      )}
+      {!(restaurant as any).isDemo && !isShowcase && (
+        <OwnerBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} />
       )}
       {(restaurant as any).isDemo && !isShowcase && (
         <>

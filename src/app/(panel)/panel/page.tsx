@@ -92,6 +92,7 @@ export default function PanelDashboard() {
   const [insightsEnabled, setInsightsEnabled] = useState(true);
   const [restSettings, setRestSettings] = useState<any>(null);
   const [cartaReviewed, setCartaReviewed] = useState(true);
+  const [qrGenerated, setQrGenerated] = useState(true);
   const [dietModal, setDietModal] = useState(false);
   const [igModal, setIgModal] = useState(false);
   const [dietValue, setDietValue] = useState("");
@@ -149,6 +150,7 @@ export default function PanelDashboard() {
       setInsightsEnabled(settings.weeklyInsightsEnabled !== false);
       setRestSettings(settings);
       setCartaReviewed(localStorage.getItem(`qc_carta_reviewed_${selectedRestaurantId}`) === "1");
+      setQrGenerated(localStorage.getItem(`qc_qr_generated_${selectedRestaurantId}`) === "1");
     }).catch(() => {}).finally(() => setLoading(false));
   }, [sessionLoading, selectedRestaurantId, isDemo]);
 
@@ -206,6 +208,7 @@ export default function PanelDashboard() {
           { key: "diet", label: "Confirma tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
           { key: "ig", label: "Agrega tu Instagram", done: !!restSettings.instagram, modal: "ig" },
           { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
+          { key: "qr", label: "Imprime tu código QR", done: qrGenerated, qrAction: true },
         ];
         const doneCount = checks.filter(c => c.done).length;
         const pct = Math.round((doneCount / checks.length) * 100);
@@ -247,7 +250,19 @@ export default function PanelDashboard() {
                     textDecoration: c.done ? "line-through" : "none",
                     opacity: c.done ? 0.5 : 1,
                   }}>{c.label}</span>
-                  {!c.done && (c.action ? (
+                  {!c.done && ((c as any).qrAction ? (
+                    <a href={`/qr/generar/${restSettings?.slug || ""}`} target="_blank" rel="noopener noreferrer" onClick={() => {
+                      if (selectedRestaurantId) {
+                        localStorage.setItem(`qc_qr_generated_${selectedRestaurantId}`, "1");
+                        setQrGenerated(true);
+                      }
+                    }} style={{
+                      padding: "5px 12px", borderRadius: 999, cursor: "pointer", textDecoration: "none",
+                      background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
+                      color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}>Generar QR</a>
+                  ) : c.action ? (
                     <button onClick={() => {
                       if (selectedRestaurantId) {
                         localStorage.setItem(`qc_carta_reviewed_${selectedRestaurantId}`, "1");

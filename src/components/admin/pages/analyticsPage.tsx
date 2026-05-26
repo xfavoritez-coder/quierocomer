@@ -395,28 +395,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
           </div>
         )}
 
-        {/* Quiénes son */}
-        {(topDiet || topRestriction || (clientes?.languages && clientes.languages.length > 0)) ? (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>👤 Quiénes son tus clientes</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {topDiet && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "0.95rem" }}>🥗</span>
-                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Dieta más común: <strong style={{ color: "var(--adm-text)" }}>{topDiet.name || topDiet.label}</strong></span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topDiet.count}</span>
-              </div>
-            )}
-            {topRestriction && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "0.95rem" }}>⚠️</span>
-                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Restricción top <strong style={{ color: "var(--adm-text)" }}>{topRestriction.label || topRestriction.name}</strong></span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topRestriction.count}</span>
-              </div>
-            )}
-          </div>
-        </div>
-        ) : null}
       </div>
 
       {/* ═══ Búsqueda top — Categoría favorita movida al HeroKpi 4 (mini) ═══ */}

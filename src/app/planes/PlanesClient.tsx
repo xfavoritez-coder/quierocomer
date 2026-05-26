@@ -148,7 +148,7 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$29.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Silver</div>
-              <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
+              <div>✓ Estadísticas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
               <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
               <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
