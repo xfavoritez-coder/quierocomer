@@ -232,8 +232,9 @@ export default function QRPageClient({ restaurant }: Props) {
             </div>
             {restaurant.logoUrl && (
               <button onClick={() => setShowLogo(l => !l)} style={{
-                marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8,
+                marginTop: 12, display: "flex", alignItems: "center", gap: 8,
                 padding: "8px 16px", borderRadius: 10, cursor: "pointer",
+                marginLeft: "auto", marginRight: "auto",
                 background: showLogo ? "#FFF4E0" : "white",
                 border: showLogo ? "1.5px solid #F4A623" : "1px solid #eee",
                 fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 600,
