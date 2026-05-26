@@ -293,7 +293,7 @@ export default function QRPageClient({ restaurant }: Props) {
             {generating ? "Generando..." : "Imprimir PDF"}
           </button>
           <button onClick={downloadImage} disabled={!finalQr} style={{ padding: "14px 20px", background: "white", color: "#0e0e0e", border: "1px solid #eee", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>
-            Imagen
+            Generar imagen
           </button>
         </div>
 
