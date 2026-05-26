@@ -1755,11 +1755,11 @@ const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
 ];
 
 const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
-  { key: "sugeridos", label: "Sugeridos", icon: "💡" },
   { key: "sesiones", label: "Sesiones", icon: "👁️" },
   { key: "clientes", label: "Clientes", icon: "👥" },
-  { key: "garzon", label: "Garzón", icon: "🔔" },
   { key: "busquedas", label: "Búsquedas", icon: "🔍" },
+  { key: "garzon", label: "Garzón", icon: "🔔" },
+  { key: "sugeridos", label: "Sugeridos", icon: "💡" },
 ];
 
 type DatePreset = "hoy" | "ayer" | "semana" | "mes" | "custom";
@@ -1818,7 +1818,7 @@ export default function AnalyticsDashboard() {
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><BarChart3 size={20} color="var(--adm-text3)" /> Analytics</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Métricas de tu restaurante</p>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Métricas de tu restaurante</p>
         </div>
         {isSuper && (
           <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>

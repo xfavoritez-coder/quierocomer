@@ -133,7 +133,7 @@ export default function LiveDashboard() {
             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: "#16a34a", marginRight: 8, animation: "livePulse 2s infinite" }} />
             Venta en vivo
           </h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
             {lastSyncAt ? `Última sincronización con Toteat: ${minutesAgo(lastSyncAt)}` : "Sincronizando con Toteat..."}
             <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 10 min</span>
           </p>

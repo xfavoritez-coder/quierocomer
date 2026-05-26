@@ -135,7 +135,7 @@ export default function SuscripcionPage() {
         }}>
           <CreditCard size={20} color="var(--adm-text3)" /> Mi suscripción
         </h1>
-        <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>
+        <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px", fontFamily: "var(--font-body)" }}>
           Estado de tu plan y activación
         </p>
 
@@ -269,7 +269,7 @@ export default function SuscripcionPage() {
       }}>
         <CreditCard size={20} color="var(--adm-text3)" /> Mi suscripción
       </h1>
-      <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>
+      <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px", fontFamily: "var(--font-body)" }}>
         Estado de tu plan, pagos y opciones
       </p>
 

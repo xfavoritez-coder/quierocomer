@@ -174,8 +174,8 @@ export default function ClientesPage() {
           <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
             <Users size={20} color="var(--adm-text3)" /> Mis Clientes
           </h1>
-          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>
-            {total} cliente{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}
+          <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            Personas que se registraron desde tu carta digital. {total} cliente{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}.
           </p>
         </div>
       </div>

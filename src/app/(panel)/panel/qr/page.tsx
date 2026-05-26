@@ -24,7 +24,7 @@ export default function PanelQRPage() {
       <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <QrCode size={20} color="var(--adm-text3)" /> Código QR
       </h1>
-      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>
+      <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>
         Genera e imprime tu código QR para las mesas de {restaurant.name}.
       </p>
 
