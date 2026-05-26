@@ -105,7 +105,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
     boxSizing: "border-box",
   };
   const labelStyle: React.CSSProperties = {
-    fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,.4)",
+    fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.45)",
     textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4, display: "block",
   };
 
@@ -141,7 +141,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             className="demo-activar-btn"
             style={{
               border: 0, borderRadius: 999, height: 38, padding: "0 18px",
-              fontSize: 13, fontWeight: 900,
+              fontSize: 15, fontWeight: 900,
               background: showForm ? "rgba(255,255,255,.1)" : "linear-gradient(135deg, #ffc44f, #f3a333)",
               color: showForm ? "rgba(255,255,255,.6)" : "#0a0a0a",
               display: "flex", alignItems: "center", gap: 6, textDecoration: "none", whiteSpace: "nowrap",
@@ -177,7 +177,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
       {/* Inline form */}
       {showForm && (
         <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,.5)", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ fontSize: 15, color: "rgba(255,255,255,.55)", margin: 0, lineHeight: 1.4 }}>
             Confirma tus datos para acceder a tu panel. Tu carta es privada hasta que compartas el QR.
           </p>
           <div>
@@ -216,11 +216,11 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           bottom: 0, left: 0, right: 0,
           transform: "translateY(100%)",
           padding: "8px 14px",
-          background: "linear-gradient(135deg, rgba(255,196,79,.15), rgba(243,163,51,.1))",
-          borderBottom: "1px solid rgba(244,166,35,.15)",
+          background: "linear-gradient(135deg, rgba(255,196,79,.18), rgba(243,163,51,.12))",
+          borderBottom: "1px solid rgba(244,166,35,.18)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.5)" }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.55)" }}>
             Vista previa · edita tu carta desde el panel
           </span>
         </div>
