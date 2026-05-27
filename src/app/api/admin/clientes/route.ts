@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }),
     prisma.emailLog.findMany({
       where: { purpose: { in: ["activation_welcome", "funnel_carta_lista", "lead_failure_help"] } },
-      select: { to: true, subject: true, purpose: true, status: true, createdAt: true },
+      select: { to: true, subject: true, purpose: true, status: true, openedAt: true, clickedAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -226,6 +226,8 @@ export async function GET(req: NextRequest) {
         subject: e.subject,
         purpose: e.purpose,
         status: e.status,
+        openedAt: e.openedAt?.toISOString() || null,
+        clickedAt: e.clickedAt?.toISOString() || null,
         createdAt: e.createdAt.toISOString(),
       })) : [],
     };

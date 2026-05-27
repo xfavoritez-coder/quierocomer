@@ -1402,6 +1402,8 @@ model EmailLog {
   status    String   // sent, failed
   errorMsg  String?
   dismissed Boolean  @default(false)
+  openedAt  DateTime?
+  clickedAt DateTime?
   createdAt DateTime @default(now())
 
   @@index([createdAt])

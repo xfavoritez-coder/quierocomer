@@ -15,35 +15,38 @@ interface SendEmailOptions {
 }
 
 export async function sendAdminEmail({ to, subject, html, purpose = "other", skipLog }: SendEmailOptions) {
+  // Create log first so we can inject tracking pixel
+  let logId: string | undefined;
+  if (!skipLog) {
+    const log = await prisma.emailLog.create({
+      data: { to, subject, purpose, status: "sent" },
+    }).catch(() => null);
+    logId = log?.id;
+  }
+
+  // Inject open pixel before </body> if we have a logId
+  let trackedHtml = html;
+  if (logId && html.includes("</body>")) {
+    const pixel = `<img src="${BASE_URL}/api/email/track/open?eid=${logId}" alt="" width="1" height="1" style="display:none" />`;
+    trackedHtml = html.replace("</body>", `${pixel}</body>`);
+  }
+
   try {
-    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, headers: { "Content-Type": "text/html; charset=UTF-8" } });
+    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html: trackedHtml, headers: { "Content-Type": "text/html; charset=UTF-8" } });
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);
       console.error("Resend error:", errorMsg);
-      if (!skipLog) {
-        await prisma.emailLog.create({
-          data: { to, subject, purpose, status: "failed", errorMsg },
-        }).catch(() => {});
-      }
+      if (logId) prisma.emailLog.update({ where: { id: logId }, data: { status: "failed", errorMsg } }).catch(() => {});
       throw new Error(errorMsg);
     }
 
-    let logId: string | undefined;
-    if (!skipLog) {
-      const log = await prisma.emailLog.create({
-        data: { to, subject, purpose, status: "sent" },
-      }).catch(() => null);
-      logId = log?.id;
-    }
     import("@/lib/costTracker").then(m => m.logResendUsage({ to, purpose })).catch(() => {});
     return { ...data, logId };
   } catch (err) {
-    if (!skipLog && !(err instanceof Error && err.message.startsWith("Resend"))) {
+    if (logId) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      await prisma.emailLog.create({
-        data: { to, subject, purpose, status: "failed", errorMsg },
-      }).catch(() => {});
+      prisma.emailLog.update({ where: { id: logId }, data: { status: "failed", errorMsg } }).catch(() => {});
     }
     throw err;
   }

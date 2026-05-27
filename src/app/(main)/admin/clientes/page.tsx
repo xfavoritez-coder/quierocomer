@@ -408,6 +408,8 @@ function TimelineTab({ c }: { c: Cliente }) {
         lead_failure_help: "Email de ayuda (carta fallo) enviado",
       };
       items.push({ time: e.createdAt, text: `${purposeLabel[e.purpose] || e.purpose} · ${e.status === "sent" ? "entregado" : "fallo"}`, dot: e.status === "sent" ? "gold" : "red" });
+      if (e.openedAt) items.push({ time: e.openedAt, text: `Email abierto`, dot: "green" });
+      if (e.clickedAt) items.push({ time: e.clickedAt, text: `Click en email`, dot: "green" });
     }
   }
 
@@ -475,15 +477,31 @@ function PanelActivityTab({ restaurantId }: { restaurantId: string }) {
     <div style={{ maxHeight: 450, overflowY: "auto" }}>
       {activities.map((a: any, i: number) => {
         const label = ACTION_LABELS[a.action] || a.action;
-        const detail = a.details && typeof a.details === "object"
-          ? (a.details.dishName || a.details.categoryName || a.details.name || "")
-          : "";
+        const d = a.details && typeof a.details === "object" ? a.details : {};
+        // Build detail parts from all available info
+        const parts: string[] = [];
+        if (d.dishName) parts.push(d.dishName);
+        if (d.categoryName || d.name) parts.push(d.categoryName || d.name);
+        if (d.section) parts.push(`seccion: ${d.section}`);
+        if (d.email) parts.push(d.email);
+        if (d.price) parts.push(`$${Number(d.price).toLocaleString("es-CL")}`);
+        if (d.fields && Array.isArray(d.fields)) parts.push(`campos: ${d.fields.join(", ")}`);
+        if (d.fields && typeof d.fields === "object" && !Array.isArray(d.fields)) parts.push(`campos: ${Object.keys(d.fields).join(", ")}`);
+        if (d.promoPrice) parts.push(`oferta: $${Number(d.promoPrice).toLocaleString("es-CL")}`);
+        if (d.status) parts.push(`estado: ${d.status}`);
+        if (d.dishes) parts.push(`${d.dishes} platos`);
+        if (d.categories) parts.push(`${d.categories} categorias`);
+        if (d.source) parts.push(`via ${d.source}`);
+        if (d.error) parts.push(d.error);
+        if (d.text) parts.push(`"${String(d.text).slice(0, 50)}"`);
+        if (d.fileName) parts.push(d.fileName);
+        const detail = parts.join(" · ");
         return (
           <div key={a.id || i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
             <div style={{ fontSize: 11, color: "var(--adm-text3)", minWidth: 110, flexShrink: 0 }}>{fmtDate(a.createdAt)}</div>
             <div style={{ fontSize: 13, color: "var(--adm-text2)" }}>
               <strong style={{ color: "var(--adm-text)" }}>{label}</strong>
-              {detail && <span style={{ marginLeft: 6, color: "var(--adm-text3)" }}>{detail}</span>}
+              {detail && <span style={{ marginLeft: 6, color: "var(--adm-text3)", fontSize: 12 }}>{detail}</span>}
             </div>
           </div>
         );
