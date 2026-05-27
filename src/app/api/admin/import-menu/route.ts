@@ -1,0 +1,163 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
+import { extractWithScraper } from "@/lib/extractors/scrape";
+import { extractFromDocument } from "@/lib/extractors/document";
+import { extractGoogleDrive } from "@/lib/extractors/googledrive";
+import { detectDishFlags } from "@/lib/utils/detectDishFlags";
+import type { ExtractionResult } from "@/lib/extractors/types";
+
+export const maxDuration = 300;
+
+function detectDishType(categoryName: string): string {
+  const n = categoryName.toLowerCase();
+  if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
+  if (/bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|té/i.test(n)) return "drink";
+  if (/postre|dessert|dulce|helado|torta|pastel/i.test(n)) return "dessert";
+  return "food";
+}
+
+/**
+ * POST /api/admin/import-menu
+ * Import menu from link or uploaded file, replacing existing dishes.
+ * Body: { restaurantId, cartaUrl } for links
+ * FormData: { restaurantId, file } for uploads
+ */
+export async function POST(req: NextRequest) {
+  const contentType = req.headers.get("content-type") || "";
+
+  let restaurantId: string;
+  let extraction: ExtractionResult;
+
+  if (contentType.includes("multipart/form-data")) {
+    // File upload
+    const formData = await req.formData();
+    restaurantId = formData.get("restaurantId") as string;
+    const file = formData.get("file") as File | null;
+
+    if (!restaurantId || !file) {
+      return NextResponse.json({ error: "Falta restaurantId o archivo" }, { status: 400 });
+    }
+
+    // Upload to Supabase
+    const ext = file.name.split(".").pop() || "bin";
+    const fileName = `cartas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { error: uploadError } = await supabase.storage
+      .from("fotos")
+      .upload(fileName, buffer, { contentType: file.type, upsert: true });
+    if (uploadError) {
+      return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 });
+    }
+    const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+    const fileUrl = urlData.publicUrl;
+
+    // Extract using document extractor
+    extraction = await extractFromDocument(fileUrl);
+  } else {
+    // JSON body — link mode
+    const body = await req.json();
+    restaurantId = body.restaurantId;
+    const cartaUrl = body.cartaUrl;
+
+    if (!restaurantId || !cartaUrl) {
+      return NextResponse.json({ error: "Falta restaurantId o cartaUrl" }, { status: 400 });
+    }
+
+    // Detect provider for better extraction
+    const provider = await prisma.menuProvider.findFirst({
+      where: { domainPatterns: { hasSome: [new URL(cartaUrl).hostname.replace(/^www\./, "")] } },
+      select: { name: true, extractionConfig: true },
+    }).catch(() => null);
+
+    // Check if it's a Google Drive link
+    if (cartaUrl.includes("drive.google.com") || cartaUrl.includes("docs.google.com")) {
+      extraction = await extractGoogleDrive(cartaUrl);
+    } else {
+      extraction = await extractWithScraper(cartaUrl, provider?.name, provider?.extractionConfig);
+    }
+  }
+
+  if (!extraction.dishes.length) {
+    return NextResponse.json({ error: "No se encontraron platos en la carta" }, { status: 400 });
+  }
+
+  // Verify restaurant exists and user has access
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { id: true, name: true },
+  });
+  if (!restaurant) {
+    return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
+  }
+
+  // Delete existing dishes and categories
+  await prisma.dish.deleteMany({ where: { restaurantId } });
+  await prisma.category.deleteMany({ where: { restaurantId } });
+
+  // Create new categories and dishes from extraction
+  const categoryMap = new Map<string, typeof extraction.dishes>();
+  for (const dish of extraction.dishes) {
+    const cat = dish.category || "General";
+    if (!categoryMap.has(cat)) categoryMap.set(cat, []);
+    categoryMap.get(cat)!.push(dish);
+  }
+
+  let catPosition = 0;
+  let totalDishes = 0;
+
+  for (const [catName, catDishes] of categoryMap) {
+    const category = await prisma.category.create({
+      data: {
+        restaurantId,
+        name: catName,
+        position: catPosition++,
+        dishType: detectDishType(catName),
+        isActive: true,
+      },
+    });
+
+    const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName);
+
+    for (let j = 0; j < catDishes.length; j++) {
+      const dish = catDishes[j];
+      const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" });
+
+      await prisma.dish.create({
+        data: {
+          restaurantId,
+          categoryId: category.id,
+          name: dish.name.trim(),
+          description: dish.description || null,
+          price: dish.price,
+          photos: dish.imageUrl ? [dish.imageUrl] : [],
+          position: j,
+          dishDiet: isDrinkCat ? "OMNIVORE" : ((dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"),
+          isSpicy: (dish as any).isSpicy || detected.isSpicy,
+          tags: j === 0 && catPosition <= 2 ? ["RECOMMENDED"] : [],
+          containsNuts: isDrinkCat ? false : detected.containsNuts,
+          isGlutenFree: isDrinkCat ? false : detected.isGlutenFree,
+          isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,
+          isSoyFree: isDrinkCat ? false : detected.isSoyFree,
+          isActive: true,
+        },
+      });
+      totalDishes++;
+    }
+  }
+
+  // Update restaurant logo if extracted
+  if (extraction.logoUrl) {
+    await prisma.restaurant.update({
+      where: { id: restaurantId },
+      data: { logoUrl: extraction.logoUrl },
+    }).catch(() => {});
+  }
+
+  return NextResponse.json({
+    ok: true,
+    dishes: totalDishes,
+    categories: categoryMap.size,
+    restaurantName: extraction.restaurantName,
+  });
+}

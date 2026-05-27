@@ -9,7 +9,8 @@ import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
-import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed } from "lucide-react";
+import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp } from "lucide-react";
+import ImportMenuModal from "@/components/admin/ImportMenuModal";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
 
@@ -359,6 +360,7 @@ export default function AdminMenus() {
   const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const router = useRouter();
@@ -1299,12 +1301,21 @@ export default function AdminMenus() {
           )}
         </div>
         {!creatingDish && (
-          <button
-            onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
-            style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
-          >
-            + Agregar
-          </button>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            <button
+              onClick={() => setShowImportModal(true)}
+              title="Importar carta existente"
+              style={{ padding: "10px 14px", background: "var(--adm-input)", color: "var(--adm-text2)", border: "1px solid var(--adm-card-border)", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <FileUp size={14} /> Importar
+            </button>
+            <button
+              onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
+              style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              + Agregar
+            </button>
+          </div>
         )}
       </div>
       {/* Filters — all in one horizontal scroll */}
@@ -1758,6 +1769,18 @@ export default function AdminMenus() {
         <div onClick={() => setPhotoModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 20 }}>
           <img src={photoModal} alt="" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
         </div>
+      )}
+
+      {showImportModal && selectedRestaurantId && (
+        <ImportMenuModal
+          restaurantId={selectedRestaurantId}
+          onClose={() => setShowImportModal(false)}
+          onDone={(result) => {
+            setShowImportModal(false);
+            // Reload the page to show new dishes
+            window.location.reload();
+          }}
+        />
       )}
 
       <style>{`
