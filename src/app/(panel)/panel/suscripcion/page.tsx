@@ -4,6 +4,7 @@ import { CreditCard, Sparkles, Shield, Receipt, XCircle, ExternalLink } from "lu
 import { SessionContext } from "@/lib/admin/SessionContext";
 import { toast } from "sonner";
 import { planNetAmount, ivaOf, grossOf, type PlanKey, PLAN_LABELS } from "@/lib/billing/plans-config";
+import FacturacionPage from "@/components/admin/pages/facturacionPage";
 
 type BillingStatus = {
   restaurantId: string;
@@ -334,15 +335,9 @@ export default function SuscripcionPage() {
             <p style={{ fontSize: "0.9rem", color: "#fbbf24", margin: "0 0 4px", fontWeight: 700 }}>
               Completa tus datos de facturación
             </p>
-            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>
-              Necesitamos tu razón social, RUT y giro para emitir la factura electrónica con IVA cada mes.
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              Necesitamos tu razón social, RUT y giro para emitir la factura electrónica con IVA cada mes. Puedes completarlos más abajo.
             </p>
-            <a href="/panel/facturacion" style={{
-              display: "inline-block", padding: "8px 16px", background: GOLD, color: "#100b03",
-              borderRadius: 999, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
-            }}>
-              Completar datos →
-            </a>
           </div>
         )}
 
@@ -512,6 +507,9 @@ export default function SuscripcionPage() {
           </button>
         </Card>
       )}
+
+      {/* ─── Datos de facturación ─────────── */}
+      <FacturacionPage />
 
     </div>
   );
