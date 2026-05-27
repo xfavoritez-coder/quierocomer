@@ -16,6 +16,7 @@ const NAV = [
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
   { icon: "📬", label: "Informe Semanal", href: "/admin/informe-semanal" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
+  { icon: "💰", label: "Costos", href: "/admin/costos" },
 ];
 
 interface Props {

@@ -108,6 +108,7 @@ Return ONLY the JSON object, nothing else.`,
 
     const data = await res.json();
     const text = data.content?.[0]?.text || "{}";
+    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: MODEL, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "extract_ingredients" })).catch(() => {});
     console.log(`[extractIngredients] ${dishName}: AI response:`, text.substring(0, 200));
 
     // Parse JSON from response

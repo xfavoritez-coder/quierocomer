@@ -46,6 +46,7 @@ async function callTranslation(prompt: string, attempt = 1, maxTokens = 512): Pr
 
     const data = await res.json();
     const text: string = data.content?.[0]?.text || "";
+    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: MODEL, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "translate" })).catch(() => {});
 
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return {};

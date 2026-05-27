@@ -36,6 +36,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other", ski
       }).catch(() => null);
       logId = log?.id;
     }
+    import("@/lib/costTracker").then(m => m.logResendUsage({ to, purpose })).catch(() => {});
     return { ...data, logId };
   } catch (err) {
     if (!skipLog && !(err instanceof Error && err.message.startsWith("Resend"))) {

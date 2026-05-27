@@ -12,6 +12,7 @@ import { extractGoogleDrive } from "./googledrive";
 import { extractHeyzine } from "./heyzine";
 import { extractCanva } from "./canva";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
+import { logClaudeUsage } from "@/lib/costTracker";
 import type { ExtractionResult, ExtractedDish } from "./types";
 
 function slugify(name: string): string {
@@ -172,6 +173,7 @@ Reglas:
   if (!res.ok) throw new Error(`Claude Vision error: ${res.status}`);
   const data = await res.json();
   const text = data.content?.[0]?.text || "";
+  logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "extract_image" });
 
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON found in Vision response");
@@ -613,10 +615,30 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
-    // Email removed — now sent as a single unified email when the owner enters their panel (activation).
-    // Mark as DELIVERED for funnel tracking.
+    // Send simple "carta lista" email (just a link to the carta, no credentials)
+    // The full welcome email with panel credentials is sent when the owner enters their panel.
     if (lead.email && translationOk) {
-      await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } }).catch(() => {});
+      try {
+        const { sendAdminEmail, cartaListaSimpleEmailHtml } = await import("@/lib/email/sendAdminEmail");
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+        const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
+        const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(`${baseUrl}/qr/${restaurant.slug}`)}`;
+        const ownerName = (lead.ownerName || "Hola").split(" ")[0];
+
+        await sendAdminEmail({
+          to: lead.email,
+          subject: `${ownerName}, tu carta está lista`,
+          html: cartaListaSimpleEmailHtml({ ownerName, restaurantName: restaurant.name, cartaUrl: clickUrl, openPixel }),
+          purpose: "funnel_carta_lista",
+        });
+
+        await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
+        console.log(`[Pipeline] Carta lista email sent to ${lead.email}`);
+      } catch (emailErr) {
+        console.error(`[Pipeline] Failed to send carta lista email:`, emailErr);
+        // Still mark as DELIVERED so funnel progresses
+        await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } }).catch(() => {});
+      }
     }
 
     // Send WhatsApp alongside email

@@ -1,0 +1,243 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+const F = "var(--font-display)";
+const FB = "var(--font-body)";
+const GOLD = "#F4A623";
+
+interface CostData {
+  from: string;
+  to: string;
+  totalCostUsd: number;
+  totalCalls: number;
+  uniqueLeads: number;
+  costPerLead: number;
+  byService: Record<string, { count: number; costUsd: number; inputTokens: number; outputTokens: number }>;
+  byDay: Record<string, Record<string, number>>;
+  byAction: Record<string, { count: number; costUsd: number }>;
+  topLeads: { leadId: string; costUsd: number; localName?: string }[];
+}
+
+const SERVICE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  claude: { label: "Claude API", icon: "🧠", color: "#a78bfa" },
+  twilio: { label: "WhatsApp (Twilio)", icon: "💬", color: "#22c55e" },
+  resend: { label: "Email (Resend)", icon: "📧", color: "#f59e0b" },
+  supabase: { label: "Supabase", icon: "🗄️", color: "#3b82f6" },
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  extract_document_text: "Extraer texto PDF",
+  pdf_vision_single: "PDF Vision (completo)",
+  pdf_vision_page: "PDF Vision (por página)",
+  pdf_vision_batch: "PDF Vision (batch imágenes)",
+  extract_image: "Extraer imagen",
+  scrape_menu: "Scraping menú",
+  translate: "Traducción",
+  whatsapp_agent: "Agente WhatsApp",
+  extract_ingredients: "Extraer ingredientes",
+  send_whatsapp: "Enviar WhatsApp",
+  send_email: "Enviar email",
+  storage_upload: "Storage upload",
+};
+
+function usd(n: number) {
+  return `$${n.toFixed(4)}`;
+}
+
+function clp(n: number) {
+  return `$${Math.round(n * 950).toLocaleString("es-CL")}`;
+}
+
+function tokens(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+  return String(n);
+}
+
+export default function CostosPage() {
+  const [data, setData] = useState<CostData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<"7d" | "14d" | "30d">("30d");
+
+  useEffect(() => {
+    const days = preset === "7d" ? 7 : preset === "14d" ? 14 : 30;
+    const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+    const to = new Date().toISOString().slice(0, 10);
+
+    setLoading(true);
+    fetch(`/api/admin/costs?from=${from}&to=${to}`)
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [preset]);
+
+  const cardStyle: React.CSSProperties = {
+    background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+    borderRadius: 16, padding: "18px 20px",
+  };
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 800, padding: 20 }}>
+        <h1 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-text)", margin: "0 0 20px" }}>💰 Costos</h1>
+        <div style={{ ...cardStyle, textAlign: "center", padding: 40, color: "var(--adm-text3)" }}>Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!data || data.totalCalls === 0) {
+    return (
+      <div style={{ maxWidth: 800, padding: 20 }}>
+        <h1 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-text)", margin: "0 0 8px" }}>💰 Costos</h1>
+        <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Consumo de servicios externos: Claude API, Twilio, Resend, Supabase</p>
+        <div style={{ ...cardStyle, textAlign: "center", padding: 40 }}>
+          <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text3)" }}>Sin datos de costos todavía</p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", marginTop: 4 }}>Los costos se registran automáticamente con cada llamada a servicios externos.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const days = Object.keys(data.byDay).sort();
+  const maxDayCost = Math.max(...days.map(d => data.byDay[d]._total || 0), 0.001);
+
+  return (
+    <div style={{ maxWidth: 800 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>💰 Costos</h1>
+          <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0 }}>Consumo de servicios externos en tiempo real</p>
+        </div>
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["7d", "14d", "30d"] as const).map(p => (
+            <button key={p} onClick={() => setPreset(p)} style={{
+              padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+              background: preset === p ? "var(--adm-card-border)" : "transparent",
+              color: preset === p ? "var(--adm-text)" : "var(--adm-text3)",
+            }}>
+              {p === "7d" ? "7 días" : p === "14d" ? "14 días" : "30 días"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 20 }}>
+        {[
+          { label: "Costo total", value: usd(data.totalCostUsd), sub: clp(data.totalCostUsd) + " CLP", color: GOLD },
+          { label: "Costo / lead", value: usd(data.costPerLead), sub: clp(data.costPerLead) + " CLP", color: "#a78bfa" },
+          { label: "Llamadas API", value: data.totalCalls.toLocaleString(), color: "#3b82f6" },
+          { label: "Leads procesados", value: String(data.uniqueLeads), color: "#22c55e" },
+        ].map(kpi => (
+          <div key={kpi.label} style={{ ...cardStyle, textAlign: "center" }}>
+            <div style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
+            <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 2 }}>{kpi.label}</div>
+            {kpi.sub && <div style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 2 }}>≈ {kpi.sub}</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* By service */}
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: ".06em" }}>Por servicio</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {Object.entries(data.byService)
+            .sort((a, b) => b[1].costUsd - a[1].costUsd)
+            .map(([service, info]) => {
+              const meta = SERVICE_LABELS[service] || { label: service, icon: "⚙️", color: "#888" };
+              const pct = data.totalCostUsd > 0 ? (info.costUsd / data.totalCostUsd * 100) : 0;
+              return (
+                <div key={service}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)" }}>{meta.icon} {meta.label}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: meta.color }}>{usd(info.costUsd)}</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, background: "var(--adm-hover)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: meta.color, borderRadius: 3, transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                    <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{info.count} llamadas</span>
+                    {info.inputTokens > 0 && (
+                      <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
+                        {tokens(info.inputTokens)} in · {tokens(info.outputTokens)} out
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+
+      {/* By day chart */}
+      {days.length > 1 && (
+        <div style={{ ...cardStyle, marginBottom: 16 }}>
+          <h2 style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: ".06em" }}>Por día</h2>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 100 }}>
+            {days.map(day => {
+              const total = data.byDay[day]._total || 0;
+              const h = Math.max(2, (total / maxDayCost) * 100);
+              const dayNum = day.slice(8);
+              return (
+                <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }} title={`${day}: ${usd(total)}`}>
+                  <div style={{ width: "100%", maxWidth: 24, height: h, background: `linear-gradient(to top, ${GOLD}44, ${GOLD})`, borderRadius: "4px 4px 0 0" }} />
+                  <span style={{ fontFamily: FB, fontSize: "0.55rem", color: "var(--adm-text3)" }}>{dayNum}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* By action */}
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: ".06em" }}>Por acción</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {Object.entries(data.byAction)
+            .sort((a, b) => b[1].costUsd - a[1].costUsd)
+            .map(([action, info]) => (
+              <div key={action} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{ACTION_LABELS[action] || action}</span>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{info.count}x</span>
+                  <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", minWidth: 60, textAlign: "right" }}>{usd(info.costUsd)}</span>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+
+      {/* Top leads */}
+      {data.topLeads.length > 0 && (
+        <div style={{ ...cardStyle }}>
+          <h2 style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: ".06em" }}>Leads más caros</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {data.topLeads.map((lead, i) => (
+              <div key={lead.leadId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", width: 18 }}>{i + 1}.</span>
+                  <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>{lead.localName || lead.leadId.slice(0, 8)}</span>
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: GOLD }}>{usd(lead.costUsd)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fixed costs note */}
+      <div style={{ marginTop: 20, padding: "14px 16px", background: "var(--adm-hover)", borderRadius: 12, border: "1px solid var(--adm-card-border)" }}>
+        <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)", margin: "0 0 6px" }}>Costos fijos mensuales (no trackeados aquí)</p>
+        <div style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", lineHeight: 1.8 }}>
+          • Vercel Pro: ~$20 USD/mes<br/>
+          • Supabase Pro: ~$25 USD/mes<br/>
+          • Resend: $20 USD/mes (50K emails)<br/>
+          • Dominio: ~$12 USD/año<br/>
+          • Claude Code: según uso
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1931,3 +1931,22 @@ model AdSession {
   @@index([utmSource, createdAt])
   @@index([createdAt])
 }
+
+// ─── API Usage / Cost Tracking ──────────────────────────────────────
+
+model ApiUsage {
+  id        String   @id @default(cuid())
+  service   String   // "claude" | "twilio" | "resend" | "supabase"
+  action    String   // "extract_menu" | "translate" | "pdf_vision" | "send_whatsapp" | "send_email" | "storage_upload"
+  model     String?  // "claude-sonnet-4-6" | "claude-haiku-4-5" etc.
+  leadId    String?  // nullable — not all calls are lead-related
+  inputTokens  Int?  // Claude API
+  outputTokens Int?  // Claude API
+  costUsd   Float    // calculated cost in USD
+  meta      Json?    // extra info: { pages: 15, emailTo: "...", twilioSid: "..." }
+  createdAt DateTime @default(now())
+
+  @@index([service, createdAt])
+  @@index([leadId, createdAt])
+  @@index([createdAt])
+}

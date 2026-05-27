@@ -3,6 +3,7 @@
  * files, then sends to Claude for structured extraction.
  */
 import type { ExtractionResult, ExtractedDish } from "./types";
+import { logClaudeUsage } from "@/lib/costTracker";
 
 /**
  * Extract text content from a document file (PDF, Word, Excel).
@@ -92,6 +93,7 @@ ${trimmedText}`;
   if (!claudeRes.ok) throw new Error(`Claude error: ${claudeRes.status}`);
   const data = await claudeRes.json();
   const responseText = data.content?.[0]?.text || "";
+  logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "extract_document_text", leadId: config?.leadId });
 
   // If response was truncated (max_tokens hit), try to find the last complete JSON
   const stopReason = data.stop_reason;
@@ -191,6 +193,7 @@ Reglas: Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0. SOL
 
       const data = await claudeRes.json();
       const responseText = data.content?.[0]?.text || "";
+      logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "pdf_vision_batch" });
       const parsed = repairAndParseJson(responseText);
 
       if (parsed.restaurantName && parsed.restaurantName !== "Restaurante") {
@@ -287,6 +290,7 @@ async function sendPdfDocumentToVision(buffer: Buffer, apiKey: string, prompt: s
   }
   const data = await claudeRes.json();
   const responseText = data.content?.[0]?.text || "";
+  logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "pdf_vision_single" });
   const parsed = repairAndParseJson(responseText);
 
   console.log("[Document] PDF Vision extracted", (parsed.categories || []).reduce((s: number, c: any) => s + (c.dishes?.length || 0), 0), "dishes");
@@ -376,6 +380,7 @@ async function sendPdfPageToVision(buffer: Buffer, apiKey: string, prompt: strin
   }
   const data = await claudeRes.json();
   const responseText = data.content?.[0]?.text || "";
+  logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "pdf_vision_page" });
   return repairAndParseJson(responseText);
 }
 

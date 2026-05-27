@@ -96,6 +96,7 @@ async function callClaude(prompt: string, maxTokens = 32000, model = MODEL_FULL)
   });
   if (!res.ok) throw new Error(`Claude error: ${res.status}`);
   const data = await res.json();
+  import("@/lib/costTracker").then(m => m.logClaudeUsage({ model, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "scrape_menu" })).catch(() => {});
   return data.content?.[0]?.text || "";
 }
 

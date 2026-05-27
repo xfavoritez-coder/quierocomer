@@ -75,6 +75,7 @@ export async function sendWhatsApp({ to, body, contentSid, contentVariables }: S
     }
 
     console.log(`[WhatsApp] Message queued to ${to}: SID ${data.sid}, status=${data.status}`);
+    import("@/lib/costTracker").then(m => m.logTwilioUsage({ twilioSid: data.sid, to })).catch(() => {});
     return data.sid;
   } catch (err) {
     console.error("[WhatsApp] Send failed:", (err as Error).message);

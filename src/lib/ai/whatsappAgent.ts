@@ -100,6 +100,7 @@ ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}`;
     }
 
     const data = await res.json();
+    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: MODEL, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "whatsapp_agent" })).catch(() => {});
     return data.content?.[0]?.text || "Gracias por tu mensaje.";
   } catch (err) {
     console.error("[WA Agent] Error:", err);
