@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   // Also count sessions in last 7 days per restaurant
   const recentSessions = await prisma.session.groupBy({
     by: ["restaurantId"],
-    where: { createdAt: { gte: sevenDaysAgo } },
+    where: { startedAt: { gte: sevenDaysAgo } },
     _count: true,
   });
   const sessions7dMap = new Map<string, number>();
