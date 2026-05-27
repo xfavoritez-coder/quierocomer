@@ -144,6 +144,40 @@ async function discoverMenuUrl(pageUrl: string): Promise<string | null> {
   }
 }
 
+/**
+ * Extract dish name→photo mappings from JS/JSON data embedded in <script> tags.
+ * Handles patterns like: { price: N, img: "URL", loc: { es: { name: "..." } } }
+ * Used for platforms like Socialreacts/GHL that embed menu data in JS.
+ */
+function extractDishPhotosFromScript(html: string): { name: string; img: string }[] {
+  const results: { name: string; img: string }[] = [];
+
+  // Pattern 1: JSON objects with img + loc.es.name (socialreacts/GHL pattern)
+  // Match: img:"URL" ... name:"dishName" within the same object context
+  const itemRegex = /\{\s*(?:[^{}]*,)?\s*price\s*:\s*\d+\s*,\s*img\s*:\s*"([^"]+)"\s*,\s*loc\s*:\s*\{\s*es\s*:\s*\{\s*name\s*:\s*"([^"]+)"/g;
+  let m;
+  while ((m = itemRegex.exec(html)) !== null) {
+    if (m[1] && m[2]) results.push({ img: m[1], name: m[2] });
+  }
+  if (results.length > 0) return results;
+
+  // Pattern 2: Generic "img":"URL" near "name":"dishName" (within ~500 chars)
+  const imgRegex = /["']img["']\s*:\s*["'](https?:\/\/[^"']+\.(?:webp|jpg|jpeg|png))["']/g;
+  const nameRegex = /["']name["']\s*:\s*["']([^"']{3,80})["']/g;
+  const imgs: { idx: number; url: string }[] = [];
+  const names: { idx: number; name: string }[] = [];
+  while ((m = imgRegex.exec(html)) !== null) imgs.push({ idx: m.index, url: m[1] });
+  while ((m = nameRegex.exec(html)) !== null) names.push({ idx: m.index, name: m[1] });
+
+  for (const img of imgs) {
+    // Find closest name within 500 chars before the img
+    const closest = names.filter(n => n.idx < img.idx && img.idx - n.idx < 500).pop();
+    if (closest) results.push({ img: img.url, name: closest.name });
+  }
+
+  return results;
+}
+
 function cleanContent(html: string): string {
   const imgUrls: string[] = [];
   // Extract image URLs from <img> tags
@@ -343,7 +377,23 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   console.log("[Scraper] Raw content length:", pageContent.length);
   // If content looks like markdown (from Jina), skip HTML cleaning
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
-  const cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
+  let cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
+
+  // When Jina was used (markdown), also fetch raw HTML to extract dish photo URLs
+  // that are embedded in JS/JSON data (e.g. socialreacts menuData)
+  if (isMarkdown) {
+    try {
+      const rawHtml = await fetchWithTimeout(menuUrl, 8000).catch(() => "");
+      if (rawHtml.length > 500) {
+        const photoMap = extractDishPhotosFromScript(rawHtml);
+        if (photoMap.length > 0) {
+          cleaned += "\n\n[DISH PHOTOS FROM PAGE DATA]\n" + photoMap.map(p => `${p.name}: ${p.img}`).join("\n");
+          console.log(`[Scraper] Extracted ${photoMap.length} dish photos from raw HTML`);
+        }
+      }
+    } catch {}
+  }
+
   console.log("[Scraper] Cleaned length:", cleaned.length, isMarkdown ? "(markdown, no cleaning)" : "(HTML cleaned)");
   const content = cleaned.length > cfgMaxChars ? cleaned.slice(0, cfgMaxChars) : cleaned;
   console.log("[Scraper] Trimmed to:", content.length, `(max: ${cfgMaxChars})`, "| Calling Claude...");
@@ -388,7 +438,7 @@ Responde con JSON:
 REGLAS IMPORTANTES:
 - Precios: busca números que parezcan precios (ej: $8.990, 8990, $12.500). Conviértelos a enteros sin puntos: $8.990→8990
 - Si un precio tiene formato "8.990" (con punto de miles), es 8990 no 8.99
-- Fotos: busca URLs de imágenes en la sección [IMAGES FOUND ON PAGE] y asócialas al plato correspondiente por nombre o posición
+- Fotos: busca URLs de imágenes en [IMAGES FOUND ON PAGE] o [DISH PHOTOS FROM PAGE DATA] y asócialas al plato correspondiente por nombre o posición
 - Las URLs de fotos deben ser absolutas. Si son relativas, añade ${baseUrl} al inicio
 - NO dejes price en 0 si hay un precio visible en la página
 - diet: "VEGAN" si tiene marcas veganas (🌿/V/vegan), "VEGETARIAN" si vegetariano, "OMNIVORE" si no hay indicador
