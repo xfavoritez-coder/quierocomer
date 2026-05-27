@@ -86,6 +86,42 @@ export async function GET(req: Request) {
   const uniqueLeads = new Set(records.filter(r => r.leadId).map(r => r.leadId)).size;
   const costPerLead = uniqueLeads > 0 ? totalCostUsd / uniqueLeads : 0;
 
+  // ─── Meta Ads (if configured) ────────────────────────────────
+  let metaAds: { spendClp: number; impressions: number; clicks: number; leads: number; landingViews: number } | null = null;
+  const metaToken = process.env.META_ACCESS_TOKEN;
+  const metaAccount = process.env.META_AD_ACCOUNT_ID;
+  if (metaToken && metaAccount) {
+    try {
+      const metaRes = await fetch(
+        `https://graph.facebook.com/v21.0/${metaAccount}/insights?` +
+        new URLSearchParams({
+          fields: "spend,impressions,clicks,actions",
+          time_range: JSON.stringify({ since: from, until: to }),
+          level: "account",
+          access_token: metaToken,
+        }),
+        { signal: AbortSignal.timeout(10000) },
+      );
+      if (metaRes.ok) {
+        const metaData = await metaRes.json();
+        const row = metaData.data?.[0];
+        if (row) {
+          const actions = row.actions || [];
+          const getAction = (type: string) => Number(actions.find((a: any) => a.action_type === type)?.value || 0);
+          metaAds = {
+            spendClp: Number(row.spend) || 0,
+            impressions: Number(row.impressions) || 0,
+            clicks: Number(row.clicks) || 0,
+            leads: getAction("lead") || getAction("offsite_conversion.fb_pixel_lead"),
+            landingViews: getAction("landing_page_view"),
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[Costs] Meta Ads fetch failed:", (e as Error).message);
+    }
+  }
+
   return NextResponse.json({
     from, to,
     totalCostUsd: +totalCostUsd.toFixed(4),
@@ -96,5 +132,6 @@ export async function GET(req: Request) {
     byDay,
     byAction,
     topLeads,
+    metaAds,
   });
 }

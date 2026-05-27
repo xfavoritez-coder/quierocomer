@@ -17,6 +17,7 @@ interface CostData {
   byDay: Record<string, Record<string, number>>;
   byAction: Record<string, { count: number; costUsd: number }>;
   topLeads: { leadId: string; costUsd: number; localName?: string }[];
+  metaAds: { spendClp: number; impressions: number; clicks: number; leads: number; landingViews: number } | null;
 }
 
 const SERVICE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
@@ -234,6 +235,29 @@ export default function CostosPage() {
         </div>
       )}
 
+      {/* Meta Ads */}
+      {data.metaAds && (
+        <div style={{ ...cardStyle, marginBottom: 16, border: "1px solid rgba(66,103,178,.25)" }}>
+          <h2 style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: ".06em" }}>📣 Meta Ads</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginBottom: 14 }}>
+            {[
+              { label: "Gasto", value: `$${data.metaAds.spendClp.toLocaleString("es-CL")}`, sub: "CLP", color: "#4267B2" },
+              { label: "Impresiones", value: data.metaAds.impressions.toLocaleString("es-CL"), color: "var(--adm-text)" },
+              { label: "Clicks", value: data.metaAds.clicks.toLocaleString("es-CL"), color: "var(--adm-text)" },
+              { label: "Landing views", value: data.metaAds.landingViews.toLocaleString("es-CL"), color: "var(--adm-text)" },
+              { label: "Leads", value: String(data.metaAds.leads), color: "#22c55e" },
+              { label: "Costo / lead", value: data.metaAds.leads > 0 ? `$${Math.round(data.metaAds.spendClp / data.metaAds.leads).toLocaleString("es-CL")}` : "—", sub: "CLP", color: GOLD },
+            ].map(kpi => (
+              <div key={kpi.label} style={{ textAlign: "center", padding: "8px 4px" }}>
+                <div style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
+                {kpi.sub && <div style={{ fontFamily: FB, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{kpi.sub}</div>}
+                <div style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 2 }}>{kpi.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Total mensual completo */}
       {(() => {
         const fixedCosts = [
@@ -245,7 +269,8 @@ export default function CostosPage() {
         ];
         const totalFixed = fixedCosts.reduce((s, c) => s + c.usd, 0);
         const totalVariable = data.totalCostUsd;
-        const grandTotal = totalFixed + totalVariable;
+        const metaAdsUsd = data.metaAds ? data.metaAds.spendClp / 950 : 0;
+        const grandTotal = totalFixed + totalVariable + metaAdsUsd;
 
         return (
           <div style={{ ...cardStyle, marginTop: 20, background: "linear-gradient(135deg, var(--adm-card), var(--adm-hover))", border: `1px solid ${GOLD}33` }}>
@@ -288,6 +313,23 @@ export default function CostosPage() {
                 <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(totalVariable)} ≈ {clp(totalVariable)}</span>
               </div>
             </div>
+
+            {/* Meta Ads */}
+            {data.metaAds && data.metaAds.spendClp > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".06em" }}>Publicidad</p>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>📣 Meta Ads</span>
+                  <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>
+                    ${data.metaAds.spendClp.toLocaleString("es-CL")} CLP
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 0", borderTop: "1px solid var(--adm-card-border)", marginTop: 6 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)" }}>Subtotal publicidad</span>
+                  <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(metaAdsUsd)} ≈ ${data.metaAds.spendClp.toLocaleString("es-CL")} CLP</span>
+                </div>
+              </div>
+            )}
 
             {/* Grand total */}
             <div style={{ background: "var(--adm-card)", borderRadius: 12, padding: "14px 16px", border: `1px solid ${GOLD}44` }}>
