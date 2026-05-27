@@ -582,9 +582,17 @@ function AccionesTab({ c, togglingExempt, onToggleExempt, onDelete, onUpdateFiel
       {/* Quick actions */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         <ActionBtn href={`${baseUrl}/qr/${c.slug}`} label="👁 Ver carta" />
-        {c.ownerId && <ActionBtn href={`/api/admin/impersonate?ownerId=${c.ownerId}`} label="🔑 Entrar como el" />}
-        {c.owner?.email && <ActionBtn href={`mailto:${c.owner.email}`} label="📧 Enviar email" />}
-        {c.owner?.whatsapp && <ActionBtn href={`https://wa.me/${c.owner.whatsapp.replace(/[^0-9+]/g, "")}`} label="💬 Enviar WA" />}
+        {c.ownerId && <button onClick={async () => {
+          const res = await fetch("/api/admin/impersonate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ownerId: c.ownerId }) });
+          if (res.ok) window.open("/panel", "_blank");
+          else alert("Error al entrar como owner");
+        }} style={{
+          padding: "7px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)",
+          background: "transparent", color: "var(--adm-text2)", fontSize: 12, cursor: "pointer",
+          fontFamily: F, display: "flex", alignItems: "center", gap: 5,
+        }}>🔑 Entrar como el</button>}
+        {c.owner?.email && <SendMessageBtn restaurantId={c.id} channel="email" ownerName={c.owner.name} ownerContact={c.owner.email} />}
+        {c.owner?.whatsapp && <SendMessageBtn restaurantId={c.id} channel="whatsapp" ownerName={c.owner.name} ownerContact={c.owner.whatsapp} />}
         <button onClick={onToggleExempt} disabled={togglingExempt === c.id} style={{
           padding: "7px 14px", borderRadius: 10, border: `1px solid ${c.billingExempt ? "#4ade80" : "var(--adm-card-border)"}`,
           background: "transparent", color: c.billingExempt ? "#4ade80" : "var(--adm-text2)",
@@ -679,5 +687,88 @@ function ActionBtn({ href, label }: { href: string; label: string }) {
     }}>
       {label}
     </a>
+  );
+}
+
+const EMAIL_TEMPLATES = [
+  { key: "bienvenida", label: "Bienvenida + credenciales", desc: "Email con datos de acceso y link al panel" },
+  { key: "carta_lista", label: "Tu carta esta lista", desc: "Notificacion de que su carta QR fue creada" },
+  { key: "trial_por_vencer", label: "Trial por vencer", desc: "Aviso de que quedan pocos dias de prueba" },
+  { key: "trial_vencido", label: "Trial vencido", desc: "Su prueba Premium termino, opciones de plan" },
+  { key: "reset_password", label: "Recuperar contraseña", desc: "Link para resetear contraseña" },
+];
+const WA_TEMPLATES = [
+  { key: "carta_lista", label: "Tu carta esta lista", desc: "Template aprobado: carta lista con link" },
+  { key: "carta_fallo", label: "No pudimos procesar tu carta", desc: "Template aprobado: pedir que reintente" },
+];
+
+function SendMessageBtn({ restaurantId, channel, ownerName, ownerContact }: { restaurantId: string; channel: "email" | "whatsapp"; ownerName: string; ownerContact: string }) {
+  const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
+  const [sent, setSent] = useState<string | null>(null);
+
+  const templates = channel === "email" ? EMAIL_TEMPLATES : WA_TEMPLATES;
+  const icon = channel === "email" ? "📧" : "💬";
+  const label = channel === "email" ? "Enviar email" : "Enviar WA";
+
+  const handleSend = async (templateKey: string) => {
+    setSending(templateKey);
+    try {
+      const res = await fetch("/api/admin/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel, template: templateKey, restaurantId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSent(templateKey);
+        setTimeout(() => { setSent(null); setOpen(false); }, 2000);
+      } else {
+        alert(data.error || "Error al enviar");
+      }
+    } catch { alert("Error de conexion"); }
+    setSending(null);
+  };
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} style={{
+        padding: "7px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)",
+        background: "transparent", color: "var(--adm-text2)", fontSize: 12, cursor: "pointer",
+        fontFamily: F, display: "flex", alignItems: "center", gap: 5,
+      }}>{icon} {label}</button>
+
+      {open && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => { if (!sending) setOpen(false); }}>
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, width: "100%", maxWidth: 400, padding: "24px 20px" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{icon} {label}</h3>
+              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: 18 }}>✕</button>
+            </div>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Para: <strong style={{ color: "var(--adm-text)" }}>{ownerName}</strong></p>
+            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 16px" }}>{ownerContact}</p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {templates.map(t => (
+                <button key={t.key} onClick={() => handleSend(t.key)} disabled={!!sending} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                  padding: "12px 14px", background: sent === t.key ? "rgba(74,222,128,.08)" : "var(--adm-input)",
+                  border: `1px solid ${sent === t.key ? "#4ade80" : "var(--adm-card-border)"}`,
+                  borderRadius: 12, cursor: sending ? "wait" : "pointer", fontFamily: F, textAlign: "left", width: "100%",
+                }}>
+                  <div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: sent === t.key ? "#4ade80" : "var(--adm-text)", marginBottom: 2 }}>
+                      {sent === t.key ? "✓ Enviado" : t.label}
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "var(--adm-text3)" }}>{t.desc}</div>
+                  </div>
+                  {sending === t.key && <span style={{ fontSize: "0.75rem", color: "var(--adm-text3)" }}>Enviando...</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
