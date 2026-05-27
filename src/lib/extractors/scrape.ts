@@ -12,7 +12,7 @@ const MODEL_FAST = "claude-haiku-4-5-20251001"; // preview (~15s)
 const MODEL_FULL = "claude-sonnet-4-6";          // full extraction (better quality)
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
-const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com"];
+const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app"];
 
 // Domains where direct HTML works better
 const DIRECT_FETCH_DOMAINS = ["thefork.com", "lafourchette.com"];
@@ -52,6 +52,12 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
   try { jinaContent = await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000); } catch {}
   try { directContent = await fetchWithTimeout(url, 8000); } catch {}
   if (!jinaContent && !directContent) throw new Error("No se pudo acceder a la URL");
+
+  // Detect SPAs that embed menu data in <script> tags (e.g. influye.app, other virtual menu platforms)
+  // These need Jina to render the JS — direct HTML has the data hidden in scripts that get stripped
+  if (directContent.includes("influye.app") || directContent.includes("var data = {") || directContent.includes("VIRTUAL_MENU")) {
+    if (jinaContent.length > 500) return jinaContent;
+  }
 
   const pricePattern = /\$[\d.,]+|\d{3,6}/g;
   const jinaPrices = (jinaContent.match(pricePattern) || []).length;
@@ -183,8 +189,14 @@ export async function extractQuickPreview(cartaUrl: string, providerName?: strin
 
   // Quick gastronomy check
   const lower = content.toLowerCase();
-  const gastronomySignals = ["menú", "menu", "plato", "precio", "carta", "restauran", "comida", "cocina", "entrante", "postre", "bebida", "ensalada", "carne", "pollo", "pescado", "sushi", "pizza", "burger", "sandwich", "empanada", "ceviche", "parrilla", "asado", "grill", "café", "coffee", "appetizer", "dessert", "drink", "entree", "dish", "order", "delivery", "$"];
-  const matchCount = gastronomySignals.filter(s => lower.includes(s)).length;
+  const gastronomySignals = ["menú", "menu", "plato", "precio", "carta", "restauran", "comida", "cocina", "entrante", "postre", "bebida", "ensalada", "carne", "pollo", "pescado", "sushi", "pizza", "burger", "sandwich", "empanada", "ceviche", "parrilla", "asado", "grill", "café", "coffee", "appetizer", "dessert", "drink", "entree", "dish", "order", "delivery", "$",
+    // SPA/JSON menu signals — virtual menus often have these keys
+    '"price"', '"precio"', '"dishes"', '"platos"', '"category"', '"categoria"', '"products"', '"items"', "completo", "papas fritas", "hamburguesa", "lomito", "churrasco", "agregado", "acompañamiento", "salsa", "wrap", "nugget", "hot dog", "combo", "promo",
+  ];
+  let matchCount = gastronomySignals.filter(s => lower.includes(s)).length;
+  // Boost: many price-like numbers (e.g. 2490, 7990) strongly suggest a menu
+  const priceMatches = content.match(/\b\d{3,5}\b/g) || [];
+  if (priceMatches.length >= 5) matchCount += 2;
   if (matchCount < 2) {
     throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
   }
@@ -246,8 +258,14 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
 
   // Quick gastronomy check — reject pages that clearly aren't restaurant menus
   const lower = content.toLowerCase();
-  const gastronomySignals = ["menú", "menu", "plato", "precio", "carta", "restauran", "comida", "cocina", "entrante", "postre", "bebida", "ensalada", "carne", "pollo", "pescado", "sushi", "pizza", "burger", "sandwich", "empanada", "ceviche", "parrilla", "asado", "grill", "café", "coffee", "appetizer", "dessert", "drink", "entree", "dish", "order", "delivery", "$"];
-  const matchCount = gastronomySignals.filter(s => lower.includes(s)).length;
+  const gastronomySignals = ["menú", "menu", "plato", "precio", "carta", "restauran", "comida", "cocina", "entrante", "postre", "bebida", "ensalada", "carne", "pollo", "pescado", "sushi", "pizza", "burger", "sandwich", "empanada", "ceviche", "parrilla", "asado", "grill", "café", "coffee", "appetizer", "dessert", "drink", "entree", "dish", "order", "delivery", "$",
+    // SPA/JSON menu signals — virtual menus often have these keys
+    '"price"', '"precio"', '"dishes"', '"platos"', '"category"', '"categoria"', '"products"', '"items"', "completo", "papas fritas", "hamburguesa", "lomito", "churrasco", "agregado", "acompañamiento", "salsa", "wrap", "nugget", "hot dog", "combo", "promo",
+  ];
+  let matchCount = gastronomySignals.filter(s => lower.includes(s)).length;
+  // Boost: many price-like numbers (e.g. 2490, 7990) strongly suggest a menu
+  const priceMatches = content.match(/\b\d{3,5}\b/g) || [];
+  if (priceMatches.length >= 5) matchCount += 2;
   if (matchCount < 2) {
     console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Rejecting.`);
     throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
