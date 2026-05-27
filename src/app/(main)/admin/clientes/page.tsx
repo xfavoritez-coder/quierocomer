@@ -84,6 +84,8 @@ const ACTION_LABELS: Record<string, string> = {
   category_edit: "Edito categoria", category_create: "Creo categoria", category_delete: "Elimino categoria",
   promo_create: "Creo oferta", promo_edit: "Edito oferta", settings_change: "Cambio config",
   announcement_create: "Creo anuncio",
+  menu_import: "Importo carta",
+  menu_import_failed: "Fallo importacion de carta",
 };
 
 export default function ClientesPage() {

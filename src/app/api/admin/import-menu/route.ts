@@ -26,8 +26,10 @@ function detectDishType(categoryName: string): string {
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") || "";
 
-  let restaurantId: string;
+  let restaurantId: string = "";
   let extraction: ExtractionResult;
+
+  try {
 
   if (contentType.includes("multipart/form-data")) {
     // File upload
@@ -155,10 +157,34 @@ export async function POST(req: NextRequest) {
     },
   }).catch(() => {});
 
+  // Log activity so it appears in /admin/clientes timeline
+  import("@/lib/admin/logActivity").then(({ logActivity }) => {
+    logActivity(restaurantId, "menu_import", {
+      dishes: totalDishes,
+      categories: categoryMap.size,
+      source: contentType.includes("multipart") ? "file" : "link",
+    });
+  }).catch(() => {});
+
   return NextResponse.json({
     ok: true,
     dishes: totalDishes,
     categories: categoryMap.size,
     restaurantName: extraction.restaurantName,
   });
+
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    // Log failure so it appears in /admin/clientes timeline
+    if (restaurantId) {
+      import("@/lib/admin/logActivity").then(({ logActivity }) => {
+        logActivity(restaurantId, "menu_import_failed", {
+          error: errorMsg.slice(0, 200),
+          source: contentType.includes("multipart") ? "file" : "link",
+        });
+      }).catch(() => {});
+    }
+    console.error("[ImportMenu] Error:", errorMsg);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
+  }
 }
