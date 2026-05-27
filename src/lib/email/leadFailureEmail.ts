@@ -74,60 +74,110 @@ function getHelpContent(type: FailureType, restaurantName: string, cartaUrl?: st
   }
 }
 
+/** Max failure emails per person before we stop asking them to retry */
+const MAX_FAILURE_EMAILS = 2;
+
 export async function sendLeadFailureEmail({ leadId, to, ownerName, restaurantName, errorMsg, cartaUrl }: FailureEmailOptions) {
-  // Anti-loop: don't send if we already sent a failure email to this lead
+  // Anti-loop: don't send if we already sent a failure email to THIS lead
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { events: true } });
   const events = (lead?.events as any[]) || [];
-  if (events.some((e: any) => e.action === "email_failure_sent")) return;
+  if (events.some((e: any) => e.action === "email_failure_sent" || e.action === "email_escalated_sent")) return;
 
-  const type = classifyError(errorMsg, cartaUrl);
-  const help = getHelpContent(type, restaurantName, cartaUrl);
+  // Count how many failure emails this person has received across ALL their leads
+  const recentLeads = await prisma.lead.findMany({
+    where: { email: to, cartaStatus: "FAILED" },
+    select: { events: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const totalFailEmails = recentLeads.reduce((count, l) => {
+    const evts = (Array.isArray(l.events) ? l.events : []) as any[];
+    return count + evts.filter((e: any) => e.action === "email_failure_sent").length;
+  }, 0);
 
-  const html = adminEmailTemplate(`
-    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0 0 16px;text-align:center;">
-      ${ownerName}, falta un paso para tu carta
-    </h1>
-    <div style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
-      ${help.explanation}
-    </div>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;margin-bottom:20px;">
-      <tr><td style="padding:16px 18px;">
-        <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Cómo solucionarlo</div>
-        <div style="font-size:14px;color:#7a6547;line-height:1.8;">
-          ${help.steps}
-        </div>
-      </td></tr>
-    </table>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid ${GOLD}33;border-radius:14px;margin-bottom:20px;">
-      <tr><td style="padding:16px 18px;">
-        <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Opción más fácil</div>
-        <div style="font-size:14px;color:#7a6547;line-height:1.7;">
-          Si prefieres algo más rápido, puedes <strong>sacarle una foto a tu carta</strong> y subirla directamente. Aceptamos fotos en JPG o PNG y nuestro sistema las procesa automáticamente.
-        </div>
-      </td></tr>
-    </table>
-    <div style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-      Una vez que soluciones esto, nosotros nos encargamos del resto. Tu carta estará lista en minutos.
-    </div>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
-      <a href="${SUBIR_URL}" style="display:inline-block;background:${GOLD};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Volver a subir mi carta</a>
-    </td></tr></table>
-    <div style="font-size:13px;color:#b8a888;text-align:center;line-height:1.6;padding-top:16px;">
-      Si tienes dudas, simplemente responde este email y te ayudamos.
-    </div>
-  `);
+  const isEscalation = totalFailEmails >= MAX_FAILURE_EMAILS;
+
+  let html: string;
+  let subject: string;
+
+  if (isEscalation) {
+    // 3rd+ attempt: stop asking to retry, tell them a human will handle it
+    html = adminEmailTemplate(`
+      <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0 0 16px;text-align:center;">
+        ${ownerName}, ya estamos en esto
+      </h1>
+      <div style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+        Vemos que has intentado subir la carta de <strong>${restaurantName}</strong> varias veces sin éxito.
+        No te preocupes — <strong>alguien de nuestro equipo va a revisar tu caso personalmente</strong> y te contactará pronto para ayudarte.
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;margin-bottom:20px;">
+        <tr><td style="padding:16px 18px;text-align:center;">
+          <div style="font-size:14px;color:#7a6547;line-height:1.8;">
+            No necesitas hacer nada más. Nosotros nos encargamos desde aquí.
+          </div>
+        </td></tr>
+      </table>
+      <div style="font-size:13px;color:#b8a888;text-align:center;line-height:1.6;padding-top:16px;">
+        Si mientras tanto quieres contarnos algo, simplemente responde este email.
+      </div>
+    `);
+    subject = `${ownerName}, ya estamos revisando tu carta`;
+  } else {
+    const type = classifyError(errorMsg, cartaUrl);
+    const help = getHelpContent(type, restaurantName, cartaUrl);
+
+    html = adminEmailTemplate(`
+      <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0 0 16px;text-align:center;">
+        ${ownerName}, falta un paso para tu carta
+      </h1>
+      <div style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
+        ${help.explanation}
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;margin-bottom:20px;">
+        <tr><td style="padding:16px 18px;">
+          <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Cómo solucionarlo</div>
+          <div style="font-size:14px;color:#7a6547;line-height:1.8;">
+            ${help.steps}
+          </div>
+        </td></tr>
+      </table>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid ${GOLD}33;border-radius:14px;margin-bottom:20px;">
+        <tr><td style="padding:16px 18px;">
+          <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Opción más fácil</div>
+          <div style="font-size:14px;color:#7a6547;line-height:1.7;">
+            Si prefieres algo más rápido, puedes <strong>sacarle una foto a tu carta</strong> y subirla directamente. Aceptamos fotos en JPG o PNG y nuestro sistema las procesa automáticamente.
+          </div>
+        </td></tr>
+      </table>
+      <div style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+        Una vez que soluciones esto, nosotros nos encargamos del resto. Tu carta estará lista en minutos.
+      </div>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
+        <a href="${SUBIR_URL}" style="display:inline-block;background:${GOLD};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Volver a subir mi carta</a>
+      </td></tr></table>
+      <div style="font-size:13px;color:#b8a888;text-align:center;line-height:1.6;padding-top:16px;">
+        Si tienes dudas, simplemente responde este email y te ayudamos.
+      </div>
+    `);
+    subject = `${ownerName}, tu carta de ${restaurantName} está casi lista`;
+  }
 
   await sendAdminEmail({
     to,
-    subject: `${ownerName}, tu carta de ${restaurantName} está casi lista`,
+    subject,
     html,
-    purpose: "lead_failure_help",
+    purpose: isEscalation ? "lead_failure_escalated" : "lead_failure_help",
   });
 
   // Track in lead events
-  events.push({ ts: new Date().toISOString(), action: "email_failure_sent", type });
+  const action = isEscalation ? "email_escalated_sent" : "email_failure_sent";
+  events.push({ ts: new Date().toISOString(), action, type: isEscalation ? "escalated" : classifyError(errorMsg, cartaUrl) });
   await prisma.lead.update({
     where: { id: leadId },
     data: { events: events as any },
   });
+
+  if (isEscalation) {
+    console.log(`[FailureEmail] Escalated to human review for ${to} (${totalFailEmails + 1} failed attempts)`);
+  }
 }

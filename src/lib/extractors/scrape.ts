@@ -12,7 +12,7 @@ const MODEL_FAST = "claude-haiku-4-5-20251001"; // preview (~15s)
 const MODEL_FULL = "claude-sonnet-4-6";          // full extraction (better quality)
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
-const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app"];
+const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app", "socialreacts.com"];
 
 // Domains where direct HTML works better
 const DIRECT_FETCH_DOMAINS = ["thefork.com", "lafourchette.com"];
@@ -66,14 +66,99 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
   return jinaContent || directContent;
 }
 
+/**
+ * Discover a menu URL from a page that isn't itself a menu.
+ * Looks for <a> tags whose text or href contain menu/carta keywords.
+ * Returns the discovered URL or null.
+ */
+async function discoverMenuUrl(pageUrl: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(pageUrl, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+      redirect: "follow",
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+
+    const reader = res.body?.getReader();
+    if (!reader) return null;
+    let html = "";
+    const decoder = new TextDecoder();
+    const MAX = 200_000;
+    let bytes = 0;
+    while (bytes < MAX) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+      bytes += value.length;
+    }
+    reader.cancel();
+
+    const base = new URL(pageUrl);
+
+    // Pattern: <a ... href="URL" ...>text with menu/carta keywords</a>
+    // Also match href itself containing carta/menu path segments
+    const MENU_KEYWORDS = /carta|men[úu]|menu|ver.carta|ver.men[úu]/i;
+    const linkRegex = /<a\s[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    let match;
+    const candidates: { url: string; score: number }[] = [];
+
+    while ((match = linkRegex.exec(html)) !== null) {
+      const href = match[1].trim();
+      const text = match[2].replace(/<[^>]*>/g, "").trim().toLowerCase();
+
+      // Skip empty, javascript:, mailto:, tel:, same-page anchors
+      if (!href || href.startsWith("javascript:") || href.startsWith("mailto:") || href.startsWith("tel:")) continue;
+
+      let score = 0;
+      // Text contains menu/carta keywords
+      if (MENU_KEYWORDS.test(text)) score += 3;
+      // Href path contains menu/carta keywords
+      if (MENU_KEYWORDS.test(href)) score += 2;
+      // Bonus: text specifically says "ver carta" or "ver menú"
+      if (/ver\s*(la\s+)?carta|ver\s*(el\s+)?men[úu]/i.test(text)) score += 3;
+
+      if (score >= 2) {
+        try {
+          const resolved = new URL(href, base).toString();
+          // Don't discover links to the same page
+          if (resolved !== pageUrl && resolved !== pageUrl + "/") {
+            candidates.push({ url: resolved, score });
+          }
+        } catch {}
+      }
+    }
+
+    if (candidates.length === 0) return null;
+
+    // Pick the highest-scoring candidate
+    candidates.sort((a, b) => b.score - a.score);
+    console.log(`[MenuDiscovery] Found ${candidates.length} menu link(s) on ${pageUrl}. Best: ${candidates[0].url} (score ${candidates[0].score})`);
+    return candidates[0].url;
+  } catch (err) {
+    console.log("[MenuDiscovery] Failed to discover menu URL:", err);
+    return null;
+  }
+}
+
 function cleanContent(html: string): string {
   const imgUrls: string[] = [];
+  // Extract image URLs from <img> tags
   const imgMatches = html.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi);
   for (const m of imgMatches) {
     const src = m[1];
     if (src && !src.includes("favicon") && !src.includes("logo") && !src.includes("icon") && !src.includes("data:image") && src.length > 10) {
       imgUrls.push(src);
     }
+  }
+  // Also extract image URLs from JSON/JS data inside <script> tags (e.g. socialreacts menus)
+  // These are dish photos embedded as "img":"URL" in JS objects
+  const scriptImgMatches = html.matchAll(/["']img["']\s*:\s*["'](https?:\/\/[^"']+\.(?:webp|jpg|jpeg|png))["']/gi);
+  for (const m of scriptImgMatches) {
+    if (m[1] && !imgUrls.includes(m[1])) imgUrls.push(m[1]);
   }
 
   let cleaned = html
@@ -198,6 +283,11 @@ export async function extractQuickPreview(cartaUrl: string, providerName?: strin
   const priceMatches = content.match(/\b\d{3,5}\b/g) || [];
   if (priceMatches.length >= 5) matchCount += 2;
   if (matchCount < 2) {
+    const discoveredUrl = await discoverMenuUrl(menuUrl);
+    if (discoveredUrl) {
+      console.log(`[QuickPreview] Discovered menu URL: ${discoveredUrl} — retrying`);
+      return extractQuickPreview(discoveredUrl, providerName);
+    }
     throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
   }
 
@@ -239,6 +329,8 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000, MO
  * Generic scraper: fetches URL (with Jina for SPAs), sends to Claude for extraction.
  * Works with Fudo, Mercat, Gourmedia, and any unknown provider.
  */
+export { discoverMenuUrl };
+
 export async function extractWithScraper(cartaUrl: string, providerName?: string | null, extractionConfig?: any): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
@@ -267,6 +359,15 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const priceMatches = content.match(/\b\d{3,5}\b/g) || [];
   if (priceMatches.length >= 5) matchCount += 2;
   if (matchCount < 2) {
+    // Try discovering a menu link on the page (but don't recurse if already a discovery attempt)
+    if (!extractionConfig?._discoveryAttempt) {
+      console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Trying menu discovery...`);
+      const discoveredUrl = await discoverMenuUrl(menuUrl);
+      if (discoveredUrl) {
+        console.log(`[Scraper] Discovered menu URL: ${discoveredUrl} — retrying extraction`);
+        return extractWithScraper(discoveredUrl, providerName, { ...extractionConfig, _discoveryAttempt: true });
+      }
+    }
     console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Rejecting.`);
     throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
   }

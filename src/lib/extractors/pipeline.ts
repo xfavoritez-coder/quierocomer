@@ -330,11 +330,23 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     // Direct PDF links (e.g. .pdf URLs) → treat as document, not scrape
     const isDirectPdf = !isFileUpload && lead.cartaUrl && /\.pdf(\?|$)/i.test(lead.cartaUrl);
 
-    const extraction = isFileUpload
+    let extraction = isFileUpload
       ? (isDocument ? await extractFromDocument(lead.cartaFileUrl!, fileConfig) : await extractFromImage(lead.cartaFileUrl!))
       : isDirectPdf
         ? await extractFromDocument(lead.cartaUrl!, null)
         : await extractMenu(lead.cartaUrl!, providerName, providerConfig);
+
+    // If no dishes found from a URL, try discovering the real menu link on the page
+    if (extraction.dishes.length === 0 && lead.cartaUrl && !isFileUpload && !isDirectPdf) {
+      const { discoverMenuUrl } = await import("./scrape");
+      const discoveredUrl = await discoverMenuUrl(lead.cartaUrl);
+      if (discoveredUrl) {
+        console.log(`[Pipeline] No dishes at original URL. Discovered menu URL: ${discoveredUrl} — retrying`);
+        // Update lead with the real menu URL
+        await prisma.lead.update({ where: { id: leadId }, data: { cartaUrl: discoveredUrl } });
+        extraction = await extractMenu(discoveredUrl, providerName, providerConfig);
+      }
+    }
 
     if (extraction.dishes.length === 0) {
       throw new Error("No dishes extracted from the menu");
@@ -708,7 +720,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }).catch(() => {});
     }
 
-    // Send WhatsApp on failure using approved template
+    // Send WhatsApp on failure using approved template (max 2 per person)
     if (lead.whatsapp) {
       try {
         // Check if this error warrants a WA notification
@@ -729,48 +741,47 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           if (SID && TOKEN) {
             const phone = lead.whatsapp.startsWith("+") ? lead.whatsapp : `+${lead.whatsapp}`;
 
-            // Anti-loop: don't send if we already sent a fail WA to this phone in the last 24h
-            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const recentLeads = await prisma.lead.findMany({
-              where: { whatsapp: lead.whatsapp, createdAt: { gte: oneDayAgo } },
+            // Count total fail WAs sent to this phone across all leads
+            const allPhoneLeads = await prisma.lead.findMany({
+              where: { whatsapp: lead.whatsapp, cartaStatus: "FAILED" },
               select: { events: true },
+              orderBy: { createdAt: "desc" },
+              take: 20,
             });
-            const recentWa = recentLeads.some(l =>
-              Array.isArray(l.events) && (l.events as any[]).some((e: any) => e.action === "wa_fail_template_sent")
-            );
-            if (recentWa) {
-              console.log(`[Pipeline] Skipping fail WA to ${phone} — already sent in last 24h`);
-            } else {
+            const totalFailWa = allPhoneLeads.reduce((count, l) => {
+              const evts = (Array.isArray(l.events) ? l.events : []) as any[];
+              return count + evts.filter((e: any) => e.action === "wa_fail_template_sent").length;
+            }, 0);
 
-            const ownerName = (lead.ownerName || "").split(" ")[0] || "Hola";
-            const params: Record<string, string> = {
-              From: FROM,
-              To: `whatsapp:${phone}`,
-              ContentSid: FAIL_TEMPLATE,
-              ContentVariables: JSON.stringify({ "1": ownerName }),
-            };
-            const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
-              method: "POST",
-              headers: { "Authorization": "Basic " + Buffer.from(`${SID}:${TOKEN}`).toString("base64"), "Content-Type": "application/x-www-form-urlencoded" },
-              body: new URLSearchParams(params),
-              signal: AbortSignal.timeout(10000),
-            });
-            const data = await res.json();
-            if (data.sid) {
-              // Don't set whatsappSentAt — that field is for "carta ready" WA only.
-              // Track the fail WA in events instead so admin can see it.
-              await prisma.lead.update({
-                where: { id: leadId },
-                data: {
-                  events: [...(Array.isArray(lead.events) ? (lead.events as any[]) : []), { ts: new Date().toISOString(), action: "wa_fail_template_sent" }] as any,
-                },
+            if (totalFailWa >= 2) {
+              console.log(`[Pipeline] Skipping fail WA to ${phone} — already sent ${totalFailWa} times (limit reached)`);
+            } else {
+              const ownerName = (lead.ownerName || "").split(" ")[0] || "Hola";
+              const params: Record<string, string> = {
+                From: FROM,
+                To: `whatsapp:${phone}`,
+                ContentSid: FAIL_TEMPLATE,
+                ContentVariables: JSON.stringify({ "1": ownerName }),
+              };
+              const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+                method: "POST",
+                headers: { "Authorization": "Basic " + Buffer.from(`${SID}:${TOKEN}`).toString("base64"), "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams(params),
+                signal: AbortSignal.timeout(10000),
               });
-              console.log(`[Pipeline] Sent fail template WA to ${phone}`);
-            } else {
-              console.log(`[Pipeline] Fail template WA error: ${data.error_message || data.message}`);
+              const data = await res.json();
+              if (data.sid) {
+                await prisma.lead.update({
+                  where: { id: leadId },
+                  data: {
+                    events: [...(Array.isArray(lead.events) ? (lead.events as any[]) : []), { ts: new Date().toISOString(), action: "wa_fail_template_sent" }] as any,
+                  },
+                });
+                console.log(`[Pipeline] Sent fail template WA to ${phone} (${totalFailWa + 1}/2)`);
+              } else {
+                console.log(`[Pipeline] Fail template WA error: ${data.error_message || data.message}`);
+              }
             }
-
-            } // end anti-loop else
           }
         }
       } catch {}
