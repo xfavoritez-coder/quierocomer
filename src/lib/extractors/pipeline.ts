@@ -412,6 +412,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         plan: "PREMIUM",
         subscriptionStatus: "NONE",
         waiterPanelActive: true,
+        menuImported: true,
         website: lead.cartaUrl,
       },
     });

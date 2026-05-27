@@ -80,8 +80,23 @@ export async function POST(req: NextRequest) {
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
   const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (14 dias de Premium gratis)`;
 
-  // No email to owner here — the "carta lista" email was already sent from the pipeline.
-  // The owner already has access to their panel from the activation flow.
+  // Send welcome email to owner with credentials
+  if (ownerEmail) {
+    const password = `${restaurant.slug}2026`;
+    sendAdminEmail({
+      to: ownerEmail,
+      subject: `${ownerName}, tu panel de ${restaurant.name} está listo`,
+      html: activationWelcomeEmailHtml({
+        ownerName,
+        restaurantName: restaurant.name!,
+        panelLink,
+        qrLink,
+        credentials: { email: ownerEmail, password },
+        planLabel,
+      }),
+      purpose: "activation_welcome",
+    }).catch((err) => console.error("[Activar/trial] Email owner falló:", err));
+  }
 
   sendAdminEmail({
     to: "favoritez@gmail.com",

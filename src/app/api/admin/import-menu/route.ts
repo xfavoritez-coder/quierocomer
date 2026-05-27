@@ -146,13 +146,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Update restaurant logo if extracted
-  if (extraction.logoUrl) {
-    await prisma.restaurant.update({
-      where: { id: restaurantId },
-      data: { logoUrl: extraction.logoUrl },
-    }).catch(() => {});
-  }
+  // Mark menu as imported + update logo if extracted
+  await prisma.restaurant.update({
+    where: { id: restaurantId },
+    data: {
+      menuImported: true,
+      ...(extraction.logoUrl ? { logoUrl: extraction.logoUrl } : {}),
+    },
+  }).catch(() => {});
 
   return NextResponse.json({
     ok: true,

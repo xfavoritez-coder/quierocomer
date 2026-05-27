@@ -56,7 +56,24 @@ export async function POST(req: NextRequest) {
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
 
-  // No email to owner here — the "carta lista" email was already sent from the pipeline.
+  // Send welcome email to owner with credentials
+  if (ownerEmail) {
+    const { activationWelcomeEmailHtml } = await import("@/app/api/preview-email/activation/route");
+    const password = `${restaurant.slug}2026`;
+    sendAdminEmail({
+      to: ownerEmail,
+      subject: `${ownerName}, tu panel de ${restaurant.name} está listo`,
+      html: activationWelcomeEmailHtml({
+        ownerName,
+        restaurantName: restaurant.name,
+        panelLink,
+        qrLink,
+        credentials: { email: ownerEmail, password },
+        planLabel: "Premium (14 dias gratis)",
+      }),
+      purpose: "activation_welcome",
+    }).catch((err) => console.error("[activar/free] Email owner falló:", err));
+  }
 
   sendAdminEmail({
     to: "favoritez@gmail.com",

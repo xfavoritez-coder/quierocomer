@@ -45,7 +45,13 @@ export async function GET(req: NextRequest) {
     return { ...rest, allergens: derivedAllergens, allergenDetails: Object.keys(allergenMap).length > 0 ? allergenMap : null };
   });
 
-  return NextResponse.json(result);
+  // Include menuImported flag for the import banner
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { menuImported: true },
+  });
+
+  return NextResponse.json({ dishes: result, menuImported: restaurant?.menuImported ?? false });
 }
 
 export async function POST(req: NextRequest) {

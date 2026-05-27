@@ -500,6 +500,7 @@ model Restaurant {
   isActive           Boolean    @default(true)
   isDemo             Boolean    @default(false)
   demoOnboardingDone Boolean    @default(false)
+  menuImported       Boolean    @default(false)
   needsTranslation   Boolean    @default(false)
   weeklyEmailEnabled    Boolean    @default(true)
   weeklyInsightsEnabled Boolean    @default(true)

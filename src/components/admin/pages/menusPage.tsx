@@ -361,6 +361,7 @@ export default function AdminMenus() {
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [importBannerDismissed, setImportBannerDismissed] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const router = useRouter();
@@ -433,11 +434,14 @@ export default function AdminMenus() {
     setSelectedDish(null);
     fetch(`/api/admin/dishes?restaurantId=${selectedRestaurantId}`)
       .then(r => r.json())
-      .then(d => {
+      .then(data => {
+        // Support both old format (array) and new format ({ dishes, menuImported })
+        const d = Array.isArray(data) ? data : data.dishes;
         if (Array.isArray(d)) {
           setDishes(d);
           setRecommendedSnapshot(new Set(d.filter((x: any) => x.tags?.includes("RECOMMENDED")).map((x: any) => x.id)));
         }
+        if (data.menuImported) setImportBannerDismissed(true);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -1286,6 +1290,30 @@ export default function AdminMenus() {
       </div>
 
       {menuTab === "productos" && (<>
+      {/* Import banner — visible for any restaurant that hasn't imported yet */}
+      {!importBannerDismissed && (
+        <div onClick={() => setShowImportModal(true)} style={{
+          display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", marginBottom: 14,
+          background: "var(--adm-card)", border: "1px solid var(--adm-accent)",
+          borderRadius: 16, cursor: "pointer", boxShadow: "0 2px 12px rgba(244,166,35,.08)",
+        }}>
+          <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: 14, background: "rgba(244,166,35,.12)", display: "grid", placeItems: "center" }}>
+            <FileUp size={22} color={GOLD} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 2 }}>
+              ¿Ya tienes carta? Impórtala
+            </div>
+            <div style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
+              Sube un link, PDF o foto de tu carta actual y reemplazamos los platos automáticamente.
+            </div>
+          </div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: GOLD, whiteSpace: "nowrap", flexShrink: 0 }}>
+            Importar →
+          </div>
+        </div>
+      )}
+
       {/* Search + Nuevo (desktop) */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
         <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
@@ -1777,7 +1805,7 @@ export default function AdminMenus() {
           onClose={() => setShowImportModal(false)}
           onDone={(result) => {
             setShowImportModal(false);
-            // Reload the page to show new dishes
+            setImportBannerDismissed(true);
             window.location.reload();
           }}
         />
