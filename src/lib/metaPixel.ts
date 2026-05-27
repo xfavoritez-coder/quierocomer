@@ -7,8 +7,9 @@
 
 type FbqParams = Record<string, string | number | boolean | null | undefined>;
 
-// Plan prices in CLP (neto + IVA) for ROAS tracking
-const PLAN_VALUES: Record<string, number> = { FREE: 0, GOLD: 41650, PREMIUM: 59381 };
+// Plan prices in CLP (neto + IVA) for ROAS tracking — Meta requires value > 0
+const PLAN_VALUES: Record<string, number> = { FREE: 49900, GOLD: 41650, PREMIUM: 59381 };
+// FREE gets projected Premium value because all free users get 14-day Premium trial
 
 function fbq(event: string, params?: FbqParams) {
   if (typeof window === "undefined") return;
@@ -22,12 +23,12 @@ function fbq(event: string, params?: FbqParams) {
 
 /** User creates an account */
 export function trackRegistration() {
-  fbq("CompleteRegistration", { currency: "CLP", value: 0 });
+  fbq("CompleteRegistration", { currency: "CLP", value: 49900 });
 }
 
 /** Landing/planes: user submits local name + email to start */
 export function trackLead(data?: { content_name?: string }) {
-  fbq("Lead", { ...data, currency: "CLP", value: 0 });
+  fbq("Lead", { ...data, currency: "CLP", value: 49900 });
 }
 
 /** User views pricing / plan details */
@@ -37,7 +38,7 @@ export function trackViewPlan(plan: string) {
 
 /** Free or trial plan activated (no payment yet, but projected value) */
 export function trackStartTrial(plan: string) {
-  fbq("StartTrial", { content_name: `Plan ${plan}`, currency: "CLP", value: PLAN_VALUES[plan] || 0, predicted_ltv: PLAN_VALUES[plan] || 0 });
+  fbq("StartTrial", { content_name: `Plan ${plan}`, currency: "CLP", value: PLAN_VALUES[plan] || 49900 });
 }
 
 /** Paid plan activated (Gold/Premium via MercadoPago) */
@@ -47,17 +48,17 @@ export function trackPurchase(plan: string, value: number) {
 
 /** Subir carta — paso 1 completado (link o fotos enviadas) */
 export function trackCartaUpload() {
-  fbq("AddToCart", { content_name: "Carta Upload", content_type: "menu", currency: "CLP", value: 0 });
+  fbq("AddToCart", { content_name: "Carta Upload", content_type: "menu", currency: "CLP", value: 49900 });
 }
 
-/** Subir carta — paso 2 completado (datos del local) */
+/** Subir carta — paso 2 completado (datos del local = lead real con contacto) */
 export function trackCartaInfo() {
-  fbq("AddPaymentInfo", { content_name: "Carta Info", currency: "CLP", value: 0 });
+  fbq("CompleteRegistration", { content_name: "Subir Carta Completo", currency: "CLP", value: 49900 });
 }
 
-/** Carta lista — el restaurante tiene su carta digital activa (lead convertido) */
+/** Carta lista — confirmación final (refuerzo de conversión) */
 export function trackCartaReady() {
-  fbq("Lead", { content_name: "Carta Digital Lista", currency: "CLP", value: 49900 });
+  fbq("Lead", { content_name: "Carta QR Lista", currency: "CLP", value: 49900 });
 }
 
 /** Contact form submitted */

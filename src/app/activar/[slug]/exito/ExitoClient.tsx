@@ -26,7 +26,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
-    trackStartTrial("PREMIUM");
+    trackStartTrial(plan || "PREMIUM");
   }, []);
 
   return (
