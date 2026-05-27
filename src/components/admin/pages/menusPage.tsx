@@ -361,7 +361,12 @@ export default function AdminMenus() {
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [importBannerDismissed, setImportBannerDismissed] = useState(false);
+  const [importBannerReady, setImportBannerReady] = useState(false); // wait for fetch before showing
+  const [importBannerDismissed, setImportBannerDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("import-banner-dismissed") === "true";
+  });
+  const [importBtnPulse, setImportBtnPulse] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const router = useRouter();
@@ -440,8 +445,12 @@ export default function AdminMenus() {
         if (Array.isArray(d)) {
           setDishes(d);
           setRecommendedSnapshot(new Set(d.filter((x: any) => x.tags?.includes("RECOMMENDED")).map((x: any) => x.id)));
+          // Show banner if: not imported OR few dishes (even if imported via subircarta with few results)
+          const imported = !Array.isArray(data) && data.menuImported;
+          const fewDishes = d.length > 0 && d.length <= 20;
+          if (imported && !fewDishes) setImportBannerDismissed(true);
+          setImportBannerReady(true);
         }
-        if (data.menuImported) setImportBannerDismissed(true);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -1290,26 +1299,39 @@ export default function AdminMenus() {
       </div>
 
       {menuTab === "productos" && (<>
-      {/* Import banner — visible for any restaurant that hasn't imported yet */}
-      {!importBannerDismissed && (
-        <div onClick={() => setShowImportModal(true)} style={{
+      {/* Import banner — waits for fetch, shows X to dismiss with pulse animation on Importar btn */}
+      {importBannerReady && !importBannerDismissed && (
+        <div style={{
           display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", marginBottom: 14,
           background: "var(--adm-card)", border: "1px solid var(--adm-accent)",
-          borderRadius: 16, cursor: "pointer", boxShadow: "0 2px 12px rgba(244,166,35,.08)",
+          borderRadius: 16, boxShadow: "0 2px 12px rgba(244,166,35,.08)", position: "relative",
+          animation: "fadeSlideIn .3s ease",
         }}>
-          <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: 14, background: "rgba(244,166,35,.12)", display: "grid", placeItems: "center" }}>
-            <FileUp size={22} color={GOLD} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 2 }}>
-              ¿Ya tienes carta? Impórtala
+          <button onClick={(e) => {
+            e.stopPropagation();
+            setImportBannerDismissed(true);
+            localStorage.setItem("import-banner-dismissed", "true");
+            setImportBtnPulse(true);
+            setTimeout(() => setImportBtnPulse(false), 2000);
+          }} style={{
+            position: "absolute", top: 8, right: 10, background: "none", border: "none",
+            color: "var(--adm-text3)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 4, zIndex: 1,
+          }}>✕</button>
+          <div onClick={() => setShowImportModal(true)} style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, cursor: "pointer" }}>
+            <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: 14, background: "rgba(244,166,35,.12)", display: "grid", placeItems: "center" }}>
+              <FileUp size={22} color={GOLD} />
             </div>
-            <div style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
-              Sube un link, PDF o foto de tu carta actual y reemplazamos los platos automáticamente.
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 2 }}>
+                ¿Ya tienes carta? Impórtala
+              </div>
+              <div style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
+                Sube un link, PDF o foto de tu carta actual y reemplazamos los platos automáticamente.
+              </div>
             </div>
-          </div>
-          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: GOLD, whiteSpace: "nowrap", flexShrink: 0 }}>
-            Importar →
+            <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: GOLD, whiteSpace: "nowrap", flexShrink: 0 }}>
+              Importar →
+            </div>
           </div>
         </div>
       )}
@@ -1333,7 +1355,15 @@ export default function AdminMenus() {
             <button
               onClick={() => setShowImportModal(true)}
               title="Importar carta existente"
-              style={{ padding: "10px 14px", background: "var(--adm-input)", color: "var(--adm-text2)", border: "1px solid var(--adm-card-border)", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}
+              style={{
+                padding: "10px 14px", background: importBtnPulse ? GOLD : "var(--adm-input)",
+                color: importBtnPulse ? "#fff" : "var(--adm-text2)",
+                border: `1px solid ${importBtnPulse ? GOLD : "var(--adm-card-border)"}`,
+                borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6,
+                animation: importBtnPulse ? "importPulse 0.5s ease 3" : "none",
+                transition: "all .3s ease",
+              }}
             >
               <FileUp size={14} /> Importar
             </button>
@@ -1813,6 +1843,8 @@ export default function AdminMenus() {
 
       <style>{`
         .adm-dish-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes importPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         /* En desktop, los chips de filtro se ven todos en una línea */
       `}</style>
     </div>
