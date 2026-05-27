@@ -78,23 +78,11 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
-  const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (14 dias gratis)`;
+  const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (14 dias de Premium gratis)`;
 
-  if (ownerEmail) {
-    sendAdminEmail({
-      to: ownerEmail,
-      subject: `${restaurant.name} · Tu carta está activa`,
-      html: activationWelcomeEmailHtml({
-        ownerName: ownerName.split(" ")[0],
-        restaurantName: restaurant.name!,
-        panelLink,
-        qrLink,
-        credentials: { email: ownerEmail, password: `${restaurant.slug}2026` },
-        planLabel,
-      }),
-      purpose: "trial_activated",
-    }).catch(() => {});
-  }
+  // No email to owner here — the "carta lista" email was already sent from the pipeline.
+  // The owner already has access to their panel from the activation flow.
+
   sendAdminEmail({
     to: "favoritez@gmail.com",
     subject: `Nuevo cliente: ${restaurant.name} activó ${planLabel}`,

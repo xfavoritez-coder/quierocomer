@@ -313,7 +313,7 @@ export default function SuscripcionPage() {
         {!isExempt && inTrial && status.trialEndsAt && (
           <div style={{ background: "rgba(168,85,247,.06)", border: "1px solid rgba(168,85,247,.2)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.9rem", color: "#a855f7", margin: "0 0 4px", fontWeight: 700 }}>
-              🎁 Te regalamos Premium hasta el {formatDate(status.trialEndsAt)}
+              🎁 Tienes Premium gratis hasta el {formatDate(status.trialEndsAt)}
             </p>
             <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
               Tu plan base es <strong style={{ color: "var(--adm-text)" }}>Gratis</strong>. Estás disfrutando todas las funciones Premium como regalo. Al terminar, tu carta sigue activa en el plan Gratis sin cobros.

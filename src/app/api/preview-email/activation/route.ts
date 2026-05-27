@@ -90,15 +90,6 @@ export function activationWelcomeEmailHtml({
 <tr><td style="padding-bottom:22px"></td></tr>
 </table>
 
-<!-- Gift banner -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5eef8;border:1px solid #d8b4fe;border-radius:18px;margin-bottom:22px">
-<tr><td style="padding:18px 18px;text-align:center">
-  <p style="font-size:20px;margin:0 0 6px">🎁</p>
-  <p style="font-size:15px;font-weight:800;color:#7c3aed;margin:0 0 6px">Te regalamos 14 dias de Premium</p>
-  <p style="font-size:13px;color:#6b5b8a;line-height:1.5;margin:0">Todas las funciones avanzadas disponibles. Al terminar, tu carta seguirá activa en el plan Gratis.</p>
-</td></tr>
-</table>
-
 ${credentials ? `
 <!-- Credentials card -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #ead7b7;border-radius:22px;margin-bottom:22px">
@@ -138,6 +129,16 @@ ${credentials ? `
     <td style="padding:12px 14px">
       <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta</p>
       <a href="${qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
+    </td>
+  </tr>
+  </table>
+
+  <!-- Panel link -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
+  <tr>
+    <td style="padding:12px 14px">
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
+      <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.cl/panel</a>
     </td>
   </tr>
   </table>

@@ -25,12 +25,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No encontrado o ya activado" }, { status: 404 });
   }
 
+  // All plans from /planes get 14 days of premium trial
+  const trialEndsAt = new Date();
+  trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
   await prisma.$transaction([
     prisma.restaurant.update({
       where: { id: restaurantId },
       data: {
         isDemo: false,
-        plan: "FREE",
+        plan: "PREMIUM",
+        subscriptionStatus: "TRIALING",
+        trialEndsAt,
         weeklyEmailEnabled: true,
       },
     }),
@@ -50,26 +56,12 @@ export async function POST(req: NextRequest) {
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
 
-  if (ownerEmail) {
-    sendAdminEmail({
-      to: ownerEmail,
-      subject: `${restaurant.name} · Tu carta está activa`,
-      html: activationWelcomeEmailHtml({
-        ownerName: ownerName.split(" ")[0],
-        restaurantName: restaurant.name!,
-        panelLink,
-        qrLink,
-        credentials: ownerEmail ? { email: ownerEmail, password: `${restaurant.slug}2026` } : undefined,
-        planLabel: "Plan Gratis activo",
-      }),
-      purpose: "free_activated",
-    }).catch((err) => console.error("[activar/free] Email al dueño falló:", err));
-  }
+  // No email to owner here — the "carta lista" email was already sent from the pipeline.
 
   sendAdminEmail({
     to: "favoritez@gmail.com",
-    subject: `Nuevo cliente: ${restaurant.name} activó Gratis`,
-    html: adminNewActivationEmailHtml(restaurant.name, "Gratis", "$0", ownerEmail || "sin email", restaurant.slug || ""),
+    subject: `Nuevo cliente: ${restaurant.name} activó Gratis (14 dias premium)`,
+    html: adminNewActivationEmailHtml(restaurant.name, "Gratis + 14 dias Premium", "$0 (trial)", ownerEmail || "sin email", restaurant.slug || ""),
     purpose: "admin_new_activation",
   }).catch((err) => console.error("[activar/free] Email admin falló:", err));
 
@@ -81,5 +73,5 @@ export async function POST(req: NextRequest) {
     }).catch(() => {});
   }
 
-  return NextResponse.json({ ok: true, plan: "FREE" });
+  return NextResponse.json({ ok: true, plan: "FREE", trialEndsAt: trialEndsAt.toISOString() });
 }

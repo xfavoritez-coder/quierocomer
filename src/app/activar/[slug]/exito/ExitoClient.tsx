@@ -74,9 +74,9 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
           {/* Banner regalo Premium */}
           <div className="exito-gift">
             <div className="exito-gift-icon">🎁</div>
-            <div className="exito-gift-title">Tienes 14 dias de Premium gratis</div>
+            <div className="exito-gift-title">Tienes 14 dias de Premium gratis de regalo</div>
             <p className="exito-gift-desc">
-              Te hemos activado un regalo de 14 dias de plan Premium. Al terminar, tu carta seguirá activa en el plan Gratis — sin cobros.
+              Tienes 14 dias de plan Premium gratis de regalo. Al terminar, tu carta seguirá activa en el plan Gratis — sin cobros.
             </p>
           </div>
 
