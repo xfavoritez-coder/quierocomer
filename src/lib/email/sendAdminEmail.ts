@@ -69,8 +69,10 @@ function wrap(content: string): string {
 <table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
 
   <tr><td align="center" style="padding-bottom:24px;">
-    <img src="${BASE_URL}/landing/logo.png" alt="QuieroComer" width="28" height="28" style="width:28px;height:28px;margin:0 auto 8px;display:block;" />
-    <span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span>
+    <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
+    </tr></table></a>
   </td></tr>
 
   ${content}
@@ -251,28 +253,82 @@ export function cartaListaSimpleEmailHtml({
   restaurantName,
   cartaUrl,
   openPixel,
+  dishCount,
+  categoryCount,
+  logoUrl,
 }: {
   ownerName: string;
   restaurantName: string;
   cartaUrl: string;
   openPixel: string;
+  dishCount?: number;
+  categoryCount?: number;
+  logoUrl?: string | null;
 }): string {
-  return wrap(`
-  <tr><td style="padding-bottom:16px;">
-    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">
-      ${ownerName}, tu carta está lista
+  const initials = restaurantName.split(" ").map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
+  const logoHtml = logoUrl
+    ? `<img src="${logoUrl}" alt="" width="50" height="50" style="width:50px;height:50px;border-radius:14px;object-fit:cover;" />`
+    : `<div style="width:50px;height:50px;border-radius:14px;background:#f5edd8;text-align:center;line-height:50px;font-family:Georgia,serif;font-size:18px;font-weight:700;color:${GOLD};">${initials}</div>`;
+  const statsText = dishCount ? `${dishCount} platos${categoryCount ? ` · ${categoryCount} categorias` : ""}` : "";
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td align="center" style="padding-bottom:24px;">
+    <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
+    </tr></table></a>
+  </td></tr>
+
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.15;">
+      ${ownerName}, tu carta esta lista
     </h1>
   </td></tr>
+
   <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    Transformamos la carta de <strong>${restaurantName}</strong> en una carta digital. Puedes verla ahora mismo.
+    Transformamos tu carta en una <strong style="color:${GOLD};">carta QR inteligente</strong>. Puedes verla ahora mismo.
   </td></tr>
-  <tr><td style="padding-bottom:16px;">${btn(cartaUrl, "Ver mi carta →")}</td></tr>
-  <tr><td style="font-size:13px;color:#b8a888;text-align:center;line-height:1.6;">
-    ¿Quieres editar los platos, precios o fotos?<br/>
-    Pronto recibirás acceso a tu panel de administración.
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:18px;">
+      <tr><td style="padding:18px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="vertical-align:middle;padding-right:14px;" width="50">${logoHtml}</td>
+          <td style="vertical-align:middle;">
+            <p style="font-family:Georgia,serif;font-size:18px;font-weight:400;color:#1a1a1a;margin:0;">${restaurantName}</p>
+            ${statsText ? `<p style="font-size:12px;color:#b8a888;margin:4px 0 0;">${statsText}</p>` : ""}
+          </td>
+        </tr></table>
+      </td></tr>
+    </table>
   </td></tr>
-  <img src="${openPixel}" alt="" width="1" height="1" style="display:none" />
-  `);
+
+  <tr><td style="padding-bottom:24px;">${btn(cartaUrl, "Ver mi carta →")}</td></tr>
+
+  <tr><td style="padding-top:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:20px 0 0;">
+    <p style="font-size:13px;color:#8a7550;margin:0 0 12px;">¿Tienes dudas? <a href="${BASE_URL}/#contacto" style="color:${GOLD};text-decoration:underline;font-weight:700;">Contactanos</a></p>
+    <table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td><a href="${BASE_URL}" style="font-family:Georgia,serif;font-size:13px;color:${GOLD};text-decoration:none;">QuieroComer.cl</a></td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">&copy; ${new Date().getFullYear()}</td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">Hecho en Chile</td>
+    </tr></table>
+  </td></tr>
+
+</table>
+</td></tr></table>
+<img src="${openPixel}" alt="" width="1" height="1" style="display:none" />
+</body></html>`;
 }
 
 export function trialEndingSoonEmailHtml(

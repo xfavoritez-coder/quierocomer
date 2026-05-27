@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import GenieShell from "@/components/GenieShell";
+import VisitorTrackerInit from "@/components/VisitorTrackerInit";
 import { Toaster } from "sonner";
 
 const spaceGrotesk = Space_Grotesk({
@@ -43,6 +44,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <div className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <ErrorBoundary>
         <AuthProvider>
+          <VisitorTrackerInit />
           <GenieShell>
             {children}
           </GenieShell>

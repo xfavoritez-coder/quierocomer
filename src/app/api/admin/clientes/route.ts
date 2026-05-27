@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  // 3 parallel queries
-  const [restaurants, leads, recentActivity] = await Promise.all([
+  // 5 parallel queries
+  const [restaurants, leads, recentActivity, adSessions, emailLogs] = await Promise.all([
     prisma.restaurant.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -41,9 +41,35 @@ export async function GET(req: NextRequest) {
       select: { restaurantId: true, action: true, createdAt: true, details: true },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.adSession.findMany({
+      where: { leadId: { not: null } },
+      select: {
+        leadId: true, utmSource: true, utmMedium: true, utmCampaign: true,
+        landingPage: true, referrer: true, device: true, duration: true,
+        maxScroll: true, interactions: true, sectionsViewed: true, bounced: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.emailLog.findMany({
+      where: { purpose: { in: ["activation_welcome", "funnel_carta_lista", "lead_failure_help"] } },
+      select: { to: true, subject: true, purpose: true, status: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   // Build lookup maps
+  const emailsByOwnerEmail = new Map<string, typeof emailLogs>();
+  for (const e of emailLogs) {
+    if (!emailsByOwnerEmail.has(e.to)) emailsByOwnerEmail.set(e.to, []);
+    emailsByOwnerEmail.get(e.to)!.push(e);
+  }
+
+  const adSessionByLeadId = new Map<string, typeof adSessions[0]>();
+  for (const s of adSessions) {
+    if (s.leadId && !adSessionByLeadId.has(s.leadId)) adSessionByLeadId.set(s.leadId, s);
+  }
+
   const leadBySlug = new Map<string, typeof leads[0]>();
   for (const l of leads) {
     if (l.generatedSlug) leadBySlug.set(l.generatedSlug, l);
@@ -177,6 +203,31 @@ export async function GET(req: NextRequest) {
         createdAt: a.createdAt.toISOString(),
         details: a.details,
       })),
+      // Visitor/ad session data (pre-activation behavior)
+      visitorSession: lead ? (() => {
+        const vs = adSessionByLeadId.get(lead.id);
+        return vs ? {
+          utmSource: vs.utmSource,
+          utmMedium: vs.utmMedium,
+          utmCampaign: vs.utmCampaign,
+          landingPage: vs.landingPage,
+          referrer: vs.referrer,
+          device: vs.device,
+          duration: vs.duration,
+          maxScroll: vs.maxScroll,
+          interactions: vs.interactions,
+          sectionsViewed: vs.sectionsViewed,
+          bounced: vs.bounced,
+          createdAt: vs.createdAt.toISOString(),
+        } : null;
+      })() : null,
+      // Emails sent to this owner
+      emailsSent: r.owner?.email ? (emailsByOwnerEmail.get(r.owner.email) || []).map(e => ({
+        subject: e.subject,
+        purpose: e.purpose,
+        status: e.status,
+        createdAt: e.createdAt.toISOString(),
+      })) : [],
     };
   });
 

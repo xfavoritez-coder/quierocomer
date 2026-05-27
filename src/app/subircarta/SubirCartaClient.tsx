@@ -8,6 +8,7 @@ import PlanesModal from "@/components/PlanesModal";
 import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
 import { initAdTracker, resumeAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
+import { linkVisitorToLead } from "@/lib/visitorTracker";
 import { normalizePhone } from "@/lib/normalizePhone";
 import { parseAbText } from "@/lib/ab/parseAbText";
 
@@ -270,6 +271,7 @@ export default function SubirCartaClient() {
         if (abIds.current.titleId) fetch("/api/qr/stat-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "SUBIRCARTA_CARTA_UPLOADED", metadata: { abExperiment: "subircarta-hero", ...abIds.current } }), keepalive: true }).catch(() => {});
         trackCartaUpload();
         linkAdSessionToLead(data.id);
+        linkVisitorToLead(data.id);
         navigateToPaso2(data.id);
       } else {
         const filesToUpload = mode === "photo" ? photoFiles : Array.from(fileRef.current?.files || []);
@@ -311,6 +313,7 @@ export default function SubirCartaClient() {
         if (abIds.current.titleId) fetch("/api/qr/stat-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "SUBIRCARTA_CARTA_UPLOADED", metadata: { abExperiment: "subircarta-hero", ...abIds.current } }), keepalive: true }).catch(() => {});
         trackCartaUpload();
         linkAdSessionToLead(leadId);
+        linkVisitorToLead(leadId);
         setUploadProgress("");
         navigateToPaso2(leadId);
       }

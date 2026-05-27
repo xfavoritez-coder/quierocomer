@@ -99,7 +99,7 @@ export default function ClientesPage() {
   const [sortBy, setSortBy] = useState<SortCol>("ultimaActividad");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"timeline" | "metricas" | "acciones">("timeline");
+  const [activeTab, setActiveTab] = useState<"timeline" | "metricas" | "panel" | "acciones">("timeline");
   const [togglingExempt, setTogglingExempt] = useState<string | null>(null);
 
   useEffect(() => {
@@ -291,21 +291,25 @@ export default function ClientesPage() {
                 <div style={{ background: "var(--adm-bg)", borderBottom: "1px solid var(--adm-card-border)", padding: "0 18px 20px" }}>
                   {/* Tabs */}
                   <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--adm-card-border)", marginBottom: 16 }}>
-                    {(["timeline", "metricas", "acciones"] as const).map(tab => (
+                    {(["timeline", "metricas", "panel", "acciones"] as const).map(tab => (
                       <button key={tab} onClick={() => setActiveTab(tab)} style={{
                         padding: "10px 16px", fontSize: 12, fontWeight: activeTab === tab ? 700 : 500,
                         color: activeTab === tab ? GOLD : "var(--adm-text3)", cursor: "pointer",
                         borderBottom: `2px solid ${activeTab === tab ? GOLD : "transparent"}`,
                         background: "none", border: "none", fontFamily: F,
                       }}>
-                        {tab === "timeline" ? "Timeline" : tab === "metricas" ? "Metricas" : "Acciones"}
+                        {tab === "timeline" ? "Timeline" : tab === "metricas" ? "Metricas" : tab === "panel" ? "Acciones Panel" : "Acciones"}
                       </button>
                     ))}
                   </div>
 
                   {activeTab === "timeline" && <TimelineTab c={c} />}
                   {activeTab === "metricas" && <MetricasTab c={c} />}
-                  {activeTab === "acciones" && <AccionesTab c={c} togglingExempt={togglingExempt} onToggleExempt={() => toggleExempt(c)} />}
+                  {activeTab === "panel" && <PanelActivityTab restaurantId={c.id} />}
+                  {activeTab === "acciones" && <AccionesTab c={c} togglingExempt={togglingExempt} onToggleExempt={() => toggleExempt(c)}
+                    onDelete={() => { setClientes(prev => prev.filter(x => x.id !== c.id)); setExpanded(null); }}
+                    onUpdateField={(field, value) => setClientes(prev => prev.map(x => x.id === c.id ? { ...x, [field]: value } : x))}
+                  />}
                 </div>
               )}
             </div>
@@ -380,8 +384,38 @@ function TimelineTab({ c }: { c: Cliente }) {
     items.push({ time: a.createdAt, text: `${label}${detail ? `: ${detail}` : ""}`, dot: "" });
   }
 
-  // Registration
-  items.push({ time: c.createdAt, text: `Restaurante creado (${c.origen === "SUBIR_CARTA" ? "Subir Carta" : c.origen === "PLANES" ? "Planes" : "Handoff"})`, dot: "purple" });
+  // Visitor session (pre-activation behavior)
+  if ((c as any).visitorSession) {
+    const vs = (c as any).visitorSession;
+    const src = vs.utmSource === "organic" ? "organico" : vs.utmSource === "facebook" ? "Facebook Ads" : vs.utmSource || "directo";
+    const parts = [`Llego via ${src}`];
+    if (vs.landingPage) parts.push(`a ${vs.landingPage}`);
+    if (vs.device) parts.push(`(${vs.device})`);
+    if (vs.referrer) parts.push(`desde ${vs.referrer}`);
+    if (vs.duration > 0) parts.push(`· ${vs.duration}s en pagina`);
+    if (vs.interactions > 0) parts.push(`· ${vs.interactions} interacciones`);
+    if (vs.sectionsViewed?.length > 0) parts.push(`· vio: ${vs.sectionsViewed.join(", ")}`);
+    if (vs.utmCampaign) parts.push(`· campaña: ${vs.utmCampaign}`);
+    items.push({ time: vs.createdAt, text: parts.join(" "), dot: vs.utmSource === "facebook" ? "blue" : "purple" });
+  }
+
+  // Emails sent
+  if ((c as any).emailsSent) {
+    for (const e of (c as any).emailsSent) {
+      const purposeLabel: Record<string, string> = {
+        activation_welcome: "Email de bienvenida enviado",
+        funnel_carta_lista: "Email carta lista enviado",
+        lead_failure_help: "Email de ayuda (carta fallo) enviado",
+      };
+      items.push({ time: e.createdAt, text: `${purposeLabel[e.purpose] || e.purpose} · ${e.status === "sent" ? "entregado" : "fallo"}`, dot: e.status === "sent" ? "gold" : "red" });
+    }
+  }
+
+  // Registration + plan info
+  const planLabel = c.plan === "FREE" ? "Free" : c.plan === "GOLD" ? "Gold" : c.plan === "PREMIUM" ? "Premium" : c.plan;
+  const origenLabel = c.origen === "SUBIR_CARTA" ? "Subir Carta" : c.origen === "PLANES" ? "Planes" : "Handoff";
+  const trialInfo = c.trialDaysLeft ? ` · regalo 14 dias Premium` : "";
+  items.push({ time: c.createdAt, text: `Registro desde ${origenLabel} · Plan ${planLabel}${trialInfo}`, dot: "purple" });
 
   // Sort chronologically desc
   items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
@@ -403,6 +437,66 @@ function TimelineTab({ c }: { c: Cliente }) {
         </div>
       ))}
       {items.length === 0 && <div style={{ color: "var(--adm-text3)", fontSize: 13, padding: "10px 0" }}>Sin actividad registrada.</div>}
+    </div>
+  );
+}
+
+function PanelActivityTab({ restaurantId }: { restaurantId: string }) {
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/admin/actividad/${restaurantId}?limit=30`)
+      .then(r => r.json())
+      .then(data => {
+        setActivities(data.activities || []);
+        setCursor(data.nextCursor || null);
+        setHasMore(!!data.nextCursor);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  const loadMore = async () => {
+    if (!cursor) return;
+    const res = await fetch(`/api/admin/actividad/${restaurantId}?limit=30&cursor=${cursor}`);
+    const data = await res.json();
+    setActivities(prev => [...prev, ...(data.activities || [])]);
+    setCursor(data.nextCursor || null);
+    setHasMore(!!data.nextCursor);
+  };
+
+  if (loading) return <div style={{ color: "var(--adm-text3)", fontSize: 13, padding: "10px 0" }}>Cargando...</div>;
+
+  return (
+    <div style={{ maxHeight: 450, overflowY: "auto" }}>
+      {activities.map((a: any, i: number) => {
+        const label = ACTION_LABELS[a.action] || a.action;
+        const detail = a.details && typeof a.details === "object"
+          ? (a.details.dishName || a.details.categoryName || a.details.name || "")
+          : "";
+        return (
+          <div key={a.id || i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
+            <div style={{ fontSize: 11, color: "var(--adm-text3)", minWidth: 110, flexShrink: 0 }}>{fmtDate(a.createdAt)}</div>
+            <div style={{ fontSize: 13, color: "var(--adm-text2)" }}>
+              <strong style={{ color: "var(--adm-text)" }}>{label}</strong>
+              {detail && <span style={{ marginLeft: 6, color: "var(--adm-text3)" }}>{detail}</span>}
+            </div>
+          </div>
+        );
+      })}
+      {activities.length === 0 && <div style={{ color: "var(--adm-text3)", fontSize: 13, padding: "10px 0" }}>Sin acciones en el panel registradas.</div>}
+      {hasMore && (
+        <button onClick={loadMore} style={{
+          padding: "8px 16px", marginTop: 10, borderRadius: 8, border: "1px solid var(--adm-card-border)",
+          background: "transparent", color: "var(--adm-text3)", fontSize: 12, cursor: "pointer", fontFamily: F,
+        }}>
+          Ver más
+        </button>
+      )}
     </div>
   );
 }
@@ -429,21 +523,131 @@ function MiniCard({ label, value, color }: { label: string; value: string | numb
   );
 }
 
-function AccionesTab({ c, togglingExempt, onToggleExempt }: { c: Cliente; togglingExempt: string | null; onToggleExempt: () => void }) {
+function AccionesTab({ c, togglingExempt, onToggleExempt, onDelete, onUpdateField }: {
+  c: Cliente; togglingExempt: string | null; onToggleExempt: () => void;
+  onDelete: () => void; onUpdateField: (field: string, value: string) => void;
+}) {
   const baseUrl = "https://quierocomer.cl";
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(c.name);
+  const [editPlan, setEditPlan] = useState(c.plan);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const body: Record<string, any> = {};
+    if (editName !== c.name) body.name = editName;
+    if (editPlan !== c.plan) body.plan = editPlan;
+    if (Object.keys(body).length > 0) {
+      await fetch(`/api/admin/locales/${c.id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }).catch(() => {});
+      if (body.name) onUpdateField("name", body.name);
+      if (body.plan) onUpdateField("plan", body.plan);
+    }
+    setSaving(false);
+    setEditing(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const res = await fetch(`/api/admin/locales/${c.id}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) onDelete();
+    else setDeleting(false);
+  };
+
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      <ActionBtn href={`${baseUrl}/qr/${c.slug}`} label="👁 Ver carta" />
-      {c.ownerId && <ActionBtn href={`/api/admin/impersonate?ownerId=${c.ownerId}`} label="🔑 Entrar como el" />}
-      {c.owner?.email && <ActionBtn href={`mailto:${c.owner.email}`} label="📧 Enviar email" />}
-      {c.owner?.whatsapp && <ActionBtn href={`https://wa.me/${c.owner.whatsapp.replace(/[^0-9+]/g, "")}`} label="💬 Enviar WA" />}
-      <button onClick={onToggleExempt} disabled={togglingExempt === c.id} style={{
-        padding: "7px 14px", borderRadius: 10, border: `1px solid ${c.billingExempt ? "#4ade80" : "var(--adm-card-border)"}`,
-        background: "transparent", color: c.billingExempt ? "#4ade80" : "var(--adm-text2)",
-        fontSize: 12, cursor: "pointer", fontFamily: F, display: "flex", alignItems: "center", gap: 5,
-      }}>
-        {c.billingExempt ? "🎁 Bonificado ✓" : "🎁 Activar bonificacion"}
-      </button>
+    <div>
+      {/* Quick actions */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <ActionBtn href={`${baseUrl}/qr/${c.slug}`} label="👁 Ver carta" />
+        {c.ownerId && <ActionBtn href={`/api/admin/impersonate?ownerId=${c.ownerId}`} label="🔑 Entrar como el" />}
+        {c.owner?.email && <ActionBtn href={`mailto:${c.owner.email}`} label="📧 Enviar email" />}
+        {c.owner?.whatsapp && <ActionBtn href={`https://wa.me/${c.owner.whatsapp.replace(/[^0-9+]/g, "")}`} label="💬 Enviar WA" />}
+        <button onClick={onToggleExempt} disabled={togglingExempt === c.id} style={{
+          padding: "7px 14px", borderRadius: 10, border: `1px solid ${c.billingExempt ? "#4ade80" : "var(--adm-card-border)"}`,
+          background: "transparent", color: c.billingExempt ? "#4ade80" : "var(--adm-text2)",
+          fontSize: 12, cursor: "pointer", fontFamily: F, display: "flex", alignItems: "center", gap: 5,
+        }}>
+          {c.billingExempt ? "🎁 Bonificado ✓" : "🎁 Activar bonificacion"}
+        </button>
+      </div>
+
+      {/* Edit section */}
+      {!editing ? (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setEditing(true)} style={{
+            padding: "8px 16px", borderRadius: 10, border: "1px solid var(--adm-card-border)",
+            background: "transparent", color: "var(--adm-text2)", fontSize: 12, cursor: "pointer", fontFamily: F,
+          }}>
+            ✏️ Editar cliente
+          </button>
+          {!confirmDelete ? (
+            <button onClick={() => setConfirmDelete(true)} style={{
+              padding: "8px 16px", borderRadius: 10, border: "1px solid rgba(248,113,113,.3)",
+              background: "transparent", color: "#f87171", fontSize: 12, cursor: "pointer", fontFamily: F,
+            }}>
+              🗑 Eliminar
+            </button>
+          ) : (
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#f87171", fontFamily: F }}>¿Seguro?</span>
+              <button onClick={handleDelete} disabled={deleting} style={{
+                padding: "6px 14px", borderRadius: 8, border: "none", background: "#f87171", color: "#fff",
+                fontSize: 12, cursor: deleting ? "wait" : "pointer", fontFamily: F, fontWeight: 700,
+              }}>
+                {deleting ? "Eliminando..." : "Si, eliminar"}
+              </button>
+              <button onClick={() => setConfirmDelete(false)} style={{
+                padding: "6px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)",
+                background: "transparent", color: "var(--adm-text3)", fontSize: 12, cursor: "pointer", fontFamily: F,
+              }}>
+                Cancelar
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16 }}>
+          <div style={{ fontSize: 11, color: "var(--adm-text3)", textTransform: "uppercase" as const, letterSpacing: "0.06em", fontWeight: 600, marginBottom: 12, fontFamily: F }}>Editar cliente</div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ fontSize: 11, color: "var(--adm-text3)", display: "block", marginBottom: 4, fontFamily: F }}>Nombre</label>
+            <input value={editName} onChange={e => setEditName(e.target.value)} style={{
+              width: "100%", padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)",
+              borderRadius: 8, color: "var(--adm-text)", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" as const,
+            }} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 11, color: "var(--adm-text3)", display: "block", marginBottom: 4, fontFamily: F }}>Plan</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["FREE", "GOLD", "PREMIUM"].map(p => (
+                <button key={p} onClick={() => setEditPlan(p)} style={{
+                  padding: "6px 14px", borderRadius: 8, border: `1px solid ${editPlan === p ? GOLD : "var(--adm-card-border)"}`,
+                  background: editPlan === p ? GOLD : "transparent", color: editPlan === p ? "#0a0908" : "var(--adm-text2)",
+                  fontSize: 12, fontWeight: editPlan === p ? 700 : 500, cursor: "pointer", fontFamily: F,
+                }}>{p}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleSave} disabled={saving} style={{
+              padding: "8px 20px", borderRadius: 10, border: "none", background: GOLD, color: "#0a0908",
+              fontSize: 12, fontWeight: 700, cursor: saving ? "wait" : "pointer", fontFamily: F,
+            }}>
+              {saving ? "Guardando..." : "Guardar"}
+            </button>
+            <button onClick={() => { setEditing(false); setEditName(c.name); setEditPlan(c.plan); }} style={{
+              padding: "8px 16px", borderRadius: 10, border: "1px solid var(--adm-card-border)",
+              background: "transparent", color: "var(--adm-text3)", fontSize: 12, cursor: "pointer", fontFamily: F,
+            }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
