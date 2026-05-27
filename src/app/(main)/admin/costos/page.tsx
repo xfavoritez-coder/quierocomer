@@ -39,6 +39,13 @@ const ACTION_LABELS: Record<string, string> = {
   send_whatsapp: "Enviar WhatsApp",
   send_email: "Enviar email",
   storage_upload: "Storage upload",
+  historical_extraction: "Extracción (histórico)",
+  historical_translation: "Traducción (histórico)",
+  historical_ingredients: "Ingredientes (histórico)",
+  historical_wa_agent: "Agente WA (histórico)",
+  historical_weekly_email: "Weekly email (histórico)",
+  historical_whatsapp: "WhatsApp (histórico)",
+  historical_email: "Email (histórico)",
 };
 
 function usd(n: number) {
@@ -227,17 +234,74 @@ export default function CostosPage() {
         </div>
       )}
 
-      {/* Fixed costs note */}
-      <div style={{ marginTop: 20, padding: "14px 16px", background: "var(--adm-hover)", borderRadius: 12, border: "1px solid var(--adm-card-border)" }}>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)", margin: "0 0 6px" }}>Costos fijos mensuales (no trackeados aquí)</p>
-        <div style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", lineHeight: 1.8 }}>
-          • Vercel Pro: ~$20 USD/mes<br/>
-          • Supabase Pro: ~$25 USD/mes<br/>
-          • Resend: $20 USD/mes (50K emails)<br/>
-          • Dominio: ~$12 USD/año<br/>
-          • Claude Code: según uso
-        </div>
-      </div>
+      {/* Total mensual completo */}
+      {(() => {
+        const fixedCosts = [
+          { label: "Claude Code Pro", usd: 100_000 / 950, clpRaw: 100_000 },
+          { label: "Vercel Pro", usd: 20, clpRaw: null },
+          { label: "Supabase Pro", usd: 25, clpRaw: null },
+          { label: "Resend (50K emails)", usd: 20, clpRaw: null },
+          { label: "Dominio (anual ÷ 12)", usd: 1, clpRaw: null },
+        ];
+        const totalFixed = fixedCosts.reduce((s, c) => s + c.usd, 0);
+        const totalVariable = data.totalCostUsd;
+        const grandTotal = totalFixed + totalVariable;
+
+        return (
+          <div style={{ ...cardStyle, marginTop: 20, background: "linear-gradient(135deg, var(--adm-card), var(--adm-hover))", border: `1px solid ${GOLD}33` }}>
+            <h2 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: GOLD, margin: "0 0 16px", textTransform: "uppercase", letterSpacing: ".06em" }}>Costo total mensual</h2>
+
+            {/* Fixed */}
+            <div style={{ marginBottom: 14 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".06em" }}>Costos fijos</p>
+              {fixedCosts.map(c => (
+                <div key={c.label} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{c.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>
+                    {c.clpRaw ? `$${c.clpRaw.toLocaleString("es-CL")} CLP` : usd(c.usd)}
+                  </span>
+                </div>
+              ))}
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 0", borderTop: "1px solid var(--adm-card-border)", marginTop: 6 }}>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)" }}>Subtotal fijo</span>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(totalFixed)} ≈ {clp(totalFixed)}</span>
+              </div>
+            </div>
+
+            {/* Variable */}
+            <div style={{ marginBottom: 14 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".06em" }}>Costos variables (período seleccionado)</p>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Claude API (tokens)</span>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(data.byService.claude?.costUsd || 0)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Twilio WhatsApp</span>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(data.byService.twilio?.costUsd || 0)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Resend (emails extra)</span>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(data.byService.resend?.costUsd || 0)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 0", borderTop: "1px solid var(--adm-card-border)", marginTop: 6 }}>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)" }}>Subtotal variable</span>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)" }}>{usd(totalVariable)} ≈ {clp(totalVariable)}</span>
+              </div>
+            </div>
+
+            {/* Grand total */}
+            <div style={{ background: "var(--adm-card)", borderRadius: 12, padding: "14px 16px", border: `1px solid ${GOLD}44` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>TOTAL</span>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 900, color: GOLD }}>{usd(grandTotal)}</div>
+                  <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>≈ {clp(grandTotal)} CLP</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
