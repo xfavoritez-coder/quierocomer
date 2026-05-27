@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { sendAdminEmail, welcomeOwnerEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
+import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
@@ -70,8 +71,8 @@ export async function POST(request: Request) {
       await sendAdminEmail({
         to: email.trim().toLowerCase(),
         subject: `${firstName}, tu carta digital está lista`,
-        html: welcomeOwnerEmailHtml(firstName, email.trim().toLowerCase(), password, qrLink, `${BASE_URL}/panel`),
-        purpose: "welcome",
+        html: activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant.name, panelLink: `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}`, qrLink, credentials: { email: email.trim().toLowerCase(), password } }),
+        purpose: "activation_welcome",
       });
     }
 

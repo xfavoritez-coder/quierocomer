@@ -66,11 +66,27 @@ function tokens(n: number) {
 export default function CostosPage() {
   const [data, setData] = useState<CostData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [preset, setPreset] = useState<"7d" | "14d" | "30d">("30d");
+  const [preset, setPreset] = useState<"hoy" | "7d" | "14d" | "30d">("30d");
+  const [allTimeTotal, setAllTimeTotal] = useState<number | null>(null);
+
+  // Fetch all-time total once
+  useEffect(() => {
+    fetch("/api/admin/costs?from=2024-01-01&to=2030-01-01")
+      .then(r => r.json())
+      .then(d => {
+        const fixedMonths = 3; // ~3 meses operando
+        const fixedPerMonth = 100_000 / 950 + 20 + 25 + 20 + 1; // Claude Pro + Vercel + Supabase + Resend + Dominio
+        const metaUsd = d.metaAds ? d.metaAds.spendClp / 950 : 0;
+        setAllTimeTotal((d.totalCostUsd || 0) + metaUsd + fixedPerMonth * fixedMonths);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
-    const days = preset === "7d" ? 7 : preset === "14d" ? 14 : 30;
-    const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+    const days = preset === "hoy" ? 0 : preset === "7d" ? 7 : preset === "14d" ? 14 : 30;
+    const from = preset === "hoy"
+      ? new Date().toISOString().slice(0, 10)
+      : new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
     const to = new Date().toISOString().slice(0, 10);
 
     setLoading(true);
@@ -118,18 +134,27 @@ export default function CostosPage() {
           <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0 }}>Consumo de servicios externos en tiempo real</p>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
-          {(["7d", "14d", "30d"] as const).map(p => (
+          {(["hoy", "7d", "14d", "30d"] as const).map(p => (
             <button key={p} onClick={() => setPreset(p)} style={{
               padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
               background: preset === p ? "var(--adm-card-border)" : "transparent",
               color: preset === p ? "var(--adm-text)" : "var(--adm-text3)",
             }}>
-              {p === "7d" ? "7 días" : p === "14d" ? "14 días" : "30 días"}
+              {p === "hoy" ? "Hoy" : p === "7d" ? "7 días" : p === "14d" ? "14 días" : "30 días"}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Total acumulado */}
+      {allTimeTotal !== null && (
+        <div style={{ ...cardStyle, marginBottom: 16, background: "linear-gradient(135deg, var(--adm-card), var(--adm-hover))", border: `1px solid ${GOLD}33`, textAlign: "center" }}>
+          <div style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>Total acumulado (desde el inicio)</div>
+          <div style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: GOLD }}>{usd(allTimeTotal)}</div>
+          <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", marginTop: 2 }}>{clp(allTimeTotal)} CLP</div>
+        </div>
+      )}
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 20 }}>

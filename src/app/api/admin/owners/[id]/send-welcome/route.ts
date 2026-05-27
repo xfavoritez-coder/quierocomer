@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
-import { sendAdminEmail, welcomeOwnerEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
+import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 import bcrypt from "bcryptjs";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
@@ -40,8 +41,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await sendAdminEmail({
       to: owner.email,
       subject: `${firstName}, tu carta digital está lista 🧞`,
-      html: welcomeOwnerEmailHtml(firstName, owner.email, tempPassword, qrLink, `${BASE_URL}/panel`),
-      purpose: "welcome",
+      html: activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant?.name || "tu restaurante", panelLink: restaurant ? `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}` : `${BASE_URL}/panel`, qrLink: qrLink || BASE_URL, credentials: { email: owner.email, password: tempPassword } }),
+      purpose: "activation_welcome",
     });
 
     return NextResponse.json({ success: true });

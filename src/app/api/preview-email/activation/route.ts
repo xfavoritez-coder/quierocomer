@@ -41,12 +41,13 @@ export function activationWelcomeEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:430px;margin:0 auto;padding:24px 16px 32px">
 <tr><td>
 
-<!-- Icon -->
+<!-- Logo -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:16px">
-  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-    <td width="46" height="46" style="width:46px;height:46px;border-radius:50%;background:#ffffff;text-align:center;vertical-align:middle;font-size:24px;box-shadow:0 12px 30px rgba(120,80,20,0.12)">🎉</td>
-  </tr></table>
+  <a href="https://quierocomer.cl" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    <td style="vertical-align:middle;padding-right:3px;"><img src="https://quierocomer.cl/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+    <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:#e8930a;">QuieroComer</span></td>
+  </tr></table></a>
 </td></tr>
 </table>
 
@@ -65,29 +66,20 @@ export function activationWelcomeEmailHtml({
 
 <!-- Lead text -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:22px">
+<tr><td style="text-align:center;padding-bottom:16px">
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${ownerName}, tu carta de ${restaurantName} ya está creada. Entra a tu panel para revisarla, editarla y dejarla a tu gusto.
-</p>
-<p style="font-size:13px;color:#a08a68;line-height:1.5;margin:10px 0 0">
-  Tu carta es privada — nadie la ve hasta que tú compartas el QR en tus mesas.
+  ${ownerName}, tu carta de <strong style="color:#111">${restaurantName}</strong> ya esta creada.
 </p>
 </td></tr>
-</table>
-
-<!-- Primary CTA: Panel -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:12px">
-  <a href="${panelLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
-    Entrar a mi panel →
-  </a>
+<tr><td style="text-align:center;padding-bottom:22px">
+  <table cellpadding="0" cellspacing="0" border="0" align="center" style="background:#faf5eb;border:1px solid #ead7b7;border-radius:14px;">
+    <tr><td style="padding:12px 18px;text-align:center;">
+      <p style="font-size:13px;color:#92400e;line-height:1.5;margin:0;font-weight:600">
+        Revisa tu carta, editala a tu gusto y cuando este lista comparte el QR en tus mesas
+      </p>
+    </td></tr>
+  </table>
 </td></tr>
-<tr><td style="text-align:center;padding-bottom:8px">
-  <a href="${qrLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
-    Ver cómo se ve mi carta
-  </a>
-</td></tr>
-<tr><td style="padding-bottom:22px"></td></tr>
 </table>
 
 ${credentials ? `
@@ -146,6 +138,20 @@ ${credentials ? `
   <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso al panel.</p>
 </td></tr>
 </table>
+
+<!-- CTAs after credentials -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:12px">
+  <a href="${panelLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
+    Entrar a mi panel →
+  </a>
+</td></tr>
+<tr><td style="text-align:center;padding-bottom:22px">
+  <a href="${qrLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
+    Ver cómo se ve mi carta
+  </a>
+</td></tr>
+</table>
 ` : ""}
 
 <!-- Steps card -->
@@ -169,26 +175,11 @@ ${credentials ? `
   </table>
 
   <!-- Step 2 -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding:13px 0;border-top:1px solid rgba(193,151,82,0.22)">
-  <tr>
-    <td style="width:40px;vertical-align:top;padding-top:2px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="30" height="30" style="width:30px;height:30px;border-radius:50%;background:#f29a00;color:#fff;font-weight:900;font-size:13px;text-align:center;vertical-align:middle">2</td>
-      </tr></table>
-    </td>
-    <td style="vertical-align:top;padding-left:4px">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Sube tus fotos reales</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Reemplaza las fotos de referencia con fotos de tus platos.</p>
-    </td>
-  </tr>
-  </table>
-
-  <!-- Step 3 -->
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding-top:13px;border-top:1px solid rgba(193,151,82,0.22)">
   <tr>
     <td style="width:40px;vertical-align:top;padding-top:2px">
       <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="30" height="30" style="width:30px;height:30px;border-radius:50%;background:#f29a00;color:#fff;font-weight:900;font-size:13px;text-align:center;vertical-align:middle">3</td>
+        <td width="30" height="30" style="width:30px;height:30px;border-radius:50%;background:#f29a00;color:#fff;font-weight:900;font-size:13px;text-align:center;vertical-align:middle">2</td>
       </tr></table>
     </td>
     <td style="vertical-align:top;padding-left:4px">
@@ -201,15 +192,6 @@ ${credentials ? `
 </td></tr>
 </table>
 
-<!-- Footer note -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding:18px 8px 0">
-<p style="color:#927955;font-size:12px;line-height:1.5;margin:0">
-  Tu carta ya está creada. Edítala a tu gusto y comparte el QR cuando estés listo.
-</p>
-</td></tr>
-</table>
-
 </td></tr>
 </table>
 
@@ -219,7 +201,7 @@ ${credentials ? `
 <p style="color:#927955;font-size:12px;margin:0">
   ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
 </p>
-<p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · 2026</p>
+<p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · 2026 · Hecho en Chile</p>
 </td></tr>
 </table>
 

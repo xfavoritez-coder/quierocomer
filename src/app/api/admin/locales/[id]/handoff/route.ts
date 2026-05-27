@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
-import { sendAdminEmail, handoffOwnerEmailHtml, handoffFreeEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
+import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 import { TRIAL_DAYS } from "@/lib/billing/plans-config";
 import type { RestaurantPlan } from "@prisma/client";
 
@@ -114,19 +115,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   let emailSent = false;
   let emailError: string | null = null;
   try {
-    if (isPaidPlan) {
+    const emailHtml = activationWelcomeEmailHtml({
+      ownerName: name,
+      restaurantName: restaurant.name,
+      panelLink: `${BASE_URL}/api/panel/demo-auth?slug=${restaurant.slug}`,
+      qrLink,
+      credentials: { email, password },
+      planLabel: isPaidPlan ? `${planLabel} (${TRIAL_DAYS} dias gratis)` : "Gratis",
+    });
+    {
       await sendAdminEmail({
         to: email,
-        subject: `${name}, tu plan ${planLabel} está activo · ${TRIAL_DAYS} días gratis`,
-        html: handoffOwnerEmailHtml(name, email, password, qrLink, panelLink, planLabel, TRIAL_DAYS),
-        purpose: "welcome",
-      });
-    } else {
-      await sendAdminEmail({
-        to: email,
-        subject: `${name}, tu carta de ${restaurant.name} ya está lista`,
-        html: handoffFreeEmailHtml(name, email, password, qrLink, panelLink, restaurant.name),
-        purpose: "welcome",
+        subject: `${name}, tu panel de ${restaurant.name} está listo`,
+        html: emailHtml,
+        purpose: "activation_welcome",
       });
     }
     emailSent = true;
