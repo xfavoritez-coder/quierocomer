@@ -175,7 +175,7 @@ export default function Paso2Client() {
     const t = setTimeout(() => {
       const el = formSectionRef.current;
       if (el) {
-        const top = el.getBoundingClientRect().top + window.scrollY - 24;
+        const top = el.getBoundingClientRect().top + window.scrollY - 80;
         window.scrollTo({ top, behavior: "smooth" });
       }
       setTimeout(() => firstInputRef.current?.focus(), 400);
@@ -541,7 +541,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--amber-2)); border-radius: 999px; transition: width 0.3s ease; }
 .checks { display: grid; gap: 7px; margin-top: 12px; color: var(--cream-2); font-size: 13px; }
 .check { display: flex; align-items: center; gap: 8px; }
-.form-section { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 20px; }
+.form-section { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 28px; }
 .form-reveal { animation: formSlideUp 0.6s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes formSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pillMetaFade { from { opacity: 0; } to { opacity: 1; } }
