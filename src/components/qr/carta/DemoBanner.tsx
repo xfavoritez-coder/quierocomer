@@ -222,9 +222,9 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           borderBottom: "1px solid rgba(244,166,35,.18)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.55)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            Vista previa
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.55)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            Vista previa · entra a tu panel para editar
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
               <path d="M12 19V5M5 10l7-7 7 7" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </span>
