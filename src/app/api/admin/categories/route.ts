@@ -101,6 +101,11 @@ export async function PUT(req: NextRequest) {
     if (dishType !== undefined) data.dishType = dishType;
 
     const updated = await prisma.category.update({ where: { id }, data });
+
+    // Log specific action for visibility toggle vs generic edit
+    if (isActive !== undefined) {
+      logActivity(existing.restaurantId, isActive ? "category_show" : "category_hide", { categoryId: id, name: updated.name });
+    }
     logActivity(existing.restaurantId, "category_edit", { categoryId: id, name: updated.name, fields: Object.keys(data) });
 
     // Re-translate if name changed

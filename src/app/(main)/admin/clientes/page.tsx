@@ -82,6 +82,8 @@ const ACTION_LABELS: Record<string, string> = {
   panel_login: "Inicio sesion", panel_visit: "Visito panel", dish_edit: "Edito plato",
   dish_create: "Creo plato", dish_delete: "Elimino plato", photo_upload: "Subio foto",
   category_edit: "Edito categoria", category_create: "Creo categoria", category_delete: "Elimino categoria",
+  category_hide: "Oculto categoria", category_show: "Mostro categoria",
+  dish_hide: "Oculto plato", dish_show: "Mostro plato",
   promo_create: "Creo oferta", promo_edit: "Edito oferta", settings_change: "Cambio config",
   announcement_create: "Creo anuncio",
   menu_import: "Importo carta",

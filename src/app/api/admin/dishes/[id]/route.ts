@@ -103,6 +103,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
+    // Track specific action for visibility toggle
+    if (body.isActive !== undefined) {
+      logActivity(existing.restaurantId, body.isActive ? "dish_show" : "dish_hide", { dishId: id, dishName: dish.name });
+    }
     // Track activity
     const changes = Object.keys(body).filter(k => k !== "restaurantId");
     logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes });
