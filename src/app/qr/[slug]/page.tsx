@@ -97,7 +97,12 @@ export default async function CartaPage({
   const [topDishesResult, activePromos, rawAnnouncements] = await Promise.all([
     getTopDishIds(restaurant.id).catch(() => ({ dishIds: new Set<string>(), source: "none" as const, totalSalesToday: 0 })),
     prisma.promotion.findMany({
-    where: { restaurantId: restaurant.id, status: "ACTIVE", OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] },
+    where: {
+      restaurantId: restaurant.id,
+      status: "ACTIVE",
+      OR: [{ validFrom: null }, { validFrom: { lte: new Date() } }],
+      AND: [{ OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] }],
+    },
     orderBy: { createdAt: "desc" },
   }),
     prisma.announcement.findMany({

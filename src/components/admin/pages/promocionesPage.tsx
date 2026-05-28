@@ -10,8 +10,14 @@ const GOLD = "#F4A623";
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   SUGGESTED: { label: "Sugerida", color: "#F4A623", bg: "rgba(244,166,35,0.1)" },
   ACTIVE: { label: "Activa", color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
+  SCHEDULED: { label: "Programada", color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
   PAUSED: { label: "Pausada", color: "var(--adm-text2)", bg: "var(--adm-hover)" },
 };
+
+function getPromoDisplayStatus(p: { status: string; validFrom: string | null; validUntil: string | null }): string {
+  if (p.status === "ACTIVE" && p.validFrom && new Date(p.validFrom) > new Date()) return "SCHEDULED";
+  return p.status;
+}
 
 interface Promo {
   id: string; name: string; description: string | null; dishIds: string[];
@@ -72,7 +78,11 @@ export default function AdminPromociones() {
   const [cDiscountPct, setCDiscountPct] = useState("");
   const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
   const [cDaysOfWeek, setCDaysOfWeek] = useState<number[]>([]);
+  const [cValidFrom, setCValidFrom] = useState("");
+  const [cValidUntil, setCValidUntil] = useState("");
   const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
+  const [editValidFrom, setEditValidFrom] = useState("");
+  const [editValidUntil, setEditValidUntil] = useState("");
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
   const [savingNew, setSavingNew] = useState(false);
   const [dishSearch, setDishSearch] = useState("");
@@ -166,6 +176,8 @@ export default function AdminPromociones() {
       body.discountPct = cDiscountPct ? Number(cDiscountPct) : null;
     }
     if (cModifierTemplateIds.length > 0) body.modifierTemplateIds = cModifierTemplateIds;
+    if (cValidFrom) body.validFrom = cValidFrom;
+    if (cValidUntil) body.validUntil = cValidUntil;
     const res = await fetch("/api/admin/promotions", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -178,7 +190,7 @@ export default function AdminPromociones() {
 
   const resetCreate = () => {
     setCreating(false); setCreateType(null);
-    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]); setDishSearch(""); setCModifierTemplateIds([]);
+    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]); setDishSearch(""); setCModifierTemplateIds([]); setCValidFrom(""); setCValidUntil("");
   };
 
   useEffect(() => {
@@ -228,6 +240,8 @@ export default function AdminPromociones() {
     setEditOriginalPrice(p.originalPrice?.toString() || "");
     setEditImageUrl(p.imageUrl || "");
     setEditDaysOfWeek(p.daysOfWeek || []);
+    setEditValidFrom(p.validFrom ? p.validFrom.slice(0, 10) : "");
+    setEditValidUntil(p.validUntil ? p.validUntil.slice(0, 10) : "");
     setEditModifierTemplateIds((p.modifierTemplates || []).map(t => t.id));
     setTimeout(() => editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
@@ -262,6 +276,8 @@ export default function AdminPromociones() {
       originalPrice: editOriginalPrice ? Number(editOriginalPrice) : null,
       imageUrl: editImageUrl || null,
       daysOfWeek: editDaysOfWeek.length > 0 ? editDaysOfWeek : [],
+      validFrom: editValidFrom || null,
+      validUntil: editValidUntil || null,
       modifierTemplateIds: editModifierTemplateIds,
     };
     const res = await fetch("/api/admin/promotions", {
@@ -713,6 +729,21 @@ export default function AdminPromociones() {
             </div>
           </div>
 
+          {/* Date range */}
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Rango de fechas (opcional)</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Desde</label>
+                <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Hasta</label>
+                <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
             <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
@@ -792,6 +823,21 @@ export default function AdminPromociones() {
             </div>
           </div>
 
+          {/* Date range */}
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Rango de fechas (opcional)</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Desde</label>
+                <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Hasta</label>
+                <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
             <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
@@ -850,6 +896,21 @@ export default function AdminPromociones() {
             </div>
           </div>
 
+          {/* Date range edit */}
+          <div style={{ marginTop: 10 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Rango de fechas (opcional)</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Desde</label>
+                <input type="date" value={editValidFrom} onChange={e => setEditValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Hasta</label>
+                <input type="date" value={editValidUntil} onChange={e => setEditValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
             <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
@@ -862,7 +923,8 @@ export default function AdminPromociones() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map(p => {
-            const st = STATUS_STYLES[p.status] || STATUS_STYLES.SUGGESTED;
+            const displayStatus = getPromoDisplayStatus(p);
+            const st = STATUS_STYLES[displayStatus] || STATUS_STYLES.SUGGESTED;
             const isOpen = expanded === p.id;
             const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
             return (
@@ -938,7 +1000,7 @@ export default function AdminPromociones() {
                       <span style={{ fontSize: "0.58rem", padding: "2px 7px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600, flexShrink: 0 }}>{st.label}</span>
                     </div>
                     <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {p.promoPrice ? `$${p.promoPrice.toLocaleString("es-CL")}` : ""}{p.discountPct ? ` · ${p.discountPct}% off` : ""}{dishNames.length > 0 ? ` · ${dishNames.join(", ")}` : ""}{p.daysOfWeek && p.daysOfWeek.length > 0 ? ` · ${p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}` : ""}
+                      {p.promoPrice ? `$${p.promoPrice.toLocaleString("es-CL")}` : ""}{p.discountPct ? ` · ${p.discountPct}% off` : ""}{dishNames.length > 0 ? ` · ${dishNames.join(", ")}` : ""}{p.daysOfWeek && p.daysOfWeek.length > 0 ? ` · ${p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}` : ""}{p.validFrom || p.validUntil ? ` · ${p.validFrom ? new Date(p.validFrom).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "..."} → ${p.validUntil ? new Date(p.validUntil).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "..."}` : ""}
                     </p>
                   </div>
                   <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
