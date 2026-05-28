@@ -35,7 +35,7 @@ function formatDate(d: string | null) {
 
 const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }> = {
   NONE:      { label: "Sin plan activo",       color: "var(--adm-text3)",     bg: "rgba(128,128,128,.1)" },
-  TRIALING:  { label: "En prueba",             color: "#4ade80", bg: "rgba(74,222,128,.12)" },
+  TRIALING:  { label: "Activo",                color: "#4ade80", bg: "rgba(74,222,128,.12)" },
   ACTIVE:    { label: "Activa",                color: "#4ade80", bg: "rgba(74,222,128,.12)" },
   PAST_DUE:  { label: "Pago atrasado",         color: "#f87171", bg: "rgba(248,113,113,.12)" },
   CANCELED:  { label: "Cancelada",             color: "#fbbf24", bg: "rgba(251,191,36,.12)" },
@@ -508,8 +508,9 @@ export default function SuscripcionPage() {
         </Card>
       )}
 
-      {/* ─── Datos de facturación ─────────── */}
+      {/* ─── Datos de facturación (oculto por ahora) ───────────
       <FacturacionPage />
+      */}
 
     </div>
   );

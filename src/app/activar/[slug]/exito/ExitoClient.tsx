@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
-import { trackStartTrial } from "@/lib/metaPixel";
+import { trackStartTrial, trackPurchase } from "@/lib/metaPixel";
 
 interface Props {
   restaurant: { name: string; slug: string; logoUrl: string | null };
@@ -26,7 +26,11 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
-    trackStartTrial(plan || "PREMIUM");
+    const p = plan || "PREMIUM";
+    trackStartTrial(p);
+    // Fire Purchase so Facebook Ads can track conversions
+    const PLAN_VALUES: Record<string, number> = { FREE: 49900, GOLD: 41650, PREMIUM: 59381 };
+    trackPurchase(p, PLAN_VALUES[p] || 49900);
   }, []);
 
   return (

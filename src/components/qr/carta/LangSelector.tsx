@@ -82,8 +82,10 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "9px 14px", borderRadius: 8, textDecoration: "none",
-                  background: l === lang ? "rgba(244,166,35,0.2)" : "transparent",
-                  color: "white", fontSize: "0.85rem", fontWeight: l === lang ? 600 : 400,
+                  background: l === lang ? "rgba(244,166,35,0.25)" : "transparent",
+                  border: l === lang ? "1.5px solid rgba(244,166,35,0.5)" : "1.5px solid transparent",
+                  color: l === lang ? "#F4A623" : "white",
+                  fontSize: "0.85rem", fontWeight: l === lang ? 700 : 400,
                 }}
               >
                 <FlagSvg code={l} size={18} />

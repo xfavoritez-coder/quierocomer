@@ -128,9 +128,11 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
           {restaurantLogo ? (
-            <img src={restaurantLogo} alt="" style={{ width: 32, height: 32, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+            <div style={{ width: 28, height: 28, borderRadius: 8, border: "1.5px solid rgba(244,166,35,.5)", overflow: "hidden", flexShrink: 0 }}>
+              <img src={restaurantLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
           ) : (
-            <span style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(255,178,45,.15)", display: "inline-grid", placeItems: "center", fontSize: 14, flexShrink: 0 }}>🍽</span>
+            <span style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,178,45,.15)", border: "1.5px solid rgba(244,166,35,.3)", display: "inline-grid", placeItems: "center", fontSize: 12, flexShrink: 0 }}>🍽</span>
           )}
           <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurantName}</span>
         </div>
@@ -140,8 +142,8 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             onClick={onboardingActive ? handleLockedClick : () => setShowForm(f => !f)}
             className="demo-activar-btn"
             style={{
-              border: 0, borderRadius: 999, height: 38, padding: "0 18px",
-              fontSize: 15, fontWeight: 900,
+              border: 0, borderRadius: 999, height: 44, padding: "0 22px",
+              fontSize: 16, fontWeight: 900,
               background: showForm ? "rgba(255,255,255,.1)" : "linear-gradient(135deg, #ffc44f, #f3a333)",
               color: showForm ? "rgba(255,255,255,.6)" : "#0a0a0a",
               display: "flex", alignItems: "center", gap: 6, textDecoration: "none", whiteSpace: "nowrap",
@@ -220,8 +222,11 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           borderBottom: "1px solid rgba(244,166,35,.18)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.55)" }}>
-            Vista previa · edita tu carta desde el panel
+          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.55)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            Vista previa
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
+              <path d="M12 19V5M5 10l7-7 7 7" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </span>
         </div>
       )}
@@ -236,6 +241,10 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           to { opacity: 1; transform: translateY(0); }
         }
         .demo-activar-btn:active { transform: scale(0.93) !important; }
+        @keyframes arrowBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
       `}</style>
     </div>
   );
