@@ -15,8 +15,16 @@ function fbq(event: string, params?: FbqParams) {
   if (typeof window === "undefined") return;
   const f = (window as any).fbq;
   if (typeof f !== "function") return;
-  if (params) f("track", event, params);
-  else f("track", event);
+  if (params) {
+    // Strip null/undefined values so Facebook doesn't receive ""
+    const clean: Record<string, string | number | boolean> = {};
+    for (const [k, v] of Object.entries(params)) {
+      if (v != null) clean[k] = v;
+    }
+    f("track", event, clean);
+  } else {
+    f("track", event);
+  }
 }
 
 // ── Standard events ──
@@ -43,7 +51,8 @@ export function trackStartTrial(plan: string) {
 
 /** Paid plan activated (Gold/Premium via MercadoPago) */
 export function trackPurchase(plan: string, value: number) {
-  fbq("Purchase", { content_name: `Plan ${plan}`, currency: "CLP", value });
+  const v = typeof value === "number" && value > 0 ? value : 49900;
+  fbq("Purchase", { content_name: `Plan ${plan}`, currency: "CLP", value: v });
 }
 
 /** Subir carta — paso 1 completado (link o fotos enviadas) */
