@@ -7,6 +7,13 @@ import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
+/** Parse CLP price: "14.900" → 14900, "14900" → 14900, "14,9" → 14900 */
+function parseCLP(v: string): number | null {
+  if (!v) return null;
+  const clean = v.replace(/\./g, "").replace(/,/g, "");
+  const n = parseInt(clean, 10);
+  return isNaN(n) || n <= 0 ? null : n;
+}
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   SUGGESTED: { label: "Sugerida", color: "#F4A623", bg: "rgba(244,166,35,0.1)" },
   ACTIVE: { label: "Activa", color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
@@ -167,12 +174,12 @@ export default function AdminPromociones() {
     if (createType === "graphic") {
       body.imageUrl = cImageUrl || null;
       body.thumbUrl = cThumbUrl || null;
-      body.originalPrice = cOriginalPrice ? Number(cOriginalPrice) : null;
-      body.promoPrice = cPromoPrice ? Number(cPromoPrice) : null;
+      body.originalPrice = parseCLP(cOriginalPrice);
+      body.promoPrice = parseCLP(cPromoPrice);
     } else {
       body.dishIds = cSelectedDishes;
       body.originalPrice = selectedDishesTotal;
-      body.promoPrice = cPromoPrice ? Number(cPromoPrice) : null;
+      body.promoPrice = parseCLP(cPromoPrice);
       body.discountPct = cDiscountPct ? Number(cDiscountPct) : null;
     }
     if (cModifierTemplateIds.length > 0) body.modifierTemplateIds = cModifierTemplateIds;
@@ -272,8 +279,8 @@ export default function AdminPromociones() {
     if (!editing) return;
     const body: any = {
       id: editing.id, name: editName, description: editDesc,
-      promoPrice: editPrice ? Number(editPrice) : null,
-      originalPrice: editOriginalPrice ? Number(editOriginalPrice) : null,
+      promoPrice: parseCLP(editPrice),
+      originalPrice: parseCLP(editOriginalPrice),
       imageUrl: editImageUrl || null,
       daysOfWeek: editDaysOfWeek.length > 0 ? editDaysOfWeek : [],
       validFrom: editValidFrom || null,
@@ -700,8 +707,8 @@ export default function AdminPromociones() {
 
           {/* Prices (optional) */}
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <input type="number" placeholder="Precio normal (opcional)" value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
-            <input type="number" placeholder="Precio promo (opcional)" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
+            <input type="text" inputMode="numeric" placeholder="Precio normal (ej: 22.900)" value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
+            <input type="text" inputMode="numeric" placeholder="Precio promo (ej: 14.900)" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
           </div>
 
           {/* Modifier templates */}
@@ -788,7 +795,7 @@ export default function AdminPromociones() {
               <div style={{ display: "flex", gap: 10 }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>Precio promo</label>
-                  <input type="number" placeholder="$" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
+                  <input type="text" inputMode="numeric" placeholder="Ej: 14.900" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>% descuento</label>
@@ -854,7 +861,7 @@ export default function AdminPromociones() {
           <textarea placeholder="Descripción" value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} style={{ ...I, resize: "vertical" }} />
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             <input placeholder="Precio normal" type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
-            <input placeholder="Precio promo" type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
+            <input placeholder="Precio promo (ej: 14.900)" type="text" inputMode="numeric" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
           </div>
           {/* Image */}
           {editing.promoType === "graphic" && (
