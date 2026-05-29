@@ -536,16 +536,18 @@ export default function AdminMenus() {
     // Recently created first, then recommended (snapshot — no se reordena
     // mientras el usuario marca/desmarca; los nuevos destacados suben en
     // el siguiente reload del listado), then alphabetical.
+    // Sort by category position then dish position — same order as the carta
+    // Recently created dishes float to top so the owner sees them immediately
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
       const bNew = recentlyCreated.has(b.id) ? 0 : 1;
       if (aNew !== bNew) return aNew - bNew;
-      const aRec = recommendedSnapshot.has(a.id) ? 0 : 1;
-      const bRec = recommendedSnapshot.has(b.id) ? 0 : 1;
-      if (aRec !== bRec) return aRec - bRec;
-      return a.name.localeCompare(b.name, "es");
+      const aCat = categories.findIndex(c => c.id === a.categoryId);
+      const bCat = categories.findIndex(c => c.id === b.categoryId);
+      if (aCat !== bCat) return aCat - bCat;
+      return (a.position ?? 0) - (b.position ?? 0);
     });
-  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, recommendedSnapshot]);
+  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, categories]);
 
   // Reset page when filters change
   useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, selectedRestaurantId]);
@@ -1805,7 +1807,7 @@ export default function AdminMenus() {
         }} onToggleVisibility={(dishId, isActive) => {
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, isActive } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive }) });
-        }} />
+        }} onPhotoClick={(url) => setPhotoModal(url)} />
       )}
 
       {/* ── Modificadores tab ── */}

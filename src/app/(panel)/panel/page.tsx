@@ -222,12 +222,17 @@ export default function PanelDashboard() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: "1.1rem" }}>⚙️</span>
-                <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text)" }}>Configura tu local</span>
+                <div>
+                  <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text)", display: "block" }}>Completa tu local</span>
+                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                    {checks.length - doneCount === 1 ? "Te falta 1 paso" : `Te faltan ${checks.length - doneCount} pasos`}
+                  </span>
+                </div>
               </div>
               <span style={{
                 fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: GOLD,
                 background: `${GOLD}18`, padding: "3px 10px", borderRadius: 999,
-              }}>{pct}%</span>
+              }}>{doneCount}/{checks.length}</span>
             </div>
             {/* Progress bar */}
             <div style={{ height: 5, background: "var(--adm-card-border)", borderRadius: 10, marginBottom: 14, overflow: "hidden" }}>
