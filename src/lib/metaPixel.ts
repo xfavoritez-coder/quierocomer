@@ -41,7 +41,7 @@ export function trackLead(data?: { content_name?: string }) {
 
 /** User views pricing / plan details */
 export function trackViewPlan(plan: string) {
-  fbq("ViewContent", { content_name: `Plan ${plan}`, content_type: "product", currency: "CLP", value: PLAN_VALUES[plan] || 0 });
+  fbq("ViewContent", { content_name: `Plan ${plan}`, content_type: "product", currency: "CLP", value: PLAN_VALUES[plan] || 49900 });
 }
 
 /** Free or trial plan activated (no payment yet, but projected value) */
@@ -77,5 +77,5 @@ export function trackContact() {
 
 /** Inicio de checkout (redirige a MercadoPago) */
 export function trackInitiateCheckout(plan: string) {
-  fbq("InitiateCheckout", { content_name: `Plan ${plan}`, currency: "CLP", value: PLAN_VALUES[plan] || 0 });
+  fbq("InitiateCheckout", { content_name: `Plan ${plan}`, currency: "CLP", value: PLAN_VALUES[plan] || 49900 });
 }
