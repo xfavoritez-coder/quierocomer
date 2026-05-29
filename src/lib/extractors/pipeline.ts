@@ -567,7 +567,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
               finalUrl = supabaseUrl || dish.externalPhoto!;
             }
 
-            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
+            const updateData: any = { photos: [finalUrl], isPhotoReferential: true };
             if (credit) updateData.photoCredits = [credit];
             await prisma.dish.update({ where: { id: dish.id }, data: updateData });
           }),
