@@ -161,7 +161,11 @@ export default function MiRestaurantePage() {
     if (rid) localStorage.setItem(`qc_diet_confirmed_${rid}`, "1");
   };
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
-  const saveSocial = () => save({ instagram: instagram || null, website: website || null });
+  const saveSocial = () => {
+    let w = website?.trim() || null;
+    if (w && !w.startsWith("http")) w = `https://${w}`;
+    save({ instagram: instagram || null, website: w });
+  };
   const saveSchedule = () => save({ scheduleJson: Object.keys(schedule).length > 0 ? schedule : null });
   const updateDay = (key: string, value: string) => {
     setSchedule(prev => ({ ...prev, [key]: value }));
