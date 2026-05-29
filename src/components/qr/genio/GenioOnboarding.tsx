@@ -716,6 +716,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             onClick={() => {
               trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
               window.dispatchEvent(new Event("genio-updated"));
+              window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "impact", noFlash: true } }));
               setVisible(false);
               setTimeout(onClose, 200);
             }}

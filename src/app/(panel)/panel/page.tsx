@@ -262,7 +262,7 @@ export default function PanelDashboard() {
                       color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
                       whiteSpace: "nowrap",
                     }}>Generar QR</a>
-                  ) : c.action ? (
+                  ) : (c as any).action ? (
                     <button onClick={() => {
                       if (selectedRestaurantId) {
                         localStorage.setItem(`qc_carta_reviewed_${selectedRestaurantId}`, "1");
