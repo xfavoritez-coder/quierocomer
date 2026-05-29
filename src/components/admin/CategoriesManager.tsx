@@ -10,7 +10,7 @@ import SkeletonLoading from "@/components/admin/SkeletonLoading";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
-interface Dish { id: string; name: string; photos: string[]; price: number; position: number; isActive?: boolean; tags?: string[]; isHero?: boolean; }
+interface Dish { id: string; name: string; photos: string[]; price: number; discountPrice?: number | null; position: number; isActive?: boolean; tags?: string[]; isHero?: boolean; }
 interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
 const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
   food: { label: "Platos de fondo", emoji: "🍽️" },
@@ -46,7 +46,14 @@ function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibili
           <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-card-border)", flexShrink: 0, display: "grid", placeItems: "center", fontSize: "0.75rem", color: "var(--adm-text3)" }}>🍽</div>
         )}
         <span style={{ fontFamily: F, fontSize: "0.78rem", color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: dish.isActive === false ? "line-through" : "none" }}>{dish.name}</span>
-        <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
+        {dish.discountPrice && dish.discountPrice < dish.price ? (
+          <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#F4A623" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+            <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", textDecoration: "line-through" }}>${dish.price.toLocaleString("es-CL")}</span>
+          </span>
+        ) : (
+          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
+        )}
         {onToggleFeatured && (
           <button onClick={() => onToggleFeatured(dish.id)} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "1rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
             {isFeatured ? "★" : "☆"}

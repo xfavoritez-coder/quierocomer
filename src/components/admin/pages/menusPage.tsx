@@ -1664,7 +1664,16 @@ export default function AdminMenus() {
                       </span>
                     )}
                   </div>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", margin: "4px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "4px 0 0" }}>
+                    {d.discountPrice && d.discountPrice < d.price ? (
+                      <>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 700, color: "#F4A623" }}>${d.discountPrice.toLocaleString("es-CL")}</span>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 500, color: "var(--adm-text3)", textDecoration: "line-through" }}>${d.price.toLocaleString("es-CL")}</span>
+                      </>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)" }}>${d.price.toLocaleString("es-CL")}</span>
+                    )}
+                  </div>
                 </div>
                 {/* Actions */}
                 <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 2, flexShrink: 0, alignItems: "center" }}>
