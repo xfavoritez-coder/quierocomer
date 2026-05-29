@@ -280,7 +280,7 @@ function MoodSection({
         const photo = catDishes.find((d) => d.photos?.[0])?.photos?.[0] || null;
         return { id: cat.id, label: cat.name, photo };
       })
-      .filter((m) => m.photo); // Only show categories with at least one photo
+      .filter((m) => dishes.some(d => d.categoryId === m.id && d.isActive)); // Show all categories with active dishes
   }, [categories, dishes]);
 
   if (moods.length === 0) return null;
@@ -323,10 +323,12 @@ function MoodSection({
                   : "0 4px 16px rgba(0,0,0,0.08)",
                 flexShrink: 0,
               }}>
-                {m.photo && (
-                  <Image src={m.photo!} alt={m.label} fill className="object-cover" sizes="116px" />
+                {m.photo ? (
+                  <Image src={m.photo} alt={m.label} fill className="object-cover" sizes="116px" />
+                ) : (
+                  <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: "2.2rem", opacity: 0.3 }}>🍽</div>
                 )}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.7))" }} />
+                <div style={{ position: "absolute", inset: 0, background: m.photo ? "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.7))" : "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.5))" }} />
                 <b style={{
                   position: "relative", zIndex: 1, fontSize: 14, lineHeight: 1.15,
                   textShadow: "0 2px 14px #000", color: "white", textAlign: "left",
@@ -366,7 +368,7 @@ function FeaturedSection({
   onDishSelect: (d: Dish) => void;
 }) {
   const featured = useMemo(() => {
-    return dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
+    return dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
   }, [dishes]);
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -419,8 +421,12 @@ function FeaturedSection({
                   boxShadow: "0 6px 24px rgba(0,0,0,0.15), 0 0 24px color-mix(in srgb, var(--carta-accent) 8%, transparent)",
                 }}
               >
-                {photo && <Image src={photo} alt={f.name} fill className="object-cover" sizes="100vw" />}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.18) 62%, transparent)" }} />
+                {photo ? (
+                  <Image src={photo} alt={f.name} fill className="object-cover" sizes="100vw" />
+                ) : (
+                  <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: "3rem", opacity: 0.2 }}>🍽</div>
+                )}
+                <div style={{ position: "absolute", inset: 0, background: photo ? "linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.18) 62%, transparent)" : "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.4))" }} />
                 <div style={{ position: "absolute", left: 16, right: 16, bottom: 16 }}>
                   <h3 style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 800, letterSpacing: "-0.4px", color: "white" }}>⭐ {f.name}</h3>
                   {f.description && (
@@ -917,26 +923,30 @@ export default function CartaImpact({
     const preferTranslated = lang !== "es";
     const isTranslated = (d: any) => !preferTranslated || d._hasTranslation !== false;
 
-    const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
-    const popular = dishes.filter((d) => popularDishIds.has(d.id) && d.photos?.[0] && !d.tags?.includes("RECOMMENDED"));
+    const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+    const popular = dishes.filter((d) => popularDishIds.has(d.id) && !d.tags?.includes("RECOMMENDED"));
 
     // Mix: up to 2 recommended + up to 2 popular, intercalated
-    // Prioritize translated dishes first, then fill with untranslated
-    const sortTranslated = (arr: Dish[]) => [...arr].sort((a, b) => (isTranslated(b) ? 1 : 0) - (isTranslated(a) ? 1 : 0));
+    // Prioritize dishes with photos, then translated
+    const sortPriority = (arr: Dish[]) => [...arr].sort((a, b) => {
+      const aPhoto = a.photos?.[0] ? 1 : 0;
+      const bPhoto = b.photos?.[0] ? 1 : 0;
+      if (aPhoto !== bPhoto) return bPhoto - aPhoto;
+      return (isTranslated(b) ? 1 : 0) - (isTranslated(a) ? 1 : 0);
+    });
     const mixed: Dish[] = [];
     const maxEach = 2;
-    const recs = sortTranslated(recommended).slice(0, maxEach);
-    const pops = sortTranslated(popular).slice(0, maxEach);
+    const recs = sortPriority(recommended).slice(0, maxEach);
+    const pops = sortPriority(popular).slice(0, maxEach);
     for (let i = 0; i < Math.max(recs.length, pops.length); i++) {
       if (i < recs.length) mixed.push(recs[i]);
       if (i < pops.length) mixed.push(pops[i]);
     }
     if (mixed.length > 0) return mixed.slice(0, 4);
 
-    // Fallback: any dishes with photos, translated first
-    const withPhotos = sortTranslated(dishes.filter((d) => d.photos?.[0]));
-    if (withPhotos.length <= 4) return withPhotos;
-    return withPhotos.slice(0, 4);
+    // Fallback: any dishes, prioritize with photos
+    const sorted = sortPriority(dishes);
+    return sorted.slice(0, 4);
   }, [dishes, popularDishIds, lang]);
 
   /* ─── Sorted dishes ─── */

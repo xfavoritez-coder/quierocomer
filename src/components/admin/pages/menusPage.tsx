@@ -1817,12 +1817,7 @@ export default function AdminMenus() {
         }} onToggleVisibility={(dishId, isActive) => {
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, isActive } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive }) });
-        }} onPhotoClick={(url) => setPhotoModal(url)} onAddDish={(categoryId) => {
-          handleTabChange("productos");
-          setCreatingDish(true);
-          setNewDishCatId(categoryId);
-          window.scrollTo({ top: 0 });
-        }} />
+        }} onPhotoClick={(url) => setPhotoModal(url)} />
       )}
 
       {/* ── Modificadores tab ── */}

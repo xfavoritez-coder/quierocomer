@@ -29,7 +29,6 @@ interface Props {
   onToggleFeatured?: (dishId: string) => void;
   onToggleVisibility?: (dishId: string, isActive: boolean) => void;
   onPhotoClick?: (url: string) => void;
-  onAddDish?: (categoryId: string) => void;
 }
 
 function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibility, onPhotoClick, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; onToggleVisibility?: (dishId: string, isActive: boolean) => void; onPhotoClick?: (url: string) => void; categories: Category[]; currentCatId: string }) {
@@ -325,11 +324,38 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
   const [showCreateInput, setShowCreateInput] = useState(false);
+
+  // Quick-add dish modal
+  const [addingToCatId, setAddingToCatId] = useState<string | null>(null);
+  const [quickName, setQuickName] = useState("");
+  const [quickPrice, setQuickPrice] = useState("");
+  const [quickSaving, setQuickSaving] = useState(false);
+  const quickNameRef = useRef<HTMLInputElement>(null);
+
+  const quickAddDish = async () => {
+    if (!quickName.trim() || !addingToCatId) return;
+    setQuickSaving(true);
+    const price = parseInt(quickPrice.replace(/\D/g, "")) || 0;
+    const res = await fetch("/api/admin/dishes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId, categoryId: addingToCatId, name: quickName.trim(), price }),
+    });
+    if (res.ok) {
+      const dish = await res.json();
+      onDishesChange([...allDishes, { ...dish, category: { id: addingToCatId, name: categories.find(c => c.id === addingToCatId)?.name || "" } }]);
+      setQuickName("");
+      setQuickPrice("");
+      // Keep modal open to add more
+      setTimeout(() => quickNameRef.current?.focus(), 50);
+    }
+    setQuickSaving(false);
+  };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -463,7 +489,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onToggleFeatured={onToggleFeatured}
               onToggleVisibility={onToggleVisibility}
               onPhotoClick={onPhotoClick}
-              onAddDish={onAddDish}
+              onAddDish={(catId) => { setAddingToCatId(catId); setQuickName(""); setQuickPrice(""); }}
               onRename={renameCategory}
               onToggle={toggleCategory}
               onDelete={deleteCategory}
@@ -489,6 +515,46 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
           </div>
         );
       })()}
+
+      {/* Quick-add dish modal */}
+      {addingToCatId && (
+        <div onClick={() => setAddingToCatId(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card, #fff)", borderRadius: 16, padding: "24px 20px", width: "100%", maxWidth: 360, boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
+                Agregar a {categories.find(c => c.id === addingToCatId)?.name}
+              </h3>
+              <button onClick={() => setAddingToCatId(null)} style={{ background: "none", border: "none", fontSize: "1.1rem", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input
+                ref={quickNameRef}
+                value={quickName}
+                onChange={e => setQuickName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && quickName.trim()) quickAddDish(); }}
+                placeholder="Nombre del producto"
+                autoFocus
+                style={{ padding: "10px 12px", background: "var(--adm-input, #f5f4f1)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none" }}
+              />
+              <input
+                value={quickPrice}
+                onChange={e => setQuickPrice(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && quickName.trim()) quickAddDish(); }}
+                placeholder="Precio (ej: 8900)"
+                inputMode="numeric"
+                style={{ padding: "10px 12px", background: "var(--adm-input, #f5f4f1)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none" }}
+              />
+              <button
+                onClick={quickAddDish}
+                disabled={!quickName.trim() || quickSaving}
+                style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: quickName.trim() ? "#F4A623" : "var(--adm-card-border)", color: quickName.trim() ? "#fff" : "var(--adm-text3)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: quickName.trim() ? "pointer" : "default", opacity: quickSaving ? 0.6 : 1 }}
+              >
+                {quickSaving ? "Guardando..." : "+ Agregar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

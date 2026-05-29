@@ -13,6 +13,7 @@ import CartaImpact from "./CartaImpact";
 import CartaFeed from "./CartaFeed";
 import CartaEsencial from "./CartaEsencial";
 import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
+import CategoryLobby from "./CategoryLobby";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { LangProvider } from "@/contexts/LangContext";
@@ -60,6 +61,8 @@ export default function CartaRouter(props: Props) {
   });
   const [profileOpen, setProfileOpen] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
+  const showLobby = !!(props.restaurant as any).showCategoryLobby;
+  const [lobbyDismissed, setLobbyDismissed] = useState(false);
   const { overlay, fadeOut } = useViewTransition();
   const readyKeyRef = useRef(0);
   const prevViewRef = useRef(view);
@@ -251,6 +254,23 @@ export default function CartaRouter(props: Props) {
     <LangProvider value={effectiveLang}>
       <FavoritesProvider>
         <HappyHourBanner happyHours={props.happyHours || []} />
+        {showLobby && !lobbyDismissed ? (
+          <CategoryLobby
+            categories={props.categories}
+            dishes={orderedDishes}
+            restaurantName={props.restaurant.name}
+            logoUrl={props.restaurant.logoUrl}
+            accentColor={(props.restaurant as any).cartaAccentColor}
+            onSelectCategory={(catId) => {
+              setLobbyDismissed(true);
+              setTimeout(() => {
+                const el = document.querySelector(`[id$="-cat-${catId}"]`);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 300);
+            }}
+            onSkip={() => setLobbyDismissed(true)}
+          />
+        ) : (
         <div style={{ position: "relative" }}>
           {effectiveView === "lista" && <CartaLista {...sharedProps} />}
           {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
@@ -265,6 +285,7 @@ export default function CartaRouter(props: Props) {
             }} />
           )}
         </div>
+        )}
 
         {overlay && (
           <div

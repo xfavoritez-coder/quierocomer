@@ -26,6 +26,7 @@ interface SettingsData {
   defaultView: string | null;
   weeklyEmailEnabled: boolean;
   weeklyInsightsEnabled: boolean;
+  showCategoryLobby: boolean;
 }
 
 const ACCENT_OPTIONS = [
@@ -308,6 +309,22 @@ export default function AjustesPage() {
           <Toggle
             active={data.waiterPanelActive}
             onToggle={() => save({ waiterPanelActive: !data.waiterPanelActive })}
+          />
+        </div>
+      </div>
+
+      {/* Índice de categorías */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🗂️ Índice de categorías</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+              {data.showCategoryLobby ? "Muestra una pantalla visual con todas las secciones de tu carta para que el cliente navegue fácilmente" : "Los clientes ven la carta directamente sin pantalla de categorías"}
+            </p>
+          </div>
+          <Toggle
+            active={data.showCategoryLobby}
+            onToggle={() => save({ showCategoryLobby: !data.showCategoryLobby })}
           />
         </div>
       </div>

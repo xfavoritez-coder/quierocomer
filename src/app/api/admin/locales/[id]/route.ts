@@ -8,6 +8,7 @@ const OWNER_EDITABLE_FIELDS = [
   "phone", "whatsapp", "address",
   "instagram", "website", "scheduleJson",
   "waiterPanelActive",
+  "showCategoryLobby",
   "birthdayPerk",
   "cartaColorMode",
   "cartaAccentColor",

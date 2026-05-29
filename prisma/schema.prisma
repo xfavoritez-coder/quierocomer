@@ -459,6 +459,7 @@ model Restaurant {
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
+  showCategoryLobby  Boolean    @default(false) // mostrar índice visual de categorías al abrir la carta
   waiterPanelActive  Boolean    @default(false)
   birthdayPerk       String?    // beneficio que el local le regala al cliente en su cumple (ej: "un postre" / "10% off"). Si esta vacio, el modal de cumple no muestra mensaje de regalo
   birthdayEmailEnabled Boolean @default(false) // si esta activo, se envia email automatico el dia del cumple del cliente

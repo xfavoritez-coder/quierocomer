@@ -289,7 +289,7 @@ function DishSlide({
   const desc = dish.description || "";
   const isLongDesc = desc.length > 120;
   const expandDesc = expandedDescs.has(dish.id);
-  const discountPercent = dish.discountPrice && dish.price > 0 ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : null;
+  const discountPercent = dish.discountPrice && dish.price > 0 && dish.discountPrice < dish.price ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : null;
   // Derive allergens from ingredient → allergen chain
   const dishIngs = (dish as any).dishIngredients || [];
   const derivedAllergens: string[] = [];
@@ -434,14 +434,14 @@ function DishSlide({
             <h2 style={{ fontSize: "32px", fontWeight: 800, color: "var(--carta-detail-heading)", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
             </h2>
-            {dish.discountPrice ? (
+            {discountPercent ? (
               <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span style={{ background: "var(--carta-accent, #F4A623)", color: "#fff", fontSize: "0.78rem", fontWeight: 800, padding: "5px 12px", borderRadius: 8, whiteSpace: "nowrap", letterSpacing: "0.3px" }}>
                   -{discountPercent}% OFERTA
                 </span>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                   <span className="line-through" style={{ color: "var(--carta-text3)", fontSize: "14px" }}>${dish.price.toLocaleString("es-CL")}</span>
-                  <span style={{ color: "var(--carta-detail-price)", fontSize: "22px", fontWeight: 800 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+                  <span style={{ color: "var(--carta-detail-price)", fontSize: "22px", fontWeight: 800 }}>${dish.discountPrice!.toLocaleString("es-CL")}</span>
                 </div>
               </div>
             ) : (
