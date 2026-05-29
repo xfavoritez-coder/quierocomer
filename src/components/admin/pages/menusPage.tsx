@@ -1665,10 +1665,10 @@ export default function AdminMenus() {
                     )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "4px 0 0" }}>
-                    {d.discountPrice && d.discountPrice < d.price ? (
+                    {d.discountPrice ? (
                       <>
-                        <span style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 700, color: "#F4A623" }}>${d.discountPrice.toLocaleString("es-CL")}</span>
-                        <span style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 500, color: "var(--adm-text3)", textDecoration: "line-through" }}>${d.price.toLocaleString("es-CL")}</span>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 700, color: "#F4A623" }}>${Math.min(d.price, d.discountPrice).toLocaleString("es-CL")}</span>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 500, color: "var(--adm-text3)", textDecoration: "line-through" }}>${Math.max(d.price, d.discountPrice).toLocaleString("es-CL")}</span>
                       </>
                     ) : (
                       <span style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)" }}>${d.price.toLocaleString("es-CL")}</span>
