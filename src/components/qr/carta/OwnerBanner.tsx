@@ -38,6 +38,7 @@ export default function OwnerBanner({ restaurantName, restaurantSlug, restaurant
   return (
     <>
       <div
+        id="owner-banner"
         style={{
           position: "fixed",
           bottom: "calc(16px + env(safe-area-inset-bottom))",

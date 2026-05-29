@@ -36,28 +36,53 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
       background: "var(--carta-bg, #0e0e0e)",
       padding: "0 0 40px",
     }}>
-      {/* Header */}
-      <div style={{ padding: "48px 20px 28px", textAlign: "center" }}>
-        {logoUrl && (
-          <div style={{ width: 52, height: 52, borderRadius: "50%", overflow: "hidden", margin: "0 auto 14px", border: "2px solid rgba(255,255,255,0.1)" }}>
-            <Image src={logoUrl} alt="" width={52} height={52} className="object-cover" />
+      {/* Header with hero background */}
+      {(() => {
+        const heroPhoto = visibleCategories.find(c => c.coverPhoto)?.coverPhoto;
+        return (
+          <div style={{ position: "relative", overflow: "hidden", marginBottom: 8 }}>
+            {/* Background image with blur */}
+            {heroPhoto && (
+              <div style={{ position: "absolute", inset: -20, filter: "blur(20px) saturate(1.2)", transform: "scale(1.1)" }}>
+                <Image src={heroPhoto} alt="" fill className="object-cover" style={{ opacity: 0.4 }} />
+              </div>
+            )}
+            <div style={{
+              position: "absolute", inset: 0,
+              background: heroPhoto
+                ? "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 60%, var(--carta-bg, #0e0e0e) 100%)"
+                : `linear-gradient(135deg, ${accent}15 0%, transparent 60%)`,
+            }} />
+            <div style={{ position: "relative", zIndex: 2, padding: "36px 20px 28px", textAlign: "center" }}>
+              {logoUrl && (
+                <div style={{
+                  width: 68, height: 68, borderRadius: "50%", overflow: "hidden",
+                  margin: "0 auto 16px", border: "3px solid rgba(255,255,255,0.2)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                }}>
+                  <Image src={logoUrl} alt="" width={68} height={68} className="object-cover" />
+                </div>
+              )}
+              <h1 style={{
+                fontFamily: "var(--font-dm)",
+                fontSize: "26px", fontWeight: 800,
+                color: "#fff",
+                margin: "0 0 6px", letterSpacing: "-0.3px",
+                textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+              }}>
+                {restaurantName}
+              </h1>
+              <p style={{
+                fontSize: "13px", color: "rgba(255,255,255,0.55)",
+                margin: 0, fontWeight: 500, letterSpacing: "0.8px",
+                textTransform: "uppercase",
+              }}>
+                Nuestra carta
+              </p>
+            </div>
           </div>
-        )}
-        <h1 style={{
-          fontFamily: "var(--font-playfair), serif",
-          fontSize: "28px", fontWeight: 700,
-          color: "var(--carta-heading, #fff)",
-          margin: "0 0 6px", letterSpacing: "-0.5px",
-        }}>
-          {restaurantName}
-        </h1>
-        <p style={{
-          fontSize: "14px", color: "var(--carta-text3, rgba(255,255,255,0.45))",
-          margin: 0, letterSpacing: "0.5px",
-        }}>
-          {visibleCategories.length} secciones
-        </p>
-      </div>
+        );
+      })()}
 
       {/* Grid */}
       <div style={{
@@ -108,7 +133,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
               }}>
                 <p style={{
                   margin: "0 0 3px",
-                  fontFamily: "var(--font-playfair), serif",
+                  fontFamily: "var(--font-dm)",
                   fontSize: isWide ? "20px" : "16px",
                   fontWeight: 700,
                   color: "#fff",

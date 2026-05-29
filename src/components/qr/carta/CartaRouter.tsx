@@ -63,6 +63,19 @@ export default function CartaRouter(props: Props) {
   const [showNameModal, setShowNameModal] = useState(false);
   const showLobby = !!(props.restaurant as any).showCategoryLobby;
   const [lobbyDismissed, setLobbyDismissed] = useState(false);
+
+  // Browser back button returns to lobby
+  useEffect(() => {
+    if (!showLobby) return;
+    const onPopState = () => {
+      if (lobbyDismissed) {
+        setLobbyDismissed(false);
+        window.scrollTo({ top: 0 });
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [showLobby, lobbyDismissed]);
   const { overlay, fadeOut } = useViewTransition();
   const readyKeyRef = useRef(0);
   const prevViewRef = useRef(view);
@@ -262,13 +275,14 @@ export default function CartaRouter(props: Props) {
             logoUrl={props.restaurant.logoUrl}
             accentColor={(props.restaurant as any).cartaAccentColor}
             onSelectCategory={(catId) => {
+              history.pushState({ lobby: true }, "");
               setLobbyDismissed(true);
               setTimeout(() => {
                 const el = document.querySelector(`[id$="-cat-${catId}"]`);
                 if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
               }, 300);
             }}
-            onSkip={() => setLobbyDismissed(true)}
+            onSkip={() => { history.pushState({ lobby: true }, ""); setLobbyDismissed(true); }}
           />
         ) : (
         <div style={{ position: "relative" }}>
@@ -286,6 +300,7 @@ export default function CartaRouter(props: Props) {
           )}
         </div>
         )}
+
 
         {overlay && (
           <div
@@ -333,3 +348,5 @@ export default function CartaRouter(props: Props) {
     </LangProvider>
   );
 }
+
+
