@@ -197,6 +197,40 @@ export default function AjustesPage() {
         </div>
       </div>
 
+      {/* Índice de categorías */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🗂️ Índice de categorías</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 0" }}>
+              {data.showCategoryLobby
+                ? "Tus clientes ven una pantalla de bienvenida con todas las secciones antes de la carta"
+                : "Ideal si tu carta tiene muchas secciones. Muestra una pantalla de inicio con todas las categorías para que el cliente navegue fácil"}
+            </p>
+          </div>
+          <Toggle
+            active={data.showCategoryLobby}
+            onToggle={() => save({ showCategoryLobby: !data.showCategoryLobby })}
+          />
+        </div>
+        {data.showCategoryLobby && currentRestaurant?.slug && (
+          <a
+            href={`/qr/${currentRestaurant.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              marginTop: 12, padding: "7px 14px", borderRadius: 8,
+              background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)",
+              color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+              textDecoration: "none", cursor: "pointer",
+            }}
+          >
+            👁 Ver cómo se ve
+          </a>
+        )}
+      </div>
+
       {/* Tema de la carta */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Moon size={16} color="var(--adm-text3)" /> Modo por defecto de la carta</h3>
@@ -309,22 +343,6 @@ export default function AjustesPage() {
           <Toggle
             active={data.waiterPanelActive}
             onToggle={() => save({ waiterPanelActive: !data.waiterPanelActive })}
-          />
-        </div>
-      </div>
-
-      {/* Índice de categorías */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🗂️ Índice de categorías</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.showCategoryLobby ? "Muestra una pantalla visual con todas las secciones de tu carta para que el cliente navegue fácilmente" : "Los clientes ven la carta directamente sin pantalla de categorías"}
-            </p>
-          </div>
-          <Toggle
-            active={data.showCategoryLobby}
-            onToggle={() => save({ showCategoryLobby: !data.showCategoryLobby })}
           />
         </div>
       </div>

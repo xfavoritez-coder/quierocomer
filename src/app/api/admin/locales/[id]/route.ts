@@ -84,6 +84,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.whatsapp !== undefined && { whatsapp: body.whatsapp }),
         ...(body.scheduleJson !== undefined && { scheduleJson: body.scheduleJson }),
         ...(body.waiterPanelActive !== undefined && { waiterPanelActive: body.waiterPanelActive }),
+        ...(body.showCategoryLobby !== undefined && { showCategoryLobby: body.showCategoryLobby }),
         ...(body.cartaColorMode !== undefined && { cartaColorMode: body.cartaColorMode }),
         ...(body.cartaAccentColor !== undefined && { cartaAccentColor: body.cartaAccentColor }),
         ...(body.allPhotosReferential !== undefined && { allPhotosReferential: body.allPhotosReferential }),
