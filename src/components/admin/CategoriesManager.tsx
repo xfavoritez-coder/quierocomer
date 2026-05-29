@@ -29,6 +29,7 @@ interface Props {
   onToggleFeatured?: (dishId: string) => void;
   onToggleVisibility?: (dishId: string, isActive: boolean) => void;
   onPhotoClick?: (url: string) => void;
+  onAddDish?: (categoryId: string) => void;
 }
 
 function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibility, onPhotoClick, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; onToggleVisibility?: (dishId: string, isActive: boolean) => void; onPhotoClick?: (url: string) => void; categories: Category[]; currentCatId: string }) {
@@ -80,7 +81,7 @@ const iconBtnStyle: React.CSSProperties = {
   alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
 };
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onRename, onToggle, onDelete, onTypeChange }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
@@ -89,6 +90,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   onToggleFeatured?: (dishId: string) => void;
   onToggleVisibility?: (dishId: string, isActive: boolean) => void;
   onPhotoClick?: (url: string) => void;
+  onAddDish?: (categoryId: string) => void;
   onMove: (dishId: string, toCatId: string) => void;
   onRename: (id: string, name: string) => void;
   onToggle: (id: string, isActive: boolean) => void;
@@ -223,6 +225,16 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 </div>
               )}
             </div>
+            {/* Add dish */}
+            {onAddDish && (
+              <button
+                onClick={() => onAddDish(category.id)}
+                style={iconBtnStyle}
+                title="Agregar producto"
+              >
+                <span style={{ fontSize: 18, lineHeight: 1, fontWeight: 300, color: "#F4A623" }}>+</span>
+              </button>
+            )}
             {/* Visibility toggle */}
             <button
               onClick={() => onToggle(category.id, !category.isActive)}
@@ -300,7 +312,11 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
           ) : (
             <div style={{ textAlign: "center", padding: "20px 12px" }}>
               <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888" }}>Sin productos en esta categoría</p>
-              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#888", opacity: 0.6, marginTop: 4 }}>Agrega productos desde la pestaña Productos</p>
+              {onAddDish ? (
+                <button onClick={() => onAddDish(category.id)} style={{ marginTop: 8, padding: "7px 16px", borderRadius: 8, border: "1px solid rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.08)", color: "#F4A623", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>+ Agregar producto</button>
+              ) : (
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#888", opacity: 0.6, marginTop: 4 }}>Agrega productos desde la pestaña Productos</p>
+              )}
             </div>
           )}
         </div>
@@ -309,7 +325,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
@@ -447,6 +463,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onToggleFeatured={onToggleFeatured}
               onToggleVisibility={onToggleVisibility}
               onPhotoClick={onPhotoClick}
+              onAddDish={onAddDish}
               onRename={renameCategory}
               onToggle={toggleCategory}
               onDelete={deleteCategory}

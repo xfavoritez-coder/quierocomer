@@ -663,7 +663,7 @@ function DishSlide({
                         />
                       </div>
                     ) : (
-                      <div style={{ width: 78, height: 78, borderRadius: "50%", background: "var(--carta-img-placeholder)", flexShrink: 0 }} />
+                      <div style={{ width: 78, height: 78, borderRadius: "50%", background: "var(--carta-img-placeholder)", flexShrink: 0, display: "grid", placeItems: "center", fontSize: "1.6rem", opacity: 0.5 }}>🍽</div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       {(s.dish.tags?.includes("RECOMMENDED") || popularDishIds?.has(s.dish.id)) && (

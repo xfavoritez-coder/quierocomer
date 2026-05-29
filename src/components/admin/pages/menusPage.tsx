@@ -90,29 +90,24 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
   const regenerate = async (lang: string) => {
     setRegenerating(lang);
     try {
-      // Delete the manual flag by setting isManual to false, then trigger re-translation
-      await fetch(`/api/admin/dishes/${dishId}/translations`, {
+      const res = await fetch(`/api/admin/dishes/${dishId}/translations`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lang, description: translations[lang]?.description || "", regenerate: true }),
       });
-      // Reload after a moment to get the regenerated version
-      setTimeout(async () => {
-        const res = await fetch(`/api/admin/dishes/${dishId}/translations`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          const map: Record<string, { description: string; isManual: boolean }> = {};
-          const draftMap: Record<string, string> = {};
-          for (const t of data) {
-            map[t.lang] = { description: t.description || "", isManual: t.isManual };
-            draftMap[t.lang] = t.description || "";
-          }
-          setTranslations(map);
-          setDrafts(draftMap);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const map: Record<string, { description: string; isManual: boolean }> = {};
+        const draftMap: Record<string, string> = {};
+        for (const t of data) {
+          map[t.lang] = { description: t.description || "", isManual: t.isManual };
+          draftMap[t.lang] = t.description || "";
         }
-        setRegenerating(null);
-      }, 3000);
-    } catch { setRegenerating(null); }
+        setTranslations(map);
+        setDrafts(draftMap);
+      }
+    } catch {}
+    setRegenerating(null);
   };
 
   const langs = enabledLangs.length > 0 ? enabledLangs : ["en", "pt"];
@@ -351,6 +346,7 @@ export default function AdminMenus() {
   const [lactoseFreeFilter, setLactoseFreeFilter] = useState(false);
   const [soyFreeFilter, setSoyFreeFilter] = useState(false);
   const [nutsFilter, setNutsFilter] = useState(false);
+  const [sortMode, setSortMode] = useState<"category" | "alpha" | "recent">("category");
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkActionValue, setBulkActionValue] = useState<string>("");
@@ -536,18 +532,20 @@ export default function AdminMenus() {
     // Recently created first, then recommended (snapshot — no se reordena
     // mientras el usuario marca/desmarca; los nuevos destacados suben en
     // el siguiente reload del listado), then alphabetical.
-    // Sort by category position then dish position — same order as the carta
-    // Recently created dishes float to top so the owner sees them immediately
+    // Recently created dishes always float to top
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
       const bNew = recentlyCreated.has(b.id) ? 0 : 1;
       if (aNew !== bNew) return aNew - bNew;
+      if (sortMode === "alpha") return a.name.localeCompare(b.name, "es");
+      if (sortMode === "recent") return ((b as any).updatedAt || "").localeCompare((a as any).updatedAt || "");
+      // Default: category position + dish position (same as carta)
       const aCat = categories.findIndex(c => c.id === a.categoryId);
       const bCat = categories.findIndex(c => c.id === b.categoryId);
       if (aCat !== bCat) return aCat - bCat;
       return (a.position ?? 0) - (b.position ?? 0);
     });
-  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, categories]);
+  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, categories, sortMode]);
 
   // Reset page when filters change
   useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, selectedRestaurantId]);
@@ -1597,6 +1595,18 @@ export default function AdminMenus() {
                     · <strong style={{ color: "var(--adm-text2)" }}>{filtered.length}</strong> producto{filtered.length !== 1 ? "s" : ""} filtrado{filtered.length !== 1 ? "s" : ""}
                   </span>
                 )}
+                <div style={{ marginLeft: "auto", position: "relative", flexShrink: 0 }}>
+                  <select
+                    value={sortMode}
+                    onChange={e => setSortMode(e.target.value as any)}
+                    style={{ appearance: "none", WebkitAppearance: "none", padding: "5px 24px 5px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "var(--adm-input)", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", cursor: "pointer", outline: "none" }}
+                  >
+                    <option value="category">Por categoría</option>
+                    <option value="alpha">A → Z</option>
+                    <option value="recent">Último modificado</option>
+                  </select>
+                  <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontSize: "7px", color: "var(--adm-text3)", pointerEvents: "none" }}>▼</span>
+                </div>
               </div>
             );
           })()}
@@ -1807,7 +1817,12 @@ export default function AdminMenus() {
         }} onToggleVisibility={(dishId, isActive) => {
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, isActive } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive }) });
-        }} onPhotoClick={(url) => setPhotoModal(url)} />
+        }} onPhotoClick={(url) => setPhotoModal(url)} onAddDish={(categoryId) => {
+          handleTabChange("productos");
+          setCreatingDish(true);
+          setNewDishCatId(categoryId);
+          window.scrollTo({ top: 0 });
+        }} />
       )}
 
       {/* ── Modificadores tab ── */}

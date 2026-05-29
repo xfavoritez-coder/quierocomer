@@ -37,12 +37,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { dishId: id, lang },
       data: { isManual: false },
     });
-    // Trigger background re-translation
+    // Wait for translation to complete before responding
     try {
       const { translateDish } = await import("@/lib/ai/translateContent");
-      translateDish(id).catch(() => {});
+      await translateDish(id);
     } catch {}
-    return NextResponse.json({ ok: true, regenerating: true });
+    const updated = await prisma.dishTranslation.findMany({ where: { dishId: id } });
+    return NextResponse.json(updated);
   }
 
   if (!description) {

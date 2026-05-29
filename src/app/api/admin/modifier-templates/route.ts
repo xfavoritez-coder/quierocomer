@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+import { logActivity } from "@/lib/admin/logActivity";
 
 const INCLUDE_FULL = {
   groups: {
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
       include: INCLUDE_FULL,
     });
 
+    logActivity(restaurantId, "modifier_create", { templateId: template.id, name });
     return NextResponse.json(template);
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
@@ -123,6 +125,7 @@ export async function PUT(req: NextRequest) {
         data: { name: body.name },
         include: INCLUDE_FULL,
       });
+      logActivity(template.restaurantId, "modifier_edit", { templateId: body.templateId, name: body.name });
       return NextResponse.json(updated);
     }
 
@@ -317,10 +320,11 @@ export async function DELETE(req: NextRequest) {
     }
 
     if (body.templateId) {
-      const template = await prisma.modifierTemplate.findUnique({ where: { id: body.templateId }, select: { restaurantId: true } });
+      const template = await prisma.modifierTemplate.findUnique({ where: { id: body.templateId }, select: { restaurantId: true, name: true } });
       if (!template) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
       await prisma.modifierTemplate.delete({ where: { id: body.templateId } });
+      logActivity(template.restaurantId, "modifier_delete", { templateId: body.templateId, name: template.name });
       return NextResponse.json({ success: true });
     }
 
