@@ -277,12 +277,24 @@ export default function CartaRouter(props: Props) {
             onSelectCategory={(catId) => {
               history.pushState({ lobby: true }, "");
               setLobbyDismissed(true);
-              setTimeout(() => {
+              const scrollToCategory = () => {
                 const el = document.querySelector(`[id$="-cat-${catId}"]`);
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-              }, 300);
+                if (el) {
+                  const y = el.getBoundingClientRect().top + window.scrollY - 20;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                  return true;
+                }
+                return false;
+              };
+              // Retry until element is rendered
+              let attempts = 0;
+              const tryScroll = () => {
+                if (scrollToCategory() || attempts++ > 15) return;
+                setTimeout(tryScroll, 100);
+              };
+              setTimeout(tryScroll, 150);
             }}
-            onSkip={() => { history.pushState({ lobby: true }, ""); setLobbyDismissed(true); }}
+            onSkip={() => { history.pushState({ lobby: true }, ""); setLobbyDismissed(true); window.scrollTo({ top: 0 }); }}
           />
         ) : (
         <div style={{ position: "relative" }}>

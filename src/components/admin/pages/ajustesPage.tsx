@@ -105,8 +105,7 @@ export default function AjustesPage() {
       });
       if (res.ok) {
         const updated = await res.json();
-        console.log("AJUSTES save response:", JSON.stringify({ cartaColorMode: updated.cartaColorMode, waiterPanelActive: updated.waiterPanelActive, allPhotosReferential: updated.allPhotosReferential }));
-        setData(updated);
+        setData((prev: any) => ({ ...prev, ...updated }));
         toast.success("Guardado");
       } else {
         const err = await res.json();
