@@ -73,6 +73,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                 {restaurantName}
               </h1>
               <p style={{
+                fontFamily: "var(--font-dm)",
                 fontSize: "13px", color: "rgba(255,255,255,0.55)",
                 margin: 0, fontWeight: 500, letterSpacing: "0.8px",
                 textTransform: "uppercase",
@@ -143,8 +144,9 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                   {cat.name}
                 </p>
                 <span style={{
-                  fontSize: "11px",
-                  color: "rgba(255,255,255,0.55)",
+                  fontFamily: "var(--font-dm)",
+                  fontSize: "13px",
+                  color: "rgba(255,255,255,0.6)",
                   fontWeight: 500,
                 }}>
                   {cat.dishCount} {cat.dishCount === 1 ? "producto" : "productos"}
@@ -168,7 +170,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
             color: accent,
             fontSize: "0.88rem",
             fontWeight: 700,
-            fontFamily: "var(--font-display)",
+            fontFamily: "var(--font-dm)",
             cursor: "pointer",
             letterSpacing: "0.3px",
           }}
