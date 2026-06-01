@@ -7,10 +7,12 @@ import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
 import { extractMiCartaQR } from "./micartaqr";
 import { extractWithScraper } from "./scrape";
+import { extractOlaClick } from "./olaclick";
 import { extractFromDocument } from "./document";
 import { extractGoogleDrive } from "./googledrive";
 import { extractHeyzine } from "./heyzine";
 import { extractCanva } from "./canva";
+import { extractAvocaty } from "./avocaty";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { logClaudeUsage } from "@/lib/costTracker";
 import type { ExtractionResult, ExtractedDish } from "./types";
@@ -264,6 +266,10 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractHeyzine(cartaUrl);
     case "Canva":
       return extractCanva(cartaUrl);
+    case "Avocaty":
+      return extractAvocaty(cartaUrl);
+    case "OlaClick":
+      return extractOlaClick(cartaUrl);
     case "Dropbox":
     case "OneDrive":
       // Cloud storage PDFs: treat as generic document via the scraper

@@ -12,7 +12,7 @@ const MODEL_FAST = "claude-haiku-4-5-20251001"; // preview (~15s)
 const MODEL_FULL = "claude-sonnet-4-6";          // full extraction (better quality)
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
-const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app", "socialreacts.com"];
+const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app", "socialreacts.com", "ola.click"];
 
 // Domains where direct HTML works better
 const DIRECT_FETCH_DOMAINS = ["thefork.com", "lafourchette.com"];
@@ -21,11 +21,11 @@ function getDomain(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string> {
+async function fetchWithTimeout(url: string, timeoutMs = 10000, extraHeaders?: Record<string, string>): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { signal: controller.signal, headers: { Accept: "text/plain", "X-No-Cache": "true" } });
+    const res = await fetch(url, { signal: controller.signal, headers: { Accept: "text/plain", "X-No-Cache": "true", ...extraHeaders } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.text();
   } finally { clearTimeout(timer); }
@@ -43,7 +43,9 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
   }
 
   if (preferJina) {
-    try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000); } catch {}
+    // For heavy SPAs (Vue/React), tell Jina to wait for content to render
+    const spaHeaders = domain.includes("ola.click") ? { "X-Wait-For-Selector": ".products", "X-Timeout": "30000" } : undefined;
+    try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, spaHeaders ? 35000 : 12000, spaHeaders); } catch {}
     return await fetchWithTimeout(url, 8000);
   }
 
@@ -409,28 +411,64 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const priceMatches = content.match(/\b\d{3,5}\b/g) || [];
   if (priceMatches.length >= 5) matchCount += 2;
   if (matchCount < 2) {
-    // Try discovering a menu link on the page (but don't recurse if already a discovery attempt)
-    if (!extractionConfig?._discoveryAttempt) {
-      console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Trying menu discovery...`);
-      const discoveredUrl = await discoverMenuUrl(menuUrl);
-      if (discoveredUrl) {
-        console.log(`[Scraper] Discovered menu URL: ${discoveredUrl} — retrying extraction`);
-        return extractWithScraper(discoveredUrl, providerName, { ...extractionConfig, _discoveryAttempt: true });
+    // If cleaned HTML lost menu data (SPA/JS-rendered menus), check raw HTML for signals
+    if (!isMarkdown && pageContent.length > 10000) {
+      const rawLower = pageContent.toLowerCase();
+      const rawSignals = gastronomySignals.filter(s => rawLower.includes(s)).length;
+      const rawPrices = (pageContent.match(/"price"\s*:\s*\d|price:\s*\d|\bprecio\b/gi) || []).length;
+      if (rawSignals >= 3 || rawPrices >= 3) {
+        console.log(`[Scraper] Cleaned HTML lost menu data (${matchCount} signals) but raw HTML has ${rawSignals} signals + ${rawPrices} price refs. Extracting from scripts.`);
+        // Extract complete product objects (influye.app: "title":"...","description":"...","image":"...","price":N)
+        const productRegex = /"(?:title|name)":"([^"]+)","description":"([^"]*)","(?:image|img)":"([^"]*)","price":(\d+)/g;
+        const products: { name: string; desc: string; img: string; price: number }[] = [];
+        let pm;
+        while ((pm = productRegex.exec(pageContent)) !== null) {
+          if (pm[4] && parseInt(pm[4]) > 0) {
+            products.push({ name: pm[1], desc: pm[2], img: pm[3], price: parseInt(pm[4]) });
+          }
+        }
+        if (products.length > 3) {
+          cleaned = `[MENU DATA FROM EMBEDDED SCRIPTS - ${products.length} products]\n` +
+            products.map(p => `- ${p.name}: $${p.price}${p.desc ? ` (${p.desc})` : ""}${p.img ? ` [img: ${p.img}]` : ""}`).join("\n");
+          console.log(`[Scraper] Extracted ${products.length} products from script data`);
+          matchCount = 10;
+        } else {
+          // Fallback: extract raw key-value pairs for Claude
+          const menuData = pageContent.match(/"(?:title|name)"\s*:\s*"[^"]+"|"price"\s*:\s*\d+|"description"\s*:\s*"[^"]*"/g) || [];
+          if (menuData.length > 5) {
+            cleaned = `[MENU DATA FROM PAGE SCRIPTS]\n${menuData.slice(0, 500).join("\n")}`;
+            matchCount = 10;
+          }
+        }
       }
     }
-    console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Rejecting.`);
-    throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
+    if (matchCount < 2) {
+      // Try discovering a menu link on the page (but don't recurse if already a discovery attempt)
+      if (!extractionConfig?._discoveryAttempt) {
+        console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Trying menu discovery...`);
+        const discoveredUrl = await discoverMenuUrl(menuUrl);
+        if (discoveredUrl) {
+          console.log(`[Scraper] Discovered menu URL: ${discoveredUrl} — retrying extraction`);
+          return extractWithScraper(discoveredUrl, providerName, { ...extractionConfig, _discoveryAttempt: true });
+        }
+      }
+      console.log(`[Scraper] Content doesn't look like a restaurant menu (${matchCount} signals). Rejecting.`);
+      throw new Error("El link no parece ser una carta de restaurante. Sube un link a tu menú o carta.");
+    }
   }
 
+  // Recalculate content after potential script data extraction above
+  const finalContent = cleaned.length > cfgMaxChars ? cleaned.slice(0, cfgMaxChars) : cleaned;
+
   // Detect if source is a PDF (text may be scrambled/unordered)
-  const isPdf = /\.pdf(\?|$)/i.test(cartaUrl) || content.includes("Number of Pages:");
+  const isPdf = /\.pdf(\?|$)/i.test(cartaUrl) || finalContent.includes("Number of Pages:");
   const pdfHint = isPdf ? `
 IMPORTANTE — TEXTO DE PDF: El contenido viene de un PDF con formato visual. Los nombres de platos y precios pueden estar SEPARADOS o DESORDENADOS en el texto. Debes reconstruir la carta asociando cada plato con su precio correcto por contexto y proximidad. No te rindas si el texto parece confuso — analiza todo el contenido completo y extrae todos los platos que puedas encontrar.` : "";
 
   const result = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
 URL: ${cartaUrl}
 Contenido:
-${content}
+${finalContent}
 
 Responde con JSON:
 {"restaurantName":"...","logo":"URL o null","categories":[{"name":"...","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null","diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
