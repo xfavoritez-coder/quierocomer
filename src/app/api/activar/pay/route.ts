@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createMPCustomer, createMPPreference } from "@/lib/billing/mercadopago";
+import { createMPCustomer, createMPSubscription } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, activationPromoAmount, grossOf } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/activar/pay
  * Body: { restaurantId, plan: "SILVER" | "GOLD" | "PREMIUM", skipPromo?: boolean }
  *
- * Crea una preferencia de pago único en MercadoPago para activación desde demo.
- * Con promo: primer mes a precio reducido.
+ * Crea una suscripción recurrente en MercadoPago para activación desde demo.
+ * Con promo: primer mes a precio reducido, los siguientes al precio regular.
  */
 export async function POST(req: NextRequest) {
   let body: { restaurantId?: string; plan?: string; skipPromo?: boolean };
@@ -37,9 +37,9 @@ export async function POST(req: NextRequest) {
   const planConfig = FLOW_PLANS[planKey];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
-  // Determinar monto (promo o regular)
+  // Determinar monto promo del primer mes
   const promoNet = skipPromo ? null : activationPromoAmount(planKey);
-  const amountGross = promoNet !== null ? grossOf(promoNet) : grossOf(planConfig.amountNet);
+  const firstAmountGross = promoNet !== null ? grossOf(promoNet) : undefined;
 
   try {
     // Crear customer (opcional, no bloquea)
@@ -52,17 +52,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const preference = await createMPPreference({
-      title: `${planConfig.name} — 1 mes`,
-      amountGross,
-      externalReference: restaurantId,
+    const subscription = await createMPSubscription({
+      planKey,
       payerEmail: ownerEmail,
-      notificationUrl: `${baseUrl}/api/billing/webhook`,
-      backUrls: {
-        success: `${baseUrl}/api/activar/pay/return?plan=${planKey}`,
-        failure: `${baseUrl}/activar/${restaurant.slug}?pago=error`,
-        pending: `${baseUrl}/activar/${restaurant.slug}?pago=pendiente`,
-      },
+      externalReference: restaurantId,
+      backUrl: `${baseUrl}/api/activar/pay/return?plan=${planKey}`,
+      firstAmountGross,
     });
 
     await prisma.restaurant.update({
@@ -70,7 +65,7 @@ export async function POST(req: NextRequest) {
       data: { pendingMpPlanId: planConfig.planId },
     });
 
-    return NextResponse.json({ url: preference.initPoint });
+    return NextResponse.json({ url: subscription.initPoint });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[activar/pay]", msg);

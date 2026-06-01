@@ -175,6 +175,27 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 4.6 Downgrade suscripciones CANCELED cuyo período ya venció
+    let canceledDowngraded = 0;
+    const expiredCanceled = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "CANCELED",
+        currentPeriodEnd: { lt: now },
+        billingExempt: false,
+      },
+      select: { id: true, name: true, slug: true },
+    });
+    if (expiredCanceled.length > 0) {
+      await prisma.restaurant.updateMany({
+        where: { id: { in: expiredCanceled.map(r => r.id) } },
+        data: { subscriptionStatus: "NONE", plan: "FREE", currentPeriodEnd: null, mpSubscriptionId: null },
+      });
+      canceledDowngraded = expiredCanceled.length;
+      for (const r of expiredCanceled) {
+        console.log(`[diario] Downgraded canceled subscription: ${r.name} (${r.slug})`);
+      }
+    }
+
     // 5. Backfill translations for restaurants that failed during pipeline
     let translationsBackfilled = 0;
     try {
@@ -296,6 +317,7 @@ export async function GET(req: NextRequest) {
           expiredTokensCleaned: expiredTokens.count,
           trialRemindersSent,
           trialsExpired,
+          canceledDowngraded,
           translationsBackfilled,
           weeklyFallback,
           automations: automationResults,

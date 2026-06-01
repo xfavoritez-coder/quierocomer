@@ -1,40 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMPPayment } from "@/lib/billing/mercadopago";
+import { getMPSubscription } from "@/lib/billing/mercadopago";
 import { planFromFlowId } from "@/lib/billing/plans-config";
 
 /**
- * GET /api/billing/return?payment_id=...&status=...&plan=...
+ * GET /api/billing/return?preapproval_id=...&plan=...
  *
- * MercadoPago redirige aquí después de que el usuario completa
- * el pago único mensual.
+ * MercadoPago redirige aquí después de que el usuario autoriza la suscripción.
+ * La suscripción puede estar en "authorized" o "pending" — el primer cobro
+ * puede tardar unos segundos. El webhook se encarga de confirmar el pago.
  */
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
-  const paymentId = params.get("payment_id") || params.get("collection_id");
-  const paymentStatus = params.get("status") || params.get("collection_status");
+  const preapprovalId = params.get("preapproval_id");
   const planParam = params.get("plan");
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
-  if (!paymentId) {
-    return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=no_payment_id`);
+  if (!preapprovalId) {
+    return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=no_subscription_id`);
   }
 
-  // Verificar pago en MercadoPago
-  let mpPayment;
+  // Verificar suscripción en MercadoPago
+  let mpSub;
   try {
-    mpPayment = await getMPPayment(paymentId);
+    mpSub = await getMPSubscription(preapprovalId);
   } catch (err: any) {
-    console.error("[billing/return] getMPPayment falló:", err?.message);
-    return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=payment_verify_failed`);
+    console.error("[billing/return] getMPSubscription falló:", err?.message);
+    return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=subscription_verify_failed`);
   }
 
-  if (mpPayment.status !== "approved" && paymentStatus !== "approved") {
-    return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=payment_not_approved`);
+  // "authorized" o "pending" son estados válidos post-checkout
+  if (!["authorized", "pending"].includes(mpSub.status)) {
+    return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=subscription_not_authorized`);
   }
 
-  // Buscar restaurant por external_reference (restaurantId)
-  const restaurantId = mpPayment.externalReference;
+  const restaurantId = mpSub.externalReference;
   const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
 
   if (!restaurant) {
@@ -50,11 +50,10 @@ export async function GET(req: NextRequest) {
       plan: appPlan,
       subscriptionStatus: "ACTIVE",
       mpPlanId: restaurant.pendingMpPlanId,
+      mpSubscriptionId: preapprovalId,
       currentPeriodEnd: periodEnd,
       lastPaymentAt: new Date(),
       pendingMpPlanId: null,
-      // Limpiar campos de suscripción recurrente legacy
-      mpSubscriptionId: null,
     },
   });
 
