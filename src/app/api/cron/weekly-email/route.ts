@@ -17,9 +17,16 @@ export const maxDuration = 120;
 export async function GET(req: NextRequest) {
   const start = Date.now();
 
-  // Verify cron secret
+  // Verify cron secret (Vercel auto-generates CRON_SECRET for cron invocations)
+  // Also accept ?key=SEED_SECRET for manual triggers
   const authHeader = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const queryKey = req.nextUrl.searchParams.get("key");
+  const seedSecret = process.env.SEED_SECRET;
+  const isAuthorized =
+    !process.env.CRON_SECRET ||
+    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
+    (seedSecret && queryKey === seedSecret);
+  if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
