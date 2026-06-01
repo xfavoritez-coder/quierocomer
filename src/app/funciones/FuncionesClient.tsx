@@ -95,6 +95,14 @@ const features = [
     imgPos: "center 30%",
   },
   {
+    num: "05",
+    title: "Cumpleaños automáticos",
+    desc: "Envía automáticamente regalos, descuentos o promociones de cumpleaños a tus clientes.",
+    tags: ["Cumpleaños", "Automático", "Fidelización"],
+    img: "/funciones/cumpleanos.jpg",
+    imgPos: "center 30%",
+  },
+  {
     num: "06",
     title: "Promociones visibles",
     desc: "Destaca productos nuevos, ofertas del día o platos con mejor margen.",
@@ -265,10 +273,7 @@ function FuncionesInner() {
             <p className="fn-hero-sub">{data.text}</p>
             <div className="fn-actions">
               <a href="/subircarta" className="fn-btn-primary">
-                Sube tu carta gratis →
-              </a>
-              <a href="#funciones" className="fn-btn-secondary">
-                Ver funciones
+                Transforma tu carta gratis →
               </a>
             </div>
           </div>
