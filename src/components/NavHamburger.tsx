@@ -51,32 +51,32 @@ export default function NavHamburger() {
       >
         <div className="nav-menu-panel" onClick={(e) => e.stopPropagation()}>
           <div className="nav-menu-header">
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 600, color: "#E8DDC8", display: "flex", alignItems: "center", gap: 10 }}>
+            <a href="/" onClick={() => setMenuOpen(false)} style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 600, color: "#E8DDC8", display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
               <img src="/landing/logo.png" alt="" style={{ height: 18, marginRight: -6 }} />
               QuieroComer
-            </div>
+            </a>
             <button className="nav-menu-close" onClick={() => setMenuOpen(false)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
           <div className="nav-menu-links">
-            <a href="/" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
+            <a href="/funciones" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
               <div className="nav-menu-item-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
               </div>
-              <span className="nav-menu-item-title">Inicio</span>
+              <span className="nav-menu-item-title">Funciones</span>
+            </a>
+            <a href="/planes" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
+              <div className="nav-menu-item-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              </div>
+              <span className="nav-menu-item-title">Planes</span>
             </a>
             <a href="/clientes" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
               <div className="nav-menu-item-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
               </div>
               <span className="nav-menu-item-title">Clientes</span>
-            </a>
-            <a href="/planes" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
-              <div className="nav-menu-item-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-              </div>
-              <span className="nav-menu-item-title">Planes</span>
             </a>
             <a href="/contacto" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
               <div className="nav-menu-item-icon">

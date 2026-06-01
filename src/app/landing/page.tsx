@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import LandingNew from "../(main)/LandingNew";
 
-const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza"];
+const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "el-menu-de-la-esquina"];
 const FALLBACK_COLORS: Record<string, string> = {
   "hand-roll": "#dc2626",
   "horusvegan": "#1a5f3f",
   "juana-la-brava": "#7c2d12",
   "alleria-pizza": "#c0392b",
+  "el-menu-de-la-esquina": "#2563eb",
 };
 
 export const metadata = {
