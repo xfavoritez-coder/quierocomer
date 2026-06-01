@@ -269,39 +269,76 @@ export function trialEndingSoonEmailHtml(
   daysLeft: number, panelLink: string, suscripcionLink: string,
 ): string {
   const dayLabel = daysLeft === 1 ? "mañana" : `en ${daysLeft} días`;
+
   const featureRow = (icon: string, text: string) =>
-    `<tr><td style="padding:5px 0;font-size:14px;color:#7a6547;line-height:1.5;vertical-align:top;">
-      <span style="margin-right:6px;">${icon}</span> ${text}
+    `<tr><td style="padding:6px 0;vertical-align:top;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="26" style="font-size:15px;vertical-align:middle;">${icon}</td>
+        <td style="font-size:14px;color:#8a7550;line-height:1.4;">${text}</td>
+      </tr></table>
     </td></tr>`;
 
-  return wrap(`
-  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎁</span></td></tr>
-  <tr><td style="padding-bottom:16px;">
-    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td align="center" style="padding-bottom:24px;">
+    <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
+    </tr></table></a>
+  </td></tr>
+
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.15;">
       ${firstName}, tu regalo Premium termina ${dayLabel}
     </h1>
   </td></tr>
+
   <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    Los 14 días de Premium en <strong>${restaurantName}</strong> están por terminar. Tu carta volverá al plan Gratis y perderás estas funciones:
+    Los 14 días de Premium en <strong style="color:${GOLD};">${restaurantName}</strong> están por terminar. Tu carta <strong>seguirá activa</strong> en el plan Gratis, pero estas funciones dejarán de estar disponibles:
   </td></tr>
-  <tr><td style="padding-bottom:20px;">${card(`
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-      ${featureRow("📊", "Estadísticas de visitas y platos más vistos")}
-      ${featureRow("🌙", "Modo oscuro y claro")}
-      ${featureRow("🏷️", "Ofertas y promociones visibles en la carta")}
-      ${featureRow("⭐", "Destacar platos estrella")}
-      ${featureRow("🌍", "Carta traducida a inglés y portugués")}
-      ${featureRow("🔔", "Botón de llamar al garzón")}
-      ${featureRow("🎂", "Captación de cumpleaños")}
-      ${featureRow("🧞", "Genio IA para recomendaciones")}
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:18px;">
+      <tr><td style="padding:18px 20px;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          ${featureRow("📊", "Estadísticas de visitas y platos más vistos")}
+          ${featureRow("🌙", "Modo oscuro y claro")}
+          ${featureRow("🏷️", "Ofertas y promociones en la carta")}
+          ${featureRow("⭐", "Destacar platos estrella")}
+          ${featureRow("🌍", "Carta en inglés y portugués")}
+          ${featureRow("🔔", "Botón llamar al garzón")}
+          ${featureRow("🎂", "Captación de cumpleaños")}
+        </table>
+      </td></tr>
     </table>
-  `)}</td></tr>
-  <tr><td style="font-size:14px;color:#7a6547;line-height:1.5;padding-bottom:20px;text-align:center;">
-    Si no quieres perder estas funciones, elige un plan desde tu panel antes de que termine tu regalo.
   </td></tr>
-  <tr><td style="padding-bottom:12px;">${btn(suscripcionLink, "Ver planes disponibles")}</td></tr>
-  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">¿Dudas? Responde este email y te ayudamos.</td></tr>
-  `);
+
+  <tr><td style="font-size:14px;color:#8a7550;line-height:1.5;padding-bottom:20px;text-align:center;">
+    Tu carta seguirá funcionando en el plan Gratis. Si quieres mantener estas funciones, elige un plan antes de que termine tu regalo.
+  </td></tr>
+
+  <tr><td style="padding-bottom:24px;">${btn(suscripcionLink, "Ver planes disponibles")}</td></tr>
+
+  <tr><td style="padding-top:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:20px 0 0;">
+    <p style="font-size:13px;color:#8a7550;margin:0 0 12px;">¿Tienes dudas? <a href="${BASE_URL}/#contacto" style="color:${GOLD};text-decoration:underline;font-weight:700;">Contáctanos</a></p>
+    <table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td><a href="${BASE_URL}" style="font-family:Georgia,serif;font-size:13px;color:${GOLD};text-decoration:none;">QuieroComer.cl</a></td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">&copy; ${new Date().getFullYear()}</td>
+    </tr></table>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
 }
 
 export function trialExpiredEmailHtml(
@@ -322,40 +359,82 @@ export function trialExpiredEmailHtml(
   </table>`;
 
   const featureRow = (icon: string, text: string) =>
-    `<tr><td style="padding:4px 0;font-size:13px;color:#92400e;line-height:1.5;vertical-align:top;">
-      <span style="margin-right:5px;opacity:0.5">${icon}</span> <s>${text}</s>
+    `<tr><td style="padding:4px 0;vertical-align:top;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="26" style="font-size:15px;vertical-align:middle;opacity:0.4;">${icon}</td>
+        <td style="font-size:14px;color:#b8a888;line-height:1.4;text-decoration:line-through;">${text}</td>
+      </tr></table>
     </td></tr>`;
 
-  return wrap(`
-  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎁</span></td></tr>
-  <tr><td style="padding-bottom:16px;">
-    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td align="center" style="padding-bottom:24px;">
+    <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
+    </tr></table></a>
+  </td></tr>
+
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.15;">
       ${firstName}, tu regalo Premium terminó
     </h1>
   </td></tr>
+
   <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    Los 14 días de Premium en <strong>${restaurantName}</strong> terminaron. Tu carta <strong>sigue activa</strong> en el plan Gratis, pero estas funciones ya no están disponibles:
+    Los 14 días de Premium en <strong style="color:${GOLD};">${restaurantName}</strong> terminaron. Tu carta <strong>sigue activa</strong> en el plan Gratis, pero estas funciones ya no están disponibles:
   </td></tr>
-  <tr><td style="padding-bottom:20px;">${card(`
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-      ${featureRow("📊", "Estadísticas de visitas y platos")}
-      ${featureRow("🌙", "Modo oscuro y claro")}
-      ${featureRow("🏷️", "Ofertas y promociones")}
-      ${featureRow("⭐", "Destacar platos estrella")}
-      ${featureRow("🌍", "Traducciones automáticas")}
-      ${featureRow("🔔", "Botón llamar garzón")}
-      ${featureRow("🎂", "Captación de cumpleaños")}
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:18px;">
+      <tr><td style="padding:18px 20px;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          ${featureRow("📊", "Estadísticas de visitas y platos")}
+          ${featureRow("🌙", "Modo oscuro y claro")}
+          ${featureRow("🏷️", "Ofertas y promociones")}
+          ${featureRow("⭐", "Destacar platos estrella")}
+          ${featureRow("🌍", "Traducciones automáticas")}
+          ${featureRow("🔔", "Botón llamar garzón")}
+          ${featureRow("🎂", "Captación de cumpleaños")}
+        </table>
+      </td></tr>
     </table>
-  `)}</td></tr>
-  <tr><td style="font-size:14px;color:#7a6547;line-height:1.5;padding-bottom:8px;text-align:center;">
+  </td></tr>
+
+  <tr><td style="font-size:14px;color:#8a7550;line-height:1.5;padding-bottom:8px;text-align:center;">
     Si quieres recuperar estas funciones, elige un plan desde tu panel:
   </td></tr>
-  <tr><td style="padding-bottom:8px;">${card(`
-    ${planRow("Silver", "$14.900", "#475569", "3 vistas · Dark/Light · Destacar platos · Ofertas")}
-    ${planRow("Gold", "$29.900", "#92400e", "Stats · Multilenguaje · Anuncios · Cross-selling")}
-    ${planRow("Premium", "$49.900", "#6d28d9", "Todo Gold + Garzón · Clientes · Email marketing", true)}
-  `)}</td></tr>
-  <tr><td style="padding-bottom:12px;">${btn(suscripcionLink, "Ver planes y activar")}</td></tr>
-  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">¿Dudas? Responde este email y te ayudamos.</td></tr>
-  `);
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:18px;">
+      <tr><td style="padding:18px 20px;">
+        ${planRow("Silver", "$14.900", "#475569", "3 vistas · Dark/Light · Destacar platos · Ofertas")}
+        ${planRow("Gold", "$29.900", "#92400e", "Stats · Multilenguaje · Anuncios · Cross-selling")}
+        ${planRow("Premium", "$49.900", "#6d28d9", "Todo Gold + Garzón · Clientes · Email marketing", true)}
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding-bottom:24px;">${btn(suscripcionLink, "Ver planes y activar")}</td></tr>
+
+  <tr><td style="padding-top:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:20px 0 0;">
+    <p style="font-size:13px;color:#8a7550;margin:0 0 12px;">¿Tienes dudas? <a href="${BASE_URL}/#contacto" style="color:${GOLD};text-decoration:underline;font-weight:700;">Contáctanos</a></p>
+    <table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td><a href="${BASE_URL}" style="font-family:Georgia,serif;font-size:13px;color:${GOLD};text-decoration:none;">QuieroComer.cl</a></td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">&copy; ${new Date().getFullYear()}</td>
+    </tr></table>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
 }
