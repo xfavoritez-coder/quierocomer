@@ -7,7 +7,7 @@ import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQ
 import { generateInsights } from "@/lib/genio/generateInsights";
 import { chileHourOf } from "@/lib/toteat/timezone";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 /**
  * Cron: Weekly email summary — runs every Monday at 11:11 AM Chile time.
