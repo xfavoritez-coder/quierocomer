@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 
 interface Props {
-  /** Secondary buttons that expand upward (GenioFab, WaiterButton, ViewSelector) */
+  /** Secondary buttons that expand upward (GenioFab, ViewSelector) */
   children: React.ReactNode[];
+  /** Element pinned above the lamp — always visible (e.g. WaiterButton) */
+  pinned?: React.ReactNode;
 }
 
 /**
@@ -13,7 +15,7 @@ interface Props {
  * Tap again or outside to close.
  * Hidden during demo onboarding — appears with bounce when onboarding ends.
  */
-export default function FabSpeedDial({ children }: Props) {
+export default function FabSpeedDial({ children, pinned }: Props) {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [entering, setEntering] = useState(false);
@@ -107,6 +109,9 @@ export default function FabSpeedDial({ children }: Props) {
           {child}
         </div>
       ))}
+
+      {/* Pinned element — always visible above the lamp */}
+      {pinned && <div style={{ marginBottom: -2 }}>{pinned}</div>}
 
       {/* Main trigger button — lamp icon */}
       <button

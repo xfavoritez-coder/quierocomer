@@ -1629,7 +1629,7 @@ export default function CartaImpact({
       })()}
 
       {/* FABs */}
-      <FabSpeedDial>
+      <FabSpeedDial pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} size={48} /> : undefined}>
         {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && (() => {
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
           const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
@@ -1644,7 +1644,6 @@ export default function CartaImpact({
             />
           );
         })()}
-        {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         {(restaurant as any).plan !== "FREE" && (
           <ViewSelector
             restaurantId={restaurant.id}
