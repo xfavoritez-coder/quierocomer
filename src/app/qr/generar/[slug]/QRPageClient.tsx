@@ -31,7 +31,6 @@ export default function QRPageClient({ restaurant }: Props) {
   const [generating, setGenerating] = useState(false);
   const [qrPreview, setQrPreview] = useState<string>("");
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
-  const [showLabel, setShowLabel] = useState(true);
   const [showLogo, setShowLogo] = useState(!!restaurant.logoUrl);
 
   const qrUrl = restaurant.qrToken
@@ -136,15 +135,15 @@ export default function QRPageClient({ restaurant }: Props) {
     setGenerating(true);
     try {
       const qrMm = getQrMm();
-      const labelHeight = showLabel ? 6 : 0;
-      const cellMm = qrMm + PADDING_MM * 2 + labelHeight; // total cell = QR + padding + label
+      const cellMm = qrMm + PADDING_MM * 2;
       const pageW = 210, pageH = 297, margin = 10;
       const cols = Math.floor((pageW - margin * 2) / cellMm);
       const rows = Math.floor((pageH - margin * 2) / cellMm);
       const perPage = cols * rows;
       const pages = Math.ceil(quantity / perPage);
 
-      // Generate high-res QR with logo
+      // Use the same QR as the preview (includes logo if enabled)
+      // Re-generate at high res for print quality
       const qrHi = await QRCode.toDataURL(qrUrl, { width: 1200, margin: 1, errorCorrectionLevel: "H", color: { dark: "#0e0e0e", light: "#ffffff" } });
 
       let qrFinal = qrHi;
@@ -158,11 +157,15 @@ export default function QRPageClient({ restaurant }: Props) {
         const ls = 240, cx = 600, cy = 600;
         ctx.beginPath(); ctx.arc(cx, cy, ls / 2 + 24, 0, Math.PI * 2); ctx.fillStyle = "white"; ctx.fill();
         try {
-          const logoImg = new Image(); logoImg.crossOrigin = "anonymous"; logoImg.src = restaurant.logoUrl;
+          const logoImg = new Image(); logoImg.crossOrigin = "anonymous";
+          const logoSrc = restaurant.logoUrl.includes("supabase.co") ? restaurant.logoUrl : `/api/proxy-image?url=${encodeURIComponent(restaurant.logoUrl)}`;
+          logoImg.src = logoSrc;
           await new Promise((r) => { logoImg.onload = r; logoImg.onerror = r; });
           if (logoImg.naturalWidth > 0) {
+            ctx.save();
             ctx.beginPath(); ctx.arc(cx, cy, ls / 2, 0, Math.PI * 2); ctx.clip();
             ctx.drawImage(logoImg, cx - ls / 2, cy - ls / 2, ls, ls);
+            ctx.restore();
           }
         } catch {}
         qrFinal = canvas.toDataURL("image/png");
@@ -187,14 +190,6 @@ export default function QRPageClient({ restaurant }: Props) {
             // QR code centered inside the cell with padding
             pdf.addImage(qrFinal, "PNG", x + PADDING_MM, y + PADDING_MM, qrMm, qrMm);
 
-            // "Ver carta" label below QR
-            if (showLabel) {
-              pdf.setFont("helvetica", "normal");
-              pdf.setFontSize(qrMm >= 80 ? 10 : 8);
-              pdf.setTextColor(100);
-              pdf.text("Ver carta", x + cellMm / 2, y + PADDING_MM + qrMm + labelHeight - 1, { align: "center" });
-            }
-
             placed++;
           }
         }
@@ -205,7 +200,7 @@ export default function QRPageClient({ restaurant }: Props) {
   };
 
   const perPage = (() => {
-    const cellMm = getQrMm() + PADDING_MM * 2 + (showLabel ? 6 : 0);
+    const cellMm = getQrMm() + PADDING_MM * 2;
     return Math.floor((210 - 20) / cellMm) * Math.floor((297 - 20) / cellMm);
   })();
 
@@ -292,10 +287,10 @@ export default function QRPageClient({ restaurant }: Props) {
         </p>
 
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-          <button onClick={generatePDF} disabled={generating} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.95rem", fontWeight: 700, cursor: generating ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generating ? 0.6 : 1 }}>
+          <button onClick={generatePDF} disabled={generating} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: generating ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generating ? 0.6 : 1 }}>
             {generating ? "Generando..." : "Imprimir PDF"}
           </button>
-          <button onClick={downloadImage} disabled={!finalQr} style={{ padding: "14px 20px", background: "white", color: "#0e0e0e", border: "1px solid #eee", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={downloadImage} disabled={!finalQr} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)" }}>
             Generar imagen
           </button>
         </div>

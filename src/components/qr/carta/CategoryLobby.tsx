@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Category, Dish } from "@prisma/client";
 import Image from "next/image";
 
@@ -17,6 +17,18 @@ interface Props {
 export default function CategoryLobby({ categories, dishes, restaurantName, logoUrl, accentColor, onSelectCategory, onSkip }: Props) {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const accent = accentColor || "#F4A623";
+
+  const [isDark, setIsDark] = useState(true);
+  useEffect(() => {
+    const container = document.querySelector(".carta-dark, .carta-light");
+    setIsDark(container?.classList.contains("carta-dark") ?? true);
+    if (!container) return;
+    const obs = new MutationObserver(() => {
+      setIsDark(container.classList.contains("carta-dark"));
+    });
+    obs.observe(container, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   // Only show active categories with active dishes
   const visibleCategories = categories
@@ -44,21 +56,24 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
             {/* Background image with blur */}
             {heroPhoto && (
               <div style={{ position: "absolute", inset: -20, filter: "blur(20px) saturate(1.2)", transform: "scale(1.1)" }}>
-                <Image src={heroPhoto} alt="" fill className="object-cover" style={{ opacity: 0.4 }} />
+                <Image src={heroPhoto} alt="" fill className="object-cover" style={{ opacity: isDark ? 0.4 : 0.5 }} />
               </div>
             )}
             <div style={{
               position: "absolute", inset: 0,
               background: heroPhoto
-                ? "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 60%, var(--carta-bg, #0e0e0e) 100%)"
+                ? isDark
+                  ? "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 60%, var(--carta-bg, #0e0e0e) 100%)"
+                  : "linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.5) 60%, var(--carta-bg, #faf9f6) 100%)"
                 : `linear-gradient(135deg, ${accent}15 0%, transparent 60%)`,
             }} />
             <div style={{ position: "relative", zIndex: 2, padding: "36px 20px 28px", textAlign: "center" }}>
               {logoUrl && (
                 <div style={{
                   width: 68, height: 68, borderRadius: "50%", overflow: "hidden",
-                  margin: "0 auto 16px", border: "3px solid rgba(255,255,255,0.2)",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                  margin: "0 auto 16px",
+                  border: isDark ? "3px solid rgba(255,255,255,0.2)" : "3px solid rgba(0,0,0,0.1)",
+                  boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.4)" : "0 4px 24px rgba(0,0,0,0.12)",
                 }}>
                   <Image src={logoUrl} alt="" width={68} height={68} className="object-cover" />
                 </div>
@@ -66,15 +81,16 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
               <h1 style={{
                 fontFamily: "var(--font-dm)",
                 fontSize: "26px", fontWeight: 800,
-                color: "#fff",
+                color: isDark ? "#fff" : "var(--carta-text, #0e0e0e)",
                 margin: "0 0 6px", letterSpacing: "-0.3px",
-                textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+                textShadow: isDark ? "0 2px 12px rgba(0,0,0,0.5)" : "none",
               }}>
                 {restaurantName}
               </h1>
               <p style={{
                 fontFamily: "var(--font-dm)",
-                fontSize: "13px", color: "rgba(255,255,255,0.55)",
+                fontSize: "13px",
+                color: isDark ? "rgba(255,255,255,0.55)" : "var(--carta-text3, #999)",
                 margin: 0, fontWeight: 500, letterSpacing: "0.8px",
                 textTransform: "uppercase",
               }}>
@@ -94,6 +110,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
       }}>
         {visibleCategories.map((cat, i) => {
           const isWide = i === 0; // First item full width
+          const hasCover = !!(cat.coverPhoto && !failedImages.has(cat.id));
           return (
             <button
               key={cat.id}
@@ -106,7 +123,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                 overflow: "hidden",
                 border: "none",
                 cursor: "pointer",
-                background: "#1a1a1a",
+                background: isDark ? "#1a1a1a" : "#f0ede6",
                 textAlign: "left",
               }}
             >
@@ -125,7 +142,9 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
               <div style={{
                 position: "absolute", inset: 0,
                 background: cat.coverPhoto && !failedImages.has(cat.id)
-                  ? "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.15) 100%)"
+                  ? isDark
+                    ? "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.15) 100%)"
+                    : "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.05) 100%)"
                   : `linear-gradient(135deg, ${accent}15 0%, ${accent}08 100%)`,
               }} />
               {/* Text */}
@@ -137,16 +156,16 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                   fontFamily: "var(--font-dm)",
                   fontSize: isWide ? "20px" : "16px",
                   fontWeight: 700,
-                  color: "#fff",
+                  color: hasCover ? "#fff" : isDark ? "#fff" : "var(--carta-text, #0e0e0e)",
                   lineHeight: 1.15,
-                  textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                  textShadow: hasCover ? "0 2px 8px rgba(0,0,0,0.5)" : "none",
                 }}>
                   {cat.name}
                 </p>
                 <span style={{
                   fontFamily: "var(--font-dm)",
                   fontSize: "13px",
-                  color: "rgba(255,255,255,0.6)",
+                  color: hasCover ? "rgba(255,255,255,0.6)" : isDark ? "rgba(255,255,255,0.5)" : "var(--carta-text3, #999)",
                   fontWeight: 500,
                 }}>
                   {cat.dishCount} {cat.dishCount === 1 ? "producto" : "productos"}
