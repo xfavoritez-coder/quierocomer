@@ -266,34 +266,46 @@ export function cartaListaSimpleEmailHtml({
 
 export function trialEndingSoonEmailHtml(
   firstName: string, restaurantName: string,
-  daysLeft: number, panelLink: string, facturacionLink: string,
+  daysLeft: number, panelLink: string, suscripcionLink: string,
 ): string {
-  const dayLabel = daysLeft === 1 ? "1 dia" : `${daysLeft} dias`;
+  const dayLabel = daysLeft === 1 ? "mañana" : `en ${daysLeft} días`;
+  const featureRow = (icon: string, text: string) =>
+    `<tr><td style="padding:5px 0;font-size:14px;color:#7a6547;line-height:1.5;vertical-align:top;">
+      <span style="margin-right:6px;">${icon}</span> ${text}
+    </td></tr>`;
+
   return wrap(`
-  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">⏰</span></td></tr>
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎁</span></td></tr>
   <tr><td style="padding-bottom:16px;">
     <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">
-      ${firstName}, te ${daysLeft === 1 ? "queda 1 dia" : `quedan ${daysLeft} dias`} de prueba
+      ${firstName}, tu regalo Premium termina ${dayLabel}
     </h1>
   </td></tr>
-  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
-    Tu plan en <strong>${restaurantName}</strong> vence en <strong>${dayLabel}</strong>. Si no renuevas, tu plan baja a Gratis y pierdes las funciones avanzadas.
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Los 14 días de Premium en <strong>${restaurantName}</strong> están por terminar. Tu carta volverá al plan Gratis y perderás estas funciones:
   </td></tr>
-  <tr><td style="padding-bottom:16px;">${card(`
-    ${label("Cómo renovar")}
-    <div style="font-size:14px;color:#7a6547;line-height:1.8;">
-      1. Entra a tu panel<br/>
-      2. Ve a Suscripción<br/>
-      3. Paga tu siguiente mes
-    </div>
+  <tr><td style="padding-bottom:20px;">${card(`
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${featureRow("📊", "Estadísticas de visitas y platos más vistos")}
+      ${featureRow("🌙", "Modo oscuro y claro")}
+      ${featureRow("🏷️", "Ofertas y promociones visibles en la carta")}
+      ${featureRow("⭐", "Destacar platos estrella")}
+      ${featureRow("🌍", "Carta traducida a inglés y portugués")}
+      ${featureRow("🔔", "Botón de llamar al garzón")}
+      ${featureRow("🎂", "Captación de cumpleaños")}
+      ${featureRow("🧞", "Genio IA para recomendaciones")}
+    </table>
   `)}</td></tr>
-  <tr><td style="padding-bottom:16px;">${btn(panelLink, "Ir a mi panel")}</td></tr>
+  <tr><td style="font-size:14px;color:#7a6547;line-height:1.5;padding-bottom:20px;text-align:center;">
+    Si no quieres perder estas funciones, elige un plan desde tu panel antes de que termine tu regalo.
+  </td></tr>
+  <tr><td style="padding-bottom:12px;">${btn(suscripcionLink, "Ver planes disponibles")}</td></tr>
   <tr><td style="font-size:12px;color:#b8a888;text-align:center;">¿Dudas? Responde este email y te ayudamos.</td></tr>
   `);
 }
 
 export function trialExpiredEmailHtml(
-  firstName: string, restaurantName: string, planesLink: string,
+  firstName: string, restaurantName: string, suscripcionLink: string,
 ): string {
   const planRow = (name: string, price: string, color: string, features: string, isLast = false) => `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="${!isLast ? "padding-bottom:13px;border-bottom:1px solid rgba(193,151,82,0.22);margin-bottom:13px;" : ""}">
@@ -309,92 +321,41 @@ export function trialExpiredEmailHtml(
   </tr>
   </table>`;
 
-  return `<html><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="background-color:#fbf6ec;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;padding:0;-webkit-text-size-adjust:100%">
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:430px;margin:0 auto;padding:24px 16px 32px">
-<tr><td>
+  const featureRow = (icon: string, text: string) =>
+    `<tr><td style="padding:4px 0;font-size:13px;color:#92400e;line-height:1.5;vertical-align:top;">
+      <span style="margin-right:5px;opacity:0.5">${icon}</span> <s>${text}</s>
+    </td></tr>`;
 
-<!-- Icon -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:16px">
-  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-    <td width="46" height="46" style="width:46px;height:46px;border-radius:50%;background:#f9f6f0;text-align:center;vertical-align:middle;font-size:24px;box-shadow:0 12px 30px rgba(120,80,20,0.12)">📋</td>
-  </tr></table>
-</td></tr>
-</table>
-
-<!-- Main card -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#fffaf1;border-radius:28px;border:1px solid #ead7b7;box-shadow:0 24px 70px rgba(70,45,10,0.10)">
-<tr><td style="padding:28px 22px 24px">
-
-<!-- Title -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:10px">
-<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.12;letter-spacing:-0.03em;margin:0;color:#92400e">
-  ${firstName}, tu prueba<br/>Premium terminó
-</h1>
-</td></tr>
-</table>
-
-<!-- Lead text -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:22px">
-<p style="font-size:15px;color:#8a7550;line-height:1.55;margin:0">
-  Tu prueba en <strong>${restaurantName}</strong> terminó, pero tu carta <strong>sigue activa</strong> en el plan Gratis.
-</p>
-</td></tr>
-</table>
-
-<!-- Plans section -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f9f6f0;border:1px solid #ead7b7;border-radius:24px;margin-bottom:22px">
-<tr><td style="padding:20px 18px 18px">
-  <p style="font-size:13px;color:#836a47;margin:0 0 18px;text-align:center;line-height:1.5">Si quieres subir de plan, aquí tienes las opciones disponibles:</p>
-
-  <!-- Gratis (actual) -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding-bottom:13px;border-bottom:1px solid rgba(193,151,82,0.22);margin-bottom:13px;">
-  <tr>
-    <td style="vertical-align:top;padding-right:12px;">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#888">Gratis <span style="display:inline-block;background:#92400e;color:#fff;font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;letter-spacing:0.06em;text-transform:uppercase;vertical-align:middle;margin-left:6px">Tu plan actual</span></p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Carta QR · Genio IA · Panel · 2 vistas</p>
-    </td>
-    <td style="vertical-align:top;text-align:right;white-space:nowrap;">
-      <p style="font-size:15px;font-weight:800;color:#8a7550;margin:0">$0</p>
-    </td>
-  </tr>
-  </table>
-
-  ${planRow("Silver", "$14.900", "#475569", "3 vistas · Dark/Light mode · Destacar platos · Ofertas")}
-  ${planRow("Gold", "$29.900", "#92400e", "Estadísticas · Anuncios · Multilenguaje · Cross-selling")}
-  ${planRow("Premium", "$49.900", "#6d28d9", "Stats avanzadas · Garzón · Clientes · Email marketing · Toteat", true)}
-</td></tr>
-</table>
-
-<!-- CTA -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:8px">
-  <a href="${planesLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
-    Ver mi suscripción →
-  </a>
-</td></tr>
-</table>
-
-</td></tr>
-</table>
-
-<!-- Contact footer -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-top:24px">
-<p style="color:#927955;font-size:12px;margin:0">
-  ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
-</p>
-<p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · ${new Date().getFullYear()}</p>
-</td></tr>
-</table>
-
-</td></tr>
-</table>
-</body></html>`;
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎁</span></td></tr>
+  <tr><td style="padding-bottom:16px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">
+      ${firstName}, tu regalo Premium terminó
+    </h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Los 14 días de Premium en <strong>${restaurantName}</strong> terminaron. Tu carta <strong>sigue activa</strong> en el plan Gratis, pero estas funciones ya no están disponibles:
+  </td></tr>
+  <tr><td style="padding-bottom:20px;">${card(`
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${featureRow("📊", "Estadísticas de visitas y platos")}
+      ${featureRow("🌙", "Modo oscuro y claro")}
+      ${featureRow("🏷️", "Ofertas y promociones")}
+      ${featureRow("⭐", "Destacar platos estrella")}
+      ${featureRow("🌍", "Traducciones automáticas")}
+      ${featureRow("🔔", "Botón llamar garzón")}
+      ${featureRow("🎂", "Captación de cumpleaños")}
+    </table>
+  `)}</td></tr>
+  <tr><td style="font-size:14px;color:#7a6547;line-height:1.5;padding-bottom:8px;text-align:center;">
+    Si quieres recuperar estas funciones, elige un plan desde tu panel:
+  </td></tr>
+  <tr><td style="padding-bottom:8px;">${card(`
+    ${planRow("Silver", "$14.900", "#475569", "3 vistas · Dark/Light · Destacar platos · Ofertas")}
+    ${planRow("Gold", "$29.900", "#92400e", "Stats · Multilenguaje · Anuncios · Cross-selling")}
+    ${planRow("Premium", "$49.900", "#6d28d9", "Todo Gold + Garzón · Clientes · Email marketing", true)}
+  `)}</td></tr>
+  <tr><td style="padding-bottom:12px;">${btn(suscripcionLink, "Ver planes y activar")}</td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">¿Dudas? Responde este email y te ayudamos.</td></tr>
+  `);
 }

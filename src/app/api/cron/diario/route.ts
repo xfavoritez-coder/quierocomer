@@ -110,8 +110,8 @@ export async function GET(req: NextRequest) {
         try {
           await sendAdminEmail({
             to: r.owner.email,
-            subject: `⏰ ${daysLeft === 1 ? "Te queda 1 día" : `Quedan ${daysLeft} días`} de tu prueba en ${r.name}`,
-            html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/facturacion`),
+            subject: `🎁 Tu regalo Premium en ${r.name} termina ${daysLeft === 1 ? "mañana" : `en ${daysLeft} días`}`,
+            html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/suscripcion`),
             purpose: "trial_reminder",
           });
           await prisma.restaurant.update({
@@ -165,7 +165,7 @@ export async function GET(req: NextRequest) {
           const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
           await sendAdminEmail({
             to: r.owner.email,
-            subject: `${firstName}, tu prueba Premium terminó — tu carta sigue activa`,
+            subject: `${firstName}, tu regalo Premium en ${r.name} terminó`,
             html: trialExpiredEmailHtml(firstName, r.name, `${baseUrl}/panel/suscripcion`),
             purpose: "trial_expired",
           });
