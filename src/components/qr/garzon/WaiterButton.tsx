@@ -18,6 +18,26 @@ interface WaiterButtonProps {
 type ButtonState = "idle" | "calling" | "success";
 
 const TABLE_KEY_PREFIX = "qr_table_";
+const TABLE_TS_PREFIX = "qr_table_ts_";
+const TABLE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+
+/** Read saved table only if it hasn't expired (3h TTL) */
+function readSavedTable(restaurantId: string): string | null {
+  const val = localStorage.getItem(`${TABLE_KEY_PREFIX}${restaurantId}`);
+  if (!val) return null;
+  const ts = parseInt(localStorage.getItem(`${TABLE_TS_PREFIX}${restaurantId}`) || "0", 10);
+  if (Date.now() - ts > TABLE_TTL_MS) {
+    localStorage.removeItem(`${TABLE_KEY_PREFIX}${restaurantId}`);
+    localStorage.removeItem(`${TABLE_TS_PREFIX}${restaurantId}`);
+    return null;
+  }
+  return val;
+}
+
+function writeSavedTable(restaurantId: string, num: string) {
+  localStorage.setItem(`${TABLE_KEY_PREFIX}${restaurantId}`, num);
+  localStorage.setItem(`${TABLE_TS_PREFIX}${restaurantId}`, String(Date.now()));
+}
 
 export default function WaiterButton({ restaurantId, tableId, tableName, size = 62, waiterPanelActive = false }: WaiterButtonProps) {
   const [state, setState] = useState<ButtonState>("idle");
@@ -26,12 +46,11 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   const [savedTable, setSavedTable] = useState<string | null>(null);
   const [panelActive, setPanelActive] = useState(waiterPanelActive);
 
-  // Read saved table + check subscription on mount
+  // Read saved table (with TTL) + check subscription on mount
   useEffect(() => {
-    const stored = localStorage.getItem(`${TABLE_KEY_PREFIX}${restaurantId}`);
+    const stored = readSavedTable(restaurantId);
     if (stored) setSavedTable(stored);
 
-    // Check if waiter panel has active subscriptions (overrides prop if true)
     fetch(`/api/qr/waiter/subscribe?restaurantId=${restaurantId}`)
       .then((r) => r.json())
       .then((data) => { if (data.active) setPanelActive(true); })
@@ -80,24 +99,21 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   const handleClick = () => {
     if (state !== "idle") return;
 
-    // Has explicit tableId from QR scan — call directly
     if (tableId && tableId !== "general") {
       doCall();
       return;
     }
 
-    // Panel active + saved table — call directly
     if (panelActive && savedTable) {
       doCall();
       return;
     }
 
-    // No saved table — open modal to ask for table number
     setModalOpen(true);
   };
 
   const handleSaveTable = (num: string) => {
-    localStorage.setItem(`${TABLE_KEY_PREFIX}${restaurantId}`, num);
+    writeSavedTable(restaurantId, num);
     setSavedTable(num);
     showTableToast(num);
   };
@@ -115,61 +131,77 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
 
   const isInactive = !panelActive && !savedTable;
 
+  // Toast positioning: to the left of the button, vertically centered
+  const toastStyle = {
+    position: "absolute" as const,
+    right: size + 10,
+    top: "50%",
+    transform: "translateY(-50%)",
+    zIndex: 60,
+    whiteSpace: "nowrap" as const,
+    animation: "waiterBubbleIn 0.2s ease-out",
+  };
+  const arrowRight = {
+    position: "absolute" as const,
+    top: "50%",
+    right: -4,
+    transform: "translateY(-50%) rotate(45deg)",
+    width: 8,
+    height: 8,
+  };
+
   return (
     <div style={{ position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Success bubble — opens to the left */}
+      {/* Success bubble — to the left */}
       {state === "success" && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14,
+            ...toastStyle,
             background: "#16a34a", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 600,
-            boxShadow: "0 4px 12px rgba(22,163,74,0.3)", zIndex: 60,
-            whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
+            boxShadow: "0 4px 12px rgba(22,163,74,0.3)",
           }}
         >
           ¡Garzón avisado!
-          <div style={{ position: "absolute", top: "50%", right: -4, transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#16a34a" }} />
+          <div style={{ ...arrowRight, background: "#16a34a" }} />
         </div>
       )}
 
-      {/* Error toast — opens to the left */}
+      {/* Error toast — to the left */}
       {toast && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14,
+            ...toastStyle,
             background: "#333", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 500,
-            zIndex: 60, whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
           }}
         >
           {toast}
-          <div style={{ position: "absolute", top: "50%", right: -4, transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#333" }} />
+          <div style={{ ...arrowRight, background: "#333" }} />
         </div>
       )}
 
-      {/* Table saved toast */}
+      {/* Table saved toast — to the left */}
       {tableToast && !state.match(/calling|success/) && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14,
+            ...toastStyle,
             background: "var(--carta-accent, #F4A623)", color: "#0e0e0e",
             padding: "8px 14px", borderRadius: 12, fontSize: "0.78rem", fontWeight: 600,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 60,
-            whiteSpace: "nowrap", animation: "waiterBubbleIn 0.25s ease-out",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
             maxWidth: 200, lineHeight: 1.4,
           }}
         >
           <div>Mesa {tableToast} guardada 🔔</div>
           <div style={{ fontSize: "0.7rem", fontWeight: 500, opacity: 0.8, marginTop: 2 }}>Tócame cuando quieras llamar al garzón</div>
-          <div style={{ position: "absolute", top: "50%", right: -5, transform: "translateY(-50%) rotate(45deg)", width: 10, height: 10, background: "var(--carta-accent, #F4A623)" }} />
+          <div style={{ ...arrowRight, right: -5, width: 10, height: 10, background: "var(--carta-accent, #F4A623)" }} />
         </div>
       )}
 
-      {/* Bell button — always visible */}
+      {/* Bell button */}
       <button
         onClick={handleClick}
         className="flex items-center justify-center rounded-full transition-transform active:scale-95"
@@ -197,7 +229,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         )}
       </button>
 
-      {/* Mesa modal — rendered via portal to escape transform context */}
+      {/* Mesa modal */}
       {modalOpen && typeof document !== "undefined" && createPortal(
         <ModalMesa
           panelActive={panelActive}
@@ -221,8 +253,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           80% { transform: rotate(-6deg); }
         }
         @keyframes waiterBubbleIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateX(4px); }
+          to { opacity: 1; transform: translateX(0); }
         }
       `}</style>
     </div>

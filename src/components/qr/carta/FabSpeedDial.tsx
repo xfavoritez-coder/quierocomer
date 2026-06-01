@@ -1,29 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
-  /** Secondary buttons that expand upward (GenioFab, ViewSelector) */
-  children: React.ReactNode[];
+  /** Called when the lamp button is tapped — opens the Genio */
+  onLampClick?: () => void;
   /** Element pinned above the lamp — always visible (e.g. WaiterButton) */
   pinned?: React.ReactNode;
 }
 
 /**
- * Speed dial FAB: shows a main lamp button. On tap, expands
- * secondary buttons upward with staggered animation.
- * Tap again or outside to close.
+ * FAB with lamp icon that opens the Genio directly.
+ * Optionally shows a pinned element above (waiter bell).
  * Hidden during demo onboarding — appears with bounce when onboarding ends.
  */
-export default function FabSpeedDial({ children, pinned }: Props) {
-  const [open, setOpen] = useState(false);
+export default function FabSpeedDial({ onLampClick, pinned }: Props) {
   const [hidden, setHidden] = useState(false);
   const [entering, setEntering] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
   // Hide during demo onboarding, show with bounce when it ends
   useEffect(() => {
-    // Check initial state
     if (document.body.hasAttribute("data-demo-onboarding")) setHidden(true);
 
     const obs = new MutationObserver(() => {
@@ -32,7 +28,6 @@ export default function FabSpeedDial({ children, pinned }: Props) {
     });
     obs.observe(document.body, { attributes: true, attributeFilter: ["data-demo-onboarding"] });
 
-    // Listen for show event (onboarding exit animation completed)
     const showFab = () => {
       setHidden(false);
       setEntering(true);
@@ -46,79 +41,35 @@ export default function FabSpeedDial({ children, pinned }: Props) {
     };
   }, []);
 
-  // Close on outside tap
+  // Open Genio programmatically (from demo onboarding)
   useEffect(() => {
-    if (!open) return;
-    const handle = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handle);
-    document.addEventListener("touchstart", handle);
-    return () => {
-      document.removeEventListener("mousedown", handle);
-      document.removeEventListener("touchstart", handle);
-    };
-  }, [open]);
-
-  // Close when a child action triggers (genio opens, etc.)
-  useEffect(() => {
-    const close = () => setOpen(false);
-    window.addEventListener("fab-speed-dial-close", close);
-    return () => window.removeEventListener("fab-speed-dial-close", close);
-  }, []);
-
-  // Open programmatically
-  useEffect(() => {
-    const openFab = () => {
-      setOpen(true);
-      window.dispatchEvent(new CustomEvent("fab-speed-dial-toggle", { detail: { open: true } }));
-    };
+    const openFab = () => onLampClick?.();
     window.addEventListener("demo-onboarding-open-fab", openFab);
     return () => window.removeEventListener("demo-onboarding-open-fab", openFab);
-  }, []);
-
-  const items = children.filter(Boolean);
+  }, [onLampClick]);
 
   if (hidden) return null;
 
   return (
     <div
-      ref={ref}
       className="fixed flex flex-col items-center"
       style={{
         right: 14,
         bottom: "calc(16px + env(safe-area-inset-bottom))",
         gap: 10,
         zIndex: 50,
-        // Bounce-in animation
         transform: entering ? "scale(1)" : undefined,
         animation: entering ? "fabBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1)" : undefined,
       }}
     >
-      {/* Secondary buttons — expand upward */}
-      {items.map((child, i) => (
-        <div
-          key={i}
-          style={{
-            opacity: open ? 1 : 0,
-            transform: open ? "translateY(0) scale(1)" : "translateY(20px) scale(0.5)",
-            transition: `all 0.25s cubic-bezier(0.16,1,0.3,1) ${open ? i * 60 : 0}ms`,
-            pointerEvents: open ? "auto" : "none",
-          }}
-        >
-          {child}
-        </div>
-      ))}
-
       {/* Pinned element — always visible above the lamp */}
-      {pinned && <div style={{ marginBottom: -2 }}>{pinned}</div>}
+      {pinned && <div>{pinned}</div>}
 
-      {/* Main trigger button — lamp icon */}
+      {/* Main lamp button — opens Genio */}
       <button
         onClick={() => {
-          const next = !open;
-          setOpen(next);
-          window.dispatchEvent(new CustomEvent("fab-speed-dial-toggle", { detail: { open: next } }));
+          onLampClick?.();
+          window.dispatchEvent(new CustomEvent("fab-speed-dial-close"));
         }}
         className="flex items-center justify-center rounded-full genio-fab-btn"
         style={{
@@ -129,25 +80,14 @@ export default function FabSpeedDial({ children, pinned }: Props) {
       >
         <img
           src="/genio-lamp.png"
-          alt="Menú"
+          alt="Genio"
           className="genio-lamp-icon"
           style={{
             width: 32, height: 32, objectFit: "contain",
             transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
-            transform: open ? "scale(1.15)" : "scale(1)",
           }}
         />
       </button>
-
-      {/* Backdrop — invisible, catches taps to close */}
-      <div
-        style={{
-          position: "fixed", inset: 0, zIndex: -1,
-          background: "transparent",
-          pointerEvents: open ? "auto" : "none",
-        }}
-        onClick={() => setOpen(false)}
-      />
 
       <style>{`
         @keyframes fabBounceIn {

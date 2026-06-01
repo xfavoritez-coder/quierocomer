@@ -840,17 +840,11 @@ export default function CartaPremium({
         );
       })()}
 
-      {/* Floating buttons */}
-      {/* Floating buttons — Genio separate to avoid pushing others */}
-      <FabSpeedDial pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} /> : undefined}>
-        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && (() => {
-          const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-          const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} redundantDiet={dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian" ? dietMsg : null} restaurantName={restaurant.name} />;
-        })()}
-        {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />}
-      </FabSpeedDial>
+      {/* Floating buttons: lamp (Genio) + bell (waiter) */}
+      <FabSpeedDial
+        onLampClick={() => setGenioOpen(true)}
+        pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} /> : undefined}
+      />
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes genioNudgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
