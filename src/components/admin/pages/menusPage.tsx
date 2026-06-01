@@ -441,10 +441,9 @@ export default function AdminMenus() {
         if (Array.isArray(d)) {
           setDishes(d);
           setRecommendedSnapshot(new Set(d.filter((x: any) => x.tags?.includes("RECOMMENDED")).map((x: any) => x.id)));
-          // Show banner if: not imported OR few dishes (even if imported via subircarta with few results)
+          // Hide import banner if restaurant already has a solid menu (>20 dishes)
           const imported = !Array.isArray(data) && data.menuImported;
-          const fewDishes = d.length > 0 && d.length <= 20;
-          if (imported && !fewDishes) setImportBannerDismissed(true);
+          if (imported || d.length > 20) setImportBannerDismissed(true);
           setImportBannerReady(true);
         }
       })
