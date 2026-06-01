@@ -842,7 +842,7 @@ export default function CartaPremium({
 
       {/* Floating buttons */}
       {/* Floating buttons — Genio separate to avoid pushing others */}
-      <FabSpeedDial pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} size={48} /> : undefined}>
+      <FabSpeedDial pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} /> : undefined}>
         {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && (() => {
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
           const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
