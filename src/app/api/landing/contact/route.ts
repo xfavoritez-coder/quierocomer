@@ -63,6 +63,24 @@ export async function POST(request: Request) {
       }),
     ]);
 
+    // Fire-and-forget: send WhatsApp to contact if phone provided
+    if (telefono) {
+      const rawPhone = telefono.replace(/\D/g, "");
+      const phone = rawPhone.startsWith("56") ? `+${rawPhone}` : `+56${rawPhone}`;
+      if (phone.length >= 11) {
+        import("@/lib/whatsapp").then(({ sendWhatsApp }) => {
+          const ownerName = (nombre || "").split(" ")[0] || "Hola";
+          sendWhatsApp({
+            to: phone,
+            body: `Hola ${ownerName}, te habla Camila de QuieroComer. Recibimos tu mensaje sobre nuestro servicio de carta QR inteligente. ¿En qué te puedo ayudar?`,
+            contentSid: "HXb70a8b2bf8e01e4a4c4d3a70bf3c13a8",
+            contentVariables: { "1": ownerName },
+          }).then(sid => { if (sid) console.log(`[Contact] WA sent to ${phone}: ${sid}`); })
+            .catch(() => {});
+        }).catch(() => {});
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Landing contact error:", error);
