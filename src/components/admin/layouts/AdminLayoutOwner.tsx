@@ -189,13 +189,13 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
       {/* ── Mobile Header (<768px) ── */}
       <header className="owl-mobile-header">
-        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
-          <RestLogo size={32} />
+        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+          <RestLogo size={40} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <p style={{ fontFamily: F, fontSize: "17px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
               {activePlan && basePath === "/panel" && (
-                <span style={{ fontFamily: F, fontSize: "8px", fontWeight: 700, padding: "1px 5px", borderRadius: 3, letterSpacing: "0.3px",
+                <span style={{ fontFamily: F, fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.3px",
                   background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",
                   color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : "var(--adm-text3)",
                   flexShrink: 0,
@@ -204,7 +204,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 </span>
               )}
             </div>
-            <p style={{ fontFamily: F, fontSize: "10.5px", color: "var(--adm-text3)", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
+            <p style={{ fontFamily: F, fontSize: "12px", color: "var(--adm-text3)", fontWeight: 500, margin: "2px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
         {false && restaurants.length > 1 && (
@@ -213,10 +213,10 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        <button onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10 }}>
-          {theme === "dark" ? <Sun size={13} color="#777" /> : <Moon size={13} color="#bbb" />}
+        <button onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }} style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10 }}>
+          {theme === "dark" ? <Sun size={16} color="#777" /> : <Moon size={16} color="#bbb" />}
         </button>
-        <button onClick={openAccount} style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(244,166,35,0.15)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, flexShrink: 0 }}>
+        <button onClick={openAccount} style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(244,166,35,0.15)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "1rem", fontWeight: 700, flexShrink: 0 }}>
           {initial}
         </button>
       </header>
@@ -379,7 +379,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           .owl-sidebar { display: none; }
           .owl-mobile-header {
             display: flex; position: sticky; top: 0; z-index: 100;
-            height: 56px; align-items: center; justify-content: space-between;
+            height: 64px; align-items: center; justify-content: space-between;
             padding: 0 16px; background: var(--adm-card); border-bottom: 1px solid var(--adm-card-border);
           }
           .owl-bottom-nav {
