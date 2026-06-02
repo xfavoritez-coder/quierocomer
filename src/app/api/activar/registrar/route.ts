@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       name: localName.trim(),
       slug,
       cartaTheme: "PREMIUM",
-      cartaColorMode: "LIGHT",
+      cartaColorMode: "DARK",
       defaultView: "impact",
       enabledLangs: ["es"],
       isActive: true,
