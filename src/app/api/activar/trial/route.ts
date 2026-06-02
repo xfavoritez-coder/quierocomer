@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
     purpose: "admin_new_activation",
   }).catch(() => {});
 
-  // Remove Unsplash referential photos — owner should upload their own real photos
+  // Solo borrar fotos Unsplash (tienen photoCredits), NO las del sitio del restaurante
   prisma.dish.updateMany({
-    where: { restaurantId, isPhotoReferential: true },
+    where: { restaurantId, isPhotoReferential: true, photoCredits: { isEmpty: false } },
     data: { photos: [], isPhotoReferential: false, photoCredits: [] },
   }).then((r) => {
     if (r.count > 0) console.log(`[Activar] Cleared ${r.count} Unsplash referential photos for ${restaurantId}`);

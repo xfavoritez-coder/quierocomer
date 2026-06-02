@@ -40,9 +40,9 @@ export async function POST(req: NextRequest) {
         weeklyEmailEnabled: true,
       },
     }),
-    // Limpiar fotos Unsplash referenciales
+    // Solo borrar fotos Unsplash (tienen photoCredits), NO las del sitio del restaurante
     prisma.dish.updateMany({
-      where: { restaurantId, isPhotoReferential: true },
+      where: { restaurantId, isPhotoReferential: true, photoCredits: { isEmpty: false } },
       data: { photos: [], isPhotoReferential: false, photoCredits: [] },
     }),
     // Borrar sessions demo (cascade borra DishImpressions)
