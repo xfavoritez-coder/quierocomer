@@ -372,7 +372,7 @@ function FeaturedSection({
   onDishSelect: (d: Dish) => void;
 }) {
   const featured = useMemo(() => {
-    return dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+    return dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
   }, [dishes]);
 
   const [activeIdx, setActiveIdx] = useState(0);
