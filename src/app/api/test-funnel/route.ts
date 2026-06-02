@@ -147,6 +147,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, step: "reset", trialEndsAt: trialEnd.toISOString() });
   }
 
+  // ═══ STEP fix-logo: Crop Pavito logo ═══
+  if (step === "fix-logo") {
+    const sharp = (await import("sharp")).default;
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+    const res = await fetch("https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780133047284-ht76n4b1848.jpg");
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const meta = await sharp(buffer).metadata();
+    const w = meta.width!, h = meta.height!;
+
+    const cropped = await sharp(buffer)
+      .extract({ left: Math.round(w * 0.15), top: Math.round(h * 0.35), width: Math.round(w * 0.7), height: Math.round(h * 0.3) })
+      .resize(400, 400, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 1 } })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    const fileName = `logos/pavito-logo-${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from("fotos").upload(fileName, cropped, { contentType: "image/jpeg", upsert: true });
+    if (error) return NextResponse.json({ ok: false, error: error.message });
+
+    const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+    await prisma.restaurant.update({
+      where: { slug: "la-picada-del-pa-vito" },
+      data: { logoUrl: urlData.publicUrl },
+    });
+
+    return NextResponse.json({ ok: true, step: "fix-logo", newUrl: urlData.publicUrl });
+  }
+
   // ═══ STEP email-terraza: Send photo update email to Terraza Alameda ═══
   if (step === "email-terraza") {
     const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
