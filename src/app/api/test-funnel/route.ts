@@ -147,6 +147,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, step: "reset", trialEndsAt: trialEnd.toISOString() });
   }
 
+  // ═══ STEP email-plan: Send plan activation email ═══
+  if (step === "email-plan") {
+    if (!restaurant.owner?.email) return NextResponse.json({ error: "No owner email" }, { status: 400 });
+    const { sendAdminEmail, planActivatedEmailHtml } = await import("@/lib/email/sendAdminEmail");
+    const firstName = (restaurant.owner.name || "").split(" ")[0] || "Hola";
+    const planLabel = restaurant.plan === "PREMIUM" ? "Premium" : restaurant.plan === "GOLD" ? "Gold" : "Silver";
+
+    await sendAdminEmail({
+      to: restaurant.owner.email,
+      subject: `¡Tu plan ${planLabel} en ${restaurant.name} está activo!`,
+      html: planActivatedEmailHtml(firstName, restaurant.name, planLabel, `${baseUrl}/panel`),
+      purpose: "plan_activated",
+    });
+
+    return NextResponse.json({ ok: true, step: "email-plan", to: restaurant.owner.email, plan: planLabel });
+  }
+
   // ═══ STEP fix-mp: Find and link MP subscription ═══
   if (step === "fix-mp") {
     try {
