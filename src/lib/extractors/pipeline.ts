@@ -629,6 +629,43 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     await Promise.all([unsplashTask, translationTask]);
 
+    // Reassign RECOMMENDED to dishes that have photos (the initial assignment happens before photos are uploaded)
+    try {
+      const allDishesForRec = await prisma.dish.findMany({
+        where: { restaurantId: restaurant.id, isActive: true },
+        orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
+        select: { id: true, photos: true, tags: true, category: { select: { position: true, dishType: true } } },
+      });
+      // Clear existing RECOMMENDED tags
+      const currentRec = allDishesForRec.filter(d => d.tags?.includes("RECOMMENDED"));
+      for (const d of currentRec) {
+        await prisma.dish.update({ where: { id: d.id }, data: { tags: d.tags.filter(t => t !== "RECOMMENDED") } });
+      }
+      // Assign RECOMMENDED to first dish WITH photo in first 2 non-drink categories
+      const seenCats = new Set<number>();
+      let assigned = 0;
+      for (const d of allDishesForRec) {
+        if (assigned >= 2) break;
+        const catPos = d.category?.position ?? 99;
+        if (seenCats.has(catPos)) continue;
+        if (d.category?.dishType === "drink") { seenCats.add(catPos); continue; }
+        if (d.photos?.length > 0) {
+          await prisma.dish.update({ where: { id: d.id }, data: { tags: [...d.tags.filter(t => t !== "RECOMMENDED"), "RECOMMENDED"] } });
+          seenCats.add(catPos);
+          assigned++;
+        }
+      }
+      // Fallback: if no dishes with photos found, assign to first 2 dishes with photos anywhere
+      if (assigned === 0) {
+        const withPhotos = allDishesForRec.filter(d => d.photos?.length > 0 && d.category?.dishType !== "drink");
+        for (const d of withPhotos.slice(0, 2)) {
+          await prisma.dish.update({ where: { id: d.id }, data: { tags: [...d.tags.filter(t => t !== "RECOMMENDED"), "RECOMMENDED"] } });
+        }
+      }
+    } catch (recErr) {
+      console.error("[Pipeline] RECOMMENDED reassignment failed:", recErr);
+    }
+
     // Always flag for backfill — we only translate ~30% here, full translation on activation
     await prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: true } }).catch(() => {});
 
