@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import ViewSelectorCompact from "./ViewSelectorCompact";
 
 interface Props {
   restaurantName: string;
@@ -12,11 +13,13 @@ interface Props {
   leadEmail?: string;
   leadWhatsapp?: string;
   onActivate?: () => void;
+  plan?: string;
+  defaultView?: string | null;
+  enabledLangs?: string[];
+  hasReferentialPhotos?: boolean;
 }
 
-const TOTAL_ONBOARDING_STEPS = 6;
-
-export default function DemoBanner({ restaurantName, restaurantSlug, restaurantLogo, restaurantId, context, leadName, leadEmail, leadWhatsapp, onActivate }: Props) {
+export default function DemoBanner({ restaurantName, restaurantSlug, restaurantLogo, restaurantId, context, leadName, leadEmail, leadWhatsapp, onActivate, plan, defaultView, enabledLangs, hasReferentialPhotos }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState(leadName || "");
   const [email, setEmail] = useState(leadEmail || "");
@@ -24,55 +27,23 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const [highlight, setHighlight] = useState(false);
-  const [onboardingActive, setOnboardingActive] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
-  const [lockedTooltip, setLockedTooltip] = useState<string | null>(null);
-
-  // Track onboarding active state
-  useEffect(() => {
-    const check = () => setOnboardingActive(document.body.hasAttribute("data-demo-onboarding"));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.body, { attributes: true, attributeFilter: ["data-demo-onboarding"] });
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const onStep = (e: Event) => setOnboardingStep((e as CustomEvent).detail?.step ?? 0);
-    window.addEventListener("demo-onboarding-step", onStep);
-    return () => window.removeEventListener("demo-onboarding-step", onStep);
-  }, []);
-
-  useEffect(() => {
-    const on = () => setHighlight(true);
-    const off = () => setHighlight(false);
-    window.addEventListener("demo-onboarding-highlight-activate", on);
-    window.addEventListener("demo-onboarding-stop-highlight", off);
-    return () => {
-      window.removeEventListener("demo-onboarding-highlight-activate", on);
-      window.removeEventListener("demo-onboarding-stop-highlight", off);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!lockedTooltip) return;
-    const close = () => setLockedTooltip(null);
-    const autoClose = setTimeout(close, 3000);
-    const t = setTimeout(() => window.addEventListener("pointerdown", close, { once: true }), 10);
-    return () => { clearTimeout(t); clearTimeout(autoClose); window.removeEventListener("pointerdown", close); };
-  }, [lockedTooltip]);
-
-  useEffect(() => { setLockedTooltip(null); }, [onboardingStep]);
-
-  const stepsLeft = Math.max(0, TOTAL_ONBOARDING_STEPS - 1 - onboardingStep);
-  const lockedMsg = `Completa el tour — ${stepsLeft === 1 ? "queda 1 paso" : `quedan ${stepsLeft} pasos`}`;
-
-  const handleLockedClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setLockedTooltip(prev => prev ? null : "btn");
+  const LANG_FLAGS: Record<string, string> = {
+    es: "https://purecatamphetamine.github.io/country-flag-icons/3x2/ES.svg",
+    en: "https://purecatamphetamine.github.io/country-flag-icons/3x2/GB.svg",
+    pt: "https://purecatamphetamine.github.io/country-flag-icons/3x2/PT.svg",
+    it: "https://purecatamphetamine.github.io/country-flag-icons/3x2/IT.svg",
   };
+
+  // Detect when carta header scrolls out of view → show view/lang controls
+  const [headerGone, setHeaderGone] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      setHeaderGone(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", check, { passive: true });
+    check();
+    return () => window.removeEventListener("scroll", check);
+  }, []);
 
   const handleSubmit = async () => {
     if (!email.trim() || !email.includes("@")) { setError("Ingresa un email válido"); return; }
@@ -115,7 +86,6 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 60,
-        transform: "translate3d(0,0,0)", WebkitTransform: "translate3d(0,0,0)",
         padding: showForm ? "14px 14px 16px" : "18px 14px 18px",
         background: "rgba(7,7,7,.92)",
         backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
@@ -124,22 +94,65 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         transition: "padding 0.2s ease",
       }}
     >
-      {/* Top row: logo + name + button */}
+      {/* Top row: logo + name OR view/lang controls + button */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-          {restaurantLogo ? (
-            <div style={{ width: 28, height: 28, borderRadius: 8, border: "1.5px solid rgba(244,166,35,.5)", overflow: "hidden", flexShrink: 0 }}>
-              <img src={restaurantLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
+          {!headerGone || showForm ? (
+            <>
+              {restaurantLogo ? (
+                <div style={{ width: 28, height: 28, borderRadius: 8, border: "1.5px solid rgba(244,166,35,.5)", overflow: "hidden", flexShrink: 0 }}>
+                  <img src={restaurantLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              ) : (
+                <span style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,178,45,.15)", border: "1.5px solid rgba(244,166,35,.3)", display: "inline-grid", placeItems: "center", fontSize: 12, flexShrink: 0 }}>🍽</span>
+              )}
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurantName}</span>
+            </>
           ) : (
-            <span style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,178,45,.15)", border: "1.5px solid rgba(244,166,35,.3)", display: "inline-grid", placeItems: "center", fontSize: 12, flexShrink: 0 }}>🍽</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {plan !== "FREE" && restaurantId && (
+                <div style={{ transform: "scale(1.2)", transformOrigin: "center" }}>
+                  <ViewSelectorCompact restaurantId={restaurantId} plan={plan} defaultView={defaultView} />
+                </div>
+              )}
+              {enabledLangs && enabledLangs.length > 1 && (
+                <div style={{ display: "flex", gap: 4 }}>
+                  {enabledLangs.map(l => {
+                    const isActive = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("lang") || "es") === l;
+                    return (
+                      <button
+                        key={l}
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("lang", l);
+                          window.location.href = url.toString();
+                        }}
+                        style={{
+                          width: 38, height: 38, borderRadius: "50%",
+                          background: isActive ? "rgba(244,166,35,0.2)" : "rgba(255,255,255,0.08)",
+                          border: isActive ? "1.5px solid " + (isActive ? "rgba(244,166,35,0.5)" : "rgba(255,255,255,0.12)") : undefined,
+                          cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          overflow: "hidden", padding: 0,
+                        }}
+                      >
+                        {LANG_FLAGS[l] ? (
+                          <img src={LANG_FLAGS[l]} alt={l} style={{ width: 22, height: 16, objectFit: "cover", borderRadius: 2, opacity: isActive ? 1 : 0.5 }} />
+                        ) : (
+                          <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? "#F4A623" : "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>{l}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurantName}</span>
         </div>
 
         <div style={{ position: "relative", flexShrink: 0 }}>
           <button
-            onClick={onboardingActive ? handleLockedClick : () => setShowForm(f => !f)}
+            onClick={() => setShowForm(f => !f)}
             className="demo-activar-btn"
             style={{
               border: 0, borderRadius: 999, height: 44, padding: "0 22px",
@@ -147,32 +160,13 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               background: showForm ? "rgba(255,255,255,.1)" : "linear-gradient(135deg, #ffc44f, #f3a333)",
               color: showForm ? "rgba(255,255,255,.6)" : "#0a0a0a",
               display: "flex", alignItems: "center", gap: 6, textDecoration: "none", whiteSpace: "nowrap",
-              boxShadow: highlight ? "0 0 0 3px rgba(244,166,35,0.4), 0 10px 24px rgba(244,166,35,.35)" : showForm ? "none" : "0 8px 20px rgba(244,166,35,.2)",
-              animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
+              boxShadow: showForm ? "none" : "0 8px 20px rgba(244,166,35,.2)",
               transition: "all 0.2s ease",
-              cursor: onboardingActive ? "default" : "pointer",
+              cursor: "pointer",
             }}
           >
             {showForm ? "Cerrar" : "Entrar a mi panel"}
           </button>
-          {lockedTooltip && (
-            <div style={{
-              position: "absolute", top: "calc(100% + 8px)", right: 0,
-              background: "#1a1a1a", border: "1px solid rgba(255,178,45,0.25)", borderRadius: 10,
-              padding: "10px 14px", width: 220, zIndex: 70,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-              animation: "tooltipFadeIn 0.15s ease-out",
-            }}>
-              <div style={{
-                position: "absolute", top: -5, right: 20,
-                width: 10, height: 10, background: "#1a1a1a", borderTop: "1px solid rgba(255,178,45,0.25)", borderLeft: "1px solid rgba(255,178,45,0.25)",
-                transform: "rotate(45deg)",
-              }} />
-              <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
-                🧞 {lockedMsg}
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -218,12 +212,12 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           bottom: 0, left: 0, right: 0,
           transform: "translateY(100%)",
           padding: "8px 14px",
-          background: "linear-gradient(135deg, rgba(255,196,79,.18), rgba(243,163,51,.12))",
-          borderBottom: "1px solid rgba(244,166,35,.18)",
+          background: "linear-gradient(135deg, rgba(255,196,79,.5), rgba(243,163,51,.4))",
+          borderBottom: "1px solid rgba(244,166,35,.5)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.55)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            Vista previa · entra a tu panel para editar
+          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.9)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {hasReferentialPhotos ? "Algunas fotos son referenciales" : "Vista previa"} · edita tu carta
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
               <path d="M12 19V5M5 10l7-7 7 7" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

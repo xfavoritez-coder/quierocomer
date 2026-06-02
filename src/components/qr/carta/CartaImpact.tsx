@@ -1417,11 +1417,6 @@ export default function CartaImpact({
         }}>
           {t(lang, "impactMenu" as any)}
         </h2>
-        {(restaurant as any).isDemo && (
-          <p style={{ fontSize: "0.75rem", color: "var(--carta-text2, rgba(255,255,255,0.45))", margin: "8px 0 0", lineHeight: 1.4 }}>
-            📸 Algunas fotos son referenciales · Sube las tuyas desde el panel
-          </p>
-        )}
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
@@ -1563,17 +1558,41 @@ export default function CartaImpact({
                   {category.description}
                 </p>
               )}
-              {catDishes.map((dish) => (
-                <div key={dish.id} data-dish-id={dish.id}>
-                  <ImpactDishCard
-                    dish={dish}
-                    rating={ratingMap[dish.id]}
-                    isPopular={popularDishIds.has(dish.id)}
-                    autoRecommended={pMap?.get(dish.id)?.autoRecommended}
-                    onClick={() => handleDishClick(dish)}
-                  />
-                </div>
-              ))}
+              {catDishes.map((dish, dishIdx) => {
+                // Check if this is the last translated dish followed by untranslated ones
+                const showTranslationBanner = (restaurant as any).isDemo && lang !== "es"
+                  && (dish as any)._hasTranslation
+                  && catDishes[dishIdx + 1] && !(catDishes[dishIdx + 1] as any)._hasTranslation;
+                return (
+                  <div key={dish.id}>
+                    <div data-dish-id={dish.id}>
+                      <ImpactDishCard
+                        dish={dish}
+                        rating={ratingMap[dish.id]}
+                        isPopular={popularDishIds.has(dish.id)}
+                        autoRecommended={pMap?.get(dish.id)?.autoRecommended}
+                        onClick={() => handleDishClick(dish)}
+                      />
+                    </div>
+                    {showTranslationBanner && (
+                      <div
+                        className="font-[family-name:var(--font-dm)]"
+                        style={{
+                          margin: "4px 0 14px", padding: "12px 14px",
+                          background: "linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.03))",
+                          border: "1px solid rgba(59,130,246,0.15)", borderRadius: 14,
+                          display: "flex", alignItems: "center", gap: 10,
+                        }}
+                      >
+                        <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>🌍</span>
+                        <span style={{ fontSize: "0.75rem", color: "var(--carta-text2, rgba(255,255,255,0.55))", lineHeight: 1.45 }}>
+                          Tradujimos los primeros platos para que lo veas. Al activar tu carta, se traduce completa.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
