@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+
 import { sendAdminEmail, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     }),
     // Solo borrar fotos Unsplash (tienen photoCredits), NO las del sitio del restaurante
     prisma.dish.updateMany({
-      where: { restaurantId, isPhotoReferential: true, photoCredits: { isEmpty: false } },
+      where: { restaurantId, isPhotoReferential: true },
       data: { photos: [], isPhotoReferential: false, photoCredits: [] },
     }),
     // Borrar sessions demo (cascade borra DishImpressions)

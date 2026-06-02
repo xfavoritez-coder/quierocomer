@@ -188,7 +188,7 @@ export async function GET(req: NextRequest) {
                 to: lead.whatsapp,
                 body: "",
                 contentSid: "HX553107603c0366a63214d4f52afc8e38",
-                contentVariables: JSON.stringify({ "1": ownerName, "2": r.name }),
+                contentVariables: { "1": ownerName, "2": r.name },
               });
               if (sid) {
                 events.push({ ts: now.toISOString(), action: "nurturing_trial_usado", sid });

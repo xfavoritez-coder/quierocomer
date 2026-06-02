@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
 
   // Solo borrar fotos Unsplash (tienen photoCredits), NO las del sitio del restaurante
   prisma.dish.updateMany({
-    where: { restaurantId, isPhotoReferential: true, photoCredits: { isEmpty: false } },
+    where: { restaurantId, isPhotoReferential: true },
     data: { photos: [], isPhotoReferential: false, photoCredits: [] },
   }).then((r) => {
     if (r.count > 0) console.log(`[Activar] Cleared ${r.count} Unsplash referential photos for ${restaurantId}`);

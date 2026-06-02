@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
         to: lead.whatsapp,
         body: "", // Template handles the body
         contentSid: templateSid,
-        contentVariables: JSON.stringify({ "1": ownerName, "2": restaurantName }),
+        contentVariables: { "1": ownerName, "2": restaurantName },
       });
 
       if (sid) {

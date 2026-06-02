@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
       },
     }),
     // Solo borrar fotos Unsplash (tienen photoCredits), NO las del sitio del restaurante
-    prisma.dish.updateMany({ where: { restaurantId: restaurant.id, isPhotoReferential: true, photoCredits: { isEmpty: false } }, data: { photos: [], isPhotoReferential: false, photoCredits: [] } }),
+    prisma.dish.updateMany({ where: { restaurantId: restaurant.id, isPhotoReferential: true }, data: { photos: [], isPhotoReferential: false, photoCredits: [] } }),
     prisma.session.deleteMany({ where: { restaurantId: restaurant.id } }),
   ]);
 
