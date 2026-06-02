@@ -19,7 +19,6 @@ import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
-import DemoViewFab from "./DemoViewFab";
 import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import { getGuestId } from "@/lib/guestId";
@@ -839,9 +838,6 @@ export default function CartaPremium({
         onLampClick={() => setGenioOpen(true)}
         pinned={
           <>
-            {(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" && (
-              <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
-            )}
             {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
           </>
         }

@@ -142,8 +142,6 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       { text: "Clientes capturados", tip: "Ve todos los clientes capturados: correos, cumpleaños, preferencias y más." },
       { text: "Email marketing", tip: "Envía campañas de email a tu base de clientes." },
       { text: "Cumpleaños automáticos", tip: "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante." },
-      { text: "Integración Toteat", tip: "Sincroniza ventas reales con la carta. Dashboard en vivo." },
-      { text: "Idiomas adicionales", tip: "Agrega idiomas extra además de inglés y portugués: francés, italiano, alemán, chino y más." },
     ],
     inheritsFrom: "Todo lo del plan Gold",
     isFeatured: false,

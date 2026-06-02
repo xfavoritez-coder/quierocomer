@@ -35,7 +35,6 @@ import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
-import DemoViewFab from "./DemoViewFab";
 import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import WaiterButton from "../garzon/WaiterButton";
@@ -703,9 +702,6 @@ export default function CartaFeed({
         onLampClick={() => setGenioOpen(true)}
         pinned={
           <>
-            {(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" && (
-              <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
-            )}
             {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
           </>
         }

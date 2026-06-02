@@ -15,7 +15,6 @@ import { norm } from "@/lib/normalize";
 import ViewSelectorCompact from "./ViewSelectorCompact";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
-import DemoViewFab from "./DemoViewFab";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -1670,9 +1669,6 @@ export default function CartaImpact({
         onLampClick={() => setGenioOpen(true)}
         pinned={
           <>
-            {(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" && (
-              <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
-            )}
             {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
           </>
         }

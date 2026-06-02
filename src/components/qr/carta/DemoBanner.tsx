@@ -111,7 +111,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {enabledLangs && enabledLangs.length > 1 && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,.5)", whiteSpace: "nowrap" }}>Idioma:</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.55)", whiteSpace: "nowrap" }}>Idioma:</span>
                   {enabledLangs.map(l => {
                     const isActive = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("lang") || "es") === l;
                     return (
