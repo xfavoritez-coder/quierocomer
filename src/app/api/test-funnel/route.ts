@@ -147,13 +147,46 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, step: "reset", trialEndsAt: trialEnd.toISOString() });
   }
 
+  // ═══ STEP fix-mp: Find and link MP subscription ═══
+  if (step === "fix-mp") {
+    try {
+      const { MercadoPagoConfig, PreApproval } = await import("mercadopago");
+      const config = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
+      const client = new PreApproval(config);
+
+      const result = await client.search({
+        options: { external_reference: restaurant.id },
+      });
+
+      const subs = (result.results || []).map((s: any) => ({
+        id: s.id, status: s.status, reason: s.reason,
+        payer_email: s.payer_email, next_payment_date: s.next_payment_date,
+      }));
+
+      // Auto-link the first authorized/pending subscription
+      const active = (result.results || []).find((s: any) => ["authorized", "pending"].includes(s.status));
+      if (active?.id) {
+        await prisma.restaurant.update({
+          where: { slug: SLUG },
+          data: { mpSubscriptionId: active.id },
+        });
+        return NextResponse.json({ ok: true, step: "fix-mp", linked: active.id, allSubs: subs });
+      }
+
+      return NextResponse.json({ ok: false, step: "fix-mp", message: "No active subscription found", allSubs: subs });
+    } catch (e: any) {
+      return NextResponse.json({ ok: false, step: "fix-mp", error: e.message });
+    }
+  }
+
   return NextResponse.json({
-    error: "Use ?step=6, ?step=7, or ?step=reset",
+    error: "Use ?step=6, ?step=7, ?step=reset, or ?step=fix-mp",
     currentState: {
       plan: restaurant.plan,
       subscriptionStatus: restaurant.subscriptionStatus,
       trialEndsAt: restaurant.trialEndsAt,
       trialReminderSentAt: restaurant.trialReminderSentAt,
+      mpSubscriptionId: (restaurant as any).mpSubscriptionId,
     },
   });
 }
