@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { processLead } from "@/lib/extractors/pipeline";
 import { isSuperAdmin, checkAdminAuth } from "@/lib/adminAuth";
 
 export const maxDuration = 300;
 
 /**
  * POST /api/admin/crear-carta
- * Superadmin: create a carta from a URL instantly.
- * Body: { url: string, nombre?: string, email?: string, whatsapp?: string }
+ * Superadmin: create a lead and fire processing in background.
+ * Returns immediately with leadId. UI polls GET for status.
  */
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -42,7 +41,39 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const result = await processLead(lead.id);
+  // Fire and forget — process in background
+  import("@/lib/extractors/pipeline").then(({ processLead }) => {
+    processLead(lead.id).catch(err => {
+      console.error("[crear-carta] Pipeline error:", err.message);
+      prisma.lead.update({ where: { id: lead.id }, data: { cartaStatus: "FAILED", errorLog: err.message } }).catch(() => {});
+    });
+  });
 
-  return NextResponse.json({ ok: true, slug: result.slug, url: result.url, leadId: lead.id });
+  return NextResponse.json({ ok: true, leadId: lead.id });
+}
+
+/**
+ * GET /api/admin/crear-carta?leadId=xxx
+ * Poll lead status.
+ */
+export async function GET(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  const leadId = req.nextUrl.searchParams.get("leadId");
+  if (!leadId) return NextResponse.json({ error: "leadId requerido" }, { status: 400 });
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { cartaStatus: true, generatedSlug: true, errorLog: true },
+  });
+  if (!lead) return NextResponse.json({ error: "Lead no encontrado" }, { status: 404 });
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  return NextResponse.json({
+    status: lead.cartaStatus,
+    slug: lead.generatedSlug,
+    url: lead.generatedSlug ? `${baseUrl}/qr/${lead.generatedSlug}` : null,
+    error: lead.errorLog,
+  });
 }

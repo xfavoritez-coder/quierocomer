@@ -412,7 +412,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     }
 
     // Create restaurant
-    const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
     const restaurant = await prisma.restaurant.create({
       data: {
         name: cleanedName,
@@ -425,7 +424,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         isActive: true,
         isDemo: true,
         weeklyEmailEnabled: true,
-        qrToken,
         qrActivatedAt: new Date(),
         plan: "PREMIUM",
         subscriptionStatus: "NONE",
@@ -508,7 +506,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Mark lead as READY early — before slow operations (photos, translations)
     // so a timeout won't mark it FAILED after the restaurant already exists
-    const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}?t=${qrToken}`;
+    const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}`;
     await prisma.lead.update({
       where: { id: leadId },
       data: { cartaStatus: "READY", generatedSlug: restaurant.slug, readyAt: new Date() },

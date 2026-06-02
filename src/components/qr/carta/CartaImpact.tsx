@@ -1585,7 +1585,7 @@ export default function CartaImpact({
                         }}
                       >
                         <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>🌍</span>
-                        <span style={{ fontSize: "0.75rem", color: "var(--carta-text2, rgba(255,255,255,0.55))", lineHeight: 1.45 }}>
+                        <span style={{ fontSize: "0.85rem", color: "var(--carta-text2, rgba(255,255,255,0.55))", lineHeight: 1.45 }}>
                           Tradujimos los primeros platos para que lo veas. Al activar tu carta, se traduce completa.
                         </span>
                       </div>

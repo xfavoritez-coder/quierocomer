@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import ViewSelectorCompact from "./ViewSelectorCompact";
+import { List, Rocket, FileText } from "lucide-react";
 
 interface Props {
   restaurantName: string;
@@ -109,10 +109,37 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurantName}</span>
             </>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {plan !== "FREE" && restaurantId && (
-                <div style={{ transform: "scale(1.2)", transformOrigin: "center" }}>
-                  <ViewSelectorCompact restaurantId={restaurantId} plan={plan} defaultView={defaultView} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {plan !== "FREE" && (
+                <div style={{ display: "flex", gap: 4 }}>
+                  {([
+                    { value: "esencial", Icon: FileText },
+                    { value: "lista", Icon: List },
+                    { value: "impact", Icon: Rocket },
+                  ] as const).map(({ value, Icon }) => {
+                    const currentView = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("vista") || defaultView || "impact") : "impact";
+                    const isActive = currentView === value;
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("vista", value);
+                          window.location.href = url.toString();
+                        }}
+                        style={{
+                          width: 38, height: 38, borderRadius: "50%",
+                          background: isActive ? "rgba(244,166,35,0.2)" : "rgba(255,255,255,0.08)",
+                          border: isActive ? "1.5px solid rgba(244,166,35,0.5)" : "1.5px solid rgba(255,255,255,0.12)",
+                          color: isActive ? "#F4A623" : "rgba(255,255,255,0.5)",
+                          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        title={value}
+                      >
+                        <Icon size={15} strokeWidth={1.75} />
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               {enabledLangs && enabledLangs.length > 1 && (
@@ -216,7 +243,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           borderBottom: "1px solid rgba(244,166,35,.5)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.9)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.9)", display: "inline-flex", alignItems: "center", gap: 6 }}>
             {hasReferentialPhotos ? "Algunas fotos son referenciales" : "Vista previa"} · edita tu carta
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
               <path d="M12 19V5M5 10l7-7 7 7" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
