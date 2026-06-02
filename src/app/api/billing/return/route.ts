@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMPSubscription } from "@/lib/billing/mercadopago";
-import { planFromFlowId } from "@/lib/billing/plans-config";
+import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
+import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
  * GET /api/billing/return?preapproval_id=...&plan=...
@@ -35,7 +36,10 @@ export async function GET(req: NextRequest) {
   }
 
   const restaurantId = mpSub.externalReference;
-  const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    include: { owner: { select: { email: true, name: true } } },
+  });
 
   if (!restaurant) {
     return NextResponse.redirect(`${baseUrl}/panel?billing=error&reason=restaurant_not_found`);
@@ -57,5 +61,26 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.redirect(`${baseUrl}/panel?billing=success&plan=${appPlan}`);
+  // Send confirmation email to owner
+  const ownerEmail = restaurant.owner?.email;
+  const ownerName = restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
+  const planKey = appPlan as Exclude<PlanKey, "FREE">;
+  const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
+  const chargeGross = grossOf(FLOW_PLANS[planKey]?.amountNet ?? 0);
+  const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+  const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  const nextAmount = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+  const panelLink = `${baseUrl}/panel`;
+  const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
+
+  if (ownerEmail) {
+    sendAdminEmail({
+      to: ownerEmail,
+      subject: `${restaurant.name} · Plan ${planLabel} activado`,
+      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, panelLink, qrLink),
+      purpose: "plan_activated",
+    }).catch(() => {});
+  }
+
+  return NextResponse.redirect(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);
 }

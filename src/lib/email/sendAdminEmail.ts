@@ -264,6 +264,29 @@ export function cartaListaSimpleEmailHtml({
 </body></html>`;
 }
 
+export function monthlyRenewalEmailHtml(
+  firstName: string, restaurantName: string, planName: string,
+  amount: string, panelLink: string,
+): string {
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">✅</span></td></tr>
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Tu plan se renovó</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    ${firstName}, tu plan <strong>${planName}</strong> en <strong>${restaurantName}</strong> se renovó exitosamente. Tu carta sigue activa sin interrupciones.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Cobro del mes")}
+    ${field("Monto cobrado", amount)}
+    ${field("Plan", planName)}
+    ${field("Restaurante", restaurantName)}
+  `, true)}</td></tr>
+  <tr><td style="padding-bottom:8px;">${btn(panelLink, "Ir a mi panel")}</td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Gracias por confiar en QuieroComer. Puedes cancelar o cambiar de plan cuando quieras desde tu panel.</td></tr>
+  `);
+}
+
 export function trialEndingSoonEmailHtml(
   firstName: string, restaurantName: string,
   daysLeft: number, panelLink: string, suscripcionLink: string,
