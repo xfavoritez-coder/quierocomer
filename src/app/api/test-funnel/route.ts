@@ -147,6 +147,83 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, step: "reset", trialEndsAt: trialEnd.toISOString() });
   }
 
+  // ═══ STEP email-terraza: Send photo update email to Terraza Alameda ═══
+  if (step === "email-terraza") {
+    const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+  <tr><td align="center" style="padding-bottom:24px;">
+    <a href="${baseUrl}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:3px;"><img src="${baseUrl}/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:#E8A33D;">QuieroComer</span></td>
+    </tr></table></a>
+  </td></tr>
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">📸</span></td></tr>
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">Actualizamos las fotos de tu carta</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Victor, detectamos que las fotos de la carta de <strong style="color:#E8A33D;">Terraza Alameda</strong> no eran las correctas — se estaban mostrando imágenes genéricas en lugar de las fotos reales de tus platos.
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Ya lo corregimos. Extrajimos las fotos directamente desde tu sitio web y las actualizamos en tu carta digital. Ahora tus clientes ven <strong>tus platos reales</strong>.
+  </td></tr>
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid rgba(232,163,61,0.2);border-radius:14px;">
+      <tr><td style="padding:16px 18px;">
+        <div style="font-size:10px;color:#E8A33D;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Lo que hicimos</div>
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr><td style="padding:5px 0;font-size:14px;color:#6c4d22;line-height:1.5;"><span style="color:#16a34a;margin-right:6px;">✓</span> 73 platos ahora tienen sus fotos reales</td></tr>
+          <tr><td style="padding:5px 0;font-size:14px;color:#6c4d22;line-height:1.5;"><span style="color:#16a34a;margin-right:6px;">✓</span> Se eliminaron todas las imágenes genéricas</td></tr>
+          <tr><td style="padding:5px 0;font-size:14px;color:#6c4d22;line-height:1.5;"><span style="color:#16a34a;margin-right:6px;">✓</span> Tu vista por defecto ahora es Impact</td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="font-size:14px;color:#8a7550;line-height:1.5;padding-bottom:16px;text-align:center;">
+    Disculpa las molestias. Si necesitas ajustar algo, puedes hacerlo desde tu panel.
+  </td></tr>
+  <tr><td style="padding-bottom:8px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
+      <a href="${baseUrl}/qr/terraza-alameda" style="display:inline-block;background:#E8A33D;color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Ver mi carta →</a>
+    </td></tr></table>
+  </td></tr>
+  <tr><td style="padding-bottom:4px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
+      <a href="${baseUrl}/panel" style="display:inline-block;background:#fffaf1;color:#6c4d22;border:1px solid #e8dcc4;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Ir a mi panel</a>
+    </td></tr></table>
+  </td></tr>
+  <tr><td style="padding-top:24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:16px 0 0;">
+    <table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td><a href="${baseUrl}" style="font-family:Georgia,serif;font-size:13px;color:#E8A33D;text-decoration:none;">QuieroComer.cl</a></td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">Hecho en Chile</td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">&copy; ${new Date().getFullYear()}</td>
+    </tr></table>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+    await sendAdminEmail({
+      to: "terrazaalamedalinares@gmail.com",
+      subject: "Victor, actualizamos las fotos de tu carta",
+      html,
+      purpose: "photo_update",
+    });
+
+    return NextResponse.json({ ok: true, step: "email-terraza", to: "terrazaalamedalinares@gmail.com" });
+  }
+
   // ═══ STEP email-plan: Send plan activation email ═══
   if (step === "email-plan") {
     if (!restaurant.owner?.email) return NextResponse.json({ error: "No owner email" }, { status: 400 });
