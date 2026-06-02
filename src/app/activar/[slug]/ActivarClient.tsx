@@ -33,10 +33,10 @@ body { margin: 0; font-family: Inter, -apple-system, sans-serif; background: rad
 .hero { text-align: center; padding-top: 60px; }
 .resto-logo { width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 24px; border: 1px solid rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 950; font-size: 20px; color: var(--amber); box-shadow: 0 18px 40px rgba(0,0,0,.45); overflow: hidden; background: #111; }
 .resto-logo img { width: 100%; height: 100%; object-fit: cover; }
-.eyebrow { color: var(--amber); font-size: 11px; letter-spacing: 3.5px; font-weight: 950; text-transform: uppercase; margin-bottom: 13px; }
-h1 { margin: 0; font-family: Georgia, serif; font-size: 40px; line-height: 1.02; letter-spacing: -.8px; font-weight: 400; }
+.eyebrow { color: var(--amber); font-size: 13px; letter-spacing: 3.5px; font-weight: 950; text-transform: uppercase; margin-bottom: 13px; }
+h1 { margin: 0; font-family: Georgia, serif; font-size: 46px; line-height: 1.02; letter-spacing: -.8px; font-weight: 400; }
 h1 em { color: var(--amber); font-style: italic; }
-.subtitle { margin: 16px auto 22px; max-width: 350px; color: var(--cream-soft); font-size: 15px; line-height: 1.48; }
+.subtitle { margin: 16px auto 22px; max-width: 380px; color: var(--cream-soft); font-size: 17px; line-height: 1.48; }
 .phone-wrap { position: relative; margin: 0 auto 22px; width: 260px; }
 .phone { width: 260px; height: 470px; border-radius: 44px; padding: 12px; background: linear-gradient(145deg, #313131, #060606); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 28px 60px rgba(0,0,0,.6), 0 0 48px rgba(255,174,42,.14); }
 .screen { height: 100%; border-radius: 31px; overflow: hidden; background: #0a0908; display: flex; flex-direction: column; }
@@ -60,7 +60,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .screen-cat { padding: 5px 10px; border-radius: 99px; font-size: 9px; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,.05); color: rgba(255,255,255,.45); border: 1px solid transparent; }
 .screen-cat.active { background: rgba(232,163,61,.12); color: var(--amber); border-color: rgba(232,163,61,.25); }
 .screen-dishes { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
-.phone-caption { margin-top: 11px; color: var(--gray-warm); font-size: 12px; text-align: center; }
+.phone-caption { margin-top: 11px; color: var(--gray-warm); font-size: 14px; text-align: center; }
 .activation-flow { position: relative; margin-top: 28px; padding-bottom: 8px; }
 .activation-flow::before { content: ""; position: absolute; left: 50%; top: 330px; transform: translateX(-50%); width: 360px; height: 360px; background: radial-gradient(circle, rgba(255,178,45,.22), transparent 66%); pointer-events: none; z-index: 0; }
 .flow-arrow { width: 1px; height: 42px; margin: 14px auto 0; background: linear-gradient(to bottom, rgba(255,178,45,.0), rgba(255,178,45,.7)); position: relative; z-index: 2; }
@@ -72,31 +72,31 @@ h1 em { color: var(--amber); font-style: italic; }
 .discount { position: absolute; top: 16px; right: 16px; border-radius: 999px; padding: 8px 10px; background: rgba(168,85,247,.14); border: 1px solid rgba(168,85,247,.35); color: #c084fc; font-size: 11px; font-weight: 950; }
 .new-price { margin: -2px 0 6px; color: var(--amber); font-size: 38px; font-weight: 950; letter-spacing: -1.5px; }
 .new-price small { font-size: 13px; color: var(--cream-soft); letter-spacing: 0; }
-.offer-text { color: var(--cream-soft); font-size: 12px; line-height: 1.4; margin-bottom: 12px; }
-.cta { width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; font-size: 15px; font-weight: 950; box-shadow: 0 18px 34px rgba(245,164,51,.22); cursor: pointer; transition: opacity .2s; }
+.offer-text { color: var(--cream-soft); font-size: 14px; line-height: 1.4; margin-bottom: 12px; }
+.cta { width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; font-size: 17px; font-weight: 950; box-shadow: 0 18px 34px rgba(245,164,51,.22); cursor: pointer; transition: opacity .2s; }
 .cta:disabled { opacity: .6; cursor: wait; }
-.secure { margin-top: 13px; text-align: center; color: var(--gray-warm); font-size: 12px; }
+.secure { margin-top: 13px; text-align: center; color: var(--gray-warm); font-size: 14px; }
 .divider { height: 1px; background: rgba(255,255,255,.08); margin: 32px 0 24px; }
-.section-title { text-align: center; margin: 0 0 7px; font-family: Georgia, serif; font-size: 26px; font-weight: 400; }
-.section-sub { text-align: center; color: var(--gray-warm); opacity: 0.7; margin: 0 auto 18px; font-size: 13px; line-height: 1.4; }
+.section-title { text-align: center; margin: 0 0 7px; font-family: Georgia, serif; font-size: 30px; font-weight: 400; }
+.section-sub { text-align: center; color: var(--gray-warm); opacity: 0.7; margin: 0 auto 18px; font-size: 15px; line-height: 1.4; }
 .venues { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .venue { min-height: 155px; padding: 15px; border-radius: 20px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); text-align: center; }
 .venue-logo { width: 48px; height: 48px; margin: 0 auto 10px; border-radius: 15px; display: grid; place-items: center; font-size: 12px; font-weight: 950; overflow: hidden; background: #151515; border: 1px solid rgba(255,255,255,.1); color: var(--amber); }
 .venue-logo img { width: 100%; height: 100%; object-fit: cover; }
 .stars { color: var(--amber); font-size: 11px; margin-bottom: 6px; }
-.venue strong { display: block; font-size: 13px; margin-bottom: 6px; }
+.venue strong { display: block; font-size: 15px; margin-bottom: 6px; }
 .venue-badge { display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: .5px; padding: 4px 8px; border-radius: 999px; text-transform: uppercase; }
 .venue-badge-premium { background: rgba(168,85,247,.12); color: #c4b5fd; border: 1px solid rgba(168,85,247,.25); }
 .venue-badge-gold { background: rgba(255,178,45,.12); color: #ffd184; border: 1px solid rgba(255,178,45,.25); }
 .venue-badge-free { background: rgba(255,255,255,.06); color: var(--gray-warm); border: 1px solid rgba(255,255,255,.1); }
-.benefits-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 auto 12px; padding: 8px 12px; border-radius: 999px; background: rgba(255,178,45,.10); color: #ffbd55; border: 1px solid rgba(255,178,45,.18); font-size: 11px; font-weight: 950; letter-spacing: .8px; text-transform: uppercase; }
+.benefits-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 auto 12px; padding: 8px 12px; border-radius: 999px; background: rgba(255,178,45,.10); color: #ffbd55; border: 1px solid rgba(255,178,45,.18); font-size: 13px; font-weight: 950; letter-spacing: .8px; text-transform: uppercase; }
 .benefits { display: grid; gap: 12px; }
 .benefit { position: relative; overflow: hidden; display: grid; grid-template-columns: 58px 1fr; gap: 14px; align-items: center; padding: 17px; min-height: 110px; border-radius: 26px; background: linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.025)), #111; border: 1px solid rgba(255,255,255,.09); box-shadow: 0 16px 34px rgba(0,0,0,.26); }
 .benefit::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 12% 20%, rgba(255,178,45,.13), transparent 28%), radial-gradient(circle at 100% 100%, rgba(255,178,45,.06), transparent 30%); pointer-events: none; }
 .benefit-icon { position: relative; z-index: 1; width: 58px; height: 58px; border-radius: 20px; display: grid; place-items: center; font-size: 27px; background: linear-gradient(135deg, rgba(255,178,45,.22), rgba(255,178,45,.08)); border: 1px solid rgba(255,178,45,.18); box-shadow: 0 10px 24px rgba(255,178,45,.09); }
 .benefit-content { position: relative; z-index: 1; }
-.benefit strong { display: block; margin-bottom: 6px; font-size: 16px; line-height: 1.15; letter-spacing: -.2px; }
-.benefit p { margin: 0; color: var(--cream-soft); font-size: 14px; line-height: 1.45; }
+.benefit strong { display: block; margin-bottom: 6px; font-size: 18px; line-height: 1.15; letter-spacing: -.2px; }
+.benefit p { margin: 0; color: var(--cream-soft); font-size: 15px; line-height: 1.45; }
 .benefit.highlight { border-color: rgba(255,178,45,.34); background: linear-gradient(135deg, rgba(255,178,45,.13), rgba(255,255,255,.03)), #111; }
 .plans { display: grid; gap: 14px; }
 .plan { border-radius: 25px; padding: 20px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10); position: relative; }
@@ -108,18 +108,18 @@ h1 em { color: var(--amber); font-style: italic; }
 .plan.featured h3 { color: var(--amber); }
 .badge { position: absolute; right: 16px; top: 16px; border-radius: 999px; padding: 7px 10px; color: #ffd38a; background: rgba(255,178,45,.14); font-size: 10px; font-weight: 950; }
 .badge-trial { position: absolute; right: 16px; top: 16px; border-radius: 999px; padding: 7px 12px; color: #fff; background: #dc2626; font-size: 10px; font-weight: 950; letter-spacing: .3px; }
-.plan h3 { margin: 0 0 10px; font-family: Georgia, serif; font-size: 24px; font-weight: 400; color: var(--cream); }
-.plan-price { font-size: 30px; font-weight: 950; margin-bottom: 8px; }
-.plan-price small { font-size: 12px; color: var(--cream-soft); }
+.plan h3 { margin: 0 0 10px; font-family: Georgia, serif; font-size: 28px; font-weight: 400; color: var(--cream); }
+.plan-price { font-size: 34px; font-weight: 950; margin-bottom: 8px; }
+.plan-price small { font-size: 14px; color: var(--cream-soft); }
 .plan.featured .plan-price { color: var(--amber); }
-.strike { display: block; color: rgba(232,221,200,.45); font-size: 15px; font-weight: 700; text-decoration: line-through; text-decoration-thickness: 2px; margin-top: 2px; margin-bottom: 6px; }
-.plan p { margin: 0 0 14px; color: var(--cream-soft); font-size: 13px; line-height: 1.4; }
+.strike { display: block; color: rgba(232,221,200,.45); font-size: 17px; font-weight: 700; text-decoration: line-through; text-decoration-thickness: 2px; margin-top: 2px; margin-bottom: 6px; }
+.plan p { margin: 0 0 14px; color: var(--cream-soft); font-size: 15px; line-height: 1.4; }
 .checks { display: grid; gap: 8px; margin-bottom: 16px; }
-.checks div { color: var(--cream); font-size: 14px; display: flex; align-items: center; gap: 4px; }
+.checks div { color: var(--cream); font-size: 15px; display: flex; align-items: center; gap: 4px; }
 .tip { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: rgba(232,163,61,.12); color: var(--amber); font-size: 10px; font-weight: 800; font-style: italic; cursor: pointer; flex-shrink: 0; position: relative; -webkit-tap-highlight-color: transparent; }
 .tip.open .tip-text { display: block; }
 .tip-text { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid rgba(232,163,61,.25); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-weight: 400; font-style: normal; color: var(--cream-soft); width: 200px; text-align: left; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.5); line-height: 1.4; }
-.plan-btn { width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: var(--cream); padding: 14px 15px; font-weight: 950; cursor: pointer; font-size: 14px; transition: opacity .2s, transform .2s; }
+.plan-btn { width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: var(--cream); padding: 14px 15px; font-weight: 950; cursor: pointer; font-size: 16px; transition: opacity .2s, transform .2s; }
 .plan-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: .9; }
 .plan.featured .plan-btn { background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; border: 0; box-shadow: 0 12px 28px rgba(245,164,51,.22); }
 .plan-btn:disabled { opacity: .45; cursor: default; }
@@ -129,18 +129,18 @@ footer { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(255,255
 footer a { color: var(--gray-warm); text-decoration: none; }
 @media (min-width: 768px) {
   .page { max-width: 720px; padding: 30px 32px 60px; }
-  h1 { font-size: 50px; }
-  .subtitle { font-size: 17px; max-width: 480px; }
+  h1 { font-size: 56px; }
+  .subtitle { font-size: 19px; max-width: 480px; }
   .activation-flow { max-width: 480px; margin: 40px auto 0; }
   .phone-wrap { margin: 0 auto; }
   .venues { grid-template-columns: repeat(4, 1fr); }
   .plans { grid-template-columns: repeat(3, 1fr); }
   .benefits { grid-template-columns: 1fr 1fr; }
-  .section-title { font-size: 32px; }
+  .section-title { font-size: 36px; }
 }
 @media (min-width: 1024px) {
   .page { max-width: 900px; padding: 40px 48px 80px; }
-  h1 { font-size: 58px; }
+  h1 { font-size: 64px; }
 }
 @media (max-width: 360px) { h1 { font-size: 34px; } .venues { grid-template-columns: 1fr; } }
 `;
@@ -340,19 +340,19 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Edita platos, precios y fotos desde tu panel</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 16 }}>Edita platos, precios y fotos desde tu panel</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Tu carta es privada hasta que compartas el QR</span>
+                <span style={{ color: "#ffc85a", fontSize: 18, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 16 }}>Tu carta es privada hasta que compartas el QR</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Código QR gratis para imprimir cuando estés listo</span>
+                <span style={{ color: "#ffc85a", fontSize: 18, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 16 }}>Código QR gratis para imprimir cuando estés listo</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ color: "#ffc85a", fontSize: 16, flexShrink: 0 }}>✓</span>
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>Sin compromisos, sin pagos</span>
+                <span style={{ color: "#ffc85a", fontSize: 18, flexShrink: 0 }}>✓</span>
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 16 }}>Sin compromisos, sin pagos</span>
               </div>
             </div>
 
@@ -365,7 +365,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <div className="done-msg"><p>Listo. Redirigiendo...</p></div>
             )}
 
-            <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 12, margin: 0 }}>
+            <p style={{ textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 14, margin: 0 }}>
               Gratis. Tu carta no se publica hasta que compartas el QR.
             </p>
 
@@ -419,7 +419,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         {/* Venues */}
         <section>
           <h2 className="section-title">Locales reales que ya usan QuieroComer</h2>
-          <p className="section-sub" style={{ fontSize: 15 }}>Cartas reales funcionando con QuieroComer.</p>
+          <p className="section-sub" style={{ fontSize: 16 }}>Cartas reales funcionando con QuieroComer.</p>
           <div className="venues">
             {activeVenues.map((v, i) => {
               const plan = ((v as any).plan || "PREMIUM").toLowerCase();
@@ -445,7 +445,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           border: "1px solid rgba(232,163,61,.2)",
         }}>
           <h2 className="section-title" style={{ marginBottom: 8 }}>Tu carta te está esperando</h2>
-          <p style={{ color: "var(--cream-soft)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.5 }}>
+          <p style={{ color: "var(--cream-soft)", fontSize: 16, margin: "0 0 18px", lineHeight: 1.5 }}>
             Entra a tu panel, revisa tus platos y cuando estés listo comparte el QR.
           </p>
           {!done ? (
