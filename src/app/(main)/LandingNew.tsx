@@ -298,6 +298,43 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
+      {/* FUNCIONES */}
+      <section className="funciones-section" data-track="Funciones">
+        <div className="container">
+          <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14, textAlign: "center" }}>Funciones inteligentes</p>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(32px,4.5vw,46px)", lineHeight: 1.12, textAlign: "center", marginBottom: 48, fontWeight: 400 }}>
+            Tu carta QR también puede <span style={{ color: "var(--amber)", fontStyle: "italic" }}>vender, atender y fidelizar.</span>
+          </h2>
+          <div className="func-grid">
+            {[
+              { icon: "🔔", title: "Llamar al garzón", desc: "Tus clientes piden atención desde la mesa sin esperar a ser vistos." },
+              { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos y postres mientras el cliente decide." },
+              { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué platos miran más tus clientes y en qué horarios." },
+              { icon: "🎂", title: "Cumpleaños automáticos", desc: "Envía regalos y descuentos automáticos a clientes que cumplen años." },
+              { icon: "🏷️", title: "Ofertas y promociones", desc: "Destaca promos del día, lanzamientos o platos con mejor margen." },
+              { icon: "🌍", title: "Varios idiomas", desc: "Tu carta traducida automáticamente a inglés y portugués." },
+            ].map((f, i) => (
+              <div key={i} className="func-card">
+                <span className="func-icon">{f.icon}</span>
+                <h3 className="func-title">{f.title}</h3>
+                <p className="func-desc">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 36 }}>
+            <a href="/funciones" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "14px 28px", background: "transparent",
+              border: "1px solid rgba(232,163,61,.3)", color: "var(--cream-soft)",
+              fontSize: 14, fontWeight: 600, textDecoration: "none",
+              letterSpacing: ".02em", transition: ".25s", borderRadius: 8,
+            }}>
+              Ver todas las funciones →
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="faq" data-track="FAQ">
         <div className="container">
@@ -535,6 +572,15 @@ section{position:relative}
 .banner-img-wrap img{width:100%;display:block}
 .step h3{font-size:32px;display:inline;font-weight:700;margin-bottom:14px}
 .step p{color:var(--cream-soft);font-size:22px;margin-top:18px}
+.funciones-section{padding:70px 0 60px;background:var(--black-soft)}
+.func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:820px;margin:0 auto}
+.func-card{background:rgba(20,18,16,.5);border:1px solid var(--gray-deep);border-radius:16px;padding:24px 20px;transition:border-color .25s,transform .25s}
+.func-card:hover{border-color:rgba(232,163,61,.3);transform:translateY(-2px)}
+.func-icon{font-size:28px;display:block;margin-bottom:12px}
+.func-title{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--cream);margin:0 0 8px}
+.func-desc{font-size:13px;color:var(--cream-soft);line-height:1.5;margin:0}
+@media(max-width:700px){.func-grid{grid-template-columns:repeat(2,1fr);gap:12px}.func-card{padding:18px 16px}.func-title{font-size:17px}}
+@media(max-width:420px){.func-grid{grid-template-columns:1fr}}
 .faq{padding:60px 0 60px;background:var(--black)}
 .faq .section-head{text-align:center}
 .faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
