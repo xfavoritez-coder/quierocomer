@@ -29,7 +29,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
     const p = plan || "PREMIUM";
     trackStartTrial(p);
     // Fire Purchase so Facebook Ads can track conversions
-    const PLAN_VALUES: Record<string, number> = { FREE: 45900, GOLD: 41650, PREMIUM: 54621 };
+    const PLAN_VALUES: Record<string, number> = { FREE: 39900, GOLD: 41650, PREMIUM: 47481 };
     trackPurchase(p, PLAN_VALUES[p] || 49900);
   }, []);
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
 
-const PLAN_PRICES: Record<string, number> = { SILVER: 14900, GOLD: 29900, PREMIUM: 45900 };
+const PLAN_PRICES: Record<string, number> = { SILVER: 14900, GOLD: 29900, PREMIUM: 39900 };
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);

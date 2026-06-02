@@ -124,8 +124,8 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     key: "PREMIUM",
     label: "Premium",
     tagline: "",
-    priceMonthly: 45900,
-    priceAnnualMonthly: 36900,
+    priceMonthly: 39900,
+    priceAnnualMonthly: 31900,
     trialDays: 14,
     features: new Set([
       "genio", "modifiers",

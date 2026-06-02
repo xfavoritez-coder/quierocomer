@@ -159,7 +159,7 @@ export default function PlanesClient() {
           <article className="qc-plan qc-premium">
             <div className="qc-badge" style={{ background: "#dc2626", color: "#fff" }}>14 días gratis</div>
             <h3>Premium</h3>
-            <div className="qc-plan-price">$45.900<small>/mes + IVA</small></div>
+            <div className="qc-plan-price">$39.900<small>/mes + IVA</small></div>
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
@@ -168,8 +168,6 @@ export default function PlanesClient() {
               <div>✓ Clientes capturados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
               <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante</span></span></div>
-              <div>✓ Integración Toteat <span className="qc-tip">i<span className="qc-tip-text">Sincroniza ventas reales con la carta. Dashboard en vivo</span></span></div>
-              <div>✓ Idiomas adicionales <span className="qc-tip">i<span className="qc-tip-text">Agrega idiomas extra: francés, italiano, alemán, chino y más</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 dias</button>
           </article>
