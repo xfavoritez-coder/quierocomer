@@ -4,17 +4,25 @@ import { sendWhatsApp } from "@/lib/whatsapp";
 
 export const maxDuration = 60;
 
+// Template SIDs (Meta approval pending — fallback to carta_lista_v2 if not yet approved)
+const TEMPLATES = {
+  cartaNoRevisada: "HX212aca9223fecaf089df099969e19a25",
+  onboardingIncompleto: "HX5b196800fee3fde1de075c604bc5d598",
+  noVolvio: "HXe8201d69e53b2c6c4c2af79470c34845",
+  // Fallback if new templates aren't approved yet
+  cartaLista: "HX73cbf24831adf5448d0e4eef6cb84f41",
+};
+
 /**
  * Cron: Lead nurturing via WhatsApp — runs daily at 14:00 Chile (18:00 UTC).
  *
- * Sends a single follow-up message to leads based on their state:
+ * 3 scenarios, all sent as "Camila de QuieroComer":
  *
- * 1. Carta DELIVERED +24h, no panel visit, no activation → "¿Pudiste ver tu carta?"
- * 2. Trial activated +24h, no panel return → "¿Qué te pareció la carta?"
+ * 1. Carta DELIVERED +24h, no la revisó (no panel visit, no onboarding) → camila_carta_no_revisada
+ * 2. Vio carta pero no terminó onboarding (onboardingDoneAt null) → camila_onboarding_incompleto
+ * 3. Activó trial, hizo onboarding, pero no volvió al panel → camila_no_volvio
  *
- * Only sends once per lead (tracked via lead.events "nurturing_sent").
- * Uses the approved carta_lista_v2 template to initiate the conversation.
- * When the lead replies, the AI sales agent takes over automatically.
+ * Each scenario sends once per lead (tracked via lead.events).
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -31,118 +39,132 @@ export async function GET(req: NextRequest) {
   const start = Date.now();
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   let sent = 0;
   let skipped = 0;
   let errors = 0;
 
-  // ═══ Scenario 1: Carta delivered >24h ago, no panel visit, no activation ═══
-  const unactivatedLeads = await prisma.lead.findMany({
-    where: {
-      cartaStatus: "DELIVERED",
-      deliveredAt: { lt: oneDayAgo, gt: threeDaysAgo }, // Between 1-3 days ago
-      activatedAt: null,
-      panelVisitedAt: null,
-      whatsapp: { not: null },
-    },
-    select: {
-      id: true, ownerName: true, localName: true, whatsapp: true,
-      generatedSlug: true, events: true,
-    },
-    take: 30, // Limit per cron run
-  });
-
-  for (const lead of unactivatedLeads) {
+  async function sendNurturing(
+    lead: { id: string; ownerName: string | null; localName: string | null; whatsapp: string | null; generatedSlug: string | null; events: any },
+    scenario: string,
+    eventKey: string,
+    templateSid: string,
+  ) {
     const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
-    if (events.some((e: any) => e.action === "nurturing_sent")) { skipped++; continue; }
-    if (!lead.whatsapp || !lead.generatedSlug) continue;
+    if (events.some((e: any) => e.action === eventKey)) { skipped++; return; }
+    if (!lead.whatsapp || !lead.generatedSlug) return;
 
     const ownerName = (lead.ownerName || "Hola").split(" ")[0];
-    const restaurantName = lead.localName || "tu restaurante";
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-    const trackUrl = `${baseUrl}/c/${lead.generatedSlug}`;
+
+    // Resolve restaurant name from DB (more accurate than lead.localName)
+    const rest = await prisma.restaurant.findFirst({
+      where: { slug: lead.generatedSlug },
+      select: { name: true },
+    });
+    const restaurantName = rest?.name || lead.localName || "tu restaurante";
 
     try {
-      // Use carta_lista_v2 template (already approved by Meta)
       const sid = await sendWhatsApp({
         to: lead.whatsapp,
-        body: `${ownerName}, ¿pudiste ver la carta de ${restaurantName}? 👉 ${trackUrl}`,
-        contentSid: "HX73cbf24831adf5448d0e4eef6cb84f41",
-        contentVariables: JSON.stringify({ "1": ownerName, "2": restaurantName, "3": trackUrl }),
+        body: "", // Template handles the body
+        contentSid: templateSid,
+        contentVariables: JSON.stringify({ "1": ownerName, "2": restaurantName }),
       });
 
       if (sid) {
-        events.push({ ts: now.toISOString(), action: "nurturing_sent", scenario: "unactivated", sid });
+        events.push({ ts: now.toISOString(), action: eventKey, scenario, sid });
         await prisma.lead.update({ where: { id: lead.id }, data: { events: events as any } });
         sent++;
-        console.log(`[nurturing] Sent follow-up to ${lead.whatsapp} (${restaurantName})`);
+        console.log(`[nurturing] ${scenario}: ${lead.whatsapp} (${restaurantName})`);
       } else {
         errors++;
       }
     } catch (e: any) {
-      console.error(`[nurturing] Error sending to ${lead.whatsapp}:`, e.message);
+      console.error(`[nurturing] ${scenario} error for ${lead.whatsapp}:`, e.message);
       errors++;
     }
   }
 
-  // ═══ Scenario 2: Trial activated >24h ago, hasn't returned to panel ═══
-  const trialNoReturn = await prisma.lead.findMany({
+  // ═══ Scenario 1: Carta lista +24h, no la revisó ═══
+  // deliveredAt between 1-7 days ago, no panel visit, no onboarding, no activation
+  const noRevisada = await prisma.lead.findMany({
     where: {
-      activatedAt: { lt: oneDayAgo, gt: threeDaysAgo },
+      cartaStatus: "DELIVERED",
+      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      activatedAt: null,
+      panelVisitedAt: null,
+      onboardingDoneAt: null,
       whatsapp: { not: null },
       generatedSlug: { not: null },
     },
-    select: {
-      id: true, ownerName: true, localName: true, whatsapp: true,
-      generatedSlug: true, events: true,
-    },
+    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
     take: 30,
   });
 
-  for (const lead of trialNoReturn) {
-    const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
-    if (events.some((e: any) => e.action === "nurturing_trial_sent")) { skipped++; continue; }
-    if (!lead.whatsapp || !lead.generatedSlug) continue;
+  for (const lead of noRevisada) {
+    await sendNurturing(lead, "carta_no_revisada", "nurturing_no_revisada", TEMPLATES.cartaNoRevisada);
+  }
 
-    // Check if restaurant owner has visited panel recently
+  // ═══ Scenario 2: Vio carta pero no terminó onboarding ═══
+  // Has some engagement (emailClickedAt or whatsappClickedAt) but onboardingDoneAt is null
+  const onboardingIncompleto = await prisma.lead.findMany({
+    where: {
+      cartaStatus: "DELIVERED",
+      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      activatedAt: null,
+      onboardingDoneAt: null,
+      whatsapp: { not: null },
+      generatedSlug: { not: null },
+      OR: [
+        { emailClickedAt: { not: null } },
+        { whatsappClickedAt: { not: null } },
+        { panelVisitedAt: { not: null } },
+      ],
+    },
+    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
+    take: 30,
+  });
+
+  for (const lead of onboardingIncompleto) {
+    // Skip if already sent scenario 1 (avoid double-messaging)
+    const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
+    if (events.some((e: any) => e.action === "nurturing_no_revisada")) { skipped++; continue; }
+    await sendNurturing(lead, "onboarding_incompleto", "nurturing_onboarding", TEMPLATES.onboardingIncompleto);
+  }
+
+  // ═══ Scenario 3: Activó trial, hizo onboarding, pero no volvió ═══
+  // activatedAt between 1-7 days ago, but restaurant owner hasn't visited panel recently
+  const noVolvio = await prisma.lead.findMany({
+    where: {
+      activatedAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      onboardingDoneAt: { not: null },
+      whatsapp: { not: null },
+      generatedSlug: { not: null },
+    },
+    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
+    take: 30,
+  });
+
+  for (const lead of noVolvio) {
+    if (!lead.generatedSlug) continue;
+
+    // Check if owner has been active in the panel recently (edits, uploads, etc.)
     const restaurant = await prisma.restaurant.findFirst({
       where: { slug: lead.generatedSlug },
-      select: { id: true, name: true },
+      select: { id: true, updatedAt: true },
     });
     if (!restaurant) continue;
 
-    // Check for recent panel activity (sessions from owner in last 24h)
-    // If they've been active, skip
-    const recentActivity = await prisma.session.count({
-      where: { restaurantId: restaurant.id, startedAt: { gte: oneDayAgo } },
+    // If restaurant was updated in the last 24h, they're using it — skip
+    if (restaurant.updatedAt > oneDayAgo) { skipped++; continue; }
+
+    // Check for recent dish edits
+    const recentEdits = await prisma.dish.count({
+      where: { restaurantId: restaurant.id, updatedAt: { gt: oneDayAgo } },
     });
-    if (recentActivity > 2) { skipped++; continue; } // Active, skip
+    if (recentEdits > 0) { skipped++; continue; }
 
-    const ownerName = (lead.ownerName || "Hola").split(" ")[0];
-    const restaurantName = lead.localName || restaurant.name;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-    const trackUrl = `${baseUrl}/c/${lead.generatedSlug}`;
-
-    try {
-      const sid = await sendWhatsApp({
-        to: lead.whatsapp,
-        body: `${ownerName}, ¿qué te pareció la carta de ${restaurantName}? 👉 ${trackUrl}`,
-        contentSid: "HX73cbf24831adf5448d0e4eef6cb84f41",
-        contentVariables: JSON.stringify({ "1": ownerName, "2": restaurantName, "3": trackUrl }),
-      });
-
-      if (sid) {
-        events.push({ ts: now.toISOString(), action: "nurturing_trial_sent", scenario: "trial_no_return", sid });
-        await prisma.lead.update({ where: { id: lead.id }, data: { events: events as any } });
-        sent++;
-        console.log(`[nurturing] Sent trial follow-up to ${lead.whatsapp} (${restaurantName})`);
-      } else {
-        errors++;
-      }
-    } catch (e: any) {
-      console.error(`[nurturing] Error sending trial to ${lead.whatsapp}:`, e.message);
-      errors++;
-    }
+    await sendNurturing(lead, "no_volvio", "nurturing_no_volvio", TEMPLATES.noVolvio);
   }
 
   const durationMs = Date.now() - start;
@@ -154,8 +176,7 @@ export async function GET(req: NextRequest) {
       durationMs,
       details: {
         sent, skipped, errors,
-        unactivatedCandidates: unactivatedLeads.length,
-        trialCandidates: trialNoReturn.length,
+        candidates: { noRevisada: noRevisada.length, onboardingIncompleto: onboardingIncompleto.length, noVolvio: noVolvio.length },
       },
     },
   }).catch(() => {});
