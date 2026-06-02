@@ -13,6 +13,7 @@ import { groupDishesByCategory, isGeniePick } from "./utils/dishHelpers";
 import { getCarouselMode, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
 import DishDetailEsencial from "./DishDetailEsencial";
 import FabSpeedDial from "./FabSpeedDial";
+import ViewSelectorCompact from "./ViewSelectorCompact";
 import GenioFab from "./GenioFab";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -476,6 +477,7 @@ export default function CartaEsencial({
               </>
             )}
           </div>
+          {(restaurant as any).plan !== "FREE" && <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />}
         </div>
       </header>
 

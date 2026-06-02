@@ -1118,7 +1118,7 @@ export default function CartaImpact({
         marginBottom: (restaurant as any).isDemo ? -56 : undefined,
         background: (restaurant as any).isDemo
           ? "var(--impact-header-solid, rgba(3,3,3,0.92))"
-          : showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
+          : showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, var(--impact-header-grad-start, rgba(0,0,0,0.8)), var(--impact-header-grad-mid, rgba(0,0,0,0.4)), transparent)",
         backdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
         WebkitBackdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
         pointerEvents: "auto",
@@ -1148,9 +1148,6 @@ export default function CartaImpact({
           >
             <Search size={15} color="var(--carta-text, white)" />
           </button>
-          {(restaurant as any).plan !== "FREE" && (
-            <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />
-          )}
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
               <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
@@ -1179,6 +1176,9 @@ export default function CartaImpact({
                   ))}
                 </div>
             </div>
+          )}
+          {(restaurant as any).plan !== "FREE" && (
+            <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />
           )}
         </div>
       </div>
