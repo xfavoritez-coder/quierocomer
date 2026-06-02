@@ -70,11 +70,11 @@ export default function AjustesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [birthdayPerk, setBirthdayPerk] = useState("");
-  const [panelTheme, setPanelTheme] = useState("dark");
+  const [panelTheme, setPanelTheme] = useState("light");
   const [customColor, setPersonalizadoColor] = useState("#F4A623");
   const [customDirty, setPersonalizadoDirty] = useState(false);
 
-  useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "dark"); }, []);
+  useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "light"); }, []);
 
   const rid = selectedRestaurantId;
 
