@@ -108,10 +108,10 @@ export default function PlanesClient() {
           <style dangerouslySetInnerHTML={{ __html: "#pl-hero-text{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 20px;text-align:center;display:flex;flex-direction:column;align-items:center}" }} />
           <div className="planes-eyebrow">Planes</div>
           <h1 id="pl-hero-h1">
-            El plan perfecto para <br className="pl-mobile-br" /><span style={{ color: "#E8A33D", fontStyle: "italic" }}>tu restaurante</span>
+            El plan perfecto para <br className="pl-mobile-br" /><span style={{ color: "#E8A33D", fontStyle: "italic" }}>tu local</span>
           </h1>
           <p id="pl-hero-sub">Cambia cuando quieras. Sin permanencia.</p>
-          <style dangerouslySetInnerHTML={{ __html: "#pl-hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,8vw,62px);line-height:1.02;font-weight:400;max-width:480px;margin:0 0 16px}#pl-hero-sub{font-size:15px;color:#B7A993;max-width:380px;line-height:1.5;margin:0}" }} />
+          <style dangerouslySetInnerHTML={{ __html: "#pl-hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,8vw,62px);line-height:1.02;font-weight:500;max-width:480px;margin:0 0 16px}#pl-hero-sub{font-size:15px;color:#B7A993;max-width:380px;line-height:1.5;margin:0}" }} />
         </div>
       </header>
 

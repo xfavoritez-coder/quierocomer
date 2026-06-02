@@ -296,25 +296,6 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       </section>
 
 
-      {/* LOGOS */}
-      <section className="logos-band" data-track="Logos">
-        <div className="container">
-          <p className="logos-eyebrow">Ya usan QuieroComer</p>
-          <div className="logos-grid">
-            {logoChips.map((l, i) => (
-              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
-                {l.logoUrl ? (
-                  <img src={l.logoUrl} alt={l.name} className="logo-grid-img" />
-                ) : (
-                  <div className="logo-grid-init" style={{ background: l.color }}>{l.initials}</div>
-                )}
-                <span className="logo-grid-name">{l.name}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* FUNCIONES */}
       <section className="funciones-section" data-track="Funciones">
         <div className="container">
@@ -348,6 +329,25 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
             }}>
               Ver todas las funciones →
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* LOGOS */}
+      <section className="logos-band" data-track="Logos">
+        <div className="container">
+          <p className="logos-eyebrow">Ya usan QuieroComer</p>
+          <div className="logos-grid">
+            {logoChips.filter(l => l.slug !== "el-menu-de-la-esquina").map((l, i) => (
+              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
+                {l.logoUrl ? (
+                  <img src={l.logoUrl} alt={l.name} className="logo-grid-img" />
+                ) : (
+                  <div className="logo-grid-init" style={{ background: l.color }}>{l.initials}</div>
+                )}
+                <span className="logo-grid-name">{l.name}</span>
+              </a>
+            ))}
           </div>
         </div>
       </section>
@@ -594,9 +594,9 @@ section{position:relative}
 .func-card{background:rgba(232,163,61,.04);border:1px solid rgba(232,163,61,.12);border-radius:18px;padding:28px 22px;transition:border-color .3s,transform .3s,background .3s}
 .func-card:hover{border-color:rgba(232,163,61,.35);background:rgba(232,163,61,.08);transform:translateY(-3px)}
 .func-icon{font-size:32px;display:block;margin-bottom:14px;filter:drop-shadow(0 4px 12px rgba(232,163,61,.2))}
-.func-title{font-family:var(--font-body);font-size:15px;font-weight:600;color:var(--cream);margin:0 0 8px}
-.func-desc{font-size:13px;color:var(--cream-soft);line-height:1.55;margin:0}
-@media(max-width:700px){.func-grid{grid-template-columns:repeat(2,1fr);gap:12px}.func-card{padding:20px 16px}.func-title{font-size:17px}}
+.func-title{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--cream);margin:0 0 8px}
+.func-desc{font-size:15px;color:var(--cream-soft);line-height:1.55;margin:0}
+@media(max-width:700px){.func-grid{grid-template-columns:repeat(2,1fr);gap:12px}.func-card{padding:20px 16px}.func-title{font-size:18px}}
 @media(max-width:420px){.func-grid{grid-template-columns:1fr}}
 .faq{padding:60px 0 60px;background:var(--black)}
 .faq .section-head{text-align:center}
