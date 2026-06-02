@@ -927,30 +927,27 @@ export default function CartaImpact({
     const preferTranslated = lang !== "es";
     const isTranslated = (d: any) => !preferTranslated || d._hasTranslation !== false;
 
+    const withPhoto = (arr: Dish[]) => arr.filter((d) => d.photos?.[0]);
     const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
     const popular = dishes.filter((d) => popularDishIds.has(d.id) && !d.tags?.includes("RECOMMENDED"));
 
     // Mix: up to 2 recommended + up to 2 popular, intercalated
-    // Prioritize dishes with photos, then translated
+    // Only include dishes with photos in the hero
     const sortPriority = (arr: Dish[]) => [...arr].sort((a, b) => {
-      const aPhoto = a.photos?.[0] ? 1 : 0;
-      const bPhoto = b.photos?.[0] ? 1 : 0;
-      if (aPhoto !== bPhoto) return bPhoto - aPhoto;
       return (isTranslated(b) ? 1 : 0) - (isTranslated(a) ? 1 : 0);
     });
     const mixed: Dish[] = [];
     const maxEach = 2;
-    const recs = sortPriority(recommended).slice(0, maxEach);
-    const pops = sortPriority(popular).slice(0, maxEach);
+    const recs = sortPriority(withPhoto(recommended)).slice(0, maxEach);
+    const pops = sortPriority(withPhoto(popular)).slice(0, maxEach);
     for (let i = 0; i < Math.max(recs.length, pops.length); i++) {
       if (i < recs.length) mixed.push(recs[i]);
       if (i < pops.length) mixed.push(pops[i]);
     }
     if (mixed.length > 0) return mixed.slice(0, 4);
 
-    // Fallback: any dishes, prioritize with photos
-    const sorted = sortPriority(dishes);
-    return sorted.slice(0, 4);
+    // Fallback: any dishes with photos
+    return withPhoto(dishes).slice(0, 4);
   }, [dishes, popularDishIds, lang]);
 
   /* ─── Sorted dishes ─── */

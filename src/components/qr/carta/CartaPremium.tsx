@@ -343,11 +343,12 @@ export default function CartaPremium({
       return 0;
     });
 
-    const recommended = sortPriority(dishes.filter(d => d.tags?.includes("RECOMMENDED")));
+    const withPhoto = (arr: typeof dishes) => arr.filter(d => d.photos?.[0]);
+    const recommended = sortPriority(withPhoto(dishes.filter(d => d.tags?.includes("RECOMMENDED"))));
     if (recommended.length > 0) return recommended;
-    const popular = sortPriority(dishes.filter(d => popularDishIds.has(d.id))).slice(0, 3);
+    const popular = sortPriority(withPhoto(dishes.filter(d => popularDishIds.has(d.id)))).slice(0, 3);
     if (popular.length > 0) return popular;
-    return sortPriority(dishes).slice(0, 3);
+    return sortPriority(withPhoto(dishes)).slice(0, 3);
   }, [dishes, popularDishIds, lang]);
 
   // Hard rule: si el cliente filtra "_spicy", los picantes SIEMPRE van al final

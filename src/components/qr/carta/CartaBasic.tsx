@@ -47,10 +47,10 @@ export default function CartaBasic({
   const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "basic");
 
   const heroDishes = useMemo(() => {
-    const sortByPhoto = (arr: Dish[]) => [...arr].sort((a, b) => (b.photos?.[0] ? 1 : 0) - (a.photos?.[0] ? 1 : 0));
-    const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
-    if (rec.length > 0) return sortByPhoto(rec);
-    return sortByPhoto(dishes).slice(0, 3);
+    const withPhoto = (arr: Dish[]) => arr.filter(d => d.photos?.[0]);
+    const rec = withPhoto(dishes.filter(d => d.tags?.includes("RECOMMENDED")));
+    if (rec.length > 0) return rec;
+    return withPhoto(dishes).slice(0, 3);
   }, [dishes]);
 
   // IntersectionObserver-based active category detection

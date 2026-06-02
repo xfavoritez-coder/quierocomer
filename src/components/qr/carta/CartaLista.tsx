@@ -148,11 +148,12 @@ export default function CartaLista({
       return 0;
     });
 
-    const recommended = sortPriority(dishes.filter(d => d.tags?.includes("RECOMMENDED")));
+    const withPhoto = (arr: typeof dishes) => arr.filter(d => d.photos?.[0]);
+    const recommended = sortPriority(withPhoto(dishes.filter(d => d.tags?.includes("RECOMMENDED"))));
     if (recommended.length > 0) return recommended;
-    const popular = sortPriority(dishes.filter(d => popularDishIds.has(d.id))).slice(0, 3);
+    const popular = sortPriority(withPhoto(dishes.filter(d => popularDishIds.has(d.id)))).slice(0, 3);
     if (popular.length > 0) return popular;
-    return sortPriority(dishes).slice(0, 3);
+    return sortPriority(withPhoto(dishes)).slice(0, 3);
   }, [dishes, popularDishIds, lang]);
 
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
