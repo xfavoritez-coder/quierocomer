@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
         try {
           await sendAdminEmail({
             to: r.owner.email,
-            subject: `🎁 Tu regalo Premium en ${r.name} termina ${daysLeft === 1 ? "mañana" : `en ${daysLeft} días`}`,
+            subject: `🎁 Tu regalo termina ${daysLeft === 1 ? "mañana" : `en ${daysLeft} días`}`,
             html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/suscripcion`),
             purpose: "trial_reminder",
           });

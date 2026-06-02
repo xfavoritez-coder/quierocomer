@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     await sendAdminEmail({
       to: restaurant.owner.email,
-      subject: `🎁 Tu regalo Premium en ${restaurant.name} termina mañana`,
+      subject: `🎁 Tu regalo termina mañana`,
       html: trialEndingSoonEmailHtml(firstName, restaurant.name, 1, `${baseUrl}/panel`, `${baseUrl}/panel/suscripcion`),
       purpose: "trial_reminder",
     });

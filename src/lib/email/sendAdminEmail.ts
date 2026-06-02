@@ -318,19 +318,16 @@ export function trialEndingSoonEmailHtml(
     </table>
   </td></tr>
 
-  <tr><td style="font-size:14px;color:#8a7550;line-height:1.5;padding-bottom:20px;text-align:center;">
-    Tu carta seguirá funcionando en el plan Gratis. Si quieres mantener estas funciones, elige un plan antes de que termine tu regalo.
-  </td></tr>
-
   <tr><td style="padding-bottom:24px;">${btn(suscripcionLink, "Ver planes disponibles")}</td></tr>
 
   <tr><td style="padding-top:8px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
   </td></tr>
   <tr><td align="center" style="padding:20px 0 0;">
-    <p style="font-size:13px;color:#8a7550;margin:0 0 12px;">¿Tienes dudas? <a href="${BASE_URL}/#contacto" style="color:${GOLD};text-decoration:underline;font-weight:700;">Contáctanos</a></p>
     <table cellpadding="0" cellspacing="0" border="0"><tr>
       <td><a href="${BASE_URL}" style="font-family:Georgia,serif;font-size:13px;color:${GOLD};text-decoration:none;">QuieroComer.cl</a></td>
+      <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
+      <td style="font-size:11px;color:#b8a888;">Hecho en Chile</td>
       <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
       <td style="font-size:11px;color:#b8a888;">&copy; ${new Date().getFullYear()}</td>
     </tr></table>
