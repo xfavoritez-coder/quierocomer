@@ -29,6 +29,7 @@ import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHe
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import HeroDish from "./HeroDish";
+import ViewSelectorCompact from "./ViewSelectorCompact";
 import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
@@ -375,7 +376,7 @@ export default function CartaLista({
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       ) : (
-        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
       )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}

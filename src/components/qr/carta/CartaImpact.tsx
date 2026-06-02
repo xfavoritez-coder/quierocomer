@@ -12,7 +12,7 @@ import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
-import ViewSelector from "./ViewSelector";
+import ViewSelectorCompact from "./ViewSelectorCompact";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
@@ -1148,6 +1148,9 @@ export default function CartaImpact({
           >
             <Search size={15} color="var(--carta-text, white)" />
           </button>
+          {(restaurant as any).plan !== "FREE" && (
+            <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />
+          )}
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
               <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>

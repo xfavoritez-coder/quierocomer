@@ -6,6 +6,7 @@ import type { Restaurant, Dish } from "@prisma/client";
 import { User } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
 import LangSelector from "./LangSelector";
+import ViewSelectorCompact from "./ViewSelectorCompact";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
@@ -133,6 +134,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--carta-text2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </a>
           )}
+          {viewSelectorSlot}
           <LangSelector enabledLangs={enabledLangs} />
         </div>
       </div>

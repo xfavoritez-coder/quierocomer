@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
+import ViewSelectorCompact from "./ViewSelectorCompact";
 import CategoryNav from "./CategoryNav";
 import DishCard from "./DishCard";
 import DishDetail from "./DishDetail";
@@ -485,7 +486,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
