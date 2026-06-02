@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
       const ua = s.userAgent || "";
       const isGhost = /FBAN|FBAV|FB_IAB|Instagram/i.test(ua) && s.maxScroll === 0 && s.interactions <= 2;
       if (isGhost) continue;
-      const day = s.createdAt.toISOString().slice(0, 10);
+      const day = s.createdAt.toLocaleDateString("sv-SE", { timeZone: "America/Santiago" });
       if (!daily[day]) daily[day] = { visits: 0, converted: 0, bounced: 0 };
       daily[day].visits++;
       if (s.converted) daily[day].converted++;

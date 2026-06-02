@@ -1184,37 +1184,42 @@ export default function CartaImpact({
       </div>
       {/* Fixed category nav — appears when menu section reaches header */}
       {showFixedCatNav && (
-        <div style={{ position: "relative" }}>
-          <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
-            {allChipCats.map((cat) => {
-              const isActive = cat.id === activeCategory;
-              return (
-                <button
-                  key={cat.id}
-                  ref={isActive ? fixedActiveChipRef : null}
-                  onClick={() => {
-                    setActiveCategory(cat.id);
-                    scrollToCategory(cat.id);
-                  }}
-                  className="font-[family-name:var(--font-dm)]"
-                  style={{
-                    whiteSpace: "nowrap", flexShrink: 0,
-                    border: isActive
-                      ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
-                      : "1px solid var(--impact-chip-inactive-border)",
-                    background: isActive
-                      ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
-                      : "var(--impact-chip-inactive-bg)",
-                    borderRadius: 999, padding: "7px 12px",
-                    color: isActive ? "var(--impact-chip-active-text, var(--carta-accent))" : "var(--impact-chip-inactive-text)",
-                    fontSize: 13, fontWeight: 800, cursor: "pointer",
-                  }}
-                >{cat.name}</button>
-              );
-            })}
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+            <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+              {allChipCats.map((cat) => {
+                const isActive = cat.id === activeCategory;
+                return (
+                  <button
+                    key={cat.id}
+                    ref={isActive ? fixedActiveChipRef : null}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      scrollToCategory(cat.id);
+                    }}
+                    className="font-[family-name:var(--font-dm)]"
+                    style={{
+                      whiteSpace: "nowrap", flexShrink: 0,
+                      border: isActive
+                        ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
+                        : "1px solid var(--impact-chip-inactive-border)",
+                      background: isActive
+                        ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
+                        : "var(--impact-chip-inactive-bg)",
+                      borderRadius: 999, padding: "7px 12px",
+                      color: isActive ? "var(--impact-chip-active-text, var(--carta-accent))" : "var(--impact-chip-inactive-text)",
+                      fontSize: 13, fontWeight: 800, cursor: "pointer",
+                    }}
+                  >{cat.name}</button>
+                );
+              })}
+            </div>
+            {fixedChipsScrolled && <div style={{ position: "absolute", top: 0, left: 0, bottom: 10, width: 24, background: "linear-gradient(to left, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />}
+            <div style={{ position: "absolute", top: 0, right: 0, bottom: 10, width: 24, background: "linear-gradient(to right, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />
           </div>
-          {fixedChipsScrolled && <div style={{ position: "absolute", top: 0, left: 0, bottom: 10, width: 24, background: "linear-gradient(to left, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />}
-          <div style={{ position: "absolute", top: 0, right: 0, bottom: 10, width: 24, background: "linear-gradient(to right, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />
+          <div style={{ paddingBottom: 10 }}>
+            <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
+          </div>
         </div>
       )}
       </header>
@@ -1460,7 +1465,6 @@ export default function CartaImpact({
                     >{cat.name}</button>
                   );
                 })}
-                <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
               </div>
               {/* Fade left — only when scrolled */}
               {chipsRef.current && chipsRef.current.scrollLeft > 10 && (
@@ -1477,6 +1481,7 @@ export default function CartaImpact({
                 pointerEvents: "none", opacity: 0.8,
               }} />
             </div>
+            <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
         </div>
 

@@ -553,10 +553,10 @@ export default function FacebookAdsPage() {
                       const convH = d.converted > 0 ? Math.max((d.converted / d.visits) * barH, 4) : 0;
                       const label = day.slice(5); // MM-DD
                       const dayNum = parseInt(day.slice(8));
-                      const isToday = day === new Date().toISOString().slice(0, 10);
+                      const isToday = day === new Date().toLocaleDateString("sv-SE", { timeZone: "America/Santiago" });
                       return (
                         <div key={day} className="fb-hour-col" style={{ minWidth: 18 }}>
-                          {d.converted > 0 && <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 800 }}>{Math.round((d.converted / d.visits) * 100)}%</span>}
+                          {d.converted > 0 && <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 800, lineHeight: 1.1, textAlign: "center" }}>{d.converted}<br/><span style={{ fontSize: 9, opacity: 0.8 }}>{Math.round((d.converted / d.visits) * 100)}%</span></span>}
                           {d.visits > 0 && !d.converted && <span style={{ fontSize: 10, color: "#999", fontWeight: 700 }}>{d.visits}</span>}
                           <div className="fb-hour-bar" style={{
                             height: barH,
