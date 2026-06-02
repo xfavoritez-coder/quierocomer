@@ -367,7 +367,6 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 borderBottom: tab === t ? `3px solid ${tabBorder}` : "3px solid transparent",
               }}>
                 {tabIcon} {tabLabel}
-                {plan === t && <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: tabBg, color: tabColor }}>Actual</span>}
               </button>
             );
           })}
