@@ -653,7 +653,7 @@ export default function CartaPremium({
           return (
             <div key={cat.id}>
             {index === Math.max(2, Math.floor(categories.length * 0.4)) && <ExperienceBanner restaurantId={restaurant.id} />}
-            <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 21 }}>
+            <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
               {/* Title */}
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
                 <h2
