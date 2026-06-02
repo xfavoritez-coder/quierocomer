@@ -151,13 +151,21 @@ export async function GET(req: NextRequest) {
   if (step === "email-plan") {
     if (!restaurant.owner?.email) return NextResponse.json({ error: "No owner email" }, { status: 400 });
     const { sendAdminEmail, planActivatedEmailHtml } = await import("@/lib/email/sendAdminEmail");
+    const { grossOf } = await import("@/lib/billing/plans-config");
+    const { PLANS } = await import("@/lib/billing/plans-central");
     const firstName = (restaurant.owner.name || "").split(" ")[0] || "Hola";
+    const planKey = restaurant.plan as keyof typeof PLANS;
     const planLabel = restaurant.plan === "PREMIUM" ? "Premium" : restaurant.plan === "GOLD" ? "Gold" : "Silver";
+    const net = PLANS[planKey]?.priceMonthly || 0;
+    const gross = grossOf(net);
+    const fmtPrice = (n: number) => `$${n.toLocaleString("es-CL")}`;
+    const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
 
     await sendAdminEmail({
       to: restaurant.owner.email,
       subject: `¡Tu plan ${planLabel} en ${restaurant.name} está activo!`,
-      html: planActivatedEmailHtml(firstName, restaurant.name, planLabel, `${baseUrl}/panel`),
+      html: planActivatedEmailHtml(firstName, restaurant.name, planLabel, fmtPrice(gross), nextDate, fmtPrice(gross), `${baseUrl}/panel`, `${baseUrl}/qr/${restaurant.slug}`),
       purpose: "plan_activated",
     });
 
