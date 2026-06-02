@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
-import { generateWhatsAppReply } from "@/lib/ai/whatsappAgent";
+import { generateWhatsAppReplyWithInsight } from "@/lib/ai/whatsappAgent";
 
 export const maxDuration = 15;
 
@@ -92,10 +92,21 @@ export async function POST(req: NextRequest) {
       knowledgeEntries = entries.filter((e: any) => e.enabled !== false);
     } catch {}
 
-    // 5. Generate AI reply
-    const reply = await generateWhatsAppReply(body.trim(), conversationHistory, context, knowledgeEntries);
+    // 5. Generate AI reply (with insight extraction for sales mode)
+    const { reply, insight } = await generateWhatsAppReplyWithInsight(body.trim(), conversationHistory, context, knowledgeEntries);
 
-    // 5. Send reply via Twilio
+    // 5b. Save insight to lead events if present
+    if (insight && leadId) {
+      prisma.lead.findUnique({ where: { id: leadId }, select: { events: true } }).then(async (l) => {
+        if (!l) return;
+        const events = Array.isArray(l.events) ? (l.events as any[]) : [];
+        events.push({ ts: new Date().toISOString(), action: "agent_insight", insight, inboundMsg: body.trim().slice(0, 100) });
+        await prisma.lead.update({ where: { id: leadId }, data: { events: events as any } });
+        console.log(`[WA Agent] Insight saved for lead ${leadId}: ${insight}`);
+      }).catch(() => {});
+    }
+
+    // 6. Send reply via Twilio
     let replySid: string | null = null;
     try {
       const SID = process.env.TWILIO_ACCOUNT_SID;

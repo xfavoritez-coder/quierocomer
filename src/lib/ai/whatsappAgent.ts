@@ -1,10 +1,11 @@
 /**
  * WhatsApp AI Agent — responds to restaurant owners via Claude Haiku.
+ * Two modes: SUPPORT (active restaurants) and SALES (leads not yet activated).
  */
 
 const MODEL = "claude-haiku-4-5-20251001";
 
-const SYSTEM_PROMPT = `Eres el asistente de soporte de QuieroComer.cl por WhatsApp. Respondes en español, de forma amigable, breve y profesional.
+const SUPPORT_PROMPT = `Eres el asistente de soporte de QuieroComer.cl por WhatsApp. Respondes en español, de forma amigable, breve y profesional.
 
 SOBRE QUIEROCOMER:
 - Plataforma de cartas QR inteligentes para restaurantes en Chile
@@ -29,14 +30,63 @@ REGLAS:
 - Para editar su carta: "Entra a tu panel desde el link que te enviamos por correo"
 - Usa emojis con moderación (máximo 1-2 por mensaje)
 - No uses markdown, solo texto plano (es WhatsApp)
-- IMPORTANTE: Tú eres soporte de QuieroComer, NO eres el restaurante. Nunca respondas como si fueras el restaurante (no tomes pedidos, no ofrezcas el menú como si fueras ellos, no digas "te atendemos"). Si alguien parece ser un cliente final del restaurante (no el dueño), explica amablemente que este es el WhatsApp de QuieroComer y que para ver el menú del restaurante pueden visitar la carta digital.`;
+- IMPORTANTE: Tú eres soporte de QuieroComer, NO eres el restaurante. Nunca respondas como si fueras el restaurante (no tomes pedidos, no ofrezcas el menú como si fueras ellos). Si alguien parece ser un cliente final del restaurante (no el dueño), explica amablemente que este es el WhatsApp de QuieroComer y que para ver el menú del restaurante pueden visitar la carta digital.`;
+
+const SALES_PROMPT = `Eres parte del equipo de QuieroComer.cl. Hablas por WhatsApp con dueños de restaurantes que subieron su carta pero aún no la están usando activamente. Tu objetivo es entender qué pasó y ayudarlos.
+
+SOBRE QUIEROCOMER:
+- Plataforma de cartas QR inteligentes para restaurantes en Chile
+- Al subir su carta, se les crea una carta digital gratuita con QR
+- Tienen 14 días de Premium gratis para probar todas las funciones
+- Funciones Premium: estadísticas, ofertas, destacar platos, modo dark/light, multiidioma, botón garzón, captar cumpleaños de clientes
+- Después de los 14 días pueden elegir un plan desde $14.900/mes o quedarse en Gratis
+
+TU PERSONALIDAD:
+- Eres amable, casual, como alguien del equipo que quiere ayudar genuinamente
+- NO eres un bot de ventas agresivo. Eres una persona real que quiere saber cómo les fue
+- Hablas como chileno pero sin modismos exagerados. Tuteo natural
+- Haces preguntas abiertas para entender su situación
+- Si tienen un problema, ayúdalos a resolverlo
+- Si no les interesa, agradece y despídete sin insistir
+
+TU OBJETIVO:
+1. Saber si vieron su carta y qué les pareció
+2. Si no la vieron, motivarlos a que la miren (envíales el link)
+3. Si la vieron pero no entraron al panel, pregunta si necesitan ayuda
+4. Si tienen dudas o problemas, resuélvelos ahí mismo
+5. Si ya no están interesados, pregunta brevemente por qué (para mejorar) y despídete
+
+IMPORTANTE — REGISTRAR INSIGHTS:
+Al final de tu respuesta, si el lead reveló información útil, agrega una línea EXACTAMENTE así:
+[INSIGHT: texto breve del insight]
+
+Ejemplos de insights que debes capturar:
+- [INSIGHT: no sabía que la carta ya estaba lista]
+- [INSIGHT: ya tiene otra carta QR y no quiere cambiar]
+- [INSIGHT: le interesa pero no tiene tiempo ahora]
+- [INSIGHT: quiere saber cuánto cuesta antes de probar]
+- [INSIGHT: tuvo problemas para ver la carta]
+- [INSIGHT: le gustó la carta, va a ponerla en las mesas]
+- [INSIGHT: cerró el restaurante]
+- [INSIGHT: no entiende cómo funciona el QR]
+
+Solo agrega [INSIGHT:] cuando haya información nueva y útil. No en cada mensaje.
+
+REGLAS:
+- Responde siempre en español
+- Sé breve: máximo 3-4 oraciones por mensaje
+- No uses markdown, solo texto plano (es WhatsApp)
+- Usa emojis con moderación (1-2 máximo)
+- Nunca inventes información sobre el restaurante
+- Si preguntan precios: Gratis (básico), Silver $14.900, Gold $29.900, Premium $49.900/mes
+- Para entrar al panel: "Te envié el link por email, también puedes entrar desde quierocomer.cl/panel"`;
 
 interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-interface RestaurantContext {
+export interface RestaurantContext {
   restaurantName?: string;
   plan?: string;
   slug?: string;
@@ -46,16 +96,34 @@ interface RestaurantContext {
   isDemo?: boolean;
 }
 
+export interface AgentResult {
+  reply: string;
+  insight: string | null;
+}
+
 export async function generateWhatsAppReply(
   inboundMessage: string,
   history: ConversationMessage[],
   context: RestaurantContext,
   knowledgeEntries?: { topic: string; content: string }[],
 ): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return "Gracias por tu mensaje. Te contactaremos pronto.";
+  const result = await generateWhatsAppReplyWithInsight(inboundMessage, history, context, knowledgeEntries);
+  return result.reply;
+}
 
-  // Build custom knowledge block from admin-defined entries
+export async function generateWhatsAppReplyWithInsight(
+  inboundMessage: string,
+  history: ConversationMessage[],
+  context: RestaurantContext,
+  knowledgeEntries?: { topic: string; content: string }[],
+): Promise<AgentResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { reply: "Gracias por tu mensaje. Te contactaremos pronto.", insight: null };
+
+  // Use sales mode for demo/inactive restaurants, support for active ones
+  const isSalesMode = context.isDemo || (!context.isActive && context.restaurantName);
+  const systemPrompt = isSalesMode ? SALES_PROMPT : SUPPORT_PROMPT;
+
   let knowledgeBlock = "";
   if (knowledgeEntries && knowledgeEntries.length > 0) {
     knowledgeBlock = "\n\nCONOCIMIENTO ADICIONAL:\n" + knowledgeEntries.map(e => `[${e.topic}]\n${e.content}`).join("\n\n");
@@ -66,7 +134,7 @@ export async function generateWhatsAppReply(
     contextBlock = `\n\nESTAS HABLANDO CON:
 - Restaurante: ${context.restaurantName}
 - Plan: ${context.plan || "No definido"}
-- Estado: ${context.isDemo ? "Demo (aún no activa)" : context.isActive ? "Activo" : "Inactivo"}
+- Estado: ${context.isDemo ? "Demo (subió carta pero no activó)" : context.isActive ? "Activo" : "Inactivo"}
 - Platos: ${context.dishCount || 0}
 ${context.slug ? `- URL carta: quierocomer.cl/qr/${context.slug}` : ""}
 ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}`;
@@ -87,8 +155,8 @@ ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}`;
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 300,
-        system: SYSTEM_PROMPT + knowledgeBlock + contextBlock,
+        max_tokens: 400,
+        system: systemPrompt + knowledgeBlock + contextBlock,
         messages,
       }),
       signal: AbortSignal.timeout(10000),
@@ -96,14 +164,23 @@ ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}`;
 
     if (!res.ok) {
       console.error("[WA Agent] Claude error:", res.status);
-      return "Gracias por tu mensaje. Un miembro de nuestro equipo te contactará pronto.";
+      return { reply: "Gracias por tu mensaje. Un miembro de nuestro equipo te contactará pronto.", insight: null };
     }
 
     const data = await res.json();
-    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: MODEL, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "whatsapp_agent" })).catch(() => {});
-    return data.content?.[0]?.text || "Gracias por tu mensaje.";
+    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: MODEL, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: isSalesMode ? "whatsapp_sales_agent" : "whatsapp_agent" })).catch(() => {});
+
+    const fullText = data.content?.[0]?.text || "Gracias por tu mensaje.";
+
+    // Extract insight if present
+    const insightMatch = fullText.match(/\[INSIGHT:\s*(.+?)\]/i);
+    const insight = insightMatch ? insightMatch[1].trim() : null;
+    // Remove insight tag from the reply sent to the user
+    const reply = fullText.replace(/\[INSIGHT:\s*.+?\]/gi, "").trim();
+
+    return { reply, insight };
   } catch (err) {
     console.error("[WA Agent] Error:", err);
-    return "Gracias por tu mensaje. Te responderemos a la brevedad.";
+    return { reply: "Gracias por tu mensaje. Te responderemos a la brevedad.", insight: null };
   }
 }

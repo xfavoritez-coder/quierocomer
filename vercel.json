@@ -27,6 +27,10 @@
     {
       "path": "/api/cron/weekly-email",
       "schedule": "11 15 * * 1"
+    },
+    {
+      "path": "/api/cron/nurturing",
+      "schedule": "0 18 * * *"
     }
   ]
 }
