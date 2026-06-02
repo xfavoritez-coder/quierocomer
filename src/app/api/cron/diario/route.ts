@@ -172,6 +172,34 @@ export async function GET(req: NextRequest) {
         } catch (e) {
           console.error("[diario] email trial expired error:", e);
         }
+
+        // WhatsApp de Camila para los que usaron el trial
+        try {
+          const lead = await prisma.lead.findFirst({
+            where: { generatedSlug: r.slug },
+            select: { id: true, whatsapp: true, ownerName: true, events: true },
+          });
+          if (lead?.whatsapp) {
+            const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
+            if (!events.some((e: any) => e.action === "nurturing_trial_usado")) {
+              const { sendWhatsApp } = await import("@/lib/whatsapp");
+              const ownerName = (lead.ownerName || r.owner?.name || "Hola").split(" ")[0];
+              const sid = await sendWhatsApp({
+                to: lead.whatsapp,
+                body: "",
+                contentSid: "HX553107603c0366a63214d4f52afc8e38",
+                contentVariables: JSON.stringify({ "1": ownerName, "2": r.name }),
+              });
+              if (sid) {
+                events.push({ ts: now.toISOString(), action: "nurturing_trial_usado", sid });
+                await prisma.lead.update({ where: { id: lead.id }, data: { events: events as any } });
+                console.log(`[diario] Camila WA sent to ${lead.whatsapp} (trial usado: ${r.name})`);
+              }
+            }
+          }
+        } catch (waErr) {
+          console.error("[diario] WA trial usado error:", waErr);
+        }
       }
     }
 
