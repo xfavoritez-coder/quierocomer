@@ -30,7 +30,7 @@
     },
     {
       "path": "/api/cron/nurturing",
-      "schedule": "0 18 * * *"
+      "schedule": "0 20 * * *"
     }
   ]
 }
