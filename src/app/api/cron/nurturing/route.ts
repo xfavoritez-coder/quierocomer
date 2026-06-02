@@ -86,14 +86,13 @@ export async function GET(req: NextRequest) {
   }
 
   // ═══ Scenario 1: Carta lista +24h, no la revisó ═══
-  // deliveredAt between 1-7 days ago, no panel visit, no onboarding, no activation
+  // deliveredAt between 1-7 days ago, no panel visit, no activation
   const noRevisada = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
       deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
       activatedAt: null,
       panelVisitedAt: null,
-      onboardingDoneAt: null,
       whatsapp: { not: null },
       generatedSlug: { not: null },
     },
@@ -105,14 +104,13 @@ export async function GET(req: NextRequest) {
     await sendNurturing(lead, "carta_no_revisada", "nurturing_no_revisada", TEMPLATES.cartaNoRevisada);
   }
 
-  // ═══ Scenario 2: Vio carta pero no terminó onboarding ═══
-  // Has some engagement (emailClickedAt or whatsappClickedAt) but onboardingDoneAt is null
+  // ═══ Scenario 2: Vio carta pero no activó ═══
+  // Has some engagement (clicked email/WA or visited panel) but hasn't activated
   const onboardingIncompleto = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
       deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
       activatedAt: null,
-      onboardingDoneAt: null,
       whatsapp: { not: null },
       generatedSlug: { not: null },
       OR: [
@@ -132,12 +130,11 @@ export async function GET(req: NextRequest) {
     await sendNurturing(lead, "onboarding_incompleto", "nurturing_onboarding", TEMPLATES.onboardingIncompleto);
   }
 
-  // ═══ Scenario 3: Activó trial, hizo onboarding, pero no volvió ═══
+  // ═══ Scenario 3: Activó trial pero no volvió ═══
   // activatedAt between 1-7 days ago, but restaurant owner hasn't visited panel recently
   const noVolvio = await prisma.lead.findMany({
     where: {
       activatedAt: { lt: oneDayAgo, gt: sevenDaysAgo },
-      onboardingDoneAt: { not: null },
       whatsapp: { not: null },
       generatedSlug: { not: null },
     },

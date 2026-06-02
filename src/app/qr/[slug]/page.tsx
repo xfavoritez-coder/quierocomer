@@ -212,10 +212,7 @@ export default async function CartaPage({
         <OwnerBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} />
       )}
       {(restaurant as any).isDemo && !isShowcase && (
-        <>
-          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} />
-          <DemoOnboarding restaurantSlug={slug} onboardingDone={(restaurant as any).demoOnboardingDone} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} />
-        </>
+        <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} />
       )}
       {isShowcase && !isEmbed && (
         <ShowcaseMobileOnly restaurantSlug={slug} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} restaurantName={restaurant.name} />

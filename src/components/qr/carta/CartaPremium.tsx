@@ -488,6 +488,12 @@ export default function CartaPremium({
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
 
+      {(restaurant as any).isDemo && (
+        <p style={{ fontSize: "0.75rem", color: "var(--carta-text2, rgba(255,255,255,0.45))", margin: 0, padding: "8px 14px 0", lineHeight: 1.4 }}>
+          📸 Algunas fotos son referenciales · Sube las tuyas desde el panel
+        </p>
+      )}
+
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div

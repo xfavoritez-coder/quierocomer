@@ -1417,6 +1417,11 @@ export default function CartaImpact({
         }}>
           {t(lang, "impactMenu" as any)}
         </h2>
+        {(restaurant as any).isDemo && (
+          <p style={{ fontSize: "0.75rem", color: "var(--carta-text2, rgba(255,255,255,0.45))", margin: "8px 0 0", lineHeight: 1.4 }}>
+            📸 Algunas fotos son referenciales · Sube las tuyas desde el panel
+          </p>
+        )}
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
