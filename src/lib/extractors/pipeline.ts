@@ -420,7 +420,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         logoUrl: extraction.logoUrl,
         cartaTheme: "PREMIUM",
         cartaColorMode: "DARK",
-        defaultView: "lista",
+        defaultView: "impact",
         enabledLangs: ["es", "en", "pt"],
         isActive: true,
         isDemo: true,
@@ -504,41 +504,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           credit: dish.photoCredit || null,
         });
       }
-    }
-
-    // Create a demo promotion so the owner sees how promos look in their carta
-    try {
-      // Pick a dish preferring ones with photo, food over drinks
-      const allDishes = extraction.dishes;
-      const withPhoto = allDishes.filter(d => d.imageUrl);
-      const foodOnly = (arr: typeof allDishes) => arr.filter(d => !/bebida|trago|jugo|café|coffee|tea|cerveza|vino|agua|drink/i.test(d.name));
-      const pick = foodOnly(withPhoto)[0] || withPhoto[0] || foodOnly(allDishes)[0] || allDishes[0];
-      if (pick) {
-        const matchedDish = createdDishes.find(d => d.name === pick.name.trim());
-        if (matchedDish) {
-          const originalPrice = pick.price > 0 ? pick.price : 9900;
-          const discountPct = 15;
-          const promoPrice = Math.round(originalPrice * (1 - discountPct / 100));
-          await prisma.promotion.create({
-            data: {
-              restaurantId: restaurant.id,
-              name: `${pick.name.trim()} en oferta`,
-              description: pick.description || null,
-              promoType: "product",
-              dishIds: [matchedDish.id],
-              originalPrice,
-              promoPrice,
-              discountPct,
-              status: "ACTIVE",
-              generatedBy: "ai",
-              aiJustification: "Oferta demo creada automáticamente para mostrar cómo se ven las promociones",
-            },
-          });
-          console.log(`[Pipeline] Demo promo created: ${pick.name.trim()} ($${originalPrice} → $${promoPrice})`);
-        }
-      }
-    } catch (promoErr) {
-      console.error("[Pipeline] Failed to create demo promo:", promoErr);
     }
 
     // Mark lead as READY early — before slow operations (photos, translations)
