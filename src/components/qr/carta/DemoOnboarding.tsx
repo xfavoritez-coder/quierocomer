@@ -41,8 +41,8 @@ const STEPS: Step[] = [
   },
   {
     icon: "📸",
-    title: "Fotos referenciales",
-    body: "Pusimos algunas fotos referenciales para que veas como se verá tu carta.",
+    title: "Sube tus fotos",
+    body: "Desde tu panel puedes agregar fotos a tus platos para que tu carta se vea increíble.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },

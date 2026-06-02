@@ -536,7 +536,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
               finalUrl = supabaseUrl || dish.externalPhoto!;
             }
 
-            const updateData: any = { photos: [finalUrl], isPhotoReferential: true };
+            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
             if (credit) updateData.photoCredits = [credit];
             await prisma.dish.update({ where: { id: dish.id }, data: updateData });
           }),
@@ -547,43 +547,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     // Run Unsplash photo fill + translations in parallel (independent: photos→dish.photos, translations→dishTranslation)
     let translationOk = true;
 
-    const unsplashTask = (async () => {
-      if (!process.env.UNSPLASH_ACCESS_KEY) return;
-      const { searchUnsplashPhoto: searchPhoto, triggerUnsplashDownload: triggerDl } = await import("@/lib/unsplash");
-      // Only fetch photos for hero (RECOMMENDED) + first 30% of dishes for demo
-      // Full photo fill happens on activation via backfill
-      const allDishesDB = await prisma.dish.findMany({
-        where: { restaurantId: restaurant.id, isActive: true },
-        orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
-        select: { id: true, name: true, photos: true, tags: true },
-      });
-      const cap = Math.min(20, Math.ceil(allDishesDB.length * 0.3));
-      const heroIds = new Set(allDishesDB.filter(d => d.tags?.includes("RECOMMENDED")).map(d => d.id));
-      const priorityDishes = [
-        ...allDishesDB.filter(d => heroIds.has(d.id)),
-        ...allDishesDB.filter(d => !heroIds.has(d.id)).slice(0, cap),
-      ].slice(0, 20);
-      const missing = priorityDishes.filter(d => !d.photos?.length);
-      console.log(`[Pipeline] Unsplash: ${missing.length}/${allDishesDB.length} priority dishes need photos`);
-      if (missing.length > 0) {
-        await Promise.allSettled(missing.map(async (d) => {
-          try {
-            const photo = await searchPhoto(`${d.name} food dish`);
-            if (photo) {
-              await prisma.dish.update({
-                where: { id: d.id },
-                data: {
-                  photos: [photo.rawUrl],
-                  isPhotoReferential: true,
-                  photoCredits: [{ photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId }],
-                },
-              });
-              triggerDl(photo.downloadLocation).catch(() => {});
-            }
-          } catch {}
-        }));
-      }
-    })();
+    // Unsplash photo assignment removed — dishes display with text-only fallback
 
     const translationTask = (async () => {
       if (createdDishes.length === 0) return;
@@ -625,7 +589,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     })();
 
-    await Promise.all([unsplashTask, translationTask]);
+    await translationTask;
 
     // Reassign RECOMMENDED to dishes that have photos (the initial assignment happens before photos are uploaded)
     try {
@@ -639,7 +603,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       for (const d of currentRec) {
         await prisma.dish.update({ where: { id: d.id }, data: { tags: d.tags.filter(t => t !== "RECOMMENDED") } });
       }
-      // Assign RECOMMENDED to first dish WITH photo in first 2 non-drink categories
+      // Assign RECOMMENDED to first dish in first 2 non-drink categories
       const seenCats = new Set<number>();
       let assigned = 0;
       for (const d of allDishesForRec) {
@@ -647,18 +611,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const catPos = d.category?.position ?? 99;
         if (seenCats.has(catPos)) continue;
         if (d.category?.dishType === "drink") { seenCats.add(catPos); continue; }
-        if (d.photos?.length > 0) {
-          await prisma.dish.update({ where: { id: d.id }, data: { tags: [...d.tags.filter(t => t !== "RECOMMENDED"), "RECOMMENDED"] } });
-          seenCats.add(catPos);
-          assigned++;
-        }
-      }
-      // Fallback: if no dishes with photos found, assign to first 2 dishes with photos anywhere
-      if (assigned === 0) {
-        const withPhotos = allDishesForRec.filter(d => d.photos?.length > 0 && d.category?.dishType !== "drink");
-        for (const d of withPhotos.slice(0, 2)) {
-          await prisma.dish.update({ where: { id: d.id }, data: { tags: [...d.tags.filter(t => t !== "RECOMMENDED"), "RECOMMENDED"] } });
-        }
+        await prisma.dish.update({ where: { id: d.id }, data: { tags: [...d.tags.filter(t => t !== "RECOMMENDED"), "RECOMMENDED"] } });
+        seenCats.add(catPos);
+        assigned++;
       }
     } catch (recErr) {
       console.error("[Pipeline] RECOMMENDED reassignment failed:", recErr);

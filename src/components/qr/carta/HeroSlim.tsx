@@ -5,9 +5,6 @@ import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { trackHeroClick } from "./utils/cartaAnalytics";
 
-const FALLBACK_IMG =
-  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
-
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
@@ -29,10 +26,10 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
   const bgSrc = dish
     ? isReal(dish.photos?.[0])
       ? dish.photos[0]
-      : FALLBACK_IMG
+      : null
     : isReal(restaurant.bannerUrl)
       ? restaurant.bannerUrl!
-      : FALLBACK_IMG;
+      : null;
 
   // Auto-rotate every 5s
   useEffect(() => {
@@ -75,26 +72,24 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
         onTouchStart={hasSlides ? handleTouchStart : undefined}
         onTouchEnd={hasSlides ? handleTouchEnd : undefined}
       >
-        {/* Background image */}
-        <Image
-          src={bgSrc}
-          alt={dish?.name || restaurant.name}
-          fill
-          className="object-cover object-center"
-          priority
-          sizes="100vw"
-          key={bgSrc}
-          style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
-        />
-
-        {/* Lateral gradient */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
-          }}
-        />
+        {/* Background image or gradient fallback */}
+        {bgSrc ? (
+          <>
+            <Image
+              src={bgSrc}
+              alt={dish?.name || restaurant.name}
+              fill
+              className="object-cover object-center"
+              priority
+              sizes="100vw"
+              key={bgSrc}
+              style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
+            />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }} />
+          </>
+        ) : (
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
+        )}
 
         {/* Top left: logo + name */}
         <button

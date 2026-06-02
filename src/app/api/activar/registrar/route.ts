@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       qrActivatedAt: new Date(),
       plan: "PREMIUM",
       ownerId: owner.id,
-      allPhotosReferential: true,
+      allPhotosReferential: false,
     },
   });
 

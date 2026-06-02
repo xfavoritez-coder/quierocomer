@@ -35,6 +35,7 @@ import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
+import DemoViewFab from "./DemoViewFab";
 import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import WaiterButton from "../garzon/WaiterButton";
@@ -71,10 +72,10 @@ interface Props {
 function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restaurant: Restaurant; onDishSelect: (d: Dish) => void }) {
   const lang = useLang();
   const heroDishes = useMemo(() => {
-    const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
-    if (rec.length > 0) return rec;
-    const withPhoto = dishes.filter(d => d.photos?.[0]);
-    return [...withPhoto].sort((a, b) => a.position - b.position).slice(0, 3);
+    const sortByPhoto = (arr: Dish[]) => [...arr].sort((a, b) => (b.photos?.[0] ? 1 : 0) - (a.photos?.[0] ? 1 : 0));
+    const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
+    if (rec.length > 0) return sortByPhoto(rec);
+    return sortByPhoto(dishes).slice(0, 3);
   }, [dishes]);
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -122,8 +123,8 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
       onTouchEnd={handleTouchEnd}
       style={{ position: "relative", width: "100%", height: 460, overflow: "hidden", cursor: "pointer" }}
     >
-      {/* Photo */}
-      {dish.photos?.[0] && (
+      {/* Photo or gradient fallback */}
+      {dish.photos?.[0] ? (
         <Image
           src={dish.photos[0]}
           alt={dish.name}
@@ -133,6 +134,8 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
           priority
           style={{ transition: "opacity 0.5s ease" }}
         />
+      ) : (
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
       )}
 
       {/* Gradient */}
@@ -698,7 +701,14 @@ export default function CartaFeed({
 
       <FabSpeedDial
         onLampClick={() => setGenioOpen(true)}
-        pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} /> : undefined}
+        pinned={
+          <>
+            {(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" && (
+              <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
+            )}
+            {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
+          </>
+        }
       />
 
       {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} logoUrl={restaurant.logoUrl} />}

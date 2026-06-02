@@ -15,6 +15,7 @@ import { norm } from "@/lib/normalize";
 import ViewSelectorCompact from "./ViewSelectorCompact";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
+import DemoViewFab from "./DemoViewFab";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -149,23 +150,27 @@ function ImpactHeroSlider({
         }
       }}
     >
-      {/* Photos */}
-      {heroDishes.map((dish, i) => {
-        const p = getDishPhoto(dish);
-        return p ? (
-          <div key={dish.id} style={{
-            position: "absolute", inset: 0, zIndex: -3,
-            opacity: i === current ? 1 : 0,
-            transition: "opacity 0.8s ease",
-          }}>
-            <Image
-              src={p} alt={dish.name} fill className="object-cover" sizes="100vw"
-              style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
-              quality={95} priority={i === 0}
-            />
-          </div>
-        ) : null;
-      })}
+      {/* Photos or gradient fallback */}
+      {heroDishes.some(dish => getDishPhoto(dish)) ? (
+        heroDishes.map((dish, i) => {
+          const p = getDishPhoto(dish);
+          return p ? (
+            <div key={dish.id} style={{
+              position: "absolute", inset: 0, zIndex: -3,
+              opacity: i === current ? 1 : 0,
+              transition: "opacity 0.8s ease",
+            }}>
+              <Image
+                src={p} alt={dish.name} fill className="object-cover" sizes="100vw"
+                style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
+                quality={95} priority={i === 0}
+              />
+            </div>
+          ) : null;
+        })
+      ) : (
+        <div style={{ position: "absolute", inset: 0, zIndex: -3, background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
+      )}
 
       {/* Dark overlays — always dark regardless of theme */}
       <div style={{
@@ -1660,10 +1665,17 @@ export default function CartaImpact({
         );
       })()}
 
-      {/* FABs: lamp (Genio) + bell (waiter) */}
+      {/* FABs: lamp (Genio) + views (demo) + bell (waiter) */}
       <FabSpeedDial
         onLampClick={() => setGenioOpen(true)}
-        pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} /> : undefined}
+        pinned={
+          <>
+            {(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" && (
+              <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
+            )}
+            {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
+          </>
+        }
       />
 
       {/* Keyframe animations */}

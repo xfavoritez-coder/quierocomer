@@ -10,9 +10,6 @@ import ViewSelectorCompact from "./ViewSelectorCompact";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
-const FALLBACK_IMG =
-  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
-
 interface QRUserData {
   id: string;
   name: string | null;
@@ -48,13 +45,15 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
   const rawBg = dish
     ? isReal(dish.photos?.[0])
       ? dish.photos[0]
-      : FALLBACK_IMG
+      : null
     : isReal(restaurant.bannerUrl)
       ? restaurant.bannerUrl!
-      : FALLBACK_IMG;
-  const bgSrc = rawBg.includes("images.unsplash.com")
-    ? rawBg.split("?")[0] + "?w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress"
-    : rawBg;
+      : null;
+  const bgSrc = rawBg
+    ? rawBg.includes("images.unsplash.com")
+      ? rawBg.split("?")[0] + "?w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress"
+      : rawBg
+    : null;
 
   // Auto-rotate every 5s
   useEffect(() => {
@@ -145,29 +144,25 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         onTouchStart={hasSlides ? handleTouchStart : undefined}
         onTouchEnd={hasSlides ? handleTouchEnd : undefined}
       >
-        {/* Background image */}
-        <Image
-          src={bgSrc}
-          alt={dish?.name || restaurant.name}
-          fill
-          className="object-cover object-center"
-          priority
-          sizes="100vw"
-          key={bgSrc}
-          style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
-        />
-
-        {/* Overlay 1: subtle darkening */}
-        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />
-
-        {/* Overlay 2: gradient bottom heavy */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)",
-          }}
-        />
+        {/* Background image or gradient fallback */}
+        {bgSrc ? (
+          <>
+            <Image
+              src={bgSrc}
+              alt={dish?.name || restaurant.name}
+              fill
+              className="object-cover object-center"
+              priority
+              sizes="100vw"
+              key={bgSrc}
+              style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
+            />
+            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
+          </>
+        ) : (
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
+        )}
 
 
 

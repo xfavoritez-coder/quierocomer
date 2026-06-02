@@ -19,6 +19,7 @@ import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
+import DemoViewFab from "./DemoViewFab";
 import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import { getGuestId } from "@/lib/guestId";
@@ -334,28 +335,20 @@ export default function CartaPremium({
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {
-    // When viewing in non-Spanish lang, prioritize translated dishes
     const preferTranslated = lang !== "es";
-    const sortT = (arr: typeof dishes) => preferTranslated
-      ? [...arr].sort((a, b) => ((b as any)._hasTranslation ? 1 : 0) - ((a as any)._hasTranslation ? 1 : 0))
-      : arr;
+    const sortPriority = (arr: typeof dishes) => [...arr].sort((a, b) => {
+      const aPhoto = a.photos?.[0] ? 1 : 0;
+      const bPhoto = b.photos?.[0] ? 1 : 0;
+      if (aPhoto !== bPhoto) return bPhoto - aPhoto;
+      if (preferTranslated) return ((b as any)._hasTranslation ? 1 : 0) - ((a as any)._hasTranslation ? 1 : 0);
+      return 0;
+    });
 
-    // 1. RECOMMENDED dishes with photos
-    const recommendedWithPhotos = sortT(dishes.filter(
-      (d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]
-    ));
-    if (recommendedWithPhotos.length > 0) return recommendedWithPhotos;
-
-    // 2. Popular dishes with photos (up to 3)
-    const popularWithPhotos = sortT(dishes.filter(
-      (d) => popularDishIds.has(d.id) && d.photos?.[0]
-    )).slice(0, 3);
-    if (popularWithPhotos.length > 0) return popularWithPhotos;
-
-    // 3. Fallback: first 3 dishes with photos (by position)
-    const withPhotos = sortT(dishes.filter((d) => d.photos?.[0]));
-    if (withPhotos.length <= 3) return withPhotos;
-    return withPhotos.slice(0, 3);
+    const recommended = sortPriority(dishes.filter(d => d.tags?.includes("RECOMMENDED")));
+    if (recommended.length > 0) return recommended;
+    const popular = sortPriority(dishes.filter(d => popularDishIds.has(d.id))).slice(0, 3);
+    if (popular.length > 0) return popular;
+    return sortPriority(dishes).slice(0, 3);
   }, [dishes, popularDishIds, lang]);
 
   // Hard rule: si el cliente filtra "_spicy", los picantes SIEMPRE van al final
@@ -841,10 +834,17 @@ export default function CartaPremium({
         );
       })()}
 
-      {/* Floating buttons: lamp (Genio) + bell (waiter) */}
+      {/* Floating buttons: lamp (Genio) + views (demo) + bell (waiter) */}
       <FabSpeedDial
         onLampClick={() => setGenioOpen(true)}
-        pinned={showWaiter ? <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} /> : undefined}
+        pinned={
+          <>
+            {(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" && (
+              <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
+            )}
+            {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
+          </>
+        }
       />
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }

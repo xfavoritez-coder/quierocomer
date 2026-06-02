@@ -13,6 +13,7 @@ import { groupDishesByCategory, isGeniePick } from "./utils/dishHelpers";
 import { getCarouselMode, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
 import DishDetailEsencial from "./DishDetailEsencial";
 import FabSpeedDial from "./FabSpeedDial";
+import DemoViewFab from "./DemoViewFab";
 import ViewSelectorCompact from "./ViewSelectorCompact";
 import GenioFab from "./GenioFab";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -984,8 +985,13 @@ export default function CartaEsencial({
         }
       `}</style>
 
-      {/* ══════ FAB: lamp (Genio) ══════ */}
-      <FabSpeedDial onLampClick={() => setGenioOpen(true)} />
+      {/* ══════ FAB: lamp (Genio) + views (demo) ══════ */}
+      <FabSpeedDial
+        onLampClick={() => setGenioOpen(true)}
+        pinned={(restaurant as any).isDemo && (restaurant as any).plan !== "FREE" ? (
+          <DemoViewFab restaurantId={restaurant.id} defaultView={(restaurant as any).defaultView} />
+        ) : undefined}
+      />
 
       {/* ══════ GENIO ONBOARDING MODAL ══════ */}
       {genioOpen && (
