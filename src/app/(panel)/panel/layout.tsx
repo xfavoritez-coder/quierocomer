@@ -118,6 +118,7 @@ type BillingStatus = {
   hasSubscription: boolean;
   activeFlowPlan: string | null;
   billingExempt?: boolean;
+  trialUsed?: boolean;
 };
 
 export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTrialEnds, subscriptionStatus: propStatus }: { restaurantId: string | null; plan?: string; trialEndsAt?: string | null; subscriptionStatus?: string }) {
