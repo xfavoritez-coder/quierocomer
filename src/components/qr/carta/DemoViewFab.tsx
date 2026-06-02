@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { List, Rocket, FileText } from "lucide-react";
+import { List, Rocket, LayoutGrid } from "lucide-react";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
 const VIEWS: { value: CartaView; labelKey: string; Icon: typeof List }[] = [
-  { value: "esencial", labelKey: "viewEsencial", Icon: FileText },
+  { value: "premium", labelKey: "viewGallery", Icon: LayoutGrid },
   { value: "lista", labelKey: "viewList", Icon: List },
   { value: "impact", labelKey: "viewImpact", Icon: Rocket },
 ];

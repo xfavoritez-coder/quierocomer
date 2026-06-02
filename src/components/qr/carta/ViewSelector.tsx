@@ -14,7 +14,7 @@ const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const LANG_STORAGE_KEY = "qc_lang";
 
 const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewImpact" | "viewFeed" | "viewEsencial"; Icon: typeof List }[] = [
-  { value: "esencial", labelKey: "viewEsencial", Icon: FileText },
+  { value: "premium", labelKey: "viewGallery", Icon: LayoutGrid },
   { value: "lista", labelKey: "viewList", Icon: List },
   { value: "impact", labelKey: "viewImpact", Icon: Rocket },
 ];
@@ -137,7 +137,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
         >
           {/* View options — 3 in a row */}
           <div style={{ display: "flex", gap: 4, padding: "4px" }}>
-            {VIEW_KEYS.filter(v => v.value !== "premium" && (plan !== "GOLD" || v.value === "lista")).map(({ value, labelKey, Icon }) => {
+            {VIEW_KEYS.filter(v => (plan !== "GOLD" || v.value === "lista")).map(({ value, labelKey, Icon }) => {
               const label = t(lang, labelKey as any);
               const isActive = view === value;
               return (

@@ -254,10 +254,9 @@ export default function CartaRouter(props: Props) {
 
   // Force view based on plan
   const effectiveView = (() => {
-    if (view === "premium") return "esencial"; // Galería deprecated, redirect to esencial
     if (view === "feed" && !canAccess(plan, "view_feed")) return "lista";
     if (view === "impact" && !canAccess(plan, "view_space")) return "lista";
-    if (view === "esencial" && !canAccess(plan, "view_gallery")) return "lista";
+    if (view === "premium" && !canAccess(plan, "view_gallery")) return "lista";
     return view;
   })();
 
@@ -302,6 +301,7 @@ export default function CartaRouter(props: Props) {
           {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
           {effectiveView === "impact" && <CartaImpact {...sharedProps} />}
           {effectiveView === "esencial" && <CartaEsencial {...sharedProps} />}
+          {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
           {demoFading && (
             <div style={{
               position: "fixed", inset: 0, zIndex: 9999, pointerEvents: "none",
