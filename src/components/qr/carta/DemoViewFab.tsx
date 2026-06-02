@@ -57,7 +57,7 @@ export default function DemoViewFab({ restaurantId, defaultView }: Props) {
         onClick={() => setOpen(o => !o)}
         aria-label="Cambiar vista"
         style={{
-          width: 48, height: 48, borderRadius: "50%",
+          width: 62, height: 62, borderRadius: "50%",
           background: open ? "rgba(244,166,35,0.25)" : "rgba(30,30,30,0.85)",
           border: "1.5px solid rgba(244,166,35,0.4)",
           backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",

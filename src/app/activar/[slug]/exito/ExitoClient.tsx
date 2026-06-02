@@ -57,18 +57,6 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
             }
           </div>
 
-          {/* Check — solo mobile */}
-          <div className="exito-check-mobile">
-            <svg width="28" height="28" viewBox="0 0 48 48">
-              <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(232,163,61,.2)" strokeWidth="2" />
-              <circle cx="24" cy="24" r="22" fill="none" stroke="#E8A33D" strokeWidth="2.5"
-                strokeDasharray="138" strokeDashoffset={show ? "0" : "138"}
-                style={{ transition: "stroke-dashoffset 0.8s ease 0.3s" }} />
-              <path d="M15 24l6 6 12-12" fill="none" stroke="#E8A33D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                strokeDasharray="30" strokeDashoffset={show ? "0" : "30"}
-                style={{ transition: "stroke-dashoffset 0.5s ease 0.9s" }} />
-            </svg>
-          </div>
           <h1 className="exito-title">Ya tienes acceso a tu <em>panel</em></h1>
 
           <p className="exito-subtitle">
@@ -78,9 +66,9 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
           {/* Banner regalo Premium */}
           <div className="exito-gift">
             <div className="exito-gift-icon">🎁</div>
-            <div className="exito-gift-title">Tienes 14 dias de Premium gratis de regalo</div>
+            <div className="exito-gift-title">Te regalamos 14 días de Premium</div>
             <p className="exito-gift-desc">
-              Tienes 14 dias de plan Premium gratis de regalo. Al terminar, tu carta seguirá activa en el plan Gratis — sin cobros.
+              Al terminar tu carta seguirá activa en el plan gratis, no perderás nada.
             </p>
           </div>
 
@@ -125,8 +113,6 @@ body { background: var(--black) !important; color: var(--cream) !important; font
 .exito-card.show { opacity: 1; transform: translateY(0); }
 .exito-resto-logo { width: 68px; height: 68px; margin: 0 auto 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 950; font-size: 18px; color: var(--amber); overflow: hidden; background: #111; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
 .exito-resto-logo img { width: 100%; height: 100%; object-fit: cover; }
-.exito-check-mobile { margin-bottom: 10px; }
-@media(min-width: 768px) { .exito-check-mobile { display: none; } }
 .exito-title { font-family: Georgia, serif; font-size: clamp(28px,6vw,38px); font-weight: 400; line-height: 1.1; margin-bottom: 12px; }
 .exito-title em { color: var(--amber); font-style: italic; }
 .exito-subtitle { color: var(--cream-soft); font-size: 15px; line-height: 1.5; margin-bottom: 20px; }

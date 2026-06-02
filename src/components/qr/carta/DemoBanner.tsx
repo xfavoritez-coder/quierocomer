@@ -108,9 +108,10 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurantName}</span>
             </>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {enabledLangs && enabledLangs.length > 1 && (
-                <div style={{ display: "flex", gap: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,.5)", whiteSpace: "nowrap" }}>Idioma:</span>
                   {enabledLangs.map(l => {
                     const isActive = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("lang") || "es") === l;
                     return (
