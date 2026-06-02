@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
     currentPeriodEnd: restaurant.currentPeriodEnd,
     lastPaymentAt: restaurant.lastPaymentAt,
     hasSubscription: !!restaurant.mpSubscriptionId,
-    trialUsed: !!(restaurant.trialReminderSentAt || (restaurant.trialEndsAt && restaurant.subscriptionStatus !== "TRIALING")),
+    trialUsed: !!(restaurant.trialReminderSentAt || restaurant.trialEndsAt),
     activePlan,
     activeFlowPlan: activePlan, // backward-compat con panel pages
     billingExempt: restaurant.billingExempt,

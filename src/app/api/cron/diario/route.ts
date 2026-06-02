@@ -151,7 +151,6 @@ export async function GET(req: NextRequest) {
         data: {
           subscriptionStatus: "NONE",
           plan: "FREE",
-          trialEndsAt: null,
         },
       });
       trialsExpired = expiredTrials.length;
