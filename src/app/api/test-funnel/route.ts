@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
         const firstName = (restaurant.owner.name || "").split(" ")[0] || "Hola";
         await sendAdminEmail({
           to: restaurant.owner.email,
-          subject: `${firstName}, tu regalo Premium en ${restaurant.name} terminó`,
+          subject: `Tu carta QR volvió al plan gratis`,
           html: trialExpiredEmailHtml(firstName, restaurant.name, `${baseUrl}/panel/suscripcion`),
           purpose: "trial_expired",
         });

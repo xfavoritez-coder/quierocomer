@@ -283,8 +283,8 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
     if (!restaurantId || submitting) return;
     setSubmitting(true);
     try {
-      // Premium: activate 14-day trial directly (no MercadoPago)
-      if (tab === "PREMIUM") {
+      // Premium: activate 14-day trial directly (no MercadoPago) — only if trial not used
+      if (tab === "PREMIUM" && !trialUsed) {
         const res = await fetch("/api/billing/start-trial", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -344,6 +344,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
   };
 
   const inTrial = status?.subscriptionStatus === "TRIALING";
+  const trialUsed = !!status?.trialUsed;
   const isActive = status?.subscriptionStatus === "ACTIVE";
   const isCanceled = status?.subscriptionStatus === "CANCELED";
   const showCancelButton = isCurrentPlan && (inTrial || isActive) && status?.hasSubscription;
@@ -410,7 +411,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{net === 0 ? "$0" : fmt(net)}</span>
                   <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>{net === 0 ? "para siempre" : "+ IVA /mes"}</span>
                   {net > 0 && <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>}
-                  {tab === "PREMIUM" && !inTrial && plan !== "PREMIUM" && (
+                  {tab === "PREMIUM" && !inTrial && !trialUsed && plan !== "PREMIUM" && (
                     <div style={{ marginTop: 10, padding: "8px 14px", background: "#dc2626", borderRadius: 8 }}>
                       <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>14 días gratis para probar</span>
                     </div>
@@ -461,7 +462,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial ? "Empezar prueba gratis 14 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 14 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
@@ -492,7 +493,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
           const iva = ivaOf(net);
           const gross = grossOf(net);
           const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
-          const isPremiumTrial = confirmTab === "PREMIUM";
+          const isPremiumTrial = confirmTab === "PREMIUM" && !trialUsed;
           const planLabel = confirmTab.charAt(0) + confirmTab.slice(1).toLowerCase();
           return (
             <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "var(--adm-bg, #fff)", borderRadius: 24, display: "flex", flexDirection: "column", justifyContent: "center", padding: "28px 24px" }}>

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!restaurant) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
   // Prevent double trial
-  if (restaurant.trialEndsAt || restaurant.subscriptionStatus === "TRIALING") {
+  if (restaurant.trialEndsAt || restaurant.subscriptionStatus === "TRIALING" || restaurant.trialReminderSentAt) {
     return NextResponse.json({ error: "Ya usaste tu periodo de prueba" }, { status: 409 });
   }
   if (restaurant.plan === "PREMIUM" && restaurant.subscriptionStatus === "ACTIVE") {

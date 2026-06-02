@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         select: {
           id: true, name: true, plan: true,
           mpCustomerId: true, mpSubscriptionId: true, mpPlanId: true,
-          subscriptionStatus: true, trialEndsAt: true, currentPeriodEnd: true, lastPaymentAt: true,
+          subscriptionStatus: true, trialEndsAt: true, trialReminderSentAt: true, currentPeriodEnd: true, lastPaymentAt: true,
           billingExempt: true,
           billingCompanyName: true,
           billingRut: true,
@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
     currentPeriodEnd: restaurant.currentPeriodEnd,
     lastPaymentAt: restaurant.lastPaymentAt,
     hasSubscription: !!restaurant.mpSubscriptionId,
+    trialUsed: !!(restaurant.trialReminderSentAt || (restaurant.trialEndsAt && restaurant.subscriptionStatus !== "TRIALING")),
     activePlan,
     activeFlowPlan: activePlan, // backward-compat con panel pages
     billingExempt: restaurant.billingExempt,

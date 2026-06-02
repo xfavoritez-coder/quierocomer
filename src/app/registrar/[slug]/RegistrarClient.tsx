@@ -42,7 +42,7 @@ const PLAN_INFO: Record<string, { label: string; price: string; priceSub: string
     ],
   },
   PREMIUM: {
-    label: "Premium", price: "$49.900", priceSub: "CLP / mes + IVA",
+    label: "Premium", price: "$45.900", priceSub: "CLP / mes + IVA",
     desc: "Multidioma, estadísticas avanzadas, cumpleaños, email marketing y más.",
     features: [
       { icon: "🌍", title: "Carta en varios idiomas", desc: "Español, inglés y portugués automáticos para turistas." },
@@ -64,7 +64,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
   const PLAN_PRICING: Record<string, { label: string; neto: number; iva: number; total: number }> = {
     GOLD: { label: "Gold", neto: 35000, iva: 6650, total: 41650 },
-    PREMIUM: { label: "Premium", neto: 49900, iva: 9481, total: 59381 },
+    PREMIUM: { label: "Premium", neto: 45900, iva: 8721, total: 54621 },
   };
 
   useEffect(() => {
