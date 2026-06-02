@@ -28,7 +28,7 @@ const AB_DEFAULTS = {
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
-export default function LandingNew({ logos }: { logos: Logo[] }) {
+export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverAb?: Record<string, any> }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [planesOpen, setPlanesOpen] = useState(false);
   const [anual, setAnual] = useState(false);
@@ -68,9 +68,9 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
   }, []);
 
   // A/B testing state
-  const [abTitle, setAbTitle] = useState("");
-  const [abSubtitle, setAbSubtitle] = useState("");
-  const [abCta, setAbCta] = useState(AB_DEFAULTS.ctaText);
+  const [abTitle, setAbTitle] = useState(serverAb?.titleText || "");
+  const [abSubtitle, setAbSubtitle] = useState(serverAb?.subtitleText || "");
+  const [abCta, setAbCta] = useState(serverAb?.ctaText || AB_DEFAULTS.ctaText);
   const abIds = useRef<{ titleId: string | null; subtitleId: string | null; ctaId: string | null }>({ titleId: null, subtitleId: null, ctaId: null });
   const impressionSent = useRef(false);
 
@@ -83,8 +83,26 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
     openCarta(r[0]);
   }, [openCarta]);
 
-  // Fetch A/B variants on mount
+  // Fetch A/B variants on mount (skip if server already resolved them)
   useEffect(() => {
+    if (serverAb?.titleText) {
+      abIds.current = { titleId: serverAb.titleId || null, subtitleId: serverAb.subtitleId || null, ctaId: serverAb.ctaId || null };
+      try { localStorage.setItem("qc_ab_landing", JSON.stringify(abIds.current)); } catch {}
+      // Track impression
+      if (!impressionSent.current) {
+        impressionSent.current = true;
+        fetch("/api/qr/stat-events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventType: "LANDING_VIEWED",
+            metadata: { abExperiment: "landing-hero", ...abIds.current },
+          }),
+        }).catch(() => {});
+      }
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const forced = params.get("v");
     const url = forced ? `/api/landing/ab?v=${forced}` : "/api/landing/ab";
@@ -98,7 +116,6 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         abIds.current = { titleId: d.titleId || null, subtitleId: d.subtitleId || null, ctaId: d.ctaId || null };
         try { localStorage.setItem("qc_ab_landing", JSON.stringify(abIds.current)); } catch {}
 
-        // Track impression
         if (!impressionSent.current) {
           impressionSent.current = true;
           fetch("/api/qr/stat-events", {
@@ -307,12 +324,12 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           </h2>
           <div className="func-grid">
             {[
-              { icon: "🔔", title: "Llamar al garzón", desc: "Tus clientes piden atención desde la mesa sin esperar a ser vistos." },
-              { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos y postres mientras el cliente decide." },
-              { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué platos miran más tus clientes y en qué horarios." },
-              { icon: "🎂", title: "Cumpleaños automáticos", desc: "Envía regalos y descuentos automáticos a clientes que cumplen años." },
-              { icon: "🏷️", title: "Ofertas y promociones", desc: "Destaca promos del día, lanzamientos o platos con mejor margen." },
-              { icon: "🌍", title: "Varios idiomas", desc: "Tu carta traducida automáticamente a inglés y portugués." },
+              { icon: "🔔", title: "Llamar al garzón", desc: "El cliente puede llamar al garzón directamente desde la carta QR, sin levantar la mano ni esperar." },
+              { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos, acompañamientos o postres mientras el cliente decide." },
+              { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso." },
+              { icon: "🎂", title: "Cumpleaños automáticos", desc: "Envía automáticamente regalos, descuentos o promociones de cumpleaños a tus clientes." },
+              { icon: "🏷️", title: "Promociones visibles", desc: "Muestra promociones, productos nuevos o platos estratégicos directamente en tu carta QR." },
+              { icon: "🌍", title: "Varios idiomas", desc: "Facilita la experiencia de turistas y clientes extranjeros con tu carta traducida." },
             ].map((f, i) => (
               <div key={i} className="func-card">
                 <span className="func-icon">{f.icon}</span>
@@ -572,14 +589,14 @@ section{position:relative}
 .banner-img-wrap img{width:100%;display:block}
 .step h3{font-size:32px;display:inline;font-weight:700;margin-bottom:14px}
 .step p{color:var(--cream-soft);font-size:22px;margin-top:18px}
-.funciones-section{padding:70px 0 60px;background:var(--black-soft)}
-.func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:820px;margin:0 auto}
-.func-card{background:rgba(20,18,16,.5);border:1px solid var(--gray-deep);border-radius:16px;padding:24px 20px;transition:border-color .25s,transform .25s}
-.func-card:hover{border-color:rgba(232,163,61,.3);transform:translateY(-2px)}
-.func-icon{font-size:28px;display:block;margin-bottom:12px}
-.func-title{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--cream);margin:0 0 8px}
-.func-desc{font-size:13px;color:var(--cream-soft);line-height:1.5;margin:0}
-@media(max-width:700px){.func-grid{grid-template-columns:repeat(2,1fr);gap:12px}.func-card{padding:18px 16px}.func-title{font-size:17px}}
+.funciones-section{padding:80px 0 70px;background:linear-gradient(165deg,rgba(232,163,61,.06) 0%,rgba(10,9,8,.95) 40%,var(--black) 100%);border-top:1px solid rgba(232,163,61,.1);border-bottom:1px solid rgba(232,163,61,.1)}
+.func-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:840px;margin:0 auto}
+.func-card{background:rgba(232,163,61,.04);border:1px solid rgba(232,163,61,.12);border-radius:18px;padding:28px 22px;transition:border-color .3s,transform .3s,background .3s}
+.func-card:hover{border-color:rgba(232,163,61,.35);background:rgba(232,163,61,.08);transform:translateY(-3px)}
+.func-icon{font-size:32px;display:block;margin-bottom:14px;filter:drop-shadow(0 4px 12px rgba(232,163,61,.2))}
+.func-title{font-family:var(--font-body);font-size:15px;font-weight:600;color:var(--cream);margin:0 0 8px}
+.func-desc{font-size:13px;color:var(--cream-soft);line-height:1.55;margin:0}
+@media(max-width:700px){.func-grid{grid-template-columns:repeat(2,1fr);gap:12px}.func-card{padding:20px 16px}.func-title{font-size:17px}}
 @media(max-width:420px){.func-grid{grid-template-columns:1fr}}
 .faq{padding:60px 0 60px;background:var(--black)}
 .faq .section-head{text-align:center}
