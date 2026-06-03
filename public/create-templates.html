@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><title>Create Templates</title></head>
+<body>
+<h1>Crear Templates WA v2</h1>
+<button id="btn">Crear 3 templates</button>
+<pre id="out"></pre>
+<script>
+document.getElementById("btn").onclick = function() {
+  document.getElementById("out").textContent = "Enviando...";
+  fetch("/api/admin/create-wa-template", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      templates: [
+        {
+          name: "camila_carta_no_revisada_v2",
+          body: "Hola {{1}}, soy Camila de QuieroComer. Hace unos dias subiste la carta de {{2}} y ya esta lista. Necesitas ayuda o tuviste algun problema?",
+          variables: {"1": "nombre", "2": "restaurante"}
+        },
+        {
+          name: "camila_no_volvio_v2",
+          body: "Hola {{1}}, soy Camila de QuieroComer. Vi que activaste la carta de {{2}} pero no la seguiste usando. Paso algo o necesitas ayuda con algo?",
+          variables: {"1": "nombre", "2": "restaurante"}
+        },
+        {
+          name: "camila_trial_usado_v2",
+          body: "Hola {{1}}, soy Camila de QuieroComer. Tu prueba de Premium en {{2}} termino y volvio al plan gratis. Si tienes dudas sobre los planes para no perder algunas funciones, me dices y te ayudo con gusto.",
+          variables: {"1": "nombre", "2": "restaurante"}
+        }
+      ]
+    })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    document.getElementById("out").textContent = JSON.stringify(d, null, 2);
+  }).catch(function(e){
+    document.getElementById("out").textContent = "Error: " + e.message;
+  });
+};
+</script>
+</body>
+</html>
