@@ -39,6 +39,7 @@ interface Entry {
   leadOwner: string | null;
   leadEmail: string | null;
   leadWhatsapp: string | null;
+  nurturingSent: { action: string; date: string }[];
   recentActivity: { action: string; createdAt: string }[];
 }
 
@@ -262,13 +263,16 @@ export default function LifecyclePage() {
               </div>
 
               {/* Stage badge */}
-              <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{
                   padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 600,
                   background: meta.bg, color: meta.color,
                 }}>
                   {meta.label}{entry.trialDaysLeft != null ? ` · ${entry.trialDaysLeft}d` : ""}
                 </span>
+                {entry.nurturingSent?.length > 0 && (
+                  <span title={`WA enviado: ${entry.nurturingSent.map(n => n.action.replace("nurturing_", "")).join(", ")}`} style={{ fontSize: 13, cursor: "help" }}>💬</span>
+                )}
               </div>
 
               {/* Engagement bar */}
@@ -327,6 +331,26 @@ export default function LifecyclePage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Nurturing sent */}
+                {entry.nurturingSent?.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                      WhatsApp enviados por Camila
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {entry.nurturingSent.map((n, i) => (
+                        <span key={i} style={{
+                          padding: "4px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500,
+                          background: "rgba(34,211,238,.08)", color: "#22d3ee",
+                          border: "1px solid rgba(34,211,238,.2)",
+                        }}>
+                          💬 {ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} · {new Date(n.date).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Recent activity timeline */}
                 {entry.recentActivity.length > 0 && (

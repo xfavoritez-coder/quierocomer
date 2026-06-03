@@ -113,6 +113,11 @@ export async function GET(req: NextRequest) {
     // Find last OWNER-initiated activity
     const lastOwnerAct = activity.find(a => OWNER_ACTIONS.has(a.action));
 
+    // Check which nurturing messages were already sent
+    const nurturingSent = activity
+      .filter(a => a.action.startsWith("nurturing_"))
+      .map(a => ({ action: a.action, date: a.createdAt.toISOString() }));
+
     // Compute lifecycle stage
     const stage = computeLifecycleStage({
       restaurant: {
@@ -199,6 +204,7 @@ export async function GET(req: NextRequest) {
       leadEmail: lead?.email || null,
       leadWhatsapp: lead?.whatsapp || null,
       leadCreatedAt: lead?.createdAt?.toISOString() || null,
+      nurturingSent,
       // Recent activity for timeline
       recentActivity: activity.slice(0, 15).map(a => ({
         action: a.action,
