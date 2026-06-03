@@ -63,8 +63,8 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
 
             {/* Content */}
             <div style={{
-              position: "relative", zIndex: 1, padding: "8px 14px", width: "50%",
-              display: "flex", flexDirection: "column", justifyContent: "center",
+              position: "relative", zIndex: 1, padding: "14px 14px", width: "50%",
+              display: "flex", flexDirection: "column", justifyContent: "flex-start",
             }}>
               <h3 style={{
                 margin: "0 0 4px", fontSize: 17, fontWeight: 800, color: "white",

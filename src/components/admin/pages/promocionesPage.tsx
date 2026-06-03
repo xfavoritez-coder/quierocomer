@@ -124,7 +124,7 @@ export default function AdminPromociones() {
   useEffect(() => {
     if (!selectedLocal) { setLocalDishes([]); setAvailableTemplates([]); return; }
     fetch(`/api/admin/dishes?restaurantId=${selectedLocal}`)
-      .then(r => r.json()).then(d => { if (Array.isArray(d)) setLocalDishes(d); })
+      .then(r => r.json()).then(d => { const arr = Array.isArray(d) ? d : d?.dishes; if (Array.isArray(arr)) setLocalDishes(arr); })
       .catch(() => {});
     fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
       .then(r => r.json())

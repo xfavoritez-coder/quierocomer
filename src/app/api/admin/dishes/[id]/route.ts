@@ -17,16 +17,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!existing) return NextResponse.json({ error: "Plato no encontrado" }, { status: 404 });
     await assertOwnsRestaurant(req, existing.restaurantId);
 
-    // Enforce max 1 RECOMMENDED per category
+    // Enforce max 5 RECOMMENDED globally
     if (body.tags !== undefined && body.tags.includes("RECOMMENDED")) {
-      const currentDish = await prisma.dish.findUnique({ where: { id }, select: { tags: true, categoryId: true } });
+      const currentDish = await prisma.dish.findUnique({ where: { id }, select: { tags: true, restaurantId: true } });
       const alreadyRec = currentDish?.tags?.includes("RECOMMENDED");
-      if (!alreadyRec && currentDish?.categoryId) {
-        const catRecCount = await prisma.dish.count({
-          where: { categoryId: currentDish.categoryId, tags: { has: "RECOMMENDED" }, isActive: true, deletedAt: null, id: { not: id } },
+      if (!alreadyRec && currentDish?.restaurantId) {
+        const totalRecCount = await prisma.dish.count({
+          where: { restaurantId: currentDish.restaurantId, tags: { has: "RECOMMENDED" }, isActive: true, deletedAt: null, id: { not: id } },
         });
-        if (catRecCount >= 1) {
-          return NextResponse.json({ error: "Ya hay un producto recomendado en esta sección. Quita el actual antes de agregar otro." }, { status: 400 });
+        if (totalRecCount >= 5) {
+          return NextResponse.json({ error: "Máximo 5 platos destacados. Quita uno antes de agregar otro." }, { status: 400 });
         }
       }
     }
