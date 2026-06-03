@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Test mode: ?test=+56999946208&scenario=onboarding_incompleto ──
-  const testPhone = req.nextUrl.searchParams.get("test");
+  const rawTestPhone = req.nextUrl.searchParams.get("test");
+  const testPhone = rawTestPhone?.trim().replace(/^\s/, "+") || null;
   if (testPhone) {
     const scenarioMap: Record<string, string> = {
       carta_no_revisada: TEMPLATES.cartaNoRevisada,
@@ -64,6 +65,10 @@ export async function GET(req: NextRequest) {
   const start = Date.now();
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // Números excluidos del nurturing
+  const BLACKLIST = new Set(["+56976485972"]); // Il Mascalzone
+
   let sent = 0;
   let skipped = 0;
   let errors = 0;
@@ -77,6 +82,7 @@ export async function GET(req: NextRequest) {
     const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
     if (events.some((e: any) => e.action === eventKey)) { skipped++; return; }
     if (!lead.whatsapp || !lead.generatedSlug) return;
+    if (BLACKLIST.has(lead.whatsapp)) { skipped++; return; }
 
     const ownerName = (lead.ownerName || "Hola").split(" ")[0];
 
@@ -110,11 +116,11 @@ export async function GET(req: NextRequest) {
   }
 
   // ═══ Scenario 1: Carta lista, no la revisó ═══
-  // deliveredAt in the last 24h, no panel visit, no activation
+  // deliveredAt between 24h-7d ago, no panel visit, no activation
   const noRevisada = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
-      deliveredAt: { gt: oneDayAgo },
+      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
       activatedAt: null,
       panelVisitedAt: null,
       whatsapp: { not: null },
@@ -133,7 +139,7 @@ export async function GET(req: NextRequest) {
   const onboardingIncompleto = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
-      deliveredAt: { gt: oneDayAgo },
+      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
       activatedAt: null,
       whatsapp: { not: null },
       generatedSlug: { not: null },
@@ -155,10 +161,10 @@ export async function GET(req: NextRequest) {
   }
 
   // ═══ Scenario 3: Activó trial pero no volvió ═══
-  // activatedAt in the last 24h, but restaurant owner hasn't visited panel recently
+  // activatedAt between 24h-7d ago, but restaurant owner hasn't visited panel recently
   const noVolvio = await prisma.lead.findMany({
     where: {
-      activatedAt: { gt: oneDayAgo },
+      activatedAt: { lt: oneDayAgo, gt: sevenDaysAgo },
       whatsapp: { not: null },
       generatedSlug: { not: null },
     },
