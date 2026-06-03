@@ -373,6 +373,9 @@ export default function LifecyclePage() {
             {/* Expanded detail */}
             {expanded === entry.id && (
               <div style={{ padding: "16px 20px 20px", borderBottom: "1px solid #2a2a2a", background: "#141414" }}>
+                <button onClick={(e) => { e.stopPropagation(); setExpanded(null); }} style={{
+                  background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", padding: "0 0 12px", display: "flex", alignItems: "center", gap: 4,
+                }}>← Volver</button>
                 {/* Quick info */}
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
                   <MiniCard label="Plan" value={entry.plan} />
@@ -446,36 +449,27 @@ export default function LifecyclePage() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
                       Comunicaciones
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {entry.leadTimeline?.deliveredAt && (
-                        <CommBadge icon="📧" label="Email enviado" date={entry.leadTimeline.deliveredAt} color="#60a5fa" />
-                      )}
-                      {entry.leadTimeline?.emailOpenedAt && (
-                        <CommBadge icon="👁" label="Email abierto" date={entry.leadTimeline.emailOpenedAt} color="#4ade80" />
-                      )}
-                      {entry.leadTimeline?.emailClickedAt && (
-                        <CommBadge icon="👆" label="Click en email" date={entry.leadTimeline.emailClickedAt} color="#4ade80" />
-                      )}
-                      {entry.leadTimeline?.activatedAt && (
-                        <CommBadge icon="🟢" label="Activó" date={entry.leadTimeline.activatedAt} color="#4ade80" />
-                      )}
-                      {entry.nurturingSent?.map((n, i) => (
-                        <CommBadge key={i} icon="💬" label={ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} date={n.date} color="#22d3ee" />
-                      ))}
-                      {entry.emailsSent?.map((e, i) => {
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {(() => {
                         const purposeLabels: Record<string, string> = {
                           activation_welcome: "Bienvenida", funnel_carta_lista: "Carta lista",
-                          trial_reminder: "Trial reminder", trial_expired: "Trial vencido",
-                          plan_activated: "Plan activado", weekly_summary: "Informe semanal",
-                          lead_failure_help: "Ayuda carta falló", reset_password: "Reset contraseña",
+                          funnel_carta_ready: "Carta lista", trial_reminder: "Trial reminder",
+                          trial_expired: "Trial vencido", plan_activated: "Plan activado",
+                          weekly_summary: "Informe semanal", lead_failure_help: "Ayuda carta falló",
+                          reset_password: "Reset contraseña", reactivation: "Reactivación",
                         };
-                        return (
-                          <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} />
-                        );
-                      })}
-                      {!entry.leadTimeline?.deliveredAt && entry.emailsSent?.length === 0 && entry.nurturingSent?.length === 0 && (
-                        <span style={{ fontSize: 11, color: "#555" }}>Sin comunicaciones registradas</span>
-                      )}
+                        // Collect all comms into one array with dates for sorting
+                        const comms: { date: string; node: React.ReactNode }[] = [];
+                        if (entry.leadTimeline?.deliveredAt) comms.push({ date: entry.leadTimeline.deliveredAt, node: <CommBadge key="ld" icon="📧" label="Email enviado" date={entry.leadTimeline.deliveredAt} color="#60a5fa" /> });
+                        if (entry.leadTimeline?.emailOpenedAt) comms.push({ date: entry.leadTimeline.emailOpenedAt, node: <CommBadge key="lo" icon="👁" label="Email abierto" date={entry.leadTimeline.emailOpenedAt} color="#4ade80" /> });
+                        if (entry.leadTimeline?.emailClickedAt) comms.push({ date: entry.leadTimeline.emailClickedAt, node: <CommBadge key="lc" icon="👆" label="Click en email" date={entry.leadTimeline.emailClickedAt} color="#4ade80" /> });
+                        if (entry.leadTimeline?.activatedAt) comms.push({ date: entry.leadTimeline.activatedAt, node: <CommBadge key="la" icon="🟢" label="Activó" date={entry.leadTimeline.activatedAt} color="#4ade80" /> });
+                        entry.nurturingSent?.forEach((n, i) => comms.push({ date: n.date, node: <CommBadge key={`n${i}`} icon="💬" label={ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} date={n.date} color="#22d3ee" /> }));
+                        entry.emailsSent?.forEach((e, i) => comms.push({ date: e.createdAt, node: <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} /> }));
+                        comms.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                        if (comms.length === 0) return <span style={{ fontSize: 11, color: "#555" }}>Sin comunicaciones registradas</span>;
+                        return comms.map((c, i) => <div key={i}>{c.node}</div>);
+                      })()}
                     </div>
                   </div>
                 )}

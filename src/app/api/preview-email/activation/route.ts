@@ -33,6 +33,8 @@ export function activationWelcomeEmailHtml({
   planLabel?: string;
 }): string {
 
+  const qrGenerarLink = qrLink.replace("/qr/", "/qr/generar/");
+
   return `<html><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,15 +72,6 @@ export function activationWelcomeEmailHtml({
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
   ${ownerName}, tu carta de <strong style="color:#111">${restaurantName}</strong> ya esta creada.
 </p>
-</td></tr>
-<tr><td style="text-align:center;padding-bottom:22px">
-  <table cellpadding="0" cellspacing="0" border="0" align="center" style="background:#faf5eb;border:1px solid #ead7b7;border-radius:14px;">
-    <tr><td style="padding:12px 18px;text-align:center;">
-      <p style="font-size:13px;color:#92400e;line-height:1.5;margin:0;font-weight:600">
-        Revisa tu carta, editala a tu gusto y cuando este lista comparte el QR en tus mesas
-      </p>
-    </td></tr>
-  </table>
 </td></tr>
 </table>
 
@@ -146,9 +139,14 @@ ${credentials ? `
     Entrar a mi panel →
   </a>
 </td></tr>
-<tr><td style="text-align:center;padding-bottom:22px">
+<tr><td style="text-align:center;padding-bottom:12px">
   <a href="${qrLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
     Ver cómo se ve mi carta
+  </a>
+</td></tr>
+<tr><td style="text-align:center;padding-bottom:22px">
+  <a href="${qrGenerarLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
+    🖨 Imprimir código QR
   </a>
 </td></tr>
 </table>

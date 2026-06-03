@@ -19,11 +19,11 @@ const NURTURING_MAP: Partial<Record<LifecycleStage, { action: string; template: 
   DORMIDO:            { action: "nurturing_no_volvio",        template: TEMPLATES.noVolvio },
 };
 
-// WhatsApp message logged for each action (what the template actually says)
-const ACTION_MESSAGES: Record<string, (name: string, rest: string) => string> = {
-  nurturing_carta_no_revisada: (n, r) => `Hola ${n}, soy Camila de QuieroComer. Te escribo por la carta de ${r}, ya esta lista pero vi que aun no la revisas. ¿Tienes alguna duda? — Camila de QuieroComer`,
-  nurturing_vio_no_activo: (n, r) => `Hola ${n}, soy Camila de QuieroComer. Vi que revisaste la carta de ${r}. ¿Necesitas ayuda o tienes alguna duda? — Camila de QuieroComer`,
-  nurturing_no_volvio: (n, r) => `Hola ${n}, soy Camila de QuieroComer. Activaste ${r} pero no has vuelto. ¿Todo bien? — Camila de QuieroComer`,
+// Exact template texts as approved by Meta (with variables replaced)
+const TEMPLATE_TEXTS: Record<string, (name: string, rest: string) => string> = {
+  nurturing_carta_no_revisada: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, ya está lista pero vi que aún no la revisas. ¿Tienes alguna duda o algo en que te pueda ayudar?`,
+  nurturing_vio_no_activo: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, vi que la activaste y está lista pero no la continuaste usando. ¿Habrá algo que no te gustó o tienes alguna duda? Cualquier cosa es bienvenida, nos encantaría saber.`,
+  nurturing_no_volvio: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, vi que la activaste y está lista pero no la continuaste usando. ¿Habrá algo que no te gustó o tienes alguna duda? Cualquier cosa es bienvenida, nos encantaría saber.`,
 };
 
 const BLACKLIST = new Set(["+56976485972", "+56977940643"]); // Il Mascalzone, Cuartel 50
@@ -154,9 +154,9 @@ export async function GET(req: NextRequest) {
     const nurturing = NURTURING_MAP[stage];
     if (!nurturing) continue;
 
-    // Skip if already sent for this restaurant+action
+    // Skip if already sent ANY nurturing to this restaurant
     const already = await prisma.panelActivity.findFirst({
-      where: { restaurantId: r.id, action: nurturing.action },
+      where: { restaurantId: r.id, action: { startsWith: "nurturing_" } },
       select: { id: true },
     });
     if (already) { skipped++; continue; }
@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
             details: { sid, whatsapp, ownerName: firstName, restaurantName: r.name, stage },
           },
         });
-        const msgBody = ACTION_MESSAGES[nurturing.action]?.(firstName, r.name) || `Nurturing: ${nurturing.action}`;
+        const msgBody = TEMPLATE_TEXTS[nurturing.action]?.(firstName, r.name) || `Nurturing: ${nurturing.action}`;
         const leadRecord = lead || await prisma.lead.findFirst({ where: { whatsapp: { contains: whatsapp.replace("+", "") } }, select: { id: true } }).catch(() => null);
         await prisma.whatsAppMessage.create({
           data: {

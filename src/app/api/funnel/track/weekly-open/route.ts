@@ -12,10 +12,9 @@ export async function GET(req: NextRequest) {
   const eid = req.nextUrl.searchParams.get("eid");
 
   if (eid) {
-    // Update EmailLog — add openedAt via errorMsg field (reusing existing field)
     prisma.emailLog.update({
       where: { id: eid },
-      data: { errorMsg: `opened:${new Date().toISOString()}` },
+      data: { openedAt: new Date() },
     }).catch(() => {});
   }
 

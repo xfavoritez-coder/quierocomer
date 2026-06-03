@@ -10,11 +10,9 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get("url");
 
   if (eid) {
-    const current = await prisma.emailLog.findUnique({ where: { id: eid }, select: { errorMsg: true } }).catch(() => null);
-    const openPart = current?.errorMsg?.startsWith("opened:") ? current.errorMsg : "";
     prisma.emailLog.update({
       where: { id: eid },
-      data: { errorMsg: `${openPart}|clicked:${new Date().toISOString()}` },
+      data: { openedAt: new Date(), clickedAt: new Date() },
     }).catch(() => {});
   }
 

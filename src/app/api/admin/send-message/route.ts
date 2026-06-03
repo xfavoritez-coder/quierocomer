@@ -8,13 +8,13 @@ import bcrypt from "bcryptjs";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
-// WA Templates
-const WA_TEMPLATES: Record<string, { sid: string; vars: (name: string, restName?: string) => Record<string, string>; desc: string }> = {
-  carta_lista: { sid: "HX73cbf24831adf5448d0e4eef6cb84f41", vars: (name) => ({ "1": name }), desc: "Tu carta esta lista" },
-  carta_fallo: { sid: "HX0bdab227710250fd28be04263845fb99", vars: (name) => ({ "1": name }), desc: "No pudimos procesar tu carta" },
-  camila_carta_no_revisada: { sid: "HX212aca9223fecaf089df099969e19a25", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: carta no revisada" },
-  camila_no_volvio: { sid: "HXe8201d69e53b2c6c4c2af79470c34845", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: no volviste" },
-  camila_trial_usado: { sid: "HX553107603c0366a63214d4f52afc8e38", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: trial termino" },
+// WA Templates with exact approved texts
+const WA_TEMPLATES: Record<string, { sid: string; vars: (name: string, restName?: string) => Record<string, string>; desc: string; text: (name: string, rest: string) => string }> = {
+  carta_lista: { sid: "HX73cbf24831adf5448d0e4eef6cb84f41", vars: (name) => ({ "1": name }), desc: "Tu carta esta lista", text: (n) => `Tu carta esta lista, ${n}. Revísala en el link que te enviamos.` },
+  carta_fallo: { sid: "HX0bdab227710250fd28be04263845fb99", vars: (name) => ({ "1": name }), desc: "No pudimos procesar tu carta", text: (n) => `${n}, no pudimos procesar tu carta. Por favor intenta subirla de nuevo.` },
+  camila_carta_no_revisada: { sid: "HX212aca9223fecaf089df099969e19a25", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: carta no revisada", text: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, ya está lista pero vi que aún no la revisas. ¿Tienes alguna duda o algo en que te pueda ayudar?` },
+  camila_no_volvio: { sid: "HXe8201d69e53b2c6c4c2af79470c34845", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: no volviste", text: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, vi que la activaste y está lista pero no la continuaste usando. ¿Habrá algo que no te gustó o tienes alguna duda? Cualquier cosa es bienvenida, nos encantaría saber.` },
+  camila_trial_usado: { sid: "HX553107603c0366a63214d4f52afc8e38", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: trial termino", text: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, tu periodo de prueba Premium terminó. Si quieres seguir con todas las funciones, puedes elegir un plan desde tu panel. ¿Tienes alguna duda?` },
 };
 
 export async function POST(req: NextRequest) {
@@ -87,6 +87,20 @@ export async function POST(req: NextRequest) {
     });
 
     if (!sid) return NextResponse.json({ error: "Error al enviar WhatsApp" }, { status: 500 });
+
+    // Register in PanelActivity so it shows in lifecycle
+    const actionName = template.startsWith("camila_") ? `nurturing_${template.replace("camila_", "")}` : `wa_manual_${template}`;
+    await prisma.panelActivity.create({
+      data: { restaurantId, action: actionName, details: { sid, whatsapp: owner.whatsapp, ownerName: firstName, template, manual: true } },
+    }).catch(() => {});
+
+    // Also log in WhatsAppMessage with exact template text
+    const msgBody = tpl.text(firstName, restaurant.name);
+    const lead = await prisma.lead.findFirst({ where: { whatsapp: { contains: owner.whatsapp.replace("+", "") } }, select: { id: true } }).catch(() => null);
+    await prisma.whatsAppMessage.create({
+      data: { phone: owner.whatsapp, direction: "OUTBOUND", body: msgBody, twilioSid: sid, status: "sent", restaurantId, leadId: lead?.id || null },
+    }).catch(() => {});
+
     return NextResponse.json({ ok: true, channel: "whatsapp", to: owner.whatsapp, sid });
 
   } else {
