@@ -263,6 +263,7 @@ export async function GET(req: NextRequest) {
       leadEmail: lead.email,
       leadWhatsapp: lead.whatsapp,
       leadCreatedAt: lead.createdAt.toISOString(),
+      nurturingSent: [],
       recentActivity: [],
     });
   }

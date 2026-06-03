@@ -474,30 +474,93 @@ export default function WhatsAppPage() {
                 Cuando los duenos respondan a Camila, ella capturara automaticamente por que no estan usando su carta.
               </div>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
-                {allInsights.length} insight{allInsights.length !== 1 ? "s" : ""} capturado{allInsights.length !== 1 ? "s" : ""} de {totalWithInsight} conversacion{totalWithInsight !== 1 ? "es" : ""}
+          ) : (() => {
+            // Group insights by similarity
+            const CATEGORIES: { key: string; label: string; color: string; keywords: string[] }[] = [
+              { key: "fotos", label: "Fotos / imágenes", color: "#60a5fa", keywords: ["foto", "imagen", "imágen", "photo", "subir foto"] },
+              { key: "precio", label: "Precios incorrectos", color: "#fb923c", keywords: ["precio", "caro", "costo", "cobr", "valor"] },
+              { key: "diseño", label: "Diseño / apariencia", color: "#a855f7", keywords: ["diseño", "color", "vista", "feo", "no le gusto", "no me gust", "apariencia"] },
+              { key: "otra_carta", label: "Ya tiene otra carta", color: "#f87171", keywords: ["ya tiene", "otra carta", "otro servicio", "ya uso", "ya tengo"] },
+              { key: "no_tiempo", label: "Sin tiempo", color: "#fbbf24", keywords: ["tiempo", "ocupado", "despues", "luego", "más adelante"] },
+              { key: "no_sabe", label: "No sabía / confusión", color: "#22d3ee", keywords: ["no sabia", "no sabía", "no supe", "no entend", "confus", "como funciona"] },
+              { key: "interesado", label: "Interesado / positivo", color: "#4ade80", keywords: ["le gusto", "le gustó", "interesa", "va a usar", "va a poner", "quiere", "activar"] },
+              { key: "qr", label: "QR / imprimir", color: "#e879f9", keywords: ["qr", "imprimir", "codigo", "descargar"] },
+            ];
+
+            function categorize(text: string): string {
+              const lower = text.toLowerCase();
+              for (const cat of CATEGORIES) {
+                if (cat.keywords.some(k => lower.includes(k))) return cat.key;
+              }
+              return "otros";
+            }
+
+            type Ins = typeof allInsights[0];
+            const grouped = new Map<string, Ins[]>();
+            for (const ins of allInsights) {
+              const cat = categorize(ins.text);
+              if (!grouped.has(cat)) grouped.set(cat, []);
+              grouped.get(cat)!.push(ins);
+            }
+
+            // Sort categories by count descending
+            const sortedCats = [...grouped.entries()].sort((a, b) => b[1].length - a[1].length);
+
+            return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ fontSize: 12, color: "#888" }}>
+                {allInsights.length} insight{allInsights.length !== 1 ? "s" : ""} de {totalWithInsight} conversacion{totalWithInsight !== 1 ? "es" : ""}, agrupados por tema
               </div>
-              {allInsights.map((ins, i) => (
-                <button key={i} onClick={() => openChat(ins.phone)} style={{
-                  background: "#111", borderRadius: 12, padding: "14px 18px",
-                  border: "1px solid #1a1a1a", cursor: "pointer", textAlign: "left", width: "100%",
-                  transition: "border-color 0.15s",
-                }}>
-                  <div style={{ fontSize: 14, color: "#ddd", fontWeight: 500, marginBottom: 6, lineHeight: 1.4 }}>
-                    &ldquo;{ins.text}&rdquo;
+
+              {/* Category summary */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {sortedCats.map(([key, items]) => {
+                  const cat = CATEGORIES.find(c => c.key === key);
+                  return (
+                    <div key={key} style={{
+                      padding: "8px 14px", borderRadius: 10, background: "#111", border: "1px solid #1a1a1a",
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: cat?.color || "#888" }}>{items.length}</span>
+                      <span style={{ fontSize: 12, color: "#ccc" }}>{cat?.label || "Otros"}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Grouped insights */}
+              {sortedCats.map(([key, items]) => {
+                const cat = CATEGORIES.find(c => c.key === key);
+                return (
+                  <div key={key}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 4, height: 16, borderRadius: 2, background: cat?.color || "#555" }} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: cat?.color || "#888" }}>{cat?.label || "Otros"}</span>
+                      <span style={{ fontSize: 11, color: "#555" }}>({items.length})</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 12 }}>
+                      {items.map((ins, i) => (
+                        <button key={i} onClick={() => openChat(ins.phone)} style={{
+                          background: "#111", borderRadius: 10, padding: "10px 14px",
+                          border: "1px solid #1a1a1a", cursor: "pointer", textAlign: "left", width: "100%",
+                        }}>
+                          <div style={{ fontSize: 13, color: "#ddd", fontWeight: 500, marginBottom: 4, lineHeight: 1.4 }}>
+                            &ldquo;{ins.text}&rdquo;
+                          </div>
+                          <div style={{ display: "flex", gap: 8, fontSize: 11, alignItems: "center" }}>
+                            <span style={{ fontWeight: 700, color: GOLD }}>{ins.local || "—"}</span>
+                            <span style={{ color: "#555" }}>{ins.owner}</span>
+                            <span style={{ color: GREEN, marginLeft: "auto" }}>Ver chat →</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, fontSize: 11, alignItems: "center" }}>
-                    <span style={{ fontWeight: 700, color: GOLD }}>{ins.local || "—"}</span>
-                    <span style={{ color: "#666" }}>{ins.owner}</span>
-                    <span style={{ color: "#444" }}>{ins.phone}</span>
-                    <span style={{ color: GREEN, marginLeft: "auto" }}>Ver chat →</span>
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
