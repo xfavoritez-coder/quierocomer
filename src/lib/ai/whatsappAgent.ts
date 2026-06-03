@@ -3,7 +3,7 @@
  * Two modes: SUPPORT (active restaurants) and SALES (leads not yet activated).
  */
 
-const MODEL = "claude-sonnet-4-6-20250514";
+const MODEL = "claude-sonnet-4-6";
 const MODEL_FALLBACK = "claude-haiku-4-5-20251001";
 
 const SUPPORT_PROMPT = `Eres Camila, del equipo de soporte de QuieroComer.cl. Respondes por WhatsApp en español, de forma amigable, breve y profesional.
