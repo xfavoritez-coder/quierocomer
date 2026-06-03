@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   // Números excluidos del nurturing
-  const BLACKLIST = new Set(["+56976485972"]); // Il Mascalzone
+  const BLACKLIST = new Set(["+56976485972", "+56977940643"]); // Il Mascalzone, Cuartel 50
 
   let sent = 0;
   let skipped = 0;
