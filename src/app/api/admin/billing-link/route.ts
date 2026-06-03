@@ -12,8 +12,13 @@ import { grossOf } from "@/lib/billing/plans-config";
  * Used for special pricing agreements (e.g., Alleria $50.000 + IVA).
  */
 export async function POST(req: NextRequest) {
-  const authErr = checkAdminAuth(req);
-  if (authErr) return authErr;
+  // Auth: admin cookies OR seed secret query param
+  const seedSecret = process.env.SEED_SECRET;
+  const queryKey = new URL(req.url).searchParams.get("key");
+  if (!(seedSecret && queryKey === seedSecret)) {
+    const authErr = checkAdminAuth(req);
+    if (authErr) return authErr;
+  }
 
   const body = await req.json().catch(() => null);
   if (!body?.restaurantId || !body?.amountNet) {
