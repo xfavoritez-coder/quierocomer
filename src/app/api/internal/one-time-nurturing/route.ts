@@ -128,11 +128,12 @@ export async function GET(req: NextRequest) {
   if (unsplashFiltered.length > 0) {
     for (const d of unsplashFiltered) {
       const cleanPhotos = d.photos.filter(p => !p.includes("unsplash.com"));
-      const cleanTags = (d.tags as string[]).filter(t => t !== "RECOMMENDED");
       await prisma.dish.update({
         where: { id: d.id },
-        data: { photos: cleanPhotos, photoCredits: Prisma.DbNull, isPhotoReferential: false, tags: cleanTags },
+        data: { photos: cleanPhotos, photoCredits: Prisma.DbNull, isPhotoReferential: false },
       });
+      // Remove RECOMMENDED tag separately via raw SQL to avoid enum typing issues
+      await prisma.$executeRaw`UPDATE "Dish" SET tags = array_remove(tags, 'RECOMMENDED') WHERE id = ${d.id}`;
       cleaned++;
     }
   }
