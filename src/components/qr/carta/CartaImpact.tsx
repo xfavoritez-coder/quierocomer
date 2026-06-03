@@ -1300,10 +1300,92 @@ export default function CartaImpact({
       {/* Promos */}
       {hasPromos && (
         <section id="impact-cat-promos" style={{ padding: "24px 14px 24px", position: "relative", zIndex: 1 }}>
-          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
-            const dish = dishes.find(d => d.id === dishId);
-            if (dish) setSelectedDish(dish);
-          }} />
+          <h2 style={{
+            fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
+            letterSpacing: "0.8px", margin: "0 0 14px", lineHeight: 0.9,
+            color: "var(--impact-section-title)",
+          }}>{t(lang, "impactOffers" as any)}</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {(marketingPromos || []).map((p: any) => {
+              const dish = p.dishes?.[0];
+              const photo = p.imageUrl || dish?.photos?.[0];
+              const words = p.name.split(" ");
+              const firstWords = words.slice(0, -1).join(" ");
+              const lastWord = words[words.length - 1];
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    if (dish) setSelectedDish(dishes.find(d => d.id === dish.id) || null);
+                  }}
+                  style={{
+                    width: "100%", height: 220, borderRadius: 26, overflow: "hidden", position: "relative",
+                    background: "#111", border: "none",
+                    boxShadow: "0 6px 24px rgba(0,0,0,0.2)",
+                    cursor: "pointer", textAlign: "left",
+                  }}
+                >
+                  {/* Foto fondo con overlay */}
+                  {photo && (
+                    <div style={{ position: "absolute", inset: 0, transform: "scale(1.04)" }}>
+                      <Image src={photo} alt={p.name} fill className="object-cover" sizes="430px" style={{ objectPosition: "center right" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 43%, rgba(0,0,0,0.12) 100%), linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 58%)" }} />
+                    </div>
+                  )}
+                  {/* Badge día */}
+                  {(() => {
+                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+                    const label = p.daysOfWeek?.length ? `Hoy ${DAY_NAMES[todayDow].charAt(0) + DAY_NAMES[todayDow].slice(1).toLowerCase()}` : "Oferta";
+                    return (
+                      <span style={{
+                        position: "absolute", top: 15, right: 15, zIndex: 2,
+                        fontSize: 11, fontWeight: 900, color: "white",
+                        background: "var(--carta-accent)", padding: "9px 13px",
+                        borderRadius: 999, letterSpacing: "0.6px", textTransform: "uppercase",
+                      }}>{label}</span>
+                    );
+                  })()}
+                  {/* Contenido abajo izquierda */}
+                  <div style={{ position: "absolute", left: 18, right: 18, bottom: 30, zIndex: 2, maxWidth: 200 }}>
+                    <h3 style={{
+                      margin: "0 0 14px", fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif",
+                      fontSize: 36, lineHeight: 0.85, letterSpacing: "0.5px",
+                      textShadow: "0 6px 28px rgba(0,0,0,0.9)", color: "white",
+                      overflow: "hidden", textOverflow: "ellipsis",
+                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any,
+                    }}>
+                      <span style={{ color: "var(--carta-accent)" }}>{words[0]}</span>{words.length > 1 ? " " + words.slice(1).join(" ") : ""}
+                    </h3>
+                    {(() => {
+                      const desc = p.description
+                        || (p.dishes?.length > 1 ? p.dishes.map((d: any) => d.name).join(" + ") : null)
+                        || dish?.description;
+                      if (!desc) return null;
+                      return (
+                        <p style={{
+                          margin: "0 0 12px", color: "var(--impact-offer-desc, #b0a89e)", fontSize: 14, lineHeight: 1.42,
+                          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
+                        }}>{desc}</p>
+                      );
+                    })()}
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                      {p.promoPrice && (
+                        <span style={{ color: "var(--carta-accent)", fontSize: 19, fontWeight: 900, letterSpacing: "-0.5px" }}>
+                          ${p.promoPrice.toLocaleString("es-CL")}
+                        </span>
+                      )}
+                      {p.originalPrice && p.promoPrice && (
+                        <del style={{ color: "#888", fontSize: 15, fontWeight: 800 }}>
+                          ${p.originalPrice.toLocaleString("es-CL")}
+                        </del>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </section>
       )}
 
