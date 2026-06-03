@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { sendWhatsApp } from "@/lib/whatsapp";
 
 export const maxDuration = 120;
@@ -130,7 +131,7 @@ export async function GET(req: NextRequest) {
       const cleanTags = (d.tags as string[]).filter(t => t !== "RECOMMENDED");
       await prisma.dish.update({
         where: { id: d.id },
-        data: { photos: cleanPhotos, photoCredits: null, isPhotoReferential: false, tags: cleanTags },
+        data: { photos: cleanPhotos, photoCredits: Prisma.DbNull, isPhotoReferential: false, tags: cleanTags },
       });
       cleaned++;
     }
