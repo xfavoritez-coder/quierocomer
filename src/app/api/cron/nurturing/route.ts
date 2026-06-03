@@ -4,23 +4,19 @@ import { sendWhatsApp } from "@/lib/whatsapp";
 
 export const maxDuration = 60;
 
-// Template SIDs (Meta approval pending — fallback to carta_lista_v2 if not yet approved)
 const TEMPLATES = {
   cartaNoRevisada: "HX212aca9223fecaf089df099969e19a25",
-  onboardingIncompleto: "HX5b196800fee3fde1de075c604bc5d598",
   noVolvio: "HXe8201d69e53b2c6c4c2af79470c34845",
-  // Fallback if new templates aren't approved yet
   cartaLista: "HX73cbf24831adf5448d0e4eef6cb84f41",
 };
 
 /**
  * Cron: Lead nurturing via WhatsApp — runs daily at 16:00 Chile (20:00 UTC).
  *
- * 3 scenarios, all sent as "Camila de QuieroComer":
+ * 2 scenarios, all sent as "Camila de QuieroComer":
  *
- * 1. Carta DELIVERED +24h, no la revisó (no panel visit, no onboarding) → camila_carta_no_revisada
- * 2. Vio carta pero no terminó onboarding (onboardingDoneAt null) → camila_onboarding_incompleto
- * 3. Activó trial, hizo onboarding, pero no volvió al panel → camila_no_volvio
+ * 1. Carta DELIVERED 24h-7d ago, no la revisó (no panel visit, no activation) → camila_carta_no_revisada
+ * 2. Activó trial 24h-7d ago, pero no volvió al panel → camila_no_volvio
  *
  * Each scenario sends once per lead (tracked via lead.events).
  */
@@ -36,16 +32,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // ── Test mode: ?test=+56999946208&scenario=onboarding_incompleto ──
+  // ── Test mode: ?test=+56999946208&scenario=carta_no_revisada ──
   const rawTestPhone = req.nextUrl.searchParams.get("test");
   const testPhone = rawTestPhone?.trim().replace(/^\s/, "+") || null;
   if (testPhone) {
     const scenarioMap: Record<string, string> = {
       carta_no_revisada: TEMPLATES.cartaNoRevisada,
-      onboarding_incompleto: TEMPLATES.onboardingIncompleto,
       no_volvio: TEMPLATES.noVolvio,
     };
-    const scenarioKey = req.nextUrl.searchParams.get("scenario") || "onboarding_incompleto";
+    const scenarioKey = req.nextUrl.searchParams.get("scenario") || "carta_no_revisada";
     const templateSid = scenarioMap[scenarioKey];
     if (!templateSid) return NextResponse.json({ error: `Scenario inválido: ${scenarioKey}`, valid: Object.keys(scenarioMap) }, { status: 400 });
 
@@ -134,33 +129,7 @@ export async function GET(req: NextRequest) {
     await sendNurturing(lead, "carta_no_revisada", "nurturing_no_revisada", TEMPLATES.cartaNoRevisada);
   }
 
-  // ═══ Scenario 2: Vio carta pero no activó ═══
-  // Has some engagement (clicked email/WA or visited panel) but hasn't activated
-  const onboardingIncompleto = await prisma.lead.findMany({
-    where: {
-      cartaStatus: "DELIVERED",
-      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
-      activatedAt: null,
-      whatsapp: { not: null },
-      generatedSlug: { not: null },
-      OR: [
-        { emailClickedAt: { not: null } },
-        { whatsappClickedAt: { not: null } },
-        { panelVisitedAt: { not: null } },
-      ],
-    },
-    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
-    take: 30,
-  });
-
-  for (const lead of onboardingIncompleto) {
-    // Skip if already sent scenario 1 (avoid double-messaging)
-    const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
-    if (events.some((e: any) => e.action === "nurturing_no_revisada")) { skipped++; continue; }
-    await sendNurturing(lead, "onboarding_incompleto", "nurturing_onboarding", TEMPLATES.onboardingIncompleto);
-  }
-
-  // ═══ Scenario 3: Activó trial pero no volvió ═══
+  // ═══ Scenario 2: Activó trial pero no volvió ═══
   // activatedAt between 24h-7d ago, but restaurant owner hasn't visited panel recently
   const noVolvio = await prisma.lead.findMany({
     where: {
@@ -203,7 +172,7 @@ export async function GET(req: NextRequest) {
       durationMs,
       details: {
         sent, skipped, errors,
-        candidates: { noRevisada: noRevisada.length, onboardingIncompleto: onboardingIncompleto.length, noVolvio: noVolvio.length },
+        candidates: { noRevisada: noRevisada.length, noVolvio: noVolvio.length },
       },
     },
   }).catch(() => {});
