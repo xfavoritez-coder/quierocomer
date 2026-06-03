@@ -710,6 +710,9 @@ const EMAIL_TEMPLATES = [
 const WA_TEMPLATES = [
   { key: "carta_lista", label: "Tu carta esta lista", desc: "Template aprobado: carta lista con link" },
   { key: "carta_fallo", label: "No pudimos procesar tu carta", desc: "Template aprobado: pedir que reintente" },
+  { key: "camila_carta_no_revisada", label: "Camila: carta no revisada", desc: "Soy Camila, tu carta esta lista pero no la revisaste" },
+  { key: "camila_no_volvio", label: "Camila: no volviste", desc: "Soy Camila, activaste pero no volviste" },
+  { key: "camila_trial_usado", label: "Camila: trial terminó", desc: "Soy Camila, tu trial terminó" },
 ];
 
 function SendMessageBtn({ restaurantId, channel, ownerName, ownerContact }: { restaurantId: string; channel: "email" | "whatsapp"; ownerName: string; ownerContact: string }) {

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { STAGE_META, ENGAGEMENT_CRITERIA, type LifecycleStage } from "@/lib/admin/lifecycle";
 
 const F = "var(--font-display)";
@@ -82,6 +82,8 @@ const ACTION_LABELS: Record<string, string> = {
   nurturing_no_volvio: "WA Camila: no volvió",
 };
 
+const POLL_INTERVAL = 15_000;
+
 export default function LifecyclePage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -91,13 +93,56 @@ export default function LifecyclePage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [changedIds, setChangedIds] = useState<Set<string>>(new Set());
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const prevEntriesRef = useRef<Map<string, string>>(new Map());
+
+  const fetchData = useCallback((isInitial = false) => {
+    fetch("/api/admin/lifecycle").then(r => r.json()).then(data => {
+      const newEntries: Entry[] = data.entries || [];
+
+      if (!isInitial && prevEntriesRef.current.size > 0) {
+        const changed = new Set<string>();
+        const brand = new Set<string>();
+
+        for (const e of newEntries) {
+          const prevHash = prevEntriesRef.current.get(e.id);
+          const currHash = `${e.stage}|${e.engagement}|${e.lastActivity}|${e.salud}|${e.sessions7d}|${e.nurturingSent?.length}`;
+          if (!prevHash) {
+            brand.add(e.id);
+          } else if (prevHash !== currHash) {
+            changed.add(e.id);
+          }
+        }
+
+        if (changed.size > 0 || brand.size > 0) {
+          setChangedIds(changed);
+          setNewIds(brand);
+          setTimeout(() => { setChangedIds(new Set()); setNewIds(new Set()); }, 3000);
+        }
+      }
+
+      // Update hash map
+      const hashMap = new Map<string, string>();
+      for (const e of newEntries) {
+        hashMap.set(e.id, `${e.stage}|${e.engagement}|${e.lastActivity}|${e.salud}|${e.sessions7d}|${e.nurturingSent?.length}`);
+      }
+      prevEntriesRef.current = hashMap;
+
+      setEntries(newEntries);
+      setStats(data.stats || null);
+      setLastUpdate(new Date());
+    }).catch(() => {}).finally(() => { if (isInitial) setLoading(false); });
+  }, []);
 
   useEffect(() => {
-    fetch("/api/admin/lifecycle").then(r => r.json()).then(data => {
-      setEntries(data.entries || []);
-      setStats(data.stats || null);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+    fetchData(true);
+    const interval = setInterval(() => fetchData(false), POLL_INTERVAL);
+    const onVisible = () => { if (document.visibilityState === "visible") fetchData(false); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
+  }, [fetchData]);
 
   const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -148,14 +193,29 @@ export default function LifecyclePage() {
 
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#888" }}>Cargando...</div>;
 
+  const liveStyles = `
+    @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes rowFlashGold { 0% { background: rgba(244,166,35,.15); } 100% { background: transparent; } }
+    @keyframes rowFlashGreen { 0% { background: rgba(74,222,128,.12); } 100% { background: transparent; } }
+    @keyframes rowSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  `;
+
   return (
     <div style={{ padding: "0 0 40px" }}>
+      <style dangerouslySetInnerHTML={{ __html: liveStyles }} />
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
           Lifecycle
         </h1>
-        <p style={{ color: "#888", fontSize: 13, margin: 0 }}>Vista unificada de leads, clientes y su estado actual</p>
+        <p style={{ color: "#888", fontSize: 13, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          Vista unificada de leads, clientes y su estado actual
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#4ade80" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", animation: "livePulse 2s ease-in-out infinite" }} />
+            Live
+          </span>
+          {lastUpdate && <span style={{ fontSize: 11, color: "#555" }}>· {lastUpdate.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>}
+        </p>
       </div>
 
       {/* Stats cards */}
@@ -238,6 +298,7 @@ export default function LifecyclePage() {
                 padding: "12px 16px", borderBottom: "1px solid #1f1f1f", cursor: "pointer",
                 background: expanded === entry.id ? "#141414" : "transparent",
                 transition: "background 0.15s",
+                animation: newIds.has(entry.id) ? "rowSlideIn 0.5s ease-out, rowFlashGreen 3s ease-out" : changedIds.has(entry.id) ? "rowFlashGold 3s ease-out" : "none",
               }}
             >
               {/* Restaurant */}
@@ -403,9 +464,10 @@ export default function LifecyclePage() {
                       ))}
                       {entry.emailsSent?.map((e, i) => {
                         const purposeLabels: Record<string, string> = {
-                          activation_welcome: "Email bienvenida", funnel_carta_lista: "Email carta lista",
-                          trial_reminder: "Email trial reminder", trial_expired: "Email trial vencido",
-                          plan_activated: "Email plan activado",
+                          activation_welcome: "Bienvenida", funnel_carta_lista: "Carta lista",
+                          trial_reminder: "Trial reminder", trial_expired: "Trial vencido",
+                          plan_activated: "Plan activado", weekly_summary: "Informe semanal",
+                          lead_failure_help: "Ayuda carta falló", reset_password: "Reset contraseña",
                         };
                         return (
                           <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} />
@@ -485,6 +547,9 @@ const EMAIL_TEMPLATES = [
 const WA_TEMPLATES = [
   { key: "carta_lista", label: "Tu carta esta lista", desc: "Template aprobado: carta lista con link" },
   { key: "carta_fallo", label: "No pudimos procesar tu carta", desc: "Template aprobado: pedir que reintente" },
+  { key: "camila_carta_no_revisada", label: "Camila: carta no revisada", desc: "Soy Camila, tu carta esta lista pero no la revisaste" },
+  { key: "camila_no_volvio", label: "Camila: no volviste", desc: "Soy Camila, activaste pero no volviste" },
+  { key: "camila_trial_usado", label: "Camila: trial terminó", desc: "Soy Camila, tu trial terminó" },
 ];
 
 function SendMessageBtn({ restaurantId, ownerName, ownerEmail, ownerWa }: { restaurantId: string; ownerName: string; ownerEmail: string | null; ownerWa: string | null }) {

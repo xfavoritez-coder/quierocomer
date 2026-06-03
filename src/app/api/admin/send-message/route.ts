@@ -9,9 +9,12 @@ import bcrypt from "bcryptjs";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
 // WA Templates
-const WA_TEMPLATES: Record<string, { sid: string; vars: (name: string) => Record<string, string>; desc: string }> = {
+const WA_TEMPLATES: Record<string, { sid: string; vars: (name: string, restName?: string) => Record<string, string>; desc: string }> = {
   carta_lista: { sid: "HX73cbf24831adf5448d0e4eef6cb84f41", vars: (name) => ({ "1": name }), desc: "Tu carta esta lista" },
   carta_fallo: { sid: "HX0bdab227710250fd28be04263845fb99", vars: (name) => ({ "1": name }), desc: "No pudimos procesar tu carta" },
+  camila_carta_no_revisada: { sid: "HX212aca9223fecaf089df099969e19a25", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: carta no revisada" },
+  camila_no_volvio: { sid: "HXe8201d69e53b2c6c4c2af79470c34845", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: no volviste" },
+  camila_trial_usado: { sid: "HX553107603c0366a63214d4f52afc8e38", vars: (name, rest) => ({ "1": name, "2": rest || "" }), desc: "Camila: trial termino" },
 };
 
 export async function POST(req: NextRequest) {
@@ -80,7 +83,7 @@ export async function POST(req: NextRequest) {
       to: owner.whatsapp,
       body: "",
       contentSid: tpl.sid,
-      contentVariables: tpl.vars(firstName),
+      contentVariables: tpl.vars(firstName, restaurant.name),
     });
 
     if (!sid) return NextResponse.json({ error: "Error al enviar WhatsApp" }, { status: 500 });
