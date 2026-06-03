@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { STAGE_META, ENGAGEMENT_CRITERIA, type LifecycleStage } from "@/lib/admin/lifecycle";
 
 const F = "var(--font-display)";
@@ -84,8 +84,6 @@ const ACTION_LABELS: Record<string, string> = {
   nurturing_no_volvio: "WA Camila: no volvió",
 };
 
-const POLL_INTERVAL = 15_000;
-
 export default function LifecyclePage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -95,56 +93,13 @@ export default function LifecyclePage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [changedIds, setChangedIds] = useState<Set<string>>(new Set());
-  const [newIds, setNewIds] = useState<Set<string>>(new Set());
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const prevEntriesRef = useRef<Map<string, string>>(new Map());
-
-  const fetchData = useCallback((isInitial = false) => {
-    fetch("/api/admin/lifecycle").then(r => r.json()).then(data => {
-      const newEntries: Entry[] = data.entries || [];
-
-      if (!isInitial && prevEntriesRef.current.size > 0) {
-        const changed = new Set<string>();
-        const brand = new Set<string>();
-
-        for (const e of newEntries) {
-          const prevHash = prevEntriesRef.current.get(e.id);
-          const currHash = `${e.stage}|${e.engagement}|${e.lastActivity}|${e.salud}|${e.sessions7d}|${e.nurturingSent?.length}`;
-          if (!prevHash) {
-            brand.add(e.id);
-          } else if (prevHash !== currHash) {
-            changed.add(e.id);
-          }
-        }
-
-        if (changed.size > 0 || brand.size > 0) {
-          setChangedIds(changed);
-          setNewIds(brand);
-          setTimeout(() => { setChangedIds(new Set()); setNewIds(new Set()); }, 3000);
-        }
-      }
-
-      // Update hash map
-      const hashMap = new Map<string, string>();
-      for (const e of newEntries) {
-        hashMap.set(e.id, `${e.stage}|${e.engagement}|${e.lastActivity}|${e.salud}|${e.sessions7d}|${e.nurturingSent?.length}`);
-      }
-      prevEntriesRef.current = hashMap;
-
-      setEntries(newEntries);
-      setStats(data.stats || null);
-      setLastUpdate(new Date());
-    }).catch(() => {}).finally(() => { if (isInitial) setLoading(false); });
-  }, []);
 
   useEffect(() => {
-    fetchData(true);
-    const interval = setInterval(() => fetchData(false), POLL_INTERVAL);
-    const onVisible = () => { if (document.visibilityState === "visible") fetchData(false); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
-  }, [fetchData]);
+    fetch("/api/admin/lifecycle").then(r => r.json()).then(data => {
+      setEntries(data.entries || []);
+      setStats(data.stats || null);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
 
   const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -195,29 +150,15 @@ export default function LifecyclePage() {
 
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#888" }}>Cargando...</div>;
 
-  const liveStyles = `
-    @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    @keyframes rowFlashGold { 0% { background: rgba(244,166,35,.15); } 100% { background: transparent; } }
-    @keyframes rowFlashGreen { 0% { background: rgba(74,222,128,.12); } 100% { background: transparent; } }
-    @keyframes rowSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-  `;
 
   return (
     <div style={{ padding: "0 0 40px" }}>
-      <style dangerouslySetInnerHTML={{ __html: liveStyles }} />
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
           Lifecycle
         </h1>
-        <p style={{ color: "#888", fontSize: 13, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-          Vista unificada de leads, clientes y su estado actual
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#4ade80" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", animation: "livePulse 2s ease-in-out infinite" }} />
-            Live
-          </span>
-          {lastUpdate && <span style={{ fontSize: 11, color: "#555" }}>· {lastUpdate.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>}
-        </p>
+        <p style={{ color: "#888", fontSize: 13, margin: 0 }}>Vista unificada de leads, clientes y su estado actual</p>
       </div>
 
       {/* Stats cards */}
@@ -300,7 +241,6 @@ export default function LifecyclePage() {
                 padding: "12px 16px", borderBottom: "1px solid #1f1f1f", cursor: "pointer",
                 background: expanded === entry.id ? "#141414" : "transparent",
                 transition: "background 0.15s",
-                animation: newIds.has(entry.id) ? "rowSlideIn 0.5s ease-out, rowFlashGreen 3s ease-out" : changedIds.has(entry.id) ? "rowFlashGold 3s ease-out" : "none",
               }}
             >
               {/* Restaurant */}
@@ -490,7 +430,7 @@ export default function LifecyclePage() {
                     }} />
                   )}
                   {ownerWa && entry.nurturingSent?.length > 0 && (
-                    <ActionBtn label="💬 Ver chat WA" onClick={() => window.open(`/admin/whatsapp`, "_blank")} />
+                    <ChatModalBtn phone={ownerWa} name={entry.name} />
                   )}
                   {(ownerEmail || ownerWa) && (
                     <SendMessageBtn restaurantId={entry.id} ownerName={ownerName || "Dueño"} ownerEmail={ownerEmail} ownerWa={ownerWa} />
@@ -553,6 +493,61 @@ const WA_TEMPLATES = [
   { key: "camila_no_volvio", label: "Camila: no volviste", desc: "Soy Camila, activaste pero no volviste" },
   { key: "camila_trial_usado", label: "Camila: trial terminó", desc: "Soy Camila, tu trial terminó" },
 ];
+
+function ChatModalBtn({ phone, name }: { phone: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<{ direction: string; body: string; createdAt: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadChat = () => {
+    setOpen(true);
+    setLoading(true);
+    fetch(`/api/admin/whatsapp/conversations?phone=${encodeURIComponent(phone)}`).then(r => r.json()).then(data => {
+      setMessages(data.messages || []);
+    }).catch(() => {}).finally(() => setLoading(false));
+  };
+
+  return (
+    <>
+      <ActionBtn label="💬 Ver chat WA" onClick={loadChat} />
+      {open && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setOpen(false)}>
+          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20, width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #2a2a2a" }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>💬 {name}</h3>
+              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {loading ? (
+                <div style={{ textAlign: "center", color: "#666", padding: 20, fontSize: 13 }}>Cargando...</div>
+              ) : messages.length === 0 ? (
+                <div style={{ textAlign: "center", color: "#555", padding: 20, fontSize: 13 }}>Sin mensajes</div>
+              ) : (
+                messages.map((m, i) => {
+                  const isOutbound = m.direction === "OUTBOUND";
+                  return (
+                    <div key={i} style={{ display: "flex", justifyContent: isOutbound ? "flex-end" : "flex-start" }}>
+                      <div style={{
+                        maxWidth: "80%", padding: "8px 12px", borderRadius: 12,
+                        background: isOutbound ? "rgba(34,211,238,.1)" : "#222",
+                        border: `1px solid ${isOutbound ? "rgba(34,211,238,.2)" : "#333"}`,
+                      }}>
+                        <div style={{ fontSize: 12, color: isOutbound ? "#22d3ee" : "#ccc", lineHeight: 1.5 }}>{m.body}</div>
+                        <div style={{ fontSize: 10, color: "#555", marginTop: 4, textAlign: "right" }}>
+                          {new Date(m.createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function SendMessageBtn({ restaurantId, ownerName, ownerEmail, ownerWa }: { restaurantId: string; ownerName: string; ownerEmail: string | null; ownerWa: string | null }) {
   const [open, setOpen] = useState(false);

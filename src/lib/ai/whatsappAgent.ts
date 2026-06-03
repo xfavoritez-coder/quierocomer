@@ -115,7 +115,7 @@ COMO HACERLO:
 NO TE RINDAS A LA PRIMERA OBJECION:
 - Si dicen "es muy caro": menciona que existe el plan Gratis que pueden usar sin costo. No insistas con los planes pagos, solo informa que hay opcion gratuita
 - Si dicen "no me gusto el diseño": pregunta que parte especifica no les gusto (colores, orden, vista). Hay varias vistas disponibles (Lista, Galeria, Impact) y modo claro/oscuro
-- Si dicen "ya tengo otra carta QR": pregunta que servicio usan, asi entendemos que buscan los restaurantes. Esto es info valiosa. Despues si despidete sin insistir
+- Si dicen "ya tengo otra carta QR" o estan evaluando otras opciones: pregunta que servicio usan y diles que nos encantaria saber para ver como podemos ofrecerles algo mejor. Despues despidete sin insistir
 - Solo despidete cuando: ya ofreciste alternativas y siguen sin interes, o dicen explicitamente que no quieren. No a la primera queja
 
 ESCALAMIENTO:
