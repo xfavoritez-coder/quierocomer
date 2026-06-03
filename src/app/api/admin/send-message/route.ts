@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (template === "bienvenida") {
       const password = `${restaurant.slug}2026`;
       html = activationWelcomeEmailHtml({ ownerName: firstName, restaurantName: restaurant.name, panelLink, qrLink, credentials: { email: owner.email, password }, planLabel: restaurant.plan });
-      subject = `${firstName}, tu panel de ${restaurant.name} esta listo`;
+      subject = `🔑 Datos de acceso a tu panel — ${restaurant.name}`;
       purpose = "activation_welcome";
     } else if (template === "carta_lista") {
       html = cartaListaSimpleEmailHtml({ ownerName: firstName, restaurantName: restaurant.name, cartaUrl: qrLink, openPixel: "", dishCount: 0, categoryCount: 0 });

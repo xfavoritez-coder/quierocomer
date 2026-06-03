@@ -58,7 +58,7 @@ export function activationWelcomeEmailHtml({
 <!-- Title -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:10px">
-<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:32px;line-height:1.08;letter-spacing:-0.03em;margin:0;color:#111111">
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.15;letter-spacing:-0.02em;margin:0;color:#111111">
   ${restaurantName}<br/>Tu panel está listo
 </h1>
 </td></tr>

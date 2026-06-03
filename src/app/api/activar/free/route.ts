@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     const password = `${restaurant.slug}2026`;
     sendAdminEmail({
       to: ownerEmail,
-      subject: `${ownerName}, tu panel de ${restaurant.name} está listo`,
+      subject: `🔑 Datos de acceso a tu panel — ${restaurant.name}`,
       html: activationWelcomeEmailHtml({
         ownerName,
         restaurantName: restaurant.name,

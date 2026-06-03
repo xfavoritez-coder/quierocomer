@@ -211,12 +211,11 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           borderBottom: "1px solid rgba(244,166,35,.5)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.9)", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            Vista previa · edita tu carta
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
-              <path d="M12 19V5M5 10l7-7 7 7" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.9)" }}>
+            Revisa los detalles de tu carta, corrige información y agrega fotografías desde tu panel
           </span>
+          {/* Triangle pointing up toward the "Entrar a mi panel" button */}
+          <div style={{ position: "absolute", top: -8, right: 95, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: "8px solid rgba(249,180,65,.45)" }} />
         </div>
       )}
 

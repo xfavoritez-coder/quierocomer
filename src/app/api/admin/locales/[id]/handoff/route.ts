@@ -126,7 +126,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     {
       await sendAdminEmail({
         to: email,
-        subject: `${name}, tu panel de ${restaurant.name} está listo`,
+        subject: `🔑 Datos de acceso a tu panel — ${restaurant.name}`,
         html: emailHtml,
         purpose: "activation_welcome",
       });

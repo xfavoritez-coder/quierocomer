@@ -16,6 +16,7 @@ import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import OwnerBanner from "@/components/qr/carta/OwnerBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
+import DemoFirstViewModal from "@/components/qr/carta/DemoFirstViewModal";
 import DemoBirthdayBanner from "@/components/qr/carta/DemoBirthdayBanner";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
 import { prisma } from "@/lib/prisma";
@@ -212,7 +213,10 @@ export default async function CartaPage({
         <OwnerBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} />
       )}
       {(restaurant as any).isDemo && !isShowcase && (
-        <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
+        <>
+          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
+          <DemoFirstViewModal restaurantSlug={slug} restaurantName={restaurant.name} />
+        </>
       )}
       {isShowcase && !isEmbed && (
         <ShowcaseMobileOnly restaurantSlug={slug} restaurantName={restaurant.name} />

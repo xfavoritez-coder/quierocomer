@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
-import { generateWhatsAppReplyWithInsight } from "@/lib/ai/whatsappAgent";
+import { generateWhatsAppReplyWithInsight, compareCartaWithDishes } from "@/lib/ai/whatsappAgent";
 
-export const maxDuration = 15;
+export const maxDuration = 25;
 
 /**
  * Twilio WhatsApp webhook — receives incoming messages, responds with AI agent.
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const lead = await prisma.lead.findFirst({
       where: { whatsapp: { contains: phone.replace("+", "") } },
       orderBy: { createdAt: "desc" },
-      select: { id: true, localName: true, ownerName: true, generatedSlug: true },
+      select: { id: true, localName: true, ownerName: true, generatedSlug: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, email: true },
     });
 
     if (lead) {
@@ -57,11 +57,19 @@ export async function POST(req: NextRequest) {
             dishCount: rest._count.dishes, ownerName: lead.ownerName,
             isActive: rest.isActive, isDemo: rest.isDemo,
             recentSessions,
+            cartaOriginalUrl: lead.cartaFileUrl || lead.cartaUrl || undefined,
+            cartaType: lead.cartaType,
+            ownerEmail: lead.email,
           };
         }
       }
       if (!context.restaurantName) {
-        context = { restaurantName: lead.localName, ownerName: lead.ownerName };
+        context = {
+          restaurantName: lead.localName, ownerName: lead.ownerName,
+          cartaOriginalUrl: lead.cartaFileUrl || lead.cartaUrl || undefined,
+          cartaType: lead.cartaType,
+          ownerEmail: lead.email,
+        };
       }
     }
 
@@ -79,8 +87,21 @@ export async function POST(req: NextRequest) {
       where: { phone },
       orderBy: { createdAt: "asc" },
       take: 20,
-      select: { direction: true, body: true },
+      select: { direction: true, body: true, createdAt: true },
     });
+
+    // 3b. Detect duplicate messages — skip if same body as previous inbound within 2 min
+    const recentInbounds = history.filter((m: any) => m.direction === "INBOUND");
+    if (recentInbounds.length >= 2) {
+      const prev = recentInbounds[recentInbounds.length - 2];
+      const curr = recentInbounds[recentInbounds.length - 1];
+      const timeDiff = new Date(curr.createdAt).getTime() - new Date(prev.createdAt).getTime();
+      if (prev.body.trim().toLowerCase() === curr.body.trim().toLowerCase() && timeDiff < 120_000) {
+        console.log(`[WA Webhook] Duplicate message detected from ${phone}, skipping AI reply`);
+        return TWIML_OK;
+      }
+    }
+
     const conversationHistory = history.slice(-10).map((m: any) => ({
       role: (m.direction === "INBOUND" ? "user" : "assistant") as "user" | "assistant",
       content: m.body,
@@ -98,8 +119,37 @@ export async function POST(req: NextRequest) {
       knowledgeEntries = entries.filter((e: any) => e.enabled !== false);
     } catch {}
 
+    // 4b. Vision comparison — when user complains about prices/dishes being wrong
+    const bodyLower = body.toLowerCase();
+    const complainsAboutExtraction = /precio.*(mal|diferent|incorrecto|no es|cambi)|plato.*(mal|falt|diferent|no est)|imagen|no son los mismos|mire la imagen|mira la imagen|lo que subi/i.test(bodyLower);
+    if (complainsAboutExtraction && context.cartaOriginalUrl && context.cartaType !== "LINK" && restaurantId) {
+      try {
+        const dishes = await prisma.dish.findMany({
+          where: { restaurantId },
+          select: { name: true, price: true, category: { select: { name: true } } },
+          orderBy: { position: "asc" },
+          take: 80,
+        });
+        const dishList = dishes.map((d: any) => ({ name: d.name, price: d.price, category: d.category?.name || "Sin categoría" }));
+        const comparison = await compareCartaWithDishes(context.cartaOriginalUrl, dishList);
+        if (comparison) {
+          knowledgeEntries.push({
+            topic: "Comparacion carta original vs platos extraidos",
+            content: `Revisamos la carta original que subio el dueño y la comparamos con lo que extrajimos. Resultado:\n${comparison}\n\nUsa esta info para responder con datos concretos sobre que esta diferente.`,
+          });
+          console.log(`[WA Webhook] Vision comparison done for ${phone}`);
+        }
+      } catch (e) {
+        console.error("[WA Webhook] Vision comparison failed:", e);
+      }
+    }
+
     // 5. Generate AI reply (with insight extraction for sales mode)
-    const { reply, insight } = await generateWhatsAppReplyWithInsight(body.trim(), conversationHistory, context, knowledgeEntries);
+    const { reply: rawReply, insight } = await generateWhatsAppReplyWithInsight(body.trim(), conversationHistory, context, knowledgeEntries);
+
+    // 5a. Handle escalation flag
+    const shouldEscalate = rawReply.includes("[ESCALATE]");
+    const reply = rawReply.replace(/\[ESCALATE\]/gi, "").trim();
 
     // 5b. Save insight to lead events if present
     if (insight && leadId) {
@@ -146,7 +196,20 @@ export async function POST(req: NextRequest) {
       },
     }).catch((e: any) => console.error("[WA Webhook] Save outbound failed:", e));
 
-    // Email notification removed — conversations visible in /admin/whatsapp
+    // Escalation: notify team when AI detects frustrated customer
+    if (shouldEscalate && resend) {
+      resend.emails.send({
+        from: "QuieroComer <hola@quierocomer.cl>",
+        to: "hola@quierocomer.cl",
+        subject: `⚠️ Escalar: ${context.restaurantName || phone} necesita atención humana`,
+        html: `<p><strong>Cliente frustrado detectado por Camila IA</strong></p>
+<p>Teléfono: ${phone}</p>
+<p>Restaurante: ${context.restaurantName || "Desconocido"}</p>
+<p>Último mensaje: ${body.trim()}</p>
+<p>Última respuesta de Camila: ${reply}</p>
+<p><a href="https://quierocomer.cl/admin/whatsapp">Ver conversación</a></p>`,
+      }).catch(() => {});
+    }
 
     return TWIML_OK;
   } catch (error) {
