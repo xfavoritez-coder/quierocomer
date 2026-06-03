@@ -365,6 +365,11 @@ function TimelineTab({ c }: { c: Cliente }) {
       else if (action === "panel_visit") text = `Visito panel: ${ev.section || ""}`;
       else if (action === "email_failure_sent") text = `Email de ayuda enviado (${ev.type || ""})`;
       else if (action === "wa_fail_template_sent") text = "WhatsApp de fallo enviado";
+      else if (action === "nurturing_no_revisada") text = "WA Camila: no revisaste tu carta";
+      else if (action === "nurturing_vio_no_activo") text = "WA Camila: viste carta, no activaste";
+      else if (action === "nurturing_no_volvio") text = "WA Camila: activaste, no volviste";
+      else if (action === "nurturing_onboarding") text = "WA Camila: onboarding incompleto";
+      else if (action === "nurturing_trial_usado") text = "WA Camila: trial expirado";
       else if (action === "manual_reprocess") text = `Reprocesado: ${ev.reason || ""}`;
       items.push({ time: ts, text, dot: action.includes("done") || action.includes("ready") ? "green" : action.includes("fail") || action.includes("error") ? "red" : "blue" });
     }
