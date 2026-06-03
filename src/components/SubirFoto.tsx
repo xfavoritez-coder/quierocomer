@@ -53,13 +53,34 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
     });
   };
 
+  const squareCrop = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const x = Math.round((img.width - size) / 2);
+        const y = Math.round((img.height - size) / 2);
+        const canvas = document.createElement("canvas");
+        canvas.width = 400;
+        canvas.height = 400;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, x, y, size, size, 0, 0, 400, 400);
+        canvas.toBlob((blob) => {
+          resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, ".webp"), { type: "image/webp" }) : file);
+        }, "image/webp", 0.92);
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFile = async (rawFile: File) => {
     if (!rawFile) return;
     if (!rawFile.type.startsWith("image/")) { setError("Solo se permiten imágenes"); return; }
     if (rawFile.size > 10 * 1024 * 1024) { setError("Máximo 10MB por imagen"); return; }
     setUploading(true);
     setError(null);
-    const file = await compressImage(rawFile);
+    const file = folder === "logos" ? await squareCrop(rawFile) : await compressImage(rawFile);
     setPreviewUrl(URL.createObjectURL(file));
 
     try {

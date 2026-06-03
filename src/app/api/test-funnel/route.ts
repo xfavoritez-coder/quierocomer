@@ -153,13 +153,19 @@ export async function GET(req: NextRequest) {
     const { createClient } = await import("@supabase/supabase-js");
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-    const res = await fetch("https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780133047284-ht76n4b1848.jpg");
-    const buffer = Buffer.from(await res.arrayBuffer());
+    const imgRes = await fetch("https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780133047284-ht76n4b1848.jpg");
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
     const meta = await sharp(buffer).metadata();
     const w = meta.width!, h = meta.height!;
 
+    // Bird is centered ~40-65% vertically in the screenshot
+    const cropLeft = Math.round(w * 0.18);
+    const cropTop = Math.round(h * 0.38);
+    const cropW = Math.min(Math.round(w * 0.64), w - cropLeft);
+    const cropH = Math.min(Math.round(h * 0.25), h - cropTop);
+
     const cropped = await sharp(buffer)
-      .extract({ left: Math.round(w * 0.15), top: Math.round(h * 0.35), width: Math.round(w * 0.7), height: Math.round(h * 0.3) })
+      .extract({ left: cropLeft, top: cropTop, width: cropW, height: cropH })
       .resize(400, 400, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 1 } })
       .jpeg({ quality: 90 })
       .toBuffer();
