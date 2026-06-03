@@ -105,12 +105,6 @@ export async function GET(req: NextRequest) {
       const { sendAdminEmail, trialEndingSoonEmailHtml } = await import("@/lib/email/sendAdminEmail");
       for (const r of trialsEndingSoon) {
         if (!r.owner?.email) continue;
-        // Skip if already received a nurturing WA from Camila — avoid double contact
-        const hadNurturing = await prisma.panelActivity.findFirst({
-          where: { restaurantId: r.id, action: { startsWith: "nurturing_" } },
-          select: { id: true },
-        });
-        if (hadNurturing) { console.log(`[diario] skip trial reminder for ${r.name} — already received nurturing WA`); continue; }
         const daysLeft = Math.max(1, Math.ceil(((r.trialEndsAt?.getTime() || now.getTime()) - now.getTime()) / (24 * 60 * 60 * 1000)));
         const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
         try {
