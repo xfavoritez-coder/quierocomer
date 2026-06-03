@@ -335,7 +335,7 @@ async function main() {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
   console.log(`\n✓ Listo. ${totalCategories} categorías, ${totalDishes} platos creados.`);
-  console.log(`\nCarta: ${baseUrl}/qr/${restaurant.slug}?t=${qrToken}`);
+  console.log(`\nCarta: ${baseUrl}/qr/${restaurant.slug}`);
   console.log(`Slug:  ${restaurant.slug}`);
   console.log(`ID:    ${restaurant.id}`);
   console.log(`QR:    ${qrToken}\n`);

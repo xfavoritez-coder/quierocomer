@@ -31,7 +31,7 @@ async function main() {
   if (!restaurant) throw new Error("Isekai Ramen no encontrado");
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-  const qrUrl = `${baseUrl}/qr/${restaurant.slug}${restaurant.qrToken ? `?t=${restaurant.qrToken}` : ""}`;
+  const qrUrl = `${baseUrl}/qr/${restaurant.slug}`;
 
   // Generamos el QR como SVG en alta densidad: nivel H (~30% recovery)
   // permite que el QR siga siendo escaneable aun con un pequeño logo encima

@@ -250,7 +250,7 @@ export async function GET(req: NextRequest) {
             if (lead?.email) {
               try {
                 const dishCount = await prisma.dish.count({ where: { restaurantId: r.id, isActive: true, deletedAt: null } });
-                const cartaUrl = `https://quierocomer.cl/qr/${r.slug}${r.qrToken ? `?t=${r.qrToken}` : ""}`;
+                const cartaUrl = `https://quierocomer.cl/qr/${r.slug}`;
                 const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
                 const ownerName = lead.ownerName || "Hola";
                 await sendAdminEmail({

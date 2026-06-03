@@ -33,9 +33,7 @@ export default function QRPageClient({ restaurant }: Props) {
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
   const [showLogo, setShowLogo] = useState(!!restaurant.logoUrl);
 
-  const qrUrl = restaurant.qrToken
-    ? `${BASE_URL}/qr/${restaurant.slug}?t=${restaurant.qrToken}`
-    : `${BASE_URL}/qr/${restaurant.slug}`;
+  const qrUrl = `${BASE_URL}/qr/${restaurant.slug}`;
 
   // Generate QR with logo overlay
   useEffect(() => {

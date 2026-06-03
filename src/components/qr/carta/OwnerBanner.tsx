@@ -22,8 +22,7 @@ export default function OwnerBanner({ restaurantName, restaurantSlug, restaurant
     // Quick client-side check: skip fetch if no panel cookies at all
     const cookies = document.cookie.split(";").map(c => c.trim());
     const hasPanel = cookies.some(c => c.startsWith("panel_demo=")) ||
-                     cookies.some(c => c.startsWith("panel_logged=")) ||
-                     cookies.some(c => c.startsWith("admin_token="));
+                     cookies.some(c => c.startsWith("panel_logged="));
     if (!hasPanel) return;
 
     // Validate ownership server-side
@@ -65,13 +64,6 @@ export default function OwnerBanner({ restaurantName, restaurantSlug, restaurant
           animation: "ownerBannerIn 0.4s ease-out",
         }}
       >
-        {/* Logo */}
-        {restaurantLogo ? (
-          <img src={restaurantLogo} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-        ) : (
-          <span style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(244,166,35,.15)", display: "inline-grid", placeItems: "center", fontSize: 16, flexShrink: 0 }}>🍽</span>
-        )}
-
         {/* Stats */}
         <span style={{
           flex: 1,

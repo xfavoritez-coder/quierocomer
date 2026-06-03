@@ -53,7 +53,7 @@ function PrintPageInner() {
   useEffect(() => {
     if (!restaurant) return;
     const baseUrl = typeof window !== "undefined" ? window.location.origin.replace(/^http:/, "https:") : "https://quierocomer.cl";
-    const url = `${baseUrl}/qr/${restaurant.slug}${restaurant.qrToken ? `?t=${restaurant.qrToken}` : ""}`;
+    const url = `${baseUrl}/qr/${restaurant.slug}`;
     QRCode.toDataURL(url, {
       errorCorrectionLevel: "H",
       // quiet zone minima — antes 2 modulos hacia que QRs adyacentes se vieran

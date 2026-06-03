@@ -59,13 +59,13 @@ export default async function CartaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ mesa?: string; t?: string; vista?: string; lang?: string; showcase?: string; embed?: string }>;
+  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string }>;
 }) {
   const { slug } = await params;
-  const { mesa: tableId, t: qrToken, vista: urlView, lang: urlLang, showcase, embed } = await searchParams;
+  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed } = await searchParams;
   const isShowcase = showcase === "1";
   const isEmbed = embed === "mobile";
-  const isQrScan = !!(tableId || qrToken);
+  const isQrScan = !!tableId;
 
   // Resolve language: URL param > Accept-Language header > fallback (es)
   let lang: Lang = "es";

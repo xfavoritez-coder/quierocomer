@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // Enviar email
   const planLabel = plan === "PREMIUM" ? "Premium" : plan === "GOLD" ? "Gold" : "Gratis";
-  const qrLink = `${BASE_URL}/qr/${restaurant.slug}${restaurant.qrToken ? `?t=${restaurant.qrToken}` : ""}`;
+  const qrLink = `${BASE_URL}/qr/${restaurant.slug}`;
   const panelLink = `${BASE_URL}/panel`;
 
   let emailSent = false;

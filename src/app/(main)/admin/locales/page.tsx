@@ -525,11 +525,11 @@ export default function AdminLocales() {
         {/* Inline QR */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 16 }}>
           <div style={{ background: "white", borderRadius: 10, padding: 8, flexShrink: 0 }}>
-            <QRCodeCanvas value={`https://quierocomer.cl/qr/${selected.slug}${selected.qrToken ? `?t=${selected.qrToken}` : ""}`} size={80} level="H" />
+            <QRCodeCanvas value={`https://quierocomer.cl/qr/${selected.slug}`} size={80} level="H" />
           </div>
           <div>
             <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", margin: "0 0 4px" }}>QR de la carta</p>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.cl/qr/{selected.slug}{selected.qrToken ? `?t=${selected.qrToken}` : ""}</p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.cl/qr/{selected.slug}</p>
           </div>
         </div>
 
