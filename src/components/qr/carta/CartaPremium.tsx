@@ -481,7 +481,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} onSearchClick={() => setSearchOpen(true)} />
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
@@ -529,22 +529,6 @@ export default function CartaPremium({
           }}
           rightSlot={
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="flex items-center justify-center"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  background: "rgba(14,14,14,0.06)",
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                }}
-                aria-label="Buscar"
-              >
-                <Search size={19} color="var(--carta-text2)" />
-              </button>
               <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
           }

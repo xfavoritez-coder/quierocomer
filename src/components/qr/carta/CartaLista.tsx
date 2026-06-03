@@ -377,7 +377,7 @@ export default function CartaLista({
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       ) : (
-        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
+        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} onSearchClick={() => setSearchOpen(true)} />
       )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
@@ -471,16 +471,8 @@ export default function CartaLista({
                 );
               })}
             </div>
-            {/* Search + Sort */}
+            {/* Sort */}
             <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="flex items-center justify-center"
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--carta-search-bg)", border: "none", cursor: "pointer" }}
-                aria-label="Buscar"
-              >
-                <Search size={19} color="var(--carta-text2)" />
-              </button>
               <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
           </nav>

@@ -94,9 +94,7 @@ export default function PanelDashboard() {
   const [cartaReviewed, setCartaReviewed] = useState(true);
   const [qrGenerated, setQrGenerated] = useState(true);
   const [dietModal, setDietModal] = useState(false);
-  const [igModal, setIgModal] = useState(false);
   const [dietValue, setDietValue] = useState("");
-  const [igValue, setIgValue] = useState("");
   const [savingChecklist, setSavingChecklist] = useState(false);
   const welcomeShown = useRef(false);
 
@@ -206,7 +204,6 @@ export default function PanelDashboard() {
         const checks = [
           { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
           { key: "diet", label: "Confirma tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
-          { key: "ig", label: "Agrega tu Instagram", done: !!restSettings.instagram, modal: "ig" },
           // { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
           { key: "qr", label: "Imprime tu código QR", done: qrGenerated, qrAction: true },
         ];
@@ -283,7 +280,6 @@ export default function PanelDashboard() {
                   ) : (c as any).modal ? (
                     <button onClick={() => {
                       if ((c as any).modal === "diet") setDietModal(true);
-                      if ((c as any).modal === "ig") setIgModal(true);
                     }} style={{
                       padding: "5px 12px", borderRadius: 999, cursor: "pointer",
                       background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
@@ -498,40 +494,6 @@ export default function PanelDashboard() {
         </div>
       )}
 
-      {/* Modal: Instagram */}
-      {igModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setIgModal(false)}>
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, width: "100%", maxWidth: 340, padding: "24px 20px" }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 4px", textAlign: "center" }}>Agrega tu Instagram</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", margin: "0 0 16px" }}>Aparecerá en tu carta para que tus clientes te sigan</p>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ padding: "12px 10px 12px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRight: "none", borderRadius: "10px 0 0 10px", fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text3)" }}>@</span>
-              <input value={igValue} onChange={e => setIgValue(e.target.value.replace(/^@/, ""))} placeholder="tu_usuario" style={{
-                flex: 1, padding: "12px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderLeft: "none", borderRadius: "0 10px 10px 0",
-                fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text)", outline: "none",
-              }} autoFocus />
-            </div>
-            <button disabled={!igValue.trim() || savingChecklist} onClick={async () => {
-              if (!selectedRestaurantId || !igValue.trim()) return;
-              setSavingChecklist(true);
-              try {
-                await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
-                  method: "PUT", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ instagram: igValue.trim() }),
-                });
-                setRestSettings((s: any) => ({ ...s, instagram: igValue.trim() }));
-                setIgModal(false);
-                toast.success("Instagram guardado");
-              } catch { toast.error("Error al guardar"); }
-              setSavingChecklist(false);
-            }} style={{
-              width: "100%", marginTop: 16, padding: 12, borderRadius: 999, border: "none", cursor: igValue.trim() ? "pointer" : "default",
-              background: igValue.trim() ? GOLD : "var(--adm-hover)", color: igValue.trim() ? "#fff" : "var(--adm-text3)",
-              fontFamily: F, fontSize: "0.85rem", fontWeight: 700, opacity: savingChecklist ? 0.6 : 1,
-            }}>{savingChecklist ? "Guardando..." : "Guardar"}</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -7,18 +7,24 @@ export const maxDuration = 60;
 const TEMPLATES = {
   cartaNoRevisada: "HX212aca9223fecaf089df099969e19a25",
   noVolvio: "HXe8201d69e53b2c6c4c2af79470c34845",
-  cartaLista: "HX73cbf24831adf5448d0e4eef6cb84f41",
 };
+
+// Números excluidos del nurturing
+const BLACKLIST = new Set(["+56976485972", "+56977940643"]); // Il Mascalzone, Cuartel 50
 
 /**
  * Cron: Lead nurturing via WhatsApp — runs daily at 16:00 Chile (20:00 UTC).
  *
- * 2 scenarios, all sent as "Camila de QuieroComer":
+ * 3 scenarios, all sent as "Camila de QuieroComer":
  *
- * 1. Carta DELIVERED 24h-7d ago, no la revisó (no panel visit, no activation) → camila_carta_no_revisada
- * 2. Activó trial 24h-7d ago, pero no volvió al panel → camila_no_volvio
+ * 1. "carta_no_revisada": Restaurant creado hace 24h-7d, owner nunca hizo login,
+ *    sin actividad en panel, tiene lead con cartaStatus=DELIVERED.
+ * 2. "vio_no_activo": Tiene lead con emailClickedAt o whatsappClickedAt,
+ *    pero no activó (plan FREE, no trial).
+ * 3. "no_volvio": Restaurant con owner, plan activo o trial, pero dormido
+ *    (sin actividad en panel en 7+ días, sin login reciente). Incluye restaurants sin lead.
  *
- * Each scenario sends once per lead (tracked via lead.events).
+ * Tracking via PanelActivity (action = "nurturing_*"), one per restaurant+scenario.
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -38,11 +44,12 @@ export async function GET(req: NextRequest) {
   if (testPhone) {
     const scenarioMap: Record<string, string> = {
       carta_no_revisada: TEMPLATES.cartaNoRevisada,
+      vio_no_activo: TEMPLATES.noVolvio,
       no_volvio: TEMPLATES.noVolvio,
     };
     const scenarioKey = req.nextUrl.searchParams.get("scenario") || "carta_no_revisada";
     const templateSid = scenarioMap[scenarioKey];
-    if (!templateSid) return NextResponse.json({ error: `Scenario inválido: ${scenarioKey}`, valid: Object.keys(scenarioMap) }, { status: 400 });
+    if (!templateSid) return NextResponse.json({ error: `Scenario invalido: ${scenarioKey}`, valid: Object.keys(scenarioMap) }, { status: 400 });
 
     try {
       const msgSid = await sendWhatsApp({
@@ -61,128 +68,240 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  // Números excluidos del nurturing
-  const BLACKLIST = new Set(["+56976485972", "+56977940643"]); // Il Mascalzone, Cuartel 50
 
   let sent = 0;
   let skipped = 0;
   let errors = 0;
+  const candidates = { cartaNoRevisada: 0, vioNoActivo: 0, noVolvio: 0 };
 
-  async function sendNurturing(
-    lead: { id: string; ownerName: string | null; localName: string | null; whatsapp: string | null; generatedSlug: string | null; events: any },
-    scenario: string,
-    eventKey: string,
-    templateSid: string,
-  ) {
-    const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
-    if (events.some((e: any) => e.action === eventKey)) { skipped++; return; }
-    if (!lead.whatsapp || !lead.generatedSlug) return;
-    if (BLACKLIST.has(lead.whatsapp)) { skipped++; return; }
+  /**
+   * Send a nurturing WhatsApp and track via PanelActivity.
+   * Returns true if sent, false if skipped/error.
+   */
+  async function sendNurturing(opts: {
+    restaurantId: string;
+    restaurantName: string;
+    ownerName: string;
+    whatsapp: string;
+    action: string;
+    templateSid: string;
+  }) {
+    const { restaurantId, restaurantName, ownerName, whatsapp, action, templateSid } = opts;
 
-    const ownerName = (lead.ownerName || "Hola").split(" ")[0];
+    if (BLACKLIST.has(whatsapp)) { skipped++; return; }
 
-    // Resolve restaurant name from DB (more accurate than lead.localName)
-    const rest = await prisma.restaurant.findFirst({
-      where: { slug: lead.generatedSlug },
-      select: { name: true },
+    // Check if already sent for this restaurant
+    const already = await prisma.panelActivity.findFirst({
+      where: { restaurantId, action },
+      select: { id: true },
     });
-    const restaurantName = rest?.name || lead.localName || "tu restaurante";
+    if (already) { skipped++; return; }
+
+    const firstName = (ownerName || "Hola").split(" ")[0];
 
     try {
       const sid = await sendWhatsApp({
-        to: lead.whatsapp,
-        body: "", // Template handles the body
+        to: whatsapp,
+        body: "",
         contentSid: templateSid,
-        contentVariables: { "1": ownerName, "2": restaurantName },
+        contentVariables: { "1": firstName, "2": restaurantName },
       });
 
       if (sid) {
-        events.push({ ts: now.toISOString(), action: eventKey, scenario, sid });
-        await prisma.lead.update({ where: { id: lead.id }, data: { events: events as any } });
+        // Track in PanelActivity (prevents re-send)
+        await prisma.panelActivity.create({
+          data: {
+            restaurantId,
+            action,
+            details: { sid, whatsapp, ownerName: firstName, restaurantName },
+          },
+        });
+        // Also log in WhatsAppMessage so it shows in /admin/whatsapp
+        const actionLabels: Record<string, string> = {
+          nurturing_carta_no_revisada: `Hola ${firstName}, tu carta de ${restaurantName} esta lista y esperandote. ¿Quieres verla? — Camila de QuieroComer`,
+          nurturing_vio_no_activo: `Hola ${firstName}, vi que revisaste la carta de ${restaurantName}. ¿Necesitas ayuda para activar tu local? — Camila de QuieroComer`,
+          nurturing_no_volvio: `Hola ${firstName}, hace unos dias activaste ${restaurantName} pero no has vuelto. ¿Todo bien? Estoy para ayudarte — Camila de QuieroComer`,
+        };
+        const lead = await prisma.lead.findFirst({ where: { whatsapp: { contains: whatsapp.replace("+", "") } }, select: { id: true } }).catch(() => null);
+        await prisma.whatsAppMessage.create({
+          data: {
+            phone: whatsapp,
+            direction: "OUTBOUND",
+            body: actionLabels[action] || `Nurturing: ${action}`,
+            twilioSid: sid,
+            status: "sent",
+            restaurantId,
+            leadId: lead?.id || null,
+          },
+        }).catch(() => {});
         sent++;
-        console.log(`[nurturing] ${scenario}: ${lead.whatsapp} (${restaurantName})`);
+        console.log(`[nurturing] ${action}: ${whatsapp} (${restaurantName})`);
       } else {
         errors++;
       }
     } catch (e: any) {
-      console.error(`[nurturing] ${scenario} error for ${lead.whatsapp}:`, e.message);
+      console.error(`[nurturing] ${action} error for ${whatsapp}:`, e.message);
       errors++;
     }
   }
 
-  // ═══ Scenario 1: Carta lista, no la revisó (ni clickeó email/WA) ═══
-  const noRevisada = await prisma.lead.findMany({
+  // ═══ Scenario 1: "carta_no_revisada" ═══
+  // Restaurant creado hace 24h-7d, owner nunca hizo login, sin actividad en panel,
+  // tiene lead con cartaStatus=DELIVERED.
+  const cartaNoRevisadaRestaurants = await prisma.restaurant.findMany({
     where: {
-      cartaStatus: "DELIVERED",
-      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
-      activatedAt: null,
-      panelVisitedAt: null,
-      emailClickedAt: null,
-      whatsappClickedAt: null,
-      whatsapp: { not: null },
-      generatedSlug: { not: null },
+      createdAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      ownerId: { not: null },
     },
-    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
-    take: 30,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      owner: { select: { name: true, whatsapp: true, lastLoginAt: true } },
+    },
+    take: 50,
   });
 
-  for (const lead of noRevisada) {
-    await sendNurturing(lead, "carta_no_revisada", "nurturing_no_revisada", TEMPLATES.cartaNoRevisada);
+  candidates.cartaNoRevisada = cartaNoRevisadaRestaurants.length;
+
+  for (const r of cartaNoRevisadaRestaurants) {
+    if (!r.owner?.whatsapp) continue;
+    // Owner must have never logged in
+    if (r.owner.lastLoginAt) { skipped++; continue; }
+
+    // Must have a lead with cartaStatus=DELIVERED
+    const lead = await prisma.lead.findFirst({
+      where: { generatedSlug: r.slug, cartaStatus: "DELIVERED" },
+      select: { id: true },
+    });
+    if (!lead) { skipped++; continue; }
+
+    // Must have NO panel activity at all
+    const activity = await prisma.panelActivity.findFirst({
+      where: { restaurantId: r.id, action: { not: { startsWith: "nurturing_" } } },
+      select: { id: true },
+    });
+    if (activity) { skipped++; continue; }
+
+    await sendNurturing({
+      restaurantId: r.id,
+      restaurantName: r.name,
+      ownerName: r.owner.name,
+      whatsapp: r.owner.whatsapp,
+      action: "nurturing_carta_no_revisada",
+      templateSid: TEMPLATES.cartaNoRevisada,
+    });
   }
 
-  // ═══ Scenario 1b: Vio la carta (clickeó email/WA) pero no activó ═══
-  const vioPeroNoActivo = await prisma.lead.findMany({
+  // ═══ Scenario 2: "vio_no_activo" ═══
+  // Tiene lead con emailClickedAt o whatsappClickedAt, pero plan FREE y no trial.
+  const vioNoActivoLeads = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
-      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
-      activatedAt: null,
-      whatsapp: { not: null },
       generatedSlug: { not: null },
+      whatsapp: { not: null },
       OR: [
         { emailClickedAt: { not: null } },
         { whatsappClickedAt: { not: null } },
       ],
     },
-    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
-    take: 30,
+    select: {
+      id: true,
+      ownerName: true,
+      localName: true,
+      whatsapp: true,
+      generatedSlug: true,
+    },
+    take: 50,
   });
 
-  for (const lead of vioPeroNoActivo) {
-    await sendNurturing(lead, "vio_no_activo", "nurturing_vio_no_activo", TEMPLATES.noVolvio);
+  candidates.vioNoActivo = vioNoActivoLeads.length;
+
+  for (const lead of vioNoActivoLeads) {
+    if (!lead.whatsapp || !lead.generatedSlug) continue;
+
+    // Find the restaurant — must be FREE and not trialing
+    const rest = await prisma.restaurant.findFirst({
+      where: {
+        slug: lead.generatedSlug,
+        plan: "FREE",
+        subscriptionStatus: "NONE",
+      },
+      select: {
+        id: true,
+        name: true,
+        owner: { select: { name: true, whatsapp: true } },
+      },
+    });
+    if (!rest) { skipped++; continue; }
+
+    // Use owner whatsapp if available, otherwise lead whatsapp
+    const whatsapp = rest.owner?.whatsapp || lead.whatsapp;
+    const ownerName = rest.owner?.name || lead.ownerName;
+
+    await sendNurturing({
+      restaurantId: rest.id,
+      restaurantName: rest.name,
+      ownerName: ownerName || "Hola",
+      whatsapp,
+      action: "nurturing_vio_no_activo",
+      templateSid: TEMPLATES.noVolvio,
+    });
   }
 
-  // ═══ Scenario 2: Activó trial pero no volvió ═══
-  // activatedAt between 24h-7d ago, but restaurant owner hasn't visited panel recently
-  const noVolvio = await prisma.lead.findMany({
+  // ═══ Scenario 3: "no_volvio" ═══
+  // Restaurant con owner, dormido (sin actividad 7+ dias).
+  // Incluye restaurants SIN lead y de cualquier plan.
+  const noVolvioRestaurants = await prisma.restaurant.findMany({
     where: {
-      activatedAt: { lt: oneDayAgo, gt: sevenDaysAgo },
-      whatsapp: { not: null },
-      generatedSlug: { not: null },
+      ownerId: { not: null },
+      isDemo: false,
     },
-    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
-    take: 30,
+    select: {
+      id: true,
+      name: true,
+      updatedAt: true,
+      owner: { select: { name: true, whatsapp: true, lastLoginAt: true } },
+    },
+    take: 100,
   });
 
-  for (const lead of noVolvio) {
-    if (!lead.generatedSlug) continue;
+  candidates.noVolvio = noVolvioRestaurants.length;
 
-    // Check if owner has been active in the panel recently (edits, uploads, etc.)
-    const restaurant = await prisma.restaurant.findFirst({
-      where: { slug: lead.generatedSlug },
-      select: { id: true, updatedAt: true },
+  for (const r of noVolvioRestaurants) {
+    if (!r.owner?.whatsapp) continue;
+
+    // If owner logged in within last 7 days, skip
+    if (r.owner.lastLoginAt && r.owner.lastLoginAt > sevenDaysAgo) {
+      skipped++;
+      continue;
+    }
+
+    // Check for any panel activity in the last 7 days (excluding nurturing itself)
+    const recentActivity = await prisma.panelActivity.findFirst({
+      where: {
+        restaurantId: r.id,
+        createdAt: { gt: sevenDaysAgo },
+        action: { not: { startsWith: "nurturing_" } },
+      },
+      select: { id: true },
     });
-    if (!restaurant) continue;
-
-    // If restaurant was updated in the last 24h, they're using it — skip
-    if (restaurant.updatedAt > oneDayAgo) { skipped++; continue; }
+    if (recentActivity) { skipped++; continue; }
 
     // Check for recent dish edits
     const recentEdits = await prisma.dish.count({
-      where: { restaurantId: restaurant.id, updatedAt: { gt: oneDayAgo } },
+      where: { restaurantId: r.id, updatedAt: { gt: sevenDaysAgo } },
     });
     if (recentEdits > 0) { skipped++; continue; }
 
-    await sendNurturing(lead, "no_volvio", "nurturing_no_volvio", TEMPLATES.noVolvio);
+    await sendNurturing({
+      restaurantId: r.id,
+      restaurantName: r.name,
+      ownerName: r.owner.name,
+      whatsapp: r.owner.whatsapp,
+      action: "nurturing_no_volvio",
+      templateSid: TEMPLATES.noVolvio,
+    });
   }
 
   const durationMs = Date.now() - start;
@@ -192,12 +311,9 @@ export async function GET(req: NextRequest) {
       jobName: "nurturing",
       status: errors > 0 && sent === 0 ? "error" : "success",
       durationMs,
-      details: {
-        sent, skipped, errors,
-        candidates: { noRevisada: noRevisada.length, vioPeroNoActivo: vioPeroNoActivo.length, noVolvio: noVolvio.length },
-      },
+      details: { sent, skipped, errors, candidates },
     },
   }).catch(() => {});
 
-  return NextResponse.json({ ok: true, sent, skipped, errors, durationMs });
+  return NextResponse.json({ ok: true, sent, skipped, errors, candidates, durationMs });
 }

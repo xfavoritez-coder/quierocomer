@@ -88,6 +88,9 @@ const ACTION_LABELS: Record<string, string> = {
   announcement_create: "Creo anuncio",
   menu_import: "Importo carta",
   menu_import_failed: "Fallo importacion de carta",
+  nurturing_carta_no_revisada: "WA Camila: no revisaste tu carta",
+  nurturing_vio_no_activo: "WA Camila: viste carta, no activaste",
+  nurturing_no_volvio: "WA Camila: activaste, no volviste",
 };
 
 export default function ClientesPage() {
