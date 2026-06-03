@@ -15,9 +15,9 @@ export async function GET(req: NextRequest) {
   const adminToken = req.cookies.get("admin_token")?.value;
   const adminRole = req.cookies.get("admin_role")?.value;
 
-  // Superadmin always sees it
+  // Superadmin should NOT see the owner banner — it's for restaurant owners only
   if (adminToken && adminRole === "SUPERADMIN") {
-    return NextResponse.json({ isOwner: true });
+    return NextResponse.json({ isOwner: false });
   }
 
   if (!panelToken || !panelId) {
