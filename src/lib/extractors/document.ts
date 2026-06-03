@@ -417,31 +417,8 @@ function repairAndParseJson(responseText: string): any {
   return parsed;
 }
 
-/** Transform parsed Claude JSON into ExtractionResult with Unsplash photos */
+/** Transform parsed Claude JSON into ExtractionResult (no Unsplash photos) */
 async function buildResult(parsed: any): Promise<ExtractionResult> {
-  const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
-  const photoMap = new Map<string, string>();
-  if (UNSPLASH_KEY) {
-    const allDishes = (parsed.categories || []).flatMap((c: any) =>
-      (c.dishes || []).map((d: any) => ({ name: d.name, category: c.name }))
-    ).filter((d: any) => d.name).slice(0, 15);
-    await Promise.allSettled(allDishes.map(async (d: any) => {
-      try {
-        for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
-          const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`, {
-            headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-            signal: AbortSignal.timeout(5000),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const url = data.results?.[0]?.urls?.regular;
-            if (url) { photoMap.set(d.name, url); return; }
-          }
-        }
-      } catch {}
-    }));
-  }
-
   const dishes: ExtractedDish[] = [];
   for (const cat of (parsed.categories || [])) {
     for (const dish of (cat.dishes || [])) {
@@ -450,7 +427,7 @@ async function buildResult(parsed: any): Promise<ExtractionResult> {
         name: dish.name.trim(),
         description: dish.description || "",
         price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
-        imageUrl: photoMap.get(dish.name) || null,
+        imageUrl: null,
         category: cat.name || "General",
         diet: dish.diet || "OMNIVORE",
         isSpicy: dish.isSpicy || false,

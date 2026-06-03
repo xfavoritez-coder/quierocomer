@@ -10,10 +10,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Auth: admin cookies OR seed secret (query, header, or body)
   const seedSecret = process.env.SEED_SECRET;
   const queryKey = req.nextUrl.searchParams.get("key") || req.headers.get("x-seed-key");
-  if (!(seedSecret && queryKey === seedSecret)) {
-    return NextResponse.json({ error: "No autorizado", debug: { hasSecret: !!seedSecret, gotKey: !!queryKey } }, { status: 401 });
+  const adminToken = req.cookies.get("admin_token")?.value;
+  const adminId = req.cookies.get("admin_id")?.value;
+  const hasAdminAuth = !!(adminToken && adminId);
+  const hasSeedAuth = !!(seedSecret && queryKey === seedSecret);
+  if (!hasAdminAuth && !hasSeedAuth) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const SID = process.env.TWILIO_ACCOUNT_SID;
