@@ -41,6 +41,8 @@ interface Entry {
   leadWhatsapp: string | null;
   nurturingSent: { action: string; date: string }[];
   ownerId: string | null;
+  cartaOriginalUrl: string | null;
+  cartaType: string | null;
   leadTimeline: { deliveredAt: string | null; emailOpenedAt: string | null; emailClickedAt: string | null; activatedAt: string | null } | null;
   emailsSent: { purpose: string; status: string; openedAt: string | null; clickedAt: string | null; createdAt: string }[];
   recentActivity: { action: string; createdAt: string }[];
@@ -477,12 +479,18 @@ export default function LifecyclePage() {
                 {/* Actions */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <ActionBtn label="👁 Ver carta" onClick={() => window.open(`/qr/${entry.slug}`, "_blank")} />
+                  {entry.cartaOriginalUrl && (
+                    <ActionBtn label={`📄 Ver original (${entry.cartaType === "LINK" ? "link" : entry.cartaType === "DOCUMENT" ? "PDF" : "foto"})`} onClick={() => window.open(entry.cartaOriginalUrl!, "_blank")} />
+                  )}
                   {entry.ownerId && (
                     <ActionBtn label="🔑 Entrar como él" onClick={async () => {
                       const res = await fetch("/api/admin/impersonate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ownerId: entry.ownerId }) });
                       if (res.ok) window.open("/panel", "_blank");
                       else alert("Error al entrar como owner");
                     }} />
+                  )}
+                  {ownerWa && entry.nurturingSent?.length > 0 && (
+                    <ActionBtn label="💬 Ver chat WA" onClick={() => window.open(`/admin/whatsapp`, "_blank")} />
                   )}
                   {(ownerEmail || ownerWa) && (
                     <SendMessageBtn restaurantId={entry.id} ownerName={ownerName || "Dueño"} ownerEmail={ownerEmail} ownerWa={ownerWa} />
