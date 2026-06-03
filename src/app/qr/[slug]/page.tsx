@@ -210,7 +210,12 @@ export default async function CartaPage({
         `}} />
       )}
       {!(restaurant as any).isDemo && !isShowcase && (
-        <OwnerBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} />
+        <>
+          <OwnerBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} />
+          {topDishesResult.totalSalesToday === 0 && (restaurant as any).owner && (
+            <DemoFirstViewModal restaurantSlug={slug} restaurantName={restaurant.name} />
+          )}
+        </>
       )}
       {(restaurant as any).isDemo && !isShowcase && (
         <>
