@@ -63,12 +63,11 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
 
             {/* Content */}
             <div style={{
-              position: "relative", zIndex: 1, padding: "12px 14px", width: "50%",
+              position: "relative", zIndex: 1, padding: "8px 14px", width: "50%",
               display: "flex", flexDirection: "column", justifyContent: "center",
             }}>
-              <span style={{ fontSize: 13, fontWeight: 900, color: "var(--carta-accent, #F4A623)", letterSpacing: "0.15em", textTransform: "uppercase" }}>OFERTA</span>
               <h3 style={{
-                margin: "2px 0 4px", fontSize: 17, fontWeight: 800, color: "white",
+                margin: "0 0 4px", fontSize: 17, fontWeight: 800, color: "white",
                 overflow: "hidden", textOverflow: "ellipsis",
                 display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, lineHeight: 1.2,
                 fontFamily: "inherit",
