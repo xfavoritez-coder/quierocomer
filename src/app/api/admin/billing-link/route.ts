@@ -14,7 +14,7 @@ import { grossOf } from "@/lib/billing/plans-config";
 export async function POST(req: NextRequest) {
   // Auth: admin cookies OR seed secret query param
   const seedSecret = process.env.SEED_SECRET;
-  const queryKey = new URL(req.url).searchParams.get("key");
+  const queryKey = req.nextUrl.searchParams.get("key");
   if (!(seedSecret && queryKey === seedSecret)) {
     const authErr = checkAdminAuth(req);
     if (authErr) return authErr;
