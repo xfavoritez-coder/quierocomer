@@ -372,7 +372,7 @@ function FeaturedSection({
   onDishSelect: (d: Dish) => void;
 }) {
   const featured = useMemo(() => {
-    return dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
+    return dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
   }, [dishes]);
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -932,22 +932,25 @@ export default function CartaImpact({
     const popular = dishes.filter((d) => popularDishIds.has(d.id) && !d.tags?.includes("RECOMMENDED"));
 
     // Mix: up to 2 recommended + up to 2 popular, intercalated
-    // Only include dishes with photos in the hero
+    // Prefer dishes with photos, but allow without photos if none have them
     const sortPriority = (arr: Dish[]) => [...arr].sort((a, b) => {
       return (isTranslated(b) ? 1 : 0) - (isTranslated(a) ? 1 : 0);
     });
     const mixed: Dish[] = [];
     const maxEach = 2;
-    const recs = sortPriority(withPhoto(recommended)).slice(0, maxEach);
-    const pops = sortPriority(withPhoto(popular)).slice(0, maxEach);
+    const recsWithPhoto = sortPriority(withPhoto(recommended));
+    const recs = (recsWithPhoto.length > 0 ? recsWithPhoto : sortPriority(recommended)).slice(0, maxEach);
+    const popsWithPhoto = sortPriority(withPhoto(popular));
+    const pops = (popsWithPhoto.length > 0 ? popsWithPhoto : sortPriority(popular)).slice(0, maxEach);
     for (let i = 0; i < Math.max(recs.length, pops.length); i++) {
       if (i < recs.length) mixed.push(recs[i]);
       if (i < pops.length) mixed.push(pops[i]);
     }
     if (mixed.length > 0) return mixed.slice(0, 4);
 
-    // Fallback: any dishes with photos
-    return withPhoto(dishes).slice(0, 4);
+    // Fallback: any dishes with photos, or just first dishes if none have photos
+    const anyWithPhoto = withPhoto(dishes);
+    return (anyWithPhoto.length > 0 ? anyWithPhoto : dishes).slice(0, 4);
   }, [dishes, popularDishIds, lang]);
 
   /* ─── Sorted dishes ─── */

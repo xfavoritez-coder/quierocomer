@@ -72,8 +72,10 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
   const lang = useLang();
   const heroDishes = useMemo(() => {
     const withPhoto = (arr: Dish[]) => arr.filter(d => d.photos?.[0]);
-    const rec = withPhoto(dishes.filter(d => d.tags?.includes("RECOMMENDED")));
-    if (rec.length > 0) return rec;
+    const recommended = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
+    const recWithPhoto = withPhoto(recommended);
+    if (recWithPhoto.length > 0) return recWithPhoto;
+    if (recommended.length > 0) return recommended;
     return withPhoto(dishes).slice(0, 3);
   }, [dishes]);
 

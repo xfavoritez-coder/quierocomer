@@ -344,8 +344,10 @@ export default function CartaPremium({
     });
 
     const withPhoto = (arr: typeof dishes) => arr.filter(d => d.photos?.[0]);
-    const recommended = sortPriority(withPhoto(dishes.filter(d => d.tags?.includes("RECOMMENDED"))));
-    if (recommended.length > 0) return recommended;
+    const recommended = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
+    const recsWithPhoto = sortPriority(withPhoto(recommended));
+    if (recsWithPhoto.length > 0) return recsWithPhoto;
+    if (recommended.length > 0) return sortPriority(recommended);
     const popular = sortPriority(withPhoto(dishes.filter(d => popularDishIds.has(d.id)))).slice(0, 3);
     if (popular.length > 0) return popular;
     return sortPriority(withPhoto(dishes)).slice(0, 3);
