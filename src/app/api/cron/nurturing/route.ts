@@ -14,7 +14,7 @@ const TEMPLATES = {
 };
 
 /**
- * Cron: Lead nurturing via WhatsApp — runs daily at 14:00 Chile (18:00 UTC).
+ * Cron: Lead nurturing via WhatsApp — runs daily at 16:00 Chile (20:00 UTC).
  *
  * 3 scenarios, all sent as "Camila de QuieroComer":
  *
@@ -36,10 +36,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // ── Test mode: ?test=+56999946208&scenario=onboarding_incompleto ──
+  const testPhone = req.nextUrl.searchParams.get("test");
+  if (testPhone) {
+    const scenarioMap: Record<string, string> = {
+      carta_no_revisada: TEMPLATES.cartaNoRevisada,
+      onboarding_incompleto: TEMPLATES.onboardingIncompleto,
+      no_volvio: TEMPLATES.noVolvio,
+    };
+    const scenarioKey = req.nextUrl.searchParams.get("scenario") || "onboarding_incompleto";
+    const templateSid = scenarioMap[scenarioKey];
+    if (!templateSid) return NextResponse.json({ error: `Scenario inválido: ${scenarioKey}`, valid: Object.keys(scenarioMap) }, { status: 400 });
+
+    try {
+      const msgSid = await sendWhatsApp({
+        to: testPhone,
+        body: "",
+        contentSid: templateSid,
+        contentVariables: { "1": "Test", "2": "Restaurante Demo" },
+      });
+      return NextResponse.json({ test: true, phone: testPhone, scenario: scenarioKey, sid: msgSid });
+    } catch (e: any) {
+      return NextResponse.json({ test: true, phone: testPhone, scenario: scenarioKey, error: e.message }, { status: 500 });
+    }
+  }
+
   const start = Date.now();
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   let sent = 0;
   let skipped = 0;
   let errors = 0;
@@ -85,12 +109,12 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ═══ Scenario 1: Carta lista +24h, no la revisó ═══
-  // deliveredAt between 1-7 days ago, no panel visit, no activation
+  // ═══ Scenario 1: Carta lista, no la revisó ═══
+  // deliveredAt in the last 24h, no panel visit, no activation
   const noRevisada = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
-      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      deliveredAt: { gt: oneDayAgo },
       activatedAt: null,
       panelVisitedAt: null,
       whatsapp: { not: null },
@@ -109,7 +133,7 @@ export async function GET(req: NextRequest) {
   const onboardingIncompleto = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
-      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      deliveredAt: { gt: oneDayAgo },
       activatedAt: null,
       whatsapp: { not: null },
       generatedSlug: { not: null },
@@ -131,10 +155,10 @@ export async function GET(req: NextRequest) {
   }
 
   // ═══ Scenario 3: Activó trial pero no volvió ═══
-  // activatedAt between 1-7 days ago, but restaurant owner hasn't visited panel recently
+  // activatedAt in the last 24h, but restaurant owner hasn't visited panel recently
   const noVolvio = await prisma.lead.findMany({
     where: {
-      activatedAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      activatedAt: { gt: oneDayAgo },
       whatsapp: { not: null },
       generatedSlug: { not: null },
     },
