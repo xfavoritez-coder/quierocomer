@@ -5,11 +5,15 @@ import { NextRequest, NextResponse } from "next/server";
  * Creates WhatsApp content templates in Twilio and submits for Meta approval.
  * Auth via SEED_SECRET query param.
  */
+export async function GET(req: NextRequest) {
+  return NextResponse.json({ error: "Use POST" }, { status: 405 });
+}
+
 export async function POST(req: NextRequest) {
   const seedSecret = process.env.SEED_SECRET;
-  const queryKey = req.nextUrl.searchParams.get("key");
+  const queryKey = req.nextUrl.searchParams.get("key") || req.headers.get("x-seed-key");
   if (!(seedSecret && queryKey === seedSecret)) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado", debug: { hasSecret: !!seedSecret, gotKey: !!queryKey } }, { status: 401 });
   }
 
   const SID = process.env.TWILIO_ACCOUNT_SID;
