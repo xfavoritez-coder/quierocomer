@@ -172,27 +172,46 @@ export async function GET(req: NextRequest) {
           console.error("[diario] email trial expired error:", e);
         }
 
-        // WhatsApp de Camila para los que usaron el trial
+        // WhatsApp de Camila solo si realmente usó el trial y no recibió nurturing antes
         try {
-          const lead = await prisma.lead.findFirst({
-            where: { generatedSlug: r.slug },
-            select: { id: true, whatsapp: true, ownerName: true, events: true },
+          // Skip if already received any nurturing WA (ya lo contactó Camila por inactividad)
+          const hadNurturing = await prisma.panelActivity.findFirst({
+            where: { restaurantId: r.id, action: { startsWith: "nurturing_" } },
+            select: { action: true },
           });
-          if (lead?.whatsapp) {
-            const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
-            if (!events.some((e: any) => e.action === "nurturing_trial_usado")) {
-              const { sendWhatsApp } = await import("@/lib/whatsapp");
-              const ownerName = (lead.ownerName || r.owner?.name || "Hola").split(" ")[0];
-              const sid = await sendWhatsApp({
-                to: lead.whatsapp,
-                body: "",
-                contentSid: "HX553107603c0366a63214d4f52afc8e38",
-                contentVariables: { "1": ownerName, "2": r.name },
+          if (hadNurturing) {
+            console.log(`[diario] skip trial_usado WA for ${r.name} — already received ${hadNurturing.action}`);
+          } else {
+            // Only send if they actually used the trial (had real owner activity)
+            const { OWNER_ACTIONS } = await import("@/lib/admin/lifecycle");
+            const ownerActivity = await prisma.panelActivity.findFirst({
+              where: { restaurantId: r.id, action: { in: [...OWNER_ACTIONS] } },
+              select: { id: true },
+            });
+            if (!ownerActivity) {
+              console.log(`[diario] skip trial_usado WA for ${r.name} — never used the trial`);
+            } else {
+              const lead = await prisma.lead.findFirst({
+                where: { generatedSlug: r.slug },
+                select: { id: true, whatsapp: true, ownerName: true, events: true },
               });
-              if (sid) {
-                events.push({ ts: now.toISOString(), action: "nurturing_trial_usado", sid });
-                await prisma.lead.update({ where: { id: lead.id }, data: { events: events as any } });
-                console.log(`[diario] Camila WA sent to ${lead.whatsapp} (trial usado: ${r.name})`);
+              if (lead?.whatsapp) {
+                const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
+                if (!events.some((e: any) => e.action === "nurturing_trial_usado")) {
+                  const { sendWhatsApp } = await import("@/lib/whatsapp");
+                  const ownerName = (lead.ownerName || r.owner?.name || "Hola").split(" ")[0];
+                  const sid = await sendWhatsApp({
+                    to: lead.whatsapp,
+                    body: "",
+                    contentSid: "HX553107603c0366a63214d4f52afc8e38",
+                    contentVariables: { "1": ownerName, "2": r.name },
+                  });
+                  if (sid) {
+                    events.push({ ts: now.toISOString(), action: "nurturing_trial_usado", sid });
+                    await prisma.lead.update({ where: { id: lead.id }, data: { events: events as any } });
+                    console.log(`[diario] Camila WA sent to ${lead.whatsapp} (trial usado: ${r.name})`);
+                  }
+                }
               }
             }
           }
