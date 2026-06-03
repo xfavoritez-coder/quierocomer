@@ -51,7 +51,6 @@ export default function OwnerBanner({ restaurantName, restaurantSlug, restaurant
           position: "fixed",
           bottom: "calc(20px + env(safe-area-inset-bottom))",
           left: 16,
-          right: 16,
           zIndex: 55,
           display: "flex",
           alignItems: "center",
