@@ -29,7 +29,7 @@ import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
-import PromoCompact from "./PromoCompact";
+import PromoCarousel from "../capture/PromoCarousel";
 import EmailTypoHint from "../capture/EmailTypoHint";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import { useLang } from "@/contexts/LangContext";
@@ -570,7 +570,7 @@ export default function CartaPremium({
         {/* Ofertas section */}
         {hasPromos && (
           <div id="cat-promos" style={{ paddingTop: 18 }}>
-            <PromoCompact promos={marketingPromos || []} onViewDish={(dishId) => {
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
               const dish = dishes.find(d => d.id === dishId);
               if (dish) setSelectedDish(dish);
             }} />

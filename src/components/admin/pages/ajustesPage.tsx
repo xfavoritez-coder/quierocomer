@@ -158,7 +158,7 @@ export default function AjustesPage() {
             }}
             style={{
               padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-              background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.75rem", fontWeight: 700,
+              background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.75rem", fontWeight: 700,
               flexShrink: 0, whiteSpace: "nowrap",
             }}
           >
