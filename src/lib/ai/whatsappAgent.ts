@@ -4,6 +4,7 @@
  */
 
 const MODEL = "claude-sonnet-4-6-20250514";
+const MODEL_FALLBACK = "claude-haiku-4-5-20251001";
 
 const SUPPORT_PROMPT = `Eres Camila, del equipo de soporte de QuieroComer.cl. Respondes por WhatsApp en español, de forma amigable, breve y profesional.
 
@@ -192,30 +193,42 @@ ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}`;
     { role: "user", content: inboundMessage },
   ];
 
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+  async function callClaude(model: string): Promise<Response> {
+    return fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "x-api-key": apiKey,
+        "x-api-key": apiKey!,
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model,
         max_tokens: 400,
         system: systemPrompt + knowledgeBlock + contextBlock,
         messages,
       }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(12000),
     });
+  }
+
+  try {
+    let res = await callClaude(MODEL);
+    let usedModel = MODEL;
+
+    // Fallback to Haiku if Sonnet fails
+    if (!res.ok) {
+      console.error(`[WA Agent] ${MODEL} failed (${res.status}), trying fallback ${MODEL_FALLBACK}`);
+      res = await callClaude(MODEL_FALLBACK);
+      usedModel = MODEL_FALLBACK;
+    }
 
     if (!res.ok) {
-      console.error("[WA Agent] Claude error:", res.status);
-      return { reply: "Gracias por tu mensaje. Un miembro de nuestro equipo te contactará pronto.", insight: null };
+      console.error("[WA Agent] Both models failed:", res.status);
+      return { reply: "Gracias por tu mensaje. Un miembro de nuestro equipo te contactara pronto.", insight: null };
     }
 
     const data = await res.json();
-    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: MODEL, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: isSalesMode ? "whatsapp_sales_agent" : "whatsapp_agent" })).catch(() => {});
+    import("@/lib/costTracker").then(m => m.logClaudeUsage({ model: usedModel, inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: isSalesMode ? "whatsapp_sales_agent" : "whatsapp_agent" })).catch(() => {});
 
     const fullText = data.content?.[0]?.text || "Gracias por tu mensaje.";
 
