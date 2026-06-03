@@ -190,27 +190,9 @@ Reglas:
     parsed = JSON.parse(jsonStr);
   }
 
-  // Search Unsplash photos for dishes (batch, max 15 to respect rate limits)
-  const { searchUnsplashPhoto, triggerUnsplashDownload } = await import("@/lib/unsplash");
+  // Unsplash photo search removed — dishes display with text-only fallback
   const photoMap = new Map<string, string>();
   const creditMap = new Map<string, { photographer: string; profileUrl: string; unsplashId: string }>();
-  if (process.env.UNSPLASH_ACCESS_KEY) {
-    const allDishes = (parsed.categories || []).flatMap((c: any) =>
-      (c.dishes || []).map((d: any) => ({ name: d.name, category: c.name }))
-    ).filter((d: any) => d.name).slice(0, 50);
-
-    await Promise.allSettled(allDishes.map(async (d: any) => {
-      for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
-        const photo = await searchUnsplashPhoto(query);
-        if (photo) {
-          photoMap.set(d.name, photo.rawUrl);
-          creditMap.set(d.name, { photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId });
-          triggerUnsplashDownload(photo.downloadLocation).catch(() => {});
-          return;
-        }
-      }
-    }));
-  }
 
   const dishes: ExtractedDish[] = [];
   for (const cat of (parsed.categories || [])) {

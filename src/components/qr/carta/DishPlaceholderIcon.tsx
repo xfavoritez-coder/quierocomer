@@ -1,5 +1,5 @@
 /** SVG dish placeholder icon — consistent across all platforms (no emoji) */
-export default function DishPlaceholderIcon({ size = 36 }: { size?: number }) {
+export default function DishPlaceholderIcon({ size = 36, opacity = 0.2 }: { size?: number; opacity?: number }) {
   return (
     <svg
       width={size}
@@ -10,7 +10,7 @@ export default function DishPlaceholderIcon({ size = 36 }: { size?: number }) {
       strokeWidth="1.2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ opacity: 0.2 }}
+      style={{ opacity }}
     >
       {/* Plate dome (cloche) */}
       <path d="M3 16h18" />

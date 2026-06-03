@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { trackHeroClick } from "./utils/cartaAnalytics";
+import DishPlaceholderIcon from "./DishPlaceholderIcon";
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
@@ -88,7 +89,12 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
             <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }} />
           </>
         ) : (
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-accent, #F4A623) 18%, #1a1a2e), color-mix(in srgb, var(--carta-accent, #F4A623) 6%, #0f3460))",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <DishPlaceholderIcon size={70} opacity={0.35} />
+          </div>
         )}
 
         {/* Top left: logo + name */}

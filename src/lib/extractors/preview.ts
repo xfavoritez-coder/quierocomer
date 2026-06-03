@@ -63,17 +63,8 @@ Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.` },
   let parsed: any;
   try { parsed = JSON.parse(match[0]); } catch { parsed = { dishes: [] }; }
 
-  // Search Unsplash for dish photos
-  const { searchUnsplashPhoto } = await import("@/lib/unsplash");
+  // Unsplash photo search removed — dishes display with text-only fallback
   const photoMap = new Map<string, string>();
-  if (process.env.UNSPLASH_ACCESS_KEY) {
-    const names = (parsed.dishes || []).map((d: any) => d.name).filter(Boolean).slice(0, 5);
-    await Promise.allSettled(names.map(async (name: string) => {
-      const photo = await searchUnsplashPhoto(name + " food dish");
-      if (photo) photoMap.set(name, photo.url);
-      // No download trigger here — preview only, not "used"
-    }));
-  }
 
   const dishes: ExtractedDish[] = [];
   for (const d of (parsed.dishes || [])) {

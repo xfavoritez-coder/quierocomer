@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 export const maxDuration = 300;
 
-import { searchUnsplashPhoto } from "@/lib/unsplash";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = "claude-sonnet-4-6";
@@ -357,21 +356,7 @@ REGLAS IMPORTANTES:
       }
     }
 
-    // Fill missing photos with Unsplash (max 10)
-    if (withoutPhoto > 0 && process.env.UNSPLASH_ACCESS_KEY) {
-      const needPhotos = [];
-      for (const cat of (parsed.categories || [])) {
-        for (const dish of (cat.dishes || [])) {
-          if (!dish.photo) needPhotos.push(dish);
-        }
-      }
-      for (const dish of needPhotos.slice(0, 10)) {
-        const query = (dish.name || "").replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s]/g, "").trim();
-        if (!query) continue;
-        const result = await searchUnsplashPhoto(query + " food");
-        if (result) { dish.photo = result.url; dish._unsplash = true; }
-      }
-    }
+    // Unsplash photo fill removed — dishes display with text-only fallback
 
     const totalDishes = (parsed.categories || []).reduce((a: number, c: any) => a + (c.dishes?.length || 0), 0);
 
@@ -383,7 +368,7 @@ REGLAS IMPORTANTES:
         totalCategories: (parsed.categories || []).length,
         type: isCatalog ? "catalog" : "inline",
         productPagesFetched: isCatalog ? Math.min((parsed.categories || []).flatMap((c: any) => c.dishes || []).length, 60) : 0,
-        filledWithUnsplash: (parsed.categories || []).flatMap((c: any) => c.dishes || []).filter((d: any) => d._unsplash).length,
+        filledWithUnsplash: 0,
       },
     });
   } catch (e: any) {

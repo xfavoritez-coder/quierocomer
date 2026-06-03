@@ -149,27 +149,33 @@ function ImpactHeroSlider({
         }
       }}
     >
-      {/* Photos or gradient fallback */}
-      {heroDishes.some(dish => getDishPhoto(dish)) ? (
-        heroDishes.map((dish, i) => {
-          const p = getDishPhoto(dish);
-          return p ? (
-            <div key={dish.id} style={{
-              position: "absolute", inset: 0, zIndex: -3,
-              opacity: i === current ? 1 : 0,
-              transition: "opacity 0.8s ease",
-            }}>
+      {/* Photos or placeholder fallback */}
+      {heroDishes.map((dish, i) => {
+        const p = getDishPhoto(dish);
+        return (
+          <div key={dish.id} style={{
+            position: "absolute", inset: 0, zIndex: -3,
+            opacity: i === current ? 1 : 0,
+            transition: "opacity 0.8s ease",
+          }}>
+            {p ? (
               <Image
                 src={p} alt={dish.name} fill className="object-cover" sizes="100vw"
                 style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
                 quality={95} priority={i === 0}
               />
-            </div>
-          ) : null;
-        })
-      ) : (
-        <div style={{ position: "absolute", inset: 0, zIndex: -3, background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
-      )}
+            ) : (
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-accent) 18%, #1a1a2e), color-mix(in srgb, var(--carta-accent) 6%, #0f3460))",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <DishPlaceholderIcon size={90} opacity={0.35} />
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {/* Dark overlays — always dark regardless of theme */}
       <div style={{
@@ -330,7 +336,12 @@ function MoodSection({
                 {m.photo ? (
                   <Image src={m.photo} alt={m.label} fill className="object-cover" sizes="116px" />
                 ) : (
-                  <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: "2.2rem", opacity: 0.3 }}>🍽</div>
+                  <div style={{
+                    position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))",
+                  }}>
+                    <DishPlaceholderIcon size={40} opacity={0.35} />
+                  </div>
                 )}
                 <div style={{ position: "absolute", inset: 0, background: m.photo ? "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.7))" : "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.5))" }} />
                 <b style={{
@@ -428,7 +439,12 @@ function FeaturedSection({
                 {photo ? (
                   <Image src={photo} alt={f.name} fill className="object-cover" sizes="100vw" />
                 ) : (
-                  <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: "3rem", opacity: 0.2 }}>🍽</div>
+                  <div style={{
+                    position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))",
+                  }}>
+                    <DishPlaceholderIcon size={56} opacity={0.35} />
+                  </div>
                 )}
                 <div style={{ position: "absolute", inset: 0, background: photo ? "linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.18) 62%, transparent)" : "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.4))" }} />
                 <div style={{ position: "absolute", left: 16, right: 16, bottom: 16 }}>

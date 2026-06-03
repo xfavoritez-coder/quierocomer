@@ -37,6 +37,7 @@ import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
 import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
+import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
 import { useLang } from "@/contexts/LangContext";
@@ -136,7 +137,13 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
           style={{ transition: "opacity 0.5s ease" }}
         />
       ) : (
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)" }} />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-accent, #F4A623) 18%, #1a1a2e), color-mix(in srgb, var(--carta-accent, #F4A623) 6%, #0f3460))",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <DishPlaceholderIcon size={80} opacity={0.35} />
+        </div>
       )}
 
       {/* Gradient */}
