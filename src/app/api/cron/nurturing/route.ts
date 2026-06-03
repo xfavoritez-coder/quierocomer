@@ -110,14 +110,15 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ═══ Scenario 1: Carta lista, no la revisó ═══
-  // deliveredAt between 24h-7d ago, no panel visit, no activation
+  // ═══ Scenario 1: Carta lista, no la revisó (ni clickeó email/WA) ═══
   const noRevisada = await prisma.lead.findMany({
     where: {
       cartaStatus: "DELIVERED",
       deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
       activatedAt: null,
       panelVisitedAt: null,
+      emailClickedAt: null,
+      whatsappClickedAt: null,
       whatsapp: { not: null },
       generatedSlug: { not: null },
     },
@@ -127,6 +128,27 @@ export async function GET(req: NextRequest) {
 
   for (const lead of noRevisada) {
     await sendNurturing(lead, "carta_no_revisada", "nurturing_no_revisada", TEMPLATES.cartaNoRevisada);
+  }
+
+  // ═══ Scenario 1b: Vio la carta (clickeó email/WA) pero no activó ═══
+  const vioPeroNoActivo = await prisma.lead.findMany({
+    where: {
+      cartaStatus: "DELIVERED",
+      deliveredAt: { lt: oneDayAgo, gt: sevenDaysAgo },
+      activatedAt: null,
+      whatsapp: { not: null },
+      generatedSlug: { not: null },
+      OR: [
+        { emailClickedAt: { not: null } },
+        { whatsappClickedAt: { not: null } },
+      ],
+    },
+    select: { id: true, ownerName: true, localName: true, whatsapp: true, generatedSlug: true, events: true },
+    take: 30,
+  });
+
+  for (const lead of vioPeroNoActivo) {
+    await sendNurturing(lead, "vio_no_activo", "nurturing_vio_no_activo", TEMPLATES.noVolvio);
   }
 
   // ═══ Scenario 2: Activó trial pero no volvió ═══
@@ -172,7 +194,7 @@ export async function GET(req: NextRequest) {
       durationMs,
       details: {
         sent, skipped, errors,
-        candidates: { noRevisada: noRevisada.length, noVolvio: noVolvio.length },
+        candidates: { noRevisada: noRevisada.length, vioPeroNoActivo: vioPeroNoActivo.length, noVolvio: noVolvio.length },
       },
     },
   }).catch(() => {});
