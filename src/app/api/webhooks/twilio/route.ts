@@ -47,10 +47,16 @@ export async function POST(req: NextRequest) {
         });
         if (rest) {
           restaurantId = rest.id;
+          // Count sessions in last 7 days to determine if truly active (clients using the QR)
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          const recentSessions = await prisma.session.count({
+            where: { restaurantId: rest.id, startedAt: { gte: sevenDaysAgo } },
+          });
           context = {
             restaurantName: rest.name, plan: rest.plan, slug: rest.slug,
             dishCount: rest._count.dishes, ownerName: lead.ownerName,
             isActive: rest.isActive, isDemo: rest.isDemo,
+            recentSessions,
           };
         }
       }
@@ -140,18 +146,7 @@ export async function POST(req: NextRequest) {
       },
     }).catch((e: any) => console.error("[WA Webhook] Save outbound failed:", e));
 
-    // 7. Email notification (non-blocking)
-    const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
-    resend.emails.send({
-      from: `QuieroComer WA <${fromEmail}>`,
-      to: "favoritez@gmail.com",
-      subject: `💬 ${profileName || phone}: ${body.slice(0, 40)}`,
-      html: `<div style="font-family:system-ui,sans-serif;max-width:500px;padding:20px">
-        <p style="margin:0 0 4px;color:#888;font-size:13px"><strong>${profileName}</strong> (${phone})${context.restaurantName ? ` · ${context.restaurantName}` : ""}</p>
-        <div style="background:#f5f5f5;border-radius:12px;padding:14px;margin:8px 0;font-size:15px">${body}</div>
-        <div style="background:#d1fae5;border-radius:12px;padding:14px;margin:8px 0;font-size:14px;color:#065f46"><strong>🤖 IA:</strong> ${reply}</div>
-      </div>`,
-    }).catch(() => {});
+    // Email notification removed — conversations visible in /admin/whatsapp
 
     return TWIML_OK;
   } catch (error) {

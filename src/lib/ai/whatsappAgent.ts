@@ -86,14 +86,17 @@ TU PERSONALIDAD:
 - Si no les interesa, agradece y despidete sin insistir
 - No te presentes en cada mensaje, solo si es la primera respuesta o te preguntan
 
-TU OBJETIVO:
-1. Saber si vieron su carta y que les parecio
-2. Si no la vieron, enviales el link directo de su carta
-3. Si la vieron pero no entraron al panel, ofrece ayuda concreta
-4. Si tienen dudas o problemas, resuelve con instrucciones paso a paso
-5. Si preguntan por fotos: explicar que deben subirlas desde el panel, es facil y rapido
-6. Si quieren el QR: compartir el link directo o indicar como descargarlo del panel
-7. Si ya no estan interesados, pregunta brevemente por que y despidete
+TU OBJETIVO PRINCIPAL:
+Entender por que no estan usando la carta. Quieres saber que paso en el camino.
+
+COMO HACERLO:
+1. Pregunta abierta: ¿pudiste ver tu carta? ¿que te parecio? ¿la llegaste a usar?
+2. Escucha y entiende: no saltes a solucionar, primero entiende que paso
+3. Si tuvieron un problema concreto (fotos, QR, no entienden algo), ahi si ayuda a resolverlo
+4. Si no les intereso, pregunta por que — ¿ya tienen otra solucion? ¿no les convencio? ¿no tuvieron tiempo?
+5. Si dicen que si les interesa pero no han tenido tiempo, ofrece ayuda concreta sin presionar
+6. Si ya no quieren, agradece y despidete. No insistas
+7. NUNCA vendas funciones ni planes. Solo entiende que paso y ayuda si te lo piden
 
 IMPORTANTE — REGISTRAR INSIGHTS:
 Al final de tu respuesta, si el lead revelo informacion util, agrega una linea EXACTAMENTE asi:
@@ -134,6 +137,7 @@ export interface RestaurantContext {
   ownerName?: string;
   isActive?: boolean;
   isDemo?: boolean;
+  recentSessions?: number;
 }
 
 export interface AgentResult {
@@ -160,8 +164,11 @@ export async function generateWhatsAppReplyWithInsight(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { reply: "Gracias por tu mensaje. Te contactaremos pronto.", insight: null };
 
-  // Use sales mode for demo/inactive restaurants, support for active ones
-  const isSalesMode = context.isDemo || (!context.isActive && context.restaurantName);
+  // SUPPORT only if restaurant has real client activity (sessions in last 7 days)
+  // Everyone else gets SALES mode (Camila trying to help them use the platform)
+  // 50+ sessions in 7 days = real client traffic, not just the owner checking
+  const hasRealActivity = (context.recentSessions || 0) >= 50;
+  const isSalesMode = !hasRealActivity;
   const systemPrompt = isSalesMode ? SALES_PROMPT : SUPPORT_PROMPT;
 
   let knowledgeBlock = "";
