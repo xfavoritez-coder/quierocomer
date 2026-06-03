@@ -483,7 +483,7 @@ function OnboardBlock({ events }: { events: any[] }) {
   const allSteps = [
     { label: "Inicio", event: start },
     { label: "Fotos", event: steps.find((e: any) => e.stepName === "fotos") },
-    { label: "Esencial", event: steps.find((e: any) => e.stepName === "esencial") },
+    { label: "Galería", event: steps.find((e: any) => e.stepName === "esencial") },
     { label: "Impact", event: steps.find((e: any) => e.stepName === "impact") },
     { label: "Idioma", event: steps.find((e: any) => e.stepName === "idioma") },
     { label: "Listo", event: done },

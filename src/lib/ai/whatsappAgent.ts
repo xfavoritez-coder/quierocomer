@@ -18,7 +18,7 @@ FUNCIONES DEL PANEL:
 - Estadísticas de visitas y platos más vistos
 - Ofertas y promociones
 - Descargar QR para imprimir
-- Cambiar vista de la carta (Lista, Esencial, Impact)
+- Cambiar vista de la carta (Lista, Galería, Impact)
 - Cambiar tema (dark/light)
 
 REGLAS:

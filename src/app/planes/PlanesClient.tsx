@@ -123,7 +123,7 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$0</div>
             <div className="qc-checks">
               <div>✓ Carta digital con QR <span className="qc-tip">i<span className="qc-tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
-              <div>✓ 2 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Vista Free y vista Esencial para elegir la que mejor represente tu local</span></span></div>
+              <div>✓ 2 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Vista Free y vista Galería para elegir la que mejor represente tu local</span></span></div>
               <div>✓ Genio IA incluido <span className="qc-tip">i<span className="qc-tip-text">El Genio reordena tu carta segun los gustos de cada cliente</span></span></div>
               <div>✓ Panel autoadministrable <span className="qc-tip">i<span className="qc-tip-text">Edita platos, precios y fotos desde tu celular</span></span></div>
             </div>
@@ -135,7 +135,7 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$14.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Gratis</div>
-              <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Esencial, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
+              <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
               <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema que mejor represente tu local</span></span></div>
               <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que mas te conviene vender</span></span></div>
               <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
