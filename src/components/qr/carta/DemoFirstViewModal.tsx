@@ -66,7 +66,7 @@ export default function DemoFirstViewModal({ restaurantSlug, restaurantName }: P
           letterSpacing: "-0.02em",
           lineHeight: 1.1,
         }}>
-          Importante sobre tu carta
+          Importante sobre tu nueva carta
         </h3>
 
         <p style={{

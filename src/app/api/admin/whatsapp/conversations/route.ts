@@ -121,12 +121,8 @@ export async function GET(req: NextRequest) {
       };
     }));
 
-    // Sort: responded first, then by lastAt
-    conversations.sort((a, b) => {
-      if (a.responded && !b.responded) return -1;
-      if (!a.responded && b.responded) return 1;
-      return new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime();
-    });
+    // Sort by most recent message first
+    conversations.sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
 
     // Stats
     const totalConvs = conversations.length;
