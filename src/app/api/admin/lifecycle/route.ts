@@ -239,7 +239,7 @@ export async function GET(req: NextRequest) {
       slug: lead.generatedSlug,
       name: lead.localName || "Sin nombre",
       logoUrl: null,
-      plan: "-",
+      plan: "FREE" as any,
       stage,
       engagement,
       engagementChecks,
