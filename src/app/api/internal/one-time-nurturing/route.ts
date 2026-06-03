@@ -75,18 +75,19 @@ export async function GET(req: NextRequest) {
     sendList.push({ ...l, whatsapp: l.whatsapp!, generatedSlug: l.generatedSlug!, scenario: "no_volvio", eventKey: "nurturing_no_volvio", templateSid: TEMPLATES.noVolvio });
   }
 
-  // ── UNSPLASH: find all dishes with unsplash photos ──
-  const unsplashDishes = await prisma.dish.findMany({
-    where: { photoUrl: { contains: "unsplash.com" } },
-    select: { id: true, name: true, photoUrl: true, restaurant: { select: { name: true, slug: true } } },
-  });
+  // ── UNSPLASH: find all dishes with unsplash photos (raw SQL for array text search) ──
+  const unsplashFiltered = await prisma.$queryRaw<{ id: string; name: string; photos: string[]; tags: string[]; restaurantName: string; restaurantSlug: string }[]>`
+    SELECT d.id, d.name, d.photos, d.tags, r.name as "restaurantName", r.slug as "restaurantSlug"
+    FROM "Dish" d JOIN "Restaurant" r ON d."restaurantId" = r.id
+    WHERE EXISTS (SELECT 1 FROM unnest(d.photos) p WHERE p LIKE '%unsplash.com%')
+  `;
 
   if (action === "preview") {
     return NextResponse.json({
       nurturing: sendList.map(l => ({ scenario: l.scenario, local: l.localName, owner: l.ownerName, wa: l.whatsapp })),
       unsplash: {
-        total: unsplashDishes.length,
-        dishes: unsplashDishes.slice(0, 50).map(d => ({ dish: d.name, restaurant: d.restaurant?.name, slug: d.restaurant?.slug })),
+        total: unsplashFiltered.length,
+        dishes: unsplashFiltered.slice(0, 50).map(d => ({ dish: d.name, restaurant: d.restaurantName, slug: d.restaurantSlug })),
       },
     });
   }
@@ -123,20 +124,15 @@ export async function GET(req: NextRequest) {
 
   // Clean unsplash photos
   let cleaned = 0;
-  if (unsplashDishes.length > 0) {
-    const ids = unsplashDishes.map(d => d.id);
-    const res = await prisma.dish.updateMany({
-      where: { id: { in: ids } },
-      data: { photoUrl: null, photoCredits: null, isPhotoReferential: false },
-    });
-    cleaned = res.count;
-
-    // Also remove RECOMMENDED tag from dishes that had unsplash photos
-    for (const d of unsplashDishes) {
+  if (unsplashFiltered.length > 0) {
+    for (const d of unsplashFiltered) {
+      const cleanPhotos = d.photos.filter(p => !p.includes("unsplash.com"));
+      const cleanTags = (d.tags as string[]).filter(t => t !== "RECOMMENDED");
       await prisma.dish.update({
         where: { id: d.id },
-        data: { tags: { set: (await prisma.dish.findUnique({ where: { id: d.id }, select: { tags: true } }))!.tags.filter(t => t !== "RECOMMENDED") } },
-      }).catch(() => {});
+        data: { photos: cleanPhotos, photoCredits: null, isPhotoReferential: false, tags: cleanTags },
+      });
+      cleaned++;
     }
   }
 
