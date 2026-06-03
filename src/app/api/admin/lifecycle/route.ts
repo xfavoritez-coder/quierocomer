@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
     totalSessionGroups,
     dishesWithPhotos,
     clientCounts,
+    emailLogs,
   ] = await Promise.all([
     prisma.restaurant.findMany({
       orderBy: { createdAt: "desc" },
@@ -73,6 +74,10 @@ export async function GET(req: NextRequest) {
       by: ["restaurantId"],
       _count: true,
     }),
+    prisma.emailLog.findMany({
+      select: { to: true, subject: true, purpose: true, status: true, openedAt: true, clickedAt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   // ── Build lookup maps ──
@@ -98,6 +103,12 @@ export async function GET(req: NextRequest) {
 
   const clientCountMap = new Map<string, number>();
   for (const c of clientCounts) clientCountMap.set(c.restaurantId, c._count);
+
+  const emailsByOwnerEmail = new Map<string, typeof emailLogs>();
+  for (const e of emailLogs) {
+    if (!emailsByOwnerEmail.has(e.to)) emailsByOwnerEmail.set(e.to, []);
+    emailsByOwnerEmail.get(e.to)!.push(e);
+  }
 
   // ── Process each restaurant ──
   const stageCounts: Record<string, number> = {};
@@ -205,6 +216,22 @@ export async function GET(req: NextRequest) {
       leadWhatsapp: lead?.whatsapp || null,
       leadCreatedAt: lead?.createdAt?.toISOString() || null,
       nurturingSent,
+      ownerId: r.ownerId,
+      // Lead timeline
+      leadTimeline: lead ? {
+        deliveredAt: lead.deliveredAt?.toISOString() || null,
+        emailOpenedAt: lead.emailOpenedAt?.toISOString() || null,
+        emailClickedAt: lead.emailClickedAt?.toISOString() || null,
+        activatedAt: lead.activatedAt?.toISOString() || null,
+      } : null,
+      // Emails sent to owner
+      emailsSent: r.owner?.email ? (emailsByOwnerEmail.get(r.owner.email) || []).slice(0, 10).map(e => ({
+        purpose: e.purpose,
+        status: e.status,
+        openedAt: e.openedAt?.toISOString() || null,
+        clickedAt: e.clickedAt?.toISOString() || null,
+        createdAt: e.createdAt.toISOString(),
+      })) : [],
       // Recent activity for timeline
       recentActivity: activity.slice(0, 15).map(a => ({
         action: a.action,
@@ -264,6 +291,19 @@ export async function GET(req: NextRequest) {
       leadWhatsapp: lead.whatsapp,
       leadCreatedAt: lead.createdAt.toISOString(),
       nurturingSent: [],
+      ownerId: null,
+      leadTimeline: {
+        deliveredAt: null,
+        emailOpenedAt: null,
+        emailClickedAt: null,
+        activatedAt: null,
+      },
+      emailsSent: lead.email ? (emailsByOwnerEmail.get(lead.email) || []).slice(0, 10).map(e => ({
+        purpose: e.purpose, status: e.status,
+        openedAt: e.openedAt?.toISOString() || null,
+        clickedAt: e.clickedAt?.toISOString() || null,
+        createdAt: e.createdAt.toISOString(),
+      })) : [],
       recentActivity: [],
     });
   }

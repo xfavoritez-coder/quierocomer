@@ -40,6 +40,9 @@ interface Entry {
   leadEmail: string | null;
   leadWhatsapp: string | null;
   nurturingSent: { action: string; date: string }[];
+  ownerId: string | null;
+  leadTimeline: { deliveredAt: string | null; emailOpenedAt: string | null; emailClickedAt: string | null; activatedAt: string | null } | null;
+  emailsSent: { purpose: string; status: string; openedAt: string | null; clickedAt: string | null; createdAt: string }[];
   recentActivity: { action: string; createdAt: string }[];
 }
 
@@ -86,7 +89,7 @@ export default function LifecyclePage() {
   const [filter, setFilter] = useState("todos");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud">("lastActivity");
+  const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
@@ -127,6 +130,7 @@ export default function LifecyclePage() {
           return dir * (ta - tb);
         }
         case "salud": return dir * ((SALUD_ORDER[a.salud] ?? 9) - (SALUD_ORDER[b.salud] ?? 9));
+        case "createdAt": return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         default: return 0;
       }
     });
@@ -196,7 +200,7 @@ export default function LifecyclePage() {
       <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 14, overflow: "hidden" }}>
         {/* Header row */}
         <div style={{
-          display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1.2fr 0.8fr 0.5fr",
+          display: "grid", gridTemplateColumns: "2fr 1.3fr 1fr 1.1fr 0.7fr 0.5fr 0.7fr",
           padding: "10px 16px", borderBottom: "1px solid #2a2a2a", fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em",
         }}>
           {([
@@ -206,7 +210,8 @@ export default function LifecyclePage() {
             { key: "engagement", label: "Engagement" },
             { key: "lastActivity", label: "Actividad" },
             { key: "salud", label: "Salud" },
-          ] as const).map(col => (
+            { key: "createdAt" as const, label: "Registro" },
+          ] as { key: "name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt"; label: string }[]).map(col => (
             <span
               key={col.key}
               onClick={() => { if (sortBy === col.key) setSortDir(d => d === "asc" ? "desc" : "asc"); else { setSortBy(col.key); setSortDir("desc"); } }}
@@ -229,7 +234,7 @@ export default function LifecyclePage() {
             <div
               onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
               style={{
-                display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1.2fr 0.8fr 0.5fr",
+                display: "grid", gridTemplateColumns: "2fr 1.3fr 1fr 1.1fr 0.7fr 0.5fr 0.7fr",
                 padding: "12px 16px", borderBottom: "1px solid #1f1f1f", cursor: "pointer",
                 background: expanded === entry.id ? "#141414" : "transparent",
                 transition: "background 0.15s",
@@ -296,6 +301,11 @@ export default function LifecyclePage() {
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: SALUD_COLORS[entry.salud] || "#555" }} />
                 <span style={{ fontSize: 11, color: "#666" }}>{SALUD_LABELS[entry.salud] || ""}</span>
+              </div>
+
+              {/* Registro */}
+              <div style={{ display: "flex", alignItems: "center", fontSize: 11, color: "#888" }}>
+                {new Date(entry.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
               </div>
             </div>
 
@@ -369,11 +379,58 @@ export default function LifecyclePage() {
                   </div>
                 )}
 
+                {/* Email/WA communication history */}
+                {(entry.leadTimeline || entry.emailsSent?.length > 0 || entry.nurturingSent?.length > 0) && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                      Comunicaciones
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {entry.leadTimeline?.deliveredAt && (
+                        <CommBadge icon="📧" label="Email enviado" date={entry.leadTimeline.deliveredAt} color="#60a5fa" />
+                      )}
+                      {entry.leadTimeline?.emailOpenedAt && (
+                        <CommBadge icon="👁" label="Email abierto" date={entry.leadTimeline.emailOpenedAt} color="#4ade80" />
+                      )}
+                      {entry.leadTimeline?.emailClickedAt && (
+                        <CommBadge icon="👆" label="Click en email" date={entry.leadTimeline.emailClickedAt} color="#4ade80" />
+                      )}
+                      {entry.leadTimeline?.activatedAt && (
+                        <CommBadge icon="🟢" label="Activó" date={entry.leadTimeline.activatedAt} color="#4ade80" />
+                      )}
+                      {entry.nurturingSent?.map((n, i) => (
+                        <CommBadge key={i} icon="💬" label={ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} date={n.date} color="#22d3ee" />
+                      ))}
+                      {entry.emailsSent?.map((e, i) => {
+                        const purposeLabels: Record<string, string> = {
+                          activation_welcome: "Email bienvenida", funnel_carta_lista: "Email carta lista",
+                          trial_reminder: "Email trial reminder", trial_expired: "Email trial vencido",
+                          plan_activated: "Email plan activado",
+                        };
+                        return (
+                          <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} />
+                        );
+                      })}
+                      {!entry.leadTimeline?.deliveredAt && entry.emailsSent?.length === 0 && entry.nurturingSent?.length === 0 && (
+                        <span style={{ fontSize: 11, color: "#555" }}>Sin comunicaciones registradas</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <ActionBtn label="Ver carta" onClick={() => window.open(`/qr/${entry.slug}`, "_blank")} />
-                  {ownerWa && <ActionBtn label="Enviar WA" onClick={() => {}} />}
-                  {entry.owner && <ActionBtn label="Entrar como él" onClick={() => {}} />}
+                  <ActionBtn label="👁 Ver carta" onClick={() => window.open(`/qr/${entry.slug}`, "_blank")} />
+                  {entry.ownerId && (
+                    <ActionBtn label="🔑 Entrar como él" onClick={async () => {
+                      const res = await fetch("/api/admin/impersonate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ownerId: entry.ownerId }) });
+                      if (res.ok) window.open("/panel", "_blank");
+                      else alert("Error al entrar como owner");
+                    }} />
+                  )}
+                  {(ownerEmail || ownerWa) && (
+                    <SendMessageBtn restaurantId={entry.id} ownerName={ownerName || "Dueño"} ownerEmail={ownerEmail} ownerWa={ownerWa} />
+                  )}
                 </div>
               </div>
             )}
@@ -400,11 +457,115 @@ function MiniCard({ label, value, highlight }: { label: string; value: string; h
 
 function ActionBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={(e) => { e.stopPropagation(); onClick(); }} style={{
       padding: "6px 14px", borderRadius: 8, border: "1px solid #2a2a2a", background: "transparent",
       color: "#999", fontSize: 12, fontWeight: 500, cursor: "pointer",
     }}>
       {label}
     </button>
+  );
+}
+
+function CommBadge({ icon, label, date, color, extra }: { icon: string; label: string; date: string; color: string; extra?: string }) {
+  return (
+    <span style={{ padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500, background: `${color}12`, color, border: `1px solid ${color}30`, display: "inline-flex", alignItems: "center", gap: 4 }}>
+      {icon} {label} · {new Date(date).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+      {extra && <span style={{ opacity: 0.7 }}>· {extra}</span>}
+    </span>
+  );
+}
+
+const EMAIL_TEMPLATES = [
+  { key: "bienvenida", label: "Bienvenida + credenciales", desc: "Email con datos de acceso y link al panel" },
+  { key: "carta_lista", label: "Tu carta esta lista", desc: "Notificacion de que su carta QR fue creada" },
+  { key: "trial_por_vencer", label: "Trial por vencer", desc: "Aviso de que quedan pocos dias de prueba" },
+  { key: "trial_vencido", label: "Trial vencido", desc: "Su prueba Premium termino, opciones de plan" },
+  { key: "reset_password", label: "Recuperar contraseña", desc: "Link para resetear contraseña" },
+];
+const WA_TEMPLATES = [
+  { key: "carta_lista", label: "Tu carta esta lista", desc: "Template aprobado: carta lista con link" },
+  { key: "carta_fallo", label: "No pudimos procesar tu carta", desc: "Template aprobado: pedir que reintente" },
+];
+
+function SendMessageBtn({ restaurantId, ownerName, ownerEmail, ownerWa }: { restaurantId: string; ownerName: string; ownerEmail: string | null; ownerWa: string | null }) {
+  const [open, setOpen] = useState(false);
+  const [channel, setChannel] = useState<"email" | "whatsapp">(ownerWa ? "whatsapp" : "email");
+  const [sending, setSending] = useState<string | null>(null);
+  const [sent, setSent] = useState<string | null>(null);
+
+  const templates = channel === "email" ? EMAIL_TEMPLATES : WA_TEMPLATES;
+
+  const handleSend = async (templateKey: string) => {
+    setSending(templateKey);
+    try {
+      const res = await fetch("/api/admin/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel, template: templateKey, restaurantId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSent(templateKey);
+        setTimeout(() => { setSent(null); setOpen(false); }, 2000);
+      } else alert(data.error || "Error al enviar");
+    } catch { alert("Error de conexion"); }
+    setSending(null);
+  };
+
+  return (
+    <>
+      <ActionBtn label="📨 Enviar mensaje" onClick={() => setOpen(true)} />
+      {open && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => { if (!sending) setOpen(false); }}>
+          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20, width: "100%", maxWidth: 400, padding: "24px 20px" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: 0 }}>Enviar mensaje</h3>
+              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>✕</button>
+            </div>
+            <p style={{ fontSize: 12, color: "#888", margin: "0 0 4px" }}>Para: <strong style={{ color: "#ccc" }}>{ownerName}</strong></p>
+            <p style={{ fontSize: 11, color: "#666", margin: "0 0 14px" }}>{channel === "email" ? ownerEmail : ownerWa}</p>
+
+            {/* Channel toggle */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+              {ownerEmail && (
+                <button onClick={() => setChannel("email")} style={{
+                  padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  background: channel === "email" ? "rgba(244,166,35,.15)" : "transparent",
+                  border: `1px solid ${channel === "email" ? GOLD : "#2a2a2a"}`,
+                  color: channel === "email" ? GOLD : "#888",
+                }}>📧 Email</button>
+              )}
+              {ownerWa && (
+                <button onClick={() => setChannel("whatsapp")} style={{
+                  padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  background: channel === "whatsapp" ? "rgba(34,211,238,.15)" : "transparent",
+                  border: `1px solid ${channel === "whatsapp" ? "#22d3ee" : "#2a2a2a"}`,
+                  color: channel === "whatsapp" ? "#22d3ee" : "#888",
+                }}>💬 WhatsApp</button>
+              )}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {templates.map(t => (
+                <button key={t.key} onClick={() => handleSend(t.key)} disabled={!!sending} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                  padding: "10px 12px", background: sent === t.key ? "rgba(74,222,128,.08)" : "#111",
+                  border: `1px solid ${sent === t.key ? "#4ade80" : "#2a2a2a"}`,
+                  borderRadius: 10, cursor: sending ? "wait" : "pointer", textAlign: "left", width: "100%",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: sent === t.key ? "#4ade80" : "#ddd", marginBottom: 2 }}>
+                      {sent === t.key ? "✓ Enviado" : t.label}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#666" }}>{t.desc}</div>
+                  </div>
+                  {sending === t.key && <span style={{ fontSize: 11, color: "#666" }}>...</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
