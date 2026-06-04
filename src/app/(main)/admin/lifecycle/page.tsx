@@ -511,30 +511,66 @@ function ChatModalBtn({ phone, name }: { phone: string; name: string }) {
     <>
       <ActionBtn label="💬 Ver chat WA" onClick={loadChat} />
       {open && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setOpen(false)}>
-          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20, width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #2a2a2a" }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>💬 {name}</h3>
-              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>✕</button>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }} onClick={() => setOpen(false)}>
+          <style>{`
+            @media (min-width: 641px) {
+              .lc-chat-modal { max-width: 420px !important; max-height: 85vh !important; margin: auto !important; border-radius: 16px !important; }
+            }
+          `}</style>
+          <div className="lc-chat-modal" style={{ background: "#111", width: "100%", height: "100%", maxHeight: "100vh", display: "flex", flexDirection: "column", borderRadius: 0 }} onClick={e => e.stopPropagation()}>
+            {/* WhatsApp-style header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#1a1a1a", borderBottom: "1px solid #222", flexShrink: 0 }}>
+              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 18, padding: "2px 6px" }}>←</button>
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#0a3d20", color: "#22c55e", fontWeight: 800, fontSize: 14, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                {(name || "?").charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+                <div style={{ fontSize: 11, color: "#22c55e" }}>🤖 Camila IA</div>
+              </div>
             </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Messages */}
+            <div style={{
+              flex: 1, overflowY: "auto", padding: "10px 8px 16px", display: "flex", flexDirection: "column", gap: 3,
+              background: "#0b0b0b",
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            }}>
               {loading ? (
                 <div style={{ textAlign: "center", color: "#666", padding: 20, fontSize: 13 }}>Cargando...</div>
               ) : messages.length === 0 ? (
                 <div style={{ textAlign: "center", color: "#555", padding: 20, fontSize: 13 }}>Sin mensajes</div>
               ) : (
                 messages.map((m, i) => {
-                  const isOutbound = m.direction === "OUTBOUND";
+                  const isOut = m.direction === "OUTBOUND";
+                  const isNurturing = isOut && m.body.includes("Camila de QuieroComer");
+                  const isTemplate = isOut && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.cl/api/funnel"));
+                  const isAI = isOut && !isNurturing && !isTemplate;
+                  const prev = messages[i - 1];
+                  const showDate = !prev || new Date(m.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
                   return (
-                    <div key={i} style={{ display: "flex", justifyContent: isOutbound ? "flex-end" : "flex-start" }}>
-                      <div style={{
-                        maxWidth: "80%", padding: "8px 12px", borderRadius: 12,
-                        background: isOutbound ? "rgba(34,211,238,.1)" : "#222",
-                        border: `1px solid ${isOutbound ? "rgba(34,211,238,.2)" : "#333"}`,
-                      }}>
-                        <div style={{ fontSize: 12, color: isOutbound ? "#22d3ee" : "#ccc", lineHeight: 1.5 }}>{m.body}</div>
-                        <div style={{ fontSize: 10, color: "#555", marginTop: 4, textAlign: "right" }}>
-                          {new Date(m.createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    <div key={i}>
+                      {showDate && (
+                        <div style={{ textAlign: "center", margin: "8px 0 4px" }}>
+                          <span style={{ fontSize: 10, color: "#888", background: "#1a1a1a", padding: "3px 12px", borderRadius: 8 }}>
+                            {new Date(m.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+                          </span>
+                        </div>
+                      )}
+                      <div style={{ display: "flex", justifyContent: isOut ? "flex-end" : "flex-start" }}>
+                        <div style={{
+                          maxWidth: "85%", padding: "6px 8px 4px", borderRadius: 8,
+                          borderTopRightRadius: isOut ? 2 : 8,
+                          borderTopLeftRadius: isOut ? 8 : 2,
+                          background: isNurturing ? "rgba(168,85,247,0.08)" : isAI ? "rgba(34,197,94,0.06)" : isOut ? "#0a3d20" : "#1a1a1a",
+                          border: isNurturing ? "1px solid rgba(168,85,247,0.15)" : isAI ? "1px solid rgba(34,197,94,0.1)" : "none",
+                        }}>
+                          {isNurturing && <div style={{ fontSize: 9, color: "#a855f7", fontWeight: 700, marginBottom: 2 }}>📨 Nurturing</div>}
+                          {isTemplate && <div style={{ fontSize: 9, color: "#888", fontWeight: 700, marginBottom: 2 }}>📋 Template</div>}
+                          {isAI && <div style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, marginBottom: 2 }}>🤖 Camila IA</div>}
+                          <div style={{ fontSize: 14, color: "#e0e0e0", lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
+                          <div style={{ fontSize: 9, color: "#5a5a5a", textAlign: "right", marginTop: 1 }}>
+                            {new Date(m.createdAt).toLocaleString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
                         </div>
                       </div>
                     </div>

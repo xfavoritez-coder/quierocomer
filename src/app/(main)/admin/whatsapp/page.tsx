@@ -131,9 +131,138 @@ export default function WhatsAppPage() {
   );
 
   return (
-    <div style={{ maxWidth: 900, padding: "0 12px", fontFamily: FB }}>
+    <div className="wa-page" style={{ fontFamily: FB }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        .wa-page { max-width: 900px; padding: 0 12px; }
+        .wa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .wa-nav { display: flex; gap: 2px; margin-bottom: 20px; background: #0d0d0d; border-radius: 12px; padding: 3px; border: 1px solid #1a1a1a; }
+        .wa-nav button { flex: 1; padding: 10px 0; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; }
+        .wa-nav .wa-nav-label { display: inline; }
+        .wa-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .wa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .wa-waiting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .wa-filters { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+        .wa-filters::-webkit-scrollbar { display: none; }
+        .wa-filters button { flex-shrink: 0; }
+        .wa-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .wa-conv-item { background: #111; border-radius: 12px; padding: 12px 16px; border: 1px solid #1a1a1a; cursor: pointer; text-align: left; width: 100%; transition: all 0.15s; }
+        .wa-conv-meta { font-size: 11px; color: #666; display: flex; gap: 6px; margin-top: 1px; }
+        .wa-conv-preview { font-size: 12px; color: #555; margin-top: 6px; margin-left: 42px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wa-conv-insight { margin-top: 6px; margin-left: 42px; font-size: 11px; color: ${GOLD}; display: flex; align-items: center; gap: 4px; }
+
+        /* ═══ Chat Thread - WhatsApp style ═══ */
+        .wa-thread-container {
+          display: flex; flex-direction: column; height: calc(100vh - 160px);
+          margin: -12px -12px 0; /* bleed to edges on mobile */
+          border-radius: 12px; overflow: hidden;
+        }
+        .wa-thread-header {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 12px; background: #1a1a1a;
+          border-bottom: 1px solid #222; flex-shrink: 0;
+        }
+        .wa-thread-back {
+          background: none; border: none; color: #888; font-size: 18px;
+          cursor: pointer; padding: 4px 8px; flex-shrink: 0;
+        }
+        .wa-thread-avatar {
+          width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+          background: #0a3d20; color: #22c55e; font-weight: 800; font-size: 15px;
+          display: grid; place-items: center;
+        }
+        .wa-thread-name {
+          font-size: 14px; font-weight: 700; color: #fff;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .wa-thread-sub { font-size: 11px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wa-thread-carta-btn {
+          font-size: 11px; color: #22c55e; font-weight: 700; text-decoration: none;
+          padding: 5px 12px; border-radius: 6px; background: rgba(34,197,94,0.08);
+          border: 1px solid rgba(34,197,94,0.15); flex-shrink: 0;
+        }
+        .wa-thread-insights {
+          padding: 8px 14px; background: rgba(244,166,35,0.04);
+          border-bottom: 1px solid rgba(244,166,35,0.1); flex-shrink: 0;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .wa-thread-messages {
+          flex: 1; overflow-y: auto; padding: 12px 10px 20px;
+          display: flex; flex-direction: column; gap: 3px;
+          background: #0b0b0b;
+          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .wa-thread-date-pill {
+          font-size: 10px; color: #888; background: #1a1a1a;
+          padding: 4px 14px; border-radius: 8px; display: inline-block;
+        }
+        .wa-bubble { display: flex; }
+        .wa-bubble-out { justify-content: flex-end; }
+        .wa-bubble-in { justify-content: flex-start; }
+        .wa-bubble-inner {
+          max-width: 80%; padding: 7px 10px 4px; border-radius: 8px;
+          position: relative;
+        }
+        .wa-bubble-outbound {
+          background: #0a3d20; border-top-right-radius: 2px;
+        }
+        .wa-bubble-inbound {
+          background: #1a1a1a; border-top-left-radius: 2px;
+        }
+        .wa-bubble-nurturing {
+          background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.15);
+          border-top-right-radius: 2px;
+        }
+        .wa-bubble-ai {
+          background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.1);
+          border-top-right-radius: 2px;
+        }
+        .wa-bubble-tag {
+          font-size: 9px; font-weight: 700; margin-bottom: 2px;
+          text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .wa-bubble-body {
+          font-size: 13px; color: #e0e0e0; line-height: 1.45;
+          white-space: pre-wrap; word-break: break-word;
+        }
+        .wa-bubble-time {
+          font-size: 9px; color: #5a5a5a; float: right;
+          margin-top: 2px; margin-left: 10px; line-height: 1;
+          position: relative; top: 2px;
+        }
+
+        @media (max-width: 640px) {
+          .wa-page { padding: 0 8px; }
+          .wa-header { margin-bottom: 16px; }
+          .wa-nav button { padding: 8px 0; font-size: 11px; gap: 4px; }
+          .wa-nav .wa-nav-label { display: none; }
+          .wa-stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .wa-two-col { grid-template-columns: 1fr; }
+          .wa-waiting-grid { grid-template-columns: 1fr; }
+          .wa-config-grid { grid-template-columns: 1fr; }
+          .wa-conv-item { padding: 10px 12px; border-radius: 10px; }
+          .wa-conv-meta { flex-wrap: wrap; gap: 4px; }
+          .wa-conv-preview { margin-left: 0; margin-top: 8px; }
+          .wa-conv-insight { margin-left: 0; }
+
+          /* Chat thread fullscreen on mobile */
+          .wa-thread-container {
+            height: calc(100vh - 120px);
+            margin: -8px -8px 0;
+            border-radius: 0;
+          }
+          .wa-thread-header { padding: 8px 10px; gap: 8px; }
+          .wa-thread-avatar { width: 32px; height: 32px; font-size: 13px; }
+          .wa-thread-name { font-size: 13px; }
+          .wa-thread-carta-btn { padding: 4px 10px; font-size: 10px; }
+          .wa-thread-messages { padding: 8px 6px 16px; }
+          .wa-bubble-inner { max-width: 88%; padding: 6px 8px 4px; }
+          .wa-bubble-body { font-size: 14px; line-height: 1.5; }
+        }
+      `}</style>
+
       {/* ═══ Header ═══ */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+      <div className="wa-header">
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 14, background: `linear-gradient(135deg, ${GREEN}, ${GREEN}cc)`,
@@ -152,22 +281,20 @@ export default function WhatsAppPage() {
       </div>
 
       {/* ═══ Nav ═══ */}
-      <div style={{ display: "flex", gap: 2, marginBottom: 20, background: "#0d0d0d", borderRadius: 12, padding: 3, border: "1px solid #1a1a1a" }}>
+      <div className="wa-nav">
         {([
           { key: "dashboard", label: "Dashboard", icon: "◉" },
           { key: "chat", label: "Chats", icon: "💬", count: conversations.length },
           { key: "insights", label: "Insights", icon: "💡", count: allInsights.length },
-          { key: "config", label: "Configurar", icon: "⚙" },
+          { key: "config", label: "Config", icon: "⚙" },
         ] as const).map(t => (
           <button key={t.key} onClick={() => { setView(t.key); if (t.key !== "chat") setSelectedPhone(null); }} style={{
-            flex: 1, padding: "10px 0", borderRadius: 10, border: "none", cursor: "pointer",
             background: view === t.key ? "#1e1e1e" : "transparent",
             color: view === t.key ? "#fff" : "#555",
-            fontSize: 12, fontWeight: 600, fontFamily: FB, transition: "all 0.2s",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            fontFamily: FB,
           }}>
-            <span style={{ fontSize: 13 }}>{t.icon}</span>
-            {t.label}
+            <span style={{ fontSize: 14 }}>{t.icon}</span>
+            <span className="wa-nav-label">{t.label}</span>
             {"count" in t && (t as any).count > 0 && (
               <span style={{ fontSize: 9, background: view === t.key ? "#333" : "#1a1a1a", padding: "1px 6px", borderRadius: 10, color: view === t.key ? "#fff" : "#666" }}>{(t as any).count}</span>
             )}
@@ -179,7 +306,7 @@ export default function WhatsAppPage() {
       {view === "dashboard" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Stats row */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          <div className="wa-stats-grid">
             <GlassCard>
               <div style={{ fontSize: 28, fontWeight: 800, color: GREEN, lineHeight: 1 }}>{totalSent}</div>
               <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Mensajes enviados</div>
@@ -212,7 +339,7 @@ export default function WhatsAppPage() {
           </GlassCard>
 
           {/* Two columns: responded + insights */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="wa-two-col">
             {/* Recent responses */}
             <GlassCard>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Ultimas respuestas</div>
@@ -249,7 +376,7 @@ export default function WhatsAppPage() {
                 {conversations.filter(c => !c.responded && c.outbound > 0).length} pendientes
               </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <div className="wa-waiting-grid">
               {conversations.filter(c => !c.responded && c.outbound > 0).slice(0, 8).map(c => (
                 <MiniConvRow key={c.phone} c={c} onOpen={openChat} timeAgo={timeAgo} />
               ))}
@@ -275,7 +402,7 @@ export default function WhatsAppPage() {
           </div>
 
           {/* Filters */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+          <div className="wa-filters">
             {([
               { key: "all", label: "Todas" },
               { key: "responded", label: "Respondieron" },
@@ -298,11 +425,7 @@ export default function WhatsAppPage() {
           {/* List */}
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {filteredConvs.map(c => (
-              <button key={c.phone} onClick={() => openChat(c.phone)} style={{
-                background: "#111", borderRadius: 12, padding: "12px 16px",
-                border: "1px solid #1a1a1a", cursor: "pointer", textAlign: "left", width: "100%",
-                transition: "all 0.15s",
-              }}>
+              <button key={c.phone} onClick={() => openChat(c.phone)} className="wa-conv-item">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -328,7 +451,7 @@ export default function WhatsAppPage() {
                           }}>{c.mode === "support" ? "SOPORTE" : "SALES"}</span>
                           {c.responded && <span style={{ fontSize: 8, fontWeight: 800, padding: "2px 6px", borderRadius: 4, background: `${BLUE}12`, color: BLUE }}>RESP</span>}
                         </div>
-                        <div style={{ fontSize: 11, color: "#666", display: "flex", gap: 6, marginTop: 1 }}>
+                        <div className="wa-conv-meta">
                           {c.ownerName && <span>{c.ownerName}</span>}
                           <span>{c.phone}</span>
                           {c.plan && <span style={{ color: "#444" }}>{c.plan}</span>}
@@ -345,12 +468,12 @@ export default function WhatsAppPage() {
                   </div>
                 </div>
                 {/* Last message preview */}
-                <div style={{ fontSize: 12, color: "#555", marginTop: 6, marginLeft: 42, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div className="wa-conv-preview">
                   {c.lastMessage}
                 </div>
                 {/* Insight preview */}
                 {c.insights.length > 0 && (
-                  <div style={{ marginTop: 6, marginLeft: 42, fontSize: 11, color: GOLD, display: "flex", alignItems: "center", gap: 4 }}>
+                  <div className="wa-conv-insight">
                     <span style={{ fontSize: 10 }}>💡</span>
                     &ldquo;{c.insights[c.insights.length - 1]}&rdquo;
                   </div>
@@ -364,96 +487,73 @@ export default function WhatsAppPage() {
 
       {/* ═══ Chat thread ═══ */}
       {view === "chat" && selectedPhone && (
-        <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)" }}>
-          {/* Chat header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid #1a1a1a", marginBottom: 12, flexShrink: 0 }}>
-            <button onClick={() => setSelectedPhone(null)} style={{
-              background: "#1a1a1a", border: "1px solid #222", borderRadius: 8, padding: "6px 10px",
-              color: "#888", fontSize: 12, cursor: "pointer",
-            }}>←</button>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
+        <div className="wa-thread-container">
+          {/* WhatsApp-style header */}
+          <div className="wa-thread-header">
+            <button onClick={() => setSelectedPhone(null)} className="wa-thread-back">←</button>
+            <div className="wa-thread-avatar">
+              {(chatContext?.restaurant?.name || chatContext?.lead?.localName || "?").charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="wa-thread-name">
                 {chatContext?.restaurant?.name || chatContext?.lead?.localName || selectedPhone}
               </div>
-              <div style={{ fontSize: 11, color: "#888", display: "flex", gap: 8 }}>
+              <div className="wa-thread-sub">
                 {chatContext?.lead?.ownerName && <span>{chatContext.lead.ownerName}</span>}
+                {chatContext?.lead?.ownerName && <span> · </span>}
                 <span>{selectedPhone}</span>
-                {chatContext?.restaurant?.plan && <span>{chatContext.restaurant.plan}</span>}
+                {chatContext?.restaurant?.plan && <span> · {chatContext.restaurant.plan}</span>}
               </div>
             </div>
             {chatContext?.restaurant?.slug && (
-              <a href={`/qr/${chatContext.restaurant.slug}`} target="_blank" rel="noopener noreferrer" style={{
-                fontSize: 11, color: GREEN, fontWeight: 700, textDecoration: "none",
-                padding: "6px 14px", borderRadius: 8, background: `${GREEN}10`, border: `1px solid ${GREEN}25`,
-              }}>Ver carta</a>
+              <a href={`/qr/${chatContext.restaurant.slug}`} target="_blank" rel="noopener noreferrer" className="wa-thread-carta-btn">Carta</a>
             )}
           </div>
 
-          {/* Insights banner */}
+          {/* Insights banner (collapsible on mobile) */}
           {chatContext?.insights?.length > 0 && (
-            <div style={{ background: `${GOLD}06`, borderRadius: 10, padding: "10px 14px", marginBottom: 12, border: `1px solid ${GOLD}12`, flexShrink: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 4 }}>💡 Insights capturados</div>
-              {chatContext.insights.map((ins: string, i: number) => (
-                <div key={i} style={{ fontSize: 12, color: "#ccc", marginBottom: 1 }}>• {ins}</div>
-              ))}
+            <div className="wa-thread-insights">
+              <span style={{ fontSize: 10, color: GOLD, fontWeight: 700 }}>💡 {chatContext.insights.length} insight{chatContext.insights.length > 1 ? "s" : ""}</span>
+              <span style={{ fontSize: 11, color: "#ccc", marginLeft: 8 }}>{chatContext.insights[chatContext.insights.length - 1]}</span>
             </div>
           )}
 
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6, paddingBottom: 16 }}>
+          {/* Messages area - WhatsApp style */}
+          <div className="wa-thread-messages">
             {chatMessages.map((m, i) => {
               const isNurturing = m.direction === "OUTBOUND" && m.body.includes("Camila de QuieroComer");
               const isAutoTemplate = m.direction === "OUTBOUND" && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.cl/api/funnel"));
               const isAI = m.direction === "OUTBOUND" && !isNurturing && !isAutoTemplate;
+              const isOut = m.direction === "OUTBOUND";
               const prevMsg = chatMessages[i - 1];
               const showDate = !prevMsg || new Date(m.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
 
               return (
                 <div key={m.id}>
                   {showDate && (
-                    <div style={{ textAlign: "center", margin: "12px 0 8px" }}>
-                      <span style={{ fontSize: 10, color: "#555", background: "#111", padding: "3px 12px", borderRadius: 8 }}>
+                    <div style={{ textAlign: "center", margin: "10px 0 6px" }}>
+                      <span className="wa-thread-date-pill">
                         {new Date(m.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
                       </span>
                     </div>
                   )}
-                  <div style={{
-                    alignSelf: m.direction === "OUTBOUND" ? "flex-end" : "flex-start",
-                    maxWidth: "75%", display: "flex", flexDirection: "column",
-                    marginLeft: m.direction === "OUTBOUND" ? "auto" : 0,
-                  }}>
-                    <div style={{
-                      padding: "10px 14px", borderRadius: 14,
-                      borderTopLeftRadius: m.direction === "INBOUND" ? 4 : 14,
-                      borderTopRightRadius: m.direction === "OUTBOUND" ? 4 : 14,
-                      background: isNurturing ? `${PURPLE}10` : isAI ? `${GREEN}08` : "#151515",
-                      border: `1px solid ${isNurturing ? `${PURPLE}20` : isAI ? `${GREEN}15` : "#222"}`,
-                    }}>
+                  <div className={`wa-bubble ${isOut ? "wa-bubble-out" : "wa-bubble-in"}`}>
+                    <div className={`wa-bubble-inner ${isNurturing ? "wa-bubble-nurturing" : isAI ? "wa-bubble-ai" : isOut ? "wa-bubble-outbound" : "wa-bubble-inbound"}`}>
                       {isNurturing && (
-                        <div style={{ fontSize: 9, color: PURPLE, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: ".04em" }}>
-                          📨 Camila Nurturing
-                        </div>
+                        <div className="wa-bubble-tag" style={{ color: PURPLE }}>📨 Nurturing</div>
                       )}
                       {isAutoTemplate && (
-                        <div style={{ fontSize: 9, color: "#888", fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: ".04em" }}>
-                          📋 Template automatico
-                        </div>
+                        <div className="wa-bubble-tag" style={{ color: "#888" }}>📋 Template</div>
                       )}
                       {isAI && (
-                        <div style={{ fontSize: 9, color: GREEN, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: ".04em" }}>
-                          🤖 Camila IA
-                        </div>
+                        <div className="wa-bubble-tag" style={{ color: GREEN }}>🤖 Camila IA</div>
                       )}
-                      {m.direction === "INBOUND" && m.profileName && (
-                        <div style={{ fontSize: 9, color: "#888", fontWeight: 600, marginBottom: 4 }}>
-                          {m.profileName}
-                        </div>
+                      {!isOut && m.profileName && (
+                        <div className="wa-bubble-tag" style={{ color: "#aaa" }}>{m.profileName}</div>
                       )}
-                      <div style={{ fontSize: 13, color: "#ddd", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{m.body}</div>
+                      <div className="wa-bubble-body">{m.body}</div>
+                      <span className="wa-bubble-time">{fmtDate(m.createdAt)}</span>
                     </div>
-                    <span style={{ fontSize: 9, color: "#444", marginTop: 2, paddingLeft: 4, textAlign: m.direction === "OUTBOUND" ? "right" : "left" }}>
-                      {fmtDate(m.createdAt)}
-                    </span>
                   </div>
                 </div>
               );
@@ -570,7 +670,7 @@ export default function WhatsAppPage() {
           {/* How it works */}
           <GlassCard>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 10 }}>Como funciona Camila</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="wa-config-grid">
               <div style={{ padding: "12px 14px", borderRadius: 10, background: `${PURPLE}08`, border: `1px solid ${PURPLE}15` }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: PURPLE, marginBottom: 4 }}>Modo Sales</div>
                 <div style={{ fontSize: 11, color: "#999", lineHeight: 1.5 }}>
