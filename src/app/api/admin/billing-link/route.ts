@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
     const result = await preApprovalClient.create({
       body: {
         reason: `QuieroComer ${plan} — ${restaurant.name}`,
-        payer_email: restaurant.owner.email,
         external_reference: restaurantId,
         back_url: `${baseUrl}/api/billing/return?plan=${plan}`,
         auto_recurring: {
