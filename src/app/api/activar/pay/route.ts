@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.restaurant.update({
       where: { id: restaurant.id },
-      data: { pendingFlowPlanId: planConfig.planId, flowRegisterToken: payment.token },
+      data: { pendingFlowPlanId: planConfig.planId, flowRegisterToken: `${payment.token}|${payment.flowOrder}` },
     });
 
     return NextResponse.json({ url: `${payment.url}?token=${payment.token}` });

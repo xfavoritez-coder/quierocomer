@@ -7,9 +7,7 @@ import { planFromFlowId } from "@/lib/billing/plans-config";
  * POST /api/billing/webhook
  *
  * Flow.cl envía confirmación de pago aquí (urlConfirmation).
- * Si Flow envía el webhook, el pago fue procesado. Verificamos con getStatus
- * si está disponible, pero si Flow retorna "No services available" activamos
- * igual — el hecho de recibir el webhook ya confirma el pago.
+ * Solo activa el plan si puede confirmar que el pago fue exitoso (status 2).
  */
 export async function POST(req: NextRequest) {
   let formData: FormData;
@@ -22,44 +20,84 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  // Buscar restaurant por token
-  const restaurant = await prisma.restaurant.findFirst({
-    where: { flowRegisterToken: token },
+  console.log(`[billing/webhook] Recibido token: ${token}`);
+
+  // Buscar restaurant — flowRegisterToken puede ser "token|flowOrder"
+  let restaurant = await prisma.restaurant.findFirst({
+    where: { flowRegisterToken: { startsWith: token } },
   });
+  if (!restaurant) {
+    // Intentar búsqueda exacta por si no tiene |flowOrder
+    restaurant = await prisma.restaurant.findFirst({ where: { flowRegisterToken: token } });
+  }
 
   if (!restaurant) {
     console.log(`[billing/webhook] No se encontró restaurant para token ${token}`);
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  // Verificar estado del pago — SOLO activar si getStatus confirma (status 2)
-  let paymentConfirmed = false;
+  // Extraer flowOrder si está guardado
+  const savedToken = restaurant.flowRegisterToken || "";
+  const [savedFlowToken, flowOrderStr] = savedToken.split("|");
+  const flowOrder = flowOrderStr ? Number(flowOrderStr) : null;
+
+  // Intentar verificar el pago con getStatus, si falla intentar getStatusByFlowOrder
+  let paymentStatus: number | null = null;
+
+  // Intento 1: /payment/getStatus con token
   try {
-    const payment = await flowPost<any>("/payment/getStatus", { token });
-    console.log(`[billing/webhook] Flow status: ${payment.status} for ${restaurant.name}`);
-    if (payment.status === 2) {
-      paymentConfirmed = true;
-    } else if (payment.status === 3 || payment.status === 4) {
-      console.log(`[billing/webhook] Pago rechazado/anulado para ${restaurant.name}`);
-      await prisma.restaurant.update({
-        where: { id: restaurant.id },
-        data: { flowRegisterToken: null, pendingFlowPlanId: null },
-      });
-      return NextResponse.json({ ok: true, rejected: true });
-    } else {
-      console.log(`[billing/webhook] Pago pendiente (status ${payment.status}) para ${restaurant.name} — no activar aún`);
-      return NextResponse.json({ ok: true, pending: true });
-    }
+    const result = await flowPost<any>("/payment/getStatus", { token });
+    paymentStatus = result.status;
+    console.log(`[billing/webhook] getStatus OK: status=${result.status} for ${restaurant.name}`);
   } catch (err: any) {
-    console.error(`[billing/webhook] getStatus falló — NO se activa: ${err?.message}`);
-    return NextResponse.json({ ok: true, error: "getStatus_unavailable" });
+    console.warn(`[billing/webhook] getStatus falló: ${err?.message}`);
   }
 
-  if (!paymentConfirmed) {
-    return NextResponse.json({ ok: true, ignored: true });
+  // Intento 2: /payment/getStatusByFlowOrder si el primero falló
+  if (paymentStatus === null && flowOrder) {
+    try {
+      const result = await flowPost<any>("/payment/getStatusByFlowOrder", { flowOrder });
+      paymentStatus = result.status;
+      console.log(`[billing/webhook] getStatusByFlowOrder OK: status=${result.status} for ${restaurant.name}`);
+    } catch (err: any) {
+      console.warn(`[billing/webhook] getStatusByFlowOrder falló: ${err?.message}`);
+    }
   }
 
-  // Activar plan — solo si pago confirmado
+  // Intento 3: /payment/getStatusByCommerceId
+  if (paymentStatus === null) {
+    try {
+      const result = await flowPost<any>("/payment/getStatusByCommerceId", { commerceId: `b_${restaurant.id.slice(-8)}` });
+      paymentStatus = result.status;
+      console.log(`[billing/webhook] getStatusByCommerceId OK: status=${result.status} for ${restaurant.name}`);
+    } catch (err: any) {
+      console.warn(`[billing/webhook] getStatusByCommerceId falló: ${err?.message}`);
+    }
+  }
+
+  // Si no pudimos verificar, no activar
+  if (paymentStatus === null) {
+    console.error(`[billing/webhook] No se pudo verificar pago para ${restaurant.name} — NO se activa`);
+    return NextResponse.json({ ok: true, error: "verification_unavailable" });
+  }
+
+  // Rechazado o anulado
+  if (paymentStatus === 3 || paymentStatus === 4) {
+    console.log(`[billing/webhook] Pago rechazado/anulado (${paymentStatus}) para ${restaurant.name}`);
+    await prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: { flowRegisterToken: null, pendingFlowPlanId: null },
+    });
+    return NextResponse.json({ ok: true, rejected: true });
+  }
+
+  // Pendiente
+  if (paymentStatus !== 2) {
+    console.log(`[billing/webhook] Pago pendiente (${paymentStatus}) para ${restaurant.name}`);
+    return NextResponse.json({ ok: true, pending: true });
+  }
+
+  // ✅ Pago confirmado — activar plan
   const appPlan = planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan;
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
@@ -72,10 +110,10 @@ export async function POST(req: NextRequest) {
       currentPeriodEnd: periodEnd,
       lastPaymentAt: new Date(),
       pendingFlowPlanId: null,
-      // NO borrar flowRegisterToken aquí — el return handler lo necesita para encontrar el restaurant
+      // No borrar flowRegisterToken — el return handler lo necesita
     },
   });
 
-  console.log(`[billing/webhook] Pago confirmado: ${restaurant.name} → ${appPlan}`);
+  console.log(`[billing/webhook] ✅ Pago confirmado y plan activado: ${restaurant.name} → ${appPlan}`);
   return NextResponse.json({ ok: true, plan: appPlan });
 }
