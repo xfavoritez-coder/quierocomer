@@ -31,6 +31,9 @@ interface Entry {
   plan: string;
   billingExempt: boolean;
   subscriptionStatus: string;
+  mpPayerEmail: string | null;
+  currentPeriodEnd: string | null;
+  lastPaymentAt: string | null;
   sessions7d: number;
   totalSessions: number;
   dishes: number;
@@ -655,6 +658,12 @@ const PLAN_COLORS: Record<string, string> = { FREE: "#22c55e", SILVER: "#94a3b8"
 function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<Entry>) => void }) {
   const [saving, setSaving] = useState(false);
   const [showPlanSelect, setShowPlanSelect] = useState(false);
+  const [showManualPayment, setShowManualPayment] = useState(false);
+  const [mpPlan, setMpPlan] = useState<string>(entry.plan === "FREE" ? "GOLD" : entry.plan);
+  const [mpMethod, setMpMethod] = useState<string>("transfer");
+  const [mpNote, setMpNote] = useState("");
+  const [showMpEmail, setShowMpEmail] = useState(false);
+  const [mpEmailDraft, setMpEmailDraft] = useState(entry.mpPayerEmail || "");
 
   const updateRestaurant = async (fields: Record<string, any>) => {
     setSaving(true);
@@ -674,6 +683,38 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
     setSaving(false);
   };
 
+  const registerManualPayment = async () => {
+    if (!confirm(`Registrar pago manual de ${entry.name} — plan ${mpPlan} por ${mpMethod === "transfer" ? "transferencia" : mpMethod}?`)) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/manual-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: entry.id, plan: mpPlan, method: mpMethod, note: mpNote || undefined }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onUpdate({ plan: mpPlan, subscriptionStatus: "ACTIVE", billingExempt: false, currentPeriodEnd: data.currentPeriodEnd, lastPaymentAt: new Date().toISOString() } as any);
+        setShowManualPayment(false);
+        setMpNote("");
+      } else {
+        alert(data.error || "Error al registrar pago");
+      }
+    } catch { alert("Error de conexión"); }
+    setSaving(false);
+  };
+
+  const saveMpEmail = () => {
+    const email = mpEmailDraft.trim() || null;
+    updateRestaurant({ mpPayerEmail: email });
+    onUpdate({ mpPayerEmail: email } as any);
+    setShowMpEmail(false);
+  };
+
+  const periodLabel = entry.currentPeriodEnd
+    ? new Date(entry.currentPeriodEnd).toLocaleDateString("es-CL", { day: "numeric", month: "short" })
+    : null;
+
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
@@ -689,6 +730,13 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
         }}>
           {entry.plan}
         </span>
+
+        {/* Period end */}
+        {periodLabel && (
+          <span style={{ fontSize: 11, color: "#888" }}>
+            hasta {periodLabel}
+          </span>
+        )}
 
         {/* Change plan */}
         {!showPlanSelect ? (
@@ -725,7 +773,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
         <button onClick={(e) => {
           e.stopPropagation();
           const next = !entry.billingExempt;
-          if (next && !confirm(`¿Marcar ${entry.name} como bonificado? No se le cobrará.`)) return;
+          if (next && !confirm(`Marcar ${entry.name} como bonificado? No se le cobrará.`)) return;
           updateRestaurant({ billingExempt: next });
         }} disabled={saving} style={{
           padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
@@ -733,9 +781,106 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
           border: entry.billingExempt ? "1px solid rgba(74,222,128,.3)" : "1px solid #2a2a2a",
           color: entry.billingExempt ? "#4ade80" : "#888",
         }}>
-          {entry.billingExempt ? "✓ Bonificado" : "Bonificar"}
+          {entry.billingExempt ? "Bonificado" : "Bonificar"}
+        </button>
+
+        {/* Registrar pago manual */}
+        <button onClick={(e) => { e.stopPropagation(); setShowManualPayment(!showManualPayment); }} disabled={saving} style={{
+          padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
+          background: "rgba(96,165,250,.08)", border: "1px solid rgba(96,165,250,.25)", color: "#60a5fa",
+        }}>
+          Registrar pago
+        </button>
+
+        {/* Email MP */}
+        <button onClick={(e) => { e.stopPropagation(); setShowMpEmail(!showMpEmail); setMpEmailDraft(entry.mpPayerEmail || ""); }} style={{
+          padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
+          background: entry.mpPayerEmail ? "rgba(168,85,247,.08)" : "transparent",
+          border: entry.mpPayerEmail ? "1px solid rgba(168,85,247,.25)" : "1px solid #2a2a2a",
+          color: entry.mpPayerEmail ? "#a855f7" : "#888",
+        }}>
+          {entry.mpPayerEmail ? `MP: ${entry.mpPayerEmail}` : "Email MP"}
         </button>
       </div>
+
+      {/* Manual payment form */}
+      {showManualPayment && (
+        <div onClick={e => e.stopPropagation()} style={{
+          marginTop: 10, padding: 14, background: "#141414", border: "1px solid rgba(96,165,250,.2)",
+          borderRadius: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+        }}>
+          <select value={mpPlan} onChange={e => setMpPlan(e.target.value)} style={{
+            height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+            color: "#fff", padding: "0 8px", fontSize: 12,
+          }}>
+            <option value="SILVER">Silver</option>
+            <option value="GOLD">Gold</option>
+            <option value="PREMIUM">Premium</option>
+          </select>
+          <select value={mpMethod} onChange={e => setMpMethod(e.target.value)} style={{
+            height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+            color: "#fff", padding: "0 8px", fontSize: 12,
+          }}>
+            <option value="transfer">Transferencia</option>
+            <option value="cash">Efectivo</option>
+            <option value="other">Otro</option>
+          </select>
+          <input
+            placeholder="Nota (opcional)"
+            value={mpNote}
+            onChange={e => setMpNote(e.target.value)}
+            style={{
+              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+              color: "#fff", padding: "0 8px", fontSize: 12, width: 150,
+            }}
+          />
+          <button onClick={registerManualPayment} disabled={saving} style={{
+            height: 30, padding: "0 14px", borderRadius: 6, border: "none",
+            background: "#60a5fa", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer",
+          }}>
+            {saving ? "..." : "Confirmar pago"}
+          </button>
+          <button onClick={() => setShowManualPayment(false)} style={{
+            height: 30, padding: "0 8px", borderRadius: 6, border: "none",
+            background: "transparent", color: "#555", fontSize: 11, cursor: "pointer",
+          }}>✕</button>
+        </div>
+      )}
+
+      {/* MP payer email editor */}
+      {showMpEmail && (
+        <div onClick={e => e.stopPropagation()} style={{
+          marginTop: 10, padding: 14, background: "#141414", border: "1px solid rgba(168,85,247,.2)",
+          borderRadius: 10, display: "flex", gap: 8, alignItems: "center",
+        }}>
+          <span style={{ fontSize: 11, color: "#888", whiteSpace: "nowrap" }}>Email MercadoPago:</span>
+          <input
+            placeholder="email@mercadopago.com"
+            value={mpEmailDraft}
+            onChange={e => setMpEmailDraft(e.target.value)}
+            style={{
+              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+              color: "#fff", padding: "0 8px", fontSize: 12, flex: 1, minWidth: 180,
+            }}
+          />
+          <button onClick={saveMpEmail} disabled={saving} style={{
+            height: 30, padding: "0 12px", borderRadius: 6, border: "none",
+            background: "#a855f7", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer",
+          }}>
+            {saving ? "..." : "Guardar"}
+          </button>
+          {entry.mpPayerEmail && (
+            <button onClick={() => { setMpEmailDraft(""); updateRestaurant({ mpPayerEmail: null }); onUpdate({ mpPayerEmail: null } as any); setShowMpEmail(false); }} style={{
+              height: 30, padding: "0 8px", borderRadius: 6, border: "1px solid #333",
+              background: "transparent", color: "#f87171", fontSize: 11, cursor: "pointer",
+            }}>Quitar</button>
+          )}
+          <button onClick={() => setShowMpEmail(false)} style={{
+            height: 30, padding: "0 8px", borderRadius: 6, border: "none",
+            background: "transparent", color: "#555", fontSize: 11, cursor: "pointer",
+          }}>✕</button>
+        </div>
+      )}
     </div>
   );
 }

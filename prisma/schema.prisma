@@ -479,6 +479,7 @@ model Restaurant {
   mpSubscriptionId     String?            @unique  // Active subscription/preapproval ID
   mpPlanId             String?            // MercadoPago plan ID
   pendingMpPlanId      String?            // Plan being activated
+  mpPayerEmail         String?            // Email de la cuenta de MercadoPago del pagador (si difiere del email de registro)
 
   subscriptionStatus   SubscriptionStatus @default(NONE)
   trialEndsAt          DateTime?

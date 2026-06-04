@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
         id: true, slug: true, name: true, logoUrl: true,
         plan: true, subscriptionStatus: true, trialEndsAt: true,
         billingExempt: true, isDemo: true, createdAt: true, ownerId: true,
+        mpPayerEmail: true, currentPeriodEnd: true, lastPaymentAt: true,
         owner: { select: { id: true, name: true, email: true, whatsapp: true, lastLoginAt: true } },
         _count: { select: { dishes: true, sessions: true, categories: true } },
       },
@@ -218,6 +219,11 @@ export async function GET(req: NextRequest) {
       cartaType: lead?.cartaType || null,
       leadCreatedAt: lead?.createdAt?.toISOString() || null,
       nurturingSent,
+      billingExempt: r.billingExempt,
+      subscriptionStatus: r.subscriptionStatus,
+      mpPayerEmail: r.mpPayerEmail || null,
+      currentPeriodEnd: r.currentPeriodEnd?.toISOString() || null,
+      lastPaymentAt: r.lastPaymentAt?.toISOString() || null,
       ownerId: r.ownerId,
       // Lead timeline
       leadTimeline: lead ? {
@@ -297,6 +303,11 @@ export async function GET(req: NextRequest) {
       cartaOriginalUrl: lead.cartaFileUrl || lead.cartaUrl || null,
       cartaType: lead.cartaType || null,
       leadCreatedAt: lead.createdAt.toISOString(),
+      billingExempt: false,
+      subscriptionStatus: "NONE",
+      mpPayerEmail: null,
+      currentPeriodEnd: null,
+      lastPaymentAt: null,
       nurturingSent: [],
       ownerId: null,
       leadTimeline: {

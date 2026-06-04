@@ -153,6 +153,8 @@ export async function createMPPlan(planKey: string): Promise<MPPlanResult> {
 export type CreateMPSubscriptionParams = {
   /** Clave del plan: "GOLD" | "PREMIUM" */
   planKey: string;
+  /** Email para payer_email de MP (cuenta de MercadoPago del pagador) */
+  payerEmail: string;
   /** Referencia externa (ej: restaurantId) */
   externalReference: string;
   /** Card token si se quiere asociar tarjeta de una vez */
@@ -218,6 +220,7 @@ export async function createMPSubscription(
 
   const body: Record<string, any> = {
     reason: planConfig.name,
+    payer_email: params.payerEmail,
     external_reference: params.externalReference,
     back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
     auto_recurring: autoRecurring,
@@ -239,7 +242,7 @@ export async function createMPSubscription(
     id: result.id,
     status: result.status ?? "pending",
     initPoint: result.init_point ?? "",
-    payerEmail: result.payer_email ?? "",
+    payerEmail: result.payer_email ?? params.payerEmail,
     externalReference: result.external_reference ?? params.externalReference,
     nextPaymentDate: result.next_payment_date ?? undefined,
   };

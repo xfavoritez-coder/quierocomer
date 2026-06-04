@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest) {
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   try {
-    const { name, whatsapp, currentPassword, newPassword } = await req.json();
+    const { name, email, whatsapp, currentPassword, newPassword } = await req.json();
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
@@ -46,6 +46,21 @@ export async function PUT(req: NextRequest) {
     // Update name if provided
     if (name !== undefined && name.trim()) {
       data.name = name.trim();
+    }
+
+    // Update email if provided
+    if (email !== undefined && email.trim()) {
+      const newEmail = email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newEmail)) {
+        return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
+      }
+      // Check uniqueness
+      const existing = await prisma.restaurantOwner.findUnique({ where: { email: newEmail } });
+      if (existing && existing.id !== panelId) {
+        return NextResponse.json({ error: "Ese email ya está registrado en otra cuenta" }, { status: 409 });
+      }
+      data.email = newEmail;
     }
 
     // Update whatsapp if provided

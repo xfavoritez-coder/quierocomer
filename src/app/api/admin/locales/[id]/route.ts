@@ -93,6 +93,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.enabledLangs !== undefined && { enabledLangs: body.enabledLangs }),
         ...(body.plan !== undefined && { plan: body.plan }),
         ...(body.billingExempt !== undefined && { billingExempt: body.billingExempt }),
+        ...(body.mpPayerEmail !== undefined && { mpPayerEmail: body.mpPayerEmail || null }),
         // Toteat POS integration fields (super-admin only)
         ...(body.toteatRestaurantId !== undefined && { toteatRestaurantId: body.toteatRestaurantId || null }),
         ...(body.toteatLocalId !== undefined && { toteatLocalId: body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId) }),

@@ -70,11 +70,11 @@ export default function PanelPerfilPage() {
       const res = await fetch("/api/panel/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), whatsapp: whatsapp.trim() || null }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), whatsapp: whatsapp.trim() || null }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error al guardar"); setSavingName(false); return; }
-      toast.success("Nombre actualizado");
+      toast.success("Perfil actualizado");
     } catch { toast.error("Error de conexión"); }
     setSavingName(false);
   };
@@ -143,8 +143,7 @@ export default function PanelPerfilPage() {
 
         <div style={{ marginBottom: 12 }}>
           <label style={labelStyle}>Email</label>
-          <input value={email} disabled style={{ ...inputStyle, opacity: 0.6, cursor: "not-allowed" }} />
-          <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>El email no se puede cambiar desde aquí.</p>
+          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: 16 }}>
