@@ -32,30 +32,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  // Verificar estado del pago si es posible
-  let rejected = false;
+  // Verificar estado del pago — SOLO activar si getStatus confirma (status 2)
+  let paymentConfirmed = false;
   try {
     const payment = await flowPost<any>("/payment/getStatus", { token });
     console.log(`[billing/webhook] Flow status: ${payment.status} for ${restaurant.name}`);
-    // Solo rechazar si explícitamente rechazado (3) o anulado (4)
-    if (payment.status === 3 || payment.status === 4) {
-      rejected = true;
+    if (payment.status === 2) {
+      paymentConfirmed = true;
+    } else if (payment.status === 3 || payment.status === 4) {
+      console.log(`[billing/webhook] Pago rechazado/anulado para ${restaurant.name}`);
+      await prisma.restaurant.update({
+        where: { id: restaurant.id },
+        data: { flowRegisterToken: null, pendingFlowPlanId: null },
+      });
+      return NextResponse.json({ ok: true, rejected: true });
+    } else {
+      console.log(`[billing/webhook] Pago pendiente (status ${payment.status}) para ${restaurant.name} — no activar aún`);
+      return NextResponse.json({ ok: true, pending: true });
     }
   } catch (err: any) {
-    // "No services available" es un error conocido de Flow — continuamos
-    console.warn(`[billing/webhook] getStatus no disponible (continuando): ${err?.message}`);
+    console.error(`[billing/webhook] getStatus falló — NO se activa: ${err?.message}`);
+    return NextResponse.json({ ok: true, error: "getStatus_unavailable" });
   }
 
-  if (rejected) {
-    console.log(`[billing/webhook] Pago rechazado para ${restaurant.name}`);
-    await prisma.restaurant.update({
-      where: { id: restaurant.id },
-      data: { flowRegisterToken: null, pendingFlowPlanId: null },
-    });
-    return NextResponse.json({ ok: true, rejected: true });
+  if (!paymentConfirmed) {
+    return NextResponse.json({ ok: true, ignored: true });
   }
 
-  // Activar plan
+  // Activar plan — solo si pago confirmado
   const appPlan = planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan;
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
