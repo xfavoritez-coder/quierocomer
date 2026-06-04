@@ -430,6 +430,15 @@ export default function SuscripcionPage() {
               Cambiar plan
             </button>
           )}
+          {!isExempt && inTrial && (
+            <button onClick={handleUpgrade} style={{
+              flex: 1, minWidth: 200, padding: "13px 18px",
+              background: `linear-gradient(135deg, #ffc44f, ${GOLD})`, color: "#100b03",
+              border: "none", borderRadius: 999, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 800, cursor: "pointer",
+            }}>
+              Ver planes
+            </button>
+          )}
           {!isExempt && isCanceled && (
             <button onClick={handleUpgrade} style={{
               flex: 1, minWidth: 200, padding: "13px 18px",
