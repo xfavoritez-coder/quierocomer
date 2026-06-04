@@ -29,29 +29,33 @@ async function handleReturn(req: NextRequest) {
     return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
   }
 
-  // Verificar estado del pago en Flow
-  let payment: { status: number; commerceOrder: string; amount: number };
-  try {
-    payment = await flowPost<any>("/payment/getStatus", { token });
-  } catch (err: any) {
-    console.error("[billing/return] getStatus falló:", err?.message);
-    return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
-  }
-
-  // Flow status: 1 = pendiente, 2 = pagada, 3 = rechazada, 4 = anulada
-  // Aceptamos pendiente (1) y pagada (2) — el webhook confirma después
-  if (payment.status !== 2 && payment.status !== 1) {
-    return redirect303(`${baseUrl}/panel/suscripcion?status=failure`);
-  }
-
-  // Buscar restaurant por token
+  // Buscar restaurant por token primero
   const restaurant = await prisma.restaurant.findFirst({
     where: { flowRegisterToken: token },
     include: { owner: { select: { email: true, name: true } } },
   });
 
   if (!restaurant) {
-    return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
+    console.error("[billing/return] No se encontró restaurant para token:", token);
+    return redirect303(`${baseUrl}/panel/suscripcion?status=error&reason=${encodeURIComponent("No se encontró el restaurante asociado al pago")}`);
+  }
+
+  // Verificar estado del pago en Flow
+  const FLOW_STATUS: Record<number, string> = { 1: "pendiente", 2: "pagada", 3: "rechazada", 4: "anulada" };
+  let paymentOk = true;
+  try {
+    const payment = await flowPost<any>("/payment/getStatus", { token });
+    console.log(`[billing/return] Flow payment status: ${payment.status} (${FLOW_STATUS[payment.status] || "?"}) for ${restaurant.name}`);
+    // Solo rechazar si Flow dice explícitamente rechazada (3) o anulada (4)
+    if (payment.status === 3 || payment.status === 4) {
+      paymentOk = false;
+      const reason = FLOW_STATUS[payment.status];
+      return redirect303(`${baseUrl}/panel/suscripcion?status=failure&reason=${encodeURIComponent(`Pago ${reason} por Webpay`)}`);
+    }
+  } catch (err: any) {
+    // Si getStatus falla pero el usuario volvió del checkout, seguimos adelante
+    // El webhook de Flow confirmará el pago después
+    console.warn("[billing/return] getStatus falló (continuando):", err?.message);
   }
 
   const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";

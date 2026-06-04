@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useContext } from "react";
+import { useSearchParams } from "next/navigation";
 import { CreditCard, Sparkles, Shield, Receipt, XCircle, ExternalLink } from "lucide-react";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import { toast } from "sonner";
@@ -73,6 +74,9 @@ export default function SuscripcionPage() {
   const isDemo = !!selectedRest?.isDemo;
   const slug = selectedRest?.slug || "";
 
+  const searchParams = useSearchParams();
+  const paymentStatus = searchParams.get("status");
+  const paymentReason = searchParams.get("reason");
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(false);
@@ -273,6 +277,20 @@ export default function SuscripcionPage() {
       </h1>
       <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px", fontFamily: "var(--font-body)" }}>
         Estado de tu plan, pagos y opciones
+
+      {(paymentStatus === "error" || paymentStatus === "failure") && (
+        <div style={{ background: "rgba(248,113,113,.08)", border: "1px solid rgba(248,113,113,.25)", borderRadius: 12, padding: "14px 16px", marginTop: 12 }}>
+          <p style={{ fontSize: "0.9rem", color: "#f87171", margin: 0, fontWeight: 700 }}>
+            {paymentStatus === "failure" ? "El pago no se completó" : "Hubo un error con el pago"}
+          </p>
+          {paymentReason && (
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: "6px 0 0" }}>{paymentReason}</p>
+          )}
+          <p style={{ fontSize: "0.78rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>
+            Puedes intentar de nuevo desde "Ver planes".
+          </p>
+        </div>
+      )}
       </p>
 
       {/* ─── Plan actual ─────────────────────── */}
