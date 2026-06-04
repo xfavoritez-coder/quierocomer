@@ -254,7 +254,8 @@ export default function SuscripcionPage() {
   const statusInfo = STATUS_LABEL[status.subscriptionStatus] || STATUS_LABEL.NONE;
   const isExempt = status.billingExempt;
   const isFree = status.plan === "FREE";
-  const hasActiveSub = status.subscriptionStatus === "TRIALING" || status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE";
+  const hasActivePlan = status.subscriptionStatus === "TRIALING" || status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE";
+  const hasPaidSub = status.hasSubscription && (status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE");
   const isCanceled = status.subscriptionStatus === "CANCELED";
   const inTrial = status.subscriptionStatus === "TRIALING";
   const monthlyNet = (status as any).customPlanPriceNet ?? planNetAmount(status.plan as PlanKey);
@@ -352,7 +353,7 @@ export default function SuscripcionPage() {
           </div>
         )}
 
-        {!isExempt && !isFree && !hasActiveSub && !inTrial && !isCanceled && (
+        {!isExempt && !isFree && !hasActivePlan && !inTrial && !isCanceled && (
           <div style={{ background: "rgba(244,166,35,.06)", border: "1px solid rgba(244,166,35,.15)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.9rem", color: "var(--adm-text)", margin: "0 0 6px", fontWeight: 700 }}>
               Tu plan no tiene una suscripción activa
@@ -411,7 +412,7 @@ export default function SuscripcionPage() {
 
         {/* Actions */}
         <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16, marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {!isExempt && !hasActiveSub && !isCanceled && (
+          {!isExempt && !hasActivePlan && !isCanceled && (
             <button onClick={handleUpgrade} style={{
               flex: 1, minWidth: 200, padding: "13px 18px",
               background: `linear-gradient(135deg, #ffc44f, ${GOLD})`, color: "#100b03",
@@ -420,7 +421,7 @@ export default function SuscripcionPage() {
               Ver planes
             </button>
           )}
-          {!isExempt && hasActiveSub && (
+          {!isExempt && hasActivePlan && !inTrial && (
             <button onClick={handleUpgrade} style={{
               flex: 1, minWidth: 160, padding: "13px 18px",
               background: "rgba(255,255,255,.05)", color: "var(--adm-text)",
@@ -442,7 +443,7 @@ export default function SuscripcionPage() {
       </Card>
 
       {/* ─── Método de pago ───────────────────── */}
-      {hasActiveSub && (
+      {hasPaidSub && (
         <Card>
           <SectionTitle icon={<Shield size={14} />}>Método de pago</SectionTitle>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -501,7 +502,7 @@ export default function SuscripcionPage() {
       )}
 
       {/* ─── Cancelar ────────────────────────── */}
-      {!isExempt && hasActiveSub && (
+      {!isExempt && hasPaidSub && (
         <Card style={{ border: "1px solid rgba(248,113,113,.15)" }}>
           <SectionTitle icon={<XCircle size={14} />}>Cancelar suscripción</SectionTitle>
           <p style={{ fontSize: "0.84rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.6 }}>

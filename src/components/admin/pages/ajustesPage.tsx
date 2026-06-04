@@ -212,19 +212,31 @@ export default function AjustesPage() {
       </div>
 
       {/* Índice de categorías */}
+      {(() => {
+        const catCount = (data as any)?._count?.categories ?? 0;
+        const canEnableLobby = catCount >= 3;
+        return (
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ flex: 1 }}>
             <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🗂️ Índice de categorías</h3>
             <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 0" }}>
-              {data.showCategoryLobby
+              {!canEnableLobby
+                ? `Necesitas al menos 3 categorías para activar esta función (tienes ${catCount})`
+                : data.showCategoryLobby
                 ? "Tus clientes ven una pantalla de bienvenida con todas las secciones antes de la carta"
                 : "Ideal si tu carta tiene muchas secciones. Muestra una pantalla de inicio con todas las categorías para que el cliente navegue fácil"}
             </p>
           </div>
           <Toggle
             active={data.showCategoryLobby}
-            onToggle={() => save({ showCategoryLobby: !data.showCategoryLobby })}
+            onToggle={() => {
+              if (!canEnableLobby && !data.showCategoryLobby) {
+                toast.error(`Necesitas al menos 3 categorías (tienes ${catCount})`);
+                return;
+              }
+              save({ showCategoryLobby: !data.showCategoryLobby });
+            }}
           />
         </div>
         {data.showCategoryLobby && currentRestaurant?.slug && (
@@ -244,6 +256,8 @@ export default function AjustesPage() {
           </a>
         )}
       </div>
+        );
+      })()}
 
       {/* Tema de la carta — Gold+ */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasDesign ? 1 : 0.5 }}>
