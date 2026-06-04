@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       cartaTheme: "PREMIUM",
       cartaColorMode: "DARK",
       defaultView: "impact",
-      enabledLangs: ["es"],
+      enabledLangs: ["es", "en", "pt"],
       isActive: true,
       isDemo: true,
       weeklyEmailEnabled: true,
