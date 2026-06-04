@@ -793,15 +793,6 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
           Registrar pago
         </button>
 
-        {/* Email MP */}
-        <button onClick={(e) => { e.stopPropagation(); setShowMpEmail(!showMpEmail); setMpEmailDraft(entry.mpPayerEmail || ""); }} style={{
-          padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
-          background: entry.mpPayerEmail ? "rgba(168,85,247,.08)" : "transparent",
-          border: entry.mpPayerEmail ? "1px solid rgba(168,85,247,.25)" : "1px solid #2a2a2a",
-          color: entry.mpPayerEmail ? "#a855f7" : "#888",
-        }}>
-          {entry.mpPayerEmail ? `MP: ${entry.mpPayerEmail}` : "Email MP"}
-        </button>
       </div>
 
       {/* Manual payment form */}
@@ -857,40 +848,6 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
         </div>
       )}
 
-      {/* MP payer email editor */}
-      {showMpEmail && (
-        <div onClick={e => e.stopPropagation()} style={{
-          marginTop: 10, padding: 14, background: "#141414", border: "1px solid rgba(168,85,247,.2)",
-          borderRadius: 10, display: "flex", gap: 8, alignItems: "center",
-        }}>
-          <span style={{ fontSize: 11, color: "#888", whiteSpace: "nowrap" }}>Email MercadoPago:</span>
-          <input
-            placeholder="email@mercadopago.com"
-            value={mpEmailDraft}
-            onChange={e => setMpEmailDraft(e.target.value)}
-            style={{
-              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
-              color: "#fff", padding: "0 8px", fontSize: 12, flex: 1, minWidth: 180,
-            }}
-          />
-          <button onClick={saveMpEmail} disabled={saving} style={{
-            height: 30, padding: "0 12px", borderRadius: 6, border: "none",
-            background: "#a855f7", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer",
-          }}>
-            {saving ? "..." : "Guardar"}
-          </button>
-          {entry.mpPayerEmail && (
-            <button onClick={() => { setMpEmailDraft(""); updateRestaurant({ mpPayerEmail: null }); onUpdate({ mpPayerEmail: null } as any); setShowMpEmail(false); }} style={{
-              height: 30, padding: "0 8px", borderRadius: 6, border: "1px solid #333",
-              background: "transparent", color: "#f87171", fontSize: 11, cursor: "pointer",
-            }}>Quitar</button>
-          )}
-          <button onClick={() => setShowMpEmail(false)} style={{
-            height: 30, padding: "0 8px", borderRadius: 6, border: "none",
-            background: "transparent", color: "#555", fontSize: 11, cursor: "pointer",
-          }}>✕</button>
-        </div>
-      )}
     </div>
   );
 }

@@ -287,6 +287,30 @@ export function monthlyRenewalEmailHtml(
   `);
 }
 
+export function renewalReminderEmailHtml(
+  firstName: string, restaurantName: string, planName: string,
+  amount: string, daysLeft: number, suscripcionLink: string,
+): string {
+  const dayLabel = daysLeft <= 1 ? "mañana" : `en ${daysLeft} días`;
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">📋</span></td></tr>
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Tu plan vence ${dayLabel}</h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    ${firstName}, el plan <strong>${planName}</strong> de <strong>${restaurantName}</strong> vence ${dayLabel}. Renuévalo para seguir disfrutando de todas las funciones.
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">${card(`
+    ${label("Detalle de renovación")}
+    ${field("Plan", planName)}
+    ${field("Monto mensual", amount)}
+    ${field("Restaurante", restaurantName)}
+  `, true)}</td></tr>
+  <tr><td style="padding-bottom:8px;">${btn(suscripcionLink, "Renovar mi plan")}</td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Si no renuevas, tu carta seguirá activa en el plan Gratis.</td></tr>
+  `);
+}
+
 export function trialEndingSoonEmailHtml(
   firstName: string, restaurantName: string,
   daysLeft: number, panelLink: string, suscripcionLink: string,

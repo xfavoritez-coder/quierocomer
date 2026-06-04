@@ -243,6 +243,81 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 4.7 Recordatorio de renovación (3 días antes de que venza el período)
+    let renewalRemindersSent = 0;
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const renewalCandidates = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "ACTIVE",
+        currentPeriodEnd: { gt: now, lte: threeDaysFromNow },
+        billingExempt: false,
+        mpSubscriptionId: null, // Solo los que NO tienen suscripción automática de MP
+        plan: { not: "FREE" },
+      },
+      select: {
+        id: true, name: true, slug: true, plan: true, customPlanPriceNet: true,
+        currentPeriodEnd: true,
+        owner: { select: { email: true, name: true } },
+      },
+    });
+
+    if (renewalCandidates.length > 0) {
+      const { sendAdminEmail, renewalReminderEmailHtml } = await import("@/lib/email/sendAdminEmail");
+      const { FLOW_PLANS, grossOf, PLAN_LABELS } = await import("@/lib/billing/plans-config");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+
+      for (const r of renewalCandidates) {
+        if (!r.owner?.email) continue;
+        // Check if we already sent a reminder for this period
+        const alreadySent = await prisma.emailLog.findFirst({
+          where: { to: r.owner.email, purpose: "renewal_reminder", createdAt: { gte: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) } },
+        });
+        if (alreadySent) continue;
+
+        const daysLeft = Math.max(1, Math.ceil(((r.currentPeriodEnd?.getTime() || now.getTime()) - now.getTime()) / (24 * 60 * 60 * 1000)));
+        const planKey = r.plan as "SILVER" | "GOLD" | "PREMIUM";
+        const amountNet = r.customPlanPriceNet ?? FLOW_PLANS[planKey]?.amountNet ?? 0;
+        const amountGross = grossOf(amountNet);
+        const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
+        const planLabel = PLAN_LABELS[planKey] || planKey;
+
+        try {
+          await sendAdminEmail({
+            to: r.owner.email,
+            subject: `${r.name} · Tu plan ${planLabel} vence ${daysLeft <= 1 ? "mañana" : `en ${daysLeft} días`}`,
+            html: renewalReminderEmailHtml(firstName, r.name, planLabel, `$${amountGross.toLocaleString("es-CL")} CLP`, daysLeft, `${baseUrl}/panel/suscripcion`),
+            purpose: "renewal_reminder",
+          });
+          renewalRemindersSent++;
+        } catch (e) {
+          console.error("[diario] renewal reminder error:", e);
+        }
+      }
+    }
+
+    // 4.8 Downgrade planes ACTIVE cuyo período venció (sin suscripción automática)
+    let activeExpiredDowngraded = 0;
+    const expiredActive = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "ACTIVE",
+        currentPeriodEnd: { lt: now },
+        billingExempt: false,
+        mpSubscriptionId: null, // Solo los que NO tienen suscripción automática
+        plan: { not: "FREE" },
+      },
+      select: { id: true, name: true, slug: true },
+    });
+    if (expiredActive.length > 0) {
+      await prisma.restaurant.updateMany({
+        where: { id: { in: expiredActive.map(r => r.id) } },
+        data: { subscriptionStatus: "NONE", plan: "FREE", currentPeriodEnd: null },
+      });
+      activeExpiredDowngraded = expiredActive.length;
+      for (const r of expiredActive) {
+        console.log(`[diario] Downgraded expired active plan: ${r.name} (${r.slug})`);
+      }
+    }
+
     // 5. Backfill translations for restaurants that failed during pipeline
     let translationsBackfilled = 0;
     try {
@@ -365,6 +440,8 @@ export async function GET(req: NextRequest) {
           trialRemindersSent,
           trialsExpired,
           canceledDowngraded,
+          renewalRemindersSent,
+          activeExpiredDowngraded,
           translationsBackfilled,
           weeklyFallback,
           automations: automationResults,

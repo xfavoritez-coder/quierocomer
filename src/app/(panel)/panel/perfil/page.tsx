@@ -169,51 +169,6 @@ export default function PanelPerfilPage() {
         </button>
       </div>
 
-      {/* Email MercadoPago */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Email de MercadoPago</h2>
-        <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 14px", lineHeight: 1.5 }}>
-          Es el email con que inicias sesión en MercadoPago para pagar. Puede ser diferente al de tu cuenta en QuieroComer. Si lo dejas vacío, se usará tu email de registro.
-        </p>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input
-            value={mpEmail}
-            onChange={e => setMpEmail(e.target.value)}
-            placeholder={email || "tu@email-mercadopago.com"}
-            style={{ ...inputStyle, flex: 1 }}
-          />
-          <button
-            onClick={async () => {
-              setSavingMpEmail(true);
-              try {
-                const val = mpEmail.trim().toLowerCase() || null;
-                const res = await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ mpPayerEmail: val }),
-                });
-                if (res.ok) {
-                  setMpEmailOriginal(val || "");
-                  toast.success(val ? "Email de MercadoPago guardado" : "Email de MercadoPago eliminado");
-                } else {
-                  toast.error("Error al guardar");
-                }
-              } catch { toast.error("Error de conexión"); }
-              setSavingMpEmail(false);
-            }}
-            disabled={savingMpEmail || mpEmail.trim().toLowerCase() === mpEmailOriginal}
-            style={{
-              padding: "10px 18px", background: GOLD, color: "white",
-              fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
-              border: "none", borderRadius: 8,
-              cursor: savingMpEmail || mpEmail.trim().toLowerCase() === mpEmailOriginal ? "default" : "pointer",
-              opacity: savingMpEmail || mpEmail.trim().toLowerCase() === mpEmailOriginal ? 0.5 : 1,
-            }}
-          >
-            {savingMpEmail ? "..." : "Guardar"}
-          </button>
-        </div>
-      </div>
 
       {/* Weekly email */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
