@@ -4,15 +4,19 @@ import { flowPost } from "@/lib/billing/flow";
 import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
 
+function redirect303(url: string) {
+  return NextResponse.redirect(url, 303);
+}
+
 /**
- * GET|POST /api/billing/return?token=... (or token in POST body)
+ * GET|POST /api/billing/return
  *
- * Flow redirige aquí después del pago. Soporta GET (query) y POST (form body).
+ * Flow redirige aquí después del pago (POST con token en body).
  */
 async function handleReturn(req: NextRequest) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
-  // Flow puede enviar token como query param (GET) o en el body (POST)
+  // Flow envía token vía POST form-data o GET query param
   let token = req.nextUrl.searchParams.get("token");
   if (!token && req.method === "POST") {
     try {
@@ -22,7 +26,7 @@ async function handleReturn(req: NextRequest) {
   }
 
   if (!token) {
-    return NextResponse.redirect(`${baseUrl}/panel/suscripcion?status=error`);
+    return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
   }
 
   // Verificar estado del pago en Flow
@@ -31,12 +35,13 @@ async function handleReturn(req: NextRequest) {
     payment = await flowPost<any>("/payment/getStatus", { token });
   } catch (err: any) {
     console.error("[billing/return] getStatus falló:", err?.message);
-    return NextResponse.redirect(`${baseUrl}/panel/suscripcion?status=error`);
+    return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
   }
 
   // Flow status: 1 = pendiente, 2 = pagada, 3 = rechazada, 4 = anulada
-  if (payment.status !== 2) {
-    return NextResponse.redirect(`${baseUrl}/panel/suscripcion?status=failure`);
+  // Aceptamos pendiente (1) y pagada (2) — el webhook confirma después
+  if (payment.status !== 2 && payment.status !== 1) {
+    return redirect303(`${baseUrl}/panel/suscripcion?status=failure`);
   }
 
   // Buscar restaurant por token
@@ -46,7 +51,7 @@ async function handleReturn(req: NextRequest) {
   });
 
   if (!restaurant) {
-    return NextResponse.redirect(`${baseUrl}/panel/suscripcion?status=error`);
+    return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
   }
 
   const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";
@@ -84,7 +89,7 @@ async function handleReturn(req: NextRequest) {
     }).catch(() => {});
   }
 
-  return NextResponse.redirect(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);
+  return redirect303(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);
 }
 
 export async function GET(req: NextRequest) { return handleReturn(req); }

@@ -4,6 +4,8 @@ import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 
+function r303(url: string) { return NextResponse.redirect(url, 303); }
+
 /**
  * GET /api/activar/pay/return?token=...&plan=...
  *
@@ -21,7 +23,7 @@ async function handleReturn(req: NextRequest) {
   }
 
   if (!token) {
-    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
+    return r303(`${baseUrl}/pago-cancelado`);
   }
 
   // Verificar estado del pago
@@ -30,11 +32,11 @@ async function handleReturn(req: NextRequest) {
     payment = await flowPost<any>("/payment/getStatus", { token });
   } catch (err: any) {
     console.error("[activar/pay/return] getStatus falló:", err?.message);
-    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
+    return r303(`${baseUrl}/pago-cancelado`);
   }
 
-  if (payment.status !== 2) {
-    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
+  if (payment.status !== 2 && payment.status !== 1) {
+    return r303(`${baseUrl}/pago-cancelado`);
   }
 
   // Buscar restaurant por token
@@ -44,12 +46,12 @@ async function handleReturn(req: NextRequest) {
   });
 
   if (!restaurant) {
-    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
+    return r303(`${baseUrl}/pago-cancelado`);
   }
 
   // Idempotencia
   if (!restaurant.isDemo) {
-    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${restaurant.plan}`);
+    return r303(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${restaurant.plan}`);
   }
 
   const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || "PREMIUM") as "SILVER" | "GOLD" | "PREMIUM";
@@ -107,7 +109,7 @@ async function handleReturn(req: NextRequest) {
     });
   }
 
-  return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
+  return r303(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
 }
 
 export async function GET(req: NextRequest) { return handleReturn(req); }
