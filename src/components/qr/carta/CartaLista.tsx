@@ -155,7 +155,9 @@ export default function CartaLista({
     if (recommended.length > 0) return sortPriority(recommended);
     const popular = sortPriority(withPhoto(dishes.filter(d => popularDishIds.has(d.id)))).slice(0, 3);
     if (popular.length > 0) return popular;
-    return sortPriority(withPhoto(dishes)).slice(0, 3);
+    const anyWithPhoto = sortPriority(withPhoto(dishes)).slice(0, 3);
+    if (anyWithPhoto.length > 0) return anyWithPhoto;
+    return sortPriority(dishes).slice(0, 3);
   }, [dishes, popularDishIds, lang]);
 
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
@@ -372,7 +374,7 @@ export default function CartaLista({
   };
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 105 : 0 }}>
       {/* Hero — FREE gets slim, Gold/Premium get full hero */}
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
@@ -556,34 +558,54 @@ export default function CartaLista({
             </h2>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {catDishes.map((dish) => {
+            {catDishes.map((dish, dishIdx) => {
               const entry = pMap?.get(dish.id);
+              const showTranslationBanner = (restaurant as any).isDemo && lang !== "es"
+                && (dish as any)._hasTranslation
+                && catDishes[dishIdx + 1] && !(catDishes[dishIdx + 1] as any)._hasTranslation;
               return (
-                <DishListCard
-                  key={dish.id}
-                  dish={dish}
-                  rating={ratingMap?.[dish.id]}
-                  autoRecommended={entry?.autoRecommended}
-                  isExploration={entry?.isExploration}
-                  restaurantName={restaurant.name}
-                  isPopular={popularDishIds.has(dish.id)}
-                  onClick={() => {
-                    if (entry?.autoRecommended) {
-                      fetch("/api/qr/stats", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          eventType: "RECOMMENDATION_TAPPED",
-                          dishId: dish.id,
-                          restaurantId: restaurant.id,
-                          guestId: getGuestId(),
-                          metadata: { score: entry.score, wasAutomatic: true },
-                        }),
-                      }).catch(() => {});
-                    }
-                    handleDishClick(dish);
-                  }}
-                />
+                <div key={dish.id}>
+                  <DishListCard
+                    dish={dish}
+                    rating={ratingMap?.[dish.id]}
+                    autoRecommended={entry?.autoRecommended}
+                    isExploration={entry?.isExploration}
+                    restaurantName={restaurant.name}
+                    isPopular={popularDishIds.has(dish.id)}
+                    onClick={() => {
+                      if (entry?.autoRecommended) {
+                        fetch("/api/qr/stats", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            eventType: "RECOMMENDATION_TAPPED",
+                            dishId: dish.id,
+                            restaurantId: restaurant.id,
+                            guestId: getGuestId(),
+                            metadata: { score: entry.score, wasAutomatic: true },
+                          }),
+                        }).catch(() => {});
+                      }
+                      handleDishClick(dish);
+                    }}
+                  />
+                  {showTranslationBanner && (
+                    <div
+                      className="font-[family-name:var(--font-dm)]"
+                      style={{
+                        margin: "4px 0 8px", padding: "12px 14px",
+                        background: "linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.03))",
+                        border: "1px solid rgba(59,130,246,0.15)", borderRadius: 14,
+                        display: "flex", alignItems: "center", gap: 10,
+                      }}
+                    >
+                      <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>🌍</span>
+                      <span style={{ fontSize: "0.85rem", color: "var(--carta-text2, rgba(255,255,255,0.55))", lineHeight: 1.45 }}>
+                        Tradujimos los primeros platos para que lo veas. Al activar tu carta, se traduce completa.
+                      </span>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -631,14 +653,16 @@ export default function CartaLista({
       })()}
 
       {/* Floating buttons: lamp (Genio) + views (demo) + bell (waiter) */}
-      <FabSpeedDial
-        onLampClick={() => setGenioOpen(true)}
-        pinned={
-          <>
-            {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-          </>
-        }
-      />
+      {!(restaurant as any).isDemo && (
+        <FabSpeedDial
+          onLampClick={() => setGenioOpen(true)}
+          pinned={
+            <>
+              {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
+            </>
+          }
+        />
+      )}
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }

@@ -85,7 +85,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 60,
-        padding: showForm ? "14px 14px 16px" : "18px 14px 18px",
+        padding: showForm ? "14px 14px 16px" : "12px 14px 12px",
         background: "rgba(7,7,7,.92)",
         backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
         boxShadow: "0 12px 30px rgba(0,0,0,.35)",
@@ -152,10 +152,10 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             style={{
               border: 0, borderRadius: 999, height: 44, padding: "0 22px",
               fontSize: 16, fontWeight: 900,
-              background: showForm ? "rgba(255,255,255,.1)" : "linear-gradient(135deg, #ffc44f, #f3a333)",
-              color: showForm ? "rgba(255,255,255,.6)" : "#0a0a0a",
+              background: showForm ? "rgba(255,255,255,.1)" : "var(--demo-btn-bg, linear-gradient(135deg, #ffc44f, #f3a333))",
+              color: showForm ? "rgba(255,255,255,.6)" : "var(--demo-btn-color, #0a0a0a)",
               display: "flex", alignItems: "center", gap: 6, textDecoration: "none", whiteSpace: "nowrap",
-              boxShadow: showForm ? "none" : "0 8px 20px rgba(244,166,35,.2)",
+              boxShadow: showForm ? "none" : "var(--demo-btn-shadow, 0 8px 20px rgba(244,166,35,.2))",
               transition: "all 0.2s ease",
               cursor: "pointer",
             }}
@@ -207,15 +207,16 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           bottom: 0, left: 0, right: 0,
           transform: "translateY(100%)",
           padding: "8px 14px",
-          background: "linear-gradient(135deg, rgba(255,196,79,.5), rgba(243,163,51,.4))",
-          borderBottom: "1px solid rgba(244,166,35,.5)",
+          background: "var(--demo-ribbon-bg, linear-gradient(135deg, #ffc44f, #f3a333))",
+          borderBottom: "var(--demo-ribbon-border, 1px solid #e89a2a)",
           textAlign: "center",
         }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.9)" }}>
-            Revisa los detalles de tu carta, corrige información y agrega fotografías desde tu panel
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#1a0e00", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            Vista previa · entra a tu panel para editar
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ animation: "arrowBounce 1.2s ease-in-out infinite" }}>
+              <path d="M12 19V5M5 10l7-7 7 7" stroke="#1a0e00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </span>
-          {/* Triangle pointing up toward the "Entrar a mi panel" button */}
-          <div style={{ position: "absolute", top: -8, right: 95, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: "8px solid rgba(249,180,65,.45)" }} />
         </div>
       )}
 

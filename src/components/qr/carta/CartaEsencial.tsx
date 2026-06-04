@@ -384,7 +384,7 @@ export default function CartaEsencial({
       background: C.gradient,
       fontFamily: "Georgia, 'Times New Roman', serif",
       color: C.ink,
-      paddingTop: (restaurant as any).isDemo && !onboardingActive ? 115 : 0,
+      paddingTop: (restaurant as any).isDemo && !onboardingActive ? 90 : 0,
     }}>
 
       {/* ══════ STICKY HEADER ══════ */}
@@ -699,7 +699,7 @@ export default function CartaEsencial({
 
       {/* ══════ CATEGORY PILLS ══════ */}
       <nav ref={catScrollRef} style={{
-        position: onboardingActive ? "relative" : "sticky", top: onboardingActive ? undefined : ((restaurant as any).isDemo ? 115 : 0), zIndex: 15,
+        position: onboardingActive ? "relative" : "sticky", top: onboardingActive ? undefined : ((restaurant as any).isDemo ? 105 : 0), zIndex: 15,
         display: "flex", gap: 10, overflowX: "auto", padding: "24px 18px 14px",
         scrollbarWidth: "none", msOverflowStyle: "none" as any,
         WebkitOverflowScrolling: "touch" as any,

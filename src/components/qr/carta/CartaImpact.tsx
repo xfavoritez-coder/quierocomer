@@ -1103,7 +1103,7 @@ export default function CartaImpact({
   return (
     <div
       className="min-h-screen font-[family-name:var(--font-dm)]"
-      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}
+      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 105 : 0 }}
     >
       {/* Ambient background */}
       <div style={{
@@ -1681,14 +1681,16 @@ export default function CartaImpact({
       })()}
 
       {/* FABs: lamp (Genio) + views (demo) + bell (waiter) */}
-      <FabSpeedDial
-        onLampClick={() => setGenioOpen(true)}
-        pinned={
-          <>
-            {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-          </>
-        }
-      />
+      {!(restaurant as any).isDemo && (
+        <FabSpeedDial
+          onLampClick={() => setGenioOpen(true)}
+          pinned={
+            <>
+              {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
+            </>
+          }
+        />
+      )}
 
       {/* Keyframe animations */}
       <style>{`

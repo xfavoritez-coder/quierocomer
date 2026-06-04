@@ -31,9 +31,11 @@ interface SettingsData {
 
 const ACCENT_OPTIONS = [
   { value: null, label: "Amber", color: "#F4A623" },
-  { value: "#C50E2C", label: "Rojo", color: "#C50E2C" },
-  { value: "#f472b6", label: "Rosa", color: "#f472b6" },
-  { value: "#1a3f8f", label: "Azul", color: "#1a3f8f" },
+  { value: "#ef4444", label: "Rojo", color: "#ef4444" },
+  { value: "#22c55e", label: "Verde", color: "#22c55e" },
+  { value: "#3b82f6", label: "Azul", color: "#3b82f6" },
+  { value: "#a855f7", label: "Morado", color: "#a855f7" },
+  { value: "#ec4899", label: "Rosa", color: "#ec4899" },
 ];
 
 const VIEW_OPTIONS = [

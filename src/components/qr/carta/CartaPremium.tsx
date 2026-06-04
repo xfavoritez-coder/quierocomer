@@ -350,7 +350,9 @@ export default function CartaPremium({
     if (recommended.length > 0) return sortPriority(recommended);
     const popular = sortPriority(withPhoto(dishes.filter(d => popularDishIds.has(d.id)))).slice(0, 3);
     if (popular.length > 0) return popular;
-    return sortPriority(withPhoto(dishes)).slice(0, 3);
+    const anyWithPhoto = sortPriority(withPhoto(dishes)).slice(0, 3);
+    if (anyWithPhoto.length > 0) return anyWithPhoto;
+    return sortPriority(dishes).slice(0, 3);
   }, [dishes, popularDishIds, lang]);
 
   // Hard rule: si el cliente filtra "_spicy", los picantes SIEMPRE van al final
@@ -480,7 +482,7 @@ export default function CartaPremium({
   }, [categories, hasPromos, dietNavItem]);
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 105 : 0 }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} onSearchClick={() => setSearchOpen(true)} />
 
       {/* Search overlay on CategoryNav */}
@@ -821,14 +823,16 @@ export default function CartaPremium({
       })()}
 
       {/* Floating buttons: lamp (Genio) + views (demo) + bell (waiter) */}
-      <FabSpeedDial
-        onLampClick={() => setGenioOpen(true)}
-        pinned={
-          <>
-            {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-          </>
-        }
-      />
+      {!(restaurant as any).isDemo && (
+        <FabSpeedDial
+          onLampClick={() => setGenioOpen(true)}
+          pinned={
+            <>
+              {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
+            </>
+          }
+        />
+      )}
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes genioNudgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }

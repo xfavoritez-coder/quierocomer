@@ -12,17 +12,26 @@ export default function DemoFirstViewModal({ restaurantSlug, restaurantName }: P
 
   useEffect(() => {
     const key = `qc_first_view_${restaurantSlug}`;
+    const reset = new URLSearchParams(window.location.search).has("fresh");
+    if (reset) {
+      localStorage.removeItem(key);
+      localStorage.removeItem(`qc_view_toast_${restaurantSlug}`);
+    }
     if (!localStorage.getItem(key)) {
       setShow(true);
-      localStorage.setItem(key, "1");
     }
   }, [restaurantSlug]);
+
+  const close = () => {
+    setShow(false);
+    localStorage.setItem(`qc_first_view_${restaurantSlug}`, "1");
+  };
 
   if (!show) return null;
 
   return (
     <div
-      onClick={() => setShow(false)}
+      onClick={close}
       style={{
         position: "fixed",
         inset: 0,
@@ -55,7 +64,7 @@ export default function DemoFirstViewModal({ restaurantSlug, restaurantName }: P
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 32, textAlign: "center", marginBottom: 10, lineHeight: 1 }}>⚡</div>
+        <div style={{ fontSize: 32, textAlign: "center", marginBottom: 10, lineHeight: 1 }}>⚠️</div>
 
         <h3 style={{
           fontFamily: "'Cormorant Garamond', serif",
@@ -66,7 +75,7 @@ export default function DemoFirstViewModal({ restaurantSlug, restaurantName }: P
           letterSpacing: "-0.02em",
           lineHeight: 1.1,
         }}>
-          Importante sobre tu nueva carta
+          Importante
         </h3>
 
         <p style={{
@@ -75,11 +84,11 @@ export default function DemoFirstViewModal({ restaurantSlug, restaurantName }: P
           lineHeight: 1.6,
           margin: "0 0 26px",
         }}>
-          Es posible que algunos precios, nombres o secciones no se hayan importado exactamente. Desde tu panel puedes corregir cualquier dato y subir tus fotos de forma simple, facil y rapida.
+          La nueva carta de <strong style={{ color: "#E8A33D" }}>{restaurantName}</strong> puede tener algunos precios o nombres que no se importaron exactamente. <strong style={{ color: "#F2E5CF" }}>Desde tu panel puedes corregir y editar todo</strong> de forma simple y rápida.
         </p>
 
         <button
-          onClick={() => setShow(false)}
+          onClick={close}
           style={{
             width: "100%",
             height: 48,

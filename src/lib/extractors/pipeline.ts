@@ -401,7 +401,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         logoUrl: extraction.logoUrl,
         cartaTheme: "PREMIUM",
         cartaColorMode: "DARK",
-        defaultView: "impact",
+        defaultView: "lista",
         enabledLangs: ["es", "en", "pt"],
         isActive: true,
         isDemo: true,
