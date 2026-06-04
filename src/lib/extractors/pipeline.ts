@@ -618,7 +618,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
         await sendAdminEmail({
           to: lead.email,
-          subject: `${ownerName}, tu carta está lista`,
+          subject: `${ownerName}, tu carta de ${restaurant.name} está lista`,
           html: cartaListaSimpleEmailHtml({ ownerName, restaurantName: restaurant.name, cartaUrl: clickUrl, openPixel, dishCount: createdDishes.length, categoryCount: categoryMap.size, logoUrl: extraction.logoUrl }),
           purpose: "funnel_carta_lista",
         });

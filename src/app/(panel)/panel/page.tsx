@@ -205,7 +205,7 @@ export default function PanelDashboard() {
           { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
           { key: "diet", label: "Elige tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
           // { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
-          { key: "qr", label: "Ver tu código QR", done: qrGenerated, qrAction: true },
+          { key: "qr", label: "Ver mi código QR", done: qrGenerated, qrAction: true },
         ];
         const doneCount = checks.filter(c => c.done).length;
         const pct = Math.round((doneCount / checks.length) * 100);

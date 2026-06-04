@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(`${baseUrl}/qr/${restaurant.slug}`)}`;
       await sendAdminEmail({
         to: lead.email,
-        subject: `${ownerName}, tu carta está lista`,
+        subject: `${ownerName}, tu carta de ${restaurant.name} está lista`,
         html: cartaListaSimpleEmailHtml({ ownerName, restaurantName: restaurant.name, cartaUrl: clickUrl, openPixel, dishCount, categoryCount: catCount, logoUrl: restaurant.logoUrl }),
         purpose: "funnel_carta_lista",
       });

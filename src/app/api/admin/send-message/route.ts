@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       purpose = "activation_welcome";
     } else if (template === "carta_lista") {
       html = cartaListaSimpleEmailHtml({ ownerName: firstName, restaurantName: restaurant.name, cartaUrl: qrLink, openPixel: "", dishCount: 0, categoryCount: 0 });
-      subject = `${firstName}, tu carta esta lista`;
+      subject = `${firstName}, tu carta de ${restaurant.name} está lista`;
       purpose = "funnel_carta_lista";
     } else if (template === "trial_por_vencer") {
       const daysLeft = restaurant.trialEndsAt ? Math.max(0, Math.ceil((restaurant.trialEndsAt.getTime() - Date.now()) / 86400000)) : 3;

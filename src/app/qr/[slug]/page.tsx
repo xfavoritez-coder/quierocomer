@@ -189,7 +189,7 @@ export default async function CartaPage({
             document.head.appendChild(s);
           }
           var o = localStorage.getItem("qc_theme_override");
-          if (o) {
+          if (o && ${hasDesignFeatures ? "true" : "false"}) {
             var el = document.currentScript.parentElement;
             el.classList.remove("carta-dark", "carta-light");
             el.classList.add(o === "dark" ? "carta-dark" : "carta-light");
