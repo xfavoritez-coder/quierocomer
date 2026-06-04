@@ -192,7 +192,7 @@ function ExitoContent() {
 
           {/* CTA */}
           <a
-            href="/panel"
+            href="/panel/suscripcion"
             style={{
               display: "block",
               width: "100%",
