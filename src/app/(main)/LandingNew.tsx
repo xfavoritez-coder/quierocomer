@@ -420,7 +420,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
                 ["Estadísticas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
                 ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
-              <PlanCard name="Premium" price={anual ? "$31.900" : "$39.900"} period={anual ? "/mes + IVA · $382.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
+              <PlanCard name="Premium" price={anual ? "$35.900" : "$44.900"} period={anual ? "/mes + IVA · $430.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Cross-selling", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
