@@ -42,6 +42,7 @@ export async function flowPost<T = any>(endpoint: string, params: FlowParams = {
   const { apiKey, secret, base } = getCreds();
   const body = buildSignedBody(params, apiKey, secret);
   const url = `${base}${endpoint}`;
+  console.log(`[flow] POST ${url} (base=${base})`);
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -51,11 +52,13 @@ export async function flowPost<T = any>(endpoint: string, params: FlowParams = {
   let data: any;
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
   if (!res.ok) {
+    console.error(`[flow] ERROR ${endpoint}: ${res.status} — ${data?.message || text} (code: ${data?.code})`);
     const err = new Error(`Flow ${endpoint} ${res.status}: ${data?.message || text}`);
     (err as any).code = data?.code;
     (err as any).status = res.status;
     throw err;
   }
+  console.log(`[flow] OK ${endpoint}: ${JSON.stringify(data).slice(0, 200)}`);
   return data as T;
 }
 

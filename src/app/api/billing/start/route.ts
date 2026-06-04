@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
   const commerceOrder = `b_${restaurantId.slice(-8)}_${Date.now().toString(36)}`;
 
   try {
+    console.log(`[billing/start] Creando pago Flow: ${restaurant.name}, plan=${plan}, monto=${amountGross}, order=${commerceOrder}`);
     const payment = await flowPost<{ url: string; token: string; flowOrder: number }>("/payment/create", {
       commerceOrder,
       subject: `${restaurant.name} — Plan ${planLabel} (1 mes)`,
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
       urlConfirmation: `${baseUrl}/api/billing/webhook`,
       urlReturn: `${baseUrl}/api/billing/return`,
     });
+    console.log(`[billing/start] Flow OK: token=${payment.token}, flowOrder=${payment.flowOrder}, url=${payment.url}`);
 
     await prisma.restaurant.update({
       where: { id: restaurant.id },
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: `${payment.url}?token=${payment.token}` });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
-    console.error("[billing/start]", msg);
+    console.error("[billing/start] ERROR:", msg, "code:", err?.code, "status:", err?.status);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
