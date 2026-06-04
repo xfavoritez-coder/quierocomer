@@ -29,6 +29,8 @@ interface Entry {
   lastActivity: string | null;
   salud: string;
   plan: string;
+  billingExempt: boolean;
+  subscriptionStatus: string;
   sessions7d: number;
   totalSessions: number;
   dishes: number;
@@ -411,6 +413,11 @@ export default function LifecyclePage() {
                   </div>
                 )}
 
+                {/* Plan & Billing */}
+                <PlanActions entry={entry} onUpdate={(updates) => {
+                  setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, ...updates } : e));
+                }} />
+
                 {/* Actions */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <ActionBtn label="👁 Ver carta" onClick={() => window.open(`/qr/${entry.slug}`, "_blank")} />
@@ -639,6 +646,97 @@ function ActivityBtn({ restaurantId, name }: { restaurantId: string; name: strin
       </button>
       {open && <ActivityModal restaurantId={restaurantId} name={name} onClose={() => setOpen(false)} />}
     </>
+  );
+}
+
+const PLAN_OPTIONS = ["FREE", "SILVER", "GOLD", "PREMIUM"] as const;
+const PLAN_COLORS: Record<string, string> = { FREE: "#22c55e", SILVER: "#94a3b8", GOLD: "#F4A623", PREMIUM: "#7c3aed" };
+
+function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<Entry>) => void }) {
+  const [saving, setSaving] = useState(false);
+  const [showPlanSelect, setShowPlanSelect] = useState(false);
+
+  const updateRestaurant = async (fields: Record<string, any>) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/locales/${entry.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      if (res.ok) {
+        onUpdate(fields as any);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Error al actualizar");
+      }
+    } catch { alert("Error de conexión"); }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+        Plan y facturación
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {/* Current plan badge */}
+        <span style={{
+          padding: "4px 12px", borderRadius: 99, fontSize: 12, fontWeight: 700,
+          background: `${PLAN_COLORS[entry.plan] || "#555"}18`,
+          color: PLAN_COLORS[entry.plan] || "#555",
+          border: `1px solid ${PLAN_COLORS[entry.plan] || "#555"}30`,
+        }}>
+          {entry.plan}
+        </span>
+
+        {/* Change plan */}
+        {!showPlanSelect ? (
+          <button onClick={(e) => { e.stopPropagation(); setShowPlanSelect(true); }} disabled={saving} style={{
+            padding: "4px 10px", borderRadius: 6, border: "1px solid #2a2a2a", background: "transparent",
+            color: "#888", fontSize: 11, fontWeight: 600, cursor: "pointer",
+          }}>
+            Cambiar plan
+          </button>
+        ) : (
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }} onClick={e => e.stopPropagation()}>
+            {PLAN_OPTIONS.map(p => (
+              <button key={p} onClick={() => {
+                updateRestaurant({ plan: p });
+                setShowPlanSelect(false);
+              }} disabled={saving || p === entry.plan} style={{
+                padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: p === entry.plan ? "default" : "pointer",
+                background: p === entry.plan ? `${PLAN_COLORS[p]}20` : "transparent",
+                border: `1px solid ${p === entry.plan ? PLAN_COLORS[p] : "#2a2a2a"}`,
+                color: PLAN_COLORS[p],
+                opacity: p === entry.plan ? 0.5 : 1,
+              }}>
+                {p}
+              </button>
+            ))}
+            <button onClick={() => setShowPlanSelect(false)} style={{
+              padding: "4px 8px", borderRadius: 6, border: "none", background: "transparent",
+              color: "#555", fontSize: 11, cursor: "pointer",
+            }}>✕</button>
+          </div>
+        )}
+
+        {/* Bonificado toggle */}
+        <button onClick={(e) => {
+          e.stopPropagation();
+          const next = !entry.billingExempt;
+          if (next && !confirm(`¿Marcar ${entry.name} como bonificado? No se le cobrará.`)) return;
+          updateRestaurant({ billingExempt: next });
+        }} disabled={saving} style={{
+          padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
+          background: entry.billingExempt ? "rgba(74,222,128,.1)" : "transparent",
+          border: entry.billingExempt ? "1px solid rgba(74,222,128,.3)" : "1px solid #2a2a2a",
+          color: entry.billingExempt ? "#4ade80" : "#888",
+        }}>
+          {entry.billingExempt ? "✓ Bonificado" : "Bonificar"}
+        </button>
+      </div>
+    </div>
   );
 }
 
