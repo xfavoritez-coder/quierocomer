@@ -266,7 +266,8 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [confirmTab, setConfirmTab] = useState<TabKey | null>(null);
-  const [status, setStatus] = useState<BillingStatus & { customPlanPriceNet?: number | null } | null>(null);
+  const [payerEmail, setPayerEmail] = useState("");
+  const [status, setStatus] = useState<BillingStatus & { customPlanPriceNet?: number | null; mpPayerEmail?: string | null } | null>(null);
   const FD = "var(--font-display)";
   const FB2 = "var(--font-body)";
   const features = PLAN_FEATURES_DISPLAY[tab] || [];
@@ -276,7 +277,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
     if (!restaurantId) return;
     fetch(`/api/billing/status?restaurantId=${restaurantId}`)
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => d && setStatus(d))
+      .then((d) => { if (d) { setStatus(d); if (d.mpPayerEmail) setPayerEmail(d.mpPayerEmail); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -305,7 +306,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
       const res = await fetch("/api/billing/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, plan: tab }),
+        body: JSON.stringify({ restaurantId, plan: tab, payerEmail: payerEmail.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
@@ -534,6 +535,28 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   </>
                 )}
               </div>
+
+              {!isPremiumTrial && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 11, color: "var(--adm-text3, #888)", marginBottom: 4, fontFamily: FD, textTransform: "uppercase", letterSpacing: ".08em" }}>
+                    Email de tu cuenta MercadoPago
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={payerEmail}
+                    onChange={e => setPayerEmail(e.target.value)}
+                    style={{
+                      width: "100%", padding: "10px 14px", height: 42, boxSizing: "border-box",
+                      background: "var(--adm-card, #fff)", border: "1px solid var(--adm-card-border, #ddd)",
+                      borderRadius: 8, color: "var(--adm-text, #1a1a1a)", fontFamily: FB2, fontSize: "0.88rem", outline: "none",
+                    }}
+                  />
+                  <p style={{ fontSize: 11, color: "var(--adm-text3, #888)", margin: "4px 0 0", lineHeight: 1.4, fontFamily: FB2 }}>
+                    Es el email con que inicias sesión en MercadoPago. Puede ser diferente al de tu cuenta en QuieroComer. Si no lo sabes, déjalo vacío y se usará tu email de registro.
+                  </p>
+                </div>
+              )}
 
               <div style={{ fontSize: 13, color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
                 {isPremiumTrial

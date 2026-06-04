@@ -661,6 +661,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
   const [showManualPayment, setShowManualPayment] = useState(false);
   const [mpPlan, setMpPlan] = useState<string>(entry.plan === "FREE" ? "GOLD" : entry.plan);
   const [mpMethod, setMpMethod] = useState<string>("transfer");
+  const [mpAmount, setMpAmount] = useState<string>("");
   const [mpNote, setMpNote] = useState("");
   const [showMpEmail, setShowMpEmail] = useState(false);
   const [mpEmailDraft, setMpEmailDraft] = useState(entry.mpPayerEmail || "");
@@ -690,7 +691,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
       const res = await fetch("/api/admin/manual-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: entry.id, plan: mpPlan, method: mpMethod, note: mpNote || undefined }),
+        body: JSON.stringify({ restaurantId: entry.id, plan: mpPlan, method: mpMethod, amount: mpAmount ? Number(mpAmount) : undefined, note: mpNote || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -825,6 +826,15 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
             <option value="cash">Efectivo</option>
             <option value="other">Otro</option>
           </select>
+          <input
+            placeholder="Monto bruto CLP"
+            value={mpAmount}
+            onChange={e => setMpAmount(e.target.value.replace(/\D/g, ""))}
+            style={{
+              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+              color: "#fff", padding: "0 8px", fontSize: 12, width: 110,
+            }}
+          />
           <input
             placeholder="Nota (opcional)"
             value={mpNote}

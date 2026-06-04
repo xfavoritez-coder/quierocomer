@@ -254,7 +254,7 @@ export default function SuscripcionPage() {
   const statusInfo = STATUS_LABEL[status.subscriptionStatus] || STATUS_LABEL.NONE;
   const isExempt = status.billingExempt;
   const isFree = status.plan === "FREE";
-  const hasActiveSub = status.hasSubscription && (status.subscriptionStatus === "TRIALING" || status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE");
+  const hasActiveSub = status.subscriptionStatus === "TRIALING" || status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE";
   const isCanceled = status.subscriptionStatus === "CANCELED";
   const inTrial = status.subscriptionStatus === "TRIALING";
   const monthlyNet = (status as any).customPlanPriceNet ?? planNetAmount(status.plan as PlanKey);

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    include: { owner: { select: { email: true, name: true } } },
+    select: { id: true, name: true, slug: true, customPlanPriceNet: true, owner: { select: { email: true, name: true } } },
   });
   if (!restaurant) {
     return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
   const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const amountGross = amount ?? grossOf(planConfig.amountNet);
+  const effectiveNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
+  const amountGross = amount ?? grossOf(effectiveNet);
 
   // Actualizar restaurante
   await prisma.restaurant.update({
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
     const planLabel = PLAN_LABELS[planKey as keyof typeof PLAN_LABELS] || planKey;
     const amountStr = `$${amountGross.toLocaleString("es-CL")} CLP`;
     const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-    const nextAmount = `$${grossOf(planConfig.amountNet).toLocaleString("es-CL")} CLP`;
+    const nextAmount = `$${grossOf(effectiveNet).toLocaleString("es-CL")} CLP`;
 
     sendAdminEmail({
       to: ownerEmail,

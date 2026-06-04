@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  let body: { restaurantId?: string; plan?: keyof typeof FLOW_PLANS };
+  let body: { restaurantId?: string; plan?: keyof typeof FLOW_PLANS; payerEmail?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Body inválido" }, { status: 400 }); }
 
-  const { restaurantId, plan } = body;
+  const { restaurantId, plan, payerEmail: bodyPayerEmail } = body;
   if (!restaurantId || !plan || !FLOW_PLANS[plan]) {
     return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
   }
@@ -46,9 +46,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Si el usuario envió un email de MP, guardarlo para futuras suscripciones
+    const effectivePayerEmail = bodyPayerEmail?.trim() || restaurant.mpPayerEmail || owner.email;
+    if (bodyPayerEmail?.trim() && bodyPayerEmail.trim() !== restaurant.mpPayerEmail) {
+      await prisma.restaurant.update({ where: { id: restaurant.id }, data: { mpPayerEmail: bodyPayerEmail.trim().toLowerCase() } }).catch(() => {});
+    }
+
     const subscription = await createMPSubscription({
       planKey: plan,
-      payerEmail: restaurant.mpPayerEmail || owner.email,
+      payerEmail: effectivePayerEmail,
       externalReference: restaurantId,
       backUrl: `${baseUrl}/api/billing/return?plan=${plan}`,
       amountNetOverride: restaurant.customPlanPriceNet ?? undefined,

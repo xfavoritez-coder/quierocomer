@@ -61,7 +61,14 @@ export default function CartaRouter(props: Props) {
   });
   const [profileOpen, setProfileOpen] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
-  const showLobby = !!(props.restaurant as any).showCategoryLobby;
+  const lobbyEnabled = !!(props.restaurant as any).showCategoryLobby;
+  // Lobby needs at least 3 active categories with active dishes to show
+  const hasEnoughForLobby = lobbyEnabled && (() => {
+    const activeCats = props.categories.filter(c => c.isActive);
+    const withDishes = activeCats.filter(c => props.dishes.some(d => d.categoryId === c.id && d.isActive));
+    return withDishes.length >= 3;
+  })();
+  const showLobby = hasEnoughForLobby;
   const [lobbyDismissed, setLobbyDismissed] = useState(false);
 
   // Browser back button returns to lobby
