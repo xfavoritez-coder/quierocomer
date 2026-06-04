@@ -48,7 +48,6 @@ export async function POST(req: NextRequest) {
 
     const subscription = await createMPSubscription({
       planKey: plan,
-      payerEmail: owner.email,
       externalReference: restaurantId,
       backUrl: `${baseUrl}/api/billing/return?plan=${plan}`,
       amountNetOverride: restaurant.customPlanPriceNet ?? undefined,

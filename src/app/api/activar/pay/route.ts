@@ -54,7 +54,6 @@ export async function POST(req: NextRequest) {
 
     const subscription = await createMPSubscription({
       planKey,
-      payerEmail: ownerEmail,
       externalReference: restaurantId,
       backUrl: `${baseUrl}/api/activar/pay/return?plan=${planKey}`,
       firstAmountGross,

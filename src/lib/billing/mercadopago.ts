@@ -153,8 +153,6 @@ export async function createMPPlan(planKey: string): Promise<MPPlanResult> {
 export type CreateMPSubscriptionParams = {
   /** Clave del plan: "GOLD" | "PREMIUM" */
   planKey: string;
-  /** Email del pagador */
-  payerEmail: string;
   /** Referencia externa (ej: restaurantId) */
   externalReference: string;
   /** Card token si se quiere asociar tarjeta de una vez */
@@ -220,7 +218,6 @@ export async function createMPSubscription(
 
   const body: Record<string, any> = {
     reason: planConfig.name,
-    payer_email: params.payerEmail,
     external_reference: params.externalReference,
     back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
     auto_recurring: autoRecurring,
@@ -242,7 +239,7 @@ export async function createMPSubscription(
     id: result.id,
     status: result.status ?? "pending",
     initPoint: result.init_point ?? "",
-    payerEmail: result.payer_email ?? params.payerEmail,
+    payerEmail: result.payer_email ?? "",
     externalReference: result.external_reference ?? params.externalReference,
     nextPaymentDate: result.next_payment_date ?? undefined,
   };
@@ -298,8 +295,6 @@ export type CreateMPPreferenceParams = {
   amountGross: number;
   /** Referencia externa (ej: restaurantId o activationId) */
   externalReference: string;
-  /** Email del pagador */
-  payerEmail: string;
   /** URL de notificacion webhook (IPN) */
   notificationUrl?: string;
   /** URLs de retorno personalizadas. Si no se proveen, usa /panel/suscripcion */
@@ -338,9 +333,6 @@ export async function createMPPreference(
           currency_id: "CLP",
         },
       ],
-      payer: {
-        email: params.payerEmail,
-      },
       external_reference: params.externalReference,
       back_urls: params.backUrls ?? {
         success: `${baseUrl}/panel/suscripcion?status=approved`,
