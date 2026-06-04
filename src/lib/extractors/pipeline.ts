@@ -711,56 +711,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           shouldNotify = true;
         }
 
+        // WA fail notification disabled — se maneja manualmente desde admin si es necesario
         if (shouldNotify) {
-          const SID = process.env.TWILIO_ACCOUNT_SID;
-          const TOKEN = process.env.TWILIO_AUTH_TOKEN;
-          const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
-          const FAIL_TEMPLATE = "HX0bdab227710250fd28be04263845fb99";
-          if (SID && TOKEN) {
-            const phone = lead.whatsapp.startsWith("+") ? lead.whatsapp : `+${lead.whatsapp}`;
-
-            // Count total fail WAs sent to this phone across all leads
-            const allPhoneLeads = await prisma.lead.findMany({
-              where: { whatsapp: lead.whatsapp, cartaStatus: "FAILED" },
-              select: { events: true },
-              orderBy: { createdAt: "desc" },
-              take: 20,
-            });
-            const totalFailWa = allPhoneLeads.reduce((count, l) => {
-              const evts = (Array.isArray(l.events) ? l.events : []) as any[];
-              return count + evts.filter((e: any) => e.action === "wa_fail_template_sent").length;
-            }, 0);
-
-            if (totalFailWa >= 2) {
-              console.log(`[Pipeline] Skipping fail WA to ${phone} — already sent ${totalFailWa} times (limit reached)`);
-            } else {
-              const ownerName = (lead.ownerName || "").split(" ")[0] || "Hola";
-              const params: Record<string, string> = {
-                From: FROM,
-                To: `whatsapp:${phone}`,
-                ContentSid: FAIL_TEMPLATE,
-                ContentVariables: JSON.stringify({ "1": ownerName }),
-              };
-              const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
-                method: "POST",
-                headers: { "Authorization": "Basic " + Buffer.from(`${SID}:${TOKEN}`).toString("base64"), "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams(params),
-                signal: AbortSignal.timeout(10000),
-              });
-              const data = await res.json();
-              if (data.sid) {
-                await prisma.lead.update({
-                  where: { id: leadId },
-                  data: {
-                    events: [...(Array.isArray(lead.events) ? (lead.events as any[]) : []), { ts: new Date().toISOString(), action: "wa_fail_template_sent" }] as any,
-                  },
-                });
-                console.log(`[Pipeline] Sent fail template WA to ${phone} (${totalFailWa + 1}/2)`);
-              } else {
-                console.log(`[Pipeline] Fail template WA error: ${data.error_message || data.message}`);
-              }
-            }
-          }
+          console.log(`[Pipeline] Fail WA disabled — would have notified ${lead.whatsapp} for lead ${leadId}`);
         }
       } catch {}
     }
