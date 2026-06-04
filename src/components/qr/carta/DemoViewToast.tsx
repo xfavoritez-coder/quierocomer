@@ -64,7 +64,7 @@ function applyAccent(color: string | null) {
 
 export default function DemoViewToast({ restaurantId, restaurantSlug, defaultView }: Props) {
   const [ready, setReady] = useState(false);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { view, setView } = useCartaView(defaultView);
   const [selected, setSelected] = useState<number | null>(() => {
     const idx = VIEWS.findIndex(v => v.value === (defaultView || view || "lista"));
@@ -77,20 +77,25 @@ export default function DemoViewToast({ restaurantId, restaurantSlug, defaultVie
   // Wait for DemoFirstViewModal to close, then show FAB
   useEffect(() => {
     const key = `qc_view_toast_${restaurantSlug}`;
+    const modalKey = `qc_first_view_${restaurantSlug}`;
+
+    // Already shown before — ready but collapsed (user can reopen via FAB)
     if (localStorage.getItem(key)) { setReady(true); return; }
 
-    const modalKey = `qc_first_view_${restaurantSlug}`;
+    // Modal 1 already closed — show expanded after brief delay
     if (localStorage.getItem(modalKey)) {
       setTimeout(() => { setReady(true); setOpen(true); localStorage.setItem(key, "1"); }, 600);
       return;
     }
+
+    // Wait for modal 1 to close, then show expanded
     const interval = setInterval(() => {
       if (localStorage.getItem(modalKey)) {
         clearInterval(interval);
         setTimeout(() => { setReady(true); setOpen(true); localStorage.setItem(key, "1"); }, 500);
       }
     }, 300);
-    setTimeout(() => { clearInterval(interval); setReady(true); setOpen(true); localStorage.setItem(key, "1"); }, 5000);
+    return () => clearInterval(interval);
   }, [restaurantSlug]);
 
   // Detect initial theme
