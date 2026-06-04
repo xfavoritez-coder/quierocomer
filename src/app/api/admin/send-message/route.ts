@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
-import { sendAdminEmail, resetPasswordEmailHtml, cartaListaSimpleEmailHtml, trialEndingSoonEmailHtml, trialExpiredEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail, adminEmailTemplate, btn, resetPasswordEmailHtml, cartaListaSimpleEmailHtml, trialEndingSoonEmailHtml, trialExpiredEmailHtml } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import bcrypt from "bcryptjs";
@@ -60,6 +60,26 @@ export async function POST(req: NextRequest) {
       html = trialExpiredEmailHtml(firstName, restaurant.name, `${BASE_URL}/panel/suscripcion`);
       subject = `${firstName}, tu prueba Premium termino`;
       purpose = "trial_expired";
+    } else if (template === "confirmar_whatsapp") {
+      html = adminEmailTemplate(`
+        <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0 0 12px;text-align:center;line-height:1.2;">
+          ${firstName}, necesitamos confirmar tu WhatsApp
+        </h1>
+        <p style="font-size:15px;color:#7a6547;line-height:1.6;text-align:center;margin:0 0 20px;">
+          El número de WhatsApp de <strong style="color:#e8930a;">${restaurant.name}</strong> que tenemos registrado parece estar incompleto. Para que todo funcione correctamente, necesitamos tu número correcto.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid rgba(232,147,10,.2);border-radius:14px;margin-bottom:20px;">
+          <tr><td style="padding:16px 18px;text-align:center;">
+            <p style="font-size:12px;color:#e8930a;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 8px;">¿Cómo actualizar tu WhatsApp?</p>
+            <p style="font-size:14px;color:#7a6547;line-height:1.5;margin:0;">
+              Entra a tu panel → <strong>Perfil</strong> → actualiza tu número de WhatsApp con los 9 dígitos (ej: 9 1234 5678).
+            </p>
+          </td></tr>
+        </table>
+        ${btn(`${BASE_URL}/panel/perfil`, "Ir a mi perfil")}
+      `);
+      subject = `${firstName}, confirma tu WhatsApp en QuieroComer`;
+      purpose = "whatsapp_confirmation";
     } else if (template === "reset_password") {
       const token = crypto.randomUUID();
       const expiry = new Date(Date.now() + 60 * 60 * 1000);

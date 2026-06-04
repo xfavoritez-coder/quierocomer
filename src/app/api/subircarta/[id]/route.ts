@@ -12,9 +12,16 @@ export async function PATCH(
     const body = await req.json();
     const { localName, ownerName, email, whatsapp } = body;
 
-    if (!localName || !ownerName || !email) {
+    if (!localName || !ownerName || !email || !whatsapp) {
       return NextResponse.json(
-        { error: "Nombre del local, tu nombre y correo son obligatorios." },
+        { error: "Nombre del local, tu nombre, correo y WhatsApp son obligatorios." },
+        { status: 400 },
+      );
+    }
+    const normalizedWa = normalizePhone(whatsapp);
+    if (!normalizedWa) {
+      return NextResponse.json(
+        { error: "El número de WhatsApp no es válido." },
         { status: 400 },
       );
     }
@@ -38,7 +45,7 @@ export async function PATCH(
         localName,
         ownerName,
         email,
-        whatsapp: normalizePhone(whatsapp),
+        whatsapp: normalizedWa,
         completedAt: existing.completedAt || new Date(),
       },
     });

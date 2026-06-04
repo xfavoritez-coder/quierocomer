@@ -219,9 +219,14 @@ export default function Paso2Client() {
     }
 
     const rawWa = whatsapp.trim();
-    const normalizedWa = rawWa ? normalizePhone(rawWa) : null;
-    if (rawWa && !normalizedWa) {
-      setError("El número de WhatsApp no es válido.");
+    if (!rawWa) {
+      setError("El WhatsApp es obligatorio.");
+      setLoading(false);
+      return;
+    }
+    const normalizedWa = normalizePhone(rawWa);
+    if (!normalizedWa) {
+      setError("El número de WhatsApp no es válido. Ingresa los 9 dígitos.");
       setLoading(false);
       return;
     }

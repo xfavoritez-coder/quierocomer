@@ -99,7 +99,7 @@ function card(content: string, accent = false): string {
   </table>`;
 }
 
-function btn(href: string, label: string, primary = true): string {
+export function btn(href: string, label: string, primary = true): string {
   return `<table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
     <a href="${href}" style="display:inline-block;${primary ? `background:${GOLD};color:#fff;` : `background:#fffaf1;color:#6c4d22;border:1px solid #e8dcc4;`}font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">${label}</a>
   </td></tr></table>`;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { normalizePhone } from "@/lib/normalizePhone";
 
 function getAuth(req: NextRequest) {
   const token = req.cookies.get("panel_token")?.value;
@@ -16,11 +17,11 @@ export async function GET(req: NextRequest) {
   try {
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      select: { name: true, email: true },
+      select: { name: true, email: true, whatsapp: true },
     });
     if (!owner) return NextResponse.json({ error: "Owner no encontrado" }, { status: 404 });
 
-    return NextResponse.json({ name: owner.name, email: owner.email });
+    return NextResponse.json({ name: owner.name, email: owner.email, whatsapp: owner.whatsapp });
   } catch (error) {
     console.error("Panel profile GET error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
@@ -32,7 +33,7 @@ export async function PUT(req: NextRequest) {
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   try {
-    const { name, currentPassword, newPassword } = await req.json();
+    const { name, whatsapp, currentPassword, newPassword } = await req.json();
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
@@ -45,6 +46,19 @@ export async function PUT(req: NextRequest) {
     // Update name if provided
     if (name !== undefined && name.trim()) {
       data.name = name.trim();
+    }
+
+    // Update whatsapp if provided
+    if (whatsapp !== undefined) {
+      if (whatsapp) {
+        const normalized = normalizePhone(whatsapp);
+        if (!normalized) {
+          return NextResponse.json({ error: "El número de WhatsApp no es válido" }, { status: 400 });
+        }
+        data.whatsapp = normalized;
+      } else {
+        data.whatsapp = null;
+      }
     }
 
     // Handle password change if provided

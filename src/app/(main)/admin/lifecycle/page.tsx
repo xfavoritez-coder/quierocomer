@@ -677,6 +677,7 @@ const EMAIL_TEMPLATES = [
   { key: "trial_por_vencer", label: "Trial por vencer", desc: "Aviso de que quedan pocos dias de prueba" },
   { key: "trial_vencido", label: "Trial vencido", desc: "Su prueba Premium termino, opciones de plan" },
   { key: "reset_password", label: "Recuperar contraseña", desc: "Link para resetear contraseña" },
+  { key: "confirmar_whatsapp", label: "Confirmar WhatsApp", desc: "Pide que actualice su numero de WhatsApp en el perfil" },
 ];
 const WA_TEMPLATES = [
   { key: "carta_lista", label: "Tu carta esta lista", desc: "Template aprobado: carta lista con link" },
