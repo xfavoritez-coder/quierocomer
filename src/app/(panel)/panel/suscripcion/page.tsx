@@ -352,6 +352,17 @@ export default function SuscripcionPage() {
           </div>
         )}
 
+        {!isExempt && !isFree && !hasActiveSub && !inTrial && !isCanceled && (
+          <div style={{ background: "rgba(244,166,35,.06)", border: "1px solid rgba(244,166,35,.15)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
+            <p style={{ fontSize: "0.9rem", color: "var(--adm-text)", margin: "0 0 6px", fontWeight: 700 }}>
+              Tu plan no tiene una suscripción activa
+            </p>
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              Elige un plan y activa tu suscripción para disfrutar de todas las funciones.
+            </p>
+          </div>
+        )}
+
         {!isExempt && isCanceled && status.currentPeriodEnd && (
           <div style={{ background: "rgba(251,191,36,.06)", border: "1px solid rgba(251,191,36,.2)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.9rem", color: "#fbbf24", margin: "0 0 4px", fontWeight: 700 }}>
@@ -400,7 +411,7 @@ export default function SuscripcionPage() {
 
         {/* Actions */}
         <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16, marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {!isExempt && (isFree || inTrial) && (
+          {!isExempt && !hasActiveSub && !isCanceled && (
             <button onClick={handleUpgrade} style={{
               flex: 1, minWidth: 200, padding: "13px 18px",
               background: `linear-gradient(135deg, #ffc44f, ${GOLD})`, color: "#100b03",
