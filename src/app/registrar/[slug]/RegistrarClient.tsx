@@ -253,7 +253,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
             )}
 
             {plan !== "FREE" && (
-              <div className="rg-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía <svg width="12" height="12" viewBox="0 0 48 48" style={{ display: "inline", verticalAlign: "-2px", marginLeft: 3 }}><circle cx="24" cy="24" r="24" fill="#009ee3"/><path d="M15.8 19.5c0-1 .4-1.9 1-2.6a3.7 3.7 0 0 1 2.7-1.1c1 0 1.9.4 2.6 1.1.7.7 1.1 1.6 1.1 2.6v8.9h-7.4v-8.9zm9.8 0c0-1 .4-1.9 1.1-2.6a3.7 3.7 0 0 1 2.6-1.1c1 0 2 .4 2.7 1.1.7.7 1 1.6 1 2.6v8.9h-7.4v-8.9z" fill="#fff"/></svg> MercadoPago</div>
+              <div className="rg-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía Webpay</div>
             )}
           </section>
           </div>
@@ -323,7 +323,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
               </div>
 
               <div style={{ fontSize: 12, color: "#888", textAlign: "center", marginBottom: 16 }}>
-                Serás redirigido a MercadoPago para completar tu pago de forma segura.
+                Serás redirigido a Webpay para completar tu pago con tarjeta.
               </div>
 
               {error && <div style={{ color: "#e85d5d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>{error}</div>}
@@ -333,12 +333,12 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
                 onClick={() => handleActivar()}
                 style={{ width: "100%", padding: 15, background: "linear-gradient(135deg,#ffc44f,#f3a333)", color: "#100b03", border: "none", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: loading ? "wait" : "pointer", opacity: loading ? 0.6 : 1, boxShadow: "0 12px 28px rgba(245,164,51,.22)" }}
               >
-                {loading ? "Redirigiendo a MercadoPago..." : `Pagar $${p.total.toLocaleString("es-CL")} CLP`}
+                {loading ? "Redirigiendo a Webpay..." : `Pagar $${p.total.toLocaleString("es-CL")} CLP`}
               </button>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "#666" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                Pago 100% seguro · vía <svg width="12" height="12" viewBox="0 0 48 48" style={{ display: "inline", verticalAlign: "-2px", marginLeft: 3 }}><circle cx="24" cy="24" r="24" fill="#009ee3"/><path d="M15.8 19.5c0-1 .4-1.9 1-2.6a3.7 3.7 0 0 1 2.7-1.1c1 0 1.9.4 2.6 1.1.7.7 1.1 1.6 1.1 2.6v8.9h-7.4v-8.9zm9.8 0c0-1 .4-1.9 1.1-2.6a3.7 3.7 0 0 1 2.6-1.1c1 0 2 .4 2.7 1.1.7.7 1 1.6 1 2.6v8.9h-7.4v-8.9z" fill="#fff"/></svg> MercadoPago
+                Pago 100% seguro · vía Webpay
               </div>
             </div>
           </div>

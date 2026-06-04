@@ -539,7 +539,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               <div style={{ fontSize: 13, color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
                 {isPremiumTrial
                   ? "No se te cobra nada. Tu periodo de prueba de 14 días se activa de inmediato."
-                  : "Serás redirigido a MercadoPago para completar tu pago. Puedes pagar con cualquier cuenta."
+                  : "Serás redirigido a Webpay para completar tu pago con tarjeta de débito o crédito."
                 }
               </div>
 
@@ -559,7 +559,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               {!isPremiumTrial && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "var(--adm-text3, #888)" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                Pago seguro vía MercadoPago
+                Pago seguro vía Webpay
               </div>
               )}
             </div>

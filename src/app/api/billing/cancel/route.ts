@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cancelMPSubscription } from "@/lib/billing/mercadopago";
 
 /**
  * POST /api/billing/cancel
@@ -8,8 +7,6 @@ import { cancelMPSubscription } from "@/lib/billing/mercadopago";
  *
  * Cancela el plan. El restaurante mantiene acceso hasta el final del periodo
  * pagado (currentPeriodEnd), después baja a FREE automáticamente (vía cron).
- *
- * Si hay una suscripción recurrente legacy en MP, también se cancela.
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -29,21 +26,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
   }
 
-  // Si hay suscripción recurrente legacy en MP, cancelarla
-  if (restaurant.mpSubscriptionId) {
-    try {
-      await cancelMPSubscription(restaurant.mpSubscriptionId);
-    } catch (err: any) {
-      console.warn("[billing/cancel] cancelMPSubscription falló:", err?.message);
-    }
-  }
-
   await prisma.restaurant.update({
     where: { id: restaurant.id },
-    data: {
-      subscriptionStatus: "CANCELED",
-      mpSubscriptionId: null,
-    },
+    data: { subscriptionStatus: "CANCELED" },
   });
 
   return NextResponse.json({ ok: true });

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createMPPreference } from "@/lib/billing/mercadopago";
+import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS, grossOf, PLAN_LABELS } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/billing/start
  * Body: { restaurantId, plan: "SILVER" | "GOLD" | "PREMIUM" }
  *
- * Crea un pago único (Checkout Pro) en MercadoPago.
- * Cualquier persona puede pagar con cualquier cuenta de MP.
+ * Crea un pago único en Flow.cl (Webpay). El cliente paga con su tarjeta
+ * sin necesitar cuenta de ninguna plataforma.
  * El ciclo de 30 días se maneja internamente al confirmar el pago.
  */
 export async function POST(req: NextRequest) {
@@ -38,25 +38,24 @@ export async function POST(req: NextRequest) {
   const amountNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
   const amountGross = grossOf(amountNet);
   const planLabel = PLAN_LABELS[plan] || plan;
+  const commerceOrder = `billing_${restaurantId}_${Date.now()}`;
 
   try {
-    const preference = await createMPPreference({
-      title: `${restaurant.name} — Plan ${planLabel} (1 mes)`,
-      amountGross,
-      externalReference: restaurantId,
-      backUrls: {
-        success: `${baseUrl}/api/billing/return?plan=${plan}&status=approved`,
-        failure: `${baseUrl}/panel/suscripcion?status=failure`,
-        pending: `${baseUrl}/panel/suscripcion?status=pending`,
-      },
+    const payment = await flowPost<{ url: string; token: string; flowOrder: number }>("/payment/create", {
+      commerceOrder,
+      subject: `${restaurant.name} — Plan ${planLabel} (1 mes)`,
+      amount: amountGross,
+      email: owner.email,
+      urlConfirmation: `${baseUrl}/api/billing/webhook`,
+      urlReturn: `${baseUrl}/api/billing/return?plan=${plan}`,
     });
 
     await prisma.restaurant.update({
       where: { id: restaurant.id },
-      data: { pendingMpPlanId: planConfig.planId },
+      data: { pendingFlowPlanId: planConfig.planId, flowRegisterToken: payment.token },
     });
 
-    return NextResponse.json({ url: preference.initPoint });
+    return NextResponse.json({ url: `${payment.url}?token=${payment.token}` });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[billing/start]", msg);

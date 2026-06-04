@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createMPPreference } from "@/lib/billing/mercadopago";
+import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS, PLAN_LABELS, activationPromoAmount, grossOf } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/activar/pay
  * Body: { restaurantId, plan: "SILVER" | "GOLD" | "PREMIUM", skipPromo?: boolean }
  *
- * Crea un pago único (Checkout Pro) en MercadoPago para activación desde demo.
+ * Crea un pago único en Flow.cl (Webpay) para activación desde demo.
  * Con promo: primer mes a precio reducido.
  */
 export async function POST(req: NextRequest) {
@@ -28,6 +28,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Restaurante no encontrado o ya activado" }, { status: 404 });
   }
 
+  const ownerEmail = restaurant.owner?.email;
+  if (!ownerEmail) {
+    return NextResponse.json({ error: "No hay email del dueño. Contacta soporte." }, { status: 400 });
+  }
+
   const planKey = plan as "SILVER" | "GOLD" | "PREMIUM";
   const planConfig = FLOW_PLANS[planKey];
   const planLabel = PLAN_LABELS[planKey] || planKey;
@@ -37,25 +42,24 @@ export async function POST(req: NextRequest) {
   const promoNet = skipPromo ? null : activationPromoAmount(planKey);
   const amountNet = promoNet ?? planConfig.amountNet;
   const amountGross = grossOf(amountNet);
+  const commerceOrder = `activar_${restaurantId}_${Date.now()}`;
 
   try {
-    const preference = await createMPPreference({
-      title: `${restaurant.name} — Plan ${planLabel}${promoNet !== null ? " (primer mes promo)" : ""} (1 mes)`,
-      amountGross,
-      externalReference: restaurantId,
-      backUrls: {
-        success: `${baseUrl}/api/activar/pay/return?plan=${planKey}&status=approved`,
-        failure: `${baseUrl}/activar/${restaurant.slug}?status=failure`,
-        pending: `${baseUrl}/activar/${restaurant.slug}?status=pending`,
-      },
+    const payment = await flowPost<{ url: string; token: string; flowOrder: number }>("/payment/create", {
+      commerceOrder,
+      subject: `${restaurant.name} — Plan ${planLabel}${promoNet !== null ? " (primer mes promo)" : ""} (1 mes)`,
+      amount: amountGross,
+      email: ownerEmail,
+      urlConfirmation: `${baseUrl}/api/billing/webhook`,
+      urlReturn: `${baseUrl}/api/activar/pay/return?plan=${planKey}`,
     });
 
     await prisma.restaurant.update({
       where: { id: restaurant.id },
-      data: { pendingMpPlanId: planConfig.planId },
+      data: { pendingFlowPlanId: planConfig.planId, flowRegisterToken: payment.token },
     });
 
-    return NextResponse.json({ url: preference.initPoint });
+    return NextResponse.json({ url: `${payment.url}?token=${payment.token}` });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[activar/pay]", msg);
