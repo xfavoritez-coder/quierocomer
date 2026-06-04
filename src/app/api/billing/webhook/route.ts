@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
-import { planFromFlowId } from "@/lib/billing/plans-config";
+import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
+import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
  * POST /api/billing/webhook
@@ -25,10 +26,13 @@ export async function POST(req: NextRequest) {
   // Buscar restaurant — flowRegisterToken puede ser "token|flowOrder"
   let restaurant = await prisma.restaurant.findFirst({
     where: { flowRegisterToken: { startsWith: token } },
+    include: { owner: { select: { email: true, name: true } } },
   });
   if (!restaurant) {
-    // Intentar búsqueda exacta por si no tiene |flowOrder
-    restaurant = await prisma.restaurant.findFirst({ where: { flowRegisterToken: token } });
+    restaurant = await prisma.restaurant.findFirst({
+      where: { flowRegisterToken: token },
+      include: { owner: { select: { email: true, name: true } } },
+    });
   }
 
   if (!restaurant) {
@@ -114,6 +118,27 @@ export async function POST(req: NextRequest) {
       // No borrar flowRegisterToken — el return handler lo necesita
     },
   });
+
+  // Email de confirmación
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const ownerEmail = restaurant.owner?.email;
+  if (ownerEmail) {
+    const planKey = appPlan as Exclude<PlanKey, "FREE">;
+    const ownerName = restaurant.owner?.name || ownerEmail.split("@")[0] || "Hola";
+    const planLabel = PLAN_LABELS[planKey as keyof typeof PLAN_LABELS] || planKey;
+    const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[planKey]?.amountNet ?? 0;
+    const chargeGross = grossOf(amountNet);
+    const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+    const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+    const nextAmount = `$${grossOf(FLOW_PLANS[planKey]?.amountNet ?? 0).toLocaleString("es-CL")} CLP`;
+
+    sendAdminEmail({
+      to: ownerEmail,
+      subject: `${restaurant.name} · Plan ${planLabel} activado`,
+      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, `${baseUrl}/panel`, `${baseUrl}/qr/${restaurant.slug}`),
+      purpose: "plan_activated",
+    }).catch(() => {});
+  }
 
   console.log(`[billing/webhook] ✅ Pago confirmado y plan activado: ${restaurant.name} → ${appPlan}`);
   return NextResponse.json({ ok: true, plan: appPlan });
