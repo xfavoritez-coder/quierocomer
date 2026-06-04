@@ -77,16 +77,12 @@ export async function PUT(req: NextRequest) {
     }
 
     // Handle password change if provided
-    if (currentPassword && newPassword) {
+    if (newPassword) {
       if (newPassword.length < 8) {
         return NextResponse.json({ error: "La nueva contraseña debe tener al menos 8 caracteres" }, { status: 400 });
       }
       if (!/\d/.test(newPassword)) {
         return NextResponse.json({ error: "La nueva contraseña debe contener al menos 1 número" }, { status: 400 });
-      }
-      const valid = await bcrypt.compare(currentPassword, owner.passwordHash);
-      if (!valid) {
-        return NextResponse.json({ error: "Contraseña actual incorrecta" }, { status: 401 });
       }
       data.passwordHash = await bcrypt.hash(newPassword, 10);
       data.mustChangePassword = false;

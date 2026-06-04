@@ -24,6 +24,9 @@ export default function PanelPerfilPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [weeklyEmail, setWeeklyEmail] = useState(true);
   const [savingWeekly, setSavingWeekly] = useState(false);
+  const [mpEmail, setMpEmail] = useState("");
+  const [mpEmailOriginal, setMpEmailOriginal] = useState("");
+  const [savingMpEmail, setSavingMpEmail] = useState(false);
   const { selectedRestaurantId } = useAdminSession();
 
   useEffect(() => {
@@ -39,8 +42,14 @@ export default function PanelPerfilPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-    // Fetch weekly email preference
+    // Fetch restaurant preferences
     if (selectedRestaurantId) {
+      fetch(`/api/billing/status?restaurantId=${selectedRestaurantId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.mpPayerEmail) { setMpEmail(data.mpPayerEmail); setMpEmailOriginal(data.mpPayerEmail); }
+        })
+        .catch(() => {});
       fetch(`/api/admin/locales/${selectedRestaurantId}`)
         .then(r => r.json())
         .then(data => { if (data.weeklyEmailEnabled !== undefined) setWeeklyEmail(data.weeklyEmailEnabled); })
@@ -80,8 +89,8 @@ export default function PanelPerfilPage() {
   };
 
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("Todos los campos de contraseña son requeridos");
+    if (!newPassword || !confirmPassword) {
+      toast.error("Ingresa y confirma tu nueva contraseña");
       return;
     }
     if (newPassword.length < 8) { toast.error("La nueva contraseña debe tener al menos 8 caracteres"); return; }
@@ -92,7 +101,7 @@ export default function PanelPerfilPage() {
       const res = await fetch("/api/panel/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({ newPassword }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error al cambiar contraseña"); setSavingPassword(false); return; }
@@ -160,6 +169,52 @@ export default function PanelPerfilPage() {
         </button>
       </div>
 
+      {/* Email MercadoPago */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Email de MercadoPago</h2>
+        <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 14px", lineHeight: 1.5 }}>
+          Es el email con que inicias sesión en MercadoPago para pagar. Puede ser diferente al de tu cuenta en QuieroComer. Si lo dejas vacío, se usará tu email de registro.
+        </p>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            value={mpEmail}
+            onChange={e => setMpEmail(e.target.value)}
+            placeholder={email || "tu@email-mercadopago.com"}
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            onClick={async () => {
+              setSavingMpEmail(true);
+              try {
+                const val = mpEmail.trim().toLowerCase() || null;
+                const res = await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ mpPayerEmail: val }),
+                });
+                if (res.ok) {
+                  setMpEmailOriginal(val || "");
+                  toast.success(val ? "Email de MercadoPago guardado" : "Email de MercadoPago eliminado");
+                } else {
+                  toast.error("Error al guardar");
+                }
+              } catch { toast.error("Error de conexión"); }
+              setSavingMpEmail(false);
+            }}
+            disabled={savingMpEmail || mpEmail.trim().toLowerCase() === mpEmailOriginal}
+            style={{
+              padding: "10px 18px", background: GOLD, color: "white",
+              fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+              border: "none", borderRadius: 8,
+              cursor: savingMpEmail || mpEmail.trim().toLowerCase() === mpEmailOriginal ? "default" : "pointer",
+              opacity: savingMpEmail || mpEmail.trim().toLowerCase() === mpEmailOriginal ? 0.5 : 1,
+            }}
+          >
+            {savingMpEmail ? "..." : "Guardar"}
+          </button>
+        </div>
+      </div>
+
       {/* Weekly email */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -194,10 +249,6 @@ export default function PanelPerfilPage() {
         <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 16px" }}>Cambiar contraseña</h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Contraseña actual</label>
-            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="Tu contraseña actual" style={inputStyle} />
-          </div>
           <div>
             <label style={labelStyle}>Nueva contraseña</label>
             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mín. 8 caracteres, 1 número" style={inputStyle} />
