@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const promoNet = skipPromo ? null : activationPromoAmount(planKey);
   const amountNet = promoNet ?? planConfig.amountNet;
   const amountGross = grossOf(amountNet);
-  const commerceOrder = `activar_${restaurantId}_${Date.now()}`;
+  const commerceOrder = `a_${restaurantId.slice(-8)}_${Date.now().toString(36)}`;
 
   try {
     const payment = await flowPost<{ url: string; token: string; flowOrder: number }>("/payment/create", {

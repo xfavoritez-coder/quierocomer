@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const amountNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
   const amountGross = grossOf(amountNet);
   const planLabel = PLAN_LABELS[plan] || plan;
-  const commerceOrder = `billing_${restaurantId}_${Date.now()}`;
+  const commerceOrder = `b_${restaurantId.slice(-8)}_${Date.now().toString(36)}`;
 
   try {
     const payment = await flowPost<{ url: string; token: string; flowOrder: number }>("/payment/create", {
