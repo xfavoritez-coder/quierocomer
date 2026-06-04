@@ -9,11 +9,16 @@ import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } f
  *
  * Flow redirige aquí después del pago para activación desde demo.
  */
-export async function GET(req: NextRequest) {
-  const params = req.nextUrl.searchParams;
-  const token = params.get("token");
-  const planParam = params.get("plan");
+async function handleReturn(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
+
+  let token = req.nextUrl.searchParams.get("token");
+  if (!token && req.method === "POST") {
+    try {
+      const form = await req.formData();
+      token = (form.get("token") as string) || null;
+    } catch {}
+  }
 
   if (!token) {
     return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
@@ -47,7 +52,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${restaurant.plan}`);
   }
 
-  const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || planParam || "PREMIUM") as "SILVER" | "GOLD" | "PREMIUM";
+  const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || "PREMIUM") as "SILVER" | "GOLD" | "PREMIUM";
   const planKey = appPlan as Exclude<PlanKey, "FREE">;
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[planKey].amountNet;
@@ -104,3 +109,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
 }
+
+export async function GET(req: NextRequest) { return handleReturn(req); }
+export async function POST(req: NextRequest) { return handleReturn(req); }

@@ -5,15 +5,21 @@ import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "
 import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
- * GET /api/billing/return?token=...&plan=...
+ * GET|POST /api/billing/return?token=... (or token in POST body)
  *
- * Flow redirige aquí después del pago. Verificamos el estado y activamos.
+ * Flow redirige aquí después del pago. Soporta GET (query) y POST (form body).
  */
-export async function GET(req: NextRequest) {
-  const params = req.nextUrl.searchParams;
-  const token = params.get("token");
-  const planParam = params.get("plan");
+async function handleReturn(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
+
+  // Flow puede enviar token como query param (GET) o en el body (POST)
+  let token = req.nextUrl.searchParams.get("token");
+  if (!token && req.method === "POST") {
+    try {
+      const form = await req.formData();
+      token = (form.get("token") as string) || null;
+    } catch {}
+  }
 
   if (!token) {
     return NextResponse.redirect(`${baseUrl}/panel/suscripcion?status=error`);
@@ -43,7 +49,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/panel/suscripcion?status=error`);
   }
 
-  const appPlan = ((restaurant.pendingFlowPlanId ? planFromFlowId(restaurant.pendingFlowPlanId) : planParam) || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";
+  const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[appPlan as Exclude<PlanKey, "FREE">]?.amountNet ?? 0;
 
@@ -80,3 +86,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.redirect(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);
 }
+
+export async function GET(req: NextRequest) { return handleReturn(req); }
+export async function POST(req: NextRequest) { return handleReturn(req); }

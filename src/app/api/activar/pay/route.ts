@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       amount: amountGross,
       email: ownerEmail,
       urlConfirmation: `${baseUrl}/api/billing/webhook`,
-      urlReturn: `${baseUrl}/api/activar/pay/return?plan=${planKey}`,
+      urlReturn: `${baseUrl}/api/activar/pay/return`,
     });
 
     await prisma.restaurant.update({
