@@ -165,6 +165,8 @@ export type CreateMPSubscriptionParams = {
   startDate?: Date;
   /** Monto bruto del primer mes (promo). Si no se provee, cobra regular desde el inicio */
   firstAmountGross?: number;
+  /** Override del monto neto mensual (CLP). Si se provee, reemplaza el precio del plan */
+  amountNetOverride?: number;
 };
 
 export type MPSubscriptionResult = {
@@ -192,7 +194,8 @@ export async function createMPSubscription(
   const planConfig = FLOW_PLANS[key];
   if (!planConfig) throw new Error(`Plan "${params.planKey}" no existe`);
 
-  const amountGross = grossOf(planConfig.amountNet);
+  const amountNet = params.amountNetOverride ?? planConfig.amountNet;
+  const amountGross = grossOf(amountNet);
 
   const autoRecurring: Record<string, any> = {
     frequency: 1,

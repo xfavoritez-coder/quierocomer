@@ -8,10 +8,11 @@ import { trialEndingSoonEmailHtml } from "@/lib/email/sendAdminEmail";
 export async function GET() {
   const html = trialEndingSoonEmailHtml(
     "Daniel",
-    "Sushi Master",
+    "El Menú de la Esquina",
     2,
     "https://quierocomer.cl/panel",
     "https://quierocomer.cl/panel/suscripcion",
+    "el-menu-de-la-esquina",
   );
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });

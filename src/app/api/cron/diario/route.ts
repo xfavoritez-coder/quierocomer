@@ -94,6 +94,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
+        slug: true,
         trialEndsAt: true,
         owner: { select: { email: true, name: true } },
       },
@@ -111,7 +112,7 @@ export async function GET(req: NextRequest) {
           await sendAdminEmail({
             to: r.owner.email,
             subject: `🎁 Tu regalo termina ${daysLeft === 1 ? "mañana" : `en ${daysLeft} días`}`,
-            html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/suscripcion`),
+            html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/suscripcion`, r.slug),
             purpose: "trial_reminder",
           });
           await prisma.restaurant.update({

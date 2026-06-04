@@ -203,9 +203,9 @@ export default function PanelDashboard() {
       {!isDemo && restSettings && (() => {
         const checks = [
           { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
-          { key: "diet", label: "Confirma tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
+          { key: "diet", label: "Elige tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
           // { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
-          { key: "qr", label: "Imprime tu código QR", done: qrGenerated, qrAction: true },
+          { key: "qr", label: "Descarga tu código QR", done: qrGenerated, qrAction: true },
         ];
         const doneCount = checks.filter(c => c.done).length;
         const pct = Math.round((doneCount / checks.length) * 100);
@@ -285,7 +285,7 @@ export default function PanelDashboard() {
                       background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
                       color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
                       whiteSpace: "nowrap",
-                    }}>{(c as any).modal === "ig" ? "Agregar" : "Configurar"}</button>
+                    }}>{(c as any).modal === "ig" ? "Agregar" : "Elegir"}</button>
                   ) : (
                     <Link href={(c as any).href!} style={{
                       padding: "5px 12px", borderRadius: 999, textDecoration: "none",

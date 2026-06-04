@@ -45,7 +45,8 @@ interface Entry {
   cartaType: string | null;
   leadTimeline: { deliveredAt: string | null; emailOpenedAt: string | null; emailClickedAt: string | null; activatedAt: string | null } | null;
   emailsSent: { purpose: string; status: string; openedAt: string | null; clickedAt: string | null; createdAt: string }[];
-  recentActivity: { action: string; createdAt: string }[];
+  recentActivity: { action: string; details?: any; createdAt: string }[];
+  leadEvents: any[];
 }
 
 interface Stats {
@@ -368,22 +369,16 @@ export default function LifecyclePage() {
                   </div>
                 )}
 
-                {/* Recent activity timeline */}
-                {entry.recentActivity.length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                      Actividad reciente
+                {/* Timeline visual */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Timeline
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {entry.recentActivity.slice(0, 8).map((a, i) => (
-                        <div key={i} style={{ display: "flex", gap: 8, fontSize: 12 }}>
-                          <span style={{ color: "#555", minWidth: 90 }}>{new Date(a.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                          <span style={{ color: "#999" }}>{ACTION_LABELS[a.action] || a.action}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <ActivityBtn restaurantId={entry.id} name={entry.name} />
                   </div>
-                )}
+                  <TimelineSection entry={entry} />
+                </div>
 
                 {/* Email/WA communication history */}
                 {(entry.leadTimeline || entry.emailsSent?.length > 0 || entry.nurturingSent?.length > 0) && (
@@ -447,6 +442,203 @@ export default function LifecyclePage() {
         )}
       </div>
     </div>
+  );
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+const DOT_COLORS: Record<string, string> = { gold: GOLD, green: "#4ade80", blue: "#60a5fa", purple: "#a855f7", red: "#f87171" };
+
+function TimelineSection({ entry }: { entry: Entry }) {
+  const items: { time: string; text: string; dot: string }[] = [];
+
+  // Lead events
+  if (entry.leadEvents?.length > 0) {
+    for (const ev of entry.leadEvents) {
+      const action = ev.action || "";
+      const ts = ev.ts || "";
+      let text = action;
+      if (action === "paso1_completed") text = `Subio carta via ${ev.mode || "link"}`;
+      else if (action === "paso2_loaded") text = "Cargo formulario paso 2";
+      else if (action === "paso2_completed") text = "Completo datos (email, nombre)";
+      else if (action === "confirmacion_loaded") text = "Vio confirmacion";
+      else if (action === "carta_ready") text = "Carta lista";
+      else if (action === "onboard_start") text = "Inicio onboarding";
+      else if (action === "onboard_done") text = "Completo onboarding (6/6)";
+      else if (action.startsWith("onboard_step")) text = `Onboarding paso ${ev.stepName || ""}`;
+      else if (action === "panel_visit") text = `Visito panel: ${ev.section || ""}`;
+      else if (action === "email_failure_sent") text = `Email de ayuda enviado`;
+      else if (action === "wa_fail_template_sent") text = "WhatsApp de fallo enviado";
+      items.push({ time: ts, text, dot: action.includes("done") || action.includes("ready") ? "green" : action.includes("fail") ? "red" : "blue" });
+    }
+  }
+
+  // Lead timeline milestones
+  if (entry.leadTimeline) {
+    const lt = entry.leadTimeline;
+    if (lt.deliveredAt) items.push({ time: lt.deliveredAt, text: "Email carta lista enviado", dot: "gold" });
+    if (lt.emailOpenedAt) items.push({ time: lt.emailOpenedAt, text: "Email abierto", dot: "green" });
+    if (lt.emailClickedAt) items.push({ time: lt.emailClickedAt, text: "Click en email", dot: "green" });
+    if (lt.activatedAt) items.push({ time: lt.activatedAt, text: "Activo plan", dot: "gold" });
+  }
+
+  // Panel activity
+  for (const a of entry.recentActivity) {
+    const label = ACTION_LABELS[a.action] || a.action;
+    const d = a.details && typeof a.details === "object" ? a.details : {};
+    const detail = d.dishName || d.name || d.section || "";
+    items.push({ time: a.createdAt, text: `${label}${detail ? `: ${detail}` : ""}`, dot: a.action.includes("nurturing") ? "purple" : "" });
+  }
+
+  // Nurturing
+  for (const n of entry.nurturingSent || []) {
+    items.push({ time: n.date, text: ACTION_LABELS[n.action] || n.action, dot: "purple" });
+  }
+
+  // Emails
+  for (const e of entry.emailsSent || []) {
+    const purposeLabels: Record<string, string> = {
+      activation_welcome: "Email bienvenida", funnel_carta_lista: "Email carta lista",
+      trial_reminder: "Email trial reminder", trial_expired: "Email trial vencido",
+      weekly_summary: "Informe semanal", lead_failure_help: "Email ayuda carta fallo",
+      reactivation: "Email reactivacion",
+    };
+    items.push({ time: e.createdAt, text: `${purposeLabels[e.purpose] || e.purpose} · ${e.status === "sent" ? "entregado" : "fallo"}`, dot: e.status === "sent" ? "gold" : "red" });
+    if (e.openedAt) items.push({ time: e.openedAt, text: "Email abierto", dot: "green" });
+    if (e.clickedAt) items.push({ time: e.clickedAt, text: "Click en email", dot: "green" });
+  }
+
+  // Registration
+  items.push({ time: entry.createdAt, text: `Registro · Plan ${entry.plan}`, dot: "purple" });
+
+  items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+  return (
+    <div style={{ position: "relative", paddingLeft: 24, maxHeight: 400, overflowY: "auto" }}>
+      <div style={{ position: "absolute", left: 7, top: 4, bottom: 4, width: 1, background: "#2a2a2a" }} />
+      {items.map((item, i) => (
+        <div key={i} style={{ position: "relative", paddingBottom: 14 }}>
+          <div style={{
+            position: "absolute", left: -20, top: 3, width: 10, height: 10, borderRadius: "50%",
+            border: `2px solid ${DOT_COLORS[item.dot] || "#2a2a2a"}`,
+            background: item.dot ? DOT_COLORS[item.dot] : "#1a1a1a",
+          }} />
+          <div style={{ fontSize: 10, color: "#666", marginBottom: 2 }}>{fmtDate(item.time)}</div>
+          <div style={{ fontSize: 13, color: "#bbb" }}>{item.text}</div>
+        </div>
+      ))}
+      {items.length === 0 && <div style={{ color: "#555", fontSize: 13, padding: "10px 0" }}>Sin actividad registrada.</div>}
+    </div>
+  );
+}
+
+function ActivityModal({ restaurantId, name, onClose }: { restaurantId: string; name: string; onClose: () => void }) {
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/admin/actividad/${restaurantId}?limit=50`)
+      .then(r => r.json())
+      .then(data => {
+        setActivities(data.activities || []);
+        setCursor(data.nextCursor || null);
+        setHasMore(!!data.nextCursor);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  const loadMore = async () => {
+    if (!cursor) return;
+    const res = await fetch(`/api/admin/actividad/${restaurantId}?limit=50&cursor=${cursor}`);
+    const data = await res.json();
+    setActivities(prev => [...prev, ...(data.activities || [])]);
+    setCursor(data.nextCursor || null);
+    setHasMore(!!data.nextCursor);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
+      <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #2a2a2a", flexShrink: 0 }}>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: 0 }}>Actividad del panel</h3>
+            <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>{name}</p>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 20 }}>✕</button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px 20px" }}>
+          {loading ? (
+            <div style={{ color: "#666", fontSize: 13, padding: "20px 0", textAlign: "center" }}>Cargando...</div>
+          ) : activities.length === 0 ? (
+            <div style={{ color: "#555", fontSize: 13, padding: "20px 0", textAlign: "center" }}>Sin acciones registradas.</div>
+          ) : (
+            activities.map((a: any, i: number) => {
+              const label = ACTION_LABELS[a.action] || a.action;
+              const d = a.details && typeof a.details === "object" ? a.details : {};
+              const parts: string[] = [];
+              if (d.dishName) parts.push(d.dishName);
+              if (d.categoryName || d.name) parts.push(d.categoryName || d.name);
+              if (d.section) parts.push(`seccion: ${d.section}`);
+              if (d.email) parts.push(d.email);
+              if (d.price) parts.push(`$${Number(d.price).toLocaleString("es-CL")}`);
+              if (d.fields && Array.isArray(d.fields)) parts.push(`campos: ${d.fields.join(", ")}`);
+              if (d.fields && typeof d.fields === "object" && !Array.isArray(d.fields)) parts.push(`campos: ${Object.keys(d.fields).join(", ")}`);
+              if (d.promoPrice) parts.push(`oferta: $${Number(d.promoPrice).toLocaleString("es-CL")}`);
+              if (d.status) parts.push(`estado: ${d.status}`);
+              if (d.defaultView) parts.push(`vista: ${d.defaultView}`);
+              if (d.cartaColorMode) parts.push(`modo: ${d.cartaColorMode}`);
+              if (d.cartaAccentColor) parts.push(`color: ${d.cartaAccentColor}`);
+              if (d.waiterPanelActive !== undefined) parts.push(`garzon: ${d.waiterPanelActive ? "on" : "off"}`);
+              if (d.showCategoryLobby !== undefined) parts.push(`lobby: ${d.showCategoryLobby ? "on" : "off"}`);
+              if (d.panelTheme) parts.push(`tema panel: ${d.panelTheme}`);
+              if (d.fileName) parts.push(d.fileName);
+              if (d.text) parts.push(`"${String(d.text).slice(0, 50)}"`);
+              const detail = parts.join(" · ");
+              return (
+                <div key={a.id || i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid #222" }}>
+                  <div style={{ fontSize: 11, color: "#666", minWidth: 110, flexShrink: 0 }}>{fmtDate(a.createdAt)}</div>
+                  <div style={{ fontSize: 13, color: "#bbb" }}>
+                    <strong style={{ color: "#ddd" }}>{label}</strong>
+                    {detail && <span style={{ marginLeft: 6, color: "#777", fontSize: 12 }}>{detail}</span>}
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {hasMore && (
+            <button onClick={loadMore} style={{
+              padding: "8px 16px", marginTop: 10, borderRadius: 8, border: "1px solid #2a2a2a",
+              background: "transparent", color: "#888", fontSize: 12, cursor: "pointer",
+            }}>
+              Ver más
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityBtn({ restaurantId, name }: { restaurantId: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={(e) => { e.stopPropagation(); setOpen(true); }} style={{
+        padding: "4px 10px", borderRadius: 6, border: "1px solid #2a2a2a", background: "transparent",
+        color: "#888", fontSize: 11, fontWeight: 600, cursor: "pointer",
+      }}>
+        Ver toda la actividad
+      </button>
+      {open && <ActivityModal restaurantId={restaurantId} name={name} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 

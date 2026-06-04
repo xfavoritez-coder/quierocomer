@@ -257,7 +257,7 @@ export default function SuscripcionPage() {
   const hasActiveSub = status.hasSubscription && (status.subscriptionStatus === "TRIALING" || status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE");
   const isCanceled = status.subscriptionStatus === "CANCELED";
   const inTrial = status.subscriptionStatus === "TRIALING";
-  const monthlyNet = planNetAmount(status.plan as PlanKey);
+  const monthlyNet = (status as any).customPlanPriceNet ?? planNetAmount(status.plan as PlanKey);
   const monthlyIva = ivaOf(monthlyNet);
   const monthlyGross = monthlyNet + monthlyIva;
   const billingComplete = status.billingInfo?.isComplete !== false;

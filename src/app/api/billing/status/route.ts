@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
           id: true, name: true, plan: true,
           mpCustomerId: true, mpSubscriptionId: true, mpPlanId: true,
           subscriptionStatus: true, trialEndsAt: true, trialReminderSentAt: true, currentPeriodEnd: true, lastPaymentAt: true,
-          billingExempt: true,
+          billingExempt: true, customPlanPriceNet: true,
           billingCompanyName: true,
           billingRut: true,
           billingGiro: true,
@@ -81,6 +81,7 @@ export async function GET(req: NextRequest) {
     activePlan,
     activeFlowPlan: activePlan, // backward-compat con panel pages
     billingExempt: restaurant.billingExempt,
+    customPlanPriceNet: restaurant.customPlanPriceNet,
     plans: plansWithIva,
     ivaRate: IVA_RATE,
     billingInfo: {

@@ -29,6 +29,7 @@ export default function QRPageClient({ restaurant }: Props) {
   const [quantity, setQuantity] = useState(4);
   const [quantityInput, setQuantityInput] = useState("4");
   const [generating, setGenerating] = useState(false);
+  const [generatingImg, setGeneratingImg] = useState(false);
   const [qrPreview, setQrPreview] = useState<string>("");
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
   const [showLogo, setShowLogo] = useState(!!restaurant.logoUrl);
@@ -87,7 +88,9 @@ export default function QRPageClient({ restaurant }: Props) {
   const getQrMm = () => size === "custom" ? customMm : SIZE_CONFIG[size].qrMm;
 
   const downloadImage = async () => {
-    if (!finalQr) return;
+    if (!finalQr || generatingImg) return;
+    setGeneratingImg(true);
+    try {
     const qrMm = getQrMm();
     const pxPerMm = 4; // ~96 DPI scale for good quality
     const padding = PADDING_MM * pxPerMm;
@@ -122,11 +125,17 @@ export default function QRPageClient({ restaurant }: Props) {
     }
 
     const dataUrl = canvas.toDataURL("image/png");
-    const w = window.open("", "_blank");
+    const w = window.open("about:blank", "_blank");
     if (w) {
-      w.document.write(`<html><head><title>QR ${restaurant.name}</title><style>body{margin:0;background:#f5f5f5;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:system-ui,sans-serif}img{max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}a{display:inline-block;margin-top:16px;padding:12px 28px;background:#F4A623;color:#fff;border-radius:50px;text-decoration:none;font-weight:700;font-size:14px}</style></head><body><img src="${dataUrl}" alt="QR"/><a href="${dataUrl}" download="QR-${restaurant.slug}-x${quantity}.png">Descargar imagen</a></body></html>`);
+      w.document.write(`<!DOCTYPE html><html><head><title>QR ${restaurant.name}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;box-sizing:border-box}body{background:#f5f5f5;display:flex;flex-direction:column;align-items:center;padding:24px 16px;font-family:system-ui,sans-serif;min-height:100vh}img{max-width:100%;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.1);margin-bottom:20px}a{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:#F4A623;color:#fff;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(244,166,35,0.3)}p{color:#999;font-size:13px;margin-top:16px}</style></head><body><img src="${dataUrl}" alt="QR ${restaurant.name}"/><a href="${dataUrl}" download="QR-${restaurant.slug}-x${quantity}.png">Descargar imagen</a><p>${quantity} código${quantity > 1 ? "s" : ""} QR · ${SIZE_CONFIG[size].label}</p></body></html>`);
       w.document.close();
+    } else {
+      // Fallback si el popup es bloqueado
+      const a = document.createElement("a"); a.href = dataUrl; a.download = `QR-${restaurant.slug}-x${quantity}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
+    } catch (e) { console.error("Image error:", e); }
+    setGeneratingImg(false);
   };
 
   const generatePDF = async () => {
@@ -288,8 +297,8 @@ export default function QRPageClient({ restaurant }: Props) {
           <button onClick={generatePDF} disabled={generating} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: generating ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generating ? 0.6 : 1 }}>
             {generating ? "Generando..." : "Imprimir PDF"}
           </button>
-          <button onClick={downloadImage} disabled={!finalQr} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)" }}>
-            Generar imagen
+          <button onClick={downloadImage} disabled={!finalQr || generatingImg} style={{ flex: 1, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: generatingImg ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generatingImg ? 0.6 : 1 }}>
+            {generatingImg ? "Generando..." : "Generar imagen"}
           </button>
         </div>
 

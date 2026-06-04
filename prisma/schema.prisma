@@ -486,6 +486,7 @@ model Restaurant {
   currentPeriodEnd     DateTime?
   lastPaymentAt        DateTime?
   billingExempt        Boolean            @default(false)  // legacy clients que no pagan via Flow
+  customPlanPriceNet   Int?               // precio neto custom (CLP) — override del precio estandar del plan
   billingAnchorDay     Int?               // dia del mes del ciclo de cobro (1-28); ancla cuando reactivan tras gap
 
   // Datos de facturacion (Chile) — requeridos para emitir factura electronica

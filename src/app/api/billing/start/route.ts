@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const owner = await prisma.restaurantOwner.findUnique({
     where: { id: panelId },
-    include: { restaurants: { where: { id: restaurantId }, take: 1 } },
+    include: { restaurants: { where: { id: restaurantId }, select: { id: true, name: true, mpCustomerId: true, customPlanPriceNet: true }, take: 1 } },
   });
   if (!owner || owner.status !== "ACTIVE") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       payerEmail: owner.email,
       externalReference: restaurantId,
       backUrl: `${baseUrl}/api/billing/return?plan=${plan}`,
+      amountNetOverride: restaurant.customPlanPriceNet ?? undefined,
     });
 
     await prisma.restaurant.update({

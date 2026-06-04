@@ -96,6 +96,15 @@ export default function AjustesPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const trackSetting = (action: string, details: Record<string, any>) => {
+    if (!rid) return;
+    fetch("/api/panel/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId: rid, action, details }),
+    }).catch(() => {});
+  };
+
   const save = async (fields: Record<string, any>) => {
     if (!rid) return;
     setSaving(true);
@@ -108,6 +117,7 @@ export default function AjustesPage() {
       if (res.ok) {
         const updated = await res.json();
         setData((prev: any) => ({ ...prev, ...updated }));
+        trackSetting("settings_change", fields);
         toast.success("Guardado");
       } else {
         const err = await res.json();
@@ -261,7 +271,7 @@ export default function AjustesPage() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Settings size={16} color="var(--adm-text3)" /> Modo del panel</h3>
         <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
-          <button onClick={() => { localStorage.setItem("qc_panel_theme", "light"); window.location.reload(); }} style={{
+          <button onClick={() => { trackSetting("settings_change", { panelTheme: "light" }); localStorage.setItem("qc_panel_theme", "light"); window.location.reload(); }} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
             padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
             background: panelTheme !== "dark" ? "rgba(255,210,80,0.15)" : "transparent",
@@ -270,7 +280,7 @@ export default function AjustesPage() {
           }}>
             <Sun size={16} strokeWidth={panelTheme !== "dark" ? 2.5 : 1.5} /> Claro
           </button>
-          <button onClick={() => { localStorage.setItem("qc_panel_theme", "dark"); window.location.reload(); }} style={{
+          <button onClick={() => { trackSetting("settings_change", { panelTheme: "dark" }); localStorage.setItem("qc_panel_theme", "dark"); window.location.reload(); }} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
             padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
             background: panelTheme === "dark" ? "rgba(100,120,180,0.12)" : "transparent",

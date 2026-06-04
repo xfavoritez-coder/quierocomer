@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     }),
     // All panel activity (not just 7d) for engagement checks
     prisma.panelActivity.findMany({
-      select: { restaurantId: true, action: true, createdAt: true },
+      select: { restaurantId: true, action: true, details: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
     // Sessions last 7 days
@@ -237,8 +237,11 @@ export async function GET(req: NextRequest) {
       // Recent activity for timeline
       recentActivity: activity.slice(0, 15).map(a => ({
         action: a.action,
+        details: a.details,
         createdAt: a.createdAt.toISOString(),
       })),
+      // Lead events for full timeline
+      leadEvents: lead?.events && Array.isArray(lead.events) ? lead.events : [],
     };
   });
 
@@ -309,6 +312,7 @@ export async function GET(req: NextRequest) {
         createdAt: e.createdAt.toISOString(),
       })) : [],
       recentActivity: [],
+      leadEvents: lead.events && Array.isArray(lead.events) ? lead.events : [],
     });
   }
 

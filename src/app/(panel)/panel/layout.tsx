@@ -266,7 +266,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [confirmTab, setConfirmTab] = useState<TabKey | null>(null);
-  const [status, setStatus] = useState<BillingStatus | null>(null);
+  const [status, setStatus] = useState<BillingStatus & { customPlanPriceNet?: number | null } | null>(null);
   const FD = "var(--font-display)";
   const FB2 = "var(--font-body)";
   const features = PLAN_FEATURES_DISPLAY[tab] || [];
@@ -344,6 +344,10 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
     }
   };
 
+  // Custom price override (per-restaurant, applies to their current plan key)
+  const customNet = status?.customPlanPriceNet;
+  const resolveNet = (t: TabKey) => (customNet && t === plan) ? customNet : planNetAmount(t);
+
   const inTrial = status?.subscriptionStatus === "TRIALING";
   const trialUsed = !!status?.trialUsed;
   const isActive = status?.subscriptionStatus === "ACTIVE";
@@ -405,7 +409,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               {PLAN_TAGLINES[tab]}
             </p>}
             {(() => {
-              const net = planNetAmount(tab);
+              const net = resolveNet(tab);
               const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
               return (
                 <>
@@ -490,7 +494,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
 
         {/* Confirmation overlay */}
         {confirmTab && (() => {
-          const net = planNetAmount(confirmTab);
+          const net = resolveNet(confirmTab);
           const iva = ivaOf(net);
           const gross = grossOf(net);
           const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;

@@ -146,7 +146,7 @@ ${credentials ? `
 </td></tr>
 <tr><td style="text-align:center;padding-bottom:22px">
   <a href="${qrGenerarLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
-    🖨 Imprimir código QR
+    📱 Ver mi código QR
   </a>
 </td></tr>
 </table>
