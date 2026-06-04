@@ -183,6 +183,38 @@ export default function Paso2Client() {
     return () => clearTimeout(t);
   }, [animDone]);
 
+  // Exit-intent modal — custom message when user tries to leave
+  const [submitted, setSubmitted] = useState(false);
+  const [exitModal, setExitModal] = useState(false);
+  const exitShownRef = useRef(false);
+  useEffect(() => {
+    if (!animDone || submitted) return;
+    // Desktop: mouse leaves viewport from the top
+    const onMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 5 && !exitShownRef.current) {
+        exitShownRef.current = true;
+        setExitModal(true);
+      }
+    };
+    // Mobile: tab hidden / app switch
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden" && !exitShownRef.current) {
+        exitShownRef.current = true;
+        setExitModal(true);
+      }
+    };
+    // Fallback: native beforeunload
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    document.addEventListener("mouseleave", onMouseLeave);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("mouseleave", onMouseLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [animDone, submitted]);
+
   const handleSubmit = async () => {
     if (loading) return;
     if (!localName.trim() || !ownerName.trim() || !email.trim()) {
@@ -265,6 +297,7 @@ export default function Paso2Client() {
       } catch {}
       trackCartaInfo();
       trackLead({ content_name: localName.trim() });
+      setSubmitted(true);
       router.push(`/subircarta/confirmacion?id=${leadId}`);
     } catch (err: any) {
       trackFunnelEvent(leadId, "paso2_error", { error: err?.message || "conexión" });
@@ -501,6 +534,58 @@ export default function Paso2Client() {
 
       <Footer onPlanesClick={() => setPlanesOpen(true)} />
       {planesOpen && <PlanesModal onClose={() => setPlanesOpen(false)} />}
+
+      {/* Exit-intent modal */}
+      {exitModal && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 10000,
+          background: "rgba(0,0,0,.75)", backdropFilter: "blur(6px)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }}>
+          <div style={{
+            background: "#1a1710", border: "1px solid rgba(232,163,61,.25)",
+            borderRadius: 24, maxWidth: 380, width: "100%", padding: "32px 24px",
+            textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.5)",
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🍽️</div>
+            <h2 style={{
+              fontFamily: "Georgia, serif", fontSize: "1.4rem", fontWeight: 400,
+              color: "#E8DDC8", margin: "0 0 10px", lineHeight: 1.25,
+            }}>
+              Tu carta ya casi está lista
+            </h2>
+            <p style={{
+              fontSize: "0.92rem", color: "#9a8b73", lineHeight: 1.5, margin: "0 0 24px",
+            }}>
+              Solo faltan tus datos para crearla. Son 30 segundos y tu carta queda lista para usar.
+            </p>
+            <button
+              onClick={() => {
+                setExitModal(false);
+                setTimeout(() => firstInputRef.current?.focus(), 200);
+              }}
+              style={{
+                width: "100%", padding: "14px 20px", borderRadius: 999, border: "none",
+                background: "linear-gradient(135deg, #ffc44f, #F4A623)", color: "#1a1710",
+                fontFamily: "var(--font-display, Georgia, serif)", fontSize: "1rem", fontWeight: 800,
+                cursor: "pointer", boxShadow: "0 4px 18px rgba(244,166,35,.3)",
+                marginBottom: 10,
+              }}
+            >
+              Completar mis datos →
+            </button>
+            <button
+              onClick={() => setExitModal(false)}
+              style={{
+                background: "none", border: "none", color: "#666",
+                fontSize: "0.78rem", cursor: "pointer", padding: "8px 0",
+              }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

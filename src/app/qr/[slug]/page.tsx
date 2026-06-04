@@ -171,9 +171,12 @@ export default async function CartaPage({
     orderBy: { createdAt: "desc" },
   }) : null;
 
-  const colorMode = (restaurant as any).cartaColorMode || "LIGHT";
+  // Dark mode & custom colors: Gold+ only. Silver/Free always get LIGHT + default amber.
+  const plan = ((restaurant as any).plan || "FREE").toUpperCase();
+  const hasDesignFeatures = plan === "GOLD" || plan === "PREMIUM";
+  const colorMode = hasDesignFeatures ? ((restaurant as any).cartaColorMode || "LIGHT") : "LIGHT";
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
-  const accentColor = (restaurant as any).cartaAccentColor || null;
+  const accentColor = hasDesignFeatures ? ((restaurant as any).cartaAccentColor || null) : null;
 
   return (
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>

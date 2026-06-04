@@ -127,6 +127,9 @@ export default function AjustesPage() {
     setSaving(false);
   };
 
+  const hasDesign = activePlan === "GOLD" || activePlan === "PREMIUM";
+  const showPlanModal = () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }));
+
   if (loading) return <SkeletonLoading type="form" />;
   if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
 
@@ -242,10 +245,11 @@ export default function AjustesPage() {
         )}
       </div>
 
-      {/* Tema de la carta */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+      {/* Tema de la carta — Gold+ */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasDesign ? 1 : 0.5 }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Moon size={16} color="var(--adm-text3)" /> Modo por defecto de la carta</h3>
-        <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
+        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible desde el plan Gold →</button>}
+        <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4, pointerEvents: hasDesign ? "auto" : "none" }}>
           <button onClick={() => save({ cartaColorMode: "LIGHT" })} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
             padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
@@ -292,11 +296,12 @@ export default function AjustesPage() {
         </div>
       </div>
 
-      {/* Color de diseño */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+      {/* Color de diseño — Gold+ */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasDesign ? 1 : 0.5 }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Palette size={16} color="var(--adm-text3)" /> Diseño</h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>Color de tu carta: precios, botones y detalles</p>
-        <div style={{ display: "flex", gap: 12 }}>
+        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible desde el plan Gold →</button>}
+        <div style={{ display: "flex", gap: 12, pointerEvents: hasDesign ? "auto" : "none" }}>
           {ACCENT_OPTIONS.map((opt) => {
             const isActive = (data.cartaAccentColor || null) === opt.value;
             return (

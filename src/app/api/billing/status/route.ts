@@ -47,6 +47,9 @@ export async function GET(req: NextRequest) {
 
   const activePlan = restaurant.mpPlanId ? planFromFlowId(restaurant.mpPlanId) : null;
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const sessions30d = await prisma.session.count({ where: { restaurantId, startedAt: { gte: thirtyDaysAgo } } });
+
   // Adjuntar desglose neto/IVA/bruto a cada plan disponible
   const plansWithIva = Object.fromEntries(
     Object.entries(FLOW_PLANS).map(([key, cfg]) => [
@@ -82,6 +85,7 @@ export async function GET(req: NextRequest) {
     activeFlowPlan: activePlan, // backward-compat con panel pages
     billingExempt: restaurant.billingExempt,
     customPlanPriceNet: restaurant.customPlanPriceNet,
+    sessions30d,
     plans: plansWithIva,
     ivaRate: IVA_RATE,
     billingInfo: {
