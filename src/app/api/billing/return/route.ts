@@ -11,12 +11,14 @@ function redirect303(url: string) {
 /**
  * GET|POST /api/billing/return
  *
- * Flow redirige aquí después del pago (POST con token en body).
+ * Flow redirige aquí después del pago.
+ * - Si el webhook ya activó el plan → redirige a éxito
+ * - Si el pago fue confirmado por getStatus → activa y redirige a éxito
+ * - Si no se puede confirmar → redirige a pendiente (el webhook activará después)
  */
 async function handleReturn(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
-  // Flow envía token vía POST form-data o GET query param
   let token = req.nextUrl.searchParams.get("token");
   if (!token && req.method === "POST") {
     try {
@@ -26,74 +28,84 @@ async function handleReturn(req: NextRequest) {
   }
 
   if (!token) {
-    return redirect303(`${baseUrl}/panel/suscripcion?status=error`);
+    return redirect303(`${baseUrl}/panel/suscripcion?status=error&reason=${encodeURIComponent("No se recibió token de pago")}`);
   }
 
-  // Buscar restaurant por token primero
+  // Buscar restaurant por token
   const restaurant = await prisma.restaurant.findFirst({
     where: { flowRegisterToken: token },
     include: { owner: { select: { email: true, name: true } } },
   });
 
   if (!restaurant) {
-    console.error("[billing/return] No se encontró restaurant para token:", token);
     return redirect303(`${baseUrl}/panel/suscripcion?status=error&reason=${encodeURIComponent("No se encontró el restaurante asociado al pago")}`);
   }
 
+  // Si el webhook ya activó el plan, solo redirigir a éxito
+  if (restaurant.subscriptionStatus === "ACTIVE" && restaurant.lastPaymentAt && !restaurant.pendingFlowPlanId) {
+    await prisma.restaurant.update({ where: { id: restaurant.id }, data: { flowRegisterToken: null } });
+    return redirect303(`${baseUrl}/panel/suscripcion/exito?plan=${restaurant.plan}`);
+  }
+
   // Verificar estado del pago en Flow
-  const FLOW_STATUS: Record<number, string> = { 1: "pendiente", 2: "pagada", 3: "rechazada", 4: "anulada" };
-  let paymentOk = true;
   try {
     const payment = await flowPost<any>("/payment/getStatus", { token });
-    console.log(`[billing/return] Flow payment status: ${payment.status} (${FLOW_STATUS[payment.status] || "?"}) for ${restaurant.name}`);
-    // Solo rechazar si Flow dice explícitamente rechazada (3) o anulada (4)
-    if (payment.status === 3 || payment.status === 4) {
-      paymentOk = false;
-      const reason = FLOW_STATUS[payment.status];
-      return redirect303(`${baseUrl}/panel/suscripcion?status=failure&reason=${encodeURIComponent(`Pago ${reason} por Webpay`)}`);
+    console.log(`[billing/return] Flow status: ${payment.status} for ${restaurant.name}`);
+
+    if (payment.status === 2) {
+      // Pago confirmado — activar
+      const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";
+      const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[appPlan as Exclude<PlanKey, "FREE">]?.amountNet ?? 0;
+
+      await prisma.restaurant.update({
+        where: { id: restaurant.id },
+        data: {
+          plan: appPlan,
+          subscriptionStatus: "ACTIVE",
+          flowPlanId: restaurant.pendingFlowPlanId,
+          currentPeriodEnd: periodEnd,
+          lastPaymentAt: new Date(),
+          pendingFlowPlanId: null,
+          flowRegisterToken: null,
+        },
+      });
+
+      // Email de confirmación
+      const ownerEmail = restaurant.owner?.email;
+      if (ownerEmail) {
+        const ownerName = restaurant.owner?.name || ownerEmail.split("@")[0] || "Hola";
+        const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
+        const chargeGross = grossOf(amountNet);
+        const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+        const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+        const nextAmount = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+
+        sendAdminEmail({
+          to: ownerEmail,
+          subject: `${restaurant.name} · Plan ${planLabel} activado`,
+          html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, `${baseUrl}/panel`, `${baseUrl}/qr/${restaurant.slug}`),
+          purpose: "plan_activated",
+        }).catch(() => {});
+      }
+
+      return redirect303(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);
     }
+
+    if (payment.status === 3 || payment.status === 4) {
+      // Rechazado o anulado
+      const labels: Record<number, string> = { 3: "rechazado", 4: "anulado" };
+      await prisma.restaurant.update({ where: { id: restaurant.id }, data: { flowRegisterToken: null, pendingFlowPlanId: null } });
+      return redirect303(`${baseUrl}/panel/suscripcion?status=failure&reason=${encodeURIComponent(`Pago ${labels[payment.status]} por Webpay`)}`);
+    }
+
+    // Status 1 (pendiente) — redirigir a suscripción con mensaje
+    return redirect303(`${baseUrl}/panel/suscripcion?status=pending&reason=${encodeURIComponent("Tu pago está siendo procesado. Se activará en unos minutos.")}`);
   } catch (err: any) {
-    // Si getStatus falla pero el usuario volvió del checkout, seguimos adelante
-    // El webhook de Flow confirmará el pago después
-    console.warn("[billing/return] getStatus falló (continuando):", err?.message);
+    console.warn("[billing/return] getStatus falló:", err?.message);
+    // No pudimos verificar — redirigir con mensaje de espera
+    return redirect303(`${baseUrl}/panel/suscripcion?status=pending&reason=${encodeURIComponent("Tu pago está siendo procesado. Se activará en unos minutos.")}`);
   }
-
-  const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";
-  const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[appPlan as Exclude<PlanKey, "FREE">]?.amountNet ?? 0;
-
-  await prisma.restaurant.update({
-    where: { id: restaurant.id },
-    data: {
-      plan: appPlan,
-      subscriptionStatus: "ACTIVE",
-      flowPlanId: restaurant.pendingFlowPlanId,
-      currentPeriodEnd: periodEnd,
-      lastPaymentAt: new Date(),
-      pendingFlowPlanId: null,
-      flowRegisterToken: null,
-    },
-  });
-
-  // Email de confirmación
-  const ownerEmail = restaurant.owner?.email;
-  if (ownerEmail) {
-    const ownerName = restaurant.owner?.name || ownerEmail.split("@")[0] || "Hola";
-    const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
-    const chargeGross = grossOf(amountNet);
-    const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
-    const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-    const nextAmount = `$${chargeGross.toLocaleString("es-CL")} CLP`;
-
-    sendAdminEmail({
-      to: ownerEmail,
-      subject: `${restaurant.name} · Plan ${planLabel} activado`,
-      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, `${baseUrl}/panel`, `${baseUrl}/qr/${restaurant.slug}`),
-      purpose: "plan_activated",
-    }).catch(() => {});
-  }
-
-  return redirect303(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);
 }
 
 export async function GET(req: NextRequest) { return handleReturn(req); }

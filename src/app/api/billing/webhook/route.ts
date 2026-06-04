@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       currentPeriodEnd: periodEnd,
       lastPaymentAt: new Date(),
       pendingFlowPlanId: null,
-      flowRegisterToken: null,
+      // NO borrar flowRegisterToken aquí — el return handler lo necesita para encontrar el restaurant
     },
   });
 

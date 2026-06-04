@@ -291,6 +291,16 @@ export default function SuscripcionPage() {
           </p>
         </div>
       )}
+      {paymentStatus === "pending" && (
+        <div style={{ background: "rgba(251,191,36,.08)", border: "1px solid rgba(251,191,36,.25)", borderRadius: 12, padding: "14px 16px", marginTop: 12 }}>
+          <p style={{ fontSize: "0.9rem", color: "#fbbf24", margin: 0, fontWeight: 700 }}>
+            Pago en proceso
+          </p>
+          {paymentReason && (
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: "6px 0 0" }}>{paymentReason}</p>
+          )}
+        </div>
+      )}
       </p>
 
       {/* ─── Plan actual ─────────────────────── */}
