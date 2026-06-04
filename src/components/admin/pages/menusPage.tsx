@@ -245,7 +245,7 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
   return (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 3, fontWeight: 500 }}>Sugerir con este plato</label>
-      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.4 }}>Aparecen como sugerencia cuando alguien ve este producto. Si no agregas ninguna, el sistema sugerirá platos automáticamente según el tipo (entrada, fondo, bebida, postre).</p>
+      <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Aparecen como sugerencia cuando alguien ve este producto. Si no agregas ninguna, el sistema sugerirá platos automáticamente según el tipo (entrada, fondo, bebida, postre).</p>
 
       {suggestions.length > 0 && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -1120,7 +1120,7 @@ export default function AdminMenus() {
 
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Restricciones alimenticias</label>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.4 }}>Se ajustan automáticamente al detectar alérgenos en la descripción. Si los desmarcas manualmente, respetamos tu decisión.</p>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Se ajustan automáticamente al detectar alérgenos en la descripción. Si los desmarcas manualmente, respetamos tu decisión.</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
@@ -1368,7 +1368,7 @@ export default function AdminMenus() {
             </button>
             <button
               onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
-              style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+              style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
             >
               + Agregar
             </button>

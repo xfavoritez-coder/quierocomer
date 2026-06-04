@@ -475,7 +475,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
       ) : (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <p style={{ fontFamily: F, fontSize: 13, color: "var(--adm-text2)", margin: 0 }}>Arrastra para reordenar tus categorías</p>
-          <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
+          <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
             + Nueva categoría
           </button>
         </div>

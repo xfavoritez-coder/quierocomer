@@ -21,6 +21,14 @@ export default function PanelQRPage() {
 
   return (
     <div style={{ maxWidth: 480 }}>
+      <Link href="/panel" style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        fontFamily: F, fontSize: "0.85rem", fontWeight: 600,
+        color: "var(--adm-text3)", textDecoration: "none",
+        marginBottom: 12,
+      }}>
+        <ArrowLeft size={16} /> Volver
+      </Link>
       <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
         <QrCode size={20} color="var(--adm-text3)" /> Código QR
       </h1>
