@@ -243,9 +243,9 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
   if (loading) return null;
 
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 3, fontWeight: 500 }}>Sugerir con este plato</label>
-      <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Aparecen como sugerencia cuando alguien ve este producto. Si no agregas ninguna, el sistema sugerirá platos automáticamente según el tipo (entrada, fondo, bebida, postre).</p>
+    <div style={{ marginBottom: 24 }}>
+      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Sugerir con este plato</label>
+      <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Aparecen como sugerencia cuando alguien ve este producto. Si no agregas ninguna, el sistema sugerirá platos automáticamente según el tipo (entrada, fondo, bebida, postre).</p>
 
       {suggestions.length > 0 && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -1107,7 +1107,7 @@ export default function AdminMenus() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
+              <div style={{ marginBottom: 24 }}>
                 <label style={LBL}>Tipo de dieta</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {DIET_OPTIONS.map(d => (
@@ -1118,9 +1118,9 @@ export default function AdminMenus() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
+              <div style={{ marginBottom: 24 }}>
                 <label style={LBL}>Restricciones alimenticias</label>
-                <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Se ajustan automáticamente al detectar alérgenos en la descripción. Si los desmarcas manualmente, respetamos tu decisión.</p>
+                <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Se ajustan automáticamente al detectar alérgenos en la descripción. Si los desmarcas manualmente, respetamos tu decisión.</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
@@ -1143,7 +1143,7 @@ export default function AdminMenus() {
               {/* Ingredientes y alérgenos derivados — quitados temporalmente: simplificación del editor */}
 
               {/* Modificadores — inline management */}
-              <div style={{ marginBottom: 14 }}>
+              <div style={{ marginBottom: 24 }}>
                 <label style={LBL}>Modificadores</label>
 
                 {/* Assigned list with expandable preview */}

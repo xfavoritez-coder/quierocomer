@@ -32,6 +32,7 @@ import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 import type { Lang } from "@/lib/qr/i18n";
 import AnnouncementBanner from "./AnnouncementBanner";
+import HappyHourBanner, { getActiveHappyHour } from "./HappyHourBanner";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
 import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
@@ -74,6 +75,7 @@ interface CartaProps {
   weather?: string;
   popularDishIds?: Set<string>;
   announcements?: { id: string; text: string; linkUrl: string | null }[];
+  happyHours?: any[];
 }
 
 /* ─── Hero Slider (always dark overlay on photos) ─── */
@@ -667,12 +669,16 @@ export default function CartaImpact({
   weather: weatherProp,
   popularDishIds: popularDishIdsProp,
   announcements,
+  happyHours,
 }: CartaProps) {
   const lang = useLang();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { hasNewLikes, clearNewLikes } = useFavorites();
+
+  // Happy hour banner
+  const hasActiveHH = !!getActiveHappyHour(happyHours || []);
 
   // Language select
   const enabledLangs: string[] = (restaurant as any).enabledLangs || ["es"];
@@ -1125,7 +1131,8 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Fixed top nav — relative (not fixed) in demo mode */}
+      {/* Happy Hour banner */}
+      {/* Fixed top nav */}
       <header style={{
         position: (restaurant as any).isDemo ? "relative" : "fixed",
         top: (restaurant as any).isDemo ? undefined : 0,
@@ -1275,15 +1282,22 @@ export default function CartaImpact({
         </div>
       )}
 
+      {/* Happy Hour banner — below header, above hero */}
+      {hasActiveHH && (
+        <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 12 }}>
+          <HappyHourBanner happyHours={happyHours || []} />
+        </div>
+      )}
+
       {/* Announcement banner — above hero */}
       {announcements && announcements.length > 0 && (
-        <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 16 }}>
+        <div style={{ position: "relative", zIndex: 2, marginTop: hasActiveHH ? 0 : 65 }}>
           <AnnouncementBanner announcements={announcements} />
         </div>
       )}
 
       {/* Hero */}
-      <div style={{ position: "relative", zIndex: 1, marginTop: announcements && announcements.length > 0 ? 0 : 65 }}>
+      <div style={{ position: "relative", zIndex: 1, marginTop: (hasActiveHH || (announcements && announcements.length > 0)) ? 0 : 65 }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
           restaurant={restaurant}

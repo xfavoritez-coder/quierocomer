@@ -205,7 +205,7 @@ export default function PanelDashboard() {
           { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
           { key: "diet", label: "Elige tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
           // { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
-          { key: "qr", label: "Ver mi código QR", done: qrGenerated, qrAction: true },
+          { key: "qr", label: "Generar código QR", done: qrGenerated, qrAction: true },
         ];
         const doneCount = checks.filter(c => c.done).length;
         const pct = Math.round((doneCount / checks.length) * 100);
@@ -309,7 +309,7 @@ export default function PanelDashboard() {
         </a>
         <Link href="/panel/qr" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><QrCode size={18} color={GOLD} /></div>
-          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Imprimir<br/>códigos QR</div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Generar<br/>código QR</div>
         </Link>
       </div>
 

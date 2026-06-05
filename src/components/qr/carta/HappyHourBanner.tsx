@@ -87,6 +87,65 @@ export function applyHappyHourPrices(dishes: any[], hh: any): any[] {
   });
 }
 
+/** Floating pill variant for Impact hero overlay */
+export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
+  const [active, setActive] = useState<HappyHour | null>(null);
+  const [countdown, setCountdown] = useState("");
+
+  useEffect(() => {
+    const check = () => {
+      const hh = findActiveHappyHour(happyHours as HappyHour[]);
+      setActive(hh);
+      if (hh) setCountdown(formatCountdown(getMinutesUntil(hh.endTime)));
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, [happyHours]);
+
+  if (!active) return null;
+
+  const text = active.bannerText ||
+    (active.discountType === "FIXED_PRICE"
+      ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
+      : `${active.name} — ${active.discountValue}% de descuento`);
+
+  return (
+    <div
+      className="font-[family-name:var(--font-dm)]"
+      style={{
+        display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 4,
+        padding: "10px 18px 10px",
+        background: "rgba(0,0,0,0.55)",
+        backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+        borderRadius: 16,
+        border: `1px solid ${active.bannerColor}55`,
+        boxShadow: `0 4px 20px rgba(0,0,0,0.3), inset 0 0 20px ${active.bannerColor}15`,
+        color: "white",
+        maxWidth: "88vw",
+      }}
+    >
+      <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 700, lineHeight: 1.3, textAlign: "center" }}>
+        {text}
+      </p>
+      {countdown && (
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          padding: "2px 9px", borderRadius: 10,
+          background: `${active.bannerColor}cc`,
+          fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.03em",
+        }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          {countdown}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
   const [active, setActive] = useState<HappyHour | null>(null);
   const [countdown, setCountdown] = useState("");
@@ -116,22 +175,43 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        background: `linear-gradient(135deg, ${active.bannerColor}, ${active.bannerColor}dd)`,
+        background: `linear-gradient(135deg, ${active.bannerColor}ee, ${active.bannerColor})`,
         color: "white",
-        padding: "12px 20px",
+        padding: "11px 20px 12px",
         textAlign: "center",
         position: "relative",
         zIndex: 15,
+        overflow: "hidden",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-        <span style={{ fontSize: "1.1rem" }}>🔥</span>
-        <span style={{ fontSize: "0.88rem", fontWeight: 700 }}>{bannerText}</span>
-      </div>
+      {/* Animated shimmer sweep */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.15) 50%, transparent 65%)",
+        backgroundSize: "250% 100%",
+        animation: "hhShimmer 4s ease-in-out infinite",
+      }} />
+      {/* Subtle glow spots */}
+      <div style={{ position: "absolute", top: -10, left: "15%", width: 60, height: 60, borderRadius: "50%", background: "rgba(255,255,255,0.08)", filter: "blur(14px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: -8, right: "20%", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.06)", filter: "blur(10px)", pointerEvents: "none" }} />
+      <style>{`@keyframes hhShimmer { 0%,100% { background-position: 250% 0 } 50% { background-position: -250% 0 } } @keyframes hhPulse { 0%,100% { opacity: 0.7 } 50% { opacity: 1 } }`}</style>
+
+      {/* Main text */}
+      <p style={{ position: "relative", margin: 0, fontSize: "0.88rem", fontWeight: 800, lineHeight: 1.3, letterSpacing: "0.01em", textShadow: "0 1px 3px rgba(0,0,0,0.15)" }}>
+        {bannerText}
+      </p>
+
+      {/* Countdown pill */}
       {countdown && (
-        <p style={{ fontSize: "0.72rem", opacity: 0.85, margin: "4px 0 0", fontWeight: 500 }}>
-          Termina en {countdown}
-        </p>
+        <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "hhPulse 2s ease-in-out infinite" }}>
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.04em" }}>
+            Termina en {countdown}
+          </span>
+        </div>
       )}
     </div>
   );

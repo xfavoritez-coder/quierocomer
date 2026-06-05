@@ -272,7 +272,7 @@ export default function CartaRouter(props: Props) {
   return (
     <LangProvider value={effectiveLang}>
       <FavoritesProvider>
-        <HappyHourBanner happyHours={props.happyHours || []} />
+        {effectiveView !== "impact" && <HappyHourBanner happyHours={props.happyHours || []} />}
         {showLobby && !lobbyDismissed ? (
           <CategoryLobby
             categories={props.categories}
