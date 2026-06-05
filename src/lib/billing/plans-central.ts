@@ -84,6 +84,8 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     ]),
     featureDisplay: [
       { text: "3 vistas de carta", tip: "Galería, Lista e Impact. Lista como vista por defecto." },
+      { text: "Dark / Light mode", tip: "Elige el tema claro u oscuro que mejor represente tu local." },
+      { text: "Diseño personalizado", tip: "Cambia el color de tu carta: precios, botones y detalles." },
       { text: "Destacar platos estrella", tip: "Resalta visualmente los platos que más te conviene vender." },
       { text: "Ofertas y promociones", tip: "Crea ofertas temporales visibles en la carta." },
     ],
@@ -108,8 +110,6 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "multilang", "suggestions",
     ]),
     featureDisplay: [
-      { text: "Dark / Light mode", tip: "Elige el tema claro u oscuro que mejor represente tu local." },
-      { text: "Diseño personalizado", tip: "Cambia el color de tu carta: precios, botones y detalles." },
       { text: "Estadísticas", tip: "Visitas, platos más vistos y duración promedio." },
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente." },
