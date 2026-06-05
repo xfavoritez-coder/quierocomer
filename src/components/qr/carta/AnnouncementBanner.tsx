@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ExternalLink } from "lucide-react";
+import { X } from "lucide-react";
 
 interface Announcement {
   id: string;
@@ -30,33 +30,55 @@ export default function AnnouncementBanner({ announcements }: Props) {
 
   const ann = announcements[current];
 
-  const content = (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 36px 10px 16px", minHeight: 40 }}>
-      <p
-        className="font-[family-name:var(--font-dm)]"
-        style={{
-          margin: 0,
-          fontSize: "0.82rem",
-          fontWeight: 600,
-          color: "var(--carta-announcement-text, #713F12)",
-          textAlign: "center",
-          lineHeight: 1.35,
-        }}
-      >
-        {ann.text}
-      </p>
-      {ann.linkUrl && <ExternalLink size={13} color="#713F12" style={{ opacity: 0.5, flexShrink: 0 }} />}
-    </div>
+  const inner = (
+    <p
+      className="font-[family-name:var(--font-dm)]"
+      style={{
+        position: "relative",
+        margin: 0,
+        fontSize: "0.82rem",
+        fontWeight: 700,
+        color: "white",
+        textAlign: "center",
+        lineHeight: 1.35,
+        textShadow: "0 1px 3px rgba(0,0,0,0.15)",
+      }}
+    >
+      {ann.text}
+    </p>
   );
 
   return (
-    <div style={{ position: "relative", background: "var(--carta-announcement-bg, #FEF9C3)", overflow: "hidden" }}>
+    <div
+      style={{
+        background: "var(--carta-accent, #F4A623)",
+        position: "relative",
+        zIndex: 15,
+        overflow: "hidden",
+      }}
+    >
+      {/* Animated shimmer */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.15) 50%, transparent 65%)",
+        backgroundSize: "250% 100%",
+        animation: "annShimmer 4s ease-in-out infinite",
+      }} />
+      <style>{`@keyframes annShimmer { 0%,100% { background-position: 250% 0 } 50% { background-position: -250% 0 } }`}</style>
+
       {ann.linkUrl ? (
-        <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-          {content}
+        <a
+          href={ann.linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: "none", display: "block", padding: "10px 36px 10px 16px", position: "relative" }}
+        >
+          {inner}
         </a>
       ) : (
-        content
+        <div style={{ padding: "10px 36px 10px 16px", position: "relative" }}>
+          {inner}
+        </div>
       )}
 
       {/* Dismiss button */}
@@ -67,7 +89,8 @@ export default function AnnouncementBanner({ announcements }: Props) {
           top: "50%",
           right: 10,
           transform: "translateY(-50%)",
-          background: "rgba(113,63,18,0.1)",
+          background: "rgba(255,255,255,0.18)",
+          backdropFilter: "blur(4px)",
           border: "none",
           borderRadius: "50%",
           width: 22,
@@ -77,14 +100,15 @@ export default function AnnouncementBanner({ announcements }: Props) {
           justifyContent: "center",
           cursor: "pointer",
           padding: 0,
+          zIndex: 2,
         }}
       >
-        <X size={12} color="#713F12" />
+        <X size={12} color="white" />
       </button>
 
       {/* Dots indicator */}
       {announcements.length > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 4, paddingBottom: 6 }}>
+        <div style={{ position: "relative", display: "flex", justifyContent: "center", gap: 4, paddingBottom: 6 }}>
           {announcements.map((_, i) => (
             <div
               key={i}
@@ -92,7 +116,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
                 width: i === current ? 12 : 4,
                 height: 4,
                 borderRadius: 2,
-                background: i === current ? "#713F12" : "rgba(113,63,18,0.25)",
+                background: i === current ? "white" : "rgba(255,255,255,0.35)",
                 transition: "all 0.3s ease",
               }}
             />
