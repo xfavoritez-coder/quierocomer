@@ -361,21 +361,31 @@ export default function AjustesPage() {
         )}
       </div>
 
-      {/* Campanita garzón */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Bell size={16} color="var(--adm-text3)" /> Campanita garzón</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.waiterPanelActive ? "Activada. Los clientes pueden llamar al garzón" : "Desactivada. Los clientes no pueden llamar al garzón"}
-            </p>
+      {/* Campanita garzón — Premium only */}
+      {(() => {
+        const hasWaiter = activePlan === "PREMIUM";
+        return (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasWaiter ? 1 : 0.5 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Bell size={16} color="var(--adm-text3)" /> Campanita garzón</h3>
+                {!hasWaiter
+                  ? <button onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))} style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9333ea", margin: 0, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible en el plan Premium →</button>
+                  : <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+                      {data.waiterPanelActive ? "Activada. Los clientes pueden llamar al garzón" : "Desactivada. Los clientes no pueden llamar al garzón"}
+                    </p>
+                }
+              </div>
+              {hasWaiter && (
+                <Toggle
+                  active={data.waiterPanelActive}
+                  onToggle={() => save({ waiterPanelActive: !data.waiterPanelActive })}
+                />
+              )}
+            </div>
           </div>
-          <Toggle
-            active={data.waiterPanelActive}
-            onToggle={() => save({ waiterPanelActive: !data.waiterPanelActive })}
-          />
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Consejos semanales del Genio */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
