@@ -7,6 +7,8 @@ interface Props {
   onLampClick?: () => void;
   /** Element pinned above the lamp — always visible (e.g. WaiterButton) */
   pinned?: React.ReactNode;
+  /** Hide the lamp button (genioFabEnabled=false). Pinned elements still show. */
+  hideLamp?: boolean;
 }
 
 /**
@@ -14,7 +16,7 @@ interface Props {
  * Optionally shows a pinned element above (waiter bell).
  * Hidden during demo onboarding — appears with bounce when onboarding ends.
  */
-export default function FabSpeedDial({ onLampClick, pinned }: Props) {
+export default function FabSpeedDial({ onLampClick, pinned, hideLamp }: Props) {
   const [hidden, setHidden] = useState(false);
   const [entering, setEntering] = useState(false);
 
@@ -49,6 +51,7 @@ export default function FabSpeedDial({ onLampClick, pinned }: Props) {
   }, [onLampClick]);
 
   if (hidden) return null;
+  if (hideLamp && !pinned) return null;
 
   return (
     <div
@@ -66,7 +69,7 @@ export default function FabSpeedDial({ onLampClick, pinned }: Props) {
       {pinned && <div>{pinned}</div>}
 
       {/* Main lamp button — opens Genio */}
-      <button
+      {!hideLamp && <button
         onClick={() => {
           onLampClick?.();
           window.dispatchEvent(new CustomEvent("fab-speed-dial-close"));
@@ -87,7 +90,7 @@ export default function FabSpeedDial({ onLampClick, pinned }: Props) {
             transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
           }}
         />
-      </button>
+      </button>}
 
       <style>{`
         @keyframes fabBounceIn {

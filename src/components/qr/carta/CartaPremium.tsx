@@ -826,6 +826,7 @@ export default function CartaPremium({
       {!(restaurant as any).isDemo && (
         <FabSpeedDial
           onLampClick={() => setGenioOpen(true)}
+          hideLamp={(restaurant as any).genioFabEnabled === false}
           pinned={
             <>
               {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}

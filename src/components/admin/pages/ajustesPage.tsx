@@ -27,6 +27,7 @@ interface SettingsData {
   weeklyEmailEnabled: boolean;
   weeklyInsightsEnabled: boolean;
   showCategoryLobby: boolean;
+  genioFabEnabled: boolean;
 }
 
 const ACCENT_OPTIONS = [
@@ -362,6 +363,22 @@ export default function AjustesPage() {
       </div>
 
       {/* Campanita garzón — Premium only */}
+      {/* Genio FAB en la carta */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🧞 Genio en la carta</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+              {data.genioFabEnabled !== false ? "El botón del Genio aparece en tu carta para personalizar la experiencia" : "El botón del Genio no se muestra en tu carta"}
+            </p>
+          </div>
+          <Toggle
+            active={data.genioFabEnabled !== false}
+            onToggle={() => save({ genioFabEnabled: data.genioFabEnabled === false })}
+          />
+        </div>
+      </div>
+
       {(() => {
         const hasWaiter = activePlan === "PREMIUM";
         return (

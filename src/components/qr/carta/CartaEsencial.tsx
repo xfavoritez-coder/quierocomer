@@ -977,6 +977,7 @@ export default function CartaEsencial({
       {/* ══════ FAB: lamp (Genio) + views (demo) ══════ */}
       <FabSpeedDial
         onLampClick={() => setGenioOpen(true)}
+        hideLamp={(restaurant as any).genioFabEnabled === false}
         pinned={undefined}
       />
 
