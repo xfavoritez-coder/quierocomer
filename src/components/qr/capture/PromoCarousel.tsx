@@ -172,6 +172,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
   const goNextPromo = useCallback(() => {
     if (!hasNextPromo) return;
+    setImageFullscreen(false);
     slideRef.current = "left";
     setSlideOut("left");
     setTimeout(() => {
@@ -184,6 +185,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
   const goPrevPromo = useCallback(() => {
     if (!hasPrevPromo) return;
+    setImageFullscreen(false);
     slideRef.current = "right";
     setSlideOut("right");
     setTimeout(() => {
@@ -226,6 +228,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
     return "translateX(0)";
   };
 
+  const [imageFullscreen, setImageFullscreen] = useState(false);
   const savedScrollRef = useRef(0);
 
   const openPromo = (p: Promo) => {
@@ -244,6 +247,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
   };
 
   const closeModal = () => {
+    setImageFullscreen(false);
     setModalVisible(false);
     setTimeout(() => {
       setSelectedPromo(null);
@@ -477,30 +481,31 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
             >
 
             {isGraphic ? (
-              /* GRAPHIC PROMO — Variante C: imagen 70% arriba, panel blanco abajo
-                 con info legible. Antes era fullscreen con overlay y se mezclaba
-                 con el texto que la imagen ya traia. */
+              /* GRAPHIC PROMO — imagen tappable a fullscreen */
               <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-                {/* Imagen 70% — collage si hay varias fotos */}
-                {(() => {
-                  const photos = selectedPromo.dishes.map(d => d.photos?.[0]).filter(Boolean) as string[];
-                  if (!isGraphic && photos.length >= 2) {
-                    return (
-                      <div style={{ position: "relative", height: "70%", overflow: "hidden", flexShrink: 0, display: "flex" }}>
-                        {photos.slice(0, 2).map((src, i) => (
-                          <div key={i} style={{ position: "relative", flex: 1, borderRight: i === 0 ? "2px solid var(--carta-detail-bg)" : "none" }}>
-                            <Image src={src} alt={selectedPromo.dishes[i]?.name || ""} fill className="object-cover" sizes="50vw" />
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return (
-                    <div style={{ position: "relative", height: "70%", background: "#000", overflow: "hidden", flexShrink: 0 }}>
-                      {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
-                    </div>
-                  );
-                })()}
+                {/* Imagen — tap to fullscreen */}
+                <div
+                  onClick={() => setImageFullscreen(true)}
+                  style={{ position: "relative", height: "70%", background: "#000", overflow: "hidden", flexShrink: 0, cursor: "zoom-in" }}
+                >
+                  {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
+                </div>
+                {/* Fullscreen image overlay */}
+                {imageFullscreen && heroImg && (
+                  <div
+                    onClick={() => setImageFullscreen(false)}
+                    style={{
+                      position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.95)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "zoom-out",
+                    }}
+                  >
+                    <button onClick={() => setImageFullscreen(false)} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
+                      <X size={16} color="white" strokeWidth={2} />
+                    </button>
+                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-contain" sizes="100vw" style={{ padding: 16 }} />
+                  </div>
+                )}
                 {/* Panel blanco abajo con info */}
                 <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "16px 22px 28px", background: "var(--carta-detail-bg)" }}>
                   {(() => {
