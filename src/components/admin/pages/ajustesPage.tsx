@@ -387,22 +387,6 @@ export default function AjustesPage() {
         );
       })()}
 
-      {/* Consejos semanales del Genio */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🧞 Consejos semanales del Genio</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.weeklyInsightsEnabled ? "Cada semana aparecen en tu inicio del panel consejos personalizados del Genio para mejorar tus ventas" : "Los consejos semanales del Genio no se muestran en el panel de inicio"}
-            </p>
-          </div>
-          <Toggle
-            active={data.weeklyInsightsEnabled}
-            onToggle={() => save({ weeklyInsightsEnabled: !data.weeklyInsightsEnabled })}
-          />
-        </div>
-      </div>
-
     </div>
   );
 }
