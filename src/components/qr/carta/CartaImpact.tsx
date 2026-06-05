@@ -1284,19 +1284,16 @@ export default function CartaImpact({
         </div>
       )}
 
-      {/* Happy Hour banner — below header, above hero */}
-      {hasActiveHH && (
+      {/* Announcement banner takes priority over happy hour */}
+      {announcements && announcements.length > 0 ? (
+        <div style={{ position: "relative", zIndex: 2, marginTop: 65 }}>
+          <AnnouncementBanner announcements={announcements} />
+        </div>
+      ) : hasActiveHH ? (
         <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 12 }}>
           <HappyHourBanner happyHours={happyHours || []} />
         </div>
-      )}
-
-      {/* Announcement banner — above hero */}
-      {announcements && announcements.length > 0 && (
-        <div style={{ position: "relative", zIndex: 2, marginTop: hasActiveHH ? 0 : 65 }}>
-          <AnnouncementBanner announcements={announcements} />
-        </div>
-      )}
+      ) : null}
 
       {/* Hero */}
       <div style={{ position: "relative", zIndex: 1, marginTop: (hasActiveHH || (announcements && announcements.length > 0)) ? 0 : 65 }}>

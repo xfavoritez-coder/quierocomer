@@ -175,7 +175,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        background: `linear-gradient(135deg, ${active.bannerColor}ee, ${active.bannerColor})`,
+        background: `var(--carta-accent, ${active.bannerColor})`,
         color: "white",
         padding: "11px 20px 12px",
         textAlign: "center",
