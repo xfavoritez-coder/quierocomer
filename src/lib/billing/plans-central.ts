@@ -60,7 +60,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     features: new Set(["genio", "modifiers", "view_gallery"]),
     featureDisplay: [
       { text: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante." },
-      { text: "2 vistas de carta", tip: "Vista Free y vista Galería." },
+      { text: "1 vista de carta", tip: "Vista lista para mostrar tu carta." },
       { text: "Genio IA incluido", tip: "El Genio reordena tu carta según los gustos de cada cliente." },
       { text: "Panel autoadministrable", tip: "Edita platos, precios y fotos desde tu celular." },
     ],

@@ -123,7 +123,7 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$0</div>
             <div className="qc-checks">
               <div>✓ Carta digital con QR <span className="qc-tip">i<span className="qc-tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
-              <div>✓ 2 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Vista Free y vista Galería para elegir la que mejor represente tu local</span></span></div>
+              <div>✓ 1 vista de carta <span className="qc-tip">i<span className="qc-tip-text">Vista lista para mostrar tu carta</span></span></div>
               <div>✓ Genio IA incluido <span className="qc-tip">i<span className="qc-tip-text">El Genio reordena tu carta segun los gustos de cada cliente</span></span></div>
               <div>✓ Panel autoadministrable <span className="qc-tip">i<span className="qc-tip-text">Edita platos, precios y fotos desde tu celular</span></span></div>
             </div>

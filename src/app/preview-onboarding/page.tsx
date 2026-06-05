@@ -59,7 +59,7 @@ function Option1Toast({ onClose }: { onClose: () => void }) {
     }}>
       <style>{`@keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: ".06em" }}>Tu carta tiene 2 vistas</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: ".06em" }}>Tu carta tiene 1 vista</span>
         <button onClick={onClose} style={{ background: "none", border: "none", color: "#555", fontSize: 16, cursor: "pointer" }}>✕</button>
       </div>
       <div style={{ display: "flex", gap: 8 }}>

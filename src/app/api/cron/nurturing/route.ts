@@ -26,7 +26,7 @@ const TEMPLATE_TEXTS: Record<string, (name: string, rest: string) => string> = {
   nurturing_no_volvio: (n, r) => `Hola ${n}, soy Camila de QuieroComer 👋 Te escribo por la carta de ${r}, vi que la activaste y está lista pero no la continuaste usando. ¿Habrá algo que no te gustó o tienes alguna duda? Cualquier cosa es bienvenida, nos encantaría saber.`,
 };
 
-const BLACKLIST = new Set(["+56976485972", "+56977940643"]); // Il Mascalzone, Cuartel 50
+const BLACKLIST = new Set(["+56976485972", "+56977940643", "+56971204150", "+56999946208"]); // Il Mascalzone, Cuartel 50, Taranta Chicureo, Test Pago
 
 /**
  * Cron: Lead nurturing via WhatsApp — runs daily at 16:00 Chile (20:00 UTC).
@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
 
     // Only send to restaurants created more than 24h ago (give them time)
     const ageMs = now.getTime() - r.createdAt.getTime();
-    if (ageMs < 24 * 60 * 60 * 1000) { skipped++; continue; }
+    if (ageMs < 8 * 60 * 60 * 1000) { skipped++; continue; }
 
     const whatsapp = r.owner.whatsapp;
     const ownerName = r.owner.name || lead?.ownerName || "Hola";
