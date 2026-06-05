@@ -215,7 +215,7 @@ export default function AjustesPage() {
 
       {/* Índice de categorías */}
       {(() => {
-        const catCount = (data as any)?._count?.categories ?? 0;
+        const catCount = (data as any)?.categories?.length ?? (data as any)?._count?.categories ?? 0;
         const canEnableLobby = catCount >= 3;
         return (
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -374,7 +374,7 @@ export default function AjustesPage() {
           </div>
           <Toggle
             active={data.ownerBannerEnabled !== false}
-            onToggle={() => save({ ownerBannerEnabled: data.ownerBannerEnabled === false })}
+            onToggle={() => save({ ownerBannerEnabled: !(data.ownerBannerEnabled !== false) })}
           />
         </div>
       </div>
@@ -390,7 +390,7 @@ export default function AjustesPage() {
           </div>
           <Toggle
             active={data.genioFabEnabled !== false}
-            onToggle={() => save({ genioFabEnabled: data.genioFabEnabled === false })}
+            onToggle={() => save({ genioFabEnabled: !(data.genioFabEnabled !== false) })}
           />
         </div>
       </div>
