@@ -29,7 +29,7 @@ export default function OwnerBanner({ restaurantName, restaurantSlug, restaurant
     fetch(`/api/qr/is-owner?restaurantId=${restaurantId}`)
       .then(r => r.json())
       .then(d => {
-        if (!d.isOwner) return;
+        if (!d.isOwner || d.bannerEnabled === false) return;
         setTimeout(() => setVisible(true), 800);
         // Fetch today's visits
         fetch(`/api/qr/stats-mini?restaurantId=${restaurantId}`)

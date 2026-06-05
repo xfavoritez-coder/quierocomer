@@ -508,6 +508,7 @@ model Restaurant {
   weeklyEmailEnabled    Boolean    @default(true)
   weeklyInsightsEnabled Boolean    @default(true)
   genioFabEnabled       Boolean    @default(true)
+  ownerBannerEnabled    Boolean    @default(true)
   ownerId     String?
 
   // Toteat POS integration (per-restaurant credentials)

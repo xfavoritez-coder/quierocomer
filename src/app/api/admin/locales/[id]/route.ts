@@ -17,6 +17,7 @@ const OWNER_EDITABLE_FIELDS = [
   "weeklyEmailEnabled",
   "weeklyInsightsEnabled",
   "genioFabEnabled",
+  "ownerBannerEnabled",
   "mpPayerEmail",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
   "billingCompanyName", "billingRut", "billingGiro",

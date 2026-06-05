@@ -28,6 +28,7 @@ interface SettingsData {
   weeklyInsightsEnabled: boolean;
   showCategoryLobby: boolean;
   genioFabEnabled: boolean;
+  ownerBannerEnabled: boolean;
 }
 
 const ACCENT_OPTIONS = [
@@ -362,7 +363,22 @@ export default function AjustesPage() {
         )}
       </div>
 
-      {/* Campanita garzón — Premium only */}
+      {/* Banner Mi Panel en la carta */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🏪 Mi Panel en la carta</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+              {data.ownerBannerEnabled !== false ? "Cuando entras a tu carta aparece un banner con las visitas del día y acceso a tu panel" : "El banner de Mi Panel no se muestra cuando visitas tu carta"}
+            </p>
+          </div>
+          <Toggle
+            active={data.ownerBannerEnabled !== false}
+            onToggle={() => save({ ownerBannerEnabled: data.ownerBannerEnabled === false })}
+          />
+        </div>
+      </div>
+
       {/* Genio FAB en la carta */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>

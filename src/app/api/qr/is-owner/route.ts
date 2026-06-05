@@ -18,6 +18,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ isOwner: false });
   }
 
+  // Fetch the banner setting for the restaurant
+  const restaurantSettings = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { ownerBannerEnabled: true },
+  });
+
   // Demo session — check panel_demo_slug matches
   if (panelId === "demo") {
     const demoSlug = req.cookies.get("panel_demo_slug")?.value;
@@ -26,7 +32,7 @@ export async function GET(req: NextRequest) {
       where: { id: restaurantId, slug: demoSlug },
       select: { id: true },
     });
-    return NextResponse.json({ isOwner: !!restaurant });
+    return NextResponse.json({ isOwner: !!restaurant, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? true });
   }
 
   // Team member
@@ -36,7 +42,7 @@ export async function GET(req: NextRequest) {
       where: { id: memberId },
       select: { restaurantId: true },
     });
-    return NextResponse.json({ isOwner: member?.restaurantId === restaurantId });
+    return NextResponse.json({ isOwner: member?.restaurantId === restaurantId, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? true });
   }
 
   // Regular owner — check they own this restaurant
@@ -45,5 +51,5 @@ export async function GET(req: NextRequest) {
     select: { restaurants: { where: { id: restaurantId }, select: { id: true } } },
   });
 
-  return NextResponse.json({ isOwner: (owner?.restaurants?.length ?? 0) > 0 });
+  return NextResponse.json({ isOwner: (owner?.restaurants?.length ?? 0) > 0, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? true });
 }
