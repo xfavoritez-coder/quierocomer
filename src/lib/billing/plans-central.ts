@@ -181,7 +181,7 @@ export function effectivePlan(plan: string | null | undefined, subscriptionStatu
   if (p === "FREE") return "FREE";
   if (!subscriptionStatus) return p;
   const s = subscriptionStatus.toUpperCase();
-  if (s === "ACTIVE" || s === "TRIALING") return p;
+  if (s === "ACTIVE" || s === "TRIALING" || s === "NONE") return p;
   if (s === "PAST_DUE" || s === "GRACE") return p; // still active during grace
   return "FREE"; // CANCELLED, EXPIRED, etc.
 }

@@ -49,7 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     include: {
       owner: { select: { id: true, name: true, email: true } },
       categories: { orderBy: { position: "asc" }, select: { id: true, name: true, position: true, isActive: true } },
-      _count: { select: { dishes: true, statEvents: true, sessions: true, waiterCalls: true } },
+      _count: { select: { dishes: true, statEvents: true, sessions: true, waiterCalls: true, categories: true } },
     },
   });
   if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
@@ -103,6 +103,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.toteatUserId !== undefined && { toteatUserId: body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId) }),
         ...(body.toteatApiToken !== undefined && { toteatApiToken: body.toteatApiToken || null }),
         ...(body.isDemo !== undefined && { isDemo: body.isDemo }),
+        ...(body.genioFabEnabled !== undefined && { genioFabEnabled: body.genioFabEnabled }),
+        ...(body.ownerBannerEnabled !== undefined && { ownerBannerEnabled: body.ownerBannerEnabled }),
+        ...(body.weeklyEmailEnabled !== undefined && { weeklyEmailEnabled: body.weeklyEmailEnabled }),
+        ...(body.weeklyInsightsEnabled !== undefined && { weeklyInsightsEnabled: body.weeklyInsightsEnabled }),
       };
     } else {
       // Owner: silently filter to allowed fields only

@@ -364,36 +364,54 @@ export default function AjustesPage() {
       </div>
 
       {/* Banner Mi Panel en la carta */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🏪 Mi Panel en la carta</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.ownerBannerEnabled !== false ? "Cuando entras a tu carta aparece un banner con las visitas del día y acceso a tu panel" : "El banner de Mi Panel no se muestra cuando visitas tu carta"}
-            </p>
+      {(() => {
+        const bannerOn = data.ownerBannerEnabled ?? true;
+        return (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🏪 Mi Panel en la carta</h3>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+                  {bannerOn ? "Cuando entras a tu carta aparece un banner con las visitas del día y acceso a tu panel" : "El banner de Mi Panel no se muestra cuando visitas tu carta"}
+                </p>
+              </div>
+              <Toggle
+                active={bannerOn}
+                onToggle={() => {
+                  const next = !bannerOn;
+                  setData((prev: any) => prev ? { ...prev, ownerBannerEnabled: next } : prev);
+                  save({ ownerBannerEnabled: next });
+                }}
+              />
+            </div>
           </div>
-          <Toggle
-            active={data.ownerBannerEnabled !== false}
-            onToggle={() => save({ ownerBannerEnabled: !(data.ownerBannerEnabled !== false) })}
-          />
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Genio FAB en la carta */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🧞 Genio en la carta</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.genioFabEnabled !== false ? "El botón del Genio aparece en tu carta para personalizar la experiencia" : "El botón del Genio no se muestra en tu carta"}
-            </p>
+      {(() => {
+        const genioOn = data.genioFabEnabled ?? true;
+        return (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><img src="/genio-lamp.png" alt="Genio" style={{ width: 20, height: 20, objectFit: "contain" }} /> Genio en la carta</h3>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+                  {genioOn ? "El botón del Genio aparece en tu carta para personalizar la experiencia" : "El botón del Genio no se muestra en tu carta"}
+                </p>
+              </div>
+              <Toggle
+                active={genioOn}
+                onToggle={() => {
+                  const next = !genioOn;
+                  setData((prev: any) => prev ? { ...prev, genioFabEnabled: next } : prev);
+                  save({ genioFabEnabled: next });
+                }}
+              />
+            </div>
           </div>
-          <Toggle
-            active={data.genioFabEnabled !== false}
-            onToggle={() => save({ genioFabEnabled: !(data.genioFabEnabled !== false) })}
-          />
-        </div>
-      </div>
+        );
+      })()}
 
       {(() => {
         const hasWaiter = activePlan === "PREMIUM";
