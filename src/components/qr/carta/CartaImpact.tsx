@@ -680,8 +680,10 @@ export default function CartaImpact({
   // Happy hour banner
   const hasActiveHH = !!getActiveHappyHour(happyHours || []);
 
-  // Language select
-  const enabledLangs: string[] = (restaurant as any).enabledLangs || ["es"];
+  // Language select — multilang is Gold+ only
+  const planKey = effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus);
+  const hasMultilang = canAccess(planKey, "multilang");
+  const enabledLangs: string[] = hasMultilang ? ((restaurant as any).enabledLangs || ["es"]) : ["es"];
   const [langOpen, setLangOpen] = useState(false);
   const LANG_FLAG_IMG: Record<string, string> = {
     es: "https://purecatamphetamine.github.io/country-flag-icons/3x2/ES.svg",
