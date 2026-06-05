@@ -365,7 +365,7 @@ export default function AjustesPage() {
 
       {/* Banner Mi Panel en la carta */}
       {(() => {
-        const bannerOn = data.ownerBannerEnabled ?? true;
+        const bannerOn = data.ownerBannerEnabled ?? false;
         return (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>

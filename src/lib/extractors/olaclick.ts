@@ -112,6 +112,23 @@ function extractCategorySlugs(content: string, origin: string): string[] {
   return [...slugs];
 }
 
+/** Extract category slugs from OlaClick sitemap.xml — most reliable source */
+async function extractSlugsFromSitemap(origin: string): Promise<string[]> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`${origin}/sitemap.xml`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const slugs = new Set<string>();
+    const matches = xml.matchAll(/<loc>[^<]*\/([a-z0-9-]+)\/[a-z0-9-]+<\/loc>/gi);
+    for (const m of matches) slugs.add(m[1].toLowerCase());
+    return [...slugs];
+  } catch {}
+  return [];
+}
+
 async function callClaude(prompt: string): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
@@ -153,9 +170,12 @@ export async function extractOlaClick(cartaUrl: string): Promise<ExtractionResul
   const logoUrl = extractLogoFromHtml(rootHtml);
   console.log("[OlaClick] Initial /products:", initialContent.length, "chars | Logo:", logoUrl ? "found" : "none");
 
-  // Step 2: Discover category slugs from product links + root HTML + common slugs
-  const slugsFromContent = extractCategorySlugs(initialContent, origin);
-  const slugsFromHtml = extractSlugsFromNuxtHtml(rootHtml, origin);
+  // Step 2: Discover category slugs from sitemap + product links + root HTML + common slugs
+  const [slugsFromSitemap, slugsFromContent, slugsFromHtml] = await Promise.all([
+    extractSlugsFromSitemap(origin),
+    Promise.resolve(extractCategorySlugs(initialContent, origin)),
+    Promise.resolve(extractSlugsFromNuxtHtml(rootHtml, origin)),
+  ]);
 
   // Common category slugs used by Chilean/Latin restaurants on OlaClick
   const COMMON_SLUGS = [
@@ -170,11 +190,14 @@ export async function extractOlaClick(cartaUrl: string): Promise<ExtractionResul
     "vegetariano", "vegano", "sin-gluten", "wok", "gyoza", "dim-sum",
   ];
 
-  const allSlugsSet = new Set([...slugsFromContent, ...slugsFromHtml, ...COMMON_SLUGS]);
+  // Sitemap slugs are authoritative — if we got them, skip common slug guessing
+  const allSlugsSet = slugsFromSitemap.length > 0
+    ? new Set([...slugsFromSitemap, ...slugsFromContent, ...slugsFromHtml])
+    : new Set([...slugsFromContent, ...slugsFromHtml, ...COMMON_SLUGS]);
   // Remove already-found first slug to avoid duplicating it
   const firstSlugFromContent = slugsFromContent[0];
   const categorySlugs = [...allSlugsSet];
-  console.log("[OlaClick] Known slugs:", slugsFromContent.join(", ") || "none", "| Will probe", COMMON_SLUGS.length, "common slugs");
+  console.log("[OlaClick] Sitemap slugs:", slugsFromSitemap.length, "| Content slugs:", slugsFromContent.join(", ") || "none", "| Total to probe:", categorySlugs.length);
 
   // Step 3: Probe all candidate slugs via Jina in parallel batches
   // OlaClick returns the same SPA shell for any URL, so we need Jina to render JS

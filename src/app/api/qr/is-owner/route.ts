@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       where: { id: restaurantId, slug: demoSlug },
       select: { id: true },
     });
-    return NextResponse.json({ isOwner: !!restaurant, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? true });
+    return NextResponse.json({ isOwner: !!restaurant, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? false });
   }
 
   // Team member
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       where: { id: memberId },
       select: { restaurantId: true },
     });
-    return NextResponse.json({ isOwner: member?.restaurantId === restaurantId, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? true });
+    return NextResponse.json({ isOwner: member?.restaurantId === restaurantId, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? false });
   }
 
   // Regular owner — check they own this restaurant
@@ -51,5 +51,5 @@ export async function GET(req: NextRequest) {
     select: { restaurants: { where: { id: restaurantId }, select: { id: true } } },
   });
 
-  return NextResponse.json({ isOwner: (owner?.restaurants?.length ?? 0) > 0, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? true });
+  return NextResponse.json({ isOwner: (owner?.restaurants?.length ?? 0) > 0, bannerEnabled: restaurantSettings?.ownerBannerEnabled ?? false });
 }
