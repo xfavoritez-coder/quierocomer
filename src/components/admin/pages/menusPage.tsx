@@ -346,6 +346,7 @@ export default function AdminMenus() {
   const [lactoseFreeFilter, setLactoseFreeFilter] = useState(false);
   const [soyFreeFilter, setSoyFreeFilter] = useState(false);
   const [nutsFilter, setNutsFilter] = useState(false);
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
   const [sortMode, setSortMode] = useState<"category" | "alpha" | "recent">("category");
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
@@ -528,14 +529,20 @@ export default function AdminMenus() {
     if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree === true);
     // Filtro warning "Frutos secos": cualquier señal positiva (containsNuts O alergeno)
     if (nutsFilter) list = list.filter(d => (d as any).containsNuts === true || allergensHas(d, ["maní", "mani", "nuez", "nueces", "almendra", "frutos secos"]));
-    // Recently created first, then recommended (snapshot — no se reordena
-    // mientras el usuario marca/desmarca; los nuevos destacados suben en
-    // el siguiente reload del listado), then alphabetical.
-    // Recently created dishes always float to top
+    // Visibility filter
+    if (visibilityFilter === "hidden") list = list.filter(d => !d.isActive);
+    else if (visibilityFilter === "visible") list = list.filter(d => d.isActive);
+
+    // Recently created first, then featured/recommended always at the top,
+    // then the rest by the selected sort mode.
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
       const bNew = recentlyCreated.has(b.id) ? 0 : 1;
       if (aNew !== bNew) return aNew - bNew;
+      // Featured dishes always float to top
+      const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
+      const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
+      if (aRec !== bRec) return aRec - bRec;
       if (sortMode === "alpha") return a.name.localeCompare(b.name, "es");
       if (sortMode === "recent") return ((b as any).updatedAt || "").localeCompare((a as any).updatedAt || "");
       // Default: category position + dish position (same as carta)
@@ -544,10 +551,10 @@ export default function AdminMenus() {
       if (aCat !== bCat) return aCat - bCat;
       return (a.position ?? 0) - (b.position ?? 0);
     });
-  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, categories, sortMode]);
+  }, [dishes, search, catFilter, dietFilter, visibilityFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, categories, sortMode]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, selectedRestaurantId]);
+  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, visibilityFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, selectedRestaurantId]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -1400,6 +1407,24 @@ export default function AdminMenus() {
             </select>
             <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
           </div>
+          {/* Visibility filter */}
+          {(() => {
+            const hiddenCount = dishes.filter(d => !d.isActive).length;
+            return hiddenCount > 0 ? (
+              <button
+                onClick={() => setVisibilityFilter(v => v === "hidden" ? "all" : "hidden")}
+                style={{
+                  padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F,
+                  fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0,
+                  background: visibilityFilter === "hidden" ? "rgba(220,80,40,0.15)" : "var(--adm-input)",
+                  color: visibilityFilter === "hidden" ? "#dc5028" : "var(--adm-text2)",
+                }}
+              >
+                <EyeOff size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
+                Ocultos ({hiddenCount})
+              </button>
+            ) : null;
+          })()}
           {/* Separator */}
           <div style={{ width: 1, height: 24, background: "var(--adm-card-border)", flexShrink: 0, alignSelf: "center" }} />
           <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "var(--adm-input)", color: spicyFilter ? "#e85530" : "var(--adm-text2)" }}>
@@ -1567,7 +1592,7 @@ export default function AdminMenus() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {paginated.length > 0 && (() => {
-            const hasFilters = !!search || catFilter !== "all" || dietFilter !== "all" || spicyFilter || glutenFreeFilter || lactoseFreeFilter || soyFreeFilter || nutsFilter;
+            const hasFilters = !!search || catFilter !== "all" || dietFilter !== "all" || visibilityFilter !== "all" || spicyFilter || glutenFreeFilter || lactoseFreeFilter || soyFreeFilter || nutsFilter;
             const allFilteredSelected = filtered.length > 0 && filtered.every(d => bulkSelected.has(d.id));
             const moreInOtherPages = filtered.length > paginated.length;
             const target = moreInOtherPages ? filtered : paginated;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { optimizeImage } from "@/lib/optimizeImage";
 import {
   checkAdminAuth,
   assertOwnsRestaurant,
@@ -34,6 +35,8 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    // Promos can be larger (banners, full-width graphics)
+    const optimized = await optimizeImage(buffer, { maxDimension: 1600 });
 
     const slug = promoName
       .toLowerCase()
@@ -41,13 +44,11 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 40);
-    const ts = Date.now();
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-    const fileName = `general/promo-${ts}-${slug}.${ext}`;
+    const fileName = `general/promo-${Date.now()}-${slug}.webp`;
 
     const { error } = await supabase.storage
       .from("fotos")
-      .upload(fileName, buffer, { contentType: file.type, upsert: true });
+      .upload(fileName, optimized, { contentType: "image/webp", upsert: true });
 
     if (error) {
       console.error("[Upload promo]", error);

@@ -74,13 +74,11 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
     const buffer = Buffer.from(await res.arrayBuffer());
     if (buffer.length < 500) return null;
 
-    let pipeline = sharp(buffer);
-    const meta = await pipeline.metadata();
+    const meta = await sharp(buffer).metadata();
     if (!meta.format) return null;
-    if ((meta.width && meta.width > 1200) || (meta.height && meta.height > 1200)) {
-      pipeline = pipeline.resize(1200, 1200, { fit: "inside", withoutEnlargement: true });
-    }
-    const optimized = await pipeline.webp({ quality: 88 }).toBuffer();
+
+    const { optimizeImage } = await import("@/lib/optimizeImage");
+    const optimized = await optimizeImage(buffer);
 
     const fileName = `dishes/${restaurantId}-${Date.now()}-${dishSlug.slice(0, 30)}.webp`;
     const { error } = await supabase.storage

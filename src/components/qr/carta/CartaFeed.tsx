@@ -530,6 +530,27 @@ export default function CartaFeed({
     trackCartaDishOpenedInList(restaurant.id, dish.id, false);
   }, [restaurant.id]);
 
+  // Progressive loading: render categories in batches
+  const INITIAL_CATS = 3;
+  const BATCH_SIZE = 3;
+  const [visibleCats, setVisibleCats] = useState(INITIAL_CATS);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Reset visible count when grouped changes (e.g. search)
+  useEffect(() => { setVisibleCats(query ? grouped.length : INITIAL_CATS); }, [query, grouped.length]);
+
+  useEffect(() => {
+    if (visibleCats >= grouped.length) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisibleCats(v => Math.min(v + BATCH_SIZE, grouped.length)); },
+      { rootMargin: "600px" },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [visibleCats, grouped.length]);
+
   useEffect(() => { onReady?.(); }, [readyKey]);
 
   return (
@@ -586,11 +607,21 @@ export default function CartaFeed({
                     🔥 {t(lang, "offers" as any) || "Ofertas"}
                   </button>
                 )}
-                {categories.map(cat => (
+                {categories.map((cat, ci) => (
                   <button
                     key={cat.id}
                     ref={activeCategory === cat.id ? activeCatRef : undefined}
-                    onClick={() => { setActiveCategory(cat.id); document.getElementById(`feed-cat-${cat.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      // Ensure category is rendered before scrolling
+                      const catIdx = grouped.findIndex(g => g.category.id === cat.id);
+                      if (catIdx >= 0 && catIdx >= visibleCats) {
+                        setVisibleCats(catIdx + 1);
+                        requestAnimationFrame(() => { setTimeout(() => { document.getElementById(`feed-cat-${cat.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50); });
+                      } else {
+                        document.getElementById(`feed-cat-${cat.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }
+                    }}
                     style={{
                       padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer",
                       fontSize: 13, fontWeight: activeCategory === cat.id ? 500 : 400, whiteSpace: "nowrap",
@@ -656,7 +687,7 @@ export default function CartaFeed({
       })()}
 
       {/* ═══ CATEGORIES + FEED CARDS ═══ */}
-      {grouped.map(({ category, dishes: catDishes }, index) => (
+      {grouped.slice(0, visibleCats).map(({ category, dishes: catDishes }, index) => (
         <section key={category.id} id={`feed-cat-${category.id}`}>
           {/* Interstitial banners */}
           {index === Math.max(2, Math.floor(grouped.length * 0.4)) && <div style={{ margin: "0 10px 8px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
@@ -683,6 +714,8 @@ export default function CartaFeed({
           </div>
         </section>
       ))}
+      {/* Sentinel for progressive loading */}
+      {visibleCats < grouped.length && <div ref={sentinelRef} style={{ height: 1 }} />}
 
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "24px 0 16px", marginTop: 40 }}>

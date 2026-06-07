@@ -1286,7 +1286,7 @@ export default function CartaImpact({
 
       {/* Announcement banner takes priority over happy hour */}
       {announcements && announcements.length > 0 ? (
-        <div style={{ position: "relative", zIndex: 2, marginTop: 65 }}>
+        <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 12 }}>
           <AnnouncementBanner announcements={announcements} />
         </div>
       ) : hasActiveHH ? (

@@ -33,14 +33,12 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
     const buffer = Buffer.from(await res.arrayBuffer());
     if (buffer.length < 500) return null; // skip tiny/broken images
 
-    // Let sharp validate — content-type is unreliable (some CDNs return application/octet-stream)
-    let pipeline = sharp(buffer);
-    const meta = await pipeline.metadata();
+    // Let sharp validate — content-type is unreliable
+    const meta = await sharp(buffer).metadata();
     if (!meta.format) return null; // not a valid image
-    if ((meta.width && meta.width > 800) || (meta.height && meta.height > 800)) {
-      pipeline = pipeline.resize(800, 800, { fit: "inside", withoutEnlargement: true });
-    }
-    const optimized = await pipeline.webp({ quality: 82 }).toBuffer();
+
+    const { optimizeImage } = await import("@/lib/optimizeImage");
+    const optimized = await optimizeImage(buffer);
 
     const fileName = `dishes/${restaurantId}-${Date.now()}-${dishSlug.slice(0, 30)}.webp`;
     const { error } = await supabase.storage
