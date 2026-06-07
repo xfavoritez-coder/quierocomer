@@ -393,7 +393,7 @@ export function trialEndingSoonEmailHtml(
 }
 
 export function trialExpiredEmailHtml(
-  firstName: string, restaurantName: string, suscripcionLink: string,
+  firstName: string, restaurantName: string, suscripcionLink: string, cartaUrl?: string,
 ): string {
   const planRow = (name: string, price: string, color: string, features: string, isLast = false) => `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="${!isLast ? "padding-bottom:13px;border-bottom:1px solid rgba(193,151,82,0.22);margin-bottom:13px;" : ""}">
@@ -461,7 +461,8 @@ export function trialExpiredEmailHtml(
     Si quieres recuperar estas funciones, elige un plan desde tu panel:
   </td></tr>
 
-  <tr><td style="padding-bottom:24px;">${btn(suscripcionLink, "Ver planes")}</td></tr>
+  <tr><td style="padding-bottom:${cartaUrl ? "12" : "24"}px;">${btn(suscripcionLink, "Ver planes")}</td></tr>
+  ${cartaUrl ? `<tr><td style="padding-bottom:24px;">${btn(cartaUrl, "Ver mi carta →", false)}</td></tr>` : ""}
 
   <tr><td style="padding-top:8px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>

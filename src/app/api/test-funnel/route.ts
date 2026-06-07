@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
         await sendAdminEmail({
           to: restaurant.owner.email,
           subject: `Tu carta QR volvió al plan gratis`,
-          html: trialExpiredEmailHtml(firstName, restaurant.name, `${baseUrl}/panel/suscripcion`),
+          html: trialExpiredEmailHtml(firstName, restaurant.name, `${baseUrl}/panel/suscripcion`, `${baseUrl}/${restaurant.slug}`),
           purpose: "trial_expired",
         });
         results.push("email sent");

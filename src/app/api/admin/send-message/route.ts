@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       subject = `${firstName}, te quedan ${daysLeft} dias de prueba`;
       purpose = "trial_ending";
     } else if (template === "trial_vencido") {
-      html = trialExpiredEmailHtml(firstName, restaurant.name, `${BASE_URL}/panel/suscripcion`);
+      html = trialExpiredEmailHtml(firstName, restaurant.name, `${BASE_URL}/panel/suscripcion`, `${BASE_URL}/${restaurant.slug}`);
       subject = `${firstName}, tu prueba Premium termino`;
       purpose = "trial_expired";
     } else if (template === "confirmar_whatsapp") {

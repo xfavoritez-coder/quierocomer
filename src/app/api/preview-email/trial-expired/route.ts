@@ -10,6 +10,7 @@ export async function GET() {
     "Daniel",
     "Sushi Master",
     "https://quierocomer.cl/panel/suscripcion",
+    "https://quierocomer.cl/sushi-master",
   );
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
