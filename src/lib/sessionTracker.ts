@@ -11,7 +11,7 @@
  */
 import { getGuestId, getSessionId } from "./guestId";
 
-const HEARTBEAT_INTERVAL = 15_000; // 15 seconds — Pro tier DB handles this fine at 80+ concurrent users
+const HEARTBEAT_INTERVAL = 30_000; // 30 seconds — reduces Vercel invocations by 50% vs 15s, still precise enough for analytics
 const INACTIVITY_TIMEOUT = 45_000; // 45 seconds — gives more breathing room before closing
 
 interface DishView {

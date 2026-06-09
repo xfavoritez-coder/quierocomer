@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/experience",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/cleanup?key=__SEED_SECRET__",
@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/cron/badge-snapshot",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 */2 * * *"
     },
     {
       "path": "/api/cron/weekly-email",
