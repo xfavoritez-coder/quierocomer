@@ -132,7 +132,14 @@ function catIcon(name: string): string {
 
 /* ─── lang names ─── */
 const LANG_NAMES: Record<string, string> = {
-  es: "Español", en: "English", pt: "Português", fr: "Français", de: "Deutsch", it: "Italiano", zh: "中文", ja: "日本語", ko: "한국어",
+  es: "Español", en: "English", pt: "Português", fr: "Français", de: "Deutsch", it: "Italiano", th: "ไทย", zh: "中文", ja: "日本語", ko: "한국어",
+};
+const LANG_FLAG_URLS: Record<string, string> = {
+  es: "https://purecatamphetamine.github.io/country-flag-icons/3x2/ES.svg",
+  en: "https://purecatamphetamine.github.io/country-flag-icons/3x2/GB.svg",
+  pt: "https://purecatamphetamine.github.io/country-flag-icons/3x2/PT.svg",
+  it: "https://purecatamphetamine.github.io/country-flag-icons/3x2/IT.svg",
+  th: "https://purecatamphetamine.github.io/country-flag-icons/3x2/TH.svg",
 };
 
 /* ─── circle button style (computed per render via C) ─── */
@@ -459,7 +466,11 @@ export default function CartaEsencial({
                         borderBottom: `1px solid ${C.line}`,
                       }}
                     >
-                      <span style={{ textTransform: "uppercase", fontWeight: 800, fontSize: 11, width: 22 }}>{l}</span>
+                      {LANG_FLAG_URLS[l] ? (
+                        <img src={LANG_FLAG_URLS[l]} alt={l} style={{ width: 22, height: 15, objectFit: "cover", borderRadius: 2 }} />
+                      ) : (
+                        <span style={{ textTransform: "uppercase", fontWeight: 800, fontSize: 11, width: 22 }}>{l}</span>
+                      )}
                       <span>{LANG_NAMES[l] || l}</span>
                     </button>
                   ))}

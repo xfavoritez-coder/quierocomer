@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLang } from "@/contexts/LangContext";
 import { SUPPORTED_LANGS } from "@/lib/qr/i18n";
 
-const FLAG_EMOJI: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹" };
+const FLAG_EMOJI: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹", th: "🇹🇭" };
 
 function FlagSvg({ code, size = 20 }: { code: string; size?: number }) {
   const id = `f${code}${Math.random().toString(36).slice(2, 6)}`;
@@ -13,10 +13,11 @@ function FlagSvg({ code, size = 20 }: { code: string; size?: number }) {
     en: <svg viewBox="0 0 100 100" width={size} height={size}><defs><clipPath id={id}><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath={`url(#${id})`}><rect width="100" height="100" fill="#002868"/><rect y="0" width="100" height="8" fill="#bf0a30"/><rect y="15" width="100" height="8" fill="white"/><rect y="30" width="100" height="8" fill="#bf0a30"/><rect y="45" width="100" height="8" fill="white"/><rect y="60" width="100" height="8" fill="#bf0a30"/><rect y="75" width="100" height="8" fill="white"/><rect y="90" width="100" height="10" fill="#bf0a30"/><rect width="45" height="55" fill="#002868"/></g></svg>,
     pt: <svg viewBox="0 0 100 100" width={size} height={size}><defs><clipPath id={id}><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath={`url(#${id})`}><rect width="100" height="100" fill="#009739"/><rect width="40" height="100" fill="#002776"/><circle cx="40" cy="50" r="16" fill="#fedd00"/></g></svg>,
     it: <svg viewBox="0 0 100 100" width={size} height={size}><defs><clipPath id={id}><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath={`url(#${id})`}><rect x="0" width="33" height="100" fill="#009246"/><rect x="33" width="34" height="100" fill="white"/><rect x="67" width="33" height="100" fill="#ce2b37"/></g></svg>,
+    th: <svg viewBox="0 0 100 100" width={size} height={size}><defs><clipPath id={id}><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath={`url(#${id})`}><rect width="100" height="100" fill="#fff"/><rect y="17" width="100" height="66" fill="#241D4F"/><rect y="33" width="100" height="34" fill="#F4122B"/></g></svg>,
   };
   return <span style={{ display: "inline-flex", borderRadius: "50%", overflow: "hidden", width: size, height: size, flexShrink: 0 }}>{flags[code] || <span>{FLAG_EMOJI[code] || "🌐"}</span>}</span>;
 }
-const NAMES: Record<string, string> = { es: "Español", en: "English", pt: "Português", it: "Italiano" };
+const NAMES: Record<string, string> = { es: "Español", en: "English", pt: "Português", it: "Italiano", th: "ไทย" };
 
 export default function LangSelector({ enabledLangs }: { enabledLangs?: string[] }) {
   const lang = useLang();
