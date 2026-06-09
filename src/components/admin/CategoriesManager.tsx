@@ -40,10 +40,13 @@ function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibili
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: isFeatured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: isFeatured ? "1px solid rgba(244,166,35,0.35)" : "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4, opacity: dish.isActive === false ? 0.5 : 1 }}>
-        <div {...attributes} {...listeners} style={{ cursor: "grab", padding: "4px 2px", color: "var(--adm-text3)", fontSize: "0.8rem", touchAction: "none" }}>⠿</div>
+      <div
+        onClick={() => onEdit?.(dish)}
+        style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: isFeatured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: isFeatured ? "1px solid rgba(244,166,35,0.35)" : "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4, opacity: dish.isActive === false ? 0.5 : 1, cursor: onEdit ? "pointer" : undefined }}
+      >
+        <div {...attributes} {...listeners} onClick={e => e.stopPropagation()} style={{ cursor: "grab", padding: "4px 2px", color: "var(--adm-text3)", fontSize: "0.8rem", touchAction: "none" }}>⠿</div>
         {dish.photos?.[0] ? (
-          <img src={dish.photos[0]} alt="" onClick={() => onPhotoClick?.(dish.photos[0])} style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0, cursor: dish.photos[0] ? "zoom-in" : undefined }} />
+          <img src={dish.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
         ) : (
           <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-card-border)", flexShrink: 0, display: "grid", placeItems: "center", fontSize: "0.75rem", color: "var(--adm-text3)" }}>🍽</div>
         )}
@@ -57,17 +60,16 @@ function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibili
           <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
         )}
         {onToggleFeatured && (
-          <button onClick={() => onToggleFeatured(dish.id)} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "1rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
+          <button onClick={e => { e.stopPropagation(); onToggleFeatured(dish.id); }} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "1rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
             {isFeatured ? "★" : "☆"}
           </button>
         )}
         {onToggleVisibility && (
-          <button onClick={() => onToggleVisibility(dish.id, !dish.isActive)} title={dish.isActive === false ? "Mostrar" : "Ocultar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0, color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text2)" }}>
+          <button onClick={e => { e.stopPropagation(); onToggleVisibility(dish.id, !dish.isActive); }} title={dish.isActive === false ? "Mostrar" : "Ocultar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0, color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text2)" }}>
             {dish.isActive === false ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         )}
-        {onEdit && <button onClick={() => onEdit(dish)} style={{ padding: "3px 8px", background: "rgba(244,166,35,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#F4A623", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Editar</button>}
-        <button onClick={() => setMoving(!moving)} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Mover</button>
+        <button onClick={e => { e.stopPropagation(); setMoving(!moving); }} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Mover</button>
       </div>
       {moving && (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", padding: "4px 0 8px 42px" }}>
