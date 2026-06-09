@@ -230,6 +230,11 @@
   --impact-fade: rgba(3,3,3,0.85);
 }
 
+/* ── Admin panel scale — makes everything ~15% bigger ── */
+.theme-dark, .theme-light {
+  font-size: 115%;
+}
+
 /* ── Admin theme tokens ── */
 .theme-dark {
   --adm-bg: #0e0e0e;
