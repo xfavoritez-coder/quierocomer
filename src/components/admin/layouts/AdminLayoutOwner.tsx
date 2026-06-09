@@ -44,6 +44,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
     { icon: Mail, label: "Email Marketing", href: `${base}/campanias` },
     { icon: UsersRound, label: "Usuarios", href: `${base}/usuarios` },
+    { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
     { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
   ];
   const BOTTOM_TABS = [

@@ -65,21 +65,20 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
   });
 }
 
-export default function SubirCartaClient() {
+export default function SubirCartaClient({ serverAb }: { serverAb?: Record<string, any> }) {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
-  const [abTitle, setAbTitle] = useState("");
-  const abIds = useRef<{ titleId: string | null; ctaId: string | null }>({ titleId: null, ctaId: null });
+  const [abTitle] = useState(serverAb?.titleText || "Sube tu carta y mira cómo queda");
+  const abIds = useRef<{ titleId: string | null; ctaId: string | null }>({
+    titleId: serverAb?.titleId || null,
+    ctaId: serverAb?.ctaId || null,
+  });
   useEffect(() => {
-    fetch("/api/subircarta/ab").then(r => r.json()).then(d => {
-      setAbTitle(d.titleText || "Sube tu carta y mira cómo queda");
-      abIds.current = { titleId: d.titleId || null, ctaId: d.ctaId || null };
-      // Track impression
-      fetch("/api/qr/stat-events", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventType: "SUBIRCARTA_VIEWED", metadata: { abExperiment: "subircarta-hero", titleId: d.titleId, ctaId: d.ctaId } }),
-        keepalive: true,
-      }).catch(() => {});
+    // Track impression (server already resolved the variant)
+    fetch("/api/qr/stat-events", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventType: "SUBIRCARTA_VIEWED", metadata: { abExperiment: "subircarta-hero", titleId: abIds.current.titleId, ctaId: abIds.current.ctaId } }),
+      keepalive: true,
     }).catch(() => {});
   }, []);
   useEffect(() => {
@@ -353,7 +352,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1 style={{ opacity: abTitle ? 1 : 0, transition: "opacity 0.3s ease" }}>{parseAbText(abTitle)}</h1>
+            <h1>{parseAbText(abTitle)}</h1>
           </div>
 
           <div className="form-side centered-form">

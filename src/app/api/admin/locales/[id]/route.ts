@@ -18,6 +18,7 @@ const OWNER_EDITABLE_FIELDS = [
   "weeklyInsightsEnabled",
   "genioFabEnabled",
   "ownerBannerEnabled",
+  "multiMenuEnabled",
   "mpPayerEmail",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
   "billingCompanyName", "billingRut", "billingGiro",
@@ -105,6 +106,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.isDemo !== undefined && { isDemo: body.isDemo }),
         ...(body.genioFabEnabled !== undefined && { genioFabEnabled: body.genioFabEnabled }),
         ...(body.ownerBannerEnabled !== undefined && { ownerBannerEnabled: body.ownerBannerEnabled }),
+        ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),
         ...(body.weeklyEmailEnabled !== undefined && { weeklyEmailEnabled: body.weeklyEmailEnabled }),
         ...(body.weeklyInsightsEnabled !== undefined && { weeklyInsightsEnabled: body.weeklyInsightsEnabled }),
       };

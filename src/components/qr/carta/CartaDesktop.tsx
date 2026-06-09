@@ -11,6 +11,7 @@ import { norm } from "@/lib/normalize";
 import { getDishPhoto, groupDishesByCategory } from "./utils/dishHelpers";
 import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import SortChip from "./SortChip";
+import MenuSwitcher from "./MenuSwitcher";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, setCartaLang } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
@@ -38,11 +39,13 @@ interface Props {
   isQrScan?: boolean;
   lang?: Lang;
   marketingPromos?: any[];
+  menuGroups?: { slug: string; name: string }[];
+  activeMenuSlug?: string;
 }
 
 const LANG_STORAGE_KEY = "qc_lang";
 
-export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang, marketingPromos }: Props) {
+export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang, marketingPromos, menuGroups, activeMenuSlug }: Props) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
 
@@ -247,6 +250,9 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   return (
     <div style={{ minHeight: "100vh", background: "#f5f3ef", fontFamily: "var(--font-dm)" }}>
       {/* Top row: NO sticky — scrollea con el resto cuando bajas */}
+      {menuGroups && activeMenuSlug && (
+        <MenuSwitcher menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} accentColor={(restaurant as any).cartaAccentColor} />
+      )}
       <header style={{ background: "white", borderBottom: "1px solid #e8e4dc" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 0" }}>

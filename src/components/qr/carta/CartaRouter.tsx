@@ -14,6 +14,7 @@ import CartaFeed from "./CartaFeed";
 import CartaEsencial from "./CartaEsencial";
 import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
 import CategoryLobby from "./CategoryLobby";
+import MenuSwitcher from "./MenuSwitcher";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { LangProvider } from "@/contexts/LangContext";
@@ -46,6 +47,8 @@ interface Props {
   weather?: string;
   popularDishIds?: string[];
   announcements?: { id: string; text: string; linkUrl: string | null }[];
+  menuGroups?: { slug: string; name: string }[];
+  activeMenuSlug?: string;
 }
 
 export default function CartaRouter(props: Props) {
@@ -272,6 +275,9 @@ export default function CartaRouter(props: Props) {
   return (
     <LangProvider value={effectiveLang}>
       <FavoritesProvider>
+        {props.menuGroups && props.activeMenuSlug && (
+          <MenuSwitcher menuGroups={props.menuGroups} activeMenuSlug={props.activeMenuSlug} accentColor={(props.restaurant as any).cartaAccentColor} />
+        )}
         {effectiveView !== "impact" && !(props.announcements?.length) && <HappyHourBanner happyHours={props.happyHours || []} />}
         {showLobby && !lobbyDismissed ? (
           <CategoryLobby

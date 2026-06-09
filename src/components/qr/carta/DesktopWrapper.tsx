@@ -18,9 +18,11 @@ interface DesktopWrapperProps {
   isQrScan?: boolean;
   lang?: Lang;
   marketingPromos?: any[];
+  menuGroups?: { slug: string; name: string }[];
+  activeMenuSlug?: string;
 }
 
-export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang, marketingPromos }: DesktopWrapperProps) {
+export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang, marketingPromos, menuGroups, activeMenuSlug }: DesktopWrapperProps) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [fromLanding, setFromLanding] = useState(false);
   const [isShowcase, setIsShowcase] = useState(false);
@@ -108,7 +110,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
   if (restaurant && categories && dishes) {
     return (
       <LangProvider value={lang || "es"}>
-        <CartaDesktop restaurant={restaurant} categories={categories} dishes={dishes} popularDishIds={popularDishIds} tableId={tableId} isQrScan={isQrScan} lang={lang} marketingPromos={marketingPromos} />
+        <CartaDesktop restaurant={restaurant} categories={categories} dishes={dishes} popularDishIds={popularDishIds} tableId={tableId} isQrScan={isQrScan} lang={lang} marketingPromos={marketingPromos} menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} />
       </LangProvider>
     );
   }

@@ -87,7 +87,7 @@ function ResetPasswordForm() {
       const data = await res.json();
       if (!res.ok) { setError(data.error); setLoading(false); return; }
       setSuccess(true);
-      setTimeout(() => router.push("/admin/login"), 3000);
+      setTimeout(() => router.push("/panel/login"), 3000);
     } catch {
       setError("Error de conexión");
     }
@@ -104,7 +104,7 @@ function ResetPasswordForm() {
             <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#6B5435", margin: "0 0 16px" }}>
               Link inválido. Solicita un nuevo link de recuperación.
             </p>
-            <Link href="/admin/forgot-password" style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#F4A623", textDecoration: "none" }}>
+            <Link href="/panel/forgot-password" style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#F4A623", textDecoration: "none" }}>
               Solicitar nuevo link →
             </Link>
           </div>
@@ -221,7 +221,7 @@ function ResetPasswordForm() {
             </form>
 
             <div style={{ textAlign: "center", marginTop: 16 }}>
-              <Link href="/admin/login" style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#8a7550", textDecoration: "none" }}>
+              <Link href="/panel/login" style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#8a7550", textDecoration: "none" }}>
                 ← Volver al login
               </Link>
             </div>

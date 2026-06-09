@@ -381,37 +381,57 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     if (!slug) slug = `local-${Date.now().toString(36)}`;
     const existingRest = await prisma.restaurant.findUnique({ where: { slug } });
 
-    // If restaurant already exists with this slug, reuse it instead of creating a duplicate
+    // If restaurant already exists with this slug
     if (existingRest) {
-      console.log(`[Pipeline] Restaurant "${slug}" already exists — reusing (${existingRest.id})`);
-      // Update slug on lead and mark as ready
-      await prisma.lead.update({ where: { id: leadId }, data: { generatedSlug: slug, cartaStatus: "READY", readyAt: new Date() } });
-      clearTimeout(pipelineTimeout);
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${slug}`;
-      return { slug, url };
+      if (existingRest.isDemo) {
+        // Demo restaurant from a previous (possibly deleted) lead — wipe old data and rebuild
+        console.log(`[Pipeline] Demo restaurant "${slug}" already exists — wiping old data and rebuilding (${existingRest.id})`);
+        await prisma.dish.deleteMany({ where: { restaurantId: existingRest.id } });
+        await prisma.category.deleteMany({ where: { restaurantId: existingRest.id } });
+        await prisma.restaurant.update({
+          where: { id: existingRest.id },
+          data: {
+            name: cleanedName,
+            logoUrl: extraction.logoUrl,
+            website: lead.cartaUrl,
+            isDemo: true,
+            isActive: true,
+          },
+        });
+        // Continue below to create categories/dishes/owner for this restaurant
+      } else {
+        // Active (non-demo) restaurant — don't touch it, just link the lead
+        console.log(`[Pipeline] Restaurant "${slug}" already exists and is active — reusing (${existingRest.id})`);
+        await prisma.lead.update({ where: { id: leadId }, data: { generatedSlug: slug, cartaStatus: "READY", readyAt: new Date() } });
+        clearTimeout(pipelineTimeout);
+        const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${slug}`;
+        return { slug, url };
+      }
     }
 
-    // Create restaurant
-    const restaurant = await prisma.restaurant.create({
-      data: {
-        name: cleanedName,
-        slug,
-        logoUrl: extraction.logoUrl,
-        cartaTheme: "PREMIUM",
-        cartaColorMode: "DARK",
-        defaultView: "lista",
-        enabledLangs: ["es", "en", "pt"],
-        isActive: true,
-        isDemo: true,
-        weeklyEmailEnabled: true,
-        qrActivatedAt: new Date(),
-        plan: "PREMIUM",
-        subscriptionStatus: "NONE",
-        waiterPanelActive: true,
-        menuImported: true,
-        website: lead.cartaUrl,
-      },
-    });
+    // Create restaurant or reuse wiped demo
+    const restaurant = existingRest?.isDemo
+      ? existingRest
+      : await prisma.restaurant.create({
+          data: {
+            name: cleanedName,
+            slug,
+            logoUrl: extraction.logoUrl,
+            cartaTheme: "PREMIUM",
+            cartaColorMode: "DARK",
+            defaultView: "lista",
+            enabledLangs: ["es", "en", "pt"],
+            isActive: true,
+            isDemo: true,
+            weeklyEmailEnabled: true,
+            qrActivatedAt: new Date(),
+            plan: "PREMIUM",
+            subscriptionStatus: "NONE",
+            waiterPanelActive: true,
+            menuImported: true,
+            website: lead.cartaUrl,
+          },
+        });
 
     // Create or link owner from lead data
     if (lead.email) {

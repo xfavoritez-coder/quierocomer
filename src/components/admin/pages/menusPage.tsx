@@ -6,6 +6,7 @@ import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 import CategoriesManager from "@/components/admin/CategoriesManager";
 import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
+import MenuGroupsManager from "@/components/admin/MenuGroupsManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
@@ -368,7 +369,7 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = ["productos", "categorias", "modificadores", "horarios", "toteat"] as const;
+  const validTabs = ["productos", "categorias", "modificadores", "horarios", "multimenu", "toteat"] as const;
   type MenuTab = typeof validTabs[number];
   const tabFromUrl = searchParams.get("tab") as MenuTab | null;
   const [menuTab, setMenuTabState] = useState<MenuTab>(tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "productos");
@@ -424,6 +425,23 @@ export default function AdminMenus() {
 
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
+  // Multi-menu group filter
+  const [menuGroups, setMenuGroups] = useState<{ id: string; name: string; slug: string; categories: { id: string }[] }[]>([]);
+  const [activeMenuGroupId, setActiveMenuGroupId] = useState<string | null>(null);
+  const [multiMenuEnabled, setMultiMenuEnabled] = useState(false);
+  const isMultiMenu = multiMenuEnabled && menuGroups.length >= 1;
+
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    Promise.all([
+      fetch(`/api/admin/menu-groups?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
+      fetch(`/api/admin/locales/${selectedRestaurantId}`).then(r => r.json()),
+    ]).then(([groups, rest]) => {
+      if (Array.isArray(groups)) { setMenuGroups(groups); setActiveMenuGroupId(null); }
+      setMultiMenuEnabled(rest?.multiMenuEnabled || false);
+    }).catch(() => {});
+  }, [selectedRestaurantId, menuTab]);
+
   // Snapshot de IDs destacados al cargar la lista. Lo usamos para ordenar
   // los destacados arriba SIN que un toggle inmediato reordene la lista
   // (eso confunde al usuario porque el plato 'desaparece' de su vista).
@@ -461,6 +479,15 @@ export default function AdminMenus() {
     return Array.from(cats.entries()).map(([id, name]) => ({ id, name }));
   }, [dishes, fullCategories]);
 
+  // Categories filtered by active menu group (for dropdowns)
+  const menuFilteredCategories = useMemo(() => {
+    if (!isMultiMenu || !activeMenuGroupId) return categories;
+    const group = menuGroups.find(g => g.id === activeMenuGroupId);
+    if (!group) return categories;
+    const groupCatIds = new Set(group.categories.map(c => c.id));
+    return categories.filter(c => groupCatIds.has(c.id));
+  }, [categories, isMultiMenu, activeMenuGroupId, menuGroups]);
+
   // Fetch full categories (including empty ones) on load and tab change
   useEffect(() => {
     if (!selectedRestaurantId) return;
@@ -482,6 +509,19 @@ export default function AdminMenus() {
     setFullCategories(prev => [...prev, { ...cat, _count: { dishes: 0 } }]);
     setNewCatName("");
     setCatSaving(false);
+    // Auto-assign to active menu group
+    if (activeMenuGroupId && cat.id) {
+      const group = menuGroups.find(g => g.id === activeMenuGroupId);
+      if (group) {
+        const updatedCatIds = [...group.categories.map((c: any) => c.id), cat.id];
+        fetch("/api/admin/menu-groups", {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: activeMenuGroupId, categoryIds: updatedCatIds }),
+        }).then(() => {
+          setMenuGroups(prev => prev.map(g => g.id === activeMenuGroupId ? { ...g, categories: [...g.categories, { id: cat.id }] } : g));
+        }).catch(() => {});
+      }
+    }
   };
 
   const updateCategory = async (id: string, data: Record<string, any>) => {
@@ -511,6 +551,14 @@ export default function AdminMenus() {
 
   const filtered = useMemo(() => {
     let list = dishes;
+    // Filter by active menu group
+    if (isMultiMenu && activeMenuGroupId) {
+      const group = menuGroups.find(g => g.id === activeMenuGroupId);
+      if (group) {
+        const groupCatIds = new Set(group.categories.map(c => c.id));
+        list = list.filter(d => groupCatIds.has(d.categoryId));
+      }
+    }
     if (search) {
       const q = norm(search);
       list = list.filter(d => norm(d.name).includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q));
@@ -1096,7 +1144,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Categoría</label>
                 <select value={eCategoryId} onChange={e => setECategoryId(e.target.value)} style={{ ...INP, cursor: "pointer" }}>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 14 }}>
@@ -1293,6 +1341,7 @@ export default function AdminMenus() {
           { key: "categorias" as const, label: "Categorías" },
           { key: "modificadores" as const, label: "Modificadores" },
           { key: "horarios" as const, label: "Horarios" },
+          ...(canAccess(activePlan, "multi_menu") ? [{ key: "multimenu" as const, label: "Multi-Menú" }] : []),
           ...(canAccess(activePlan, "toteat_integration") ? [{ key: "toteat" as const, label: "Toteat" }] : []),
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
@@ -1303,6 +1352,37 @@ export default function AdminMenus() {
           }}>{tab.label}</button>
         ))}
       </div>
+
+      {/* Multi-menu group selector */}
+      {isMultiMenu && (menuTab === "productos" || menuTab === "categorias") && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Multi-Menú</span>
+          </div>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" as any }}>
+            {[{ id: null, name: "Todos" }, ...menuGroups.map(g => ({ id: g.id, name: g.name }))].map(item => {
+              const isActive = activeMenuGroupId === item.id;
+              return (
+                <button
+                  key={item.id || "__all__"}
+                  onClick={() => setActiveMenuGroupId(item.id)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 999,
+                    border: isActive ? "1.5px solid var(--adm-accent, #F4A623)" : "1px solid var(--adm-card-border)",
+                    cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: isActive ? 700 : 500,
+                    whiteSpace: "nowrap", flexShrink: 0,
+                    background: isActive ? "var(--adm-accent, #F4A623)" : "var(--adm-card, transparent)",
+                    color: isActive ? "#fff" : "var(--adm-text2)",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {item.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {menuTab === "productos" && (<>
       {/* Import banner — waits for fetch, shows X to dismiss with pulse animation on Importar btn */}
@@ -1384,7 +1464,7 @@ export default function AdminMenus() {
       </div>
       {/* Filters — all in one horizontal scroll */}
       <div style={{ position: "relative", marginBottom: creatingDish ? 10 : 16 }}>
-        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24 }}>
+        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24, flexWrap: "wrap" }}>
           <div style={{ position: "relative", flexShrink: 0 }}>
             <select
               value={dietFilter}
@@ -1403,7 +1483,7 @@ export default function AdminMenus() {
               style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: catFilter !== "all" ? "var(--adm-accent)" : "var(--adm-input)", color: catFilter !== "all" ? "#fff" : "var(--adm-text)", outline: "none" }}
             >
               <option value="all">Todas las categorías</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
           </div>
@@ -1469,7 +1549,7 @@ export default function AdminMenus() {
           {bulkAction === "category" && (
             <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
               <option value="">Seleccionar...</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
           {(bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && (
@@ -1510,7 +1590,7 @@ export default function AdminMenus() {
               <div style={{ flex: 1 }}>
                 <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Categoría *</label>
                 <select value={newDishCatId} onChange={e => setNewDishCatId(e.target.value)} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
             </div>
@@ -1840,7 +1920,7 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} onToggleFeatured={(dishId) => {
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} activeMenuGroupId={activeMenuGroupId} menuGroups={menuGroups} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} onToggleFeatured={(dishId) => {
           const dish = dishes.find(d => d.id === dishId);
           if (!dish) return;
           const hasTags = dish.tags?.includes("RECOMMENDED");
@@ -1861,6 +1941,10 @@ export default function AdminMenus() {
       {/* ── Horarios tab ── */}
       {menuTab === "horarios" && selectedRestaurantId && (
         <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
+      )}
+      {/* ── Multi-Menú tab ── */}
+      {menuTab === "multimenu" && selectedRestaurantId && (
+        <MenuGroupsManager restaurantId={selectedRestaurantId} />
       )}
       {/* ── Toteat tab ── */}
       {menuTab === "toteat" && selectedRestaurantId && (

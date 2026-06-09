@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { sendAdminEmail, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
@@ -25,15 +26,28 @@ export async function POST(req: NextRequest) {
 
   // Update owner data if provided (from inline form)
   if (newOwnerName || newEmail || newWhatsapp) {
-    const ownerUpdate: Record<string, string> = {};
-    if (newOwnerName?.trim()) ownerUpdate.name = newOwnerName.trim();
-    if (newEmail?.trim()) ownerUpdate.email = newEmail.trim().toLowerCase();
-    if (newWhatsapp?.trim()) ownerUpdate.whatsapp = newWhatsapp.trim();
-    if (Object.keys(ownerUpdate).length > 0) {
-      await prisma.restaurantOwner.updateMany({
-        where: { restaurants: { some: { id: restaurantId } } },
-        data: ownerUpdate,
-      }).catch(() => {});
+    const owner = await prisma.restaurantOwner.findFirst({
+      where: { restaurants: { some: { id: restaurantId } } },
+      select: { id: true, email: true },
+    });
+    if (owner) {
+      const ownerUpdate: Record<string, any> = {};
+      if (newOwnerName?.trim()) ownerUpdate.name = newOwnerName.trim();
+      if (newEmail?.trim()) {
+        const cleanEmail = newEmail.trim().toLowerCase();
+        ownerUpdate.email = cleanEmail;
+        // If email changed, regenerate password hash so credentials match
+        if (cleanEmail !== owner.email) {
+          ownerUpdate.passwordHash = await bcrypt.hash(`${restaurant.slug}2026`, 10);
+        }
+      }
+      if (newWhatsapp?.trim()) ownerUpdate.whatsapp = newWhatsapp.trim();
+      if (Object.keys(ownerUpdate).length > 0) {
+        await prisma.restaurantOwner.update({
+          where: { id: owner.id },
+          data: ownerUpdate,
+        });
+      }
     }
   }
 

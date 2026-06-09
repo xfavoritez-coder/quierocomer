@@ -29,6 +29,8 @@ interface Props {
   onToggleFeatured?: (dishId: string) => void;
   onToggleVisibility?: (dishId: string, isActive: boolean) => void;
   onPhotoClick?: (url: string) => void;
+  activeMenuGroupId?: string | null;
+  menuGroups?: { id: string; name: string; categories: { id: string }[] }[];
 }
 
 function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibility, onPhotoClick, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; onToggleVisibility?: (dishId: string, isActive: boolean) => void; onPhotoClick?: (url: string) => void; categories: Category[]; currentCatId: string }) {
@@ -87,7 +89,7 @@ const iconBtnStyle: React.CSSProperties = {
   alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
 };
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange, menuGroupLabel, menuGroupOptions, onAssignMenuGroup }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
@@ -102,6 +104,9 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
   onTypeChange: (id: string, dishType: string) => void;
+  menuGroupLabel?: string | null;
+  menuGroupOptions?: { id: string; name: string }[];
+  onAssignMenuGroup?: (categoryId: string, menuGroupId: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
   const [expanded, setExpanded] = useState(false);
@@ -177,8 +182,13 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
         ) : (
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
             {/* Name */}
-            <span style={{ fontFamily: F, fontSize: "14.5px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", letterSpacing: "-0.1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ fontFamily: F, fontSize: "14.5px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", letterSpacing: "-0.1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: 6 }}>
               {category.name}
+              {menuGroupLabel && (
+                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 600, color: "#F4A623", background: "rgba(244,166,35,0.1)", padding: "2px 7px", borderRadius: 999, letterSpacing: "0.3px", flexShrink: 0 }}>
+                  {menuGroupLabel}
+                </span>
+              )}
             </span>
             {/* Meta row */}
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -272,6 +282,28 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   >
                     Cambiar tipo
                   </button>
+                  {menuGroupOptions && menuGroupOptions.length > 0 && onAssignMenuGroup && (
+                    <div style={{ borderTop: "0.5px solid var(--adm-card-border)", padding: "6px 14px" }}>
+                      <span style={{ fontFamily: F, fontSize: 10, fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Menú</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
+                        <button
+                          onClick={() => { setMenuOpen(false); onAssignMenuGroup(category.id, null); }}
+                          style={{ width: "100%", padding: "6px 8px", background: !menuGroupLabel ? "rgba(244,166,35,0.1)" : "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 12, color: !menuGroupLabel ? "#F4A623" : "var(--adm-text2)", cursor: "pointer", borderRadius: 6, fontWeight: !menuGroupLabel ? 600 : 400 }}
+                        >
+                          Sin asignar
+                        </button>
+                        {menuGroupOptions.map(g => (
+                          <button
+                            key={g.id}
+                            onClick={() => { setMenuOpen(false); onAssignMenuGroup(category.id, g.id); }}
+                            style={{ width: "100%", padding: "6px 8px", background: menuGroupLabel === g.name ? "rgba(244,166,35,0.1)" : "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 12, color: menuGroupLabel === g.name ? "#F4A623" : "var(--adm-text)", cursor: "pointer", borderRadius: 6, fontWeight: menuGroupLabel === g.name ? 600 : 400 }}
+                          >
+                            {g.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <button
                     disabled
                     style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#bbb", cursor: "default", borderTop: "0.5px solid var(--adm-card-border)" }}
@@ -331,7 +363,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, activeMenuGroupId, menuGroups }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
@@ -389,7 +421,23 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
     if (!newCatName.trim()) return;
     const res = await fetch("/api/admin/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, name: newCatName.trim() }) });
     const cat = await res.json();
-    if (res.ok) { setCategories(prev => [...prev, { ...cat, _count: { dishes: 0 } }]); setNewCatName(""); setShowCreateInput(false); }
+    if (res.ok) {
+      setCategories(prev => [...prev, { ...cat, _count: { dishes: 0 } }]);
+      setNewCatName("");
+      setShowCreateInput(false);
+      // Auto-assign to active menu group if one is selected
+      if (activeMenuGroupId && cat.id) {
+        const group = menuGroups?.find(g => g.id === activeMenuGroupId);
+        if (group) {
+          const updatedCatIds = [...group.categories.map(c => c.id), cat.id];
+          fetch("/api/admin/menu-groups", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: activeMenuGroupId, categoryIds: updatedCatIds }),
+          }).catch(() => {});
+        }
+      }
+    }
   };
 
   const renameCategory = async (id: string, name: string) => {
@@ -484,7 +532,12 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
       {/* Sortable categories */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
         <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
-          {categories.map(cat => (
+          {categories.filter(cat => {
+            if (!activeMenuGroupId || !menuGroups?.length) return true;
+            const group = menuGroups.find(g => g.id === activeMenuGroupId);
+            if (!group) return true;
+            return group.categories.some(c => c.id === cat.id);
+          }).map(cat => (
             <SortableCategory
               key={cat.id}
               category={cat}
@@ -501,6 +554,27 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onToggle={toggleCategory}
               onDelete={deleteCategory}
               onTypeChange={changeDishType}
+              menuGroupLabel={menuGroups?.length ? menuGroups.find(g => g.categories.some(c => c.id === cat.id))?.name || null : null}
+              menuGroupOptions={menuGroups || undefined}
+              onAssignMenuGroup={menuGroups?.length ? async (categoryId, menuGroupId) => {
+                // Remove from current group
+                for (const g of menuGroups!) {
+                  if (g.categories.some(c => c.id === categoryId)) {
+                    const updatedIds = g.categories.filter(c => c.id !== categoryId).map(c => c.id);
+                    await fetch("/api/admin/menu-groups", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: g.id, categoryIds: updatedIds }) });
+                  }
+                }
+                // Add to new group
+                if (menuGroupId) {
+                  const target = menuGroups!.find(g => g.id === menuGroupId);
+                  if (target) {
+                    const updatedIds = [...target.categories.map(c => c.id), categoryId];
+                    await fetch("/api/admin/menu-groups", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: menuGroupId, categoryIds: updatedIds }) });
+                  }
+                }
+                // Refresh categories
+                fetch(`/api/admin/categories?restaurantId=${restaurantId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCategories(d); });
+              } : undefined}
             />
           ))}
         </SortableContext>

@@ -30,7 +30,8 @@ export type Feature =
   | "toteat_integration"  // Integracion con Toteat POS
   | "live_dashboard"      // Dashboard en vivo
   | "genio"               // Genio IA
-  | "modifiers";          // Modificadores de platos
+  | "modifiers"           // Modificadores de platos
+  | "multi_menu";         // Multi-menú (un QR, múltiples cartas)
 
 // --- Plan definitions ---
 
@@ -135,7 +136,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "stats_basic", "stats_advanced",
       "multilang", "suggestions",
       "waiter", "campaigns", "automations", "clients_full", "clients_export",
-      "toteat_integration", "live_dashboard",
+      "toteat_integration", "live_dashboard", "multi_menu",
     ]),
     featureDisplay: [
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
@@ -143,6 +144,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       { text: "Clientes capturados", tip: "Ve todos los clientes capturados: correos, cumpleaños, preferencias y más." },
       { text: "Email marketing", tip: "Envía campañas de email a tu base de clientes." },
       { text: "Cumpleaños automáticos", tip: "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante." },
+      { text: "Multi-menú", tip: "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico." },
     ],
     inheritsFrom: "Todo lo del plan Gold",
     isFeatured: false,

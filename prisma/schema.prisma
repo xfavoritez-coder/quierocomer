@@ -509,6 +509,7 @@ model Restaurant {
   weeklyInsightsEnabled Boolean    @default(true)
   genioFabEnabled       Boolean    @default(true)
   ownerBannerEnabled    Boolean    @default(false)
+  multiMenuEnabled      Boolean    @default(false)
   ownerId     String?
 
   // Toteat POS integration (per-restaurant credentials)
@@ -558,8 +559,30 @@ model Restaurant {
   announcements         Announcement[]
   dishSuggestions        DishSuggestion[]
   whatsappMessages      WhatsAppMessage[]
+  menuGroups            MenuGroup[]
 
   @@index([ownerId])
+}
+
+// ─── Multi-Menu (un QR, múltiples cartas) ───────────────────────────────
+
+model MenuGroup {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  slug         String
+  description  String?
+  imageUrl     String?
+  position     Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  categories Category[]
+
+  @@unique([restaurantId, slug])
+  @@index([restaurantId])
 }
 
 // ─── Toteat POS integration ─────────────────────────────────────────────
@@ -702,11 +725,15 @@ model Category {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  menuGroupId  String?
+
   restaurant   Restaurant            @relation(fields: [restaurantId], references: [id])
+  menuGroup    MenuGroup?            @relation(fields: [menuGroupId], references: [id])
   dishes       Dish[]
   translations CategoryTranslation[]
 
   @@index([restaurantId])
+  @@index([menuGroupId])
 }
 
 model CategoryTranslation {

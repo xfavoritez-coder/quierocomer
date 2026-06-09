@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     // Owner
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: adminId! },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, toteatApiToken: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, toteatApiToken: true, multiMenuEnabled: true } } },
     });
 
     if (!owner) {

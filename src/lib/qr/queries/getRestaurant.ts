@@ -70,6 +70,11 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
           createdAt: true,
         },
       },
+      menuGroups: {
+        where: { isActive: true },
+        orderBy: { position: "asc" },
+        include: { categories: { select: { id: true } } },
+      },
     },
   });
 

@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
                 Si tu email está registrado, recibirás un link en los próximos minutos. Revisa tu bandeja de entrada y spam.
               </p>
             </div>
-            <Link href="/admin/login" style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#F4A623", textDecoration: "none" }}>
+            <Link href="/panel/login" style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#F4A623", textDecoration: "none" }}>
               ← Volver al login
             </Link>
           </div>
@@ -155,7 +155,7 @@ export default function ForgotPasswordPage() {
             </form>
 
             <div style={{ textAlign: "center", marginTop: 16 }}>
-              <Link href="/admin/login" style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#8a7550", textDecoration: "none" }}>
+              <Link href="/panel/login" style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#8a7550", textDecoration: "none" }}>
                 ← Volver al login
               </Link>
             </div>

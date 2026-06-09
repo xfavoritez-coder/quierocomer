@@ -10,6 +10,7 @@ interface PanelRestaurant {
   plan?: string;
   hasToteat?: boolean;
   isDemo?: boolean;
+  multiMenuEnabled?: boolean;
 }
 
 export interface PanelSession {

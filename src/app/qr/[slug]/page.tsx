@@ -20,6 +20,7 @@ import DemoFirstViewModal from "@/components/qr/carta/DemoFirstViewModal";
 import DemoViewToast from "@/components/qr/carta/DemoViewToast";
 import DemoBirthdayBanner from "@/components/qr/carta/DemoBirthdayBanner";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
+import MultiMenuLanding from "@/components/qr/carta/MultiMenuLanding";
 import { prisma } from "@/lib/prisma";
 import { getTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 
@@ -61,10 +62,10 @@ export default async function CartaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string }>;
+  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string; menu?: string }>;
 }) {
   const { slug } = await params;
-  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed } = await searchParams;
+  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed, menu: menuSlug } = await searchParams;
   const isShowcase = showcase === "1";
   const isEmbed = embed === "mobile";
   const isQrScan = !!tableId;
@@ -87,13 +88,38 @@ export default async function CartaPage({
 
   const timeOfDay = getTimeOfDay();
 
-  const { dishes, categories } = applyScheduleRules(
+  const scheduled = applyScheduleRules(
     restaurant.dishes,
     restaurant.categories,
     restaurant.schedules,
     timeOfDay,
     weather
   );
+
+  // Multi-menu: check if we should show landing or filter by menu group
+  const menuGroups = (restaurant as any).menuGroups || [];
+  const isMultiMenu = (restaurant as any).multiMenuEnabled && menuGroups.length >= 2;
+  const showMultiMenuLanding = isMultiMenu && !menuSlug;
+
+  // Filter categories/dishes by selected menu group
+  let { dishes, categories } = scheduled;
+  let activeMenuGroup: { slug: string; name: string } | null = null;
+
+  if (isMultiMenu && menuSlug) {
+    const group = menuGroups.find((g: any) => g.slug === menuSlug);
+    if (group) {
+      activeMenuGroup = { slug: group.slug, name: group.name };
+      const groupCatIds = new Set(group.categories.map((c: any) => c.id));
+      // Categories not assigned to ANY group appear in all menus
+      const allAssignedCatIds = new Set(menuGroups.flatMap((g: any) => g.categories.map((c: any) => c.id)));
+      categories = scheduled.categories.filter(
+        (c: any) => groupCatIds.has(c.id) || !allAssignedCatIds.has(c.id),
+      );
+      const filteredCatIds = new Set(categories.map((c: any) => c.id));
+      dishes = scheduled.dishes.filter((d: any) => filteredCatIds.has(d.categoryId));
+    }
+    // If menuSlug is invalid, show full carta (graceful fallback)
+  }
 
   // Fetch popular dishes, marketing promos, and announcements in parallel
   const [topDishesResult, activePromos, rawAnnouncements] = await Promise.all([
@@ -232,24 +258,37 @@ export default async function CartaPage({
       {isShowcase && !isEmbed && (
         <ShowcaseMobileOnly restaurantSlug={slug} restaurantName={restaurant.name} />
       )}
-      <DesktopWrapper
-        restaurantName={restaurant.name}
-        slug={slug}
-        restaurant={restaurant as any}
-        categories={categories as any}
-        dishes={dishes as any}
-        popularDishIds={new Set(cartaProps.popularDishIds || [])}
-        tableId={tableId}
-        isQrScan={isQrScan}
-        lang={lang}
-        marketingPromos={marketingPromos}
-      >
-        {isPremium ? (
-          <CartaRouter {...cartaProps} />
-        ) : (
-          <CartaBasic {...cartaProps} />
-        )}
-      </DesktopWrapper>
+      {showMultiMenuLanding ? (
+        <MultiMenuLanding
+          menuGroups={menuGroups}
+          restaurantName={restaurant.name}
+          logoUrl={restaurant.logoUrl}
+          accentColor={accentColor}
+          dishes={dishes as any}
+          categories={categories as any}
+        />
+      ) : (
+        <DesktopWrapper
+          restaurantName={restaurant.name}
+          slug={slug}
+          restaurant={restaurant as any}
+          categories={categories as any}
+          dishes={dishes as any}
+          popularDishIds={new Set(cartaProps.popularDishIds || [])}
+          tableId={tableId}
+          isQrScan={isQrScan}
+          lang={lang}
+          marketingPromos={marketingPromos}
+          menuGroups={isMultiMenu ? menuGroups : undefined}
+          activeMenuSlug={activeMenuGroup?.slug}
+        >
+          {isPremium ? (
+            <CartaRouter {...cartaProps} menuGroups={isMultiMenu ? menuGroups : undefined} activeMenuSlug={activeMenuGroup?.slug} />
+          ) : (
+            <CartaBasic {...cartaProps} />
+          )}
+        </DesktopWrapper>
+      )}
     </div>
   );
 }

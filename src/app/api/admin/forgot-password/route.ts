@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Build reset link
-    const resetLink = `${BASE_URL}/admin/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(owner.email)}`;
+    const resetLink = `${BASE_URL}/panel/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(owner.email)}`;
 
     // Send email — wrapped in try/catch to never reveal failures to user
     const firstName = owner.name.split(" ")[0];
