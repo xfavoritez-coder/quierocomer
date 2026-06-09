@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import Image from "next/image";
+
 import { Globe } from "lucide-react";
 import type { Restaurant, Category, Dish } from "@prisma/client";
 import type { Lang } from "@/lib/qr/i18n";
@@ -257,7 +257,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 0" }}>
             {restaurant.logoUrl ? (
-              <Image src={restaurant.logoUrl} alt="" width={40} height={40} className="rounded-full" style={{ border: "1px solid #e8e4dc" }} />
+              <img src={restaurant.logoUrl} alt="" loading="lazy" style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #e8e4dc" }} />
             ) : (
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 700, color: "white" }}>
                 {restaurant.name.charAt(0)}
@@ -416,22 +416,10 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               alignItems: "center", justifyContent: "center",
             }}>
               {!selectedDish.photos?.[0] && <span style={{ fontSize: "2.5rem", opacity: 0.2 }}>🍽</span>}
-              {/* Layer 1: Next.js optimized — instant from cache */}
-              {selectedDish.photos?.[0] && (
-                <Image
-                  src={selectedDish.photos[0]}
-                  alt={selectedDish.name}
-                  fill
-                  className="object-cover"
-                  sizes="520px"
-                />
-              )}
-              {/* Layer 2: raw original — fades in when loaded */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               {selectedDish.photos?.[0] && (
                 <img
                   src={selectedDish.photos[0]}
-                  alt=""
+                  alt={selectedDish.name}
                   loading="eager"
                   decoding="async"
                   onLoad={() => setModalImgLoaded(true)}

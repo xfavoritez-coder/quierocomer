@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect, useCallback, type CSSProperties } from "react";
-import Image from "next/image";
+
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
@@ -64,7 +64,7 @@ function placeholderGradient(id: string) {
 
 function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; style?: React.CSSProperties }) {
   const photo = getDishPhoto(dish);
-  if (photo) return <Image src={photo} alt={dish.name} fill className={`object-cover ${className || ""}`} sizes="100vw" style={style} quality={95} />;
+  if (photo) return <img src={photo} alt={dish.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", ...style }} className={className} />;
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
@@ -169,7 +169,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           }}
         >
           {restaurant.logoUrl ? (
-            <Image src={restaurant.logoUrl} alt={restaurant.name} width={29} height={29} className="rounded-full" style={{ flexShrink: 0 }} />
+            <img src={restaurant.logoUrl} alt={restaurant.name} loading="lazy" style={{ width: 29, height: 29, borderRadius: "50%", flexShrink: 0 }} />
           ) : (
             <div style={{ width: 29, height: 29, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
               {restaurant.name.charAt(0).toUpperCase()}
@@ -321,7 +321,7 @@ function ChapterOpening({
       {/* Single background photo */}
       {bgPhoto && (
         <div className="vj-chapter-featured">
-          <Image src={bgPhoto} alt="" fill className="object-cover" sizes="100vw" />
+          <img src={bgPhoto} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
       )}
 
@@ -418,7 +418,7 @@ function CategoryTrack({
           {/* Single background photo */}
           {bgPhoto && (
             <div className="vj-chapter-featured">
-              <Image src={bgPhoto} alt="" fill className="object-cover" sizes="100vw" />
+              <img src={bgPhoto} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           )}
 

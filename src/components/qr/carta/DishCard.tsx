@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import type { Dish } from "@prisma/client";
 import SpicyStamp from "./SpicyStamp";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
@@ -41,7 +40,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
     <>
       <div className="shrink-0 relative overflow-hidden bg-neutral-900" style={{ width: 80, height: 80, borderRadius: 10 }}>
         {photo ? (
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="240px" quality={95} />
+          <img src={photo} alt={dish.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent, #F4A623) 12%, var(--carta-surface, #f5f5f0)), color-mix(in srgb, var(--carta-accent, #F4A623) 4%, var(--carta-surface, #f5f5f0)))", position: "relative", overflow: "hidden" }}>
             <DishPlaceholderIcon size={24} />
@@ -139,7 +138,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
         {photo ? (
           <>
             {!loaded && <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
-            <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }} quality={95} onLoad={() => setLoaded(true)} />
+            <img src={photo} alt={dish.name} loading="lazy" onLoad={() => setLoaded(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
           </>
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent, #F4A623) 12%, var(--carta-surface, #1a1a1a)), color-mix(in srgb, var(--carta-accent, #F4A623) 4%, var(--carta-surface, #1a1a1a)))", position: "relative" }}>

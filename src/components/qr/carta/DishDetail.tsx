@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
@@ -343,14 +342,11 @@ function DishSlide({
           </div>
         )}
         {photos.length > 0 && (
-          <Image
+          <img
             src={photoUrl(photos[photoIndex])}
             alt={dish.name}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            priority={isActive}
-            quality={80}
+            loading="lazy"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
           />
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -634,14 +630,12 @@ function DishSlide({
                   >
                     {s.dish.photos?.[0] && !failedImages.has(s.dish.id) ? (
                       <div style={{ position: "relative", width: 78, height: 78, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "var(--carta-img-placeholder)" }}>
-                        <Image
+                        <img
                           src={s.dish.photos[0]}
                           alt={s.dish.name}
-                          fill
-                          sizes="78px"
-                          quality={75}
-                          className="object-cover"
+                          loading="lazy"
                           onError={() => setFailedImages((prev) => new Set(prev).add(s.dish.id))}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                         />
                       </div>
                     ) : (

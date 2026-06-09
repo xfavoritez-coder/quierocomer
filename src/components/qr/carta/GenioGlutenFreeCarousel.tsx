@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
@@ -76,7 +75,7 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
               >
                 <div style={{ position: "relative", width: "100%", height: 118, borderRadius: 8, overflow: "hidden", background: "var(--carta-img-placeholder)", marginBottom: 5 }}>
                   {photo ? (
-                    <Image src={photo} alt={d.name} fill className="object-cover" sizes="130px" />
+                    <img src={photo} alt={d.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "1.2rem" }}>🍽</div>
                   )}

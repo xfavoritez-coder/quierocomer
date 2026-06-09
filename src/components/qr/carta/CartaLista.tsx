@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
@@ -767,7 +766,7 @@ function DishListCard({
         {photo ? (
           <>
             {!imgLoaded && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
-            <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} onLoad={() => setImgLoaded(true)} style={{ opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
+            <img src={photo} alt={dish.name} loading="lazy" onLoad={() => setImgLoaded(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
           </>
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><DishPlaceholderIcon size={28} /></div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { trackHeroClick } from "./utils/cartaAnalytics";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
@@ -76,15 +75,11 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
         {/* Background image or gradient fallback */}
         {bgSrc ? (
           <>
-            <Image
+            <img
               src={bgSrc}
               alt={dish?.name || restaurant.name}
-              fill
-              className="object-cover object-center"
-              priority
-              sizes="100vw"
               key={bgSrc}
-              style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
             />
             <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }} />
           </>
@@ -104,7 +99,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
           style={{ top: 10, left: 14, height: 40, background: "none", border: "none", cursor: "pointer", padding: 0 }}
         >
           {logoSrc ? (
-            <Image src={logoSrc} alt={restaurant.name} width={28} height={28} className="rounded-full" style={{ border: "none" }} />
+            <img src={logoSrc} alt={restaurant.name} loading="lazy" style={{ width: 28, height: 28, borderRadius: "50%", border: "none" }} />
           ) : (
             <div
               className="flex items-center justify-center rounded-full"

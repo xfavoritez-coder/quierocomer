@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import type { Dish } from "@prisma/client";
 
 interface MenuGroupData {
@@ -73,7 +72,7 @@ export default function MultiMenuLanding({ menuGroups, restaurantName, logoUrl, 
       <div style={{ position: "relative", overflow: "hidden", marginBottom: 8 }}>
         {heroPhoto && (
           <div style={{ position: "absolute", inset: -20, filter: "blur(20px) saturate(1.2)", transform: "scale(1.1)" }}>
-            <Image src={heroPhoto} alt="" fill className="object-cover" style={{ opacity: isDark ? 0.4 : 0.5 }} />
+            <img src={heroPhoto} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: isDark ? 0.4 : 0.5 }} />
           </div>
         )}
         <div style={{
@@ -92,7 +91,7 @@ export default function MultiMenuLanding({ menuGroups, restaurantName, logoUrl, 
               border: isDark ? "3px solid rgba(255,255,255,0.2)" : "3px solid rgba(0,0,0,0.1)",
               boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.4)" : "0 4px 24px rgba(0,0,0,0.12)",
             }}>
-              <Image src={logoUrl} alt="" width={68} height={68} className="object-cover" />
+              <img src={logoUrl} alt="" loading="lazy" style={{ width: 68, height: 68, objectFit: "cover" }} />
             </div>
           )}
           <h1 style={{
@@ -152,13 +151,11 @@ export default function MultiMenuLanding({ menuGroups, restaurantName, logoUrl, 
                 border: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
               }}>
                 {hasCover ? (
-                  <Image
+                  <img
                     src={g.coverPhoto!}
                     alt={g.name}
-                    width={72}
-                    height={72}
-                    className="object-cover"
-                    style={{ width: 72, height: 72 }}
+                    loading="lazy"
+                    style={{ width: 72, height: 72, objectFit: "cover" }}
                     onError={() => setFailedImages(prev => new Set(prev).add(g.id))}
                   />
                 ) : (

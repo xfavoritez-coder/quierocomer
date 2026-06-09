@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Image from "next/image";
+
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
@@ -161,10 +161,9 @@ function ImpactHeroSlider({
             transition: "opacity 0.8s ease",
           }}>
             {p ? (
-              <Image
-                src={p} alt={dish.name} fill className="object-cover" sizes="100vw"
-                style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
-                quality={95} priority={i === 0}
+              <img
+                src={p} alt={dish.name} loading="lazy"
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
               />
             ) : (
               <div style={{
@@ -336,7 +335,7 @@ function MoodSection({
                 flexShrink: 0,
               }}>
                 {m.photo ? (
-                  <Image src={m.photo} alt={m.label} fill className="object-cover" sizes="116px" />
+                  <img src={m.photo} alt={m.label} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <div style={{
                     position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
@@ -439,7 +438,7 @@ function FeaturedSection({
                 }}
               >
                 {photo ? (
-                  <Image src={photo} alt={f.name} fill className="object-cover" sizes="100vw" />
+                  <img src={photo} alt={f.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <div style={{
                     position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
@@ -560,10 +559,10 @@ function ImpactDishCard({
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)", animation: "impactShimmer 1.5s infinite" }} />
               </div>
             )}
-            <Image
-              src={photo} alt={dish.name} fill className="object-cover" sizes="108px"
+            <img
+              src={photo} alt={dish.name} loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              style={{ opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
             />
           </>
         ) : (
@@ -1156,10 +1155,10 @@ export default function CartaImpact({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {(restaurant as any).logoUrl ? (
-            <Image
+            <img
               src={(restaurant as any).logoUrl} alt={restaurant.name}
-              width={34} height={34}
-              style={{ borderRadius: 10, objectFit: "contain" }}
+              loading="lazy"
+              style={{ width: 34, height: 34, borderRadius: 10, objectFit: "contain" }}
             />
           ) : (
             <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--carta-accent, #F4A623)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: "#0e0e0e", flexShrink: 0 }}>
@@ -1360,7 +1359,7 @@ export default function CartaImpact({
                   {/* Foto fondo con overlay */}
                   {photo && (
                     <div style={{ position: "absolute", inset: 0, transform: "scale(1.04)" }}>
-                      <Image src={photo} alt={p.name} fill className="object-cover" sizes="430px" style={{ objectPosition: "center right" }} />
+                      <img src={photo} alt={p.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center right" }} />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 43%, rgba(0,0,0,0.12) 100%), linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 58%)" }} />
                     </div>
                   )}

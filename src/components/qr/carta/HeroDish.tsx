@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { User, Search } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
@@ -109,7 +108,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
       <div className="w-full flex items-center justify-between" style={{ background: "var(--carta-nav-bg, var(--carta-bg-solid, #1a1a1a))", borderBottom: "1px solid var(--carta-border)", padding: "10px 16px", zIndex: 20, position: "relative" }}>
         <button onClick={() => window.location.reload()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           {logoSrc ? (
-            <Image src={logoSrc} alt={restaurant.name} width={28} height={28} className="rounded-full" style={{ border: "none" }} />
+            <img src={logoSrc} alt={restaurant.name} loading="lazy" style={{ width: 28, height: 28, borderRadius: "50%", border: "none" }} />
           ) : (
             <div className="flex items-center justify-center rounded-full" style={{ width: 28, height: 28, background: "var(--carta-accent, #F4A623)", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e" }}>
               {initial}
@@ -143,15 +142,11 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         {/* Background image or gradient fallback */}
         {bgSrc ? (
           <>
-            <Image
+            <img
               src={bgSrc}
               alt={dish?.name || restaurant.name}
-              fill
-              className="object-cover object-center"
-              priority
-              sizes="100vw"
               key={bgSrc}
-              style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
             />
             <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />
             <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />

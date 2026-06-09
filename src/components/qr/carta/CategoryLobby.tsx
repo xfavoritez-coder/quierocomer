@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import type { Category, Dish } from "@prisma/client";
-import Image from "next/image";
 
 interface Props {
   categories: Category[];
@@ -56,7 +55,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
             {/* Background image with blur */}
             {heroPhoto && (
               <div style={{ position: "absolute", inset: -20, filter: "blur(20px) saturate(1.2)", transform: "scale(1.1)" }}>
-                <Image src={heroPhoto} alt="" fill className="object-cover" style={{ opacity: isDark ? 0.4 : 0.5 }} />
+                <img src={heroPhoto} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: isDark ? 0.4 : 0.5 }} />
               </div>
             )}
             <div style={{
@@ -75,7 +74,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                   border: isDark ? "3px solid rgba(255,255,255,0.2)" : "3px solid rgba(0,0,0,0.1)",
                   boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.4)" : "0 4px 24px rgba(0,0,0,0.12)",
                 }}>
-                  <Image src={logoUrl} alt="" width={68} height={68} className="object-cover" />
+                  <img src={logoUrl} alt="" loading="lazy" style={{ width: 68, height: 68, objectFit: "cover" }} />
                 </div>
               )}
               <h1 style={{
@@ -129,12 +128,11 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
             >
               {/* Cover photo */}
               {cat.coverPhoto && !failedImages.has(cat.id) ? (
-                <Image
+                <img
                   src={cat.coverPhoto}
                   alt={cat.name}
-                  fill
-                  sizes={isWide ? "100vw" : "50vw"}
-                  className="object-cover"
+                  loading="lazy"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                   onError={() => setFailedImages(prev => new Set(prev).add(cat.id))}
                 />
               ) : null}

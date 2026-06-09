@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
+
 import { Search, X, Globe } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
@@ -127,14 +127,11 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
     >
       {/* Photo or gradient fallback */}
       {dish.photos?.[0] ? (
-        <Image
+        <img
           src={dish.photos[0]}
           alt={dish.name}
-          fill
-          className="object-cover"
-          sizes="100vw"
-          priority
-          style={{ transition: "opacity 0.5s ease" }}
+          loading="lazy"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.5s ease" }}
         />
       ) : (
         <div style={{
@@ -162,7 +159,7 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
           padding: "5px 12px 5px 5px", borderRadius: 999,
         }}>
           {r.logoUrl ? (
-            <Image src={r.logoUrl} alt="" width={26} height={26} style={{ borderRadius: "50%", objectFit: "cover" }} />
+            <img src={r.logoUrl} alt="" loading="lazy" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
           ) : (
             <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#1a1a1a" }}>
               {initial}
@@ -268,7 +265,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
       {/* Photo */}
       {photo ? (
         <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 10" }}>
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 500px" loading="lazy" />
+          <img src={photo} alt={dish.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           {/* En CartaFeed el indicador de picante ya esta en los attribute circles
              abajo de la foto, no agregamos un SpicyStamp adicional. */}
 

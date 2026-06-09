@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 
 interface Promo {
   id: string;
@@ -49,7 +47,7 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
             {/* Full background photo with gradient */}
             {photo && (
               <div style={{ position: "absolute", inset: 0 }}>
-                <Image src={photo} alt={p.name} fill className="object-cover" sizes="430px" style={{ objectPosition: "center" }} />
+                <img src={photo} alt={p.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 43%, rgba(0,0,0,0.12) 100%), linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 58%)" }} />
               </div>
             )}

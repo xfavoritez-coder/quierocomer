@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 
 interface Props {
@@ -48,7 +47,7 @@ export default function GenioLactoseFreeCarousel({ dishes, categories, onDishCli
               <button key={d.id} onClick={() => onDishClick?.(d.id)} className="active:scale-[0.97] transition-transform"
                 style={{ flexShrink: 0, width: 130, background: "var(--carta-surface)", border: "0.5px solid var(--carta-genio-lf-border3)", borderRadius: 12, padding: 6, cursor: "pointer", textAlign: "left", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                 <div style={{ position: "relative", width: "100%", height: 118, borderRadius: 8, overflow: "hidden", background: "var(--carta-img-placeholder)", marginBottom: 5 }}>
-                  {photo ? <Image src={photo} alt={d.name} fill className="object-cover" sizes="130px" /> : <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "1.2rem" }}>🍽</div>}
+                  {photo ? <img src={photo} alt={d.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "1.2rem" }}>🍽</div>}
                   <span style={{ position: "absolute", top: 6, left: 6, background: "var(--carta-genio-lf-tag-bg)", color: "var(--carta-genio-lf-tag)", fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", display: "flex", alignItems: "center", gap: 3 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--carta-genio-lf-tag)", flexShrink: 0 }} />SIN LACTOSA
                   </span>
