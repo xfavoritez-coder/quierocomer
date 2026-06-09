@@ -168,6 +168,45 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
             })}
           </div>
 
+          {/* Language selector */}
+          {enabledLangs && enabledLangs.length > 1 && (
+            <>
+              <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 4px" }} />
+              <div style={{ display: "flex", gap: 4, padding: "4px", justifyContent: "center" }}>
+                {enabledLangs.filter(l => SUPPORTED_LANGS.includes(l as Lang)).map(l => {
+                  const isActive = activeLang === l;
+                  const flagUrl: Record<string, string> = {
+                    es: "https://purecatamphetamine.github.io/country-flag-icons/3x2/ES.svg",
+                    en: "https://purecatamphetamine.github.io/country-flag-icons/3x2/GB.svg",
+                    pt: "https://purecatamphetamine.github.io/country-flag-icons/3x2/PT.svg",
+                    it: "https://purecatamphetamine.github.io/country-flag-icons/3x2/IT.svg",
+                    th: "https://purecatamphetamine.github.io/country-flag-icons/3x2/TH.svg",
+                  };
+                  return (
+                    <button
+                      key={l}
+                      onClick={() => handleLangChange(l as Lang)}
+                      style={{
+                        width: 38, height: 32, borderRadius: 8, border: "none", cursor: "pointer",
+                        background: isActive ? "rgba(255,255,255,0.2)" : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        outline: isActive ? "2px solid #F4A623" : "none",
+                        outlineOffset: -2,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {flagUrl[l] ? (
+                        <img src={flagUrl[l]} alt={l} style={{ width: 22, height: 16, objectFit: "cover", borderRadius: 2, opacity: isActive ? 1 : 0.5 }} />
+                      ) : (
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: isActive ? "#F4A623" : "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>{l}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
           {/* Divider + theme toggle */}
           <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 4px" }} />
           <button
