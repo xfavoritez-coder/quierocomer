@@ -689,6 +689,7 @@ export default function CartaImpact({
     en: "https://purecatamphetamine.github.io/country-flag-icons/3x2/GB.svg",
     pt: "https://purecatamphetamine.github.io/country-flag-icons/3x2/PT.svg",
     it: "https://purecatamphetamine.github.io/country-flag-icons/3x2/IT.svg",
+    th: "https://purecatamphetamine.github.io/country-flag-icons/3x2/TH.svg",
   };
   const selectLang = useCallback((next: string) => {
     setLangOpen(false);

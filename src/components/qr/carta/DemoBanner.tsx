@@ -31,6 +31,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
     en: "https://purecatamphetamine.github.io/country-flag-icons/3x2/GB.svg",
     pt: "https://purecatamphetamine.github.io/country-flag-icons/3x2/PT.svg",
     it: "https://purecatamphetamine.github.io/country-flag-icons/3x2/IT.svg",
+    th: "https://purecatamphetamine.github.io/country-flag-icons/3x2/TH.svg",
   };
 
   // Detect when carta header scrolls out of view → show view/lang controls
