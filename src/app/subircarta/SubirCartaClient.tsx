@@ -522,6 +522,8 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
               { slug: "horusvegan", name: "Horus Vegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png", color: "#1a5f3f" },
               { slug: "alleria-pizza", name: "Alleria Pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png", color: "#c0392b" },
               { slug: "juana-la-brava", name: "Juana la Brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg", color: "#7c2d12" },
+              { slug: "el-menu-de-la-esquina", name: "El Menú de la Esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779594834786-i3nhsddtw68.png", color: "#2563eb" },
+              { slug: "krua-thai", name: "Krua Thai", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781025353917-x9yx2cbbcrn.webp", color: "#e65100" },
             ].map((r) => (
               <a key={r.slug} href={`/qr/${r.slug}?showcase=1`} target="_blank" rel="noopener noreferrer" className="social-proof-logo" title={`Ver carta de ${r.name}`}>
                 <img src={r.logo} alt={r.name} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling!.removeAttribute("style"); }} />

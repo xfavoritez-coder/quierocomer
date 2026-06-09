@@ -3,13 +3,14 @@ import LandingNew from "./(main)/LandingNew";
 import { getExperimentVariantsWithStats } from "@/lib/ab/getExperimentStats";
 import { pickByThompsonSampling } from "@/lib/ab/sampling";
 
-const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "el-menu-de-la-esquina"];
+const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "el-menu-de-la-esquina", "krua-thai"];
 const FALLBACK_COLORS: Record<string, string> = {
   "hand-roll": "#dc2626",
   "horusvegan": "#1a5f3f",
   "juana-la-brava": "#7c2d12",
   "alleria-pizza": "#c0392b",
   "el-menu-de-la-esquina": "#2563eb",
+  "krua-thai": "#e65100",
 };
 
 export const metadata = {
