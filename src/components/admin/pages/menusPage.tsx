@@ -1360,20 +1360,21 @@ export default function AdminMenus() {
             <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Multi-Menú</span>
           </div>
           <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" as any }}>
-            {[{ id: null, name: "Todos" }, ...menuGroups.map(g => ({ id: g.id, name: g.name }))].map(item => {
-              const isActive = activeMenuGroupId === item.id;
+            {[{ id: null as string | null, name: "Todos" }, ...menuGroups.map(g => ({ id: g.id as string | null, name: g.name }))].map(item => {
+              const isActive = item.id === null ? activeMenuGroupId === null : activeMenuGroupId === item.id;
               return (
                 <button
                   key={item.id || "__all__"}
                   onClick={() => setActiveMenuGroupId(item.id)}
                   style={{
                     padding: "6px 14px", borderRadius: 999,
-                    border: isActive ? "1.5px solid var(--adm-accent, #F4A623)" : "1px solid var(--adm-card-border)",
+                    border: "none",
                     cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: isActive ? 700 : 500,
                     whiteSpace: "nowrap", flexShrink: 0,
-                    background: isActive ? "var(--adm-accent, #F4A623)" : "var(--adm-card, transparent)",
+                    background: isActive ? "#F4A623" : "var(--adm-input, rgba(0,0,0,0.06))",
                     color: isActive ? "#fff" : "var(--adm-text2)",
-                    transition: "all 0.15s ease",
+                    outline: isActive ? "2px solid #F4A623" : "none",
+                    outlineOffset: isActive ? "-2px" : undefined,
                   }}
                 >
                   {item.name}
