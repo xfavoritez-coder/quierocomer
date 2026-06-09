@@ -173,7 +173,8 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
       .finally(() => setLoading(false));
     fetch(`/api/admin/dishes?restaurantId=${restaurantId}`)
       .then(r => r.json())
-      .then(d => {
+      .then(data => {
+        const d = Array.isArray(data) ? data : data.dishes;
         if (Array.isArray(d)) {
           setAllDishes(d.map((x: any) => ({ id: x.id, name: x.name, categoryId: x.category?.id, categoryName: x.category?.name })));
           // Extract unique categories
