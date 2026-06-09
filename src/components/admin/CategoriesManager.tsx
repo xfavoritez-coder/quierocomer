@@ -45,31 +45,18 @@ function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibili
         style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: isFeatured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: isFeatured ? "1px solid rgba(244,166,35,0.35)" : "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4, opacity: dish.isActive === false ? 0.5 : 1, cursor: onEdit ? "pointer" : undefined }}
       >
         <div {...attributes} {...listeners} onClick={e => e.stopPropagation()} style={{ cursor: "grab", padding: "4px 2px", color: "var(--adm-text3)", fontSize: "0.8rem", touchAction: "none" }}>⠿</div>
-        {dish.photos?.[0] ? (
-          <img src={dish.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-        ) : (
-          <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-card-border)", flexShrink: 0, display: "grid", placeItems: "center", fontSize: "0.75rem", color: "var(--adm-text3)" }}>🍽</div>
-        )}
-        <span style={{ fontFamily: F, fontSize: "0.78rem", color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: dish.isActive === false ? "line-through" : "none" }}>{dish.name}</span>
-        {dish.discountPrice ? (
-          <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#F4A623" }}>${Math.min(dish.price, dish.discountPrice).toLocaleString("es-CL")}</span>
-            <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", textDecoration: "line-through" }}>${Math.max(dish.price, dish.discountPrice).toLocaleString("es-CL")}</span>
-          </span>
-        ) : (
-          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
-        )}
-        {onToggleFeatured && (
-          <button onClick={e => { e.stopPropagation(); onToggleFeatured(dish.id); }} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "1rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
-            {isFeatured ? "★" : "☆"}
-          </button>
-        )}
-        {onToggleVisibility && (
-          <button onClick={e => { e.stopPropagation(); onToggleVisibility(dish.id, !dish.isActive); }} title={dish.isActive === false ? "Mostrar" : "Ocultar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0, color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text2)" }}>
-            {dish.isActive === false ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
-        )}
-        <button onClick={e => { e.stopPropagation(); setMoving(!moving); }} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Mover</button>
+        <span style={{ fontFamily: F, fontSize: "0.78rem", color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: dish.isActive === false ? "line-through" : "none" }}>
+          {isFeatured && <span style={{ color: "#F4A623", marginRight: 4 }}>★</span>}
+          {dish.isActive === false && <span style={{ fontSize: "0.65rem", color: "var(--adm-text3)", marginRight: 4 }}>oculto</span>}
+          {dish.name}
+        </span>
+        <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>
+          {dish.discountPrice
+            ? <><span style={{ color: "#F4A623", fontWeight: 700 }}>${Math.min(dish.price, dish.discountPrice).toLocaleString("es-CL")}</span></>
+            : `$${dish.price?.toLocaleString("es-CL")}`
+          }
+        </span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--adm-text3)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.4 }}><path d="M9 6l6 6-6 6" /></svg>
       </div>
       {moving && (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", padding: "4px 0 8px 42px" }}>
