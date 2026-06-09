@@ -143,10 +143,8 @@ function PrintPageInner() {
         <div className="qr-pages-wrap" style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
           {(() => {
             // Celdas cuadradas perfectas — usamos el lado mas chico que entra.
-            // Solo dejamos 4mm de safety abajo (zona no imprimible del impresor).
-            // Sin safety arriba ni a los lados — los QRs se pegan al tope.
-            const bottomSafetyMm = 4;
-            const cellSize = Math.min(paperW / layout.cols, (paperH - bottomSafetyMm) / layout.rows);
+            // Sin safety margins — stickers se imprimen edge-to-edge.
+            const cellSize = Math.min(paperW / layout.cols, paperH / layout.rows);
             const gridWidthMm = layout.cols * cellSize;
             return pages.map((countOnPage, pageIdx) => (
             <div
@@ -170,7 +168,7 @@ function PrintPageInner() {
                 gridTemplateRows: `repeat(${layout.rows}, ${cellSize}mm)`,
                 gap: 0,
                 width: `${gridWidthMm}mm`,
-                margin: "0 auto", // centra horizontalmente, top-aligned
+                margin: 0, // sin margin — edge-to-edge
               }}>
                 {Array.from({ length: countOnPage }).map((_, i) => (
                   <div
@@ -250,6 +248,10 @@ function PrintPageInner() {
              un page-break despues de la ultima pagina = hoja en blanco extra. */
           .qr-page {
             box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .qr-page > div {
             margin: 0 !important;
           }
         }
