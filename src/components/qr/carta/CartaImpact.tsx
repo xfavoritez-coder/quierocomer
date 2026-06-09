@@ -211,7 +211,7 @@ function ImpactHeroSlider({
         }}>
           {d.name.split(" ").map((w, i, arr) =>
             i === arr.length - 1
-              ? <span key={i} style={{ display: "block", color: "var(--carta-accent)", fontSize: 58, fontWeight: 900, textShadow: "0 0 24px color-mix(in srgb, var(--carta-accent) 32%, transparent)" }}>{w}</span>
+              ? <span key={i} style={{ display: "inline-block", color: "var(--carta-accent)", fontSize: 58, fontWeight: 900, textShadow: "0 0 24px color-mix(in srgb, var(--carta-accent) 40%, transparent), 0 0 60px color-mix(in srgb, var(--carta-accent) 15%, transparent)", background: "radial-gradient(ellipse at center, color-mix(in srgb, var(--carta-accent) 12%, transparent) 0%, transparent 70%)", padding: "0 8px", margin: "0 -8px", borderRadius: 8 }}>{w}</span>
               : <span key={i}>{w} </span>
           )}
         </h1>
