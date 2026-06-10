@@ -49,6 +49,7 @@ const PLAN_INFO: Record<string, { label: string; price: string; priceSub: string
       { icon: "📊", title: "Descubre qué vende más", desc: "Platos más vistos, horarios de mayor demanda y tendencias semanales." },
 { icon: "🎂", title: "Cumpleaños automáticos", desc: "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante." },
       { icon: "✉️", title: "Email marketing", desc: "Envía campañas y novedades a todos tus clientes." },
+      { icon: "📋", title: "Multi-carta", desc: "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico." },
     ],
   },
 };

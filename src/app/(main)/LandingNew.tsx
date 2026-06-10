@@ -428,6 +428,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
                 ["Cumpleaños automáticos", "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante"],
                 ["Clientes ilimitados", "Sin límite de clientes registrados"],
                 ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
+                ["Multi-carta", "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary={false} />
             </div>
           </div>

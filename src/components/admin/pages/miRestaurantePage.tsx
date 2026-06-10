@@ -225,6 +225,31 @@ export default function MiRestaurantePage() {
           <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Nombre del restaurant" />
         </Field>
 
+        <Field label="Tipo de cocina">
+          <div ref={dietRef} style={{ display: "flex", gap: 8 }}>
+            {([
+              { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️" },
+              { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
+              { value: "VEGAN", label: "Vegano", icon: "🌿" },
+            ] as const).map(opt => {
+              const active = dietType === opt.value;
+              return (
+                <button key={opt.value} onClick={() => setDietType(opt.value)} style={{
+                  flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
+                  background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                  border: active ? "1px solid rgba(244,166,35,0.3)" : "1px solid transparent",
+                  color: active ? GOLD : "var(--adm-text3)",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  transition: "all 0.2s",
+                }}>
+                  <span style={{ fontSize: "0.9rem" }}>{opt.icon}</span> {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
         <Field label="Instagram">
           <div ref={igRef} style={{ display: "flex", alignItems: "center", animation: highlightIg ? "dietPulse 0.8s ease-in-out infinite" : "none", borderRadius: 8 }}>
             {highlightIg && <style>{`@keyframes dietPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 12px rgba(244,166,35,0.3); } }`}</style>}

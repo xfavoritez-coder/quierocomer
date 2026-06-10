@@ -168,6 +168,7 @@ export default function PlanesClient() {
               <div>✓ Clientes capturados <span className="qc-tip">i<span className="qc-tip-text">Ve todos los clientes capturados: correos, cumpleaños, preferencias y más</span></span></div>
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas de email a tu base de clientes</span></span></div>
               <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante</span></span></div>
+              <div>✓ Multi-carta <span className="qc-tip">i<span className="qc-tip-text">Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 dias</button>
           </article>

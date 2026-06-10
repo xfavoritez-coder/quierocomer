@@ -105,6 +105,14 @@ const features = [
   },
   {
     num: "06",
+    title: "Multi-carta",
+    desc: "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico.",
+    tags: ["Multi-menú", "Premium", "QR"],
+    img: "/funciones/promos.jpg",
+    imgPos: "center 30%",
+  },
+  {
+    num: "07",
     title: "Promociones visibles",
     desc: "Destaca productos nuevos, ofertas del día o platos con mejor margen.",
     tags: ["Promos", "Lanzamientos"],
@@ -112,7 +120,7 @@ const features = [
     imgPos: "center 30%",
   },
   {
-    num: "07",
+    num: "08",
     title: "Analítica de la carta",
     desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso.",
     tags: ["Platos vistos", "Horarios", "Datos reales"],
