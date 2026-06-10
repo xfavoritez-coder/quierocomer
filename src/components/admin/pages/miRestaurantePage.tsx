@@ -228,20 +228,22 @@ export default function MiRestaurantePage() {
                 <span style={{ fontSize: "1.3rem" }}>{current.icon}</span>
                 <span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: current.color, textTransform: "uppercase", letterSpacing: "1px" }}>Plan activo</span>
               </div>
-              <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: "-0.5px" }}>
-                {current.label}
-              </p>
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
-                style={{
-                  marginTop: 14, padding: "10px 0", width: "100%", borderRadius: 999, border: "none", cursor: "pointer",
-                  background: current.color, color: "#fff",
-                  fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
-                  boxShadow: `0 4px 16px ${current.color}30`,
-                }}
-              >
-                Ver planes
-              </button>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: "-0.5px" }}>
+                  {current.label}
+                </p>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
+                  style={{
+                    padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+                    background: current.color, color: "#fff",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                    boxShadow: `0 4px 16px ${current.color}30`,
+                  }}
+                >
+                  Ver planes
+                </button>
+              </div>
             </div>
           </div>
         );
