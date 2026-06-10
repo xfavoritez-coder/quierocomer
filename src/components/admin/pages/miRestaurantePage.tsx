@@ -205,6 +205,43 @@ export default function MiRestaurantePage() {
       <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Store size={20} color="var(--adm-text3)" /> Mi Restaurante</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura la información y apariencia de tu local</p>
 
+      {/* ── Plan actual ── */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "16px 18px", marginBottom: 16,
+        background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+        borderRadius: 14,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10,
+            background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
+            display: "grid", placeItems: "center", fontSize: "1.1rem",
+          }}>
+            {activePlan === "PREMIUM" ? "💎" : activePlan === "GOLD" ? "🥇" : activePlan === "SILVER" ? "🥈" : "📋"}
+          </div>
+          <div>
+            <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
+              Plan {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : activePlan === "SILVER" ? "Silver" : "Gratis"}
+            </p>
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>
+              {activePlan === "FREE" ? "Funciones básicas" : `Funciones ${activePlan.toLowerCase()} activas`}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
+          style={{
+            padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+            background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : GOLD,
+            color: activePlan === "PREMIUM" ? "#a78bfa" : "#fff",
+            fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
+          }}
+        >
+          {activePlan === "PREMIUM" ? "Ver plan" : "Ver planes"}
+        </button>
+      </div>
+
       {/* ── Info básica ── */}
       <Card title="Información básica" icon={Camera}>
         {/* Logo */}

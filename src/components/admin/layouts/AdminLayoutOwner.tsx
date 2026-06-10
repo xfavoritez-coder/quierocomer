@@ -310,11 +310,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <UserCog size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi perfil</span>
             </a>
             {basePath === "/panel" && (
-              <a href="/panel/mi-restaurante" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
-                <Store size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi Restaurante</span>
-              </a>
-            )}
-            {basePath === "/panel" && (
               <a href="/panel/suscripcion" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
                 <CreditCard size={18} color={activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text2)"} />
                 <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi suscripción</span>
