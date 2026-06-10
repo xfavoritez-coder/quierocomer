@@ -214,7 +214,6 @@ export default function MiRestaurantePage() {
           { key: "PREMIUM", label: "Premium", price: "$44.900", color: "#a78bfa", bg: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05))", icon: "💎" },
         ];
         const current = plans.find(p => p.key === activePlan) || plans[0];
-        const others = plans.filter(p => p.key !== activePlan);
         return (
           <div style={{ marginBottom: 16 }}>
             {/* Active plan */}
@@ -235,25 +234,17 @@ export default function MiRestaurantePage() {
               <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
                 {current.price}/mes
               </p>
-            </div>
-            {/* Other plans */}
-            <div style={{ display: "flex", gap: 8 }}>
-              {others.map(p => (
-                <button
-                  key={p.key}
-                  onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: p.key } }))}
-                  style={{
-                    flex: 1, padding: "12px 8px", borderRadius: 12, cursor: "pointer",
-                    background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <span style={{ fontSize: "1.1rem" }}>{p.icon}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: p.color }}>{p.label}</span>
-                  <span style={{ fontFamily: FB, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{p.price}/mes</span>
-                </button>
-              ))}
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
+                style={{
+                  marginTop: 14, padding: "10px 0", width: "100%", borderRadius: 999, border: "none", cursor: "pointer",
+                  background: current.color, color: "#fff",
+                  fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+                  boxShadow: `0 4px 16px ${current.color}30`,
+                }}
+              >
+                Ver planes
+              </button>
             </div>
           </div>
         );
