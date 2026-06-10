@@ -228,11 +228,8 @@ export default function MiRestaurantePage() {
                 <span style={{ fontSize: "1.3rem" }}>{current.icon}</span>
                 <span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: current.color, textTransform: "uppercase", letterSpacing: "1px" }}>Plan activo</span>
               </div>
-              <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 2px", letterSpacing: "-0.5px" }}>
+              <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: "-0.5px" }}>
                 {current.label}
-              </p>
-              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
-                {current.price}/mes
               </p>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
