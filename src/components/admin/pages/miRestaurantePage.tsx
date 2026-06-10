@@ -206,41 +206,58 @@ export default function MiRestaurantePage() {
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura la información y apariencia de tu local</p>
 
       {/* ── Plan actual ── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 18px", marginBottom: 16,
-        background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-        borderRadius: 14,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
-            display: "grid", placeItems: "center", fontSize: "1.1rem",
-          }}>
-            {activePlan === "PREMIUM" ? "💎" : activePlan === "GOLD" ? "🥇" : activePlan === "SILVER" ? "🥈" : "📋"}
+      {(() => {
+        const plans = [
+          { key: "FREE", label: "Gratis", price: "$0", color: "#888", bg: "var(--adm-hover)", icon: "📋" },
+          { key: "SILVER", label: "Silver", price: "$14.900", color: "#94a3b8", bg: "linear-gradient(135deg, rgba(148,163,184,0.15), rgba(148,163,184,0.05))", icon: "🥈" },
+          { key: "GOLD", label: "Gold", price: "$29.900", color: "#F4A623", bg: "linear-gradient(135deg, rgba(244,166,35,0.15), rgba(244,166,35,0.05))", icon: "🥇" },
+          { key: "PREMIUM", label: "Premium", price: "$44.900", color: "#a78bfa", bg: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05))", icon: "💎" },
+        ];
+        const current = plans.find(p => p.key === activePlan) || plans[0];
+        const others = plans.filter(p => p.key !== activePlan);
+        return (
+          <div style={{ marginBottom: 16 }}>
+            {/* Active plan */}
+            <div style={{
+              padding: "20px 20px 18px", borderRadius: 16, overflow: "hidden", position: "relative",
+              background: current.bg,
+              border: `1.5px solid ${current.color}30`,
+              marginBottom: 10,
+            }}>
+              <div style={{ position: "absolute", top: -30, right: -20, fontSize: "5rem", opacity: 0.06, pointerEvents: "none" }}>{current.icon}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: "1.3rem" }}>{current.icon}</span>
+                <span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: current.color, textTransform: "uppercase", letterSpacing: "1px" }}>Plan activo</span>
+              </div>
+              <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 2px", letterSpacing: "-0.5px" }}>
+                {current.label}
+              </p>
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
+                {current.price}/mes
+              </p>
+            </div>
+            {/* Other plans */}
+            <div style={{ display: "flex", gap: 8 }}>
+              {others.map(p => (
+                <button
+                  key={p.key}
+                  onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: p.key } }))}
+                  style={{
+                    flex: 1, padding: "12px 8px", borderRadius: 12, cursor: "pointer",
+                    background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <span style={{ fontSize: "1.1rem" }}>{p.icon}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: p.color }}>{p.label}</span>
+                  <span style={{ fontFamily: FB, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{p.price}/mes</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-              Plan {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : activePlan === "SILVER" ? "Silver" : "Gratis"}
-            </p>
-            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>
-              {activePlan === "FREE" ? "Funciones básicas" : `Funciones ${activePlan.toLowerCase()} activas`}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
-          style={{
-            padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-            background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : GOLD,
-            color: activePlan === "PREMIUM" ? "#a78bfa" : "#fff",
-            fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
-          }}
-        >
-          {activePlan === "PREMIUM" ? "Ver plan" : "Ver planes"}
-        </button>
-      </div>
+        );
+      })()}
 
       {/* ── Info básica ── */}
       <Card title="Información básica" icon={Camera}>
