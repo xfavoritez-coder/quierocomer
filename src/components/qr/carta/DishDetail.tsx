@@ -176,9 +176,9 @@ export default function DishDetail({
         }}
       >
         {allDishes.map((d, idx) => {
-          // Only render nearby slides to prevent iOS memory crash
+          // Only render nearby slides — far slides are lightweight placeholders
           const distance = Math.abs(idx - activeIdx);
-          if (distance > 3) return <div key={d.id} style={{ flex: "0 0 100%", width: "100vw", scrollSnapAlign: "start" }} />;
+          if (distance > 5) return <div key={d.id} data-dish-slide={idx} style={{ flex: "0 0 100%", width: "100vw", scrollSnapAlign: "start" }} />;
           return (
           <DishSlide
             key={d.id}
