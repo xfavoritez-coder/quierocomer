@@ -338,7 +338,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
         <div className="container">
           <p className="logos-eyebrow">Ya usan QuieroComer</p>
           <div className="logos-grid">
-            {logoChips.filter(l => l.slug !== "el-menu-de-la-esquina").map((l, i) => (
+            {logoChips.map((l, i) => (
               <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
                 {l.logoUrl ? (
                   <img src={l.logoUrl} alt={l.name} className="logo-grid-img" />
