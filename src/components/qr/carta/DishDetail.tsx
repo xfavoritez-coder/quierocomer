@@ -62,6 +62,7 @@ export default function DishDetail({
   const [visible, setVisible] = useState(true);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastTrackedRef = useRef(dish.id);
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
@@ -127,16 +128,16 @@ export default function DishDetail({
     const timer = setTimeout(() => { mounted = true; }, 500);
     const slides = el.querySelectorAll("[data-dish-slide]");
     const obs = new IntersectionObserver((entries) => {
-      if (!mounted || programmaticScrollRef.current) return; // Ignore triggers during initial mount or programmatic scroll
+      if (!mounted || programmaticScrollRef.current) return;
       entries.forEach((e) => {
         if (e.isIntersecting && e.intersectionRatio > 0.6) {
           const idx = parseInt((e.target as HTMLElement).dataset.dishSlide || "0");
           setActiveIdx(idx);
           const d = allDishes[idx];
-          if (d && d.id !== dish.id) {
+          if (d && d.id !== lastTrackedRef.current) {
             trackDetailClose();
             trackDetailOpen(d.id);
-            onChangeDish(d);
+            lastTrackedRef.current = d.id;
           }
         }
       });
@@ -146,9 +147,14 @@ export default function DishDetail({
   }, [allDishes, dish.id, onChangeDish]);
 
   const close = useCallback(() => {
+    // Notify parent of the current dish before closing (for scroll-to)
+    const currentDish = allDishes[activeIdx];
+    if (currentDish && currentDish.id !== dish.id) {
+      onChangeDish(currentDish);
+    }
     setVisible(false);
     setTimeout(onClose, 200);
-  }, [onClose]);
+  }, [onClose, allDishes, activeIdx, dish.id, onChangeDish]);
 
 
   return (
