@@ -461,5 +461,54 @@ body:has(.feed-root) {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── Learning banner ───────────────────────────────────────── */
+.learning-banner {
+  margin: 0 12px 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(244, 166, 35, 0.04);
+  border: 1px solid rgba(244, 166, 35, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: learningPulse 3s ease-in-out infinite;
+}
+.learning-sparkle {
+  font-size: 13px;
+  animation: sparkleRotate 2s ease-in-out infinite;
+}
+.learning-text {
+  font-size: 12px;
+  color: rgba(244, 166, 35, 0.5);
+}
+.learning-dots {
+  display: flex;
+  gap: 3px;
+  margin-left: 2px;
+}
+.learning-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(244, 166, 35, 0.4);
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+.learning-dot:nth-child(2) { animation-delay: 0.2s; }
+.learning-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes learningPulse {
+  0%, 100% { opacity: 1; border-color: rgba(244, 166, 35, 0.08); }
+  50% { opacity: 0.7; border-color: rgba(244, 166, 35, 0.15); }
+}
+@keyframes sparkleRotate {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.2) rotate(10deg); }
+  75% { transform: scale(0.9) rotate(-5deg); }
+}
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.3; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
