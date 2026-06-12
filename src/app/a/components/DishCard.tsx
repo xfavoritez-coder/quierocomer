@@ -19,6 +19,11 @@ export default function DishCard({
   const gradient = getCategoryGradient(dish.categoriaNorm)
   const showFallback = !dish.fotoUrl || imgError
 
+  // Pseudo-random aspect ratio based on dish ID for Pinterest-style varied heights
+  const seed = dish.id.charCodeAt(0) + dish.id.charCodeAt(1) + dish.id.charCodeAt(dish.id.length - 1)
+  const ratios = ['3/4', '4/5', '1/1', '3/4', '5/6', '4/5', '3/4']
+  const aspectRatio = ratios[seed % ratios.length]
+
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
@@ -29,12 +34,12 @@ export default function DishCard({
   return (
     <div className="dish-card" onClick={() => onTap(dish)}>
       {/* Photo */}
-      <div style={{ position: 'relative', minHeight: 120, background: gradient }}>
+      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: gradient }}>
         {!showFallback ? (
           <img
             src={dish.fotoUrl!}
             alt={dish.nombre}
-            style={{ background: '#1a1a1a' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             onError={() => setImgError(true)}
             loading="lazy"
           />
