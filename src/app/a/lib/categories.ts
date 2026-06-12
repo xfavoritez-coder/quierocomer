@@ -348,7 +348,6 @@ export function getDisplayCategories(): string[] {
     'Sushi & Rolls',
     'Ceviches & Mariscos',
     'Ensaladas',
-    'Entradas',
     'Parrilla & Carnes',
     'Platos de fondo',
     'Sandwiches',
@@ -358,11 +357,8 @@ export function getDisplayCategories(): string[] {
     'Asiática',
     'Postres',
     'Desayunos',
-    'Cafetería',
-    'Combos',
     'Completos',
     'Vegano',
-    'Arepas & Venezolana',
-    'Acompañamientos',
+    'Entradas',
   ]
 }
