@@ -21,7 +21,7 @@ export function getDefaultFilters(userDiet?: { isVegan: boolean; isVegetarian: b
   // Default to 'all', the component will set the suggested meal time on mount.
   return {
     meal: 'all',
-    dishTypes: new Set(),
+    dishTypes: new Set(['food']),
     diet: userDiet?.isVegan ? 'VEGAN' : userDiet?.isVegetarian ? 'VEGETARIAN' : 'all',
     sort: 'relevance',
     priceMax: null,
