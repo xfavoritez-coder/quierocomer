@@ -109,7 +109,6 @@ export default function DishCard({
           )}
         </div>
 
-        <p className="dish-card-restaurant">{dish.restaurante}</p>
       </div>
     </div>
   )
