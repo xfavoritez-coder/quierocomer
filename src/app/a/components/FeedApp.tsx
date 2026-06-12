@@ -92,10 +92,9 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
     if (scoreAction) {
       const newProfile = updateProfile(profile, dish, scoreAction as any)
       setProfile(newProfile)
-      rerank(newProfile)
     }
     rateDish(dish.id, stars).catch(() => {})
-  }, [profile, rerank])
+  }, [profile])
 
   const handleRemoveSaved = useCallback((dishId: string) => {
     setAntojoDishIds(prev => { const n = new Set(prev); n.delete(dishId); return n })
