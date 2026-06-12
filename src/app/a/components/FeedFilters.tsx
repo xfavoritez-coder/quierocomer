@@ -33,11 +33,10 @@ const MEALS: { id: MealFilter; label: string }[] = [
   { id: 'almuerzo_cena', label: '🍴 Almuerzos y cenas' },
 ]
 
-const DISH_TYPES: { id: string; label: string }[] = [
-  { id: 'entry', label: '🥗 Entradas' },
-  { id: 'food', label: '🍽 Platos' },
-  { id: 'dessert', label: '🍰 Postres' },
-  { id: 'drink', label: '🍹 Bebestibles' },
+const DISH_TYPES: { id: string; label: string; matches: string[] }[] = [
+  { id: 'food', label: '🍽 Platos', matches: ['food', 'entry'] },
+  { id: 'dessert', label: '🍰 Postres', matches: ['dessert'] },
+  { id: 'drink', label: '🍹 Bebestibles', matches: ['drink', 'coffee'] },
 ]
 
 const DIETS: { id: DietFilter; label: string }[] = [
@@ -234,9 +233,15 @@ export default function FeedFilters({
 export function applyFilters(dishes: FeedDish[], filters: Filters): FeedDish[] {
   let result = dishes
 
-  // Dish types (multi-select)
+  // Dish types (multi-select, with expanded matches)
   if (filters.dishTypes.size > 0) {
-    result = result.filter(d => filters.dishTypes.has(d.categoriaTipo))
+    const expandedTypes = new Set<string>()
+    for (const id of filters.dishTypes) {
+      const dt = DISH_TYPES.find(t => t.id === id)
+      if (dt) dt.matches.forEach(m => expandedTypes.add(m))
+      else expandedTypes.add(id)
+    }
+    result = result.filter(d => expandedTypes.has(d.categoriaTipo))
   }
 
   // Meal time — applies to food and entry. Desserts and drinks always show.
