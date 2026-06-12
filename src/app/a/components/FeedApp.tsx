@@ -164,7 +164,16 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       <header className="feed-header">
         {!searchOpen ? (
           <>
-            <a href="/" style={{ textDecoration: 'none' }}><h1>QuieroComer</h1></a>
+            <a href="/" style={{ textDecoration: 'none' }}>
+              {learningMsg ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, animation: 'fadeIn 0.3s ease-out' }}>
+                  <span style={{ fontSize: 14 }}>✨</span>
+                  <span style={{ fontSize: 13, color: 'rgba(244,166,35,0.6)', fontWeight: 500 }}>{learningMsg}</span>
+                </div>
+              ) : (
+                <h1>QuieroComer</h1>
+              )}
+            </a>
             <button onClick={() => setSearchOpen(true)} style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: 4,
               color: 'rgba(255,255,255,0.5)',
@@ -212,22 +221,6 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
         <FeedFilters filters={filters} onChange={setFilters} />
       )}
 
-      {/* Learning toast */}
-      {learningMsg && (
-        <div style={{
-          margin: '0 12px 8px', padding: '9px 14px',
-          borderRadius: 10,
-          background: 'rgba(244,166,35,0.06)',
-          border: '1px solid rgba(244,166,35,0.1)',
-          display: 'flex', alignItems: 'center', gap: 7,
-          animation: 'fadeIn 0.3s ease-out',
-        }}>
-          <span style={{ fontSize: 14 }}>✨</span>
-          <span style={{ fontSize: 12, color: 'rgba(244,166,35,0.55)', fontWeight: 500 }}>
-            {learningMsg}
-          </span>
-        </div>
-      )}
 
       {/* Content */}
       {isSearching && searchResults ? (
