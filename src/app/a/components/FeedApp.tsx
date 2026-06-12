@@ -128,16 +128,16 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
   return (
     <div className="max-w-[460px] mx-auto">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0e0e0e]/95 backdrop-blur-md px-4 py-3">
+      <header className="sticky top-0 z-40 bg-[#0e0e0e]/90 backdrop-blur-lg border-b border-white/[0.04] px-4 py-2.5">
         <div className="flex items-center justify-between">
           <h1
-            className="text-xl font-bold text-white"
+            className="text-lg font-bold text-white"
             style={{ fontFamily: 'var(--font-feed-display), serif' }}
           >
             QuieroComer
           </h1>
           {calibration.isCalibrating && activeTab === 'feed' && (
-            <span className="text-[#F4A623]/60 text-[11px] font-medium animate-pulse">
+            <span className="text-[#F4A623]/50 text-[10px] font-medium animate-pulse">
               {calibration.message}
             </span>
           )}

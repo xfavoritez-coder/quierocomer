@@ -105,8 +105,8 @@ export default function FeedGrid({
   })
 
   return (
-    <div className="px-3 pb-24">
-      <div className="flex gap-3">
+    <div className="px-2.5 pb-24">
+      <div className="flex gap-2">
         <div className="flex-1 flex flex-col">
           {col1.map(dish => (
             <DishCard

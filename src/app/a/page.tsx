@@ -12,7 +12,6 @@ export default async function FeedPage() {
     redirect('/a/onboarding')
   }
 
-  // Verify user exists in DB
   const user = await prisma.feedUser.findUnique({
     where: { fingerprint },
     select: {
@@ -28,7 +27,12 @@ export default async function FeedPage() {
     redirect('/a/onboarding')
   }
 
-  // Fetch dishes, filtered by user restrictions
+  // Update lastSeenAt
+  prisma.feedUser.update({
+    where: { fingerprint },
+    data: { lastSeenAt: new Date() },
+  }).catch(() => {})
+
   const dishes = await getFeedDishes(1500, {
     isVegan: user.isVegan,
     isVegetarian: user.isVegetarian,

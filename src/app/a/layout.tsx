@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
 
 const playfair = Playfair_Display({
@@ -13,6 +13,14 @@ const dmSans = DM_Sans({
   variable: '--font-feed-body',
 })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0e0e0e',
+}
+
 export const metadata: Metadata = {
   title: 'QuieroComer — Descubre qué comer hoy',
   description: 'Explora platos reales de restaurantes cerca de ti. Encuentra tu próximo antojo.',
@@ -25,8 +33,11 @@ export const metadata: Metadata = {
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`${playfair.variable} ${dmSans.variable} min-h-dvh bg-[#0e0e0e] text-white`}
-      style={{ fontFamily: 'var(--font-feed-body), system-ui, sans-serif' }}
+      className={`${playfair.variable} ${dmSans.variable} min-h-dvh bg-[#0e0e0e] text-white antialiased`}
+      style={{
+        fontFamily: 'var(--font-feed-body), system-ui, -apple-system, sans-serif',
+        WebkitTapHighlightColor: 'transparent',
+      }}
     >
       {children}
     </div>
