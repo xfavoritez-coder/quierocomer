@@ -78,10 +78,10 @@ export default function DishModal({
           {/* Action row: pass/like left — save right */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px 0' }}>
             <div style={{ display: 'flex', gap: 12 }}>
-              <ActionBtn icon="pass" label="Paso" active={false} color="#fff"
-                onClick={() => { onPass(dish); onClose() }} />
               <ActionBtn icon="heart" label="Me gusta" active={liked} color="#F4A623"
                 onClick={() => { setLiked(!liked); onLike(dish) }} />
+              <ActionBtn icon="pass" label="Paso" active={false} color="#fff"
+                onClick={() => { onPass(dish); onClose() }} />
             </div>
             <ActionBtn icon="save" label="Guardar" active={saved} color="#F4A623"
               onClick={() => { setSaved(!saved); onSave(dish) }} />
