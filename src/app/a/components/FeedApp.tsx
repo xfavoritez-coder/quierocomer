@@ -198,13 +198,26 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
 
       {/* Learning banner */}
       {activeTab === 'feed' && !isSearching && profile.totalInteractions < 15 && (
-        <div className="learning-banner">
-          <span className="learning-sparkle">✨</span>
-          <span className="learning-text">Aprendiendo de tus gustos</span>
-          <span className="learning-dots">
-            <span className="learning-dot" />
-            <span className="learning-dot" />
-            <span className="learning-dot" />
+        <div style={{
+          margin: '0 12px 10px', padding: '10px 16px',
+          borderRadius: 12,
+          background: 'linear-gradient(135deg, rgba(244,166,35,0.08), rgba(244,166,35,0.03))',
+          border: '1px solid rgba(244,166,35,0.12)',
+          display: 'flex', alignItems: 'center', gap: 8,
+          animation: 'learningPulse 3s ease-in-out infinite',
+        }}>
+          <span style={{ fontSize: 16, animation: 'sparkleRotate 2s ease-in-out infinite' }}>✨</span>
+          <span style={{ fontSize: 13, color: 'rgba(244,166,35,0.55)', fontWeight: 500 }}>
+            Aprendiendo de tus gustos
+          </span>
+          <span style={{ display: 'flex', gap: 3, marginLeft: 2 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                width: 4, height: 4, borderRadius: '50%',
+                background: 'rgba(244,166,35,0.5)',
+                animation: `dotBounce 1.4s ease-in-out infinite ${i * 0.2}s`,
+              }} />
+            ))}
           </span>
         </div>
       )}
