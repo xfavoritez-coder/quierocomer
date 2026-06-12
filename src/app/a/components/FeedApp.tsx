@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import type { FeedDish } from '../types'
 import {
   createEmptyProfile,
@@ -87,12 +87,34 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       PASS: `${dish.categoriaNorm.toLowerCase()} no tanto... entendido`,
       SAVE: `Guardando preferencia por ${dish.categoriaNorm.toLowerCase()}`,
       TAP: `Explorando ${dish.categoriaNorm.toLowerCase()}...`,
+      VIEW: `Analizando tus preferencias...`,
     }
     const msg = msgs[action]
     if (!msg) return
     setLearningMsg(msg)
     setTimeout(() => setLearningMsg(null), 2000)
   }, [profile.totalInteractions])
+
+  // Show learning msg periodically while scrolling (every ~15 items viewed)
+  const scrollCountRef = useRef(0)
+  useEffect(() => {
+    if (profile.totalInteractions >= 20) return
+    const onScroll = () => {
+      scrollCountRef.current++
+      if (scrollCountRef.current % 80 === 0 && !learningMsg) {
+        const msgs = [
+          'Aprendiendo de tus gustos...',
+          'Ajustando recomendaciones...',
+          'Entendiendo tus preferencias...',
+          'Personalizando tu feed...',
+        ]
+        setLearningMsg(msgs[Math.floor(Math.random() * msgs.length)])
+        setTimeout(() => setLearningMsg(null), 2500)
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [profile.totalInteractions, learningMsg])
 
   const doTrack = useCallback(async (
     dish: FeedDish,
