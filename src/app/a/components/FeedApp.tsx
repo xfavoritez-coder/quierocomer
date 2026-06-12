@@ -69,16 +69,44 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
   const [searchOpen, setSearchOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'asking' | 'granted' | 'denied'>('idle')
+  const [locationToast, setLocationToast] = useState<string | null>(null)
 
   // Request geolocation on mount
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {},
-        { enableHighAccuracy: false, timeout: 5000 }
-      )
+    // Check if already granted
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then(result => {
+        if (result.state === 'granted') {
+          setLocationStatus('granted')
+          navigator.geolocation.getCurrentPosition(
+            pos => {
+              setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+            },
+            () => setLocationStatus('denied'),
+            { enableHighAccuracy: false, timeout: 5000 }
+          )
+        }
+      }).catch(() => {})
     }
+  }, [])
+
+  const requestLocation = useCallback(() => {
+    setLocationStatus('asking')
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setLocationStatus('granted')
+        setLocationToast('📍 Ubicación activada')
+        setTimeout(() => setLocationToast(null), 3000)
+      },
+      () => {
+        setLocationStatus('denied')
+        setLocationToast('No pudimos obtener tu ubicación')
+        setTimeout(() => setLocationToast(null), 3000)
+      },
+      { enableHighAccuracy: false, timeout: 8000 }
+    )
   }, [])
   const [diet, setDiet] = useState<UserDiet>(userDiet)
 
@@ -321,7 +349,34 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
       ) : (
         <>
           {activeTab === 'inicio' && (
-            <HomeFeed dishes={filteredDishes} profile={profile} userLocation={userLocation} onDishTap={handleDishTap} />
+            <>
+              {/* Location banner */}
+              {!userLocation && locationStatus !== 'denied' && (
+                <div style={{
+                  margin: '0 14px 12px', padding: '12px 16px', borderRadius: 12,
+                  background: 'rgba(244,166,35,0.06)', border: '1px solid rgba(244,166,35,0.12)',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{ fontSize: 20 }}>📍</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, color: '#fff', margin: 0, fontWeight: 500 }}>
+                      Platos cerca de ti
+                    </p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
+                      Activa tu ubicación para ver restaurantes cercanos
+                    </p>
+                  </div>
+                  <button onClick={requestLocation} style={{
+                    padding: '8px 14px', borderRadius: 10,
+                    background: '#F4A623', color: '#000', fontWeight: 600,
+                    fontSize: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
+                  }}>
+                    {locationStatus === 'asking' ? '...' : 'Activar'}
+                  </button>
+                </div>
+              )}
+              <HomeFeed dishes={filteredDishes} profile={profile} userLocation={userLocation} onDishTap={handleDishTap} />
+            </>
           )}
           {activeTab === 'feed' && (
             <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} userLocation={userLocation} />
@@ -352,6 +407,21 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
           onRate={handleDishRate}
           onDishTap={handleDishTap}
         />
+      )}
+
+      {/* Location toast */}
+      {locationToast && (
+        <div style={{
+          position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 80, padding: '10px 20px', borderRadius: 12,
+          background: 'rgba(20,20,20,0.95)', backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: '#fff', fontSize: 13, fontWeight: 500,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          animation: 'fadeIn 0.3s ease-out',
+        }}>
+          {locationToast}
+        </div>
       )}
 
       <BottomNav active={activeTab} onChange={setActiveTab} />
