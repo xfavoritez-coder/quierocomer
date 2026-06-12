@@ -341,13 +341,14 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       {selectedDish && (
         <DishModal
           dish={selectedDish}
+          allDishes={dishes}
           reason={selectedReason}
           onClose={() => setSelectedDish(null)}
           onLike={handleDishLike}
           onSave={handleDishSave}
-          onAntojo={handleDishAntojo}
           onPass={handleDishPass}
           onRate={handleDishRate}
+          onDishTap={handleDishTap}
         />
       )}
 

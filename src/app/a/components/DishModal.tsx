@@ -1,32 +1,36 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
+import { extractKeywords } from '../lib/keywords'
 
 export default function DishModal({
   dish,
+  allDishes,
   reason,
   onClose,
   onLike,
   onSave,
-  onAntojo,
   onPass,
   onRate,
+  onDishTap,
 }: {
   dish: FeedDish
+  allDishes: FeedDish[]
   reason?: string | null
   onClose: () => void
   onLike: (dish: FeedDish) => void
   onSave: (dish: FeedDish) => void
-  onAntojo: (dish: FeedDish) => void
   onPass: (dish: FeedDish) => void
   onRate: (dish: FeedDish, stars: number) => void
+  onDishTap: (dish: FeedDish) => void
 }) {
   const [imgError, setImgError] = useState(false)
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
   const [userRating, setUserRating] = useState(0)
+  const [showLocalFicha, setShowLocalFicha] = useState(false)
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
   useEffect(() => {
@@ -39,6 +43,38 @@ export default function DishModal({
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
+
+  // Similar dishes: same keywords or category, different dish
+  const similarDishes = useMemo(() => {
+    const myKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
+    return allDishes
+      .filter(d => d.id !== dish.id && d.fotoUrl)
+      .map(d => {
+        let score = 0
+        // Keyword overlap
+        const dKws = extractKeywords(d.nombre, d.descripcion)
+        for (const kw of dKws) if (myKws.has(kw)) score += 3
+        // Same category
+        if (d.categoriaNorm === dish.categoriaNorm) score += 2
+        // Same restaurant
+        if (d.restauranteId === dish.restauranteId) score += 1
+        return { dish: d, score }
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12)
+      .map(x => x.dish)
+  }, [dish, allDishes])
+
+  // Restaurant dishes (for ficha)
+  const restDishes = useMemo(() =>
+    allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl).slice(0, 12),
+    [dish, allDishes]
+  )
+
+  const handleSimilarTap = (d: FeedDish) => {
+    onDishTap(d)
+  }
 
   return (
     <>
@@ -60,9 +96,7 @@ export default function DishModal({
                 </span>
               </div>
             )}
-            {/* Gradient bottom */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, #161616, transparent)' }} />
-            {/* Close */}
             <button onClick={onClose} style={{
               position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: '50%',
               background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none',
@@ -72,10 +106,9 @@ export default function DishModal({
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
-            {dish.enOferta && <span className="dish-card-oferta" style={{ top: 16 }}>En oferta</span>}
           </div>
 
-          {/* Action row: pass/like left — save right */}
+          {/* Actions row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px 0' }}>
             <div style={{ display: 'flex', gap: 12 }}>
               <ActionBtn icon="heart" label="Me gusta" active={liked} color="#F4A623"
@@ -88,8 +121,7 @@ export default function DishModal({
           </div>
 
           {/* Content */}
-          <div style={{ padding: '16px 20px 32px' }}>
-            {/* Name + Price */}
+          <div style={{ padding: '16px 20px 0' }}>
             <h2 style={{
               fontFamily: 'var(--font-feed-display), serif',
               fontSize: 22, fontWeight: 700, color: '#fff',
@@ -103,32 +135,22 @@ export default function DishModal({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               {dish.enOferta && dish.precioDescuento != null ? (
                 <>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: '#4ade80' }}>
-                    ${dish.precioDescuento.toLocaleString('es-CL')}
-                  </span>
-                  <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>
-                    ${dish.precio.toLocaleString('es-CL')}
-                  </span>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+                  <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
                 </>
               ) : (
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#F4A623' }}>
-                  ${dish.precio.toLocaleString('es-CL')}
-                </span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
               )}
-
-              <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 14 }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
               <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{dish.categoriaNorm}</span>
             </div>
 
-            {/* Reason */}
             {reason && (
-              <p style={{ color: 'rgba(244,166,35,0.5)', fontSize: 12, fontStyle: 'italic', margin: '0 0 14px' }}>
-                {reason}
-              </p>
+              <p style={{ color: 'rgba(244,166,35,0.5)', fontSize: 12, fontStyle: 'italic', margin: '0 0 12px' }}>{reason}</p>
             )}
 
             {/* Stars */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <div style={{ display: 'flex', gap: 2 }}>
                 {[1, 2, 3, 4, 5].map(star => {
                   const filled = userRating > 0 ? star <= userRating : dish.avgRating != null && star <= Math.round(dish.avgRating)
@@ -136,9 +158,7 @@ export default function DishModal({
                     <button key={star} onClick={() => { setUserRating(star); onRate(dish, star) }}
                       style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer' }}>
                       <svg width="20" height="20" viewBox="0 0 24 24"
-                        fill={filled ? '#F4A623' : 'none'}
-                        stroke={filled ? '#F4A623' : 'rgba(255,255,255,0.12)'}
-                        strokeWidth="2">
+                        fill={filled ? '#F4A623' : 'none'} stroke={filled ? '#F4A623' : 'rgba(255,255,255,0.12)'} strokeWidth="2">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
                     </button>
@@ -150,67 +170,96 @@ export default function DishModal({
               </span>
             </div>
 
-            {/* Description */}
             {dish.descripcion && (
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 16px' }}>
-                {dish.descripcion}
-              </p>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 14px' }}>{dish.descripcion}</p>
             )}
 
-            {/* Diet badges */}
-            {(dish.dieta.sinGluten || dish.dieta.sinLactosa || dish.dieta.esPicante) && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-                {dish.dieta.sinGluten && <span style={badgeStyle('#f59e0b')}>Sin gluten</span>}
-                {dish.dieta.sinLactosa && <span style={badgeStyle('#3b82f6')}>Sin lactosa</span>}
-                {dish.dieta.esPicante && <span style={badgeStyle('#ef4444')}>Picante</span>}
-              </div>
-            )}
-
-            {/* Restaurant */}
-            <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: 12, borderRadius: 12,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-                textDecoration: 'none', marginBottom: 16,
-              }}>
+            {/* Restaurant row — tappable to show ficha */}
+            <button onClick={() => setShowLocalFicha(!showLocalFicha)} style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '10px 12px', borderRadius: 12, textAlign: 'left',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+              cursor: 'pointer', marginBottom: 0,
+            }}>
               {dish.restauranteLogo ? (
-                <img src={dish.restauranteLogo} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', background: 'rgba(255,255,255,0.1)' }} />
+                <img src={dish.restauranteLogo} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: 'rgba(255,255,255,0.1)' }} />
               ) : (
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 700 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 700 }}>
                   {dish.restaurante.charAt(0)}
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</p>
                 {dish.restauranteDireccion && (
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restauranteDireccion}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '1px 0 0' }}>{dish.restauranteDireccion}</p>
                 )}
               </div>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>Ver carta →</span>
-            </a>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round"
+                style={{ transform: showLocalFicha ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', flexShrink: 0 }}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
 
-            {/* Comments */}
-            <div style={{ paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>
-                Comentarios {dish.commentCount > 0 && `(${dish.commentCount})`}
-              </h3>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input type="text" placeholder="Escribe un comentario..."
-                  style={{
-                    flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#fff', outline: 'none',
-                  }} />
-                <button style={{
-                  padding: '10px 14px', borderRadius: 10,
-                  background: 'rgba(244,166,35,0.12)', border: 'none',
-                  color: '#F4A623', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                }}>
-                  Enviar
-                </button>
+            {/* Local ficha */}
+            {showLocalFicha && (
+              <div style={{ padding: '12px 0', animation: 'fadeIn 0.2s ease-out' }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                    style={{ flex: 1, padding: '10px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', textAlign: 'center', fontSize: 12, color: '#F4A623', fontWeight: 600 }}>
+                    Ver carta completa
+                  </a>
+                  {dish.restauranteDireccion && (
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restauranteDireccion + ' ' + dish.restaurante)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ flex: 1, padding: '10px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+                      Cómo llegar
+                    </a>
+                  )}
+                </div>
+                {restDishes.length > 0 && (
+                  <>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px' }}>Más de {dish.restaurante}</p>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                      {restDishes.map(d => (
+                        <div key={d.id} onClick={() => handleSimilarTap(d)} style={{
+                          flexShrink: 0, width: 110, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                          background: 'rgba(255,255,255,0.04)',
+                        }}>
+                          <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 110, height: 80, objectFit: 'cover', display: 'block' }} />
+                          <div style={{ padding: '6px 8px' }}>
+                            <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                            <p style={{ fontSize: 10, color: '#F4A623', margin: '2px 0 0', fontWeight: 600 }}>${d.precio.toLocaleString('es-CL')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Similar dishes — Pinterest "More like this" */}
+          {similarDishes.length > 0 && (
+            <div style={{ padding: '16px 20px 32px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 16 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>Platos similares</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {similarDishes.map(d => (
+                  <div key={d.id} onClick={() => handleSimilarTap(d)} style={{
+                    width: 'calc(50% - 4px)', cursor: 'pointer', borderRadius: 12, overflow: 'hidden',
+                    background: 'rgba(255,255,255,0.03)',
+                  }}>
+                    <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+                    <div style={{ padding: '8px 10px' }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                      <p style={{ fontSize: 11, color: '#F4A623', margin: '2px 0 0', fontWeight: 600 }}>${d.precio.toLocaleString('es-CL')}</p>
+                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: '1px 0 0' }}>{d.restaurante}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>
