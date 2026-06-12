@@ -204,19 +204,23 @@ export const CATEGORY_MAP: Record<string, string> = {
   'WAFFLES DULCES': 'Postres',
   'PROMO PASTELES': 'Postres',
 
-  // ─── Cafetería & Desayunos ──────────────────────────────────
+  // ─── Cafetería (bebidas calientes) ──────────────────────────
   'Cafetería': 'Cafetería',
   'CAFETERIA': 'Cafetería',
-  'BOLLERIA': 'Cafetería',
-  'PROMO BOLLERIA': 'Cafetería',
-  'CREPES SALADAS': 'Cafetería',
-  'WAFFLES SALADOS': 'Cafetería',
+  'Cafeteria': 'Cafetería',
+
+  // ─── Desayunos & Brunch (comida) ──────────────────────────
+  'BOLLERIA': 'Desayunos',
+  'PROMO BOLLERIA': 'Desayunos',
+  'CREPES SALADAS': 'Desayunos',
+  'WAFFLES SALADOS': 'Desayunos',
   'Desayunos': 'Desayunos',
   'DESAYUNOS': 'Desayunos',
   'Desayunos (Hasta las 12:30 hrs)': 'Desayunos',
   'Desayunos de Casa': 'Desayunos',
   'Mañanas Deliciosas (09:00 a 14:00 hrs) - Desayuno': 'Desayunos',
   'Mañanas Deliciosas (09:00 a 14:00 hrs) - Brunch': 'Desayunos',
+  'Antojos Salados - Tostadas': 'Desayunos',
 
   // ─── Combos & Promos ────────────────────────────────────────
   'Combos': 'Combos',
