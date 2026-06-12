@@ -13,91 +13,104 @@ export default function SavedList({
   onDishTap: (dish: FeedDish) => void
   onRemove: (dishId: string) => void
 }) {
-  const DishRow = ({ dish }: { dish: FeedDish }) => (
-    <button
-      onClick={() => onDishTap(dish)}
-      className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/8 transition-colors text-left"
+  const isEmpty = antojos.length === 0 && saved.length === 0
+
+  if (isEmpty) {
+    return (
+      <div style={{ padding: '80px 20px 100px', textAlign: 'center' }}>
+        <p style={{ fontSize: 40, marginBottom: 12 }}>💾</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: '0 0 6px' }}>No has guardado nada todavía</p>
+        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>Explora el feed y guarda los platos que te llamen la atención</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '8px 16px 100px' }}>
+      {/* Antojos */}
+      {antojos.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>🤤</span> Se me antoja ahora
+            <span style={{ color: 'rgba(255,255,255,0.2)' }}>({antojos.length})</span>
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {antojos.map(dish => <DishRow key={dish.id} dish={dish} onTap={onDishTap} />)}
+          </div>
+        </div>
+      )}
+
+      {/* Saved */}
+      {saved.length > 0 && (
+        <div>
+          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>💾</span> Para después
+            <span style={{ color: 'rgba(255,255,255,0.2)' }}>({saved.length})</span>
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {saved.map(dish => <DishRow key={dish.id} dish={dish} onTap={onDishTap} />)}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DishRow({ dish, onTap }: { dish: FeedDish; onTap: (d: FeedDish) => void }) {
+  return (
+    <div
+      onClick={() => onTap(dish)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: 12, borderRadius: 14,
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+        cursor: 'pointer',
+      }}
     >
       {dish.fotoUrl ? (
-        <img
-          src={dish.fotoUrl}
-          alt={dish.nombre}
-          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-        />
+        <img src={dish.fotoUrl} alt={dish.nombre}
+          style={{ width: 52, height: 52, borderRadius: 10, objectFit: 'cover', flexShrink: 0, background: '#1a1a1a' }} />
       ) : (
-        <div className="w-14 h-14 rounded-lg bg-white/10 flex-shrink-0 flex items-center justify-center text-white/30 text-xs">
+        <div style={{
+          width: 52, height: 52, borderRadius: 10, flexShrink: 0,
+          background: 'rgba(255,255,255,0.06)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'rgba(255,255,255,0.25)', fontSize: 18,
+        }}>
           {dish.categoriaNorm.charAt(0)}
         </div>
       )}
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-white text-sm font-semibold truncate"
-          style={{ fontFamily: 'var(--font-feed-display), serif' }}
-        >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{
+          fontFamily: 'var(--font-feed-display), serif',
+          fontSize: 14, fontWeight: 600, color: '#fff', margin: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
           {dish.nombre}
         </p>
-        <p className="text-[#F4A623] text-xs font-medium">
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', margin: '2px 0' }}>
           ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
         </p>
-        <p className="text-white/40 text-xs truncate">{dish.restaurante}</p>
+        <p style={{
+          fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {dish.restaurante}
+        </p>
       </div>
       <a
         href={`/carta/${dish.restauranteSlug}`}
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
-        className="text-white/30 text-xs px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 flex-shrink-0"
+        style={{
+          fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0,
+          padding: '6px 12px', borderRadius: 20,
+          background: 'rgba(255,255,255,0.06)', textDecoration: 'none',
+        }}
       >
         Ver carta
       </a>
-    </button>
-  )
-
-  const isEmpty = antojos.length === 0 && saved.length === 0
-
-  return (
-    <div className="px-4 pb-24 pt-2">
-      {isEmpty ? (
-        <div className="text-center py-20 space-y-3">
-          <p className="text-white/20 text-4xl">💾</p>
-          <p className="text-white/40 text-sm">No has guardado nada todavía</p>
-          <p className="text-white/20 text-xs">
-            Explora el feed y guarda los platos que te llamen la atención
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Antojos */}
-          {antojos.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-white/60 mb-3 flex items-center gap-2">
-                <span>🤤</span> Se me antoja ahora
-                <span className="text-white/20">({antojos.length})</span>
-              </h2>
-              <div className="space-y-2">
-                {antojos.map(dish => (
-                  <DishRow key={dish.id} dish={dish} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Saved */}
-          {saved.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-white/60 mb-3 flex items-center gap-2">
-                <span>💾</span> Para después
-                <span className="text-white/20">({saved.length})</span>
-              </h2>
-              <div className="space-y-2">
-                {saved.map(dish => (
-                  <DishRow key={dish.id} dish={dish} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }

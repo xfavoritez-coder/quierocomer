@@ -30,14 +30,11 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [profile, setProfile] = useState<FeedProfile>(createEmptyProfile)
   const [feedDishes, setFeedDishes] = useState(dishes)
-
-  // Track saved dishes locally
   const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
 
   const calibration = getCalibrationStatus(profile)
 
-  // Build saved/antojo dish lists from IDs
   const dishMap = useMemo(() => {
     const map = new Map<string, FeedDish>()
     dishes.forEach(d => map.set(d.id, d))
@@ -54,7 +51,6 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
     [savedDishIds, dishMap],
   )
 
-  // Re-rank feed after profile changes
   const rerank = useCallback((newProfile: FeedProfile) => {
     setFeedDishes(rankFeed(dishes, newProfile))
   }, [dishes])
@@ -66,13 +62,7 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
     const newProfile = updateProfile(profile, dish, action)
     setProfile(newProfile)
     rerank(newProfile)
-
-    trackInteraction(
-      dish.id,
-      action,
-      dish.categoriaNorm,
-      dish.precioDescuento ?? dish.precio,
-    ).catch(() => {})
+    trackInteraction(dish.id, action, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
   }, [profile, rerank])
 
   const handleDishTap = useCallback((dish: FeedDish) => {
@@ -121,64 +111,36 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
     setFeedDishes(dishes)
   }, [dishes])
 
-  const selectedReason = selectedDish
-    ? getRecommendationReason(selectedDish, profile)
-    : null
+  const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
   return (
-    <div className="max-w-[460px] mx-auto">
+    <div style={{ maxWidth: 460, margin: '0 auto' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0e0e0e]/90 backdrop-blur-lg border-b border-white/[0.04] px-4 py-2.5">
-        <div className="flex items-center justify-between">
-          <h1
-            className="text-lg font-bold text-white"
-            style={{ fontFamily: 'var(--font-feed-display), serif' }}
-          >
-            QuieroComer
-          </h1>
-          {calibration.isCalibrating && activeTab === 'feed' && (
-            <span className="text-[#F4A623]/50 text-[10px] font-medium animate-pulse">
-              {calibration.message}
-            </span>
-          )}
-        </div>
+      <header className="feed-header">
+        <h1>QuieroComer</h1>
+        {calibration.isCalibrating && activeTab === 'feed' && (
+          <span className="calibrating">{calibration.message}</span>
+        )}
       </header>
 
       {/* Content */}
       {activeTab === 'feed' && (
-        <FeedGrid
-          dishes={feedDishes}
-          profile={profile}
-          onDishTap={handleDishTap}
-          onDishLike={handleDishLike}
-        />
+        <FeedGrid dishes={feedDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
       )}
 
       {activeTab === 'explorar' && (
-        <ExploreGrid
-          dishes={dishes}
-          onDishTap={handleDishTap}
-          onDishLike={handleDishLike}
-        />
+        <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
       )}
 
       {activeTab === 'guardados' && (
-        <SavedList
-          antojos={antojoDishes}
-          saved={savedDishes}
-          onDishTap={handleDishTap}
-          onRemove={handleRemoveSaved}
-        />
+        <SavedList antojos={antojoDishes} saved={savedDishes} onDishTap={handleDishTap} onRemove={handleRemoveSaved} />
       )}
 
       {activeTab === 'perfil' && (
-        <ProfileView
-          profile={profile}
-          onReset={handleResetProfile}
-        />
+        <ProfileView profile={profile} onReset={handleResetProfile} />
       )}
 
-      {/* Modal inmersivo */}
+      {/* Modal */}
       {selectedDish && (
         <DishModal
           dish={selectedDish}
@@ -192,7 +154,6 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
         />
       )}
 
-      {/* Bottom nav */}
       <BottomNav active={activeTab} onChange={setActiveTab} />
     </div>
   )

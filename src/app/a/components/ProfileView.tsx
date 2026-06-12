@@ -10,7 +10,6 @@ export default function ProfileView({
   profile: FeedProfile
   onReset: () => void
 }) {
-  // Top categories sorted by score
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
       .filter(([, score]) => score > 0)
@@ -19,118 +18,116 @@ export default function ProfileView({
   }, [profile.categoryScores])
 
   const maxScore = topCategories.length > 0 ? topCategories[0][1] : 1
-
-  // Stats
   const totalLikes = profile.likedDishIds.size
   const totalSeen = profile.seenDishIds.size
   const totalPassed = profile.passedDishIds.size
 
-  // Price range
   const priceRange = useMemo(() => {
     if (profile.prices.length < 5) return null
     const sorted = [...profile.prices].sort((a, b) => a - b)
-    const p20 = sorted[Math.floor(sorted.length * 0.2)]
-    const p80 = sorted[Math.floor(sorted.length * 0.8)]
-    return { min: p20, max: p80 }
+    return { min: sorted[Math.floor(sorted.length * 0.2)], max: sorted[Math.floor(sorted.length * 0.8)] }
   }, [profile.prices])
 
   const hasData = profile.totalInteractions > 0
 
+  if (!hasData) {
+    return (
+      <div style={{ padding: '80px 20px 100px', textAlign: 'center' }}>
+        <p style={{ fontSize: 40, marginBottom: 12 }}>👤</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: '0 0 6px' }}>Tu perfil gastronómico aparecerá aquí</p>
+        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>Mientras explores el feed, iremos aprendiendo tus gustos</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="px-4 pb-24 pt-2">
-      {!hasData ? (
-        <div className="text-center py-20 space-y-3">
-          <p className="text-white/20 text-4xl">👤</p>
-          <p className="text-white/40 text-sm">Tu perfil gastronómico aparecerá aquí</p>
-          <p className="text-white/20 text-xs">
-            Mientras explores el feed, iremos aprendiendo tus gustos
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-1">
-            <h2
-              className="text-xl font-bold text-white"
-              style={{ fontFamily: 'var(--font-feed-display), serif' }}
-            >
-              Tu perfil gastronómico
-            </h2>
-            <p className="text-white/40 text-xs">
-              Basado en {profile.totalInteractions} interacciones
-            </p>
-          </div>
+    <div style={{ padding: '8px 16px 100px' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>
+          Tu perfil gastronómico
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>
+          Basado en {profile.totalInteractions} interacciones
+        </p>
+      </div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/5 rounded-xl p-3 text-center">
-              <p className="text-[#F4A623] text-lg font-bold">{totalSeen}</p>
-              <p className="text-white/40 text-[10px]">Platos vistos</p>
-            </div>
-            <div className="bg-white/5 rounded-xl p-3 text-center">
-              <p className="text-red-400 text-lg font-bold">{totalLikes}</p>
-              <p className="text-white/40 text-[10px]">Me gusta</p>
-            </div>
-            <div className="bg-white/5 rounded-xl p-3 text-center">
-              <p className="text-white/60 text-lg font-bold">{totalPassed}</p>
-              <p className="text-white/40 text-[10px]">Pasados</p>
-            </div>
-          </div>
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
+        <StatCard value={totalSeen} label="Platos vistos" color="#F4A623" />
+        <StatCard value={totalLikes} label="Me gusta" color="#ef4444" />
+        <StatCard value={totalPassed} label="Pasados" color="rgba(255,255,255,0.5)" />
+      </div>
 
-          {/* Top categories */}
-          {topCategories.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-white/60 mb-3">
-                Categorías favoritas
-              </h3>
-              <div className="space-y-2.5">
-                {topCategories.map(([category, score]) => (
-                  <div key={category} className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-white text-sm">{category}</span>
-                      <span className="text-white/30 text-xs">{score}</span>
-                    </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#F4A623] rounded-full transition-all duration-500"
-                        style={{ width: `${(score / maxScore) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+      {/* Top categories */}
+      {topCategories.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>
+            Categorías favoritas
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {topCategories.map(([category, score]) => (
+              <div key={category}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: '#fff' }}>{category}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>{score}</span>
+                </div>
+                <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', background: '#F4A623', borderRadius: 3,
+                    width: `${(score / maxScore) * 100}%`,
+                    transition: 'width 0.5s ease',
+                  }} />
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Price range */}
-          {priceRange && (
-            <div className="bg-white/5 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-white/60 mb-1">
-                Tu rango de precio
-              </h3>
-              <p className="text-[#F4A623] text-base font-semibold">
-                ${priceRange.min.toLocaleString('es-CL')} — ${priceRange.max.toLocaleString('es-CL')}
-              </p>
-              <p className="text-white/30 text-xs mt-0.5">
-                Basado en los platos que más te interesan
-              </p>
-            </div>
-          )}
-
-          {/* Reset */}
-          <div className="pt-4 border-t border-white/5">
-            <button
-              onClick={onReset}
-              className="w-full py-3 rounded-xl bg-white/5 text-white/40 text-sm hover:bg-white/10 hover:text-white/60 transition-colors"
-            >
-              Resetear gustos
-            </button>
-            <p className="text-center text-white/20 text-[10px] mt-2">
-              Esto borrará tu perfil de gustos y el feed volverá a ser diverso
-            </p>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Price range */}
+      {priceRange && (
+        <div style={{
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 14, padding: 16, marginBottom: 24,
+        }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>
+            Tu rango de precio
+          </h3>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#F4A623', margin: '0 0 2px' }}>
+            ${priceRange.min.toLocaleString('es-CL')} — ${priceRange.max.toLocaleString('es-CL')}
+          </p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
+            Basado en los platos que más te interesan
+          </p>
+        </div>
+      )}
+
+      {/* Reset */}
+      <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={onReset} style={{
+          width: '100%', padding: 14, borderRadius: 12,
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+          color: 'rgba(255,255,255,0.4)', fontSize: 14, cursor: 'pointer',
+        }}>
+          Resetear gustos
+        </button>
+        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: 10, marginTop: 8 }}>
+          Esto borrará tu perfil y el feed volverá a ser diverso
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ value, label, color }: { value: number; label: string; color: string }) {
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 14, padding: '14px 8px', textAlign: 'center',
+    }}>
+      <p style={{ fontSize: 20, fontWeight: 700, color, margin: '0 0 2px' }}>{value}</p>
+      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{label}</p>
     </div>
   )
 }

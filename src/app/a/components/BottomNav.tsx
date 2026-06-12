@@ -17,22 +17,16 @@ export default function BottomNav({
   onChange: (tab: Tab) => void
 }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0e0e0e]/95 backdrop-blur-lg border-t border-white/[0.04]"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-    >
-      <div className="max-w-[460px] mx-auto flex">
+    <nav className="feed-nav">
+      <div className="feed-nav-inner">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors active:opacity-70 ${
-              active === tab.id
-                ? 'text-[#F4A623]'
-                : 'text-white/30'
-            }`}
+            className={`feed-nav-tab ${active === tab.id ? 'active' : ''}`}
           >
-            <span className="text-[18px] leading-none">{tab.icon}</span>
-            <span className="text-[9px] font-medium">{tab.label}</span>
+            <span className="icon">{tab.icon}</span>
+            <span className="label">{tab.label}</span>
           </button>
         ))}
       </div>

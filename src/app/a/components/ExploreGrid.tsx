@@ -18,28 +18,22 @@ export default function ExploreGrid({
 
   const categories = useMemo(() => {
     const display = getDisplayCategories()
-    // Only show categories that have dishes
     const available = new Set(dishes.map(d => d.categoriaNorm))
     return display.filter(c => available.has(c))
   }, [dishes])
 
-  // Check if there are dishes on sale
   const hasOfertas = useMemo(() => dishes.some(d => d.enOferta), [dishes])
 
   const filtered = useMemo(() => {
-    if (activeCategory === '🏷️ Ofertas') {
-      return dishes.filter(d => d.enOferta)
-    }
+    if (activeCategory === 'ofertas') return dishes.filter(d => d.enOferta)
     if (!activeCategory) return dishes
     return dishes.filter(d => d.categoriaNorm === activeCategory)
   }, [dishes, activeCategory])
 
-  // Sort by popularity
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
   }, [filtered])
 
-  // Split into 2 columns
   const col1: FeedDish[] = []
   const col2: FeedDish[] = []
   sorted.forEach((dish, i) => {
@@ -49,92 +43,61 @@ export default function ExploreGrid({
 
   return (
     <div>
-      {/* Category chips */}
-      <div className="px-3 pb-3 overflow-x-auto scrollbar-hide">
-        <div className="flex gap-2 pb-1" style={{ minWidth: 'max-content' }}>
-          {/* All */}
+      {/* Chips */}
+      <div className="category-chips">
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={`category-chip ${activeCategory === null ? 'active' : ''}`}
+        >
+          Todas
+        </button>
+
+        {hasOfertas && (
           <button
-            onClick={() => setActiveCategory(null)}
-            className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-              activeCategory === null
-                ? 'bg-[#F4A623] text-black'
-                : 'bg-white/5 text-white/60 hover:bg-white/10'
-            }`}
+            onClick={() => setActiveCategory('ofertas')}
+            className={`category-chip ofertas ${activeCategory === 'ofertas' ? 'active' : ''}`}
           >
-            Todas
+            🏷️ Ofertas
           </button>
+        )}
 
-          {/* Ofertas chip */}
-          {hasOfertas && (
-            <button
-              onClick={() => setActiveCategory('🏷️ Ofertas')}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeCategory === '🏷️ Ofertas'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-              }`}
-            >
-              🏷️ Ofertas
-            </button>
-          )}
-
-          {/* Category chips */}
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeCategory === cat
-                  ? 'bg-[#F4A623] text-black'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`category-chip ${activeCategory === cat ? 'active' : ''}`}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
-      {/* Results count */}
-      <div className="px-4 pb-3">
-        <span className="text-white/30 text-xs">
-          {sorted.length} platos
-          {activeCategory && activeCategory !== '🏷️ Ofertas' && ` en ${activeCategory}`}
-          {activeCategory === '🏷️ Ofertas' && ' en oferta'}
-        </span>
+      {/* Count */}
+      <div style={{ padding: '0 12px 8px', color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>
+        {sorted.length} platos
+        {activeCategory && activeCategory !== 'ofertas' && ` en ${activeCategory}`}
+        {activeCategory === 'ofertas' && ' en oferta'}
       </div>
 
       {/* Grid */}
-      <div className="px-3 pb-24">
-        {sorted.length > 0 ? (
-          <div className="flex gap-3">
-            <div className="flex-1 flex flex-col">
-              {col1.map(dish => (
-                <DishCard
-                  key={dish.id}
-                  dish={dish}
-                  onTap={onDishTap}
-                  onLike={onDishLike}
-                />
-              ))}
-            </div>
-            <div className="flex-1 flex flex-col">
-              {col2.map(dish => (
-                <DishCard
-                  key={dish.id}
-                  dish={dish}
-                  onTap={onDishTap}
-                  onLike={onDishLike}
-                />
-              ))}
-            </div>
+      {sorted.length > 0 ? (
+        <div className="feed-masonry">
+          <div className="feed-masonry-col">
+            {col1.map(dish => (
+              <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
+            ))}
           </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-white/30 text-sm">No hay platos en esta categoría</p>
+          <div className="feed-masonry-col">
+            {col2.map(dish => (
+              <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
+          No hay platos en esta categoría
+        </div>
+      )}
     </div>
   )
 }

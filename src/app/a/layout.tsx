@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
+import './feed.css'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -33,8 +34,10 @@ export const metadata: Metadata = {
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`${playfair.variable} ${dmSans.variable} min-h-dvh bg-[#0e0e0e] text-white antialiased`}
+      className={`feed-root ${playfair.variable} ${dmSans.variable} min-h-dvh text-white antialiased`}
       style={{
+        background: '#0e0e0e',
+        color: '#ffffff',
         fontFamily: 'var(--font-feed-body), system-ui, -apple-system, sans-serif',
         WebkitTapHighlightColor: 'transparent',
       }}
