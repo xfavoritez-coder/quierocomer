@@ -94,7 +94,7 @@ export default function ProfileView({
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
             Restricciones alimentarias
           </h3>
-          <button onClick={() => { setTempDiet(diet); setEditingDiet(!editingDiet) }} style={{
+          <button onClick={() => { setTempOption(dietToOption(diet)); setEditingDiet(!editingDiet) }} style={{
             background: 'none', border: 'none', color: '#F4A623', fontSize: 13, cursor: 'pointer', fontWeight: 600,
           }}>
             {editingDiet ? 'Cancelar' : 'Editar'}
