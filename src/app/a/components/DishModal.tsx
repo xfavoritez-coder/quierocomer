@@ -27,9 +27,6 @@ export default function DishModal({
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
   const [userRating, setUserRating] = useState(0)
-  const [showAntojoSheet, setShowAntojoSheet] = useState(false)
-  const [antojoConfirmed, setAntojoConfirmed] = useState(false)
-
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
   useEffect(() => {
@@ -205,29 +202,15 @@ export default function DishModal({
               <ActionBtn icon="save" label="Guardar" active={saved} color="#F4A623" onClick={() => { setSaved(!saved); onSave(dish) }} />
             </div>
 
-            {/* CTA */}
-            {!antojoConfirmed ? (
-              <button onClick={() => { setShowAntojoSheet(true); setAntojoConfirmed(true); onAntojo(dish) }}
-                className="onboard-cta">
-                Se me antoja
-              </button>
-            ) : (
-              <div style={{ animation: 'fadeIn 0.2s ease-out' }}>
-                <p style={{ textAlign: 'center', color: '#F4A623', fontSize: 14, fontWeight: 600, margin: '0 0 10px' }}>
-                  Guardado en tus antojos
-                </p>
-                <a href={`/carta/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={linkBtnStyle}>
-                  Ver carta del local
-                </a>
-                {dish.restauranteDireccion && (
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restauranteDireccion + ' ' + dish.restaurante)}`}
-                    target="_blank" rel="noopener noreferrer" style={{ ...linkBtnStyle, marginTop: 8 }}>
-                    Cómo llegar
-                  </a>
-                )}
-              </div>
-            )}
+            {/* Ver carta CTA */}
+            <a href={`/carta/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'block', width: '100%', padding: 16, borderRadius: 14,
+                background: '#F4A623', color: '#000', fontWeight: 700, fontSize: 16,
+                textAlign: 'center', textDecoration: 'none',
+              }}>
+              Ver carta completa
+            </a>
 
             {/* Comments */}
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -263,13 +246,6 @@ const badgeStyle = (color: string): React.CSSProperties => ({
   padding: '3px 10px', borderRadius: 20,
   background: `${color}20`, color,
 })
-
-const linkBtnStyle: React.CSSProperties = {
-  display: 'block', width: '100%', padding: 14, borderRadius: 12,
-  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.06)',
-  textAlign: 'center', color: '#fff', fontSize: 14, fontWeight: 500,
-  textDecoration: 'none',
-}
 
 function ActionBtn({ icon, label, active, color, onClick }: {
   icon: 'pass' | 'heart' | 'save'; label: string; active: boolean; color: string; onClick: () => void

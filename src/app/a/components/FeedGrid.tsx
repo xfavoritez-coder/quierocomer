@@ -91,13 +91,13 @@ export default function FeedGrid({
   })
 
   return (
-    <div className="feed-masonry">
-      <div className="feed-masonry-col">
+    <div style={{ display: 'flex', gap: 8, padding: '0 8px 100px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {col1.map(dish => (
           <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
         ))}
       </div>
-      <div className="feed-masonry-col">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {col2.map(dish => (
           <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
         ))}

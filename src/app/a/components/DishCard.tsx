@@ -71,7 +71,11 @@ export default function DishCard({
 
       {/* Info */}
       <div className="dish-card-info">
-        <h3 className="dish-card-name">{dish.nombre}</h3>
+        <h3 className="dish-card-name">
+          {dish.nombre}
+          {dish.dieta.tipo === 'VEGAN' && <span title="Vegano" style={{ marginLeft: 4 }}>🌱</span>}
+          {dish.dieta.tipo === 'VEGETARIAN' && <span title="Vegetariano" style={{ marginLeft: 4 }}>🥬</span>}
+        </h3>
 
         <p className="dish-card-price">
           {dish.enOferta && dish.precioDescuento != null ? (

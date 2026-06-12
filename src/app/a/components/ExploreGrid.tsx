@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { FeedDish } from '../types'
 import { getDisplayCategories } from '../lib/categories'
 import DishCard from './DishCard'
@@ -15,6 +15,7 @@ export default function ExploreGrid({
   onDishLike?: (dish: FeedDish) => void
 }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(20)
 
   const categories = useMemo(() => {
     const display = getDisplayCategories()
@@ -34,9 +35,28 @@ export default function ExploreGrid({
     return [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
   }, [filtered])
 
+  // Reset visible count when category changes
+  useEffect(() => { setVisibleCount(20) }, [activeCategory])
+
+  // Infinite scroll
+  const loadMore = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + 20, sorted.length))
+  }, [sorted.length])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800 && visibleCount < sorted.length) {
+        loadMore()
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [visibleCount, sorted.length, loadMore])
+
+  const visible = sorted.slice(0, visibleCount)
   const col1: FeedDish[] = []
   const col2: FeedDish[] = []
-  sorted.forEach((dish, i) => {
+  visible.forEach((dish, i) => {
     if (i % 2 === 0) col1.push(dish)
     else col2.push(dish)
   })
@@ -79,15 +99,15 @@ export default function ExploreGrid({
         {activeCategory === 'ofertas' && ' en oferta'}
       </div>
 
-      {/* Grid */}
-      {sorted.length > 0 ? (
-        <div className="feed-masonry">
-          <div className="feed-masonry-col">
+      {/* Grid - masonry 2 cols with inline styles to guarantee layout */}
+      {visible.length > 0 ? (
+        <div style={{ display: 'flex', gap: 8, padding: '0 8px 100px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             {col1.map(dish => (
               <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
             ))}
           </div>
-          <div className="feed-masonry-col">
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             {col2.map(dish => (
               <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
             ))}

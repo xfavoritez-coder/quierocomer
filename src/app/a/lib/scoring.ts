@@ -80,23 +80,28 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
   const catScore = profile.categoryScores[dish.categoriaNorm] ?? 0
   const restScore = profile.restaurantScores[dish.restauranteId] ?? 0
 
-  let score = catScore + (restScore * 0.5)
+  // Usar logaritmo para comprimir la diferencia entre categorías
+  // Así Sushi(30) vs Sandwiches(15) se convierte en ~3.4 vs ~2.7 (no 30 vs 15)
+  const catSignal = catScore > 0 ? Math.log2(catScore + 1) * 3 : catScore < 0 ? catScore * 0.5 : 0
+  const restSignal = restScore > 0 ? Math.log2(restScore + 1) * 1.5 : 0
+
+  let score = catSignal + restSignal
 
   // Bonus por adyacencia (descubrimiento)
   const adjacent = ADJACENT_CATEGORIES[dish.categoriaNorm] ?? []
   for (const adj of adjacent) {
     const adjScore = profile.categoryScores[adj] ?? 0
-    if (adjScore >= 16) score += adjScore * 0.3
+    if (adjScore >= 12) score += Math.log2(adjScore) * 1.5
   }
 
   // Bonus por popularidad
   if (dish.popularityScore > 0) score += dish.popularityScore * 0.2
 
   // Bonus por oferta
-  if (dish.enOferta) score += 5
+  if (dish.enOferta) score += 3
 
   // Penalización si ya fue visto
-  if (profile.seenDishIds.has(dish.id)) score -= 12
+  if (profile.seenDishIds.has(dish.id)) score -= 8
 
   // No mostrar platos pasados
   if (profile.passedDishIds.has(dish.id)) score -= 1000
@@ -107,11 +112,11 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
     const p20 = sorted[Math.floor(sorted.length * 0.2)]
     const p80 = sorted[Math.floor(sorted.length * 0.8)]
     const price = dish.precioDescuento ?? dish.precio
-    if (price < p20 || price > p80) score -= 4
+    if (price < p20 || price > p80) score -= 3
   }
 
-  // Ruido para variedad
-  score += Math.random() * 3
+  // Ruido grande para variedad — evita que una categoría domine
+  score += Math.random() * 6
 
   return score
 }
@@ -151,9 +156,34 @@ export function getRecommendationReason(
 
 // ─── Re-rankear el feed ────────────────────────────────────────────
 export function rankFeed(dishes: FeedDish[], profile: FeedProfile): FeedDish[] {
-  if (profile.totalInteractions < 3) return dishes // No reordenar hasta tener señal
+  if (profile.totalInteractions < 3) return dishes
 
-  return [...dishes].sort((a, b) => affinity(b, profile) - affinity(a, profile))
+  // Ordenar por afinidad
+  const sorted = [...dishes].sort((a, b) => affinity(b, profile) - affinity(a, profile))
+
+  // Intercalar para evitar que una categoría domine bloques consecutivos
+  // Máximo 2 platos de la misma categoría seguidos
+  const result: FeedDish[] = []
+  const remaining = [...sorted]
+
+  while (remaining.length > 0) {
+    const recent = result.slice(-2).map(d => d.categoriaNorm)
+    const allSame = recent.length === 2 && recent[0] === recent[1]
+
+    if (allSame) {
+      // Buscar el primer plato de categoría diferente
+      const diffIdx = remaining.findIndex(d => d.categoriaNorm !== recent[0])
+      if (diffIdx >= 0) {
+        result.push(remaining[diffIdx])
+        remaining.splice(diffIdx, 1)
+        continue
+      }
+    }
+
+    result.push(remaining.shift()!)
+  }
+
+  return result
 }
 
 // ─── Indicador de calibración ──────────────────────────────────────
