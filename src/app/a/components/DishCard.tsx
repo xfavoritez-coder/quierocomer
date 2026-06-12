@@ -62,8 +62,17 @@ export default function DishCard({
           </svg>
         </button>
 
-        {/* Restaurant badge */}
-        <span className="dish-card-badge">{dish.restaurante}</span>
+        {/* Restaurant badge with logo */}
+        <div className="dish-card-badge" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px 2px 2px' }}>
+          {dish.restauranteLogo ? (
+            <img src={dish.restauranteLogo} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', background: 'rgba(255,255,255,0.1)' }} />
+          ) : (
+            <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>
+              {dish.restaurante.charAt(0)}
+            </div>
+          )}
+          <span>{dish.restaurante}</span>
+        </div>
 
         {/* Oferta */}
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
