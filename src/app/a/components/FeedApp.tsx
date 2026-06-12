@@ -5,7 +5,6 @@ import type { FeedDish } from '../types'
 import {
   createEmptyProfile,
   updateProfile,
-  getCalibrationStatus,
   getRecommendationReason,
   type FeedProfile,
 } from '../lib/scoring'
@@ -34,7 +33,6 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
   const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
 
-  const calibration = getCalibrationStatus(profile)
 
   const dishMap = useMemo(() => {
     const map = new Map<string, FeedDish>()
@@ -130,9 +128,6 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
           <>
             <h1>QuieroComer</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {calibration.isCalibrating && activeTab === 'feed' && (
-                <span className="calibrating">{calibration.message}</span>
-              )}
               <button onClick={() => setSearchOpen(true)} style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: 4,
                 color: 'rgba(255,255,255,0.5)',
