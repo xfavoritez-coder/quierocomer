@@ -154,7 +154,7 @@ export default function DishModal({
             </div>
 
             {/* Restaurant card */}
-            <a href={`/carta/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+            <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: 12, borderRadius: 12,

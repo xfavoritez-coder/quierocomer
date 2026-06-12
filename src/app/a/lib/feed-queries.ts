@@ -1,23 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { normalizeCategory, isExcludedCategory } from './categories'
+import { normalizeCategory, isExcludedCategory, inferMealTime } from './categories'
 import type { FeedDish } from '../types'
 
-type DietFilters = {
-  isVegan: boolean
-  isVegetarian: boolean
-  isGlutenFree: boolean
-  isLactoseFree: boolean
-}
-
-/** Trae platos para el feed: con foto, activos, de restaurantes reales, sin bebidas */
-export async function getFeedDishes(limit = 60, diet?: DietFilters): Promise<FeedDish[]> {
-  // Build diet filter for Prisma
-  const dietWhere: Record<string, any> = {}
-  if (diet?.isVegan) dietWhere.dishDiet = 'VEGAN'
-  else if (diet?.isVegetarian) dietWhere.dishDiet = { in: ['VEGAN', 'VEGETARIAN'] }
-  if (diet?.isGlutenFree) dietWhere.isGlutenFree = true
-  if (diet?.isLactoseFree) dietWhere.isLactoseFree = true
-
+/** Trae todos los platos para el feed: con foto, activos, restaurantes reales */
+export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
   const dishes = await prisma.dish.findMany({
     where: {
       isActive: true,
@@ -28,7 +14,6 @@ export async function getFeedDishes(limit = 60, diet?: DietFilters): Promise<Fee
         isActive: true,
         isDemo: false,
       },
-      ...dietWhere,
     },
     select: {
       id: true,
@@ -70,15 +55,15 @@ export async function getFeedDishes(limit = 60, diet?: DietFilters): Promise<Fee
         },
       },
     },
-    take: limit * 2, // traemos de más para filtrar bebidas
+    take: limit,
   })
 
-  // Filtrar bebidas y normalizar
   const feedDishes: FeedDish[] = []
 
   for (const dish of dishes) {
     if (isExcludedCategory(dish.category.name)) continue
-    if (dish.category.dishType === 'drink') continue
+
+    const categoriaNorm = normalizeCategory(dish.category.name)
 
     feedDishes.push({
       id: dish.id,
@@ -88,7 +73,7 @@ export async function getFeedDishes(limit = 60, diet?: DietFilters): Promise<Fee
       precioDescuento: dish.discountPrice,
       fotoUrl: dish.photos[0] ?? null,
       categoria: dish.category.name,
-      categoriaNorm: normalizeCategory(dish.category.name),
+      categoriaNorm,
       categoriaTipo: dish.category.dishType,
       sabores: dish.flavorTags,
       dieta: {
@@ -105,6 +90,7 @@ export async function getFeedDishes(limit = 60, diet?: DietFilters): Promise<Fee
       restauranteLogo: dish.restaurant.logoUrl,
       restauranteDireccion: dish.restaurant.address,
       enOferta: dish.discountPrice != null && dish.discountPrice < dish.price,
+      mealTime: inferMealTime(categoriaNorm),
       tags: dish.tags,
       isHero: dish.isHero,
       avgRating: dish.feedStats?.avgRating ?? null,
@@ -112,8 +98,6 @@ export async function getFeedDishes(limit = 60, diet?: DietFilters): Promise<Fee
       commentCount: dish.feedStats?.commentCount ?? 0,
       popularityScore: dish.feedStats?.popularityScore ?? 0,
     })
-
-    if (feedDishes.length >= limit) break
   }
 
   return feedDishes

@@ -244,18 +244,8 @@ export const CATEGORY_MAP: Record<string, string> = {
   '100% Vegano': 'Vegano',
 }
 
-/** Categorías de bebidas — se excluyen del feed */
+/** Solo se excluyen extras/salsas (no son platos ni bebidas reales) */
 export const EXCLUDED_CATEGORIES = new Set([
-  'Bebidas', 'Bebestibles', 'Cervezas', 'Mocktails',
-  'Jugos', 'Destilados', 'COCTELES', 'Cócteles', 'Cocteles',
-  'Vinos', 'Tragos', 'Cafe Frio', 'Café', 'Cafe',
-  'Drinks', 'Cocktails', 'Licores', 'Espumantes', 'ESPUMANTE',
-  'SHOTS', 'SMOOTHIES', 'FRAPES', 'MILKSHAKE´S', 'Schop',
-  'Para Tomar',
-])
-
-/** Categorías de extras/salsas — se excluyen (no son platos) */
-export const EXCLUDED_EXTRAS = new Set([
   'Extras', 'Adicionales', 'Salsa Extra', 'Salsas', 'Salsas y Extras',
   'AGREGA A TU SANDWICH',
 ])
@@ -268,11 +258,29 @@ export function normalizeCategory(name: string): string {
 /** Verifica si una categoría debe excluirse del feed */
 export function isExcludedCategory(name: string): boolean {
   if (EXCLUDED_CATEGORIES.has(name)) return true
-  if (EXCLUDED_EXTRAS.has(name)) return true
-  // Verificar también la categoría normalizada
   const norm = CATEGORY_MAP[name]
   if (norm === 'Extras') return true
   return false
+}
+
+/** Categorías normalizadas que son desayuno */
+export const BREAKFAST_CATEGORIES = new Set([
+  'Desayunos', 'Cafetería',
+])
+
+/** Inferir momento del día de un plato basado en su categoría normalizada */
+export type MealTime = 'desayuno' | 'almuerzo_cena'
+
+export function inferMealTime(categoriaNorm: string): MealTime {
+  if (BREAKFAST_CATEGORIES.has(categoriaNorm)) return 'desayuno'
+  return 'almuerzo_cena'
+}
+
+/** Sugerir momento del día según la hora actual */
+export function getSuggestedMealTime(): { mealTime: MealTime; label: string } {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return { mealTime: 'desayuno', label: 'Desayunos' }
+  return { mealTime: 'almuerzo_cena', label: 'Almuerzos y cenas' }
 }
 
 /** Mapa de adyacencia — para recomendaciones de descubrimiento */

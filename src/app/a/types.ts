@@ -23,6 +23,7 @@ export type FeedDish = {
   restauranteLogo: string | null
   restauranteDireccion: string | null
   enOferta: boolean
+  mealTime: 'desayuno' | 'almuerzo_cena'
   tags: string[]           // RECOMMENDED, NEW, MOST_ORDERED
   isHero: boolean
   // Stats (de FeedDishStats, si existen)

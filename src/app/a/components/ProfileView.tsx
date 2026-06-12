@@ -1,15 +1,36 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { FeedProfile } from '../lib/scoring'
+
+type UserDiet = {
+  isVegan: boolean
+  isVegetarian: boolean
+  isGlutenFree: boolean
+  isLactoseFree: boolean
+}
+
+const DIET_OPTIONS = [
+  { key: 'isVegan' as const, label: 'Vegano', emoji: '🌱' },
+  { key: 'isVegetarian' as const, label: 'Vegetariano', emoji: '🥬' },
+  { key: 'isGlutenFree' as const, label: 'Sin gluten', emoji: '🌾' },
+  { key: 'isLactoseFree' as const, label: 'Sin lactosa', emoji: '🥛' },
+]
 
 export default function ProfileView({
   profile,
+  diet,
   onReset,
+  onUpdateDiet,
 }: {
   profile: FeedProfile
+  diet: UserDiet
   onReset: () => void
+  onUpdateDiet: (d: UserDiet) => void
 }) {
+  const [editingDiet, setEditingDiet] = useState(false)
+  const [tempDiet, setTempDiet] = useState(diet)
+
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
       .filter(([, score]) => score > 0)
@@ -28,16 +49,11 @@ export default function ProfileView({
     return { min: sorted[Math.floor(sorted.length * 0.2)], max: sorted[Math.floor(sorted.length * 0.8)] }
   }, [profile.prices])
 
-  const hasData = profile.totalInteractions > 0
+  const activeDietLabels = DIET_OPTIONS.filter(o => diet[o.key]).map(o => `${o.emoji} ${o.label}`)
 
-  if (!hasData) {
-    return (
-      <div style={{ padding: '80px 20px 100px', textAlign: 'center' }}>
-        <p style={{ fontSize: 40, marginBottom: 12 }}>👤</p>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: '0 0 6px' }}>Tu perfil gastronómico aparecerá aquí</p>
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>Mientras explores el feed, iremos aprendiendo tus gustos</p>
-      </div>
-    )
+  const handleSaveDiet = () => {
+    onUpdateDiet(tempDiet)
+    setEditingDiet(false)
   }
 
   return (
@@ -47,75 +63,134 @@ export default function ProfileView({
         <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>
           Tu perfil gastronómico
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>
-          Basado en {profile.totalInteractions} interacciones
-        </p>
+        {profile.totalInteractions > 0 && (
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>
+            Basado en {profile.totalInteractions} interacciones
+          </p>
+        )}
+      </div>
+
+      {/* Diet restrictions */}
+      <div style={{
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 14, padding: 16, marginBottom: 20,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+            Restricciones alimentarias
+          </h3>
+          <button onClick={() => { setTempDiet(diet); setEditingDiet(!editingDiet) }} style={{
+            background: 'none', border: 'none', color: '#F4A623', fontSize: 13, cursor: 'pointer', fontWeight: 600,
+          }}>
+            {editingDiet ? 'Cancelar' : 'Editar'}
+          </button>
+        </div>
+
+        {!editingDiet ? (
+          <p style={{ fontSize: 14, color: '#fff', margin: 0 }}>
+            {activeDietLabels.length > 0 ? activeDietLabels.join(' · ') : 'Sin restricciones (como de todo)'}
+          </p>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+              {DIET_OPTIONS.map(o => {
+                const active = tempDiet[o.key]
+                return (
+                  <button key={o.key} onClick={() => setTempDiet(prev => ({ ...prev, [o.key]: !prev[o.key] }))}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                      borderRadius: 10, border: `1px solid ${active ? 'rgba(244,166,35,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                      background: active ? 'rgba(244,166,35,0.08)' : 'transparent',
+                      cursor: 'pointer', width: '100%', textAlign: 'left',
+                    }}>
+                    <span style={{ fontSize: 20 }}>{o.emoji}</span>
+                    <span style={{ fontSize: 14, color: active ? '#F4A623' : '#fff', fontWeight: active ? 600 : 400 }}>
+                      {o.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <button onClick={handleSaveDiet} style={{
+              width: '100%', padding: 12, borderRadius: 10,
+              background: '#F4A623', color: '#000', fontWeight: 700, fontSize: 14,
+              border: 'none', cursor: 'pointer',
+            }}>
+              Guardar cambios
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
-        <StatCard value={totalSeen} label="Platos vistos" color="#F4A623" />
-        <StatCard value={totalLikes} label="Me gusta" color="#ef4444" />
-        <StatCard value={totalPassed} label="Pasados" color="rgba(255,255,255,0.5)" />
-      </div>
-
-      {/* Top categories */}
-      {topCategories.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>
-            Categorías favoritas
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {topCategories.map(([category, score]) => (
-              <div key={category}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, color: '#fff' }}>{category}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>{score}</span>
-                </div>
-                <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', background: '#F4A623', borderRadius: 3,
-                    width: `${(score / maxScore) * 100}%`,
-                    transition: 'width 0.5s ease',
-                  }} />
-                </div>
-              </div>
-            ))}
+      {profile.totalInteractions > 0 && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
+            <StatCard value={totalSeen} label="Platos vistos" color="#F4A623" />
+            <StatCard value={totalLikes} label="Me gusta" color="#F4A623" />
+            <StatCard value={totalPassed} label="Pasados" color="rgba(255,255,255,0.5)" />
           </div>
-        </div>
+
+          {/* Top categories */}
+          {topCategories.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>
+                Categorías favoritas
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {topCategories.map(([category, score]) => (
+                  <div key={category}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, color: '#fff' }}>{category}</span>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>{score}</span>
+                    </div>
+                    <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', background: '#F4A623', borderRadius: 3,
+                        width: `${(score / maxScore) * 100}%`, transition: 'width 0.5s ease',
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Price range */}
+          {priceRange && (
+            <div style={{
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 14, padding: 16, marginBottom: 24,
+            }}>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>Tu rango de precio</h3>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#F4A623', margin: 0 }}>
+                ${priceRange.min.toLocaleString('es-CL')} — ${priceRange.max.toLocaleString('es-CL')}
+              </p>
+            </div>
+          )}
+
+          {/* Reset */}
+          <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <button onClick={onReset} style={{
+              width: '100%', padding: 14, borderRadius: 12,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+              color: 'rgba(255,255,255,0.4)', fontSize: 14, cursor: 'pointer',
+            }}>
+              Resetear gustos
+            </button>
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: 10, marginTop: 8 }}>
+              Esto borrará tu perfil y el feed volverá a ser diverso
+            </p>
+          </div>
+        </>
       )}
 
-      {/* Price range */}
-      {priceRange && (
-        <div style={{
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 14, padding: 16, marginBottom: 24,
-        }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>
-            Tu rango de precio
-          </h3>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#F4A623', margin: '0 0 2px' }}>
-            ${priceRange.min.toLocaleString('es-CL')} — ${priceRange.max.toLocaleString('es-CL')}
-          </p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
-            Basado en los platos que más te interesan
-          </p>
+      {profile.totalInteractions === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <p style={{ fontSize: 32, marginBottom: 12 }}>🍽</p>
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Explora el feed para empezar a construir tu perfil</p>
         </div>
       )}
-
-      {/* Reset */}
-      <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={onReset} style={{
-          width: '100%', padding: 14, borderRadius: 12,
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-          color: 'rgba(255,255,255,0.4)', fontSize: 14, cursor: 'pointer',
-        }}>
-          Resetear gustos
-        </button>
-        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: 10, marginTop: 8 }}>
-          Esto borrará tu perfil y el feed volverá a ser diverso
-        </p>
-      </div>
     </div>
   )
 }

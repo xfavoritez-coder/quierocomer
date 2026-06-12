@@ -27,18 +27,23 @@ export default async function FeedPage() {
     redirect('/a/onboarding')
   }
 
-  // Update lastSeenAt
   prisma.feedUser.update({
     where: { fingerprint },
     data: { lastSeenAt: new Date() },
   }).catch(() => {})
 
-  const dishes = await getFeedDishes(1500, {
-    isVegan: user.isVegan,
-    isVegetarian: user.isVegetarian,
-    isGlutenFree: user.isGlutenFree,
-    isLactoseFree: user.isLactoseFree,
-  })
+  // Traer TODOS los platos (filtros se aplican en el cliente)
+  const dishes = await getFeedDishes()
 
-  return <FeedApp dishes={dishes} />
+  return (
+    <FeedApp
+      dishes={dishes}
+      userDiet={{
+        isVegan: user.isVegan,
+        isVegetarian: user.isVegetarian,
+        isGlutenFree: user.isGlutenFree,
+        isLactoseFree: user.isLactoseFree,
+      }}
+    />
+  )
 }
