@@ -19,9 +19,11 @@ export default function DishCard({
   const gradient = getCategoryGradient(dish.categoriaNorm)
   const showFallback = !dish.fotoUrl || imgError
 
-  // Pseudo-random aspect ratio based on dish ID for Pinterest-style varied heights
-  const seed = dish.id.charCodeAt(0) + dish.id.charCodeAt(1) + dish.id.charCodeAt(dish.id.length - 1)
-  const ratios = ['3/4', '4/5', '1/1', '3/4', '5/6', '4/5', '3/4']
+  // Pseudo-random aspect ratio for Pinterest-style varied heights
+  // Use multiple chars from ID for better distribution
+  let seed = 0
+  for (let i = 0; i < dish.id.length; i++) seed = (seed * 31 + dish.id.charCodeAt(i)) & 0xffff
+  const ratios = ['3/4', '4/5', '1/1', '5/7', '2/3', '5/6', '4/5', '7/9', '3/4', '5/8', '1/1', '4/5']
   const aspectRatio = ratios[seed % ratios.length]
 
   const handleLike = (e: React.MouseEvent) => {
