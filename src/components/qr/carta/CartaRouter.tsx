@@ -275,7 +275,7 @@ export default function CartaRouter(props: Props) {
   return (
     <LangProvider value={effectiveLang}>
       <FavoritesProvider>
-        {props.menuGroups && props.activeMenuSlug && (
+        {props.menuGroups && props.activeMenuSlug && effectiveView !== "impact" && (
           <MenuSwitcher menuGroups={props.menuGroups} activeMenuSlug={props.activeMenuSlug} accentColor={(props.restaurant as any).cartaAccentColor} />
         )}
         {effectiveView !== "impact" && !(props.announcements?.length) && <HappyHourBanner happyHours={props.happyHours || []} />}

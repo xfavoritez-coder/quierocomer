@@ -47,6 +47,90 @@ import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 import { getDishPhoto } from "./utils/dishHelpers";
 
+/* ─── Multi-menu switcher (inline for Impact header) ─── */
+
+function ImpactMenuSwitcher({ menuGroups, activeMenuSlug, accent }: {
+  menuGroups: { slug: string; name: string }[];
+  activeMenuSlug: string;
+  accent: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeName = menuGroups.find(g => g.slug === activeMenuSlug)?.name || activeMenuSlug;
+
+  const navigate = (slug: string | null) => {
+    const url = new URL(window.location.href);
+    if (slug) url.searchParams.set("menu", slug);
+    else url.searchParams.delete("menu");
+    window.location.href = url.toString();
+  };
+
+  return (
+    <div style={{ padding: "0 0 8px", position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <button onClick={() => navigate(null)} style={{
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          color: accent, fontSize: 12, fontWeight: 600,
+          display: "flex", alignItems: "center", gap: 3,
+          fontFamily: "var(--font-dm)",
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.5" strokeLinecap="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Menús
+        </button>
+        <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>·</span>
+        <button onClick={() => setOpen(!open)} style={{
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          color: "var(--carta-text, #fff)", fontSize: 13, fontWeight: 700,
+          display: "flex", alignItems: "center", gap: 4,
+          fontFamily: "var(--font-dm)",
+        }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeName}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+            style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Dropdown */}
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 59 }} />
+          <div style={{
+            position: "absolute", top: "100%", left: 0, right: 0,
+            zIndex: 61, marginTop: 4,
+            background: "rgba(10,10,10,0.95)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.5)", padding: 6,
+          }}>
+            {menuGroups.map(g => (
+              <button key={g.slug}
+                onClick={() => { setOpen(false); if (g.slug !== activeMenuSlug) navigate(g.slug); }}
+                style={{
+                  width: "100%", padding: "11px 14px",
+                  background: g.slug === activeMenuSlug ? `color-mix(in srgb, ${accent} 12%, transparent)` : "transparent",
+                  border: "none", borderRadius: 10, cursor: "pointer", textAlign: "left",
+                  fontFamily: "var(--font-dm)", fontSize: 14,
+                  fontWeight: g.slug === activeMenuSlug ? 700 : 500,
+                  color: g.slug === activeMenuSlug ? accent : "var(--carta-text, #fff)",
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                {g.slug === activeMenuSlug && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {g.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── Types ─── */
 
 interface Review {
@@ -76,6 +160,8 @@ interface CartaProps {
   popularDishIds?: Set<string>;
   announcements?: { id: string; text: string; linkUrl: string | null }[];
   happyHours?: any[];
+  menuGroups?: { slug: string; name: string }[];
+  activeMenuSlug?: string;
 }
 
 /* ─── Hero Slider (always dark overlay on photos) ─── */
@@ -669,6 +755,8 @@ export default function CartaImpact({
   popularDishIds: popularDishIdsProp,
   announcements,
   happyHours,
+  menuGroups,
+  activeMenuSlug,
 }: CartaProps) {
   const lang = useLang();
   const router = useRouter();
@@ -1211,6 +1299,12 @@ export default function CartaImpact({
           )}
         </div>
       </div>
+
+      {/* Multi-menu switcher */}
+      {menuGroups && activeMenuSlug && menuGroups.length > 1 && (
+        <ImpactMenuSwitcher menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} accent={(restaurant as any).cartaAccentColor || "var(--carta-accent, #F4A623)"} />
+      )}
+
       {/* Fixed category nav — appears when menu section reaches header */}
       {showFixedCatNav && (
         <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4 }}>
