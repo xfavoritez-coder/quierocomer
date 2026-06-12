@@ -41,6 +41,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [learningMsg, setLearningMsg] = useState<string | null>(null)
   const [diet, setDiet] = useState<UserDiet>(userDiet)
 
   // Filters — default to suggested meal time + user diet
@@ -79,14 +80,29 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
 
   const isSearching = searchQuery.trim().length > 0
 
+  const flashLearning = useCallback((dish: FeedDish, action: string) => {
+    if (profile.totalInteractions >= 20) return
+    const msgs: Record<string, string> = {
+      LIKE: `Te gusta ${dish.categoriaNorm.toLowerCase()}... anotado`,
+      PASS: `${dish.categoriaNorm.toLowerCase()} no tanto... entendido`,
+      SAVE: `Guardando preferencia por ${dish.categoriaNorm.toLowerCase()}`,
+      TAP: `Explorando ${dish.categoriaNorm.toLowerCase()}...`,
+    }
+    const msg = msgs[action]
+    if (!msg) return
+    setLearningMsg(msg)
+    setTimeout(() => setLearningMsg(null), 2000)
+  }, [profile.totalInteractions])
+
   const doTrack = useCallback(async (
     dish: FeedDish,
     action: 'VIEW' | 'TAP' | 'LIKE' | 'SAVE' | 'ANTOJO' | 'PASS' | 'SCROLL_BACK',
   ) => {
     const newProfile = updateProfile(profile, dish, action)
     setProfile(newProfile)
+    flashLearning(dish, action)
     trackInteraction(dish.id, action, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
-  }, [profile])
+  }, [profile, flashLearning])
 
   const handleDishTap = useCallback((dish: FeedDish) => {
     setSelectedDish(dish)
@@ -196,28 +212,19 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
         <FeedFilters filters={filters} onChange={setFilters} />
       )}
 
-      {/* Learning banner */}
-      {activeTab === 'feed' && !isSearching && profile.totalInteractions < 15 && (
+      {/* Learning toast */}
+      {learningMsg && (
         <div style={{
-          margin: '0 12px 10px', padding: '10px 16px',
-          borderRadius: 12,
-          background: 'linear-gradient(135deg, rgba(244,166,35,0.08), rgba(244,166,35,0.03))',
-          border: '1px solid rgba(244,166,35,0.12)',
-          display: 'flex', alignItems: 'center', gap: 8,
-          animation: 'learningPulse 3s ease-in-out infinite',
+          margin: '0 12px 8px', padding: '9px 14px',
+          borderRadius: 10,
+          background: 'rgba(244,166,35,0.06)',
+          border: '1px solid rgba(244,166,35,0.1)',
+          display: 'flex', alignItems: 'center', gap: 7,
+          animation: 'fadeIn 0.3s ease-out',
         }}>
-          <span style={{ fontSize: 16, animation: 'sparkleRotate 2s ease-in-out infinite' }}>✨</span>
-          <span style={{ fontSize: 13, color: 'rgba(244,166,35,0.55)', fontWeight: 500 }}>
-            Aprendiendo de tus gustos
-          </span>
-          <span style={{ display: 'flex', gap: 3, marginLeft: 2 }}>
-            {[0, 1, 2].map(i => (
-              <span key={i} style={{
-                width: 4, height: 4, borderRadius: '50%',
-                background: 'rgba(244,166,35,0.5)',
-                animation: `dotBounce 1.4s ease-in-out infinite ${i * 0.2}s`,
-              }} />
-            ))}
+          <span style={{ fontSize: 14 }}>✨</span>
+          <span style={{ fontSize: 12, color: 'rgba(244,166,35,0.55)', fontWeight: 500 }}>
+            {learningMsg}
           </span>
         </div>
       )}
