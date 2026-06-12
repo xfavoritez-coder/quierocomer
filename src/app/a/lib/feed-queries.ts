@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { normalizeCategory, isExcludedCategory, inferMealTime } from './categories'
+import { normalizeCategory, isExcludedCategory, inferMealTime, inferDishType } from './categories'
 import type { FeedDish } from '../types'
 
 /** Trae todos los platos para el feed: con foto, activos, restaurantes reales */
@@ -74,7 +74,7 @@ export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
       fotoUrl: dish.photos[0] ?? null,
       categoria: dish.category.name,
       categoriaNorm,
-      categoriaTipo: dish.category.dishType,
+      categoriaTipo: inferDishType(categoriaNorm, dish.category.dishType),
       sabores: dish.flavorTags,
       dieta: {
         tipo: dish.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',

@@ -266,6 +266,15 @@ export function isExcludedCategory(name: string): boolean {
   return false
 }
 
+/** Categorías normalizadas que son bebidas (override dishType de BD) */
+const DRINK_CATEGORIES = new Set(['Cafetería'])
+
+/** Override dishType de la BD cuando la categoría normalizada indica otra cosa */
+export function inferDishType(categoriaNorm: string, dbDishType: string): string {
+  if (DRINK_CATEGORIES.has(categoriaNorm)) return 'drink'
+  return dbDishType
+}
+
 /** Categorías normalizadas que son desayuno */
 export const BREAKFAST_CATEGORIES = new Set([
   'Desayunos', 'Cafetería',

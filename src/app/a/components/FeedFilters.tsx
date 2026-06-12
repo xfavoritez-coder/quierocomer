@@ -127,7 +127,7 @@ export default function FeedFilters({
           onClick={() => setShowMore(!showMore)}
           style={{
             padding: '10px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500,
-            whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+            whiteSpace: 'nowrap', cursor: 'pointer',
             background: showMore || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.03)',
             color: showMore || activeSecondaryCount > 0 ? '#F4A623' : 'rgba(255,255,255,0.35)',
             border: `1px solid ${showMore || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.25)' : 'rgba(255,255,255,0.08)'}`,
