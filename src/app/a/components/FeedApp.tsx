@@ -186,16 +186,18 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       <header className="feed-header">
         {!searchOpen ? (
           <>
-            <a href="/" style={{ textDecoration: 'none' }}>
-              {learningMsg ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, animation: 'fadeIn 0.3s ease-out' }}>
-                  <span style={{ fontSize: 14 }}>✨</span>
-                  <span style={{ fontSize: 13, color: 'rgba(244,166,35,0.6)', fontWeight: 500 }}>{learningMsg}</span>
-                </div>
-              ) : (
-                <h1>QuieroComer</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
+              {learningMsg && (
+                <span style={{
+                  fontSize: 11, color: 'rgba(244,166,35,0.5)', fontWeight: 500,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  animation: 'fadeIn 0.3s ease-out',
+                }}>
+                  ✨ {learningMsg}
+                </span>
               )}
-            </a>
+            </div>
             <button onClick={() => setSearchOpen(true)} style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: 4,
               color: 'rgba(255,255,255,0.5)',
