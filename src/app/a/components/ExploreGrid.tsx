@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { FeedDish } from '../types'
 import { getDisplayCategories } from '../lib/categories'
-import DishCard from './DishCard'
+import MasonryGrid from './MasonryGrid'
 
 export default function ExploreGrid({
   dishes,
@@ -25,15 +25,12 @@ export default function ExploreGrid({
 
   const hasOfertas = useMemo(() => dishes.some(d => d.enOferta), [dishes])
 
-  const filtered = useMemo(() => {
-    if (activeCategory === 'ofertas') return dishes.filter(d => d.enOferta)
-    if (!activeCategory) return dishes
-    return dishes.filter(d => d.categoriaNorm === activeCategory)
-  }, [dishes, activeCategory])
-
   const sorted = useMemo(() => {
+    let filtered = dishes
+    if (activeCategory === 'ofertas') filtered = dishes.filter(d => d.enOferta)
+    else if (activeCategory) filtered = dishes.filter(d => d.categoriaNorm === activeCategory)
     return [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
-  }, [filtered])
+  }, [dishes, activeCategory])
 
   useEffect(() => { setVisibleCount(20) }, [activeCategory])
 
@@ -51,11 +48,8 @@ export default function ExploreGrid({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [visibleCount, sorted.length, loadMore])
 
-  const visible = sorted.slice(0, visibleCount)
-
   return (
     <div>
-      {/* Chips */}
       <div className="category-chips">
         <button onClick={() => setActiveCategory(null)}
           className={`category-chip ${activeCategory === null ? 'active' : ''}`}>
@@ -81,12 +75,8 @@ export default function ExploreGrid({
         {activeCategory === 'ofertas' && ' en oferta'}
       </div>
 
-      {visible.length > 0 ? (
-        <div className="feed-grid">
-          {visible.map(dish => (
-            <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
-          ))}
-        </div>
+      {sorted.length > 0 ? (
+        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onDishLike={onDishLike} />
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
           No hay platos en esta categoría

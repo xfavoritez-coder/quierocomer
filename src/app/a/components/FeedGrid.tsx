@@ -1,17 +1,16 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { FeedDish } from '../types'
 import type { FeedProfile } from '../lib/scoring'
-import DishCard from './DishCard'
+import MasonryGrid from './MasonryGrid'
 
 function diversifyFeed(dishes: FeedDish[]): FeedDish[] {
   const result: FeedDish[] = []
   const remaining = [...dishes]
   while (remaining.length > 0) {
-    const recentWindow = result.slice(-12)
     const counts: Record<string, number> = {}
-    for (const d of recentWindow) counts[d.restauranteId] = (counts[d.restauranteId] || 0) + 1
+    for (const d of result.slice(-12)) counts[d.restauranteId] = (counts[d.restauranteId] || 0) + 1
     let found = false
     for (let i = 0; i < remaining.length; i++) {
       if ((counts[remaining[i].restauranteId] || 0) < 3) {
@@ -62,13 +61,11 @@ export default function FeedGrid({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [visibleCount, lockedFeed.length, loadMore])
 
-  const visible = lockedFeed.slice(0, visibleCount)
-
   return (
-    <div className="feed-grid">
-      {visible.map(dish => (
-        <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
-      ))}
-    </div>
+    <MasonryGrid
+      dishes={lockedFeed.slice(0, visibleCount)}
+      onDishTap={onDishTap}
+      onDishLike={onDishLike}
+    />
   )
 }

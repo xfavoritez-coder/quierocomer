@@ -167,14 +167,24 @@ body:has(.feed-root) {
   line-height: 1.3;
 }
 
-/* ─── Masonry Grid (CSS columns for true responsive masonry) ─── */
+/* ─── Masonry Grid (manual flex columns, stable on load-more) ── */
 .feed-grid {
-  column-count: var(--feed-cols);
-  column-gap: 10px;
+  display: flex;
+  gap: 10px;
   padding: 0 10px 100px;
 }
-.feed-grid .dish-card {
-  break-inside: avoid;
+.feed-grid-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.feed-grid-item {
+  animation: cardFadeIn 0.4s ease-out both;
+}
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ─── Header ────────────────────────────────────────────────── */

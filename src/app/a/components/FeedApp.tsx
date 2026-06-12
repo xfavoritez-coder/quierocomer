@@ -15,8 +15,8 @@ import {
   saveDish,
   unsaveDish,
 } from '../lib/feed-actions'
-import DishCard from './DishCard'
 import FeedGrid from './FeedGrid'
+import MasonryGrid from './MasonryGrid'
 import ExploreGrid from './ExploreGrid'
 import SavedList from './SavedList'
 import ProfileView from './ProfileView'
@@ -245,10 +245,5 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
 function SearchGrid({ dishes, onDishTap, onDishLike }: {
   dishes: FeedDish[]; onDishTap: (d: FeedDish) => void; onDishLike?: (d: FeedDish) => void
 }) {
-  const visible = dishes.slice(0, 40)
-  return (
-    <div className="feed-grid">
-      {visible.map(d => <DishCard key={d.id} dish={d} onTap={onDishTap} onLike={onDishLike} />)}
-    </div>
-  )
+  return <MasonryGrid dishes={dishes.slice(0, 40)} onDishTap={onDishTap} onDishLike={onDishLike} />
 }
