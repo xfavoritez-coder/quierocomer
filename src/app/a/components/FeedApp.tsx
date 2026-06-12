@@ -5,7 +5,6 @@ import type { FeedDish } from '../types'
 import {
   createEmptyProfile,
   updateProfile,
-  rankFeed,
   getCalibrationStatus,
   getRecommendationReason,
   type FeedProfile,
@@ -32,7 +31,6 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [profile, setProfile] = useState<FeedProfile>(createEmptyProfile)
-  const [feedDishes, setFeedDishes] = useState(dishes)
   const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
 
@@ -54,19 +52,15 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
     [savedDishIds, dishMap],
   )
 
-  const rerank = useCallback((newProfile: FeedProfile) => {
-    setFeedDishes(rankFeed(dishes, newProfile))
-  }, [dishes])
-
   const doTrack = useCallback(async (
     dish: FeedDish,
     action: 'VIEW' | 'TAP' | 'LIKE' | 'SAVE' | 'ANTOJO' | 'PASS' | 'SCROLL_BACK',
   ) => {
+    // Update profile scores silently — the feed grid handles its own order
     const newProfile = updateProfile(profile, dish, action)
     setProfile(newProfile)
-    rerank(newProfile)
     trackInteraction(dish.id, action, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
-  }, [profile, rerank])
+  }, [profile])
 
   const handleDishTap = useCallback((dish: FeedDish) => {
     setSelectedDish(dish)
@@ -111,8 +105,7 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
 
   const handleResetProfile = useCallback(() => {
     setProfile(createEmptyProfile())
-    setFeedDishes(dishes)
-  }, [dishes])
+  }, [])
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
@@ -214,7 +207,7 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
         <>
           {/* Normal content */}
           {activeTab === 'feed' && (
-            <FeedGrid dishes={feedDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+            <FeedGrid dishes={dishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
           )}
 
           {activeTab === 'explorar' && (
