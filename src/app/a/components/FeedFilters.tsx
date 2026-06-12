@@ -139,7 +139,7 @@ export default function FeedFilters({
         <button
           onClick={() => setShowMore(!showMore)}
           style={{
-            padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+            padding: '10px 16px', borderRadius: 20, fontSize: 12, fontWeight: 500,
             whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
             background: showMore || activeSecondaryCount > 0 ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
             color: showMore || activeSecondaryCount > 0 ? '#000' : 'rgba(255,255,255,0.55)',
