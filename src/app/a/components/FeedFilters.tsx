@@ -178,7 +178,7 @@ function MealGreeting({ meal, onChange }: { meal: MealFilter; onChange: (m: Meal
   const mealLabel: Record<MealFilter, string> = {
     'all': 'platos',
     'desayuno': 'desayunos',
-    'almuerzo_cena': 'almuerzos',
+    'almuerzo_cena': hour >= 18 ? 'cenas' : 'almuerzos',
   }
 
   const options: { id: MealFilter; label: string }[] = [

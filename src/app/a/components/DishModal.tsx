@@ -117,13 +117,21 @@ export default function DishModal({
                 {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6 }}>🥬</span>}
               </h2>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'flex-start', marginTop: -6 }}>
-                <PhotoBtn active={thumbUp} color="#4ade80" onClick={() => { setThumbUp(true); onLike(dish) }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill={thumbUp ? '#4ade80' : 'none'} stroke={thumbUp ? '#4ade80' : '#fff'} strokeWidth="2" strokeLinecap="round">
+                <PhotoBtn active={thumbUp} color="#F4A623" onClick={() => {
+                  const next = !thumbUp
+                  setThumbUp(next)
+                  if (next) { setThumbDown(false); onLike(dish) }
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={thumbUp ? '#F4A623' : 'none'} stroke={thumbUp ? '#F4A623' : '#fff'} strokeWidth="2" strokeLinecap="round">
                     <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                   </svg>
                 </PhotoBtn>
-                <PhotoBtn active={thumbDown} color="#ef4444" onClick={() => { setThumbDown(true); onPass(dish) }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={thumbDown ? '#ef4444' : '#fff'} strokeWidth="2" strokeLinecap="round">
+                <PhotoBtn active={thumbDown} color="#F4A623" onClick={() => {
+                  const next = !thumbDown
+                  setThumbDown(next)
+                  if (next) { setThumbUp(false); onPass(dish) }
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={thumbDown ? '#F4A623' : 'none'} stroke={thumbDown ? '#F4A623' : '#fff'} strokeWidth="2" strokeLinecap="round">
                     <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
                   </svg>
                 </PhotoBtn>

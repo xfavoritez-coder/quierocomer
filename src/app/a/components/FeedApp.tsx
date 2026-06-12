@@ -294,12 +294,12 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
         </>
       )}
 
-      {/* Filters */}
-      {activeTab === 'feed' && (
-        <FeedFilters filters={filters} onChange={setFilters} />
-      )}
+      {/* Greeting in inicio, full filters in explorar */}
       {activeTab === 'inicio' && (
         <FeedFilters filters={filters} onChange={setFilters} greetingOnly />
+      )}
+      {activeTab === 'feed' && (
+        <FeedFilters filters={filters} onChange={setFilters} />
       )}
 
 
@@ -324,10 +324,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
             <HomeFeed dishes={filteredDishes} profile={profile} userLocation={userLocation} onDishTap={handleDishTap} />
           )}
           {activeTab === 'feed' && (
-            <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDwell={handleDishDwell} userLocation={userLocation} />
-          )}
-          {activeTab === 'explorar' && (
-            <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} userLocation={userLocation} />
           )}
         </>
       )}

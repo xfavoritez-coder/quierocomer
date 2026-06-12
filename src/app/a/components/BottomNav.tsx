@@ -28,8 +28,7 @@ export default function BottomNav({
       }}>
         {([
           { id: 'inicio' as Tab, label: 'Inicio', icon: '🏠' },
-          { id: 'feed' as Tab, label: 'Descubrir', icon: '🔥' },
-          { id: 'explorar' as Tab, label: 'Explorar', icon: '🧭' },
+          { id: 'feed' as Tab, label: 'Explorar', icon: '🧭' },
         ]).map(tab => {
           const isActive = active === tab.id
           return (
