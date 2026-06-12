@@ -45,7 +45,7 @@ export default function OnboardingPage() {
       <div className="onboard-content">
         {/* Logo - compact, app style */}
         <div className="onboard-logo">
-          <span className="onboard-logo-icon">💡</span>
+          <img src="/genio-lamp.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
           <span className="onboard-logo-text">QuieroComer</span>
         </div>
 
