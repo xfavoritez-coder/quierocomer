@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 
@@ -8,11 +8,30 @@ export default function DishCard({
   dish,
   onTap,
   onLike,
+  onDwell,
 }: {
   dish: FeedDish
   onTap: (dish: FeedDish) => void
   onLike?: (dish: FeedDish) => void
+  onDwell?: (dishId: string) => void
 }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // Dwell tracking: fire onDwell if card visible > 2s
+  useEffect(() => {
+    if (!onDwell || !cardRef.current) return
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        timer = setTimeout(() => onDwell(dish.id), 2000)
+      } else if (timer) {
+        clearTimeout(timer)
+        timer = null
+      }
+    }, { threshold: 0.5 })
+    observer.observe(cardRef.current)
+    return () => { observer.disconnect(); if (timer) clearTimeout(timer) }
+  }, [dish.id, onDwell])
   const [imgError, setImgError] = useState(false)
   const [liked, setLiked] = useState(false)
 
@@ -34,7 +53,7 @@ export default function DishCard({
   }
 
   return (
-    <div className="dish-card" onClick={() => onTap(dish)}>
+    <div ref={cardRef} className="dish-card" onClick={() => onTap(dish)}>
       {/* Photo */}
       <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: gradient }}>
         {!showFallback ? (

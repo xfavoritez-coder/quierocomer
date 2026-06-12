@@ -132,6 +132,13 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
     doTrack(dish, 'TAP')
   }, [doTrack])
 
+  const handleDishDwell = useCallback((dishId: string) => {
+    setProfile(prev => {
+      const { registerDwell } = require('../lib/scoring')
+      return registerDwell(prev, dishId)
+    })
+  }, [])
+
   const handleDishLike = useCallback((dish: FeedDish) => {
     doTrack(dish, 'LIKE')
   }, [doTrack])
@@ -314,7 +321,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       ) : (
         <>
           {activeTab === 'feed' && (
-            <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+            <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDwell={handleDishDwell} />
           )}
           {activeTab === 'explorar' && (
             <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />

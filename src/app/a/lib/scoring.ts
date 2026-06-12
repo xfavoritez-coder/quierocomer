@@ -11,12 +11,12 @@ export const SCORE_WEIGHTS = {
   ANTOJO:      { category: 10, restaurant: 3  },
   PASS:        { category: -9, restaurant: -2 },
   SCROLL_BACK: { category: 7,  restaurant: 3  },
-  RATE_HIGH:   { category: 8,  restaurant: 3  },  // 4-5 estrellas
-  RATE_LOW:    { category: -6, restaurant: -3 },  // 1-2 estrellas
+  RATE_HIGH:   { category: 8,  restaurant: 3  },
+  RATE_LOW:    { category: -6, restaurant: -3 },
   COMMENT:     { category: 4,  restaurant: 2  },
 }
 
-// ─── Perfil del usuario (en memoria, sincronizado con BD) ──────────
+// ─── Perfil del usuario ────────────────────────────────────────────
 export type FeedProfile = {
   categoryScores: Record<string, number>
   restaurantScores: Record<string, number>
@@ -26,6 +26,11 @@ export type FeedProfile = {
   passedDishIds: Set<string>
   totalInteractions: number
   prices: number[]
+  // Session momentum: recent actions in THIS session (decays)
+  sessionKeywords: Record<string, number>  // keywords liked in current session
+  sessionCategories: Record<string, number> // categories liked in current session
+  // Dwell tracking: dishes the user paused on
+  dwellDishIds: Set<string>  // dishes with dwell > 2s
 }
 
 export function createEmptyProfile(): FeedProfile {
@@ -38,6 +43,9 @@ export function createEmptyProfile(): FeedProfile {
     passedDishIds: new Set(),
     totalInteractions: 0,
     prices: [],
+    sessionKeywords: {},
+    sessionCategories: {},
+    dwellDishIds: new Set(),
   }
 }
 
@@ -55,39 +63,61 @@ export function updateProfile(
   newProfile.categoryScores = { ...profile.categoryScores }
   newProfile.restaurantScores = { ...profile.restaurantScores }
   newProfile.keywordScores = { ...profile.keywordScores }
+  newProfile.sessionKeywords = { ...profile.sessionKeywords }
+  newProfile.sessionCategories = { ...profile.sessionCategories }
   newProfile.seenDishIds = new Set(profile.seenDishIds)
   newProfile.likedDishIds = new Set(profile.likedDishIds)
   newProfile.passedDishIds = new Set(profile.passedDishIds)
+  newProfile.dwellDishIds = new Set(profile.dwellDishIds)
   newProfile.prices = [...profile.prices]
 
-  // Update category + restaurant scores
+  // Category + restaurant (persistent)
   newProfile.categoryScores[cat] = (newProfile.categoryScores[cat] ?? 0) + weights.category
   newProfile.restaurantScores[rest] = (newProfile.restaurantScores[rest] ?? 0) + weights.restaurant
 
-  // Update keyword scores from dish name
-  const keywords = extractKeywords(dish.nombre)
-  const kwWeight = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO' ? 4
-    : action === 'TAP' ? 2
-    : action === 'PASS' ? -3
-    : 0
+  // Keywords from name + description (persistent)
+  const keywords = extractKeywords(dish.nombre, dish.descripcion)
+  const isPositive = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO'
+  const isNegative = action === 'PASS'
+  const kwWeight = isPositive ? 4 : action === 'TAP' ? 2 : isNegative ? -3 : 0
+
   if (kwWeight !== 0) {
     for (const kw of keywords) {
       newProfile.keywordScores[kw] = (newProfile.keywordScores[kw] ?? 0) + kwWeight
     }
   }
 
-  // Track dish state
+  // Session momentum (stronger, ephemeral — only positive actions)
+  if (isPositive) {
+    for (const kw of keywords) {
+      newProfile.sessionKeywords[kw] = (newProfile.sessionKeywords[kw] ?? 0) + 6
+    }
+    newProfile.sessionCategories[cat] = (newProfile.sessionCategories[cat] ?? 0) + 8
+  }
+  if (isNegative) {
+    newProfile.sessionCategories[cat] = (newProfile.sessionCategories[cat] ?? 0) - 5
+  }
+
+  // Track state
   newProfile.seenDishIds.add(dish.id)
-  if (action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO') {
+  if (isPositive) {
     newProfile.likedDishIds.add(dish.id)
     newProfile.prices.push(dish.precioDescuento ?? dish.precio)
   }
-  if (action === 'PASS') {
+  if (isNegative) {
     newProfile.passedDishIds.add(dish.id)
   }
 
   newProfile.totalInteractions++
+  return newProfile
+}
 
+// ─── Register dwell (dish was visible > 2s) ────────────────────────
+export function registerDwell(profile: FeedProfile, dishId: string): FeedProfile {
+  if (profile.dwellDishIds.has(dishId)) return profile
+  const newProfile = { ...profile }
+  newProfile.dwellDishIds = new Set(profile.dwellDishIds)
+  newProfile.dwellDishIds.add(dishId)
   return newProfile
 }
 
@@ -96,37 +126,46 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
   const catScore = profile.categoryScores[dish.categoriaNorm] ?? 0
   const restScore = profile.restaurantScores[dish.restauranteId] ?? 0
 
-  // Usar logaritmo para comprimir la diferencia entre categorías
-  // Así Sushi(30) vs Sandwiches(15) se convierte en ~3.4 vs ~2.7 (no 30 vs 15)
+  // Persistent signals (compressed with log)
   const catSignal = catScore > 0 ? Math.log2(catScore + 1) * 3 : catScore < 0 ? catScore * 0.5 : 0
   const restSignal = restScore > 0 ? Math.log2(restScore + 1) * 1.5 : 0
 
-  // Keyword affinity — fine-grained scoring by dish name words
-  const kwScore = keywordAffinity(dish.nombre, profile.keywordScores)
+  // Keyword affinity (name + description)
+  const kwScore = keywordAffinity(dish.nombre, dish.descripcion, profile.keywordScores)
   const kwSignal = kwScore > 0 ? Math.log2(kwScore + 1) * 2.5 : 0
 
-  let score = catSignal + restSignal + kwSignal
+  // Session momentum — what you've been liking RIGHT NOW matters more
+  const sessionCatBoost = profile.sessionCategories[dish.categoriaNorm] ?? 0
+  const sessionKwBoost = extractKeywords(dish.nombre, dish.descripcion)
+    .reduce((sum, kw) => sum + (profile.sessionKeywords[kw] ?? 0), 0)
+  const sessionSignal = (sessionCatBoost > 0 ? Math.log2(sessionCatBoost + 1) * 2 : 0)
+    + (sessionKwBoost > 0 ? Math.log2(sessionKwBoost + 1) * 1.5 : 0)
 
-  // Bonus por adyacencia (descubrimiento)
+  let score = catSignal + restSignal + kwSignal + sessionSignal
+
+  // Adyacencia (descubrimiento)
   const adjacent = ADJACENT_CATEGORIES[dish.categoriaNorm] ?? []
   for (const adj of adjacent) {
     const adjScore = profile.categoryScores[adj] ?? 0
     if (adjScore >= 12) score += Math.log2(adjScore) * 1.5
   }
 
-  // Bonus por popularidad
+  // Popularidad
   if (dish.popularityScore > 0) score += dish.popularityScore * 0.2
 
-  // Bonus por oferta
+  // Oferta
   if (dish.enOferta) score += 3
 
   // Penalización si ya fue visto
   if (profile.seenDishIds.has(dish.id)) score -= 8
 
+  // Bonus si el usuario hizo dwell (se detuvo a mirarlo)
+  if (profile.dwellDishIds.has(dish.id) && !profile.seenDishIds.has(dish.id)) score += 3
+
   // No mostrar platos pasados
   if (profile.passedDishIds.has(dish.id)) score -= 1000
 
-  // Penalización por precio fuera de rango
+  // Precio fuera de rango
   if (profile.prices.length >= 10) {
     const sorted = [...profile.prices].sort((a, b) => a - b)
     const p20 = sorted[Math.floor(sorted.length * 0.2)]
@@ -135,7 +174,7 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
     if (price < p20 || price > p80) score -= 3
   }
 
-  // Ruido grande para variedad — evita que una categoría domine
+  // Ruido para variedad
   score += Math.random() * 6
 
   return score
@@ -148,8 +187,14 @@ export function getRecommendationReason(
 ): string | null {
   if (profile.totalInteractions < 5) return null
 
-  // Por keyword (más específico, va primero)
-  const keywords = extractKeywords(dish.nombre)
+  // Session momentum reason (most immediate)
+  const sessionCat = profile.sessionCategories[dish.categoriaNorm] ?? 0
+  if (sessionCat >= 8) {
+    return `Estás explorando ${dish.categoriaNorm.toLowerCase()}`
+  }
+
+  // Keyword reason (specific)
+  const keywords = extractKeywords(dish.nombre, dish.descripcion)
   const topKw = keywords
     .filter(kw => (profile.keywordScores[kw] ?? 0) >= 8)
     .sort((a, b) => (profile.keywordScores[b] ?? 0) - (profile.keywordScores[a] ?? 0))
@@ -159,12 +204,12 @@ export function getRecommendationReason(
 
   const catScore = profile.categoryScores[dish.categoriaNorm] ?? 0
 
-  // Por categoría directa
+  // Categoría
   if (catScore >= 16) {
     return `Porque te gusta ${dish.categoriaNorm.toLowerCase()}`
   }
 
-  // Por adyacencia
+  // Adyacencia
   const adjacent = ADJACENT_CATEGORIES[dish.categoriaNorm] ?? []
   for (const adj of adjacent) {
     if ((profile.categoryScores[adj] ?? 0) >= 16) {
@@ -172,12 +217,10 @@ export function getRecommendationReason(
     }
   }
 
-  // Por popularidad
-  if (dish.popularityScore > 50) {
-    return `Popular en ${dish.restaurante}`
-  }
+  // Popularidad
+  if (dish.popularityScore > 50) return `Popular en ${dish.restaurante}`
 
-  // Por oferta
+  // Oferta
   if (dish.enOferta) return 'En oferta'
 
   return null
@@ -187,11 +230,9 @@ export function getRecommendationReason(
 export function rankFeed(dishes: FeedDish[], profile: FeedProfile): FeedDish[] {
   if (profile.totalInteractions < 3) return dishes
 
-  // Ordenar por afinidad
   const sorted = [...dishes].sort((a, b) => affinity(b, profile) - affinity(a, profile))
 
-  // Intercalar para evitar que una categoría domine bloques consecutivos
-  // Máximo 2 platos de la misma categoría seguidos
+  // Intercalar: max 2 de la misma categoría seguidos
   const result: FeedDish[] = []
   const remaining = [...sorted]
 
@@ -200,7 +241,6 @@ export function rankFeed(dishes: FeedDish[], profile: FeedProfile): FeedDish[] {
     const allSame = recent.length === 2 && recent[0] === recent[1]
 
     if (allSame) {
-      // Buscar el primer plato de categoría diferente
       const diffIdx = remaining.findIndex(d => d.categoriaNorm !== recent[0])
       if (diffIdx >= 0) {
         result.push(remaining[diffIdx])
@@ -221,10 +261,7 @@ export function getCalibrationStatus(profile: FeedProfile): {
   message: string | null
 } {
   if (profile.totalInteractions < 10) {
-    return {
-      isCalibrating: true,
-      message: 'Aprendiendo tus gustos...',
-    }
+    return { isCalibrating: true, message: 'Aprendiendo tus gustos...' }
   }
   return { isCalibrating: false, message: null }
 }

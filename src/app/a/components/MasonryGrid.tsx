@@ -27,10 +27,12 @@ export default function MasonryGrid({
   dishes,
   onDishTap,
   onDishLike,
+  onDishDwell,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
   onDishLike?: (dish: FeedDish) => void
+  onDishDwell?: (dishId: string) => void
 }) {
   const colCount = useColumnCount()
 
@@ -50,7 +52,7 @@ export default function MasonryGrid({
               className="feed-grid-item"
               style={{ animationDelay: `${di * 30}ms` }}
             >
-              <DishCard dish={dish} onTap={onDishTap} onLike={onDishLike} />
+              <DishCard dish={dish} onTap={onDishTap} onLike={onDishLike} onDwell={onDishDwell} />
             </div>
           ))}
         </div>
