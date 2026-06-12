@@ -55,10 +55,12 @@ export default function FeedFilters({
   filters,
   onChange,
   greetingOnly,
+  noGreeting,
 }: {
   filters: Filters
   onChange: (f: Filters) => void
   greetingOnly?: boolean
+  noGreeting?: boolean
 }) {
   const [showMore, setShowMore] = useState(false)
 
@@ -76,8 +78,8 @@ export default function FeedFilters({
 
   return (
     <div style={{ padding: '6px 0 2px' }}>
-      {/* Greeting with meal selector */}
-      <MealGreeting meal={filters.meal} onChange={m => onChange({ ...filters, meal: m })} />
+      {/* Greeting with meal selector — only if not noGreeting */}
+      {!noGreeting && <MealGreeting meal={filters.meal} onChange={m => onChange({ ...filters, meal: m })} />}
 
       {/* Row 2: Dish type (single select) + filter button */}
       <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 6 }}>

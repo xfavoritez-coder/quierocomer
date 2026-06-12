@@ -327,7 +327,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
         <FeedFilters filters={filters} onChange={setFilters} greetingOnly />
       )}
       {activeTab === 'feed' && (
-        <FeedFilters filters={filters} onChange={setFilters} />
+        <FeedFilters filters={filters} onChange={setFilters} noGreeting />
       )}
 
 
