@@ -196,6 +196,20 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
         <FeedFilters filters={filters} onChange={setFilters} />
       )}
 
+      {/* Learning banner */}
+      {activeTab === 'feed' && !isSearching && profile.totalInteractions < 15 && (
+        <div style={{
+          margin: '0 12px 8px', padding: '8px 14px',
+          borderRadius: 10, fontSize: 12,
+          background: 'rgba(244,166,35,0.06)', border: '1px solid rgba(244,166,35,0.1)',
+          color: 'rgba(244,166,35,0.6)',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span style={{ fontSize: 14 }}>✨</span>
+          Aprendiendo de tus gustos — mientras exploras, el feed se adapta a ti
+        </div>
+      )}
+
       {/* Content */}
       {isSearching && searchResults ? (
         <div>
