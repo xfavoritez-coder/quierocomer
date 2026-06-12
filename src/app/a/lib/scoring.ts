@@ -1,5 +1,6 @@
 import type { FeedDish } from '../types'
 import { ADJACENT_CATEGORIES } from './categories'
+import { extractKeywords, keywordAffinity } from './keywords'
 
 // ─── Pesos de scoring ──────────────────────────────────────────────
 export const SCORE_WEIGHTS = {
@@ -19,17 +20,19 @@ export const SCORE_WEIGHTS = {
 export type FeedProfile = {
   categoryScores: Record<string, number>
   restaurantScores: Record<string, number>
+  keywordScores: Record<string, number>
   seenDishIds: Set<string>
   likedDishIds: Set<string>
   passedDishIds: Set<string>
   totalInteractions: number
-  prices: number[]  // para calcular rango
+  prices: number[]
 }
 
 export function createEmptyProfile(): FeedProfile {
   return {
     categoryScores: {},
     restaurantScores: {},
+    keywordScores: {},
     seenDishIds: new Set(),
     likedDishIds: new Set(),
     passedDishIds: new Set(),
@@ -51,14 +54,27 @@ export function updateProfile(
   const newProfile = { ...profile }
   newProfile.categoryScores = { ...profile.categoryScores }
   newProfile.restaurantScores = { ...profile.restaurantScores }
+  newProfile.keywordScores = { ...profile.keywordScores }
   newProfile.seenDishIds = new Set(profile.seenDishIds)
   newProfile.likedDishIds = new Set(profile.likedDishIds)
   newProfile.passedDishIds = new Set(profile.passedDishIds)
   newProfile.prices = [...profile.prices]
 
-  // Update scores
+  // Update category + restaurant scores
   newProfile.categoryScores[cat] = (newProfile.categoryScores[cat] ?? 0) + weights.category
   newProfile.restaurantScores[rest] = (newProfile.restaurantScores[rest] ?? 0) + weights.restaurant
+
+  // Update keyword scores from dish name
+  const keywords = extractKeywords(dish.nombre)
+  const kwWeight = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO' ? 4
+    : action === 'TAP' ? 2
+    : action === 'PASS' ? -3
+    : 0
+  if (kwWeight !== 0) {
+    for (const kw of keywords) {
+      newProfile.keywordScores[kw] = (newProfile.keywordScores[kw] ?? 0) + kwWeight
+    }
+  }
 
   // Track dish state
   newProfile.seenDishIds.add(dish.id)
@@ -85,7 +101,11 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
   const catSignal = catScore > 0 ? Math.log2(catScore + 1) * 3 : catScore < 0 ? catScore * 0.5 : 0
   const restSignal = restScore > 0 ? Math.log2(restScore + 1) * 1.5 : 0
 
-  let score = catSignal + restSignal
+  // Keyword affinity — fine-grained scoring by dish name words
+  const kwScore = keywordAffinity(dish.nombre, profile.keywordScores)
+  const kwSignal = kwScore > 0 ? Math.log2(kwScore + 1) * 2.5 : 0
+
+  let score = catSignal + restSignal + kwSignal
 
   // Bonus por adyacencia (descubrimiento)
   const adjacent = ADJACENT_CATEGORIES[dish.categoriaNorm] ?? []
@@ -127,6 +147,15 @@ export function getRecommendationReason(
   profile: FeedProfile,
 ): string | null {
   if (profile.totalInteractions < 5) return null
+
+  // Por keyword (más específico, va primero)
+  const keywords = extractKeywords(dish.nombre)
+  const topKw = keywords
+    .filter(kw => (profile.keywordScores[kw] ?? 0) >= 8)
+    .sort((a, b) => (profile.keywordScores[b] ?? 0) - (profile.keywordScores[a] ?? 0))
+  if (topKw.length > 0) {
+    return `Porque te gusta ${topKw[0]}`
+  }
 
   const catScore = profile.categoryScores[dish.categoriaNorm] ?? 0
 

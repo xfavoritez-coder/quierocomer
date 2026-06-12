@@ -47,6 +47,14 @@ export default function ProfileView({
   }, [profile.categoryScores])
 
   const maxScore = topCategories.length > 0 ? topCategories[0][1] : 1
+
+  const topKeywords = useMemo(() => {
+    return Object.entries(profile.keywordScores)
+      .filter(([, score]) => score > 0)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+  }, [profile.keywordScores])
+
   const totalLikes = profile.likedDishIds.size
   const totalSeen = profile.seenDishIds.size
   const totalPassed = profile.passedDishIds.size
@@ -166,6 +174,26 @@ export default function ProfileView({
                       }} />
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Keywords */}
+          {topKeywords.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>
+                Lo que te gusta
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {topKeywords.map(([kw, score]) => (
+                  <span key={kw} style={{
+                    padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+                    background: 'rgba(244,166,35,0.08)', border: '1px solid rgba(244,166,35,0.15)',
+                    color: 'rgba(244,166,35,0.7)',
+                  }}>
+                    {kw}
+                  </span>
                 ))}
               </div>
             </div>

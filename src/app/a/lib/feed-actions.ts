@@ -92,26 +92,41 @@ export async function trackInteraction(
 
     const user = await prisma.feedUser.findUnique({
       where: { id: userId },
-      select: { categoryScores: true, restaurantScores: true },
+      select: { categoryScores: true, restaurantScores: true, keywordScores: true },
     })
     if (!user) return
 
     const dish = await prisma.dish.findUnique({
       where: { id: dishId },
-      select: { restaurantId: true },
+      select: { restaurantId: true, name: true },
     })
     if (!dish) return
 
     const catScores = (user.categoryScores as Record<string, number>) ?? {}
     const restScores = (user.restaurantScores as Record<string, number>) ?? {}
+    const kwScores = (user.keywordScores as Record<string, number>) ?? {}
     catScores[category] = (catScores[category] ?? 0) + weights.category
     restScores[dish.restaurantId] = (restScores[dish.restaurantId] ?? 0) + weights.restaurant
+
+    // Update keyword scores from dish name
+    const { extractKeywords } = await import('./keywords')
+    const keywords = extractKeywords(dish.name)
+    const kwWeight = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO' ? 4
+      : action === 'TAP' ? 2
+      : action === 'PASS' ? -3
+      : 0
+    if (kwWeight !== 0) {
+      for (const kw of keywords) {
+        kwScores[kw] = (kwScores[kw] ?? 0) + kwWeight
+      }
+    }
 
     await prisma.feedUser.update({
       where: { id: userId },
       data: {
         categoryScores: catScores,
         restaurantScores: restScores,
+        keywordScores: kwScores,
         totalInteractions: { increment: 1 },
       },
     })

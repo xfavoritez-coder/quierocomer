@@ -2012,6 +2012,7 @@ model FeedUser {
   // Perfil de gustos (aprendido del comportamiento)
   categoryScores    Json     @default("{}")       // { "Sushi & Rolls": 45, "Pizzas": 23, ... }
   restaurantScores  Json     @default("{}")       // { "cuid_rest": 12, ... }
+  keywordScores     Json     @default("{}")       // { "salmón": 18, "nikkei": 10, "palta": 8, ... }
   priceMin          Float?                        // rango de precio aprendido (percentil 20)
   priceMax          Float?                        // rango de precio aprendido (percentil 80)
 
