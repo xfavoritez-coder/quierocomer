@@ -91,6 +91,7 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Sánguchez': 'Sandwiches',
   'Sandwichs': 'Sandwiches',
   'Sandwich y Hamburguesas': 'Sandwiches',
+  'Antojos Salados - Sandwich': 'Sandwiches',
   'SANDWICHERIA "LOS CLASICOS DE SIEMPRE"': 'Sandwiches',
   'SANDWICHERIA "SELECCION OASIS"': 'Sandwiches',
   'PROMO SANDWICH': 'Sandwiches',
@@ -106,6 +107,7 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Ensaladas': 'Ensaladas',
   'Ensalada': 'Ensaladas',
   'Cremas y Ensaladas': 'Ensaladas',
+  'Antojos Salados - Ensaladas': 'Ensaladas',
 
   // ─── Entradas ───────────────────────────────────────────────
   'Entradas': 'Entradas',
@@ -204,10 +206,24 @@ export const CATEGORY_MAP: Record<string, string> = {
   'WAFFLES DULCES': 'Postres',
   'PROMO PASTELES': 'Postres',
 
-  // ─── Cafetería (bebidas calientes) ──────────────────────────
+  // ─── Cafetería (bebidas calientes — se infieren como drink)
   'Cafetería': 'Cafetería',
   'CAFETERIA': 'Cafetería',
   'Cafeteria': 'Cafetería',
+  'Café': 'Cafetería',
+  'Cafe Frio': 'Cafetería',
+  'CAFÉ GELATO': 'Cafetería',
+  'CAFÉS - CHOCOLATES CALIENTES - INFUSIONES O TÉ': 'Cafetería',
+  'Cafés Y Tés': 'Cafetería',
+  'Café Arábica Especialidad - Con Leche': 'Cafetería',
+  'Café Arábica Especialidad - Espresso Bar': 'Cafetería',
+  'Café Arábica Frío': 'Cafetería',
+  'Bebidas Calientes - Café': 'Cafetería',
+  'Bebidas Calientes - Chocolate Caliente': 'Cafetería',
+  'Bebidas Calientes - Té e Infusiones': 'Cafetería',
+  'Bebidas Frías - Café y Té': 'Cafetería',
+  'Para Llevar o Encargar - Café para disfrutar en casa': 'Cafetería',
+  'Hot Drinks': 'Cafetería',
 
   // ─── Desayunos & Brunch (comida) ──────────────────────────
   'BOLLERIA': 'Desayunos',
