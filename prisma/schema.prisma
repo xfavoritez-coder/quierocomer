@@ -802,6 +802,13 @@ model Dish {
   suggestedBy         DishSuggestion[]       @relation("SuggestionTo")
   badgeSnapshots      BadgeSnapshot[]
 
+  // Feed B2C (/a)
+  feedInteractions    FeedInteraction[]
+  feedSaved           FeedSaved[]
+  feedRatings         FeedRating[]
+  feedComments        FeedComment[]
+  feedStats           FeedDishStats?
+
   @@index([restaurantId, toteatProductId])
 
   @@index([restaurantId])
@@ -1984,4 +1991,139 @@ model ApiUsage {
   @@index([service, createdAt])
   @@index([leadId, createdAt])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ─── Feed B2C (/a) — Descubrimiento de platos ────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+model FeedUser {
+  id                String   @id @default(cuid())
+  fingerprint       String   @unique              // cookie persistente UUID
+  displayName       String?
+  avatarUrl         String?
+
+  // Restricciones dietéticas (filtro duro)
+  isVegan           Boolean  @default(false)
+  isVegetarian      Boolean  @default(false)
+  isGlutenFree      Boolean  @default(false)
+  isLactoseFree     Boolean  @default(false)
+
+  // Perfil de gustos (aprendido del comportamiento)
+  categoryScores    Json     @default("{}")       // { "Sushi & Rolls": 45, "Pizzas": 23, ... }
+  restaurantScores  Json     @default("{}")       // { "cuid_rest": 12, ... }
+  priceMin          Float?                        // rango de precio aprendido (percentil 20)
+  priceMax          Float?                        // rango de precio aprendido (percentil 80)
+
+  // Estado
+  totalInteractions Int      @default(0)
+  onboardingDone    Boolean  @default(false)
+  lastSeenAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  interactions      FeedInteraction[]
+  savedDishes       FeedSaved[]
+  ratings           FeedRating[]
+  comments          FeedComment[]
+
+  @@index([lastSeenAt])
+}
+
+model FeedInteraction {
+  id          String     @id @default(cuid())
+  feedUserId  String
+  dishId      String
+  action      FeedAction
+  dwellMs     Int?                               // para VIEW: ms que el plato fue visible
+  category    String?                            // snapshot de categoría normalizada
+  price       Float?                             // snapshot del precio (para aprender rango)
+  createdAt   DateTime   @default(now())
+
+  feedUser    FeedUser   @relation(fields: [feedUserId], references: [id])
+  dish        Dish       @relation(fields: [dishId], references: [id])
+
+  @@index([feedUserId, createdAt])
+  @@index([dishId])
+  @@index([action, createdAt])
+}
+
+enum FeedAction {
+  VIEW
+  TAP
+  LIKE
+  SAVE
+  ANTOJO
+  PASS
+  SCROLL_BACK
+}
+
+model FeedSaved {
+  id          String       @id @default(cuid())
+  feedUserId  String
+  dishId      String
+  type        FeedSaveType
+  createdAt   DateTime     @default(now())
+
+  feedUser    FeedUser     @relation(fields: [feedUserId], references: [id])
+  dish        Dish         @relation(fields: [dishId], references: [id])
+
+  @@unique([feedUserId, dishId])
+  @@index([feedUserId, type])
+}
+
+enum FeedSaveType {
+  ANTOJO
+  SAVED
+}
+
+model FeedRating {
+  id          String   @id @default(cuid())
+  feedUserId  String
+  dishId      String
+  stars       Int                                // 1-5
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  feedUser    FeedUser @relation(fields: [feedUserId], references: [id])
+  dish        Dish     @relation(fields: [dishId], references: [id])
+
+  @@unique([feedUserId, dishId])
+  @@index([dishId])
+}
+
+model FeedComment {
+  id          String   @id @default(cuid())
+  feedUserId  String
+  dishId      String
+  text        String
+  createdAt   DateTime @default(now())
+
+  feedUser    FeedUser @relation(fields: [feedUserId], references: [id])
+  dish        Dish     @relation(fields: [dishId], references: [id])
+
+  @@index([dishId, createdAt])
+  @@index([feedUserId])
+}
+
+model FeedDishStats {
+  id              String   @id @default(cuid())
+  dishId          String   @unique
+  totalViews      Int      @default(0)
+  totalTaps       Int      @default(0)
+  totalLikes      Int      @default(0)
+  totalSaves      Int      @default(0)
+  totalAntojos    Int      @default(0)
+  totalPasses     Int      @default(0)
+  avgRating       Float?
+  ratingCount     Int      @default(0)
+  commentCount    Int      @default(0)
+  popularityScore Float    @default(0)           // ponderado compuesto de todas las señales
+  trendingScore   Float    @default(0)           // actividad reciente, decae con el tiempo
+  updatedAt       DateTime @updatedAt
+
+  dish            Dish     @relation(fields: [dishId], references: [id])
+
+  @@index([popularityScore])
+  @@index([trendingScore])
 }
