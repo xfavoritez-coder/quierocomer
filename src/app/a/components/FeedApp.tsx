@@ -41,6 +41,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [learningMsg, setLearningMsg] = useState<string | null>(null)
   const [diet, setDiet] = useState<UserDiet>(userDiet)
 
@@ -199,15 +200,27 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
                 </span>
               )}
             </div>
-            <button onClick={() => setSearchOpen(true)} style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-              color: 'rgba(255,255,255,0.5)',
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => setSearchOpen(true)} style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                color: 'rgba(255,255,255,0.5)',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+              </button>
+              <button onClick={() => setMenuOpen(!menuOpen)} style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                color: 'rgba(255,255,255,0.5)',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+            </div>
           </>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
@@ -240,6 +253,42 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
           </div>
         )}
       </header>
+
+      {/* Hamburger menu */}
+      {menuOpen && (
+        <>
+          <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 45 }} />
+          <div style={{
+            position: 'absolute', top: 52, right: 12, zIndex: 46,
+            background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+            padding: 6, minWidth: 180, boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+            animation: 'fadeIn 0.15s ease-out',
+          }}>
+            {[
+              { label: 'Inicio', href: '/' },
+              { label: 'Mi perfil', action: () => { setMenuOpen(false); setActiveTab('perfil' as Tab); window.scrollTo(0, 0) } },
+              { label: 'Guardados', action: () => { setMenuOpen(false); setActiveTab('guardados' as Tab); window.scrollTo(0, 0) } },
+            ].map((item, i) => (
+              item.href ? (
+                <a key={i} href={item.href} style={{
+                  display: 'block', padding: '12px 14px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                  color: '#fff', textDecoration: 'none',
+                }}>
+                  {item.label}
+                </a>
+              ) : (
+                <button key={i} onClick={item.action} style={{
+                  display: 'block', width: '100%', padding: '12px 14px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                  color: '#fff', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                }}>
+                  {item.label}
+                </button>
+              )
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Filters - only in feed tab */}
       {activeTab === 'feed' && (

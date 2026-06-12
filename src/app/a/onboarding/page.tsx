@@ -68,7 +68,6 @@ export default function OnboardingPage() {
                 <span className="emoji">{o.emoji}</span>
                 <div className="text">
                   <h3>{o.label}</h3>
-                  <p>{o.desc}</p>
                 </div>
                 <div className={`onboard-check ${sel ? 'checked' : ''}`}>
                   {sel && (
