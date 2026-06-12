@@ -141,8 +141,9 @@ export default function FeedFilters({
           style={{
             padding: '10px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500,
             whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
-            background: showMore || activeSecondaryCount > 0 ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
-            color: showMore || activeSecondaryCount > 0 ? '#000' : 'rgba(255,255,255,0.55)',
+            background: showMore || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.03)',
+            color: showMore || activeSecondaryCount > 0 ? '#F4A623' : 'rgba(255,255,255,0.35)',
+            border: `1px solid ${showMore || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.25)' : 'rgba(255,255,255,0.08)'}`,
             display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
             marginLeft: 4, marginRight: 12,
           }}>
