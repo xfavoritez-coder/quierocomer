@@ -349,7 +349,6 @@ export function getDisplayCategories(): string[] {
     'Ceviches & Mariscos',
     'Ensaladas',
     'Parrilla & Carnes',
-    'Platos de fondo',
     'Sandwiches',
     'Pastas',
     'Empanadas',
