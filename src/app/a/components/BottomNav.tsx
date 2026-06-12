@@ -22,7 +22,7 @@ export default function BottomNav({
         {TABS.map(tab => (
           <button
             key={tab.id}
-            onClick={() => onChange(tab.id)}
+            onClick={() => { window.scrollTo(0, 0); onChange(tab.id) }}
             className={`feed-nav-tab ${active === tab.id ? 'active' : ''}`}
           >
             <span className="icon">{tab.icon}</span>
