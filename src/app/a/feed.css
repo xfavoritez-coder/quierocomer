@@ -37,11 +37,11 @@ body:has(.feed-root) {
 
 /* ─── Cards ─────────────────────────────────────────────────── */
 .dish-card {
-  background: var(--feed-card);
-  border: 1px solid var(--feed-card-border);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   transition: transform 0.15s ease;
   cursor: pointer;
 }
@@ -60,7 +60,7 @@ body:has(.feed-root) {
   object-fit: cover;
 }
 .dish-card-info {
-  padding: 10px 12px 12px;
+  padding: 8px 10px 10px;
 }
 .dish-card-name {
   font-family: var(--font-feed-display), 'Playfair Display', serif;
@@ -170,8 +170,8 @@ body:has(.feed-root) {
 /* ─── Masonry Grid (manual flex columns, stable on load-more) ── */
 .feed-grid {
   display: flex;
-  gap: 10px;
-  padding: 0 10px 100px;
+  gap: 12px;
+  padding: 0 12px 100px;
 }
 .feed-grid-col {
   flex: 1;

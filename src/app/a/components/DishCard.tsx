@@ -29,7 +29,7 @@ export default function DishCard({
   return (
     <div className="dish-card" onClick={() => onTap(dish)}>
       {/* Photo */}
-      <div style={{ position: 'relative', minHeight: 140, background: gradient }}>
+      <div style={{ position: 'relative', minHeight: 120, background: gradient }}>
         {!showFallback ? (
           <img
             src={dish.fotoUrl!}
