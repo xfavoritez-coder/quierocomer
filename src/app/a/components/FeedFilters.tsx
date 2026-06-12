@@ -239,10 +239,10 @@ export function applyFilters(dishes: FeedDish[], filters: Filters): FeedDish[] {
     result = result.filter(d => filters.dishTypes.has(d.categoriaTipo))
   }
 
-  // Meal time — only applies to 'food' type. Entry, dessert, drink, coffee bypass it.
+  // Meal time — applies to food and entry. Desserts and drinks always show.
   if (filters.meal !== 'all') {
     result = result.filter(d => {
-      if (d.categoriaTipo !== 'food') return true // only food is affected by meal time
+      if (d.categoriaTipo === 'dessert' || d.categoriaTipo === 'drink' || d.categoriaTipo === 'coffee') return true
       return d.mealTime === filters.meal
     })
   }
