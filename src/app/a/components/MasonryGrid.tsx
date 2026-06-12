@@ -43,7 +43,7 @@ export default function MasonryGrid({
   return (
     <div className="feed-grid">
       {columns.map((col, ci) => (
-        <div key={ci} className="feed-grid-col">
+        <div key={ci} className="feed-grid-col" style={ci % 2 !== 0 ? { paddingTop: 28 } : undefined}>
           {col.map((dish, di) => (
             <div
               key={dish.id}
