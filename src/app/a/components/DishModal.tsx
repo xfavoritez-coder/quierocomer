@@ -202,15 +202,6 @@ export default function DishModal({
               <ActionBtn icon="save" label="Guardar" active={saved} color="#F4A623" onClick={() => { setSaved(!saved); onSave(dish) }} />
             </div>
 
-            {/* Ver carta CTA */}
-            <a href={`/carta/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'block', width: '100%', padding: 16, borderRadius: 14,
-                background: '#F4A623', color: '#000', fontWeight: 700, fontSize: 16,
-                textAlign: 'center', textDecoration: 'none',
-              }}>
-              Ver carta completa
-            </a>
 
             {/* Comments */}
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
