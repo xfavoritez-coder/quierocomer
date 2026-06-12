@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getSuggestedMealTime, type MealTime } from '../lib/categories'
 import type { FeedDish } from '../types'
 
@@ -17,10 +17,11 @@ export type Filters = {
 }
 
 export function getDefaultFilters(userDiet?: { isVegan: boolean; isVegetarian: boolean }): Filters {
-  const suggested = getSuggestedMealTime()
+  // Don't call getSuggestedMealTime() here — it runs on server too and causes hydration mismatch.
+  // Default to 'all', the component will set the suggested meal time on mount.
   return {
-    meal: suggested.mealTime, // default to current time of day
-    dishTypes: new Set(),     // empty = all
+    meal: 'all',
+    dishTypes: new Set(),
     diet: userDiet?.isVegan ? 'VEGAN' : userDiet?.isVegetarian ? 'VEGETARIAN' : 'all',
     sort: 'relevance',
     priceMax: null,
@@ -34,8 +35,8 @@ const MEALS: { id: MealFilter; label: string }[] = [
 ]
 
 const DISH_TYPES: { id: string; label: string }[] = [
-  { id: 'food', label: '🍽 Platos' },
   { id: 'entry', label: '🥗 Entradas' },
+  { id: 'food', label: '🍽 Platos' },
   { id: 'dessert', label: '🍰 Postres' },
   { id: 'drink', label: '🍹 Bebestibles' },
 ]
@@ -70,6 +71,18 @@ export default function FeedFilters({
   onChange: (f: Filters) => void
 }) {
   const [showMore, setShowMore] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Set suggested meal time on client mount (avoids hydration mismatch)
+  useEffect(() => {
+    if (!mounted) {
+      setMounted(true)
+      if (filters.meal === 'all') {
+        const suggested = getSuggestedMealTime()
+        onChange({ ...filters, meal: suggested.mealTime })
+      }
+    }
+  }, [])
 
   const toggleDishType = (id: string) => {
     const next = new Set(filters.dishTypes)
