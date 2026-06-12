@@ -281,6 +281,7 @@ body:has(.feed-root) {
 .onboard-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 0 24px;
 }
