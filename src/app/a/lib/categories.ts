@@ -384,9 +384,7 @@ export function getDisplayCategories(): string[] {
     'Mexicana',
     'Asiática',
     'Postres',
-    'Desayunos',
     'Completos',
     'Vegano',
-    'Entradas',
   ]
 }
