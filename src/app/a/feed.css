@@ -515,6 +515,21 @@ body:has(.feed-root) {
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
+/* ─── Home carousel cards ───────────────────────────────────── */
+.home-card {
+  width: 160px;
+}
+.home-carousel::-webkit-scrollbar { display: none; }
+@media (min-width: 640px) {
+  .home-card { width: 220px; }
+}
+@media (min-width: 960px) {
+  .home-card { width: 280px; }
+}
+@media (min-width: 1280px) {
+  .home-card { width: 320px; }
+}
+
 /* Scrollbar hide */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

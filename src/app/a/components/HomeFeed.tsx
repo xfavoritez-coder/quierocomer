@@ -173,18 +173,18 @@ export default function HomeFeed({
           </div>
 
           {/* Horizontal scroll */}
-          <div style={{
+          <div className="home-carousel" style={{
             display: 'flex', gap: 12, overflowX: 'auto', padding: '0 16px',
             scrollbarWidth: 'none', msOverflowStyle: 'none',
           }}>
             {section.dishes.map(dish => (
-              <div key={dish.id} onClick={() => onDishTap(dish)} style={{
-                flexShrink: 0, width: 160, cursor: 'pointer',
+              <div key={dish.id} onClick={() => onDishTap(dish)} className="home-card" style={{
+                flexShrink: 0, cursor: 'pointer',
                 borderRadius: 14, overflow: 'hidden',
                 background: 'rgba(255,255,255,0.03)',
               }}>
-                <img src={dish.fotoUrl!} alt={dish.nombre} style={{
-                  width: 160, height: 120, objectFit: 'cover', display: 'block',
+                <img src={dish.fotoUrl!} alt={dish.nombre} className="home-card-img" style={{
+                  width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block',
                 }} />
                 <div style={{ padding: '8px 10px 10px' }}>
                   <p style={{
