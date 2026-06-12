@@ -10,11 +10,13 @@ type UserDiet = {
   isLactoseFree: boolean
 }
 
-const DIET_OPTIONS = [
-  { key: 'isVegan' as const, label: 'Vegano', emoji: '🌱' },
-  { key: 'isVegetarian' as const, label: 'Vegetariano', emoji: '🥬' },
-  { key: 'isGlutenFree' as const, label: 'Sin gluten', emoji: '🌾' },
-  { key: 'isLactoseFree' as const, label: 'Sin lactosa', emoji: '🥛' },
+type DietOption = 'all' | 'isVegan' | 'isVegetarian' | 'isGlutenFree'
+
+const DIET_OPTIONS: { id: DietOption; label: string; emoji: string }[] = [
+  { id: 'all', label: 'Como de todo', emoji: '🍽' },
+  { id: 'isVegan', label: 'Vegano', emoji: '🌱' },
+  { id: 'isVegetarian', label: 'Vegetariano', emoji: '🥬' },
+  { id: 'isGlutenFree', label: 'Sin gluten', emoji: '🌾' },
 ]
 
 export default function ProfileView({
@@ -29,7 +31,13 @@ export default function ProfileView({
   onUpdateDiet: (d: UserDiet) => void
 }) {
   const [editingDiet, setEditingDiet] = useState(false)
-  const [tempDiet, setTempDiet] = useState(diet)
+  const dietToOption = (d: UserDiet): DietOption => {
+    if (d.isVegan) return 'isVegan'
+    if (d.isVegetarian) return 'isVegetarian'
+    if (d.isGlutenFree) return 'isGlutenFree'
+    return 'all'
+  }
+  const [tempOption, setTempOption] = useState<DietOption>(dietToOption(diet))
 
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
@@ -49,10 +57,17 @@ export default function ProfileView({
     return { min: sorted[Math.floor(sorted.length * 0.2)], max: sorted[Math.floor(sorted.length * 0.8)] }
   }, [profile.prices])
 
-  const activeDietLabels = DIET_OPTIONS.filter(o => diet[o.key]).map(o => `${o.emoji} ${o.label}`)
+  const currentOption = dietToOption(diet)
+  const currentLabel = DIET_OPTIONS.find(o => o.id === currentOption)
 
   const handleSaveDiet = () => {
-    onUpdateDiet(tempDiet)
+    const newDiet: UserDiet = {
+      isVegan: tempOption === 'isVegan',
+      isVegetarian: tempOption === 'isVegetarian',
+      isGlutenFree: tempOption === 'isGlutenFree',
+      isLactoseFree: false,
+    }
+    onUpdateDiet(newDiet)
     setEditingDiet(false)
   }
 
@@ -88,15 +103,15 @@ export default function ProfileView({
 
         {!editingDiet ? (
           <p style={{ fontSize: 14, color: '#fff', margin: 0 }}>
-            {activeDietLabels.length > 0 ? activeDietLabels.join(' · ') : 'Sin restricciones (como de todo)'}
+            {currentLabel ? `${currentLabel.emoji} ${currentLabel.label}` : '🍽 Como de todo'}
           </p>
         ) : (
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {DIET_OPTIONS.map(o => {
-                const active = tempDiet[o.key]
+                const active = tempOption === o.id
                 return (
-                  <button key={o.key} onClick={() => setTempDiet(prev => ({ ...prev, [o.key]: !prev[o.key] }))}
+                  <button key={o.id} onClick={() => setTempOption(o.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                       borderRadius: 10, border: `1px solid ${active ? 'rgba(244,166,35,0.4)' : 'rgba(255,255,255,0.08)'}`,

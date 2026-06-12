@@ -3,36 +3,29 @@
 import { useState } from 'react'
 import { completeOnboarding } from '../lib/feed-actions'
 
-const RESTRICTIONS = [
+const OPTIONS = [
+  { id: 'all' as const, label: 'Como de todo', emoji: '🍽', desc: 'Sin restricciones' },
   { id: 'isVegan' as const, label: 'Vegano', emoji: '🌱', desc: 'Sin productos de origen animal' },
   { id: 'isVegetarian' as const, label: 'Vegetariano', emoji: '🥬', desc: 'Sin carne ni pescado' },
   { id: 'isGlutenFree' as const, label: 'Sin gluten', emoji: '🌾', desc: 'Celíaco o intolerante' },
-  { id: 'isLactoseFree' as const, label: 'Sin lactosa', emoji: '🥛', desc: 'Intolerante a la lactosa' },
 ]
 
-type RId = typeof RESTRICTIONS[number]['id']
+type OptionId = typeof OPTIONS[number]['id']
 
 export default function OnboardingPage() {
-  const [selected, setSelected] = useState<Set<RId>>(new Set())
+  const [selected, setSelected] = useState<OptionId>('all')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const toggle = (id: RId) => {
-    const next = new Set(selected)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
-    setSelected(next)
-  }
 
   const handleContinue = async () => {
     setLoading(true)
     setError(null)
     try {
       const result = await completeOnboarding({
-        isVegan: selected.has('isVegan'),
-        isVegetarian: selected.has('isVegetarian'),
-        isGlutenFree: selected.has('isGlutenFree'),
-        isLactoseFree: selected.has('isLactoseFree'),
+        isVegan: selected === 'isVegan',
+        isVegetarian: selected === 'isVegetarian',
+        isGlutenFree: selected === 'isGlutenFree',
+        isLactoseFree: false,
       })
       if (!result.ok) {
         setError(result.error ?? 'No se pudo guardar')
@@ -62,20 +55,20 @@ export default function OnboardingPage() {
           <p>Filtramos el feed para ti. Si no, salta este paso.</p>
         </div>
 
-        {/* Cards */}
+        {/* Cards — single select */}
         <div className="onboard-options">
-          {RESTRICTIONS.map(r => {
-            const sel = selected.has(r.id)
+          {OPTIONS.map(o => {
+            const sel = selected === o.id
             return (
               <button
-                key={r.id}
-                onClick={() => toggle(r.id)}
+                key={o.id}
+                onClick={() => setSelected(o.id)}
                 className={`onboard-card ${sel ? 'selected' : ''}`}
               >
-                <span className="emoji">{r.emoji}</span>
+                <span className="emoji">{o.emoji}</span>
                 <div className="text">
-                  <h3>{r.label}</h3>
-                  <p>{r.desc}</p>
+                  <h3>{o.label}</h3>
+                  <p>{o.desc}</p>
                 </div>
                 <div className={`onboard-check ${sel ? 'checked' : ''}`}>
                   {sel && (
@@ -95,13 +88,8 @@ export default function OnboardingPage() {
       {/* Fixed bottom CTA */}
       <div className="onboard-footer">
         <button onClick={handleContinue} disabled={loading} className="onboard-cta">
-          {loading ? 'Preparando tu feed...' : selected.size > 0 ? 'Continuar' : 'Como de todo'}
+          {loading ? 'Preparando tu feed...' : 'Continuar'}
         </button>
-        {selected.size > 0 && (
-          <button onClick={() => setSelected(new Set())} className="onboard-clear">
-            Borrar selección
-          </button>
-        )}
       </div>
     </div>
   )

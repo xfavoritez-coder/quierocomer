@@ -148,7 +148,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       <header className="feed-header">
         {!searchOpen ? (
           <>
-            <h1>QuieroComer</h1>
+            <a href="/" style={{ textDecoration: 'none' }}><h1>QuieroComer</h1></a>
             <button onClick={() => setSearchOpen(true)} style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: 4,
               color: 'rgba(255,255,255,0.5)',
