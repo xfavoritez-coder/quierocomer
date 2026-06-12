@@ -16,6 +16,7 @@ import {
   saveDish,
   unsaveDish,
 } from '../lib/feed-actions'
+import DishCard from './DishCard'
 import FeedGrid from './FeedGrid'
 import ExploreGrid from './ExploreGrid'
 import SavedList from './SavedList'
@@ -28,6 +29,8 @@ type Tab = 'feed' | 'explorar' | 'guardados' | 'perfil'
 export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
   const [activeTab, setActiveTab] = useState<Tab>('feed')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
   const [profile, setProfile] = useState<FeedProfile>(createEmptyProfile)
   const [feedDishes, setFeedDishes] = useState(dishes)
   const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(new Set())
@@ -113,23 +116,111 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
+  // Search
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return null
+    const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return dishes.filter(d => {
+      const name = d.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      const rest = d.restaurante.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      const cat = d.categoriaNorm.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      return name.includes(q) || rest.includes(q) || cat.includes(q)
+    })
+  }, [searchQuery, dishes])
+
+  const isSearching = searchQuery.trim().length > 0
+
   return (
     <div style={{ maxWidth: 460, margin: '0 auto' }}>
       {/* Header */}
       <header className="feed-header">
-        <h1>QuieroComer</h1>
-        {calibration.isCalibrating && activeTab === 'feed' && (
-          <span className="calibrating">{calibration.message}</span>
+        {!searchOpen ? (
+          <>
+            <h1>QuieroComer</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {calibration.isCalibrating && activeTab === 'feed' && (
+                <span className="calibrating">{calibration.message}</span>
+              )}
+              <button onClick={() => setSearchOpen(true)} style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                color: 'rgba(255,255,255,0.5)',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: 8,
+              background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '8px 12px',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar plato, restaurante..."
+                autoFocus
+                style={{
+                  flex: 1, background: 'none', border: 'none', outline: 'none',
+                  color: '#fff', fontSize: 14,
+                }}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  color: 'rgba(255,255,255,0.3)',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <button onClick={() => { setSearchOpen(false); setSearchQuery('') }} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.5)', fontSize: 13, flexShrink: 0,
+            }}>
+              Cerrar
+            </button>
+          </div>
         )}
       </header>
 
-      {/* Content */}
-      {activeTab === 'feed' && (
-        <FeedGrid dishes={feedDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
-      )}
+      {/* Search results */}
+      {isSearching && searchResults ? (
+        <div>
+          <div style={{ padding: '4px 12px 8px', color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>
+            {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} para "{searchQuery}"
+          </div>
+          {searchResults.length > 0 ? (
+            <SearchGrid dishes={searchResults} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
+              <p style={{ fontSize: 32, marginBottom: 12 }}>🔍</p>
+              <p style={{ fontSize: 14 }}>No encontramos platos con "{searchQuery}"</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)', marginTop: 4 }}>Intenta con otro nombre</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Normal content */}
+          {activeTab === 'feed' && (
+            <FeedGrid dishes={feedDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+          )}
 
-      {activeTab === 'explorar' && (
-        <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+          {activeTab === 'explorar' && (
+            <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+          )}
+        </>
       )}
 
       {activeTab === 'guardados' && (
@@ -155,6 +246,26 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
       )}
 
       <BottomNav active={activeTab} onChange={setActiveTab} />
+    </div>
+  )
+}
+
+function SearchGrid({ dishes, onDishTap, onDishLike }: {
+  dishes: FeedDish[]; onDishTap: (d: FeedDish) => void; onDishLike?: (d: FeedDish) => void
+}) {
+  const visible = dishes.slice(0, 40)
+  const col1: FeedDish[] = []
+  const col2: FeedDish[] = []
+  visible.forEach((d, i) => { if (i % 2 === 0) col1.push(d); else col2.push(d) })
+
+  return (
+    <div style={{ display: 'flex', gap: 8, padding: '0 8px 100px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {col1.map(d => <DishCard key={d.id} dish={d} onTap={onDishTap} onLike={onDishLike} />)}
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {col2.map(d => <DishCard key={d.id} dish={d} onTap={onDishTap} onLike={onDishLike} />)}
+      </div>
     </div>
   )
 }

@@ -62,8 +62,8 @@ export default function DishCard({
           </svg>
         </button>
 
-        {/* Category */}
-        <span className="dish-card-badge">{dish.categoriaNorm}</span>
+        {/* Restaurant badge */}
+        <span className="dish-card-badge">{dish.restaurante}</span>
 
         {/* Oferta */}
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
