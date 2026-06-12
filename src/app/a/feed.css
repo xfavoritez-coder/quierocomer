@@ -297,6 +297,7 @@ body:has(.feed-root) {
 
 .onboard-question {
   margin-bottom: 20px;
+  text-align: center;
 }
 .onboard-question h2 {
   font-size: 22px;
