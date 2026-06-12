@@ -52,7 +52,7 @@ export default function OnboardingPage() {
         {/* Question */}
         <div className="onboard-question">
           <h2>¿Tienes alguna restricción alimentaria?</h2>
-          <p>Filtramos el feed para ti. Si no, salta este paso.</p>
+          <p>✨ Mientras explores, aprenderemos de tus gustos</p>
         </div>
 
         {/* Cards — single select */}
@@ -84,17 +84,6 @@ export default function OnboardingPage() {
 
         {error && <p className="onboard-error">{error}</p>}
 
-        {/* Subtle hint */}
-        <div style={{
-          marginTop: 24, padding: '14px 16px', borderRadius: 12,
-          background: 'rgba(244,166,35,0.04)', border: '1px solid rgba(244,166,35,0.08)',
-          display: 'flex', gap: 10, alignItems: 'flex-start',
-        }}>
-          <span style={{ fontSize: 16, lineHeight: 1, marginTop: 1 }}>✨</span>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0, lineHeight: 1.5 }}>
-            Mientras explores, iremos aprendiendo qué te gusta para mostrarte platos cada vez más afines a ti.
-          </p>
-        </div>
       </div>
 
       {/* Fixed bottom CTA */}
