@@ -2,13 +2,6 @@
 
 type Tab = 'feed' | 'explorar' | 'guardados' | 'perfil'
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'feed', label: 'Para ti', icon: '🔥' },
-  { id: 'explorar', label: 'Explorar', icon: '🧭' },
-  { id: 'guardados', label: 'Guardados', icon: '💾' },
-  { id: 'perfil', label: 'Perfil', icon: '👤' },
-]
-
 export default function BottomNav({
   active,
   onChange,
@@ -18,17 +11,35 @@ export default function BottomNav({
 }) {
   return (
     <nav className="feed-nav">
-      <div className="feed-nav-inner">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => { window.scrollTo(0, 0); onChange(tab.id) }}
-            className={`feed-nav-tab ${active === tab.id ? 'active' : ''}`}
-          >
-            <span className="icon">{tab.icon}</span>
-            <span className="label">{tab.label}</span>
-          </button>
-        ))}
+      <div style={{
+        maxWidth: 320, margin: '0 auto',
+        display: 'flex', gap: 8, padding: '8px 20px',
+        paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+      }}>
+        {([
+          { id: 'feed' as Tab, label: 'Para ti', icon: '🔥' },
+          { id: 'explorar' as Tab, label: 'Explorar', icon: '🧭' },
+        ]).map(tab => {
+          const isActive = active === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => { window.scrollTo(0, 0); onChange(tab.id) }}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 6, padding: '10px 0', borderRadius: 12,
+                background: isActive ? 'rgba(244,166,35,0.12)' : 'transparent',
+                border: isActive ? '1px solid rgba(244,166,35,0.2)' : '1px solid transparent',
+                cursor: 'pointer',
+                color: isActive ? '#F4A623' : 'rgba(255,255,255,0.35)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{tab.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500 }}>{tab.label}</span>
+            </button>
+          )
+        })}
       </div>
     </nav>
   )

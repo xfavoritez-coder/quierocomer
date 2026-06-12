@@ -226,11 +226,10 @@ body:has(.feed-root) {
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(14, 14, 14, 0.95);
+  background: rgba(14, 14, 14, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 .feed-nav-inner {
   max-width: 600px;
