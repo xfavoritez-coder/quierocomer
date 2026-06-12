@@ -46,12 +46,14 @@ export default function FeedGrid({
   onDishTap,
   onDishLike,
   onDishDwell,
+  userLocation,
 }: {
   dishes: FeedDish[]
   profile?: FeedProfile
   onDishTap: (dish: FeedDish) => void
   onDishLike?: (dish: FeedDish) => void
   onDishDwell?: (dishId: string) => void
+  userLocation?: { lat: number; lng: number } | null
 }) {
   // Create a key from dish IDs to detect filter changes
   const dishKey = useMemo(() => dishes.length + '_' + (dishes[0]?.id ?? ''), [dishes])
@@ -94,6 +96,7 @@ export default function FeedGrid({
       onDishTap={onDishTap}
       onDishLike={onDishLike}
       onDishDwell={onDishDwell}
+      userLocation={userLocation}
     />
   )
 }

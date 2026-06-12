@@ -20,6 +20,13 @@ export default async function FeedPage() {
       isVegetarian: true,
       isGlutenFree: true,
       isLactoseFree: true,
+      categoryScores: true,
+      restaurantScores: true,
+      keywordScores: true,
+      totalInteractions: true,
+      savedDishes: {
+        select: { dishId: true, type: true },
+      },
     },
   })
 
@@ -32,7 +39,6 @@ export default async function FeedPage() {
     data: { lastSeenAt: new Date() },
   }).catch(() => {})
 
-  // Traer TODOS los platos (filtros se aplican en el cliente)
   const dishes = await getFeedDishes()
 
   return (
@@ -44,6 +50,13 @@ export default async function FeedPage() {
         isGlutenFree: user.isGlutenFree,
         isLactoseFree: user.isLactoseFree,
       }}
+      savedProfile={{
+        categoryScores: (user.categoryScores as Record<string, number>) ?? {},
+        restaurantScores: (user.restaurantScores as Record<string, number>) ?? {},
+        keywordScores: (user.keywordScores as Record<string, number>) ?? {},
+        totalInteractions: user.totalInteractions,
+      }}
+      savedDishes={user.savedDishes}
     />
   )
 }

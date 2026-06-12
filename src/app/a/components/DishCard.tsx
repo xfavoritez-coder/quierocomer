@@ -3,17 +3,20 @@
 import { useState, useEffect, useRef } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
+import { distanceKm, formatDistance } from '../lib/geo'
 
 export default function DishCard({
   dish,
   onTap,
   onLike,
   onDwell,
+  userLocation,
 }: {
   dish: FeedDish
   onTap: (dish: FeedDish) => void
   onLike?: (dish: FeedDish) => void
   onDwell?: (dishId: string) => void
+  userLocation?: { lat: number; lng: number } | null
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -80,7 +83,14 @@ export default function DishCard({
           </svg>
         </button>
 
-        <span className="dish-card-badge">{dish.restaurante}</span>
+        <span className="dish-card-badge">
+          {dish.restaurante}
+          {userLocation && dish.restauranteLat && dish.restauranteLng && (
+            <span style={{ marginLeft: 4, opacity: 0.7 }}>
+              · {formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))}
+            </span>
+          )}
+        </span>
 
         {/* Oferta */}
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
@@ -109,22 +119,6 @@ export default function DishCard({
           )}
         </p>
 
-        {/* Stars */}
-        <div className="dish-stars">
-          {[1, 2, 3, 4, 5].map(star => (
-            <svg key={star} width="10" height="10" viewBox="0 0 24 24"
-              fill={dish.avgRating != null && star <= Math.round(dish.avgRating) ? '#F4A623' : 'none'}
-              stroke={dish.avgRating != null && star <= Math.round(dish.avgRating) ? '#F4A623' : 'rgba(255,255,255,0.12)'}
-              strokeWidth="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-          ))}
-          {dish.ratingCount > 0 && (
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, marginLeft: 2 }}>
-              ({dish.ratingCount})
-            </span>
-          )}
-        </div>
 
       </div>
     </div>

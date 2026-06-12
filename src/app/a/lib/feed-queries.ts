@@ -44,6 +44,8 @@ export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
           slug: true,
           logoUrl: true,
           address: true,
+          lat: true,
+          lng: true,
         },
       },
       feedStats: {
@@ -89,6 +91,8 @@ export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
       restauranteSlug: dish.restaurant.slug,
       restauranteLogo: dish.restaurant.logoUrl,
       restauranteDireccion: dish.restaurant.address,
+      restauranteLat: dish.restaurant.lat,
+      restauranteLng: dish.restaurant.lng,
       enOferta: dish.discountPrice != null && dish.discountPrice < dish.price,
       mealTime: inferMealTime(categoriaNorm),
       tags: dish.tags,

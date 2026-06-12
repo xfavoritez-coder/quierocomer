@@ -18,6 +18,32 @@ const STOPWORDS = new Set([
   'eleccion', 'opcional', 'incluye', 'lleva', 'trae',
   'ideal', 'perfecto', 'delicioso', 'exquisito', 'fresco', 'casero', 'casera',
   'tradicional', 'artesanal', 'gourmet', 'tipo', 'estilo',
+  // Cooking/presentation words (no flavor signal)
+  'envuelto', 'envuelta', 'envueltos', 'cubierto', 'cubierta', 'cubiertos',
+  'relleno', 'rellena', 'rellenos', 'base', 'sobre', 'capa',
+  'frito', 'frita', 'fritos', 'fritas', 'horneado', 'horneada',
+  'grillado', 'grillada', 'salteado', 'salteada', 'cocido', 'cocida',
+  'trozo', 'trozos', 'corte', 'filete', 'lonjas', 'rodajas',
+  'cobertura', 'topping', 'acompanamiento',
+  'sabor', 'sabores', 'seleccion', 'variedad', 'variedades', 'surtido',
+  'receta', 'estilo', 'manera', 'forma', 'modo',
+  'cremoso', 'cremosa', 'crocante', 'crujiente', 'suave', 'tierno', 'tierna',
+  'caliente', 'frio', 'fria', 'natural', 'hecho', 'hecha',
+  'nuestro', 'nuestra', 'nuestros', 'nuestras',
+  'cada', 'todo', 'toda', 'todos', 'todas', 'mas', 'muy', 'bien',
+  'rico', 'rica', 'ricos', 'ricas', 'bueno', 'buena',
+  // Colors and sizes (no signal)
+  'blanco', 'blanca', 'negro', 'negra', 'rojo', 'roja', 'verde',
+  'amarillo', 'amarilla', 'dorado', 'dorada',
+  // Common filler words in dish descriptions
+  'estilo', 'casa', 'nuestro', 'nuestra', 'especial', 'original',
+  'toque', 'punto', 'justo', 'autentico', 'autentica',
+  'buen', 'mejor', 'favorito', 'favorita', 'clasica',
+  'acompana', 'incluye', 'contiene', 'viene', 'lleva',
+  'pan', 'masa', 'harina', 'aceite', 'sal',
+  'plato', 'porcion', 'servicio', 'preparacion',
+  'opcion', 'alternativa', 'disponible',
+  'pequeño', 'pequena', 'mediana', 'grande', 'extra',
 ])
 
 /** Normalize: lowercase + remove accents */

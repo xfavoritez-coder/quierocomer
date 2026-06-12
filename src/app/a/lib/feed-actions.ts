@@ -111,8 +111,8 @@ export async function trackInteraction(
     // Update keyword scores from dish name
     const { extractKeywords } = await import('./keywords')
     const keywords = extractKeywords(dish.name, dish.description)
-    const kwWeight = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO' ? 4
-      : action === 'TAP' ? 2
+    const kwWeight = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO' ? 5
+      : action === 'TAP' ? 1
       : action === 'PASS' ? -3
       : 0
     if (kwWeight !== 0) {

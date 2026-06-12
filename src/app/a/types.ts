@@ -22,6 +22,8 @@ export type FeedDish = {
   restauranteSlug: string
   restauranteLogo: string | null
   restauranteDireccion: string | null
+  restauranteLat: number | null
+  restauranteLng: number | null
   enOferta: boolean
   mealTime: 'desayuno' | 'almuerzo_cena'
   tags: string[]           // RECOMMENDED, NEW, MOST_ORDERED

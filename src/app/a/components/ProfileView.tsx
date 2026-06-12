@@ -39,9 +39,15 @@ export default function ProfileView({
   }
   const [tempOption, setTempOption] = useState<DietOption>(dietToOption(diet))
 
+  // Categories that are too generic to show as "favorites"
+  const GENERIC_CATEGORIES = new Set([
+    'Platos de fondo', 'Desayunos', 'Cafetería', 'Postres', 'Combos',
+    'Acompañamientos', 'Extras', 'Entradas',
+  ])
+
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
-      .filter(([, score]) => score > 0)
+      .filter(([cat, score]) => score > 0 && !GENERIC_CATEGORIES.has(cat))
       .sort(([, a], [, b]) => b - a)
       .slice(0, 8)
   }, [profile.categoryScores])
@@ -50,9 +56,9 @@ export default function ProfileView({
 
   const topKeywords = useMemo(() => {
     return Object.entries(profile.keywordScores)
-      .filter(([, score]) => score > 0)
+      .filter(([, score]) => score >= 4)  // only show keywords with real signal
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
+      .slice(0, 8)
   }, [profile.keywordScores])
 
   const totalLikes = profile.likedDishIds.size
@@ -179,22 +185,30 @@ export default function ProfileView({
             </div>
           )}
 
-          {/* Keywords */}
+          {/* Keywords with ranking bars */}
           {topKeywords.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>
-                Lo que te gusta
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>
+                Porque viste
               </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {topKeywords.map(([kw, score]) => (
-                  <span key={kw} style={{
-                    padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500,
-                    background: 'rgba(244,166,35,0.08)', border: '1px solid rgba(244,166,35,0.15)',
-                    color: 'rgba(244,166,35,0.7)',
-                  }}>
-                    {kw}
-                  </span>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {topKeywords.map(([kw, score]) => {
+                  const maxKw = topKeywords[0][1]
+                  return (
+                    <div key={kw}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                        <span style={{ fontSize: 13, color: '#F4A623' }}>{kw}</span>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{score}</span>
+                      </div>
+                      <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', background: '#F4A623', borderRadius: 3,
+                          width: `${(score / maxKw) * 100}%`, transition: 'width 0.5s ease',
+                        }} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

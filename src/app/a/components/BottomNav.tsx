@@ -34,7 +34,14 @@ export default function BottomNav({
           return (
             <button
               key={tab.id}
-              onClick={() => { window.scrollTo(0, 0); onChange(tab.id) }}
+              onClick={() => {
+                if (tab.id === active && tab.id === 'feed') {
+                  window.location.reload()
+                } else {
+                  window.scrollTo(0, 0)
+                  onChange(tab.id)
+                }
+              }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 gap: 6, padding: '10px 22px', borderRadius: 14,

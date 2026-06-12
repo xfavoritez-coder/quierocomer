@@ -33,20 +33,55 @@ type UserDiet = {
   isLactoseFree: boolean
 }
 
-export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; userDiet: UserDiet }) {
+type SavedProfile = {
+  categoryScores: Record<string, number>
+  restaurantScores: Record<string, number>
+  keywordScores: Record<string, number>
+  totalInteractions: number
+}
+
+export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: savedDishesFromDB }: {
+  dishes: FeedDish[]
+  userDiet: UserDiet
+  savedProfile?: SavedProfile
+  savedDishes?: { dishId: string; type: string }[]
+}) {
   const [activeTab, setActiveTab] = useState<Tab>('feed')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
-  const [profile, setProfile] = useState<FeedProfile>(createEmptyProfile)
-  const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(new Set())
-  const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
+  const [profile, setProfile] = useState<FeedProfile>(() => {
+    const base = createEmptyProfile()
+    if (savedProfile) {
+      base.categoryScores = savedProfile.categoryScores
+      base.restaurantScores = savedProfile.restaurantScores
+      base.keywordScores = savedProfile.keywordScores
+      base.totalInteractions = savedProfile.totalInteractions
+    }
+    return base
+  })
+  const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(() =>
+    new Set(savedDishesFromDB?.filter(s => s.type === 'ANTOJO').map(s => s.dishId) ?? [])
+  )
+  const [savedDishIds, setSavedDishIds] = useState<Set<string>>(() =>
+    new Set(savedDishesFromDB?.filter(s => s.type === 'SAVED').map(s => s.dishId) ?? [])
+  )
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [learningMsg, setLearningMsg] = useState<string | null>(null)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+
+  // Request geolocation on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { enableHighAccuracy: false, timeout: 5000 }
+      )
+    }
+  }, [])
   const [diet, setDiet] = useState<UserDiet>(userDiet)
 
-  // Filters — default to suggested meal time + user diet
-  const [filters, setFilters] = useState<Filters>(() => getDefaultFilters(userDiet))
+  const [filters, setFilters] = useState<Filters>(() => getDefaultFilters())
 
   // Apply filters to dishes
   const filteredDishes = useMemo(() => applyFilters(dishes, filters), [dishes, filters])
@@ -81,51 +116,14 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
 
   const isSearching = searchQuery.trim().length > 0
 
-  const flashLearning = useCallback((dish: FeedDish, action: string) => {
-    if (profile.totalInteractions >= 20) return
-    const msgs: Record<string, string> = {
-      LIKE: `Te gusta ${dish.categoriaNorm.toLowerCase()}... anotado`,
-      PASS: `${dish.categoriaNorm.toLowerCase()} no tanto... entendido`,
-      SAVE: `Guardando preferencia por ${dish.categoriaNorm.toLowerCase()}`,
-      TAP: `Explorando ${dish.categoriaNorm.toLowerCase()}...`,
-      VIEW: `Analizando tus preferencias...`,
-    }
-    const msg = msgs[action]
-    if (!msg) return
-    setLearningMsg(msg)
-    setTimeout(() => setLearningMsg(null), 2000)
-  }, [profile.totalInteractions])
-
-  // Show learning msg periodically while scrolling (every ~15 items viewed)
-  const scrollCountRef = useRef(0)
-  useEffect(() => {
-    if (profile.totalInteractions >= 20) return
-    const onScroll = () => {
-      scrollCountRef.current++
-      if (scrollCountRef.current % 80 === 0 && !learningMsg) {
-        const msgs = [
-          'Aprendiendo de tus gustos...',
-          'Ajustando recomendaciones...',
-          'Entendiendo tus preferencias...',
-          'Personalizando tu feed...',
-        ]
-        setLearningMsg(msgs[Math.floor(Math.random() * msgs.length)])
-        setTimeout(() => setLearningMsg(null), 2500)
-      }
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [profile.totalInteractions, learningMsg])
-
   const doTrack = useCallback(async (
     dish: FeedDish,
     action: 'VIEW' | 'TAP' | 'LIKE' | 'SAVE' | 'ANTOJO' | 'PASS' | 'SCROLL_BACK',
   ) => {
     const newProfile = updateProfile(profile, dish, action)
     setProfile(newProfile)
-    flashLearning(dish, action)
     trackInteraction(dish.id, action, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
-  }, [profile, flashLearning])
+  }, [profile])
 
   const handleDishTap = useCallback((dish: FeedDish) => {
     setSelectedDish(dish)
@@ -180,9 +178,6 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
 
   const handleUpdateDiet = useCallback(async (newDiet: UserDiet) => {
     setDiet(newDiet)
-    if (newDiet.isVegan) setFilters(f => ({ ...f, diet: 'VEGAN' as const }))
-    else if (newDiet.isVegetarian) setFilters(f => ({ ...f, diet: 'VEGETARIAN' as const }))
-    else setFilters(f => ({ ...f, diet: 'all' as const }))
     completeOnboarding(newDiet).catch(() => {})
   }, [])
 
@@ -194,19 +189,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       <header className="feed-header">
         {!searchOpen ? (
           <>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0, flex: 1 }}>
-              <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
-              {learningMsg && (
-                <span style={{
-                  fontSize: 11, color: 'rgba(244,166,35,0.5)', fontWeight: 500,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  animation: 'fadeIn 0.3s ease-out',
-                  lineHeight: '20px',
-                }}>
-                  ✨ {learningMsg}
-                </span>
-              )}
-            </div>
+            <a href="/a" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button onClick={() => setSearchOpen(true)} style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: 4,
@@ -261,33 +244,46 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
         )}
       </header>
 
-      {/* Hamburger menu */}
+      {/* Hamburger menu — slide-in panel */}
       {menuOpen && (
         <>
-          <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 45 }} />
+          <div onClick={() => setMenuOpen(false)} style={{
+            position: 'fixed', inset: 0, zIndex: 55,
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          }} />
           <div style={{
-            position: 'absolute', top: 52, right: 12, zIndex: 46,
-            background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
-            padding: 6, minWidth: 180, boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-            animation: 'fadeIn 0.15s ease-out',
+            position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
+            width: 260, maxWidth: '75vw',
+            background: '#141414', borderLeft: '1px solid rgba(255,255,255,0.06)',
+            padding: '60px 20px 40px', display: 'flex', flexDirection: 'column', gap: 4,
+            animation: 'slideRight 0.2s ease-out',
           }}>
+            <button onClick={() => setMenuOpen(false)} style={{
+              position: 'absolute', top: 16, right: 16,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+
             {[
-              { label: 'Inicio', href: '/' },
-              { label: 'Mi perfil', action: () => { setMenuOpen(false); setActiveTab('perfil' as Tab); window.scrollTo(0, 0) } },
-              { label: 'Guardados', action: () => { setMenuOpen(false); setActiveTab('guardados' as Tab); window.scrollTo(0, 0) } },
+              { label: '🏠 Inicio', href: '/a' },
+              { label: '👤 Mi perfil', action: () => { setMenuOpen(false); setActiveTab('perfil' as Tab); window.scrollTo(0, 0) } },
+              { label: '💾 Guardados', action: () => { setMenuOpen(false); setActiveTab('guardados' as Tab); window.scrollTo(0, 0) } },
             ].map((item, i) => (
               item.href ? (
                 <a key={i} href={item.href} style={{
-                  display: 'block', padding: '12px 14px', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                  display: 'block', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
                   color: '#fff', textDecoration: 'none',
+                  background: 'rgba(255,255,255,0.03)',
                 }}>
                   {item.label}
                 </a>
               ) : (
                 <button key={i} onClick={item.action} style={{
-                  display: 'block', width: '100%', padding: '12px 14px', borderRadius: 10, fontSize: 14, fontWeight: 500,
-                  color: '#fff', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  display: 'block', width: '100%', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
+                  color: '#fff', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left',
                 }}>
                   {item.label}
                 </button>
@@ -321,7 +317,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       ) : (
         <>
           {activeTab === 'feed' && (
-            <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDwell={handleDishDwell} />
+            <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDwell={handleDishDwell} userLocation={userLocation} />
           )}
           {activeTab === 'explorar' && (
             <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
@@ -340,8 +336,10 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
       {/* Modal */}
       {selectedDish && (
         <DishModal
+          key={selectedDish.id}
           dish={selectedDish}
           allDishes={dishes}
+          profile={profile}
           reason={selectedReason}
           onClose={() => setSelectedDish(null)}
           onLike={handleDishLike}

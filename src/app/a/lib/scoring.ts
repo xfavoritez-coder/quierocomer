@@ -79,7 +79,8 @@ export function updateProfile(
   const keywords = extractKeywords(dish.nombre, dish.descripcion)
   const isPositive = action === 'LIKE' || action === 'SAVE' || action === 'ANTOJO'
   const isNegative = action === 'PASS'
-  const kwWeight = isPositive ? 4 : action === 'TAP' ? 2 : isNegative ? -3 : 0
+  // LIKE/SAVE/ANTOJO = strong signal (+5), TAP = weak (+1, just looked), PASS = negative (-3)
+  const kwWeight = isPositive ? 5 : action === 'TAP' ? 1 : isNegative ? -3 : 0
 
   if (kwWeight !== 0) {
     for (const kw of keywords) {
