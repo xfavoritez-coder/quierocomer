@@ -191,8 +191,8 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
         )}
       </header>
 
-      {/* Filters - show in feed and explorar tabs */}
-      {(activeTab === 'feed' || activeTab === 'explorar') && (
+      {/* Filters - only in feed tab */}
+      {activeTab === 'feed' && (
         <FeedFilters filters={filters} onChange={setFilters} />
       )}
 
@@ -217,7 +217,7 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
             <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} />
           )}
           {activeTab === 'explorar' && (
-            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+            <ExploreGrid dishes={dishes} onDishTap={handleDishTap} onDishLike={handleDishLike} />
           )}
         </>
       )}

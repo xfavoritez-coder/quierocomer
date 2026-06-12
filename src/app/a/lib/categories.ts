@@ -214,6 +214,9 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Desayunos': 'Desayunos',
   'DESAYUNOS': 'Desayunos',
   'Desayunos (Hasta las 12:30 hrs)': 'Desayunos',
+  'Desayunos de Casa': 'Desayunos',
+  'Mañanas Deliciosas (09:00 a 14:00 hrs) - Desayuno': 'Desayunos',
+  'Mañanas Deliciosas (09:00 a 14:00 hrs) - Brunch': 'Desayunos',
 
   // ─── Combos & Promos ────────────────────────────────────────
   'Combos': 'Combos',
