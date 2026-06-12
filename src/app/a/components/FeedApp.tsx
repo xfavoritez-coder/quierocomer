@@ -123,7 +123,7 @@ export default function FeedApp({ dishes }: { dishes: FeedDish[] }) {
   const isSearching = searchQuery.trim().length > 0
 
   return (
-    <div style={{ maxWidth: 460, margin: '0 auto' }}>
+    <div className="feed-container">
       {/* Header */}
       <header className="feed-header">
         {!searchOpen ? (
@@ -246,18 +246,9 @@ function SearchGrid({ dishes, onDishTap, onDishLike }: {
   dishes: FeedDish[]; onDishTap: (d: FeedDish) => void; onDishLike?: (d: FeedDish) => void
 }) {
   const visible = dishes.slice(0, 40)
-  const col1: FeedDish[] = []
-  const col2: FeedDish[] = []
-  visible.forEach((d, i) => { if (i % 2 === 0) col1.push(d); else col2.push(d) })
-
   return (
-    <div style={{ display: 'flex', gap: 8, padding: '0 8px 100px' }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {col1.map(d => <DishCard key={d.id} dish={d} onTap={onDishTap} onLike={onDishLike} />)}
-      </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {col2.map(d => <DishCard key={d.id} dish={d} onTap={onDishTap} onLike={onDishLike} />)}
-      </div>
+    <div className="feed-grid">
+      {visible.map(d => <DishCard key={d.id} dish={d} onTap={onDishTap} onLike={onDishLike} />)}
     </div>
   )
 }

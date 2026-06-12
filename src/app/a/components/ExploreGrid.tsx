@@ -35,10 +35,8 @@ export default function ExploreGrid({
     return [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
   }, [filtered])
 
-  // Reset visible count when category changes
   useEffect(() => { setVisibleCount(20) }, [activeCategory])
 
-  // Infinite scroll
   const loadMore = useCallback(() => {
     setVisibleCount(prev => Math.min(prev + 20, sorted.length))
   }, [sorted.length])
@@ -54,64 +52,40 @@ export default function ExploreGrid({
   }, [visibleCount, sorted.length, loadMore])
 
   const visible = sorted.slice(0, visibleCount)
-  const col1: FeedDish[] = []
-  const col2: FeedDish[] = []
-  visible.forEach((dish, i) => {
-    if (i % 2 === 0) col1.push(dish)
-    else col2.push(dish)
-  })
 
   return (
     <div>
       {/* Chips */}
       <div className="category-chips">
-        <button
-          onClick={() => setActiveCategory(null)}
-          className={`category-chip ${activeCategory === null ? 'active' : ''}`}
-        >
+        <button onClick={() => setActiveCategory(null)}
+          className={`category-chip ${activeCategory === null ? 'active' : ''}`}>
           Todas
         </button>
-
         {hasOfertas && (
-          <button
-            onClick={() => setActiveCategory('ofertas')}
-            className={`category-chip ofertas ${activeCategory === 'ofertas' ? 'active' : ''}`}
-          >
+          <button onClick={() => setActiveCategory('ofertas')}
+            className={`category-chip ofertas ${activeCategory === 'ofertas' ? 'active' : ''}`}>
             🏷️ Ofertas
           </button>
         )}
-
         {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`category-chip ${activeCategory === cat ? 'active' : ''}`}
-          >
+          <button key={cat} onClick={() => setActiveCategory(cat)}
+            className={`category-chip ${activeCategory === cat ? 'active' : ''}`}>
             {cat}
           </button>
         ))}
       </div>
 
-      {/* Count */}
       <div style={{ padding: '0 12px 8px', color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>
         {sorted.length} platos
         {activeCategory && activeCategory !== 'ofertas' && ` en ${activeCategory}`}
         {activeCategory === 'ofertas' && ' en oferta'}
       </div>
 
-      {/* Grid - masonry 2 cols with inline styles to guarantee layout */}
       {visible.length > 0 ? (
-        <div style={{ display: 'flex', gap: 8, padding: '0 8px 100px' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            {col1.map(dish => (
-              <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
-            ))}
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            {col2.map(dish => (
-              <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
-            ))}
-          </div>
+        <div className="feed-grid">
+          {visible.map(dish => (
+            <DishCard key={dish.id} dish={dish} onTap={onDishTap} onLike={onDishLike} />
+          ))}
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
