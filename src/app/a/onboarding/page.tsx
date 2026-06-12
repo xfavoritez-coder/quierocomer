@@ -45,8 +45,8 @@ export default function OnboardingPage() {
       <div className="onboard-content">
         {/* Logo - compact, app style */}
         <div className="onboard-logo">
-          <img src="/genio-lamp.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-          <span className="onboard-logo-text">QuieroComer</span>
+          <img src="/genio-lamp.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain', marginRight: -2 }} />
+          <span className="onboard-logo-text">Quiero<span style={{ color: '#F4A623' }}>Comer</span></span>
         </div>
 
         {/* Question */}
