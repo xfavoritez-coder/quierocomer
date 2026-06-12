@@ -109,37 +109,53 @@ export default function FeedFilters({
         ))}
       </div>
 
-      {/* Row 2: Dish types (multi-select) + filter button */}
-      <div className="category-chips" style={{ paddingBottom: 6 }}>
-        {DISH_TYPES.map(t => (
-          <button key={t.id}
-            className={`category-chip ${filters.dishTypes.has(t.id) ? 'active' : ''}`}
-            onClick={() => toggleDishType(t.id)}>
-            {t.label}
-          </button>
-        ))}
+      {/* Row 2: Dish types (scrollable) + fixed filter button */}
+      <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 6 }}>
+        {/* Scrollable chips with fade */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0 }}>
+          <div className="category-chips" style={{ paddingBottom: 0, paddingRight: 8 }}>
+            <button
+              className={`category-chip ${filters.dishTypes.size === 0 ? 'active' : ''}`}
+              onClick={() => onChange({ ...filters, dishTypes: new Set() })}>
+              Todos
+            </button>
+            {DISH_TYPES.map(t => (
+              <button key={t.id}
+                className={`category-chip ${filters.dishTypes.has(t.id) ? 'active' : ''}`}
+                onClick={() => toggleDishType(t.id)}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {/* Fade right */}
+          <div style={{
+            position: 'absolute', top: 0, right: 0, bottom: 0, width: 24,
+            background: 'linear-gradient(to right, transparent, #0e0e0e)',
+            pointerEvents: 'none',
+          }} />
+        </div>
 
-        {/* More filters button */}
+        {/* Fixed filter button */}
         <button
           onClick={() => setShowMore(!showMore)}
           style={{
-            padding: '8px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+            padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 500,
             whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
             background: showMore || activeSecondaryCount > 0 ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
             color: showMore || activeSecondaryCount > 0 ? '#000' : 'rgba(255,255,255,0.55)',
             display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+            marginLeft: 4, marginRight: 12,
           }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
             <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
             <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
             <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
           </svg>
-          Filtros
           {activeSecondaryCount > 0 && (
             <span style={{
               background: '#000', color: 'var(--feed-amber)',
-              fontSize: 10, fontWeight: 700, width: 16, height: 16,
+              fontSize: 9, fontWeight: 700, width: 14, height: 14,
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {activeSecondaryCount}
@@ -235,9 +251,12 @@ export function applyFilters(dishes: FeedDish[], filters: Filters): FeedDish[] {
     result = result.filter(d => filters.dishTypes.has(d.categoriaTipo))
   }
 
-  // Meal time
+  // Meal time — only applies to 'food' type. Entry, dessert, drink, coffee bypass it.
   if (filters.meal !== 'all') {
-    result = result.filter(d => d.mealTime === filters.meal)
+    result = result.filter(d => {
+      if (d.categoriaTipo !== 'food') return true // only food is affected by meal time
+      return d.mealTime === filters.meal
+    })
   }
 
   // Diet
