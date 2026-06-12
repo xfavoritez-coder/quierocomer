@@ -14,7 +14,6 @@ export default function DishCard({
   onLike?: (dish: FeedDish) => void
 }) {
   const [imgError, setImgError] = useState(false)
-  const [imgLoaded, setImgLoaded] = useState(false)
   const [liked, setLiked] = useState(false)
 
   const gradient = getCategoryGradient(dish.categoriaNorm)
@@ -30,24 +29,17 @@ export default function DishCard({
   return (
     <div className="dish-card" onClick={() => onTap(dish)}>
       {/* Photo */}
-      <div style={{ position: 'relative', minHeight: 140 }}>
-        {!showFallback && (
+      <div style={{ position: 'relative', minHeight: 140, background: gradient }}>
+        {!showFallback ? (
           <img
             src={dish.fotoUrl!}
             alt={dish.nombre}
-            style={{
-              opacity: imgLoaded ? 1 : 0,
-              transition: 'opacity 0.3s',
-              background: '#1a1a1a',
-            }}
-            onLoad={() => setImgLoaded(true)}
+            style={{ background: '#1a1a1a' }}
             onError={() => setImgError(true)}
             loading="lazy"
-            decoding="async"
           />
-        )}
-        {(showFallback || !imgLoaded) && (
-          <div className="dish-card-gradient" style={{ background: gradient, position: showFallback ? 'relative' : 'absolute', inset: 0 }}>
+        ) : (
+          <div className="dish-card-gradient">
             <span>{dish.nombre}</span>
           </div>
         )}
