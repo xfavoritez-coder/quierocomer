@@ -15,7 +15,7 @@ import {
   unsaveDish,
   completeOnboarding,
 } from '../lib/feed-actions'
-import FeedFilters, { applyFilters, type Filters } from './FeedFilters'
+import FeedFilters, { applyFilters, getDefaultFilters, type Filters } from './FeedFilters'
 import MasonryGrid from './MasonryGrid'
 import FeedGrid from './FeedGrid'
 import ExploreGrid from './ExploreGrid'
@@ -43,14 +43,8 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
   const [searchOpen, setSearchOpen] = useState(false)
   const [diet, setDiet] = useState<UserDiet>(userDiet)
 
-  // Filters
-  const [filters, setFilters] = useState<Filters>({
-    dishType: 'all',
-    meal: 'all',
-    diet: userDiet.isVegan ? 'VEGAN' : userDiet.isVegetarian ? 'VEGETARIAN' : 'all',
-    sort: 'relevance',
-    priceMax: null,
-  })
+  // Filters — default to suggested meal time + user diet
+  const [filters, setFilters] = useState<Filters>(() => getDefaultFilters(userDiet))
 
   // Apply filters to dishes
   const filteredDishes = useMemo(() => applyFilters(dishes, filters), [dishes, filters])
@@ -140,11 +134,9 @@ export default function FeedApp({ dishes, userDiet }: { dishes: FeedDish[]; user
 
   const handleUpdateDiet = useCallback(async (newDiet: UserDiet) => {
     setDiet(newDiet)
-    // Update filters diet to match
-    if (newDiet.isVegan) setFilters(f => ({ ...f, diet: 'VEGAN' }))
-    else if (newDiet.isVegetarian) setFilters(f => ({ ...f, diet: 'VEGETARIAN' }))
-    else setFilters(f => ({ ...f, diet: 'all' }))
-    // Persist
+    if (newDiet.isVegan) setFilters(f => ({ ...f, diet: 'VEGAN' as const }))
+    else if (newDiet.isVegetarian) setFilters(f => ({ ...f, diet: 'VEGETARIAN' as const }))
+    else setFilters(f => ({ ...f, diet: 'all' as const }))
     completeOnboarding(newDiet).catch(() => {})
   }, [])
 

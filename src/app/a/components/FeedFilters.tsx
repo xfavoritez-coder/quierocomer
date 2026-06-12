@@ -1,31 +1,43 @@
 'use client'
 
+import { useState } from 'react'
 import { getSuggestedMealTime, type MealTime } from '../lib/categories'
+import type { FeedDish } from '../types'
 
-export type DishTypeFilter = 'all' | 'food' | 'dessert' | 'drink'
+export type MealFilter = 'all' | MealTime
 export type DietFilter = 'all' | 'VEGAN' | 'VEGETARIAN' | 'GLUTEN_FREE' | 'LACTOSE_FREE'
 export type SortFilter = 'relevance' | 'rating' | 'price_asc' | 'price_desc'
-export type MealFilter = 'all' | MealTime
 
 export type Filters = {
-  dishType: DishTypeFilter
   meal: MealFilter
+  dishTypes: Set<string>  // multi-select: 'food', 'dessert', 'drink', 'entry'
   diet: DietFilter
   sort: SortFilter
   priceMax: number | null
 }
 
-const DISH_TYPES: { id: DishTypeFilter; label: string }[] = [
-  { id: 'all', label: 'Todo' },
-  { id: 'food', label: '🍽 Comida' },
-  { id: 'dessert', label: '🍰 Postres' },
-  { id: 'drink', label: '🍹 Bebestibles' },
-]
+export function getDefaultFilters(userDiet?: { isVegan: boolean; isVegetarian: boolean }): Filters {
+  const suggested = getSuggestedMealTime()
+  return {
+    meal: suggested.mealTime, // default to current time of day
+    dishTypes: new Set(),     // empty = all
+    diet: userDiet?.isVegan ? 'VEGAN' : userDiet?.isVegetarian ? 'VEGETARIAN' : 'all',
+    sort: 'relevance',
+    priceMax: null,
+  }
+}
 
 const MEALS: { id: MealFilter; label: string }[] = [
-  { id: 'all', label: 'Cualquier hora' },
+  { id: 'all', label: 'Todo el día' },
   { id: 'desayuno', label: '🌅 Desayunos' },
   { id: 'almuerzo_cena', label: '🍴 Almuerzos y cenas' },
+]
+
+const DISH_TYPES: { id: string; label: string }[] = [
+  { id: 'food', label: '🍽 Platos' },
+  { id: 'entry', label: '🥗 Entradas' },
+  { id: 'dessert', label: '🍰 Postres' },
+  { id: 'drink', label: '🍹 Bebestibles' },
 ]
 
 const DIETS: { id: DietFilter; label: string }[] = [
@@ -37,18 +49,17 @@ const DIETS: { id: DietFilter; label: string }[] = [
 ]
 
 const PRICES: { label: string; max: number | null }[] = [
-  { label: 'Todos', max: null },
+  { label: 'Cualquier precio', max: null },
   { label: '< $5.000', max: 5000 },
   { label: '< $10.000', max: 10000 },
   { label: '< $15.000', max: 15000 },
-  { label: '< $20.000', max: 20000 },
 ]
 
 const SORTS: { id: SortFilter; label: string }[] = [
   { id: 'relevance', label: 'Para ti' },
   { id: 'rating', label: '⭐ Mejor valorados' },
-  { id: 'price_asc', label: '💰 Precio ↑' },
-  { id: 'price_desc', label: '💰 Precio ↓' },
+  { id: 'price_asc', label: 'Precio ↑' },
+  { id: 'price_desc', label: 'Precio ↓' },
 ]
 
 export default function FeedFilters({
@@ -58,72 +69,157 @@ export default function FeedFilters({
   filters: Filters
   onChange: (f: Filters) => void
 }) {
-  const suggested = getSuggestedMealTime()
+  const [showMore, setShowMore] = useState(false)
+
+  const toggleDishType = (id: string) => {
+    const next = new Set(filters.dishTypes)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    onChange({ ...filters, dishTypes: next })
+  }
+
+  const activeSecondaryCount =
+    (filters.diet !== 'all' ? 1 : 0) +
+    (filters.priceMax != null ? 1 : 0) +
+    (filters.sort !== 'relevance' ? 1 : 0)
 
   return (
-    <div style={{ padding: '8px 0 4px', overflowX: 'auto' }}>
-      {/* Row 1: Dish type + Meal time */}
+    <div style={{ padding: '6px 0 2px' }}>
+      {/* Row 1: Meal time */}
       <div className="category-chips" style={{ paddingBottom: 6 }}>
-        {DISH_TYPES.map(t => (
-          <button key={t.id}
-            className={`category-chip ${filters.dishType === t.id ? 'active' : ''}`}
-            onClick={() => onChange({ ...filters, dishType: t.id })}>
-            {t.label}
-          </button>
-        ))}
-        <span style={{ width: 1, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flexShrink: 0 }} />
         {MEALS.map(m => (
           <button key={m.id}
             className={`category-chip ${filters.meal === m.id ? 'active' : ''}`}
             onClick={() => onChange({ ...filters, meal: m.id })}>
             {m.label}
-            {m.id === suggested.mealTime && filters.meal === 'all' && (
-              <span style={{ marginLeft: 4, fontSize: 9, opacity: 0.5 }}>sugerido</span>
-            )}
           </button>
         ))}
       </div>
 
-      {/* Row 2: Diet + Price + Sort */}
+      {/* Row 2: Dish types (multi-select) + filter button */}
       <div className="category-chips" style={{ paddingBottom: 6 }}>
-        {DIETS.map(d => (
-          <button key={d.id}
-            className={`category-chip ${filters.diet === d.id ? 'active' : ''}`}
-            onClick={() => onChange({ ...filters, diet: d.id })}>
-            {d.label}
+        {DISH_TYPES.map(t => (
+          <button key={t.id}
+            className={`category-chip ${filters.dishTypes.has(t.id) ? 'active' : ''}`}
+            onClick={() => toggleDishType(t.id)}>
+            {t.label}
           </button>
         ))}
-        <span style={{ width: 1, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flexShrink: 0 }} />
-        {PRICES.map((p, i) => (
-          <button key={i}
-            className={`category-chip ${filters.priceMax === p.max ? 'active' : ''}`}
-            onClick={() => onChange({ ...filters, priceMax: p.max })}>
-            {p.label}
-          </button>
-        ))}
-        <span style={{ width: 1, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flexShrink: 0 }} />
-        {SORTS.map(s => (
-          <button key={s.id}
-            className={`category-chip ${filters.sort === s.id ? 'active' : ''}`}
-            onClick={() => onChange({ ...filters, sort: s.id })}>
-            {s.label}
-          </button>
-        ))}
+
+        {/* More filters button */}
+        <button
+          onClick={() => setShowMore(!showMore)}
+          style={{
+            padding: '8px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+            whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+            background: showMore || activeSecondaryCount > 0 ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
+            color: showMore || activeSecondaryCount > 0 ? '#000' : 'rgba(255,255,255,0.55)',
+            display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+          }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+            <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+            <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+          </svg>
+          Filtros
+          {activeSecondaryCount > 0 && (
+            <span style={{
+              background: '#000', color: 'var(--feed-amber)',
+              fontSize: 10, fontWeight: 700, width: 16, height: 16,
+              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {activeSecondaryCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Secondary filters panel */}
+      {showMore && (
+        <div style={{
+          margin: '0 12px 8px', padding: 16, borderRadius: 14,
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+          animation: 'fadeIn 0.2s ease-out',
+        }}>
+          {/* Diet */}
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Dieta</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {DIETS.map(d => (
+                <button key={d.id}
+                  onClick={() => onChange({ ...filters, diet: d.id })}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
+                    background: filters.diet === d.id ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
+                    color: filters.diet === d.id ? '#000' : 'rgba(255,255,255,0.55)',
+                  }}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price */}
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Precio máximo</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {PRICES.map((p, i) => (
+                <button key={i}
+                  onClick={() => onChange({ ...filters, priceMax: p.max })}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
+                    background: filters.priceMax === p.max ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
+                    color: filters.priceMax === p.max ? '#000' : 'rgba(255,255,255,0.55)',
+                  }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sort */}
+          <div>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Ordenar por</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {SORTS.map(s => (
+                <button key={s.id}
+                  onClick={() => onChange({ ...filters, sort: s.id })}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
+                    background: filters.sort === s.id ? 'var(--feed-amber)' : 'rgba(255,255,255,0.06)',
+                    color: filters.sort === s.id ? '#000' : 'rgba(255,255,255,0.55)',
+                  }}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Clear */}
+          {activeSecondaryCount > 0 && (
+            <button onClick={() => onChange({ ...filters, diet: 'all', priceMax: null, sort: 'relevance' })}
+              style={{
+                marginTop: 12, width: '100%', padding: 10, borderRadius: 10,
+                background: 'none', border: '1px solid rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer',
+              }}>
+              Limpiar filtros secundarios
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 /** Aplica los filtros a un array de platos */
-export function applyFilters(
-  dishes: import('../types').FeedDish[],
-  filters: Filters,
-): import('../types').FeedDish[] {
+export function applyFilters(dishes: FeedDish[], filters: Filters): FeedDish[] {
   let result = dishes
 
-  // Dish type
-  if (filters.dishType !== 'all') {
-    result = result.filter(d => d.categoriaTipo === filters.dishType)
+  // Dish types (multi-select)
+  if (filters.dishTypes.size > 0) {
+    result = result.filter(d => filters.dishTypes.has(d.categoriaTipo))
   }
 
   // Meal time
