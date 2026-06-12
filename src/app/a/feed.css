@@ -41,7 +41,7 @@ body:has(.feed-root) {
   border: none;
   border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   transition: transform 0.15s ease;
   cursor: pointer;
 }
@@ -170,8 +170,8 @@ body:has(.feed-root) {
 /* ─── Masonry Grid (manual flex columns, stable on load-more) ── */
 .feed-grid {
   display: flex;
-  gap: 12px;
-  padding: 0 12px 100px;
+  gap: 16px;
+  padding: 0 14px 100px;
 }
 .feed-grid-col {
   flex: 1;
