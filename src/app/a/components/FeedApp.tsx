@@ -17,6 +17,7 @@ import {
 } from '../lib/feed-actions'
 import FeedFilters, { applyFilters, getDefaultFilters, type Filters } from './FeedFilters'
 import MasonryGrid from './MasonryGrid'
+import HomeFeed from './HomeFeed'
 import FeedGrid from './FeedGrid'
 import ExploreGrid from './ExploreGrid'
 import SavedList from './SavedList'
@@ -24,7 +25,7 @@ import ProfileView from './ProfileView'
 import BottomNav from './BottomNav'
 import DishModal from './DishModal'
 
-type Tab = 'feed' | 'explorar' | 'guardados' | 'perfil'
+type Tab = 'inicio' | 'feed' | 'explorar' | 'guardados' | 'perfil'
 
 type UserDiet = {
   isVegan: boolean
@@ -46,7 +47,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
   savedProfile?: SavedProfile
   savedDishes?: { dishId: string; type: string }[]
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>('feed')
+  const [activeTab, setActiveTab] = useState<Tab>('inicio')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [profile, setProfile] = useState<FeedProfile>(() => {
     const base = createEmptyProfile()
@@ -269,8 +270,8 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
 
             {[
               { label: '🏠 Inicio', href: '/a' },
+              { label: '💛 Favoritos', action: () => { setMenuOpen(false); setActiveTab('guardados' as Tab); window.scrollTo(0, 0) } },
               { label: '👤 Mi perfil', action: () => { setMenuOpen(false); setActiveTab('perfil' as Tab); window.scrollTo(0, 0) } },
-              { label: '💾 Guardados', action: () => { setMenuOpen(false); setActiveTab('guardados' as Tab); window.scrollTo(0, 0) } },
             ].map((item, i) => (
               item.href ? (
                 <a key={i} href={item.href} style={{
@@ -293,9 +294,12 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
         </>
       )}
 
-      {/* Filters - only in feed tab */}
+      {/* Filters */}
       {activeTab === 'feed' && (
         <FeedFilters filters={filters} onChange={setFilters} />
+      )}
+      {activeTab === 'inicio' && (
+        <FeedFilters filters={filters} onChange={setFilters} greetingOnly />
       )}
 
 
@@ -316,6 +320,9 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
         </div>
       ) : (
         <>
+          {activeTab === 'inicio' && (
+            <HomeFeed dishes={filteredDishes} profile={profile} userLocation={userLocation} onDishTap={handleDishTap} />
+          )}
           {activeTab === 'feed' && (
             <FeedGrid dishes={filteredDishes} profile={profile} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDwell={handleDishDwell} userLocation={userLocation} />
           )}

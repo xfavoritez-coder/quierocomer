@@ -18,9 +18,9 @@ export default function SavedList({
   if (isEmpty) {
     return (
       <div style={{ padding: '80px 20px 100px', textAlign: 'center' }}>
-        <p style={{ fontSize: 40, marginBottom: 12 }}>💾</p>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: '0 0 6px' }}>No has guardado nada todavía</p>
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>Explora el feed y guarda los platos que te llamen la atención</p>
+        <p style={{ fontSize: 40, marginBottom: 12 }}>❤️</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: '0 0 6px' }}>No tienes favoritos todavía</p>
+        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>Marca platos con el corazón para guardarlos aquí</p>
       </div>
     )
   }

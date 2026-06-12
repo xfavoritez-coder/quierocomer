@@ -194,10 +194,10 @@ export function getRecommendationReason(
     return `Estás explorando ${dish.categoriaNorm.toLowerCase()}`
   }
 
-  // Keyword reason (specific)
+  // Keyword reason — only if score is high enough (means they liked, not just saw)
   const keywords = extractKeywords(dish.nombre, dish.descripcion)
   const topKw = keywords
-    .filter(kw => (profile.keywordScores[kw] ?? 0) >= 8)
+    .filter(kw => (profile.keywordScores[kw] ?? 0) >= 15)
     .sort((a, b) => (profile.keywordScores[b] ?? 0) - (profile.keywordScores[a] ?? 0))
   if (topKw.length > 0) {
     return `Porque te gusta ${topKw[0]}`
@@ -205,9 +205,12 @@ export function getRecommendationReason(
 
   const catScore = profile.categoryScores[dish.categoriaNorm] ?? 0
 
-  // Categoría
-  if (catScore >= 16) {
+  // Categoría — high threshold means real likes, not just views
+  if (catScore >= 25) {
     return `Porque te gusta ${dish.categoriaNorm.toLowerCase()}`
+  }
+  if (catScore >= 12) {
+    return `Basado en lo que has visto`
   }
 
   // Adyacencia

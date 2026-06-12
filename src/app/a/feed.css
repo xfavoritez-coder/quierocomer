@@ -515,5 +515,12 @@ body:has(.feed-root) {
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
+/* Scrollbar hide */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hide scrollbar on all horizontal scroll containers in feed */
+.feed-root div[style*="overflowX"]::-webkit-scrollbar,
+.feed-root div[style*="overflow-x"]::-webkit-scrollbar { display: none; }
+.feed-root div[style*="overflowX"],
+.feed-root div[style*="overflow-x"] { -ms-overflow-style: none; scrollbar-width: none; }

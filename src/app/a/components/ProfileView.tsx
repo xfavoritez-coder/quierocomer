@@ -54,9 +54,18 @@ export default function ProfileView({
 
   const maxScore = topCategories.length > 0 ? topCategories[0][1] : 1
 
+  const JUNK_WORDS = new Set([
+    'salsa', 'salsas', 'blanco', 'blanca', 'negro', 'negra', 'rojo', 'roja', 'verde',
+    'amarillo', 'amarilla', 'dorado', 'dorada', 'base', 'envuelto', 'envuelta',
+    'cubierto', 'cubierta', 'relleno', 'rellena', 'pan', 'masa', 'harina', 'aceite', 'sal',
+    'arroz', 'papas', 'papa', 'queso', 'crema', 'leche', 'huevo', 'huevos',
+    'carne', 'pollo', 'pescado', 'verduras', 'lechuga', 'tomate', 'cebolla',
+    'casa', 'toque', 'punto', 'opcion',
+  ])
+
   const topKeywords = useMemo(() => {
     return Object.entries(profile.keywordScores)
-      .filter(([, score]) => score >= 4)  // only show keywords with real signal
+      .filter(([kw, score]) => score >= 4 && !JUNK_WORDS.has(kw))
       .sort(([, a], [, b]) => b - a)
       .slice(0, 8)
   }, [profile.keywordScores])

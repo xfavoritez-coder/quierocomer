@@ -1,6 +1,6 @@
 'use client'
 
-type Tab = 'feed' | 'explorar' | 'guardados' | 'perfil'
+type Tab = 'inicio' | 'feed' | 'explorar' | 'guardados' | 'perfil'
 
 export default function BottomNav({
   active,
@@ -27,7 +27,8 @@ export default function BottomNav({
         pointerEvents: 'auto',
       }}>
         {([
-          { id: 'feed' as Tab, label: 'Para ti', icon: '🔥' },
+          { id: 'inicio' as Tab, label: 'Inicio', icon: '🏠' },
+          { id: 'feed' as Tab, label: 'Descubrir', icon: '🔥' },
           { id: 'explorar' as Tab, label: 'Explorar', icon: '🧭' },
         ]).map(tab => {
           const isActive = active === tab.id
@@ -44,7 +45,7 @@ export default function BottomNav({
               }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 6, padding: '10px 22px', borderRadius: 14,
+                gap: 6, padding: '10px 18px', borderRadius: 14,
                 background: isActive
                   ? 'linear-gradient(135deg, rgba(244,166,35,0.2), rgba(244,166,35,0.08))'
                   : 'transparent',

@@ -77,7 +77,7 @@ export default function DishModal({
           {/* Sticky close button */}
           <button onClick={onClose} style={{
             position: 'sticky', top: 12, float: 'right', marginRight: 16,
-            width: 34, height: 34, borderRadius: '50%', zIndex: 10,
+            width: 40, height: 40, borderRadius: '50%', zIndex: 10,
             background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             color: 'rgba(255,255,255,0.8)',
@@ -87,7 +87,7 @@ export default function DishModal({
             </svg>
           </button>
 
-          {/* Hero image */}
+          {/* Hero image with action buttons inside */}
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a1a', marginTop: -34 }}>
             {dish.fotoUrl && !imgError ? (
               <img src={dish.fotoUrl} alt={dish.nombre}
@@ -100,31 +100,40 @@ export default function DishModal({
                 </span>
               </div>
             )}
-          </div>
 
-          {/* Actions: thumbs left, heart right */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px 0' }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <ActionBtn icon="thumbUp" label="Me gusta" active={thumbUp} color="#4ade80"
-                onClick={() => { setThumbUp(true); onLike(dish) }} />
-              <ActionBtn icon="thumbDown" label="Paso" active={thumbDown} color="#ef4444"
-                onClick={() => { setThumbDown(true); onPass(dish) }} />
-            </div>
-            <ActionBtn icon="heart" label="Favorito" active={saved} color="#F4A623"
-              onClick={() => { setSaved(!saved); onSave(dish) }} />
           </div>
 
           {/* Content */}
           <div style={{ padding: '16px 20px 0' }}>
-            <h2 style={{
-              fontFamily: 'var(--font-feed-display), serif',
-              fontSize: 22, fontWeight: 700, color: '#fff',
-              margin: '0 0 4px', lineHeight: 1.25,
-            }}>
-              {dish.nombre}
-              {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6 }}>🌱</span>}
-              {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6 }}>🥬</span>}
-            </h2>
+            {/* Name + actions row */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 4 }}>
+              <h2 style={{
+                fontFamily: 'var(--font-feed-display), serif',
+                fontSize: 22, fontWeight: 700, color: '#fff',
+                margin: 0, lineHeight: 1.25, flex: 1, minWidth: 0,
+              }}>
+                {dish.nombre}
+                {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6 }}>🌱</span>}
+                {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6 }}>🥬</span>}
+              </h2>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'flex-start', marginTop: -6 }}>
+                <PhotoBtn active={thumbUp} color="#4ade80" onClick={() => { setThumbUp(true); onLike(dish) }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={thumbUp ? '#4ade80' : 'none'} stroke={thumbUp ? '#4ade80' : '#fff'} strokeWidth="2" strokeLinecap="round">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                  </svg>
+                </PhotoBtn>
+                <PhotoBtn active={thumbDown} color="#ef4444" onClick={() => { setThumbDown(true); onPass(dish) }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={thumbDown ? '#ef4444' : '#fff'} strokeWidth="2" strokeLinecap="round">
+                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+                  </svg>
+                </PhotoBtn>
+                <PhotoBtn active={saved} color="#F4A623" onClick={() => { setSaved(!saved); onSave(dish) }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : '#fff'} strokeWidth="2" strokeLinecap="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                </PhotoBtn>
+              </div>
+            </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               {dish.enOferta && dish.precioDescuento != null ? (
@@ -242,36 +251,19 @@ export default function DishModal({
   )
 }
 
-function ActionBtn({ icon, label, active, color, onClick }: {
-  icon: 'thumbUp' | 'thumbDown' | 'heart'; label: string; active: boolean; color: string; onClick: () => void
+function PhotoBtn({ active, color, onClick, children }: {
+  active: boolean; color: string; onClick: () => void; children: React.ReactNode
 }) {
-  const icons = {
-    thumbUp: <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? color : 'none'} stroke={active ? color : 'currentColor'} strokeWidth="2" strokeLinecap="round">
-      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-    </svg>,
-    thumbDown: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
-    </svg>,
-    heart: <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? color : 'none'} stroke={active ? color : 'currentColor'} strokeWidth="2" strokeLinecap="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>,
-  }
-
   return (
     <button onClick={onClick} style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-      background: 'none', border: 'none', cursor: 'pointer',
-      color: active ? color : 'rgba(255,255,255,0.4)',
+      width: 40, height: 40, borderRadius: '50%',
+      background: active ? `${color}30` : 'rgba(0,0,0,0.45)',
+      backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+      border: active ? `1px solid ${color}50` : '1px solid rgba(255,255,255,0.15)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor: 'pointer', padding: 0, transition: 'all 0.15s',
     }}>
-      <div style={{
-        width: 42, height: 42, borderRadius: '50%',
-        background: active ? `${color}15` : 'rgba(255,255,255,0.05)',
-        border: `1px solid ${active ? `${color}30` : 'rgba(255,255,255,0.08)'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {icons[icon]}
-      </div>
-      <span style={{ fontSize: 10 }}>{label}</span>
+      {children}
     </button>
   )
 }

@@ -54,15 +54,25 @@ const SORTS: { id: SortFilter; label: string }[] = [
 export default function FeedFilters({
   filters,
   onChange,
+  greetingOnly,
 }: {
   filters: Filters
   onChange: (f: Filters) => void
+  greetingOnly?: boolean
 }) {
   const [showMore, setShowMore] = useState(false)
 
   const activeSecondaryCount =
     (filters.priceMax != null ? 1 : 0) +
     (filters.sort !== 'relevance' ? 1 : 0)
+
+  if (greetingOnly) {
+    return (
+      <div style={{ padding: '6px 0 2px' }}>
+        <MealGreeting meal={filters.meal} onChange={m => onChange({ ...filters, meal: m })} />
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: '6px 0 2px' }}>
@@ -172,7 +182,6 @@ function MealGreeting({ meal, onChange }: { meal: MealFilter; onChange: (m: Meal
   }
 
   const options: { id: MealFilter; label: string }[] = [
-    { id: 'all', label: 'Todo el día' },
     { id: 'desayuno', label: 'Desayunos' },
     { id: 'almuerzo_cena', label: 'Almuerzos y cenas' },
   ]
