@@ -45,7 +45,7 @@ export default function OnboardingPage() {
       <div className="onboard-content">
         {/* Logo - compact, app style */}
         <div className="onboard-logo">
-          <span className="onboard-logo-icon">🍽</span>
+          <span className="onboard-logo-icon">💡</span>
           <span className="onboard-logo-text">QuieroComer</span>
         </div>
 
