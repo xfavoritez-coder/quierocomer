@@ -61,6 +61,8 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
     }
     return base
   })
+  const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
+  const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
   const [antojoDishIds, setAntojoDishIds] = useState<Set<string>>(() =>
     new Set(savedDishesFromDB?.filter(s => s.type === 'ANTOJO').map(s => s.dishId) ?? [])
   )
@@ -170,16 +172,22 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
 
   const handleDishDislike = useCallback((dish: FeedDish) => {
     doTrack(dish, 'PASS')
+    setSessionDislikedIds(prev => new Set([...prev, dish.id]))
+    setSessionLikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
     updateTasteAction(dish.id, 'DISLIKE').catch(() => {})
   }, [doTrack])
 
   const handleDishUndo = useCallback((dish: FeedDish) => {
+    setSessionDislikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
+    setSessionLikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
     trackInteraction(dish.id, 'UNDO' as any, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
     updateTasteAction(dish.id, 'UNDO').catch(() => {})
   }, [])
 
   const handleDishLike = useCallback((dish: FeedDish) => {
     doTrack(dish, 'LIKE')
+    setSessionLikedIds(prev => new Set([...prev, dish.id]))
+    setSessionDislikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
     updateTasteAction(dish.id, 'LIKE').catch(() => {})
   }, [doTrack])
 
@@ -390,7 +398,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
             </>
           )}
           {activeTab === 'feed' && (
-            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDislike={handleDishDislike} onDishUndo={handleDishUndo} userLocation={userLocation} />
+            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDislike={handleDishDislike} onDishUndo={handleDishUndo} userLocation={userLocation} likedIds={sessionLikedIds} dislikedIds={sessionDislikedIds} />
           )}
         </>
       )}

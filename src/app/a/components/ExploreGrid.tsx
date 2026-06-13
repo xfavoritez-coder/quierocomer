@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { FeedDish } from '../types'
 import { getDisplayCategories } from '../lib/categories'
+import { extractKeywords } from '../lib/keywords'
 import MasonryGrid from './MasonryGrid'
 
 export default function ExploreGrid({
@@ -12,6 +13,8 @@ export default function ExploreGrid({
   onDishDislike,
   onDishUndo,
   userLocation,
+  likedIds,
+  dislikedIds,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
@@ -19,6 +22,8 @@ export default function ExploreGrid({
   onDishDislike?: (dish: FeedDish) => void
   onDishUndo?: (dish: FeedDish) => void
   userLocation?: { lat: number; lng: number } | null
+  likedIds?: Set<string>
+  dislikedIds?: Set<string>
 }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(20)
@@ -31,12 +36,56 @@ export default function ExploreGrid({
 
   const hasOfertas = useMemo(() => dishes.some(d => d.enOferta), [dishes])
 
+  // Build keyword scores from liked/disliked dishes for real-time re-ranking
+  const liveKeywordScores = useMemo(() => {
+    const scores: Record<string, number> = {}
+    if (!likedIds?.size && !dislikedIds?.size) return scores
+
+    for (const dish of dishes) {
+      const kws = extractKeywords(dish.nombre, dish.descripcion)
+      if (likedIds?.has(dish.id)) {
+        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) + 5
+      }
+      if (dislikedIds?.has(dish.id)) {
+        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) - 8
+      }
+    }
+    return scores
+  }, [dishes, likedIds, dislikedIds])
+
+  // Live-scored feed that reacts to swipes
   const sorted = useMemo(() => {
     let filtered = dishes
     if (activeCategory === 'ofertas') filtered = dishes.filter(d => d.enOferta)
     else if (activeCategory) filtered = dishes.filter(d => d.categoriaNorm === activeCategory)
-    return [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
-  }, [dishes, activeCategory])
+
+    return [...filtered].sort((a, b) => {
+      // Disliked dishes go to the very bottom
+      const aDisliked = dislikedIds?.has(a.id) ? 1 : 0
+      const bDisliked = dislikedIds?.has(b.id) ? 1 : 0
+      if (aDisliked !== bDisliked) return aDisliked - bDisliked
+
+      // Score by keyword overlap with likes/dislikes
+      let aScore = 0
+      let bScore = 0
+
+      const aKws = extractKeywords(a.nombre, a.descripcion)
+      const bKws = extractKeywords(b.nombre, b.descripcion)
+
+      for (const kw of aKws) aScore += (liveKeywordScores[kw] ?? 0)
+      for (const kw of bKws) bScore += (liveKeywordScores[kw] ?? 0)
+
+      // Add base popularity
+      aScore += a.popularityScore * 0.1
+      bScore += b.popularityScore * 0.1
+
+      // Random noise for variety
+      aScore += Math.random() * 2
+      bScore += Math.random() * 2
+
+      return bScore - aScore
+    })
+  }, [dishes, activeCategory, liveKeywordScores, dislikedIds])
 
   useEffect(() => { setVisibleCount(20) }, [activeCategory])
 
