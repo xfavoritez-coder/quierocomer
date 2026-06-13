@@ -70,24 +70,19 @@ export default function DishCard({
     }
   }, [])
 
-  const [flyAway, setFlyAway] = useState<'left' | 'right' | null>(null)
-
   const handleTouchEnd = useCallback(() => {
     if (Math.abs(swipeX) > 80) {
-      const direction = swipeX > 0 ? 'right' : 'left'
-      setFlyAway(direction)
-      // Wait for fly animation then set state
-      setTimeout(() => {
-        if (direction === 'right') {
-          setState('liked')
-          onLike?.(dish)
-        } else {
-          setState('disliked')
-          onDislike?.(dish)
-        }
-        setFlyAway(null)
+      if (swipeX > 0) {
+        // Like: set state immediately, no fly away
+        setState('liked')
         setSwipeX(0)
-      }, 300)
+        onLike?.(dish)
+      } else {
+        // Dislike: set state immediately to B/W
+        setState('disliked')
+        setSwipeX(0)
+        onDislike?.(dish)
+      }
     } else {
       setSwipeX(0)
     }
@@ -144,17 +139,8 @@ export default function DishCard({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        transform: flyAway
-          ? `translateX(${flyAway === 'right' ? 400 : -400}px) rotate(${flyAway === 'right' ? 20 : -20}deg) scale(0.8)`
-          : swipeX !== 0
-            ? `translateX(${swipeX}px) rotate(${swipeX * 0.05}deg)`
-            : undefined,
-        opacity: flyAway ? 0 : 1,
-        transition: flyAway
-          ? 'transform 0.3s ease-out, opacity 0.3s ease-out'
-          : swipeX === 0
-            ? 'transform 0.25s ease'
-            : 'none',
+        transform: swipeX !== 0 ? `translateX(${swipeX}px) rotate(${swipeX * 0.04}deg)` : undefined,
+        transition: swipeX === 0 ? 'transform 0.2s ease' : 'none',
         position: 'relative',
       }}
     >
