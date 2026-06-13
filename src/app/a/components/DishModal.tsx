@@ -74,21 +74,20 @@ export default function DishModal({
       <div className="dish-modal" ref={modalRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative' }}>
 
-          {/* Sticky close button */}
-          <button onClick={onClose} style={{
-            position: 'sticky', top: 12, float: 'right', marginRight: 16,
-            width: 40, height: 40, borderRadius: '50%', zIndex: 10,
-            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            color: 'rgba(255,255,255,0.8)',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-
-          {/* Hero image with action buttons inside */}
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a1a', marginTop: -34 }}>
+          {/* Hero image */}
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a1a' }}>
+            {/* Close button inside photo */}
+            <button onClick={onClose} style={{
+              position: 'absolute', top: 12, right: 12, zIndex: 10,
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.8)',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
             {dish.fotoUrl && !imgError ? (
               <img src={dish.fotoUrl} alt={dish.nombre}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
