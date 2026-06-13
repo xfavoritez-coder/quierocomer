@@ -58,43 +58,90 @@ export default function ExploreGrid({
     return scores
   }, [dishes, likedIds, dislikedIds, savedKeywordScores])
 
-  // Live-scored feed that reacts to swipes
+  // Feed con mezcla 70/15/15: scored + popular + discovery
   const sorted = useMemo(() => {
     let filtered = dishes
     if (activeCategory === 'ofertas') filtered = dishes.filter(d => d.enOferta)
     else if (activeCategory) filtered = dishes.filter(d => d.categoriaNorm === activeCategory)
 
-    return [...filtered].sort((a, b) => {
-      // Disliked dishes go to the very bottom
-      const aDisliked = dislikedIds?.has(a.id) ? 1 : 0
-      const bDisliked = dislikedIds?.has(b.id) ? 1 : 0
-      if (aDisliked !== bDisliked) return aDisliked - bDisliked
+    // Remove disliked
+    filtered = filtered.filter(d => !dislikedIds?.has(d.id))
 
-      let aScore = 0
-      let bScore = 0
-
-      // Category score from saved profile
+    // Score each dish
+    const scored = filtered.map(d => {
+      let score = 0
       const catScores = savedCategoryScores ?? {}
-      aScore += (catScores[a.categoriaNorm] ?? 0) * 0.3
-      bScore += (catScores[b.categoriaNorm] ?? 0) * 0.3
+      // Category (capped to avoid domination)
+      score += Math.min((catScores[d.categoriaNorm] ?? 0) * 0.2, 8)
 
-      // Keyword overlap with profile + session
-      const aKws = extractKeywords(a.nombre, a.descripcion)
-      const bKws = extractKeywords(b.nombre, b.descripcion)
+      // Keywords (capped)
+      const kws = extractKeywords(d.nombre, d.descripcion)
+      let kwTotal = 0
+      for (const kw of kws) kwTotal += (mergedKeywordScores[kw] ?? 0)
+      score += Math.min(kwTotal, 10) // cap keyword influence
 
-      for (const kw of aKws) aScore += (mergedKeywordScores[kw] ?? 0)
-      for (const kw of bKws) bScore += (mergedKeywordScores[kw] ?? 0)
-
-      // Base popularity (low weight)
-      aScore += a.popularityScore * 0.05
-      bScore += b.popularityScore * 0.05
-
-      // Random noise for variety
-      aScore += Math.random() * 3
-      bScore += Math.random() * 3
-
-      return bScore - aScore
+      return { dish: d, score }
     })
+
+    // Sort by score
+    scored.sort((a, b) => b.score - a.score)
+
+    // Build 70/15/15 mix
+    const total = scored.length
+    const scoredCount = Math.ceil(total * 0.7)
+    const popularCount = Math.ceil(total * 0.15)
+
+    // Top 70% by taste score
+    const topScored = scored.slice(0, scoredCount)
+
+    // 15% most popular (that aren't in top scored)
+    const topScoredIds = new Set(topScored.map(s => s.dish.id))
+    const popular = scored
+      .filter(s => !topScoredIds.has(s.dish.id))
+      .sort((a, b) => b.dish.popularityScore - a.dish.popularityScore)
+      .slice(0, popularCount)
+
+    // 15% random discovery (everything else)
+    const usedIds = new Set([...topScoredIds, ...popular.map(p => p.dish.id)])
+    const discovery = scored
+      .filter(s => !usedIds.has(s.dish.id))
+      .sort(() => Math.random() - 0.5)
+
+    // Interleave: every ~5 scored dishes, insert 1 popular and 1 discovery
+    const result: FeedDish[] = []
+    let sIdx = 0, pIdx = 0, dIdx = 0
+
+    for (let i = 0; i < total; i++) {
+      if (i % 7 === 5 && pIdx < popular.length) {
+        result.push(popular[pIdx++].dish)
+      } else if (i % 7 === 6 && dIdx < discovery.length) {
+        result.push(discovery[dIdx++].dish)
+      } else if (sIdx < topScored.length) {
+        result.push(topScored[sIdx++].dish)
+      } else if (pIdx < popular.length) {
+        result.push(popular[pIdx++].dish)
+      } else if (dIdx < discovery.length) {
+        result.push(discovery[dIdx++].dish)
+      }
+    }
+
+    // Ensure no more than 3 consecutive same category
+    const final: FeedDish[] = []
+    const remaining = [...result]
+    while (remaining.length > 0) {
+      const recent = final.slice(-3).map(d => d.categoriaNorm)
+      const allSame = recent.length === 3 && recent.every(c => c === recent[0])
+      if (allSame) {
+        const diffIdx = remaining.findIndex(d => d.categoriaNorm !== recent[0])
+        if (diffIdx >= 0) {
+          final.push(remaining.splice(diffIdx, 1)[0])
+          continue
+        }
+      }
+      final.push(remaining.shift()!)
+    }
+
+    return final
   }, [dishes, activeCategory, mergedKeywordScores, dislikedIds, savedCategoryScores])
 
   useEffect(() => { setVisibleCount(20) }, [activeCategory])

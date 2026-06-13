@@ -46,6 +46,7 @@ const STOPWORDS = new Set([
   'plato', 'porcion', 'servicio', 'preparacion',
   'opcion', 'alternativa', 'disponible',
   'pequeño', 'pequena', 'mediana', 'grande', 'extra',
+  'coronado', 'coronada', 'especial', 'original', 'clasico', 'clasica',
 ])
 
 /** Normalize: lowercase + remove accents */
