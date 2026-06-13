@@ -35,8 +35,17 @@ export default function DishModal({
   const [saved, setSaved] = useState(false)
   const [userRating, setUserRating] = useState(0)
   const [showLocalFicha, setShowLocalFicha] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [commentSent, setCommentSent] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const gradient = getCategoryGradient(dish.categoriaNorm)
+
+  // Deterministic fake rating per dish
+  let fakeSeed = 0
+  for (let i = 0; i < dish.id.length; i++) fakeSeed = (fakeSeed * 31 + dish.id.charCodeAt(i)) & 0xffff
+  const fakeRating = dish.avgRating ?? Number(((fakeSeed % 10) * 0.1 + 4.0).toFixed(1))
+  const fakeCount = dish.ratingCount || (fakeSeed % 80 + 15)
+  const displayRating = userRating > 0 ? userRating : fakeRating
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'

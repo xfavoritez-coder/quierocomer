@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { FeedDish } from '../types'
 import { getDisplayCategories } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
@@ -34,6 +34,18 @@ export default function NewHome({
   const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
   const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
+  const [visibleCount, setVisibleCount] = useState(20)
+
+  // Infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800 && visibleCount < feedDishes.length) {
+        setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [visibleCount, feedDishes.length])
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -264,7 +276,7 @@ export default function NewHome({
 
       {/* Feed masonry */}
       <MasonryGrid
-        dishes={feedDishes.slice(0, 30)}
+        dishes={feedDishes.slice(0, visibleCount)}
         onDishTap={(d) => setSelectedDish(d)}
         onDishLike={handleLike}
         onDishDislike={handleDislike}
