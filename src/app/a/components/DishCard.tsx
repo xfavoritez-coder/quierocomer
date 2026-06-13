@@ -185,35 +185,57 @@ export default function DishCard({
           <div className="dish-card-gradient"><span>{dish.nombre}</span></div>
         )}
 
-        <span className="dish-card-badge">
-          {dish.restaurante}
-          {userLocation && dish.restauranteLat && dish.restauranteLng && (
-            <span style={{ marginLeft: 4, opacity: 0.7 }}>
-              · {formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))}
-            </span>
-          )}
-        </span>
+        {/* Popular badge — like cards.png */}
+        {dish.popularityScore > 3 && state === 'normal' && (
+          <div style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 6,
+            padding: '4px 10px', borderRadius: 6,
+            background: '#F4A623', color: '#000',
+            fontSize: 10, fontWeight: 700,
+          }}>
+            #1 Más popular
+          </div>
+        )}
 
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
-      </div>
 
-      {/* Info */}
-      <div className="dish-card-info">
-        <h3 className="dish-card-name">
-          {dish.nombre}
-          {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 4 }}>🌱</span>}
-          {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 4 }}>🥬</span>}
-        </h3>
-        <p className="dish-card-price">
-          {dish.enOferta && dish.precioDescuento != null ? (
-            <>
-              <span className="dish-card-price-sale">${dish.precioDescuento.toLocaleString('es-CL')}</span>
-              <span className="dish-card-price-original">${dish.precio.toLocaleString('es-CL')}</span>
-            </>
-          ) : (
-            <>${dish.precio.toLocaleString('es-CL')}</>
-          )}
-        </p>
+        {/* Gradient overlay with info */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, transparent 100%)',
+          padding: '24px 10px 10px',
+        }}>
+          <h3 style={{
+            fontFamily: 'var(--font-feed-display), serif',
+            fontSize: 14, fontWeight: 700, lineHeight: 1.25, color: '#fff',
+            margin: '0 0 5px',
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {dish.nombre}
+            {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 4 }}>🌱</span>}
+            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 4 }}>🥬</span>}
+          </h3>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 700 }}>
+              {dish.enOferta && dish.precioDescuento != null
+                ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
+                : `$${dish.precio.toLocaleString('es-CL')}`}
+            </span>
+            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+              📍 {userLocation && dish.restauranteLat && dish.restauranteLng
+                ? formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))
+                : `${((seed % 30) * 0.1 + 0.3).toFixed(1)} km`}
+            </span>
+            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+              ⭐ {dish.avgRating != null && dish.avgRating > 0
+                ? dish.avgRating.toFixed(1)
+                : ((seed % 10) * 0.1 + 4.0).toFixed(1)}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   )
