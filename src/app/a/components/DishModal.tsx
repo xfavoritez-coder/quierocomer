@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
-import { keywordAffinity } from '../lib/keywords'
+import { extractKeywords, keywordAffinity } from '../lib/keywords'
 import type { FeedProfile } from '../lib/scoring'
 
 export default function DishModal({
