@@ -166,6 +166,22 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
     })
   }, [])
 
+  const handleDishDislike = useCallback((dish: FeedDish) => {
+    doTrack(dish, 'PASS')
+    // Update taste engine (fire and forget)
+    import('../lib/taste-engine').then(({ updateTaste }) => {
+      const cookieVal = document.cookie.split('; ').find(c => c.startsWith('qc_feed_user='))?.split('=')[1]
+      if (cookieVal) {
+        // We need the user ID, not fingerprint. For now use trackInteraction which handles it.
+      }
+    }).catch(() => {})
+  }, [doTrack])
+
+  const handleDishUndo = useCallback((dish: FeedDish) => {
+    // Track undo
+    trackInteraction(dish.id, 'UNDO' as any, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
+  }, [])
+
   const handleDishLike = useCallback((dish: FeedDish) => {
     doTrack(dish, 'LIKE')
   }, [doTrack])
@@ -375,7 +391,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
             </>
           )}
           {activeTab === 'feed' && (
-            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} userLocation={userLocation} />
+            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDislike={handleDishDislike} onDishUndo={handleDishUndo} userLocation={userLocation} />
           )}
         </>
       )}

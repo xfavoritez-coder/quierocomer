@@ -9,11 +9,15 @@ export default function ExploreGrid({
   dishes,
   onDishTap,
   onDishLike,
+  onDishDislike,
+  onDishUndo,
   userLocation,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
   onDishLike?: (dish: FeedDish) => void
+  onDishDislike?: (dish: FeedDish) => void
+  onDishUndo?: (dish: FeedDish) => void
   userLocation?: { lat: number; lng: number } | null
 }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -78,7 +82,7 @@ export default function ExploreGrid({
       </div>
 
       {sorted.length > 0 ? (
-        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onDishLike={onDishLike} userLocation={userLocation} />
+        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onDishLike={onDishLike} onDishDislike={onDishDislike} onDishUndo={onDishUndo} userLocation={userLocation} />
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
           No hay platos en esta categoría
