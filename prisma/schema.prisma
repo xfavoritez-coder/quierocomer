@@ -804,7 +804,14 @@ model Dish {
   suggestedBy         DishSuggestion[]       @relation("SuggestionTo")
   badgeSnapshots      BadgeSnapshot[]
 
-  // Feed B2C (/a)
+  // Feed B2C (/a) — embeddings
+  embedding           Unsupported("vector(1536)")?   // text embedding (OpenAI text-embedding-3-small)
+  imageEmbedding      Unsupported("vector(512)")?    // image embedding (CLIP ViT-B/32)
+  embeddingText       String?                         // source text used to generate text embedding
+  embeddingHash       String?                         // hash of embeddingText to detect changes
+  imageEmbeddingHash  String?                         // hash of photo URL to detect changes
+
+  // Feed B2C (/a) — relations
   feedInteractions    FeedInteraction[]
   feedSaved           FeedSaved[]
   feedRatings         FeedRating[]
@@ -2018,6 +2025,15 @@ model FeedUser {
   priceMin          Float?                        // rango de precio aprendido (percentil 20)
   priceMax          Float?                        // rango de precio aprendido (percentil 80)
 
+  // Gusto de fondo — últimos N embeddings de platos likeados (para clusters)
+  tasteEmbeddings   Json     @default("[]")      // [{dishId, embedding: number[], action, at}] max 50
+  gustoVector       Unsupported("vector(1536)")? // vector promedio de gusto (cached)
+
+  // Antojo de hoy — se resetea cada día
+  antojoSessionDate String?                      // "2026-06-13" — fecha del antojo actual
+  antojoDishIds     Json     @default("[]")      // dishIds likeados hoy
+  antojoRejectIds   Json     @default("[]")      // dishIds rechazados hoy
+
   // Estado
   totalInteractions Int      @default(0)
   onboardingDone    Boolean  @default(false)
@@ -2034,31 +2050,39 @@ model FeedUser {
 }
 
 model FeedInteraction {
-  id          String     @id @default(cuid())
-  feedUserId  String
-  dishId      String
-  action      FeedAction
-  dwellMs     Int?                               // para VIEW: ms que el plato fue visible
-  category    String?                            // snapshot de categoría normalizada
-  price       Float?                             // snapshot del precio (para aprender rango)
-  createdAt   DateTime   @default(now())
+  id            String     @id @default(cuid())
+  feedUserId    String
+  dishId        String
+  action        FeedAction
+  dwellMs       Int?                               // para VIEW: ms que el plato fue visible
+  category      String?                            // snapshot de categoría normalizada
+  price         Float?                             // snapshot del precio (para aprender rango)
+  source        String?                            // "FEED" | "DETAIL" | "SEARCH" | "HOME"
+  feedPosition  Int?                               // posición en el grid cuando se interactuó
+  sessionId     String?                            // session UUID (para agrupar acciones por visita)
+  createdAt     DateTime   @default(now())
 
-  feedUser    FeedUser   @relation(fields: [feedUserId], references: [id])
-  dish        Dish       @relation(fields: [dishId], references: [id])
+  feedUser      FeedUser   @relation(fields: [feedUserId], references: [id])
+  dish          Dish       @relation(fields: [dishId], references: [id])
 
   @@index([feedUserId, createdAt])
   @@index([dishId])
   @@index([action, createdAt])
+  @@index([sessionId])
 }
 
 enum FeedAction {
   VIEW
   TAP
   LIKE
+  DISLIKE
   SAVE
   ANTOJO
   PASS
   SCROLL_BACK
+  FAVORITE
+  UNFAVORITE
+  UNDO
 }
 
 model FeedSaved {
