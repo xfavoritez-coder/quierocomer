@@ -37,17 +37,6 @@ export default function NewHome({
   const [menuOpen, setMenuOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(20)
 
-  // Infinite scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800 && visibleCount < feedDishes.length) {
-        setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
-      }
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [visibleCount, feedDishes.length])
-
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(pos => {
@@ -157,6 +146,17 @@ export default function NewHome({
     }
     return final
   }, [dishes, activeDishType, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds])
+
+  // Infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800 && visibleCount < feedDishes.length) {
+        setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [visibleCount, feedDishes.length])
 
   const handleLike = useCallback((dish: FeedDish) => {
     setSessionLikedIds(prev => new Set([...prev, dish.id]))
