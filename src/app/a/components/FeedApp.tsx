@@ -43,10 +43,19 @@ type SavedProfile = {
   totalInteractions: number
 }
 
-export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: savedDishesFromDB }: {
+type TasteData = {
+  antojoSessionDate: string | null
+  antojoDishIds: string[]
+  antojoRejectIds: string[]
+  tasteEmbeddingsCount: number
+  hasGustoVector: boolean
+}
+
+export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, savedDishes: savedDishesFromDB }: {
   dishes: FeedDish[]
   userDiet: UserDiet
   savedProfile?: SavedProfile
+  tasteData?: TasteData
   savedDishes?: { dishId: string; type: string }[]
 }) {
   const [activeTab, setActiveTab] = useState<Tab>('feed')
@@ -408,7 +417,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
       )}
 
       {activeTab === 'perfil' && (
-        <ProfileView profile={profile} diet={diet} onReset={handleResetProfile} onUpdateDiet={handleUpdateDiet} />
+        <ProfileView profile={profile} diet={diet} tasteData={tasteData} dishes={dishes} onReset={handleResetProfile} onUpdateDiet={handleUpdateDiet} />
       )}
 
       {/* Modal */}

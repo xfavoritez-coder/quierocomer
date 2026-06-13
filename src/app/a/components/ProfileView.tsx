@@ -2,12 +2,21 @@
 
 import { useMemo, useState } from 'react'
 import type { FeedProfile } from '../lib/scoring'
+import type { FeedDish } from '../types'
 
 type UserDiet = {
   isVegan: boolean
   isVegetarian: boolean
   isGlutenFree: boolean
   isLactoseFree: boolean
+}
+
+type TasteData = {
+  antojoSessionDate: string | null
+  antojoDishIds: string[]
+  antojoRejectIds: string[]
+  tasteEmbeddingsCount: number
+  hasGustoVector: boolean
 }
 
 type DietOption = 'all' | 'isVegan' | 'isVegetarian' | 'isGlutenFree'
@@ -19,14 +28,32 @@ const DIET_OPTIONS: { id: DietOption; label: string; emoji: string }[] = [
   { id: 'isGlutenFree', label: 'Sin gluten', emoji: '🌾' },
 ]
 
+const GENERIC_CATEGORIES = new Set([
+  'Platos de fondo', 'Desayunos', 'Cafetería', 'Postres', 'Combos',
+  'Acompañamientos', 'Extras', 'Entradas',
+])
+
+const JUNK_WORDS = new Set([
+  'salsa', 'salsas', 'blanco', 'blanca', 'negro', 'negra', 'rojo', 'roja', 'verde',
+  'amarillo', 'amarilla', 'dorado', 'dorada', 'base', 'envuelto', 'envuelta',
+  'cubierto', 'cubierta', 'relleno', 'rellena', 'pan', 'masa', 'harina', 'aceite', 'sal',
+  'arroz', 'papas', 'papa', 'queso', 'crema', 'leche', 'huevo', 'huevos',
+  'carne', 'pollo', 'pescado', 'verduras', 'lechuga', 'tomate', 'cebolla',
+  'casa', 'toque', 'punto', 'opcion',
+])
+
 export default function ProfileView({
   profile,
   diet,
+  tasteData,
+  dishes,
   onReset,
   onUpdateDiet,
 }: {
   profile: FeedProfile
   diet: UserDiet
+  tasteData?: TasteData
+  dishes: FeedDish[]
   onReset: () => void
   onUpdateDiet: (d: UserDiet) => void
 }) {
@@ -39,46 +66,33 @@ export default function ProfileView({
   }
   const [tempOption, setTempOption] = useState<DietOption>(dietToOption(diet))
 
-  // Categories that are too generic to show as "favorites"
-  const GENERIC_CATEGORIES = new Set([
-    'Platos de fondo', 'Desayunos', 'Cafetería', 'Postres', 'Combos',
-    'Acompañamientos', 'Extras', 'Entradas',
-  ])
-
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
       .filter(([cat, score]) => score > 0 && !GENERIC_CATEGORIES.has(cat))
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 8)
+      .slice(0, 6)
   }, [profile.categoryScores])
 
-  const maxScore = topCategories.length > 0 ? topCategories[0][1] : 1
-
-  const JUNK_WORDS = new Set([
-    'salsa', 'salsas', 'blanco', 'blanca', 'negro', 'negra', 'rojo', 'roja', 'verde',
-    'amarillo', 'amarilla', 'dorado', 'dorada', 'base', 'envuelto', 'envuelta',
-    'cubierto', 'cubierta', 'relleno', 'rellena', 'pan', 'masa', 'harina', 'aceite', 'sal',
-    'arroz', 'papas', 'papa', 'queso', 'crema', 'leche', 'huevo', 'huevos',
-    'carne', 'pollo', 'pescado', 'verduras', 'lechuga', 'tomate', 'cebolla',
-    'casa', 'toque', 'punto', 'opcion',
-  ])
+  const maxCatScore = topCategories.length > 0 ? topCategories[0][1] : 1
 
   const topKeywords = useMemo(() => {
     return Object.entries(profile.keywordScores)
       .filter(([kw, score]) => score >= 4 && !JUNK_WORDS.has(kw))
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 8)
+      .slice(0, 6)
   }, [profile.keywordScores])
 
-  const totalLikes = profile.likedDishIds.size
-  const totalSeen = profile.seenDishIds.size
-  const totalPassed = profile.passedDishIds.size
+  const maxKwScore = topKeywords.length > 0 ? topKeywords[0][1] : 1
 
-  const priceRange = useMemo(() => {
-    if (profile.prices.length < 5) return null
-    const sorted = [...profile.prices].sort((a, b) => a - b)
-    return { min: sorted[Math.floor(sorted.length * 0.2)], max: sorted[Math.floor(sorted.length * 0.8)] }
-  }, [profile.prices])
+  // Antojo dishes (liked today)
+  const antojoDishes = useMemo(() => {
+    if (!tasteData?.antojoDishIds?.length) return []
+    const today = new Date().toISOString().slice(0, 10)
+    if (tasteData.antojoSessionDate !== today) return []
+    return tasteData.antojoDishIds
+      .map(id => dishes.find(d => d.id === id))
+      .filter(Boolean) as FeedDish[]
+  }, [tasteData, dishes])
 
   const currentOption = dietToOption(diet)
   const currentLabel = DIET_OPTIONS.find(o => o.id === currentOption)
@@ -94,28 +108,149 @@ export default function ProfileView({
     setEditingDiet(false)
   }
 
+  // Engine status
+  const engineLevel = !tasteData ? 0
+    : !tasteData.hasGustoVector ? 1
+    : tasteData.tasteEmbeddingsCount < 10 ? 2
+    : tasteData.tasteEmbeddingsCount < 30 ? 3
+    : 4
+
+  const engineLabels = ['Sin datos', 'Iniciando', 'Aprendiendo', 'Conociéndote', 'Te conoce bien']
+  const engineColors = ['rgba(255,255,255,0.2)', '#ef4444', '#f59e0b', '#F4A623', '#4ade80']
+
   return (
     <div style={{ padding: '8px 16px 100px' }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>
-          Tu perfil gastronómico
-        </h2>
-        {profile.totalInteractions > 0 && (
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>
-            Basado en {profile.totalInteractions} interacciones
-          </p>
-        )}
+      {/* Engine status */}
+      <div style={{
+        padding: '16px', borderRadius: 16, marginBottom: 20,
+        background: 'linear-gradient(135deg, rgba(244,166,35,0.08), rgba(244,166,35,0.02))',
+        border: '1px solid rgba(244,166,35,0.1)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 20 }}>🧠</span>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>Motor de gustos</p>
+              <p style={{ fontSize: 11, color: engineColors[engineLevel], margin: '2px 0 0', fontWeight: 500 }}>
+                {engineLabels[engineLevel]}
+              </p>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: '#F4A623', margin: 0 }}>
+              {profile.totalInteractions}
+            </p>
+            <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: 0 }}>interacciones</p>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%', borderRadius: 2,
+            background: `linear-gradient(90deg, ${engineColors[engineLevel]}, #F4A623)`,
+            width: `${Math.min((engineLevel / 4) * 100, 100)}%`,
+            transition: 'width 0.5s ease',
+          }} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
+            {tasteData?.tasteEmbeddingsCount ?? 0} platos aprendidos
+          </span>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
+            {tasteData?.hasGustoVector ? '✓ Vector activo' : 'Sin vector aún'}
+          </span>
+        </div>
       </div>
 
-      {/* Diet restrictions */}
+      {/* Antojo de hoy */}
+      {antojoDishes.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>🤤</span> Hoy te antojaste
+          </h3>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+            {antojoDishes.map(d => (
+              <div key={d.id} style={{
+                flexShrink: 0, width: 90, borderRadius: 10, overflow: 'hidden',
+                background: 'rgba(255,255,255,0.04)',
+              }}>
+                {d.fotoUrl && <img src={d.fotoUrl} alt="" style={{ width: 90, height: 65, objectFit: 'cover', display: 'block' }} />}
+                <p style={{ fontSize: 10, fontWeight: 500, color: '#fff', margin: 0, padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {d.nombre}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top categories */}
+      {topCategories.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>
+            Categorías que te gustan
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {topCategories.map(([cat, score]) => (
+              <div key={cat}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                  <span style={{ fontSize: 13, color: '#fff' }}>{cat}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{score}</span>
+                </div>
+                <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', background: '#F4A623', borderRadius: 3,
+                    width: `${(score / maxCatScore) * 100}%`, transition: 'width 0.5s ease',
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Keywords / flavors */}
+      {topKeywords.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>
+            Sabores e ingredientes
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {topKeywords.map(([kw, score]) => (
+              <div key={kw}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                  <span style={{ fontSize: 13, color: '#F4A623' }}>{kw}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{score}</span>
+                </div>
+                <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', background: 'linear-gradient(90deg, #F4A623, #f59e0b)', borderRadius: 3,
+                    width: `${(score / maxKwScore) * 100}%`, transition: 'width 0.5s ease',
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
+        <StatCard value={profile.seenDishIds.size || profile.totalInteractions} label="Vistos" icon="👁" />
+        <StatCard value={profile.likedDishIds.size} label="Likes" icon="👍" />
+        <StatCard value={tasteData?.antojoRejectIds?.length ?? 0} label="Rechazados hoy" icon="👎" />
+      </div>
+
+      {/* Diet */}
       <div style={{
         background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 14, padding: 16, marginBottom: 20,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-            Restricciones alimentarias
+            Restricciones
           </h3>
           <button onClick={() => { setTempOption(dietToOption(diet)); setEditingDiet(!editingDiet) }} style={{
             background: 'none', border: 'none', color: '#F4A623', fontSize: 13, cursor: 'pointer', fontWeight: 600,
@@ -134,13 +269,12 @@ export default function ProfileView({
               {DIET_OPTIONS.map(o => {
                 const active = tempOption === o.id
                 return (
-                  <button key={o.id} onClick={() => setTempOption(o.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                      borderRadius: 10, border: `1px solid ${active ? 'rgba(244,166,35,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                      background: active ? 'rgba(244,166,35,0.08)' : 'transparent',
-                      cursor: 'pointer', width: '100%', textAlign: 'left',
-                    }}>
+                  <button key={o.id} onClick={() => setTempOption(o.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                    borderRadius: 10, border: `1px solid ${active ? 'rgba(244,166,35,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                    background: active ? 'rgba(244,166,35,0.08)' : 'transparent',
+                    cursor: 'pointer', width: '100%', textAlign: 'left',
+                  }}>
                     <span style={{ fontSize: 20 }}>{o.emoji}</span>
                     <span style={{ fontSize: 14, color: active ? '#F4A623' : '#fff', fontWeight: active ? 600 : 400 }}>
                       {o.label}
@@ -154,121 +288,36 @@ export default function ProfileView({
               background: '#F4A623', color: '#000', fontWeight: 700, fontSize: 14,
               border: 'none', cursor: 'pointer',
             }}>
-              Guardar cambios
+              Guardar
             </button>
           </div>
         )}
       </div>
 
-      {/* Stats */}
-      {profile.totalInteractions > 0 && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
-            <StatCard value={totalSeen} label="Platos vistos" color="#F4A623" />
-            <StatCard value={totalLikes} label="Me gusta" color="#F4A623" />
-            <StatCard value={totalPassed} label="Pasados" color="rgba(255,255,255,0.5)" />
-          </div>
-
-          {/* Top categories */}
-          {topCategories.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>
-                Categorías favoritas
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {topCategories.map(([category, score]) => (
-                  <div key={category}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, color: '#fff' }}>{category}</span>
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>{score}</span>
-                    </div>
-                    <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', background: '#F4A623', borderRadius: 3,
-                        width: `${(score / maxScore) * 100}%`, transition: 'width 0.5s ease',
-                      }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Keywords with ranking bars */}
-          {topKeywords.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 14px' }}>
-                Porque viste
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {topKeywords.map(([kw, score]) => {
-                  const maxKw = topKeywords[0][1]
-                  return (
-                    <div key={kw}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                        <span style={{ fontSize: 13, color: '#F4A623' }}>{kw}</span>
-                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{score}</span>
-                      </div>
-                      <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', background: '#F4A623', borderRadius: 3,
-                          width: `${(score / maxKw) * 100}%`, transition: 'width 0.5s ease',
-                        }} />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Price range */}
-          {priceRange && (
-            <div style={{
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14, padding: 16, marginBottom: 24,
-            }}>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 4px' }}>Tu rango de precio</h3>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#F4A623', margin: 0 }}>
-                ${priceRange.min.toLocaleString('es-CL')} — ${priceRange.max.toLocaleString('es-CL')}
-              </p>
-            </div>
-          )}
-
-          {/* Reset */}
-          <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <button onClick={onReset} style={{
-              width: '100%', padding: 14, borderRadius: 12,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.4)', fontSize: 14, cursor: 'pointer',
-            }}>
-              Resetear gustos
-            </button>
-            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: 10, marginTop: 8 }}>
-              Esto borrará tu perfil y el feed volverá a ser diverso
-            </p>
-          </div>
-        </>
-      )}
-
-      {profile.totalInteractions === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <p style={{ fontSize: 32, marginBottom: 12 }}>🍽</p>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Explora el feed para empezar a construir tu perfil</p>
-        </div>
-      )}
+      {/* Reset */}
+      <button onClick={onReset} style={{
+        width: '100%', padding: 14, borderRadius: 12,
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+        color: 'rgba(255,255,255,0.3)', fontSize: 13, cursor: 'pointer',
+      }}>
+        Reiniciar motor de gustos
+      </button>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.12)', fontSize: 10, marginTop: 6 }}>
+        Borra todo lo aprendido y el feed vuelve a ser genérico
+      </p>
     </div>
   )
 }
 
-function StatCard({ value, label, color }: { value: number; label: string; color: string }) {
+function StatCard({ value, label, icon }: { value: number; label: string; icon: string }) {
   return (
     <div style={{
       background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14, padding: '14px 8px', textAlign: 'center',
+      borderRadius: 12, padding: '12px 8px', textAlign: 'center',
     }}>
-      <p style={{ fontSize: 20, fontWeight: 700, color, margin: '0 0 2px' }}>{value}</p>
-      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 14, margin: '0 0 2px' }}>{icon}</p>
+      <p style={{ fontSize: 18, fontWeight: 700, color: '#F4A623', margin: '0 0 1px' }}>{value}</p>
+      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{label}</p>
     </div>
   )
 }

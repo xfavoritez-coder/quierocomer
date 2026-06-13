@@ -24,6 +24,10 @@ export default async function FeedPage() {
       restaurantScores: true,
       keywordScores: true,
       totalInteractions: true,
+      antojoSessionDate: true,
+      antojoDishIds: true,
+      antojoRejectIds: true,
+      tasteEmbeddings: true,
       savedDishes: {
         select: { dishId: true, type: true },
       },
@@ -33,6 +37,13 @@ export default async function FeedPage() {
   if (!user || !user.onboardingDone) {
     redirect('/a/onboarding')
   }
+
+  // Check if user has gustoVector (pgvector, can't query via Prisma)
+  const gustoResult = await prisma.$queryRawUnsafe<{ has: boolean }[]>(
+    `SELECT "gustoVector" IS NOT NULL as has FROM "FeedUser" WHERE fingerprint = $1`,
+    fingerprint,
+  ).catch(() => [{ has: false }])
+  const hasGustoVector = gustoResult[0]?.has ?? false
 
   prisma.feedUser.update({
     where: { fingerprint },
@@ -55,6 +66,13 @@ export default async function FeedPage() {
         restaurantScores: (user.restaurantScores as Record<string, number>) ?? {},
         keywordScores: (user.keywordScores as Record<string, number>) ?? {},
         totalInteractions: user.totalInteractions,
+      }}
+      tasteData={{
+        antojoSessionDate: user.antojoSessionDate,
+        antojoDishIds: (user.antojoDishIds as string[]) ?? [],
+        antojoRejectIds: (user.antojoRejectIds as string[]) ?? [],
+        tasteEmbeddingsCount: ((user.tasteEmbeddings as any[]) ?? []).length,
+        hasGustoVector,
       }}
       savedDishes={user.savedDishes}
     />
