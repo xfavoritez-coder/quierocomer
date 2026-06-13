@@ -70,19 +70,27 @@ export default function DishCard({
     }
   }, [])
 
+  const [flyAway, setFlyAway] = useState<'left' | 'right' | null>(null)
+
   const handleTouchEnd = useCallback(() => {
     if (Math.abs(swipeX) > 80) {
-      if (swipeX > 0) {
-        // Swipe right = like
-        setState('liked')
-        onLike?.(dish)
-      } else {
-        // Swipe left = dislike
-        setState('disliked')
-        onDislike?.(dish)
-      }
+      const direction = swipeX > 0 ? 'right' : 'left'
+      setFlyAway(direction)
+      // Wait for fly animation then set state
+      setTimeout(() => {
+        if (direction === 'right') {
+          setState('liked')
+          onLike?.(dish)
+        } else {
+          setState('disliked')
+          onDislike?.(dish)
+        }
+        setFlyAway(null)
+        setSwipeX(0)
+      }, 300)
+    } else {
+      setSwipeX(0)
     }
-    setSwipeX(0)
     isSwiping.current = false
   }, [swipeX, dish, onLike, onDislike])
 
@@ -136,8 +144,17 @@ export default function DishCard({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        transform: swipeX !== 0 ? `translateX(${swipeX}px) rotate(${swipeX * 0.05}deg)` : undefined,
-        transition: swipeX === 0 ? 'transform 0.3s ease' : 'none',
+        transform: flyAway
+          ? `translateX(${flyAway === 'right' ? 400 : -400}px) rotate(${flyAway === 'right' ? 20 : -20}deg) scale(0.8)`
+          : swipeX !== 0
+            ? `translateX(${swipeX}px) rotate(${swipeX * 0.05}deg)`
+            : undefined,
+        opacity: flyAway ? 0 : 1,
+        transition: flyAway
+          ? 'transform 0.3s ease-out, opacity 0.3s ease-out'
+          : swipeX === 0
+            ? 'transform 0.25s ease'
+            : 'none',
         position: 'relative',
       }}
     >
@@ -157,12 +174,18 @@ export default function DishCard({
       {/* "Me antojé" stamp for liked */}
       {state === 'liked' && (
         <div style={{
-          position: 'absolute', top: 12, right: 12, zIndex: 10,
-          padding: '5px 10px', borderRadius: 8,
-          background: 'rgba(244,166,35,0.9)', color: '#000',
-          fontSize: 11, fontWeight: 700, transform: 'rotate(3deg)',
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 8,
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+          padding: 12, pointerEvents: 'none',
         }}>
-          Me antojé
+          <div style={{
+            padding: '6px 12px', borderRadius: 8,
+            background: 'rgba(244,166,35,0.85)', color: '#000',
+            fontSize: 11, fontWeight: 700, transform: 'rotate(3deg)',
+            boxShadow: '0 2px 8px rgba(244,166,35,0.3)',
+          }}>
+            Me antojé 🤤
+          </div>
         </div>
       )}
 
