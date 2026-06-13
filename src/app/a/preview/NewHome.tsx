@@ -34,6 +34,7 @@ export default function NewHome({
   const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
   const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(20)
 
   // Infinite scroll
@@ -183,12 +184,51 @@ export default function NewHome({
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
         </div>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.5)' }}>
+        <button onClick={() => setMenuOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.5)' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
       </div>
+
+      {/* Hamburger menu slide-in */}
+      {menuOpen && (
+        <>
+          <div onClick={() => setMenuOpen(false)} style={{
+            position: 'fixed', inset: 0, zIndex: 55,
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          }} />
+          <div style={{
+            position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
+            width: 260, maxWidth: '75vw',
+            background: '#141414', borderLeft: '1px solid rgba(255,255,255,0.06)',
+            padding: '60px 20px 40px', display: 'flex', flexDirection: 'column', gap: 4,
+            animation: 'slideRight 0.2s ease-out',
+          }}>
+            <button onClick={() => setMenuOpen(false)} style={{
+              position: 'absolute', top: 16, right: 16,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+            {[
+              { label: '🏠 Inicio', href: '/a' },
+              { label: '🔍 Buscar', href: '/a/search' },
+              { label: '💛 Favoritos', href: '#' },
+              { label: '👤 Mi perfil', href: '#' },
+            ].map((item, i) => (
+              <a key={i} href={item.href} style={{
+                display: 'block', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
+                color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,0.03)',
+              }}>
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Greeting */}
       <div style={{ padding: '14px 20px 0' }}>

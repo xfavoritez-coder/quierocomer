@@ -195,6 +195,69 @@ export default function DishModal({
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 14px' }}>{dish.descripcion}</p>
             )}
 
+            {/* Rating */}
+            <div style={{
+              padding: '12px', borderRadius: 12, marginBottom: 14,
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: '#F4A623' }}>{displayRating.toFixed(1)}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>({fakeCount} valoraciones)</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+                {[1, 2, 3, 4, 5].map(star => {
+                  const filled = star <= Math.round(displayRating)
+                  return (
+                    <button key={star} onClick={() => { setUserRating(star); onRate(dish, star) }}
+                      style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24"
+                        fill={filled ? '#F4A623' : 'none'} stroke={filled ? '#F4A623' : 'rgba(255,255,255,0.15)'} strokeWidth="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </button>
+                  )
+                })}
+              </div>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
+                {userRating > 0 ? 'Gracias por tu valoración' : 'Toca para valorar este plato'}
+              </p>
+            </div>
+
+            {/* Comments */}
+            <div style={{ marginBottom: 14 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px' }}>
+                Comentarios {dish.commentCount > 0 && `(${dish.commentCount})`}
+              </p>
+              {!commentSent ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input type="text" value={commentText} onChange={e => setCommentText(e.target.value)}
+                    placeholder="¿Qué te pareció?"
+                    style={{
+                      flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#fff', outline: 'none',
+                    }} />
+                  <button onClick={() => {
+                    if (commentText.trim()) {
+                      import('../lib/feed-actions').then(({ commentDish }) => commentDish(dish.id, commentText))
+                      setCommentSent(true)
+                      setCommentText('')
+                    }
+                  }} style={{
+                    padding: '10px 14px', borderRadius: 10,
+                    background: commentText.trim() ? '#F4A623' : 'rgba(255,255,255,0.05)',
+                    border: 'none', color: commentText.trim() ? '#000' : 'rgba(255,255,255,0.3)',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    Enviar
+                  </button>
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, color: '#F4A623', margin: 0 }}>✓ Comentario enviado</p>
+              )}
+            </div>
+
             {/* Restaurant row */}
             <button onClick={() => setShowLocalFicha(!showLocalFicha)} style={{
               display: 'flex', alignItems: 'center', gap: 10, width: '100%',
