@@ -47,7 +47,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
   savedProfile?: SavedProfile
   savedDishes?: { dishId: string; type: string }[]
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>('inicio')
+  const [activeTab, setActiveTab] = useState<Tab>('feed')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [profile, setProfile] = useState<FeedProfile>(() => {
     const base = createEmptyProfile()
@@ -322,10 +322,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
         </>
       )}
 
-      {/* Greeting in inicio, full filters in explorar */}
-      {activeTab === 'inicio' && (
-        <FeedFilters filters={filters} onChange={setFilters} greetingOnly />
-      )}
+      {/* Filters */}
       {activeTab === 'feed' && (
         <FeedFilters filters={filters} onChange={setFilters} noGreeting />
       )}
@@ -348,7 +345,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
         </div>
       ) : (
         <>
-          {activeTab === 'inicio' && (
+          {activeTab === 'feed' && (
             <>
               {/* Location banner */}
               {!userLocation && locationStatus !== 'denied' && (
@@ -375,7 +372,6 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
                   </button>
                 </div>
               )}
-              <HomeFeed dishes={filteredDishes} profile={profile} userLocation={userLocation} onDishTap={handleDishTap} />
             </>
           )}
           {activeTab === 'feed' && (
