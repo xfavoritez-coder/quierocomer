@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { FeedDish } from '../../types'
-import { getDisplayCategories } from '../../lib/categories'
-import { extractKeywords } from '../../lib/keywords'
-import { distanceKm, formatDistance } from '../../lib/geo'
-import MasonryGrid from '../../components/MasonryGrid'
+import type { FeedDish } from '../types'
+import { getDisplayCategories } from '../lib/categories'
+import { extractKeywords } from '../lib/keywords'
+import { distanceKm, formatDistance } from '../lib/geo'
+import MasonryGrid from '../components/MasonryGrid'
 
 const CATEGORY_ICONS: Record<string, string> = {
   'Pizzas': '🍕', 'Hamburguesas': '🍔', 'Sushi': '🍣',
