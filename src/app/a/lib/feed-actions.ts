@@ -275,3 +275,18 @@ async function updateDishStats(dishId: string, action: FeedAction) {
     console.error('[Feed] updateDishStats error:', e)
   }
 }
+
+// ─── Taste engine actions ──────────────────────────────────────────
+export async function updateTasteAction(
+  dishId: string,
+  action: 'LIKE' | 'DISLIKE' | 'ANTOJO' | 'FAVORITE' | 'UNDO',
+) {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return
+    const { updateTaste } = await import('./taste-engine')
+    await updateTaste(userId, dishId, action)
+  } catch (e) {
+    console.error('[Feed] updateTaste error:', e)
+  }
+}

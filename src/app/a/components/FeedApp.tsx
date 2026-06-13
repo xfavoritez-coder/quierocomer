@@ -14,6 +14,7 @@ import {
   saveDish,
   unsaveDish,
   completeOnboarding,
+  updateTasteAction,
 } from '../lib/feed-actions'
 import FeedFilters, { applyFilters, getDefaultFilters, type Filters } from './FeedFilters'
 import MasonryGrid from './MasonryGrid'
@@ -168,28 +169,24 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
 
   const handleDishDislike = useCallback((dish: FeedDish) => {
     doTrack(dish, 'PASS')
-    // Update taste engine (fire and forget)
-    import('../lib/taste-engine').then(({ updateTaste }) => {
-      const cookieVal = document.cookie.split('; ').find(c => c.startsWith('qc_feed_user='))?.split('=')[1]
-      if (cookieVal) {
-        // We need the user ID, not fingerprint. For now use trackInteraction which handles it.
-      }
-    }).catch(() => {})
+    updateTasteAction(dish.id, 'DISLIKE').catch(() => {})
   }, [doTrack])
 
   const handleDishUndo = useCallback((dish: FeedDish) => {
-    // Track undo
     trackInteraction(dish.id, 'UNDO' as any, dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
+    updateTasteAction(dish.id, 'UNDO').catch(() => {})
   }, [])
 
   const handleDishLike = useCallback((dish: FeedDish) => {
     doTrack(dish, 'LIKE')
+    updateTasteAction(dish.id, 'LIKE').catch(() => {})
   }, [doTrack])
 
   const handleDishSave = useCallback((dish: FeedDish) => {
     doTrack(dish, 'SAVE')
     setSavedDishIds(prev => new Set([...prev, dish.id]))
     saveDish(dish.id, 'SAVED').catch(() => {})
+    updateTasteAction(dish.id, 'FAVORITE').catch(() => {})
   }, [doTrack])
 
   const handleDishAntojo = useCallback((dish: FeedDish) => {
