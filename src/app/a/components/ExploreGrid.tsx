@@ -15,6 +15,8 @@ export default function ExploreGrid({
   userLocation,
   likedIds,
   dislikedIds,
+  savedKeywordScores,
+  savedCategoryScores,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
@@ -24,6 +26,8 @@ export default function ExploreGrid({
   userLocation?: { lat: number; lng: number } | null
   likedIds?: Set<string>
   dislikedIds?: Set<string>
+  savedKeywordScores?: Record<string, number>
+  savedCategoryScores?: Record<string, number>
 }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(20)
@@ -36,22 +40,23 @@ export default function ExploreGrid({
 
   const hasOfertas = useMemo(() => dishes.some(d => d.enOferta), [dishes])
 
-  // Build keyword scores from liked/disliked dishes for real-time re-ranking
-  const liveKeywordScores = useMemo(() => {
-    const scores: Record<string, number> = {}
-    if (!likedIds?.size && !dislikedIds?.size) return scores
+  // Merge saved profile scores + live session scores
+  const mergedKeywordScores = useMemo(() => {
+    // Start with saved scores from BD
+    const scores: Record<string, number> = { ...(savedKeywordScores ?? {}) }
 
+    // Add live session likes/dislikes (stronger weight)
     for (const dish of dishes) {
       const kws = extractKeywords(dish.nombre, dish.descripcion)
       if (likedIds?.has(dish.id)) {
-        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) + 5
+        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) + 8
       }
       if (dislikedIds?.has(dish.id)) {
-        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) - 8
+        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) - 12
       }
     }
     return scores
-  }, [dishes, likedIds, dislikedIds])
+  }, [dishes, likedIds, dislikedIds, savedKeywordScores])
 
   // Live-scored feed that reacts to swipes
   const sorted = useMemo(() => {
@@ -65,27 +70,32 @@ export default function ExploreGrid({
       const bDisliked = dislikedIds?.has(b.id) ? 1 : 0
       if (aDisliked !== bDisliked) return aDisliked - bDisliked
 
-      // Score by keyword overlap with likes/dislikes
       let aScore = 0
       let bScore = 0
 
+      // Category score from saved profile
+      const catScores = savedCategoryScores ?? {}
+      aScore += (catScores[a.categoriaNorm] ?? 0) * 0.3
+      bScore += (catScores[b.categoriaNorm] ?? 0) * 0.3
+
+      // Keyword overlap with profile + session
       const aKws = extractKeywords(a.nombre, a.descripcion)
       const bKws = extractKeywords(b.nombre, b.descripcion)
 
-      for (const kw of aKws) aScore += (liveKeywordScores[kw] ?? 0)
-      for (const kw of bKws) bScore += (liveKeywordScores[kw] ?? 0)
+      for (const kw of aKws) aScore += (mergedKeywordScores[kw] ?? 0)
+      for (const kw of bKws) bScore += (mergedKeywordScores[kw] ?? 0)
 
-      // Add base popularity
-      aScore += a.popularityScore * 0.1
-      bScore += b.popularityScore * 0.1
+      // Base popularity (low weight)
+      aScore += a.popularityScore * 0.05
+      bScore += b.popularityScore * 0.05
 
       // Random noise for variety
-      aScore += Math.random() * 2
-      bScore += Math.random() * 2
+      aScore += Math.random() * 3
+      bScore += Math.random() * 3
 
       return bScore - aScore
     })
-  }, [dishes, activeCategory, liveKeywordScores, dislikedIds])
+  }, [dishes, activeCategory, mergedKeywordScores, dislikedIds, savedCategoryScores])
 
   useEffect(() => { setVisibleCount(20) }, [activeCategory])
 

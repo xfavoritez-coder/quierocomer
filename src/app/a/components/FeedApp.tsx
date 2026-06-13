@@ -398,7 +398,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
             </>
           )}
           {activeTab === 'feed' && (
-            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDislike={handleDishDislike} onDishUndo={handleDishUndo} userLocation={userLocation} likedIds={sessionLikedIds} dislikedIds={sessionDislikedIds} />
+            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDislike={handleDishDislike} onDishUndo={handleDishUndo} userLocation={userLocation} likedIds={sessionLikedIds} dislikedIds={sessionDislikedIds} savedKeywordScores={profile.keywordScores} savedCategoryScores={profile.categoryScores} />
           )}
         </>
       )}
