@@ -281,6 +281,36 @@ async function updateDishStats(dishId: string, action: FeedAction) {
   }
 }
 
+// ─── Reset profile ─────────────────────────────────────────────────
+export async function resetProfile() {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return
+
+    await prisma.feedUser.update({
+      where: { id: userId },
+      data: {
+        categoryScores: {},
+        restaurantScores: {},
+        keywordScores: {},
+        tasteEmbeddings: [],
+        antojoDishIds: [],
+        antojoRejectIds: [],
+        antojoSessionDate: null,
+        totalInteractions: 0,
+      },
+    })
+
+    // Reset gustoVector via raw SQL
+    await prisma.$executeRawUnsafe(
+      `UPDATE "FeedUser" SET "gustoVector" = NULL WHERE id = $1`,
+      userId,
+    )
+  } catch (e) {
+    console.error('[Feed] resetProfile error:', e)
+  }
+}
+
 // ─── Taste engine actions ──────────────────────────────────────────
 export async function updateTasteAction(
   dishId: string,

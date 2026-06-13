@@ -15,6 +15,7 @@ import {
   unsaveDish,
   completeOnboarding,
   updateTasteAction,
+  resetProfile,
 } from '../lib/feed-actions'
 import FeedFilters, { applyFilters, getDefaultFilters, type Filters } from './FeedFilters'
 import MasonryGrid from './MasonryGrid'
@@ -216,6 +217,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, savedDishes: s
 
   const handleResetProfile = useCallback(() => {
     setProfile(createEmptyProfile())
+    resetProfile().catch(() => {})
   }, [])
 
   const handleUpdateDiet = useCallback(async (newDiet: UserDiet) => {
