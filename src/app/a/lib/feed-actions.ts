@@ -236,15 +236,20 @@ function getActionWeights(action: string): { category: number; restaurant: numbe
 }
 
 async function updateDishStats(dishId: string, action: FeedAction) {
-  const field = {
+  const fieldMap: Record<string, string> = {
     VIEW: 'totalViews',
     TAP: 'totalTaps',
     LIKE: 'totalLikes',
+    DISLIKE: 'totalPasses',
     SAVE: 'totalSaves',
     ANTOJO: 'totalAntojos',
     PASS: 'totalPasses',
     SCROLL_BACK: 'totalViews',
-  }[action]
+    FAVORITE: 'totalSaves',
+    UNFAVORITE: 'totalSaves',
+    UNDO: '',
+  }
+  const field = fieldMap[action]
 
   if (!field) return
 
