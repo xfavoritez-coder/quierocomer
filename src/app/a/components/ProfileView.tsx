@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { FeedProfile } from '../lib/scoring'
 import type { FeedDish } from '../types'
+import { getCategoryGradient, getDisplayCategories } from '../lib/categories'
 
 type UserDiet = {
   isVegan: boolean
@@ -28,15 +29,9 @@ const DIET_OPTIONS: { id: DietOption; label: string; emoji: string }[] = [
   { id: 'isGlutenFree', label: 'Sin gluten', emoji: '🌾' },
 ]
 
-
-const JUNK_WORDS = new Set([
-  'salsa', 'salsas', 'blanco', 'blanca', 'negro', 'negra', 'rojo', 'roja', 'verde',
-  'amarillo', 'amarilla', 'dorado', 'dorada', 'base', 'envuelto', 'envuelta',
-  'cubierto', 'cubierta', 'relleno', 'rellena', 'pan', 'masa', 'harina', 'aceite', 'sal',
-  'arroz', 'papas', 'papa', 'queso', 'crema', 'leche', 'huevo', 'huevos',
-  'carne', 'pollo', 'pescado', 'verduras', 'lechuga', 'tomate', 'cebolla',
-  'casa', 'toque', 'punto', 'opcion',
-])
+const CATEGORY_EMOJIS: Record<string, string> = Object.fromEntries(
+  getDisplayCategories().map(c => [c.norm, c.icon])
+)
 
 export default function ProfileView({
   profile,
@@ -60,7 +55,6 @@ export default function ProfileView({
     if (d.isGlutenFree) return 'isGlutenFree'
     return 'all'
   }
-  const [tempOption, setTempOption] = useState<DietOption>(dietToOption(diet))
 
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
@@ -73,18 +67,14 @@ export default function ProfileView({
 
   const topKeywords = useMemo(() => {
     return Object.entries(profile.keywordScores)
-      .filter(([kw, score]) => score >= 4 && !JUNK_WORDS.has(kw))
+      .filter(([, score]) => score >= 4)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 6)
+      .slice(0, 8)
   }, [profile.keywordScores])
 
-  const maxKwScore = topKeywords.length > 0 ? topKeywords[0][1] : 1
-
-  // Antojo dishes (liked today)
+  // Antojo dishes (liked in current period)
   const antojoDishes = useMemo(() => {
     if (!tasteData?.antojoDishIds?.length) return []
-    const today = new Date().toISOString().slice(0, 10)
-    if (tasteData.antojoSessionDate !== today) return []
     return tasteData.antojoDishIds
       .map(id => dishes.find(d => d.id === id))
       .filter(Boolean) as FeedDish[]
@@ -93,30 +83,116 @@ export default function ProfileView({
   const currentOption = dietToOption(diet)
   const currentLabel = DIET_OPTIONS.find(o => o.id === currentOption)
 
-  const handleSaveDiet = () => {
-    const newDiet: UserDiet = {
-      isVegan: tempOption === 'isVegan',
-      isVegetarian: tempOption === 'isVegetarian',
-      isGlutenFree: tempOption === 'isGlutenFree',
-      isLactoseFree: false,
-    }
-    onUpdateDiet(newDiet)
-    setEditingDiet(false)
-  }
+  // Engine level & descriptions
+  const interactions = profile.totalInteractions
+  const learned = tasteData?.tasteEmbeddingsCount ?? 0
+  const hasVector = tasteData?.hasGustoVector ?? false
 
-  // Engine status
   const engineLevel = !tasteData ? 0
-    : !tasteData.hasGustoVector ? 1
-    : tasteData.tasteEmbeddingsCount < 10 ? 2
-    : tasteData.tasteEmbeddingsCount < 30 ? 3
+    : !hasVector ? 1
+    : learned < 10 ? 2
+    : learned < 30 ? 3
     : 4
 
-  const engineLabels = ['Sin datos', 'Iniciando', 'Aprendiendo', 'Conociéndote', 'Te conoce bien']
-  const engineColors = ['rgba(255,255,255,0.2)', '#ef4444', '#f59e0b', '#F4A623', '#4ade80']
+  const engineConfig = [
+    { label: 'Nuevo', color: 'rgba(255,255,255,0.3)', desc: 'Empieza a explorar platos para que el motor aprenda tus gustos' },
+    { label: 'Arrancando', color: '#ef4444', desc: 'Ya tenemos algunos datos, sigue explorando para mejorar las recomendaciones' },
+    { label: 'Aprendiendo', color: '#f59e0b', desc: 'El motor ya detecta patrones en lo que te gusta' },
+    { label: 'Afinando', color: '#F4A623', desc: 'Las recomendaciones se ajustan cada vez mejor a tus gustos' },
+    { label: 'Te conoce', color: '#4ade80', desc: 'El feed está personalizado para ti' },
+  ]
+
+  const engine = engineConfig[engineLevel]
+
+  // How it works steps
+  const stepsCompleted = [
+    interactions >= 1,  // step 1: interact
+    interactions >= 8,  // step 2: vector activated
+    hasVector,          // step 3: personalized feed
+    learned >= 30,      // step 4: fully calibrated
+  ]
 
   return (
     <div style={{ padding: '8px 16px 100px' }}>
-      {/* Diet — compact, just shows current + tap to change */}
+
+      {/* ─── How the engine works ─── */}
+      <div style={{
+        padding: '16px', borderRadius: 16, marginBottom: 16,
+        background: 'linear-gradient(135deg, rgba(244,166,35,0.08), rgba(244,166,35,0.02))',
+        border: '1px solid rgba(244,166,35,0.1)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 20 }}>🧠</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Tu motor de gustos</p>
+            <p style={{ fontSize: 12, color: engine.color, margin: '2px 0 0', fontWeight: 600 }}>
+              {engine.label}
+            </p>
+          </div>
+          <div style={{
+            padding: '4px 10px', borderRadius: 12,
+            background: `${engine.color}15`, border: `1px solid ${engine.color}30`,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: engine.color }}>
+              {interactions}
+            </span>
+          </div>
+        </div>
+
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: '0 0 14px', lineHeight: 1.4 }}>
+          {engine.desc}
+        </p>
+
+        {/* Progress steps */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { label: 'Explorar platos', sub: 'Desliza para que aprenda', done: stepsCompleted[0] },
+            { label: 'Motor activado', sub: 'Necesita 8 interacciones', done: stepsCompleted[1] },
+            { label: 'Feed personalizado', sub: 'Recomendaciones basadas en ti', done: stepsCompleted[2] },
+            { label: 'Totalmente calibrado', sub: 'Te conoce muy bien', done: stepsCompleted[3] },
+          ].map((step, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                background: step.done ? engine.color : 'rgba(255,255,255,0.06)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.3s ease',
+              }}>
+                {step.done ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>{i + 1}</span>
+                )}
+              </div>
+              <div>
+                <p style={{
+                  fontSize: 12, fontWeight: step.done ? 600 : 400, margin: 0,
+                  color: step.done ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)',
+                }}>
+                  {step.label}
+                </p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '1px 0 0' }}>
+                  {step.sub}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress bar red → green */}
+        <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden', marginTop: 14 }}>
+          <div style={{
+            height: '100%', borderRadius: 3,
+            background: `linear-gradient(90deg, #ef4444, #f59e0b, #4ade80)`,
+            width: `${Math.min((engineLevel / 4) * 100, 100)}%`,
+            transition: 'width 0.5s ease',
+          }} />
+        </div>
+      </div>
+
+      {/* ─── Diet ─── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '12px 14px', borderRadius: 14, marginBottom: 16,
@@ -176,55 +252,11 @@ export default function ProfileView({
         </div>
       )}
 
-      {/* Engine status */}
-      <div style={{
-        padding: '16px', borderRadius: 16, marginBottom: 20,
-        background: 'linear-gradient(135deg, rgba(244,166,35,0.08), rgba(244,166,35,0.02))',
-        border: '1px solid rgba(244,166,35,0.1)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 20 }}>🧠</span>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>Motor de gustos</p>
-              <p style={{ fontSize: 11, color: engineColors[engineLevel], margin: '2px 0 0', fontWeight: 500 }}>
-                {engineLabels[engineLevel]}
-              </p>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: '#F4A623', margin: 0 }}>
-              {profile.totalInteractions}
-            </p>
-            <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: 0 }}>interacciones</p>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', borderRadius: 2,
-            background: `linear-gradient(90deg, ${engineColors[engineLevel]}, #F4A623)`,
-            width: `${Math.min((engineLevel / 4) * 100, 100)}%`,
-            transition: 'width 0.5s ease',
-          }} />
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
-            {tasteData?.tasteEmbeddingsCount ?? 0} platos aprendidos
-          </span>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
-            {tasteData?.hasGustoVector ? '✓ Vector activo' : 'Sin vector aún'}
-          </span>
-        </div>
-      </div>
-
-      {/* Antojo de hoy */}
+      {/* ─── Antojo de hoy ─── */}
       {antojoDishes.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>🤤</span> Hoy te antojaste
+            <span>🤤</span> Te antojaste hoy
           </h3>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {antojoDishes.map(d => (
@@ -242,75 +274,89 @@ export default function ProfileView({
         </div>
       )}
 
-      {/* Top categories */}
+      {/* ─── Lo que te gusta (categories as visual chips) ─── */}
       {topCategories.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>
-            Categorías que te gustan
+            Lo que te gusta
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {topCategories.map(([cat, score]) => (
-              <div key={cat}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ fontSize: 13, color: '#fff' }}>{cat}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{score}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {topCategories.map(([cat, score]) => {
+              const pct = Math.round((score / maxCatScore) * 100)
+              const emoji = CATEGORY_EMOJIS[cat] || '🍽'
+              return (
+                <div key={cat} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '8px 12px', borderRadius: 12,
+                  background: 'rgba(255,255,255,0.03)',
+                }}>
+                  <span style={{ fontSize: 18, flexShrink: 0 }}>{emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{cat}</span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, color: '#F4A623',
+                        background: 'rgba(244,166,35,0.1)', padding: '2px 6px', borderRadius: 6,
+                      }}>
+                        {pct >= 80 ? 'Encanta' : pct >= 50 ? 'Gusta mucho' : 'Gusta'}
+                      </span>
+                    </div>
+                    <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: 2,
+                        background: 'linear-gradient(90deg, #F4A623, #f59e0b)',
+                        width: `${pct}%`, transition: 'width 0.5s ease',
+                      }} />
+                    </div>
+                  </div>
                 </div>
-                <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', background: '#F4A623', borderRadius: 3,
-                    width: `${(score / maxCatScore) * 100}%`, transition: 'width 0.5s ease',
-                  }} />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* Keywords / flavors */}
+      {/* ─── Ingredientes favoritos (as chips) ─── */}
       {topKeywords.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' }}>
-            Sabores e ingredientes
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' }}>
+            Ingredientes favoritos
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {topKeywords.map(([kw, score]) => (
-              <div key={kw}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ fontSize: 13, color: '#F4A623' }}>{kw}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{score}</span>
-                </div>
-                <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', background: 'linear-gradient(90deg, #F4A623, #f59e0b)', borderRadius: 3,
-                    width: `${(score / maxKwScore) * 100}%`, transition: 'width 0.5s ease',
-                  }} />
-                </div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {topKeywords.map(([kw, score]) => {
+              const intensity = Math.min(score / (topKeywords[0]?.[1] ?? 1), 1)
+              return (
+                <span key={kw} style={{
+                  padding: '6px 12px', borderRadius: 16,
+                  fontSize: 12, fontWeight: 500,
+                  background: `rgba(244,166,35,${0.05 + intensity * 0.12})`,
+                  border: `1px solid rgba(244,166,35,${0.1 + intensity * 0.2})`,
+                  color: `rgba(255,255,255,${0.4 + intensity * 0.4})`,
+                }}>
+                  {kw}
+                </span>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
-        <StatCard value={profile.seenDishIds.size || profile.totalInteractions} label="Vistos" icon="👁" />
-        <StatCard value={profile.likedDishIds.size} label="Likes" icon="👍" />
-        <StatCard value={tasteData?.antojoRejectIds?.length ?? 0} label="Rechazados hoy" icon="👎" />
+      {/* ─── Stats ─── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+        <StatCard value={profile.totalInteractions} label="Platos explorados" icon="👁" />
+        <StatCard value={profile.likedDishIds.size} label="Te gustaron" icon="👍" />
       </div>
 
-      {/* Diet section removed — now at the top as chips */}
-
-      {/* Reset */}
+      {/* ─── Reset ─── */}
       <button onClick={onReset} style={{
         width: '100%', padding: 14, borderRadius: 12,
         background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
         color: 'rgba(255,255,255,0.3)', fontSize: 13, cursor: 'pointer',
       }}>
-        Reiniciar motor de gustos
+        Reiniciar mis gustos
       </button>
       <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.12)', fontSize: 10, marginTop: 6 }}>
-        Borra todo lo aprendido y el feed vuelve a ser genérico
+        El feed vuelve a ser genérico y empieza a aprender de nuevo
       </p>
     </div>
   )
@@ -320,11 +366,11 @@ function StatCard({ value, label, icon }: { value: number; label: string; icon: 
   return (
     <div style={{
       background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 12, padding: '12px 8px', textAlign: 'center',
+      borderRadius: 12, padding: '14px 10px', textAlign: 'center',
     }}>
       <p style={{ fontSize: 14, margin: '0 0 2px' }}>{icon}</p>
-      <p style={{ fontSize: 18, fontWeight: 700, color: '#F4A623', margin: '0 0 1px' }}>{value}</p>
-      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 22, fontWeight: 700, color: '#F4A623', margin: '0 0 2px' }}>{value}</p>
+      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{label}</p>
     </div>
   )
 }

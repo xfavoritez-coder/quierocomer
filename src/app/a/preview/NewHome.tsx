@@ -56,6 +56,7 @@ export default function NewHome({
   const [view, setView] = useState<View>('feed')
   const [activeDiet, setActiveDiet] = useState(userDiet)
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
+  const [hideRelated, setHideRelated] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationName, setLocationName] = useState<string | null>(null)
@@ -374,7 +375,13 @@ export default function NewHome({
 
   const handleDishTap = useCallback((d: FeedDish) => {
     setSelectedDish(d)
+    setHideRelated(false)
     trackInteraction(d.id, 'TAP', d.categoriaNorm, d.precioDescuento ?? d.precio).catch(() => {})
+  }, [])
+
+  const handleLikedDishTap = useCallback((d: FeedDish) => {
+    setSelectedDish(d)
+    setHideRelated(true)
   }, [])
 
   const handleDishSave = useCallback((dish: FeedDish) => {
@@ -825,7 +832,7 @@ export default function NewHome({
           <SavedList
             antojos={likedDishes}
             saved={savedDishes}
-            onDishTap={handleDishTap}
+            onDishTap={handleLikedDishTap}
             onRemove={handleRemoveSaved}
           />
         </>
@@ -861,7 +868,7 @@ export default function NewHome({
               padding: '0 3px 100px',
             }}>
               {likedDishes.map(d => (
-                <div key={d.id} onClick={() => handleDishTap(d)} style={{
+                <div key={d.id} onClick={() => handleLikedDishTap(d)} style={{
                   position: 'relative', aspectRatio: '1', overflow: 'hidden',
                   cursor: 'pointer', background: '#1a1a1a',
                 }}>
@@ -935,6 +942,7 @@ export default function NewHome({
           allDishes={dishes}
           profile={profile}
           reason={selectedReason}
+          hideRelated={hideRelated}
           onClose={() => setSelectedDish(null)}
           onLike={handleLike}
           onSave={handleDishSave}

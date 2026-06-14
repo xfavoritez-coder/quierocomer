@@ -19,11 +19,13 @@ export default function DishModal({
   onPass,
   onRate,
   onDishTap,
+  hideRelated,
 }: {
   dish: FeedDish
   allDishes: FeedDish[]
   profile: FeedProfile
   reason?: string | null
+  hideRelated?: boolean
   onClose: () => void
   onLike: (dish: FeedDish) => void
   onSave: (dish: FeedDish) => void
@@ -415,7 +417,7 @@ export default function DishModal({
           </div>
 
           {/* Related dishes — same DishCard as feed with swipe */}
-          {relatedDishes.length > 0 && (
+          {!hideRelated && relatedDishes.length > 0 && (
             <div style={{ padding: '16px 0 32px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 16 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px', paddingLeft: 16 }}>También te podría gustar</p>
               <div style={{ display: 'flex', gap: 10, padding: '0 12px' }}>
