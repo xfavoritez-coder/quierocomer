@@ -173,7 +173,7 @@ export default function ProfileView({
                 }}>
                   {step.label}
                 </p>
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', margin: '2px 0 0', fontWeight: 400 }}>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: '2px 0 0', fontWeight: 400 }}>
                   {step.sub}
                 </p>
               </div>
