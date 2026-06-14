@@ -61,19 +61,23 @@ export default function NewHome({
     return base
   }, [categoryScores, keywordScores, totalInteractions])
 
-  // Geolocation
+  // Geolocation — auto-detect on load, GPS only (no locationName filter)
+  const [gpsLabel, setGpsLabel] = useState<string | null>(null)
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(pos => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setUserLocation(loc)
+        // Find nearest restaurant to derive city name (display only)
         const nearest = dishes
           .filter(d => d.restauranteLat && d.restauranteLng)
           .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
           .sort((a, b) => a.dist - b.dist)[0]
         if (nearest?.d.restauranteDireccion) {
-          const commune = nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim()
-          setLocationName(commune || 'Santiago')
+          const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim()).filter(p => p && p !== 'Chile')
+          setGpsLabel(parts[parts.length - 1] || 'Santiago')
+        } else {
+          setGpsLabel('Santiago')
         }
       }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
     }
@@ -568,14 +572,14 @@ export default function NewHome({
               background: 'none', border: '1px solid rgba(255,255,255,0.08)',
               cursor: 'pointer',
             }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={locationName ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
               <span style={{
-                fontSize: 14, color: locationName ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+                fontSize: 14, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
                 maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
-                {locationName || 'Ubicación'}
+                {locationName || gpsLabel || 'Ubicación'}
               </span>
             </button>
 
@@ -592,16 +596,10 @@ export default function NewHome({
                 }}>
                   <button onClick={() => {
                     setLocationOpen(false)
+                    setLocationName(null)
                     navigator.geolocation.getCurrentPosition(pos => {
                       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
                       setUserLocation(loc)
-                      const nearest = dishes
-                        .filter(d => d.restauranteLat && d.restauranteLng)
-                        .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
-                        .sort((a, b) => a.dist - b.dist)[0]
-                      if (nearest?.d.restauranteDireccion) {
-                        setLocationName(nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim() || 'Santiago')
-                      }
                     }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
                   }} style={{
                     display: 'flex', alignItems: 'center', gap: 8, width: '100%',
