@@ -272,7 +272,6 @@ export default function SearchExplore({
           onLike={(d) => { updateTasteAction(d.id, 'LIKE').catch(() => {}) }}
           onSave={(d) => { saveDish(d.id, 'SAVED').catch(() => {}) }}
           onPass={(d) => { updateTasteAction(d.id, 'DISLIKE').catch(() => {}) }}
-          onRate={(d, s) => { rateDish(d.id, s).catch(() => {}) }}
           onDishTap={handleDishTap}
         />
       )}

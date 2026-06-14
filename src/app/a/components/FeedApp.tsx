@@ -432,7 +432,6 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
           onLike={handleDishLike}
           onSave={handleDishSave}
           onPass={handleDishPass}
-          onRate={handleDishRate}
           onDishTap={handleDishTap}
         />
       )}

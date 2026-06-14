@@ -933,7 +933,6 @@ export default function NewHome({
           onLike={handleLike}
           onSave={handleDishSave}
           onPass={handleDislike}
-          onRate={handleDishRate}
           onDishTap={handleDishTap}
         />
       )}

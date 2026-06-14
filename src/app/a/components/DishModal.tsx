@@ -17,7 +17,6 @@ export default function DishModal({
   onLike,
   onSave,
   onPass,
-  onRate,
   onDishTap,
   hideRelated,
 }: {
@@ -30,30 +29,23 @@ export default function DishModal({
   onLike: (dish: FeedDish) => void
   onSave: (dish: FeedDish) => void
   onPass: (dish: FeedDish) => void
-  onRate: (dish: FeedDish, stars: number) => void
   onDishTap: (dish: FeedDish) => void
 }) {
   const [imgError, setImgError] = useState(false)
-  const [thumbUp, setThumbUp] = useState(false)
-  const [thumbDown, setThumbDown] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [userRating, setUserRating] = useState(0)
   const [showLocalFicha, setShowLocalFicha] = useState(false)
-  const [showReviews, setShowReviews] = useState(false)
-  const [commentText, setCommentText] = useState('')
-  const [commentSent, setCommentSent] = useState(false)
+  const [showSwipeTip, setShowSwipeTip] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
-  // Deterministic fake rating per dish
-  let fakeSeed = 0
-  for (let i = 0; i < dish.id.length; i++) fakeSeed = (fakeSeed * 31 + dish.id.charCodeAt(i)) & 0xffff
-  const fakeRating = dish.avgRating ?? Number(((fakeSeed % 10) * 0.1 + 4.0).toFixed(1))
-  const fakeCount = dish.ratingCount || (fakeSeed % 80 + 15)
-  const displayRating = userRating > 0 ? userRating : fakeRating
-
   useEffect(() => {
     document.body.style.overflow = 'hidden'
+    // Show swipe tip on first modal open ever
+    const tipKey = 'qc_modal_tip_seen'
+    if (!localStorage.getItem(tipKey)) {
+      setShowSwipeTip(true)
+      localStorage.setItem(tipKey, '1')
+    }
     return () => { document.body.style.overflow = '' }
   }, [])
 
@@ -61,10 +53,10 @@ export default function DishModal({
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const [swipeX, setSwipeX] = useState(0)
-  const [liked, setLiked] = useState(false)
-  const [disliked, setDisliked] = useState(false)
+  const [flyAway, setFlyAway] = useState<'left' | 'right' | null>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    setShowSwipeTip(false)
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
@@ -76,7 +68,6 @@ export default function DishModal({
       setSwipeX(dx)
     }
   }
-  const [flyAway, setFlyAway] = useState<'left' | 'right' | null>(null)
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     const dy = e.changedTouches[0].clientY - touchStartY.current
@@ -92,7 +83,7 @@ export default function DishModal({
   }
 
   // Related dishes: embedding similarity (pgvector) with keyword fallback
-  const [visibleRelated, setVisibleRelated] = useState(12)
+  const [visibleRelated, setVisibleRelated] = useState(20)
   const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
 
   useEffect(() => {
@@ -102,7 +93,6 @@ export default function DishModal({
   }, [dish.id])
 
   const relatedDishes = useMemo(() => {
-    // If we have embedding-based results, use those
     if (embeddingSimilarIds && embeddingSimilarIds.length > 0) {
       const dishMap = new Map(allDishes.filter(d => d.fotoUrl).map(d => [d.id, d]))
       return embeddingSimilarIds
@@ -110,9 +100,7 @@ export default function DishModal({
         .filter(Boolean) as FeedDish[]
     }
 
-    // Fallback: keyword similarity
     const thisKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
-
     return allDishes
       .filter(d => d.id !== dish.id && d.fotoUrl)
       .map(d => {
@@ -126,7 +114,6 @@ export default function DishModal({
         }
         const catScore = profile.categoryScores[d.categoriaNorm] ?? 0
         if (catScore > 0) score += catScore * 0.1
-        score += Math.random() * 2
         return { dish: d, score }
       })
       .sort((a, b) => b.score - a.score)
@@ -139,8 +126,8 @@ export default function DishModal({
     const el = modalRef.current
     if (!el) return
     const handleScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 400 && visibleRelated < relatedDishes.length) {
-        setVisibleRelated(prev => Math.min(prev + 12, relatedDishes.length))
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 600 && visibleRelated < relatedDishes.length) {
+        setVisibleRelated(prev => Math.min(prev + 20, relatedDishes.length))
       }
     }
     el.addEventListener('scroll', handleScroll, { passive: true })
@@ -178,23 +165,39 @@ export default function DishModal({
             </div>
           )}
 
-          {/* Liked/disliked badge */}
-          {(liked || disliked) && (
-            <div style={{
-              position: 'absolute', top: 16, right: 56, zIndex: 12,
-              padding: '6px 12px', borderRadius: 8,
-              background: liked ? 'rgba(244,166,35,0.85)' : 'rgba(255,255,255,0.15)',
-              color: liked ? '#000' : '#fff',
-              fontSize: 11, fontWeight: 700,
-              boxShadow: liked ? '0 2px 8px rgba(244,166,35,0.3)' : 'none',
+          {/* Swipe tip for first-time modal users */}
+          {showSwipeTip && (
+            <div onClick={() => setShowSwipeTip(false)} style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20,
+              background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 12, borderRadius: 16, cursor: 'pointer',
             }}>
-              {liked ? 'Me antojé 🤤' : 'Paso 👎'}
+              <div className="tutorial-hand" style={{ fontSize: 36 }}>👆</div>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, textAlign: 'center', padding: '0 30px' }}>
+                También puedes deslizar aquí
+              </p>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, textAlign: 'center' }}>
+                Derecha si te antoja, izquierda si no
+              </p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '8px 0 0' }}>
+                Toca para cerrar
+              </p>
+              <style>{`
+                .tutorial-hand { animation: modalHandSwipe 2s ease-in-out infinite; }
+                @keyframes modalHandSwipe {
+                  0%, 20% { transform: translateX(0); }
+                  40% { transform: translateX(40px); }
+                  60% { transform: translateX(0); }
+                  80% { transform: translateX(-40px); }
+                  100% { transform: translateX(0); }
+                }
+              `}</style>
             </div>
           )}
 
           {/* Hero image */}
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a1a' }}>
-            {/* Close button inside photo */}
             <button onClick={onClose} style={{
               position: 'absolute', top: 12, right: 12, zIndex: 10,
               width: 36, height: 36, borderRadius: '50%',
@@ -217,12 +220,11 @@ export default function DishModal({
                 </span>
               </div>
             )}
-
           </div>
 
           {/* Content */}
           <div style={{ padding: '16px 20px 0' }}>
-            {/* Name + actions row */}
+            {/* Name + save */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 4 }}>
               <h2 style={{
                 fontFamily: 'var(--font-feed-display), serif',
@@ -318,105 +320,9 @@ export default function DishModal({
                 )}
               </div>
             )}
-
-            {/* Rating + Comments — expandable */}
-            <button onClick={() => setShowReviews(!showReviews)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              padding: '14px 16px', borderRadius: 14, marginBottom: 14,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-              cursor: 'pointer', textAlign: 'left',
-            }}>
-              {/* Stars compact */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span style={{ fontSize: 22, fontWeight: 700, color: '#F4A623' }}>{displayRating.toFixed(1)}</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#F4A623" stroke="none">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>
-                  {fakeCount} valoraciones
-                </p>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0' }}>
-                  {userRating > 0 ? 'Ya valoraste este plato' : 'Toca para valorar y comentar'}
-                </p>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round"
-                style={{ transform: showReviews ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', flexShrink: 0 }}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            {showReviews && (
-              <div style={{
-                padding: '16px', borderRadius: 14, marginBottom: 14, marginTop: -8,
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
-                animation: 'fadeIn 0.2s ease-out',
-              }}>
-                {/* Stars interactive */}
-                <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' }}>
-                  Tu valoración
-                </p>
-                <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-                  {[1, 2, 3, 4, 5].map(star => {
-                    const filled = star <= (userRating || Math.round(displayRating))
-                    return (
-                      <button key={star} onClick={() => { setUserRating(star); onRate(dish, star) }}
-                        style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24"
-                          fill={filled ? '#F4A623' : 'none'} stroke={filled ? '#F4A623' : 'rgba(255,255,255,0.15)'} strokeWidth="1.5">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Comment input */}
-                <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 8px' }}>
-                  Comentario {dish.commentCount > 0 && <span style={{ fontWeight: 400 }}>({dish.commentCount})</span>}
-                </p>
-                {!commentSent ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="text" value={commentText} onChange={e => setCommentText(e.target.value)}
-                      placeholder="¿Qué te pareció este plato?"
-                      style={{
-                        flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: 12, padding: '12px 14px', fontSize: 14, color: '#fff', outline: 'none',
-                      }} />
-                    <button onClick={() => {
-                      if (commentText.trim()) {
-                        import('../lib/feed-actions').then(({ commentDish }) => commentDish(dish.id, commentText))
-                        setCommentSent(true)
-                        setCommentText('')
-                      }
-                    }} style={{
-                      padding: '12px 16px', borderRadius: 12,
-                      background: commentText.trim() ? '#F4A623' : 'rgba(255,255,255,0.05)',
-                      border: 'none', color: commentText.trim() ? '#000' : 'rgba(255,255,255,0.3)',
-                      fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      Enviar
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'rgba(244,166,35,0.06)', border: '1px solid rgba(244,166,35,0.1)',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 500 }}>Comentario enviado</span>
-                  </div>
-                )}
-              </div>
-            )}
-
           </div>
 
-          {/* Related dishes — same DishCard as feed with swipe */}
+          {/* Related dishes */}
           {!hideRelated && relatedDishes.length > 0 && (
             <div style={{ padding: '16px 0 32px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 16 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 12px', paddingLeft: 16 }}>También te podría gustar</p>

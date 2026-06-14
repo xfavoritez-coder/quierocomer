@@ -239,12 +239,6 @@ export default function DishCard({
                 </span>
               </>
             )}
-            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>·</span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
-              ⭐{dish.avgRating != null && dish.avgRating > 0
-                ? dish.avgRating.toFixed(1)
-                : ((seed % 10) * 0.1 + 4.0).toFixed(1)}
-            </span>
           </div>
         </div>
       </div>
