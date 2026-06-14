@@ -9,11 +9,6 @@ const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/a
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // --- Root → Feed rewrite (quierocomer.cl/ serves the B2C feed) ---
-  if (pathname === '/') {
-    return NextResponse.rewrite(new URL('/a', request.url))
-  }
-
   // --- Panel page routes (owner panel) ---
   if (pathname.startsWith("/panel")) {
     if (PUBLIC_PANEL_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
