@@ -53,11 +53,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      { source: '/', destination: '/a' },
-    ]
-  },
 };
 
 export default nextConfig;

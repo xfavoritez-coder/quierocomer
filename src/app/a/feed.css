@@ -272,9 +272,10 @@ body:has(.feed-root) {
 
 .onboard-content {
   flex: 1;
-  padding: 16px 20px 120px;
+  padding: 16px 20px 40px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .onboard-logo {
