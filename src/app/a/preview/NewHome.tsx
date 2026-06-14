@@ -197,16 +197,22 @@ export default function NewHome({
       })
       if (inCommune.length > 0) filtered = inCommune
     }
-    // GPS proximity: sort nearby first (but don't filter, location name already filtered)
+    // GPS: filter to <3km, sort by distance. Show only truly nearby restaurants.
     if (userLocation && !locationName) {
-      const withDist = filtered.map(d => {
-        const dist = d.restauranteLat && d.restauranteLng
-          ? distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng)
-          : 999
-        return { dish: d, dist }
-      })
-      const nearby = withDist.filter(x => x.dist < 10).sort((a, b) => a.dist - b.dist)
-      if (nearby.length > 0) filtered = nearby.map(x => x.dish)
+      const withDist = filtered
+        .filter(d => d.restauranteLat && d.restauranteLng)
+        .map(d => ({
+          dish: d,
+          dist: distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!)
+        }))
+        .sort((a, b) => a.dist - b.dist)
+      const nearby = withDist.filter(x => x.dist < 3)
+      if (nearby.length >= 5) {
+        filtered = nearby.map(x => x.dish)
+      } else {
+        // Not enough nearby, show closest 30
+        filtered = withDist.slice(0, 30).map(x => x.dish)
+      }
     }
 
     // Category filter
