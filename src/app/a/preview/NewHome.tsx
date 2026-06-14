@@ -275,75 +275,56 @@ export default function NewHome({
     // Meal time filter
     const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
 
-    // ── pgvector path: combine vector order with keyword/category signals ──
-    if (vectorScoredIds.length > 0 && !activeCategory) {
-      // Normalize vector position to 0-1 score (first = 1.0, last = 0.0)
-      const vectorRank = new Map<string, number>()
-      vectorScoredIds.forEach((id, i) => vectorRank.set(id, 1 - i / vectorScoredIds.length))
-
-      // Score each dish: vector * 0.5 + keywords * 0.3 + category * 0.1 + momentum * 0.1
-      const scored = filtered.map(d => {
+    // Score helper used by both paths
+    const scoreDish = (d: FeedDish, vectorRank?: Map<string, number>) => {
+      let score = 0
+      if (vectorRank) {
+        // Vector path: combined scoring
         const vScore = vectorRank.get(d.id) ?? 0
         const kws = extractKeywords(d.nombre, d.descripcion)
         let kwTotal = 0
         for (const kw of kws) kwTotal += (keywordScores[kw] ?? 0)
-        const kwNorm = Math.min(kwTotal, 30) / 30 // normalize to 0-1
-
+        const kwNorm = Math.min(kwTotal, 30) / 30
         const catRaw = categoryScores[d.categoriaNorm] ?? 0
         const catNorm = catRaw > 0 ? Math.min(Math.log2(catRaw + 1) / 6, 1) : 0
-
         const sessionBoost = (sessionCatBoost[d.categoriaNorm] ?? 0) +
           (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
-        // Positive momentum boosts, negative penalizes (dislikes push category down)
         const momentumNorm = sessionBoost >= 0
           ? Math.min(sessionBoost, 30) / 30
-          : Math.max(sessionBoost, -60) / 60 // -60 → -1.0
-
-        let score = vScore * 0.5 + kwNorm * 0.3 + catNorm * 0.1 + momentumNorm * 0.2
-        // Meal time boost
-        if (d.mealTime === mealFilter) score += 0.15
-        return { dish: d, score }
-      })
-
-      scored.sort((a, b) => b.score - a.score)
-
-      // Max 3 consecutive same category
-      const final: FeedDish[] = []
-      const rem = scored.map(s => s.dish)
-      while (rem.length > 0) {
-        const recent = final.slice(-3).map(d => d.categoriaNorm)
-        const allSame = recent.length === 3 && recent.every(c => c === recent[0])
-        if (allSame) {
-          const diffIdx = rem.findIndex(d => d.categoriaNorm !== recent[0])
-          if (diffIdx >= 0) { final.push(rem.splice(diffIdx, 1)[0]); continue }
-        }
-        final.push(rem.shift()!)
+          : Math.max(sessionBoost, -60) / 60
+        score = vScore * 0.5 + kwNorm * 0.3 + catNorm * 0.1 + momentumNorm * 0.2
+      } else {
+        // Fallback path: keyword/category scoring
+        score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
+        score += (sessionCatBoost[d.categoriaNorm] ?? 0)
+        score += (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
+        const kws = extractKeywords(d.nombre, d.descripcion)
+        let kwTotal = 0
+        for (const kw of kws) kwTotal += (mergedKw[kw] ?? 0)
+        score += Math.min(kwTotal, 15)
       }
-      return final
+      return score
     }
 
-    // ── Fallback: keyword scoring with real-time session boosts ──
-    const scored = filtered.map(d => {
-      let score = 0
-      score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
-      score += (sessionCatBoost[d.categoriaNorm] ?? 0)
-      score += (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
-      const kws = extractKeywords(d.nombre, d.descripcion)
-      let kwTotal = 0
-      for (const kw of kws) kwTotal += (mergedKw[kw] ?? 0)
-      score += Math.min(kwTotal, 15)
-      // Boost dishes that match the active meal time
-      if (d.mealTime === mealFilter) score += 10
-      return { dish: d, score }
-    })
+    // Build vector rank map if available
+    const vectorRank = vectorScoredIds.length > 0 && !activeCategory
+      ? new Map(vectorScoredIds.map((id, i) => [id, 1 - i / vectorScoredIds.length]))
+      : undefined
 
-    scored.sort((a, b) => b.score - a.score)
+    // Split by meal time: matching first, rest after — each group scored independently
+    const mealDishes = filtered.filter(d => d.mealTime === mealFilter)
+    const restDishes = filtered.filter(d => d.mealTime !== mealFilter)
 
-    let result: FeedDish[] = scored.map(s => s.dish)
+    const sortByScore = (list: FeedDish[]) =>
+      list.map(d => ({ dish: d, score: scoreDish(d, vectorRank) }))
+        .sort((a, b) => b.score - a.score)
+        .map(s => s.dish)
+
+    const combined = [...sortByScore(mealDishes), ...sortByScore(restDishes)]
 
     // Max 3 consecutive same category
     const final: FeedDish[] = []
-    const rem = [...result]
+    const rem = [...combined]
     while (rem.length > 0) {
       const recent = final.slice(-3).map(d => d.categoriaNorm)
       const allSame = recent.length === 3 && recent.every(c => c === recent[0])
