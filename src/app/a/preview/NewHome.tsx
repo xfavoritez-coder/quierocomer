@@ -630,7 +630,7 @@ export default function NewHome({
                   }}
                 >
                   <p style={{
-                    fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0,
+                    fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0,
                     fontFamily: 'var(--font-feed-display), serif',
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
