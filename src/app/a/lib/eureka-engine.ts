@@ -14,6 +14,12 @@ import type { FeedDish } from '../types'
 import { extractKeywords } from './keywords'
 import { distanceKm } from './geo'
 
+// Categories too generic to be a craving — eureka ignores them
+const GENERIC_CATEGORIES = new Set([
+  'Entradas', 'Platos de fondo', 'Combos', 'Acompañamientos', 'Extras',
+  'Desayunos', 'Asiática',
+])
+
 export type EurekaState = {
   confidence: number           // 0-100
   topCategory: string | null   // detected craving category
@@ -51,12 +57,16 @@ export function computeEurekaState(
   // ─── Signal A: Category Concentration (35%) ─────────────────
   const catCounts: Record<string, number> = {}
   for (const d of likedDishes) {
-    catCounts[d.categoriaNorm] = (catCounts[d.categoriaNorm] ?? 0) + 1
+    // Skip generic categories — they don't tell us what the user wants to eat
+    if (!GENERIC_CATEGORIES.has(d.categoriaNorm)) {
+      catCounts[d.categoriaNorm] = (catCounts[d.categoriaNorm] ?? 0) + 1
+    }
   }
   const sortedCats = Object.entries(catCounts).sort(([, a], [, b]) => b - a)
   const topCategory = sortedCats[0]?.[0] ?? null
   const topCategoryCount = sortedCats[0]?.[1] ?? 0
-  const topCategoryShare = totalLikes > 0 ? topCategoryCount / totalLikes : 0
+  const likesInSpecificCats = Object.values(catCounts).reduce((s, c) => s + c, 0)
+  const topCategoryShare = likesInSpecificCats > 0 ? topCategoryCount / likesInSpecificCats : 0
 
   // Concentration scales with both share AND absolute count
   // 1 like in 1 category = share 1.0 but count too low → damped

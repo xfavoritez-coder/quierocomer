@@ -872,6 +872,31 @@ export default function NewHome({
             )}
           </div>
 
+          {/* Eureka progress — sticky below categories */}
+          {(sessionLikedIds.size + sessionDislikedIds.size) > 0 && !showEureka && (
+            <div style={{
+              position: 'sticky', top: 0, zIndex: 30,
+              padding: '8px 16px 6px',
+              background: 'rgba(14,14,14,0.95)', backdropFilter: 'blur(12px)',
+            }}>
+              <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 5 }}>
+                <div style={{
+                  height: '100%', borderRadius: 2,
+                  background: eurekaState.confidence < 40 ? '#f59e0b' : eurekaState.confidence < 65 ? '#F4A623' : '#4ade80',
+                  width: `${Math.min(eurekaState.confidence, 100)}%`,
+                  transition: 'width 0.5s ease, background 0.5s ease',
+                }} />
+              </div>
+              <p style={{ fontSize: 12, margin: 0, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+                {eurekaState.confidence < 15 && 'Desliza platos para que descubramos qué se te antoja'}
+                {eurekaState.confidence >= 15 && eurekaState.confidence < 30 && 'Sigue deslizando, estamos aprendiendo tus gustos'}
+                {eurekaState.confidence >= 30 && eurekaState.confidence < 50 && `Ya vamos entendiendo${eurekaState.topCategory ? ` — parece que te llama ${eurekaState.topCategory.toLowerCase()}` : ''}`}
+                {eurekaState.confidence >= 50 && eurekaState.confidence < 65 && `Estamos afinando${eurekaState.topCategory ? ` — te gusta ${eurekaState.topCategory.toLowerCase()}` : ''}`}
+                {eurekaState.confidence >= 65 && 'Casi listos para recomendarte'}
+              </p>
+            </div>
+          )}
+
           {/* Feed masonry */}
           {feedDishes.length > 0 ? (
             <MasonryGrid
@@ -968,35 +993,6 @@ export default function NewHome({
       )}
 
       {/* ─── DishModal ─── */}
-      {/* ─── Eureka Progress Bar — fixed, always visible during session ─── */}
-      {view === 'feed' && (sessionLikedIds.size + sessionDislikedIds.size) > 0 && !showEureka && (
-        <div style={{
-          position: 'fixed', top: 44, left: 0, right: 0, zIndex: 60,
-          padding: '8px 16px',
-          background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-        }}>
-          <div style={{ maxWidth: 480, margin: '0 auto' }}>
-            {/* Progress bar */}
-            <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
-              <div style={{
-                height: '100%', borderRadius: 2,
-                background: eurekaState.confidence < 40 ? '#f59e0b' : eurekaState.confidence < 65 ? '#F4A623' : '#4ade80',
-                width: `${Math.min(eurekaState.confidence, 100)}%`,
-                transition: 'width 0.5s ease, background 0.5s ease',
-              }} />
-            </div>
-            {/* Message */}
-            <p style={{ fontSize: 12, margin: 0, color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
-              {eurekaState.confidence < 15 && 'Desliza platos para que descubramos qué se te antoja'}
-              {eurekaState.confidence >= 15 && eurekaState.confidence < 30 && 'Sigue deslizando, estamos aprendiendo tus gustos'}
-              {eurekaState.confidence >= 30 && eurekaState.confidence < 50 && `Ya vamos entendiendo — ${eurekaState.topCategory ? `parece que te llama ${eurekaState.topCategory.toLowerCase()}` : 'sigue explorando'}`}
-              {eurekaState.confidence >= 50 && eurekaState.confidence < 65 && `Estamos afinando — ${eurekaState.topCategory ? `te gusta ${eurekaState.topCategory.toLowerCase()}` : 'casi lo tenemos'}`}
-              {eurekaState.confidence >= 65 && 'Casi listos para recomendarte'}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ─── Eureka Result ─── */}
       {showEureka && (
