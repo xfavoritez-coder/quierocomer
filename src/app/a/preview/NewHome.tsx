@@ -159,7 +159,8 @@ export default function NewHome({
         }
       }
     })
-    return [...set].sort()
+    const sorted = [...set].sort()
+    return ['Santiago', ...sorted.filter(c => c !== 'Santiago')]
   }, [dishes])
 
   // Filtered communes for search
