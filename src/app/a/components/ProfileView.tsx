@@ -176,8 +176,8 @@ export default function ProfileView({
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: '0', fontWeight: 400 }}>
                   {step.sub}
                 </p>
-                {/* Mini progress bar for incomplete steps */}
-                {!step.done && step.current > 0 && (
+                {/* Mini progress bar for incomplete steps (skip last — main bar is below) */}
+                {!step.done && step.current > 0 && i < 3 && (
                   <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginTop: 5 }}>
                     <div style={{
                       height: '100%', borderRadius: 2,
