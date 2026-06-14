@@ -10,6 +10,9 @@ import DishModal from '../components/DishModal'
 import SavedList from '../components/SavedList'
 import ProfileView from '../components/ProfileView'
 import WelcomeTutorial from '../components/WelcomeTutorial'
+import EurekaHint from '../components/EurekaHint'
+import EurekaResult from '../components/EurekaResult'
+import { computeEurekaState } from '../lib/eureka-engine'
 import { createEmptyProfile, getRecommendationReason, type FeedProfile } from '../lib/scoring'
 import {
   trackInteraction,
@@ -84,6 +87,11 @@ export default function NewHome({
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
   const [showTutorial, setShowTutorial] = useState(totalInteractions === 0)
+  const [eurekaThreshold, setEurekaThreshold] = useState(75)
+  const [eurekaDismissed, setEurekaDismissed] = useState(false)
+  const [currentHintLevel, setCurrentHintLevel] = useState(0)
+  const shownHintLevels = useRef(new Set<number>())
+  const interactionsSinceDismiss = useRef(0)
   const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
   const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
@@ -135,6 +143,38 @@ export default function NewHome({
       })
     ).catch(() => {})
   }, [view])
+
+  // ─── Eureka: confidence calculation ────────────────────────
+  const eurekaState = useMemo(() => computeEurekaState(
+    dishes, sessionLikedIds, sessionDislikedIds,
+    categoryScores, keywordScores, userLocation,
+  ), [dishes, sessionLikedIds, sessionDislikedIds, categoryScores, keywordScores, userLocation])
+
+  // Show hints when confidence crosses thresholds for the first time
+  useEffect(() => {
+    if (eurekaState.hintLevel > 0 && !shownHintLevels.current.has(eurekaState.hintLevel)) {
+      shownHintLevels.current.add(eurekaState.hintLevel)
+      setCurrentHintLevel(eurekaState.hintLevel)
+    }
+  }, [eurekaState.hintLevel])
+
+  // Re-enable eureka after 5 interactions post-dismiss
+  useEffect(() => {
+    if (!eurekaDismissed) return
+    interactionsSinceDismiss.current++
+    if (interactionsSinceDismiss.current >= 5) {
+      setEurekaDismissed(false)
+      interactionsSinceDismiss.current = 0
+    }
+  }, [sessionLikedIds.size + sessionDislikedIds.size, eurekaDismissed])
+
+  const showEureka = eurekaState.confidence >= eurekaThreshold && !eurekaDismissed && eurekaState.topDishes.length > 0 && view === 'feed'
+
+  const handleContinueExploring = useCallback(() => {
+    setEurekaDismissed(true)
+    setEurekaThreshold(prev => Math.min(prev + 15, 95))
+    interactionsSinceDismiss.current = 0
+  }, [])
 
   // Geolocation — IP fallback + GPS upgrade
   const [gpsLabel, setGpsLabel] = useState<string | null>(null)
@@ -311,9 +351,19 @@ export default function NewHome({
     // Meal time filter
     const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
 
+    // Eureka feed focusing — boost the detected category as confidence grows
+    const focusCategory = eurekaState.topCategory
+    const focusStrength = eurekaState.confidence > 40
+      ? Math.min((eurekaState.confidence - 40) / 35, 1)
+      : 0
+
     // Score helper used by both paths
     const scoreDish = (d: FeedDish, vectorRank?: Map<string, number>) => {
       let score = 0
+      // Eureka focus bonus
+      if (focusCategory && focusStrength > 0 && d.categoriaNorm === focusCategory) {
+        score += focusStrength * 15
+      }
       if (vectorRank) {
         // Vector path: combined scoring
         const vScore = vectorRank.get(d.id) ?? 0
@@ -372,7 +422,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence])
 
   // Infinite scroll
   useEffect(() => {
@@ -918,6 +968,23 @@ export default function NewHome({
       )}
 
       {/* ─── DishModal ─── */}
+      {/* ─── Eureka Hint ─── */}
+      {view === 'feed' && currentHintLevel > 0 && (
+        <EurekaHint hintLevel={currentHintLevel as 0 | 1 | 2 | 3} />
+      )}
+
+      {/* ─── Eureka Result ─── */}
+      {showEureka && (
+        <EurekaResult
+          topCategory={eurekaState.topCategory}
+          topDishes={eurekaState.topDishes}
+          userLocation={userLocation}
+          onContinueExploring={handleContinueExploring}
+          onViewCarta={(slug) => window.open(`/qr/${slug}`, '_blank')}
+          fallbackMode={eurekaState.fallbackMode}
+        />
+      )}
+
       {/* ─── Welcome Tutorial ─── */}
       {showTutorial && <WelcomeTutorial onDismiss={() => setShowTutorial(false)} />}
 
