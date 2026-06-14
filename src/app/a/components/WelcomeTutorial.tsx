@@ -108,8 +108,9 @@ export default function WelcomeTutorial({ onDismiss }: { onDismiss: () => void }
             <span style={{ color: '#ef4444', fontWeight: 600 }}>izquierda</span> si no.
           </p>
           <p style={{
-            fontSize: 13, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5,
-            margin: '0 0 28px',
+            fontSize: 12, color: '#F4A623', lineHeight: 1.5,
+            margin: '0 0 28px', fontWeight: 500, fontStyle: 'italic',
+            opacity: 0.6,
           }}>
             Mientras más explores, mejor serán las recomendaciones.
           </p>
