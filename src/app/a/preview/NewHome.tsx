@@ -68,16 +68,19 @@ export default function NewHome({
       navigator.geolocation.getCurrentPosition(pos => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setUserLocation(loc)
-        // Find nearest restaurant to derive city name (display only)
+        // Find nearest restaurant to derive commune name (display only)
         const nearest = dishes
           .filter(d => d.restauranteLat && d.restauranteLng)
           .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
           .sort((a, b) => a.dist - b.dist)[0]
         if (nearest?.d.restauranteDireccion) {
-          const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim()).filter(p => p && p !== 'Chile')
-          setGpsLabel(parts[parts.length - 1] || 'Santiago')
+          const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
+            .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
+          // Prefer commune (shorter, more specific) over city
+          const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
+          setGpsLabel(commune || 'Cerca de ti')
         } else {
-          setGpsLabel('Santiago')
+          setGpsLabel('Cerca de ti')
         }
       }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
     }
@@ -624,8 +627,10 @@ export default function NewHome({
                         .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
                         .sort((a, b) => a.dist - b.dist)[0]
                       if (nearest?.d.restauranteDireccion) {
-                        const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim()).filter(p => p && p !== 'Chile')
-                        setGpsLabel(parts[parts.length - 1] || 'Cerca de ti')
+                        const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
+                          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
+                        const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
+                        setGpsLabel(commune || 'Cerca de ti')
                       } else {
                         setGpsLabel('Cerca de ti')
                       }
