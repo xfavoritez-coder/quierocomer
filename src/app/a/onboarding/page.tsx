@@ -85,7 +85,7 @@ export default function OnboardingPage() {
         {/* CTA right after options */}
         <div style={{ marginTop: 24 }}>
           <button onClick={handleContinue} disabled={loading} className="onboard-cta">
-            {loading ? 'Preparando tu feed...' : 'Continuar'}
+            {loading ? 'Preparando tu feed...' : 'Entrar'}
           </button>
         </div>
 
