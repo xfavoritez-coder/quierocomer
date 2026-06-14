@@ -566,20 +566,6 @@ export default function NewHome({
                 )
               })}
 
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 16px' }} />
-
-              <button onClick={() => { setMenuOpen(false); setLocationOpen(true) }} style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '14px 16px', borderRadius: 14,
-                color: 'rgba(255,255,255,0.4)', fontSize: 17, fontWeight: 500,
-                background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
-                WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
-                  <path d="M12 21s7-6.1 7-12a7 7 0 0 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.5" />
-                </svg>
-                Cerca de ti
-              </button>
             </nav>
 
             {/* Footer */}
