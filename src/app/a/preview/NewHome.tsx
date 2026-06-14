@@ -556,14 +556,12 @@ export default function NewHome({
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
           }}>
             <p style={{
-              fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0,
+              fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: 0,
               fontFamily: 'var(--font-feed-display), serif', flex: 1, minWidth: 0,
             }}>
               {activeCategory
                 ? `Lo mejor en ${categories.find(c => c.norm === activeCategory)?.label || activeCategory}`
-                : hour >= 5 && hour < 12 ? '¿Qué desayunamos?'
-                : hour >= 12 && hour < 18 ? '¿Qué comemos?'
-                : '¿Qué cenamos?'}
+                : 'Descubre cerca de ti'}
             </p>
 
             <button onClick={() => setLocationOpen(!locationOpen)} style={{
@@ -597,10 +595,22 @@ export default function NewHome({
                   <button onClick={() => {
                     setLocationOpen(false)
                     setLocationName(null)
+                    setGpsLabel('Buscando...')
                     navigator.geolocation.getCurrentPosition(pos => {
                       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
                       setUserLocation(loc)
-                    }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
+                      // Derive city name from nearest restaurant
+                      const nearest = dishes
+                        .filter(d => d.restauranteLat && d.restauranteLng)
+                        .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
+                        .sort((a, b) => a.dist - b.dist)[0]
+                      if (nearest?.d.restauranteDireccion) {
+                        const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim()).filter(p => p && p !== 'Chile')
+                        setGpsLabel(parts[parts.length - 1] || 'Cerca de ti')
+                      } else {
+                        setGpsLabel('Cerca de ti')
+                      }
+                    }, () => { setGpsLabel('Sin acceso GPS') }, { enableHighAccuracy: false, timeout: 8000 })
                   }} style={{
                     display: 'flex', alignItems: 'center', gap: 8, width: '100%',
                     padding: '10px 12px', borderRadius: 10, background: 'rgba(244,166,35,0.08)',
