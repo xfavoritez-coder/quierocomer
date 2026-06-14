@@ -520,9 +520,7 @@ export default function NewHome({
                     {item.label}
                   </>
                 )
-                return item.href ? (
-                  <a key={i} href={item.href} style={s}>{inner}</a>
-                ) : (
+                return (
                   <button key={i} onClick={item.action} style={s}>{inner}</button>
                 )
               })}
