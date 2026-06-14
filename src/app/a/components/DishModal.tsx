@@ -165,34 +165,23 @@ export default function DishModal({
             </div>
           )}
 
-          {/* Swipe tip for first-time modal users */}
+          {/* Swipe tip for first-time modal users — subtle banner on image */}
           {showSwipeTip && (
             <div onClick={() => setShowSwipeTip(false)} style={{
-              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20,
-              background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 12, borderRadius: 16, cursor: 'pointer',
+              position: 'absolute', bottom: 60, left: 0, right: 0, zIndex: 20,
+              display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+              animation: 'fadeIn 0.3s ease-out',
             }}>
-              <div className="tutorial-hand" style={{ fontSize: 36 }}>👆</div>
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, textAlign: 'center', padding: '0 30px' }}>
-                También puedes deslizar aquí
-              </p>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0, textAlign: 'center' }}>
-                Derecha si te antoja, izquierda si no
-              </p>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '8px 0 0' }}>
-                Toca para cerrar
-              </p>
-              <style>{`
-                .tutorial-hand { animation: modalHandSwipe 2s ease-in-out infinite; }
-                @keyframes modalHandSwipe {
-                  0%, 20% { transform: translateX(0); }
-                  40% { transform: translateX(40px); }
-                  60% { transform: translateX(0); }
-                  80% { transform: translateX(-40px); }
-                  100% { transform: translateX(0); }
-                }
-              `}</style>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 18px', borderRadius: 20,
+                background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+                pointerEvents: 'auto', cursor: 'pointer',
+              }}>
+                <span style={{ fontSize: 14 }}>👈</span>
+                <span style={{ fontSize: 13, color: '#fff', fontWeight: 500 }}>Desliza para indicar si te antoja</span>
+                <span style={{ fontSize: 14 }}>👉</span>
+              </div>
             </div>
           )}
 
