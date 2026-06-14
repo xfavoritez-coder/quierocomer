@@ -149,8 +149,16 @@ export default function NewHome({
       // Build session category preferences
       const likedCats = new Set<string>()
       const likedTypes = new Set<string>()
+      const dislikedCats: Record<string, number> = {}
+      const dislikedTypes: Record<string, number> = {}
       for (const d of filtered) {
         if (sessionLikedIds.has(d.id)) { likedCats.add(d.categoriaNorm); likedTypes.add(d.categoriaTipo) }
+      }
+      for (const d of dishes) {
+        if (sessionDislikedIds.has(d.id)) {
+          dislikedCats[d.categoriaNorm] = (dislikedCats[d.categoriaNorm] ?? 0) + 1
+          dislikedTypes[d.categoriaTipo] = (dislikedTypes[d.categoriaTipo] ?? 0) + 1
+        }
       }
 
       const dishMap = new Map(filtered.map(d => [d.id, d]))
@@ -162,16 +170,18 @@ export default function NewHome({
       const remaining = [...dishMap.values()].sort(() => Math.random() - 0.5)
       const combined = [...vectorOrdered, ...remaining]
 
-      // Reorder: boost dishes matching liked categories/types to top
+      // Reorder: boost liked categories, penalize disliked ones
       const boosted: FeedDish[] = []
       const similar: FeedDish[] = []
       const rest: FeedDish[] = []
+      const penalized: FeedDish[] = []
       for (const d of combined) {
         if (sessionLikedIds.has(d.id)) boosted.push(d)
+        else if ((dislikedCats[d.categoriaNorm] ?? 0) >= 2 || (dislikedTypes[d.categoriaTipo] ?? 0) >= 3) penalized.push(d)
         else if (likedCats.has(d.categoriaNorm) || likedTypes.has(d.categoriaTipo)) similar.push(d)
         else rest.push(d)
       }
-      // Interleave similar (every 2nd) with rest for variety
+      // Similar first, then rest, penalized at the bottom
       const reordered = [...boosted]
       let sIdx = 0, rIdx = 0
       while (sIdx < similar.length || rIdx < rest.length) {
@@ -179,6 +189,7 @@ export default function NewHome({
         if (sIdx < similar.length) reordered.push(similar[sIdx++])
         if (rIdx < rest.length) reordered.push(rest[rIdx++])
       }
+      reordered.push(...penalized)
 
       // Max 3 consecutive same category
       const final: FeedDish[] = []
@@ -210,8 +221,11 @@ export default function NewHome({
       }
       if (sessionDislikedIds.has(d.id)) {
         const kws = extractKeywords(d.nombre, d.descripcion)
-        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 12
-        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) - 8
+        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 15
+        // Penalize category hard — 2+ dislikes in same category = strong signal
+        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) - 20
+        // Also penalize dishType (e.g., reject drinks → all drinks drop)
+        if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) - 12
       }
     }
 
