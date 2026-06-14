@@ -42,9 +42,11 @@ export default function ProfileView({
   savedDishes,
   likeCount,
   passCount,
+  displayName,
   onReset,
   onUpdateDiet,
   onDishTap,
+  onUpdateName,
 }: {
   profile: FeedProfile
   diet: UserDiet
@@ -54,11 +56,15 @@ export default function ProfileView({
   savedDishes?: FeedDish[]
   likeCount?: number
   passCount?: number
+  displayName?: string | null
   onReset: () => void
   onUpdateDiet: (d: UserDiet) => void
   onDishTap?: (d: FeedDish) => void
+  onUpdateName?: (name: string) => void
 }) {
   const [editingDiet, setEditingDiet] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState(displayName ?? '')
   const dietToOption = (d: UserDiet): DietOption => {
     if (d.isVegan) return 'isVegan'
     if (d.isVegetarian) return 'isVegetarian'
@@ -126,6 +132,65 @@ export default function ProfileView({
 
   return (
     <div style={{ padding: '8px 16px 100px' }}>
+
+      {/* ─── Name ─── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '16px 14px 12px', marginBottom: 16,
+      }}>
+        {editingName ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 260 }}>
+            <input
+              type="text" value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              placeholder="Tu nombre"
+              maxLength={30}
+              autoFocus
+              style={{
+                flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 10, padding: '10px 14px', fontSize: 16, color: '#fff', outline: 'none',
+                textAlign: 'center',
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  onUpdateName?.(nameInput)
+                  setEditingName(false)
+                }
+              }}
+            />
+            <button onClick={() => { onUpdateName?.(nameInput); setEditingName(false) }} style={{
+              background: '#F4A623', border: 'none', borderRadius: 10,
+              padding: '10px 14px', color: '#000', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+            }}>
+              OK
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setEditingName(true)} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 22,
+            }}>
+              {displayName ? displayName.charAt(0).toUpperCase() : '👤'}
+            </div>
+            <p style={{
+              fontSize: 18, fontWeight: 700, color: '#fff', margin: 0,
+            }}>
+              {displayName || 'Agregar nombre'}
+            </p>
+            {!displayName && (
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', margin: 0 }}>
+                Toca para agregar
+              </p>
+            )}
+          </button>
+        )}
+      </div>
 
       {/* ─── Diet ─── */}
       <div style={{

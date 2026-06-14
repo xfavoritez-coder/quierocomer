@@ -97,6 +97,7 @@ export default function NewHome({
   const [liveTasteData, setLiveTasteData] = useState(tasteData)
   const [likeCount, setLikeCount] = useState(0)
   const [passCount, setPassCount] = useState(0)
+  const [displayName, setDisplayName] = useState<string | null>(null)
   const profile = useMemo<FeedProfile>(() => {
     if (liveProfile) return liveProfile
     const base = createEmptyProfile()
@@ -122,6 +123,7 @@ export default function NewHome({
         setActiveDiet(data.diet)
         setLikeCount(data.likeCount ?? 0)
         setPassCount(data.passCount ?? 0)
+        setDisplayName(data.displayName ?? null)
         // Merge server liked IDs into session
         if (data.likedDishIds?.length) {
           setSessionLikedIds(prev => {
@@ -847,9 +849,11 @@ export default function NewHome({
             savedDishes={savedDishes}
             likeCount={likeCount}
             passCount={passCount}
+            displayName={displayName}
             onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
             onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
             onDishTap={handleLikedDishTap}
+            onUpdateName={(name) => { setDisplayName(name); import('../lib/feed-actions').then(({ updateDisplayName }) => updateDisplayName(name)) }}
           />
         </>
       )}

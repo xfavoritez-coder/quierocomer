@@ -281,6 +281,20 @@ async function updateDishStats(dishId: string, action: FeedAction) {
   }
 }
 
+// ─── Update display name ──────────────────────────────────────
+export async function updateDisplayName(name: string) {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return
+    await prisma.feedUser.update({
+      where: { id: userId },
+      data: { displayName: name.trim().slice(0, 30) || null },
+    })
+  } catch (e) {
+    console.error('[Feed] updateDisplayName error:', e)
+  }
+}
+
 // ─── Reset profile ─────────────────────────────────────────────────
 export async function resetProfile() {
   try {
@@ -373,6 +387,7 @@ export async function getProfileData(): Promise<{
   categoryScores: Record<string, number>
   keywordScores: Record<string, number>
   totalInteractions: number
+  displayName: string | null
   likeCount: number
   passCount: number
   likedDishIds: string[]
@@ -386,6 +401,7 @@ export async function getProfileData(): Promise<{
       where: { id: userId },
       select: {
         categoryScores: true, keywordScores: true, totalInteractions: true,
+        displayName: true,
         isVegan: true, isVegetarian: true, isGlutenFree: true, isLactoseFree: true,
         antojoSessionDate: true, antojoDishIds: true, antojoRejectIds: true, tasteEmbeddings: true,
       },
@@ -416,6 +432,7 @@ export async function getProfileData(): Promise<{
       categoryScores: (user.categoryScores as Record<string, number>) ?? {},
       keywordScores: (user.keywordScores as Record<string, number>) ?? {},
       totalInteractions: user.totalInteractions,
+      displayName: user.displayName,
       likeCount,
       passCount,
       likedDishIds: likedDishIds.map(l => l.dishId),
