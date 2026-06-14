@@ -630,14 +630,14 @@ export default function NewHome({
                   }}
                 >
                   <p style={{
-                    fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0,
+                    fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0,
                     fontFamily: 'var(--font-feed-display), serif',
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
                     {MealIcons[currentMealSlot.id]('rgba(255,255,255,0.55)')}
                     <span>{currentMealSlot.label}</span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                      stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="rgba(255,255,255,0.45)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                       style={{ transform: mealPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
