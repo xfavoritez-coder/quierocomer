@@ -530,6 +530,11 @@ body:has(.feed-root) {
   .home-card { width: 320px; }
 }
 
+/* Location search placeholder */
+.location-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.15) !important;
+}
+
 /* Scrollbar hide */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

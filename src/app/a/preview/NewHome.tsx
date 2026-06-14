@@ -714,6 +714,7 @@ export default function NewHome({
                     </svg>
                     <input type="text" placeholder="Buscar comuna o ciudad..." value={locationQuery}
                       onChange={e => setLocationQuery(e.target.value)}
+                      className="location-search-input"
                       style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 12 }} />
                   </div>
 
