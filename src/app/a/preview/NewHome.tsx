@@ -185,8 +185,8 @@ export default function NewHome({
     return allCategories.filter(c => available.has(c.norm))
   }, [dishes, allCategories])
 
-  // Feed dishes — pgvector when available, fallback to keyword scoring
-  const feedDishes = useMemo(() => {
+  // Stable feed order — computed once, not reordered by likes/dislikes
+  const baseFeedOrder = useMemo(() => {
     let filtered = dishes.filter(d => d.fotoUrl)
 
     // Diet filter
@@ -233,59 +233,24 @@ export default function NewHome({
       filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
     }
 
-    // Remove liked and disliked from feed (liked go to historial, disliked disappear)
-    filtered = filtered.filter(d => !sessionDislikedIds.has(d.id) && !sessionLikedIds.has(d.id))
+    // Note: liked/disliked filtering happens in feedDishes, not here
+    // This keeps baseFeedOrder stable when user swipes
 
-    // ── pgvector path: use server-scored order + session boosts ──
+    // ── pgvector path: use server-scored order ──
     if (vectorScoredIds.length > 0 && !activeCategory) {
-      // Build session category preferences
-      const likedCats = new Set<string>()
-      const likedTypes = new Set<string>()
-      const dislikedCats: Record<string, number> = {}
-      const dislikedTypes: Record<string, number> = {}
-      for (const d of filtered) {
-        if (sessionLikedIds.has(d.id)) { likedCats.add(d.categoriaNorm); likedTypes.add(d.categoriaTipo) }
-      }
-      for (const d of dishes) {
-        if (sessionDislikedIds.has(d.id)) {
-          dislikedCats[d.categoriaNorm] = (dislikedCats[d.categoriaNorm] ?? 0) + 1
-          dislikedTypes[d.categoriaTipo] = (dislikedTypes[d.categoriaTipo] ?? 0) + 1
-        }
-      }
-
       const dishMap = new Map(filtered.map(d => [d.id, d]))
       const vectorOrdered: FeedDish[] = []
       for (const id of vectorScoredIds) {
         const d = dishMap.get(id)
         if (d) { vectorOrdered.push(d); dishMap.delete(id) }
       }
+      // Append remaining (discovery)
       const remaining = [...dishMap.values()].sort(() => Math.random() - 0.5)
       const combined = [...vectorOrdered, ...remaining]
 
-      // Reorder: boost liked categories, penalize disliked ones
-      const boosted: FeedDish[] = []
-      const similar: FeedDish[] = []
-      const rest: FeedDish[] = []
-      const penalized: FeedDish[] = []
-      for (const d of combined) {
-        if (sessionLikedIds.has(d.id)) boosted.push(d)
-        else if ((dislikedCats[d.categoriaNorm] ?? 0) >= 2 || (dislikedTypes[d.categoriaTipo] ?? 0) >= 3) penalized.push(d)
-        else if (likedCats.has(d.categoriaNorm) || likedTypes.has(d.categoriaTipo)) similar.push(d)
-        else rest.push(d)
-      }
-      // Similar first, then rest, penalized at the bottom
-      const reordered = [...boosted]
-      let sIdx = 0, rIdx = 0
-      while (sIdx < similar.length || rIdx < rest.length) {
-        if (sIdx < similar.length) reordered.push(similar[sIdx++])
-        if (sIdx < similar.length) reordered.push(similar[sIdx++])
-        if (rIdx < rest.length) reordered.push(rest[rIdx++])
-      }
-      reordered.push(...penalized)
-
       // Max 3 consecutive same category
       const final: FeedDish[] = []
-      const rem = [...reordered]
+      const rem = [...combined]
       while (rem.length > 0) {
         const recent = final.slice(-3).map(d => d.categoriaNorm)
         const allSame = recent.length === 3 && recent.every(c => c === recent[0])
@@ -298,84 +263,37 @@ export default function NewHome({
       return final
     }
 
-    // ── Fallback: keyword scoring (cold start or category filter) ──
-    // Build session-boosted keyword and category scores
-    const mergedKw: Record<string, number> = { ...keywordScores }
-    const sessionCatBoost: Record<string, number> = {}
-    for (const d of dishes) {
-      if (sessionLikedIds.has(d.id)) {
-        const kws = extractKeywords(d.nombre, d.descripcion)
-        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) + 8
-        // Boost category aggressively for session likes
-        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) + 15
-        // Also boost same dishType (food/dessert/drink)
-        if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) + 10
-      }
-      if (sessionDislikedIds.has(d.id)) {
-        const kws = extractKeywords(d.nombre, d.descripcion)
-        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 15
-        // Penalize category hard — 2+ dislikes in same category = strong signal
-        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) - 20
-        // Also penalize dishType (e.g., reject drinks → all drinks drop)
-        if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) - 12
-      }
-    }
-
+    // ── Fallback: keyword scoring (from DB, stable) ──
     const scored = filtered.map(d => {
       let score = 0
-      // DB category score
       score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
-      // Session category boost (much stronger, immediate effect)
-      score += (sessionCatBoost[d.categoriaNorm] ?? 0)
-      // Session dishType boost (e.g., like a dessert → all desserts rise)
-      score += (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
-      // Keywords
       const kws = extractKeywords(d.nombre, d.descripcion)
       let kwTotal = 0
-      for (const kw of kws) kwTotal += (mergedKw[kw] ?? 0)
+      for (const kw of kws) kwTotal += (keywordScores[kw] ?? 0)
       score += Math.min(kwTotal, 15)
       return { dish: d, score }
     })
 
     scored.sort((a, b) => b.score - a.score)
 
-    const hasSessionPreference = sessionLikedIds.size > 0 || sessionDislikedIds.size > 0
+    // 70/15/15 mix
+    const total = scored.length
+    const scoredCount = Math.ceil(total * 0.7)
+    const popularCount = Math.ceil(total * 0.15)
+    const topScored = scored.slice(0, scoredCount)
+    const topIds = new Set(topScored.map(s => s.dish.id))
+    const popular = scored.filter(s => !topIds.has(s.dish.id)).sort((a, b) => b.dish.popularityScore - a.dish.popularityScore).slice(0, popularCount)
+    const usedIds = new Set([...topIds, ...popular.map(p => p.dish.id)])
+    const discovery = scored.filter(s => !usedIds.has(s.dish.id)).sort(() => Math.random() - 0.5)
 
-    let result: FeedDish[]
-
-    if (hasSessionPreference) {
-      // User has expressed preferences this session → respect score order directly
-      // Just add a small discovery element every 10th dish
-      const byScore = scored.map(s => s.dish)
-      result = []
-      const discoveryPool = byScore.filter(d => d.popularityScore <= 1).sort(() => Math.random() - 0.5)
-      let dIdx = 0
-      for (let i = 0; i < byScore.length; i++) {
-        result.push(byScore[i])
-        if (i > 0 && i % 10 === 0 && dIdx < discoveryPool.length) {
-          result.push(discoveryPool[dIdx++])
-        }
-      }
-    } else {
-      // No session preference → classic 70/15/15 mix
-      const total = scored.length
-      const scoredCount = Math.ceil(total * 0.7)
-      const popularCount = Math.ceil(total * 0.15)
-      const topScored = scored.slice(0, scoredCount)
-      const topIds = new Set(topScored.map(s => s.dish.id))
-      const popular = scored.filter(s => !topIds.has(s.dish.id)).sort((a, b) => b.dish.popularityScore - a.dish.popularityScore).slice(0, popularCount)
-      const usedIds = new Set([...topIds, ...popular.map(p => p.dish.id)])
-      const discovery = scored.filter(s => !usedIds.has(s.dish.id)).sort(() => Math.random() - 0.5)
-
-      result = []
-      let sI = 0, pI = 0, dI = 0
-      for (let i = 0; i < total; i++) {
-        if (i % 7 === 5 && pI < popular.length) result.push(popular[pI++].dish)
-        else if (i % 7 === 6 && dI < discovery.length) result.push(discovery[dI++].dish)
-        else if (sI < topScored.length) result.push(topScored[sI++].dish)
-        else if (pI < popular.length) result.push(popular[pI++].dish)
-        else if (dI < discovery.length) result.push(discovery[dI++].dish)
-      }
+    let result: FeedDish[] = []
+    let sI = 0, pI = 0, dI = 0
+    for (let i = 0; i < total; i++) {
+      if (i % 7 === 5 && pI < popular.length) result.push(popular[pI++].dish)
+      else if (i % 7 === 6 && dI < discovery.length) result.push(discovery[dI++].dish)
+      else if (sI < topScored.length) result.push(topScored[sI++].dish)
+      else if (pI < popular.length) result.push(popular[pI++].dish)
+      else if (dI < discovery.length) result.push(discovery[dI++].dish)
     }
 
     // Max 3 consecutive same category
@@ -391,7 +309,12 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet])
+  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, activeDiet])
+
+  // Live feed: stable order minus interacted dishes — no reordering
+  const feedDishes = useMemo(() => {
+    return baseFeedOrder.filter(d => !sessionLikedIds.has(d.id) && !sessionDislikedIds.has(d.id))
+  }, [baseFeedOrder, sessionLikedIds, sessionDislikedIds])
 
   // Infinite scroll
   useEffect(() => {
