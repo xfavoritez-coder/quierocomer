@@ -1254,7 +1254,7 @@ export default function CartaImpact({
               {restaurant.name?.charAt(0)?.toUpperCase() || "Q"}
             </div>
           )}
-          <span style={{ fontWeight: 800, fontSize: 17, color: showFixedCatNav ? "var(--carta-text)" : "var(--carta-text, white)", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
+          <span style={{ fontWeight: 800, fontSize: 18, color: showFixedCatNav ? "var(--carta-text)" : "var(--carta-text, white)", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
             {restaurant.name}
           </span>
         </div>
