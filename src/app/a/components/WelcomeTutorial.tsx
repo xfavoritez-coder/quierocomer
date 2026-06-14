@@ -29,7 +29,7 @@ export default function WelcomeTutorial({ onDismiss }: { onDismiss: () => void }
           </h1>
 
           <p style={{
-            fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
+            fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5,
             margin: '0 0 32px',
           }}>
             Descubre platos cerca de ti. Nuestro motor aprende tus gustos y te muestra lo que realmente te antoja.
