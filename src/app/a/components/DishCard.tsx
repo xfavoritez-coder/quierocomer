@@ -245,6 +245,30 @@ export default function DishCard({
           </div>
         </div>
       </div>
+      {/* Restaurant name below card */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '6px 8px 2px',
+      }}>
+        {dish.restauranteLogo ? (
+          <img src={dish.restauranteLogo} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+        ) : (
+          <div style={{
+            width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+            background: 'rgba(255,255,255,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,0.3)', fontSize: 8, fontWeight: 700,
+          }}>
+            {dish.restaurante.charAt(0)}
+          </div>
+        )}
+        <span style={{
+          fontSize: 10, color: 'rgba(255,255,255,0.35)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {dish.restaurante}
+        </span>
+      </div>
     </div>
   )
 }
