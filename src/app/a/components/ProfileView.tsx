@@ -88,7 +88,7 @@ export default function ProfileView({
   const learned = tasteData?.tasteEmbeddingsCount ?? 0
   const hasVector = tasteData?.hasGustoVector ?? false
 
-  const engineLevel = !tasteData ? 0
+  const engineLevel = !tasteData || interactions === 0 ? 0
     : !hasVector ? 1
     : learned < 10 ? 2
     : learned < 30 ? 3
