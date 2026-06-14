@@ -125,7 +125,7 @@ export default function SearchExplore({
         padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)',
       }}>
         {/* Logo */}
-        <a href="/a" style={{ display: 'block', textAlign: 'center', marginBottom: 10, textDecoration: 'none' }}>
+        <a href="/" style={{ display: 'block', textAlign: 'center', marginBottom: 10, textDecoration: 'none' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 17, fontWeight: 700, color: '#fff',
@@ -282,7 +282,7 @@ export default function SearchExplore({
         zIndex: 50, display: 'flex', gap: 12, pointerEvents: 'none',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        <a href="/a" style={{
+        <a href="/" style={{
           width: 52, height: 52, borderRadius: '50%',
           background: 'rgba(20,20,20,0.75)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',

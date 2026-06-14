@@ -192,7 +192,7 @@ export default function SearchExplore({
         zIndex: 50, display: 'flex', gap: 10, pointerEvents: 'none',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        <a href="/a" style={{
+        <a href="/" style={{
           width: 44, height: 44, borderRadius: '50%',
           background: 'rgba(20,20,20,0.7)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',

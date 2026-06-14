@@ -250,7 +250,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
       <header className="feed-header">
         {!searchOpen ? (
           <>
-            <a href="/a" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
+            <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button onClick={() => setSearchOpen(true)} style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: 4,

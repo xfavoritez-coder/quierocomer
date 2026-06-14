@@ -465,7 +465,7 @@ export default function NewHome({
         padding: '10px 16px', display: 'flex', alignItems: 'center',
       }}>
         <div style={{ width: 36 }} />
-        <a href="/a" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', cursor: 'pointer' }}>
+        <a href="/" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', cursor: 'pointer' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 20, fontWeight: 700, color: '#fff',
@@ -524,7 +524,7 @@ export default function NewHome({
 
             {/* Nav — only B2B links */}
             <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <a href="/landing" style={{
+              <a href="/qr" style={{
                 display: 'flex', alignItems: 'center', gap: 16,
                 padding: '14px 16px', borderRadius: 14,
                 color: '#fff', textDecoration: 'none',

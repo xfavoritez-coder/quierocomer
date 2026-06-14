@@ -32,7 +32,7 @@ export default function OnboardingPage() {
         setLoading(false)
         return
       }
-      window.location.href = '/a'
+      window.location.href = '/'
     } catch {
       setError('Error de conexión. Intenta de nuevo.')
       setLoading(false)
