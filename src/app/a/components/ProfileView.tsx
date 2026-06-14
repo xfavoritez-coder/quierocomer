@@ -56,12 +56,14 @@ export default function ProfileView({
     return 'all'
   }
 
+  const displayCatNames = useMemo(() => new Set(getDisplayCategories().map(c => c.norm)), [])
+
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
-      .filter(([, score]) => score > 0)
+      .filter(([cat, score]) => score > 0 && displayCatNames.has(cat))
       .sort(([, a], [, b]) => b - a)
       .slice(0, 6)
-  }, [profile.categoryScores])
+  }, [profile.categoryScores, displayCatNames])
 
   const maxCatScore = topCategories.length > 0 ? topCategories[0][1] : 1
 
