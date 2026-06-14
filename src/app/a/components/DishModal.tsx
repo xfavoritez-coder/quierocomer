@@ -55,6 +55,19 @@ export default function DishModal({
     return () => { document.body.style.overflow = '' }
   }, [])
 
+  // Infinite scroll for related dishes inside modal
+  useEffect(() => {
+    const el = modalRef.current
+    if (!el) return
+    const handleScroll = () => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 400 && visibleRelated < relatedDishes.length) {
+        setVisibleRelated(prev => Math.min(prev + 12, relatedDishes.length))
+      }
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [visibleRelated, relatedDishes.length])
+
   // Swipe: horizontal = like/dislike, vertical down = close
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -90,6 +103,7 @@ export default function DishModal({
   }
 
   // Related dishes: embedding similarity (pgvector) with keyword fallback
+  const [visibleRelated, setVisibleRelated] = useState(12)
   const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
 
   useEffect(() => {
@@ -127,7 +141,7 @@ export default function DishModal({
         return { dish: d, score }
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 12)
+      .slice(0, 60)
       .map(x => x.dish)
   }, [dish, allDishes, profile, embeddingSimilarIds])
 
@@ -407,7 +421,7 @@ export default function DishModal({
               <div style={{ display: 'flex', gap: 10, padding: '0 12px' }}>
                 {[0, 1].map(col => (
                   <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {relatedDishes.filter((_, i) => i % 2 === col).map(d => (
+                    {relatedDishes.slice(0, visibleRelated).filter((_, i) => i % 2 === col).map(d => (
                       <DishCard
                         key={d.id}
                         dish={d}

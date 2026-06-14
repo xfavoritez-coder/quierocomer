@@ -192,23 +192,23 @@ export default function DishCard({
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5,
           display: 'flex', alignItems: 'center', gap: 5,
-          padding: '6px 8px',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
+          padding: '7px 10px',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)',
         }}>
           {dish.restauranteLogo ? (
-            <img src={dish.restauranteLogo} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            <img src={dish.restauranteLogo} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
           ) : (
             <div style={{
-              width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
               background: 'rgba(255,255,255,0.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'rgba(255,255,255,0.6)', fontSize: 9, fontWeight: 700,
+              color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: 700,
             }}>
               {dish.restaurante.charAt(0)}
             </div>
           )}
           <span style={{
-            fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: 500,
+            fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 500,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {dish.restaurante}
