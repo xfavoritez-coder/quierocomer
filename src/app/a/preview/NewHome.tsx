@@ -294,9 +294,12 @@ export default function NewHome({
 
         const sessionBoost = (sessionCatBoost[d.categoriaNorm] ?? 0) +
           (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
-        const momentumNorm = Math.min(Math.max(sessionBoost, 0), 30) / 30
+        // Positive momentum boosts, negative penalizes (dislikes push category down)
+        const momentumNorm = sessionBoost >= 0
+          ? Math.min(sessionBoost, 30) / 30
+          : Math.max(sessionBoost, -60) / 60 // -60 → -1.0
 
-        let score = vScore * 0.5 + kwNorm * 0.3 + catNorm * 0.1 + momentumNorm * 0.1
+        let score = vScore * 0.5 + kwNorm * 0.3 + catNorm * 0.1 + momentumNorm * 0.2
         // Meal time boost
         if (d.mealTime === mealFilter) score += 0.15
         return { dish: d, score }
