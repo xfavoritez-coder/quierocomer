@@ -943,7 +943,7 @@ export default function NewHome({
       }}>
         {[
           { id: 'feed' as View, label: 'Inicio',
-            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill={a ? '#F4A623' : 'none'} stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill={a ? '#F4A623' : 'none'} stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12H3l9-9 9 9h-2" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /><path d="M9 21v-6h6v6" /></svg>,
             action: () => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) } },
           { id: 'search' as any, label: 'Buscar',
             icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
