@@ -18,7 +18,7 @@ import {
   updateTasteAction,
 } from '../lib/feed-actions'
 
-type View = 'feed' | 'guardados' | 'perfil'
+type View = 'feed' | 'guardados' | 'historial' | 'perfil'
 
 export default function NewHome({
   dishes,
@@ -233,8 +233,8 @@ export default function NewHome({
       filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
     }
 
-    // Remove disliked
-    filtered = filtered.filter(d => !sessionDislikedIds.has(d.id))
+    // Remove liked and disliked from feed (liked go to historial, disliked disappear)
+    filtered = filtered.filter(d => !sessionDislikedIds.has(d.id) && !sessionLikedIds.has(d.id))
 
     // ── pgvector path: use server-scored order + session boosts ──
     if (vectorScoredIds.length > 0 && !activeCategory) {
@@ -547,6 +547,9 @@ export default function NewHome({
                 { label: 'Favoritos', color: '#F4A623',
                   icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.7 4.5 6.4 4.5c2 0 3.5 1 4.3 2.3.8-1.3 2.3-2.3 4.3-2.3 3.7 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z" /></svg>,
                   action: () => { setMenuOpen(false); setView('guardados'); window.scrollTo(0, 0) } },
+                { label: 'Me han gustado', color: '#22c55e',
+                  icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></svg>,
+                  action: () => { setMenuOpen(false); setView('historial'); window.scrollTo(0, 0) } },
                 { label: 'Mi perfil', color: '#855bd8',
                   icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>,
                   action: () => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) } },
@@ -821,6 +824,77 @@ export default function NewHome({
             onDishTap={handleDishTap}
             onRemove={handleRemoveSaved}
           />
+        </>
+      )}
+
+      {/* ─── Historial (Me han gustado) View ─── */}
+      {view === 'historial' && (
+        <>
+          <div style={{ padding: '16px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button onClick={() => setView('feed')} style={{
+              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
+              display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontSize: 13,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Volver
+            </button>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
+              {likedDishes.length} plato{likedDishes.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <h2 style={{
+            fontFamily: 'var(--font-feed-display), serif',
+            fontSize: 18, fontWeight: 700, color: '#fff', margin: 0,
+            padding: '0 20px 12px',
+          }}>
+            Me han gustado
+          </h2>
+          {likedDishes.length > 0 ? (
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3,
+              padding: '0 3px 100px',
+            }}>
+              {likedDishes.map(d => (
+                <div key={d.id} onClick={() => handleDishTap(d)} style={{
+                  position: 'relative', aspectRatio: '1', overflow: 'hidden',
+                  cursor: 'pointer', background: '#1a1a1a',
+                }}>
+                  {d.fotoUrl ? (
+                    <img src={d.fotoUrl} alt={d.nombre}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      loading="lazy" />
+                  ) : (
+                    <div style={{
+                      width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', fontSize: 12, padding: 8, textAlign: 'center',
+                    }}>
+                      {d.nombre}
+                    </div>
+                  )}
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                    padding: '20px 6px 6px',
+                  }}>
+                    <p style={{
+                      fontSize: 11, fontWeight: 600, color: '#fff', margin: 0,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {d.nombre}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
+              <p style={{ fontSize: 32, marginBottom: 8 }}>👍</p>
+              <p style={{ fontSize: 14 }}>Aún no tienes platos que te gusten</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)', marginTop: 4 }}>Desliza hacia la derecha en el feed</p>
+            </div>
+          )}
         </>
       )}
 
