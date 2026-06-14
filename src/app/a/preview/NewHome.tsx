@@ -142,16 +142,20 @@ export default function NewHome({
     }
   }, [dishes])
 
-  // Communes for location dropdown
+  // Communes for location dropdown — only communes, not cities or streets
   const communes = useMemo(() => {
+    const CITIES = new Set(['Santiago', 'Santiago Centro', 'Valparaíso', 'La Serena', 'Araucanía'])
     const set = new Set<string>()
     dishes.forEach(d => {
       if (d.restauranteDireccion) {
-        const parts = d.restauranteDireccion.split(',').map(p => p.trim()).filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana')
-        // Add commune (second-to-last) and city (last) if they look like place names
-        for (let i = Math.max(0, parts.length - 2); i < parts.length; i++) {
-          const p = parts[i]
-          if (p && p.length > 2 && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i)) set.add(p)
+        const parts = d.restauranteDireccion.split(',').map(p => p.trim())
+          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i))
+        // Commune is second-to-last (before city). If only 2 parts, last is the commune.
+        if (parts.length >= 3) {
+          const commune = parts[parts.length - 2]
+          if (commune && !CITIES.has(commune)) set.add(commune)
+        } else if (parts.length === 2) {
+          set.add(parts[parts.length - 1])
         }
       }
     })
