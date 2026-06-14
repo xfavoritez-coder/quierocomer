@@ -125,14 +125,14 @@ export default function SearchExplore({
         padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)',
       }}>
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 10 }}>
+        <a href="/a" style={{ display: 'block', textAlign: 'center', marginBottom: 10, textDecoration: 'none' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 17, fontWeight: 700, color: '#fff',
           }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
-        </div>
+        </a>
 
         {/* Search bar */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

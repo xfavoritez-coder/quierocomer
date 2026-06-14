@@ -84,9 +84,12 @@ export default function NewHome({
     const set = new Set<string>()
     dishes.forEach(d => {
       if (d.restauranteDireccion) {
-        const parts = d.restauranteDireccion.split(',')
-        const commune = parts.length >= 2 ? parts[parts.length - 2].trim() : null
-        if (commune && commune !== 'Chile') set.add(commune)
+        const parts = d.restauranteDireccion.split(',').map(p => p.trim()).filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana')
+        // Add commune (second-to-last) and city (last) if they look like place names
+        for (let i = Math.max(0, parts.length - 2); i < parts.length; i++) {
+          const p = parts[i]
+          if (p && p.length > 2 && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i)) set.add(p)
+        }
       }
     })
     return [...set].sort()
@@ -109,6 +112,29 @@ export default function NewHome({
   // Feed dishes — pgvector when available, fallback to keyword scoring
   const feedDishes = useMemo(() => {
     let filtered = dishes.filter(d => d.fotoUrl)
+
+    // Location filter
+    if (locationName) {
+      // Filter by commune/city name in address
+      const locNorm = locationName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      const inCommune = filtered.filter(d => {
+        if (!d.restauranteDireccion) return false
+        const addr = d.restauranteDireccion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        return addr.includes(locNorm)
+      })
+      if (inCommune.length > 0) filtered = inCommune
+    }
+    // GPS proximity: sort nearby first (but don't filter, location name already filtered)
+    if (userLocation && !locationName) {
+      const withDist = filtered.map(d => {
+        const dist = d.restauranteLat && d.restauranteLng
+          ? distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng)
+          : 999
+        return { dish: d, dist }
+      })
+      const nearby = withDist.filter(x => x.dist < 10).sort((a, b) => a.dist - b.dist)
+      if (nearby.length > 0) filtered = nearby.map(x => x.dish)
+    }
 
     // Category filter
     if (activeCategory) {
@@ -240,7 +266,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation])
 
   // Infinite scroll
   useEffect(() => {
@@ -330,14 +356,14 @@ export default function NewHome({
         padding: '10px 16px', display: 'flex', alignItems: 'center',
       }}>
         <div style={{ width: 36 }} />
-        <div style={{ flex: 1, textAlign: 'center' }}>
+        <a href="/a" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', cursor: 'pointer' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 20, fontWeight: 700, color: '#fff',
           }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
-        </div>
+        </a>
         <button onClick={() => setMenuOpen(true)} style={{
           background: 'none', border: 'none', cursor: 'pointer', padding: 6,
           color: 'rgba(255,255,255,0.5)', width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -396,7 +422,7 @@ export default function NewHome({
                 { label: 'Buscar', color: '#7b8cff',
                   icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
                   href: '/a/search' },
-                { label: 'Mis antojos', color: '#ff5b5b',
+                { label: 'Favoritos', color: '#F4A623',
                   icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.7 4.5 6.4 4.5c2 0 3.5 1 4.3 2.3.8-1.3 2.3-2.3 4.3-2.3 3.7 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z" /></svg>,
                   action: () => { setMenuOpen(false); setView('guardados'); window.scrollTo(0, 0) } },
                 { label: 'Mi perfil', color: '#855bd8',
@@ -532,7 +558,7 @@ export default function NewHome({
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
               <span style={{
-                fontSize: 13, color: locationName ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+                fontSize: 14, color: locationName ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
                 maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {locationName || 'Ubicación'}
@@ -590,7 +616,8 @@ export default function NewHome({
 
                   {filteredCommunes.map(commune => (
                     <button key={commune} onClick={() => {
-                      setLocationName(commune); setUserLocation(null); setLocationOpen(false); setLocationQuery('')
+                      setLocationName(commune)
+                      setLocationOpen(false); setLocationQuery('')
                     }} style={{
                       display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
                       background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
