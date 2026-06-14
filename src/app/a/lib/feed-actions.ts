@@ -326,14 +326,42 @@ export async function updateTasteAction(
   }
 }
 
-// ─── Similar dishes by embedding ──────────────────────────────────
+// ─── Similar dishes by embedding (text + image combined) ─────────
 export async function getSimilarDishIds(dishId: string): Promise<string[]> {
   try {
-    const { getDishEmbedding, findSimilarDishes } = await import('./vectors')
-    const embedding = await getDishEmbedding(dishId)
-    if (!embedding) return []
-    const similar = await findSimilarDishes(embedding, 12, [dishId])
-    return similar.map(s => s.id)
+    const { getDishEmbedding, findSimilarDishes, findVisuallySimilarDishes } = await import('./vectors')
+
+    // Get text-similar dishes
+    const textEmbedding = await getDishEmbedding(dishId)
+    const textSimilar = textEmbedding
+      ? await findSimilarDishes(textEmbedding, 10, [dishId])
+      : []
+
+    // Get visually-similar dishes
+    let imageSimilar: { id: string; similarity: number }[] = []
+    try {
+      const imgResult = await prisma.$queryRawUnsafe<{ embedding: string }[]>(
+        `SELECT "imageEmbedding"::text as embedding FROM "Dish" WHERE id = $1 AND "imageEmbedding" IS NOT NULL`, dishId
+      )
+      if (imgResult[0]?.embedding) {
+        const imgEmb = JSON.parse(imgResult[0].embedding)
+        imageSimilar = await findVisuallySimilarDishes(imgEmb, 10, [dishId])
+      }
+    } catch {}
+
+    // Merge: combine scores, deduplicate, take top 12
+    const scoreMap = new Map<string, number>()
+    for (const s of textSimilar) {
+      scoreMap.set(s.id, (s.similarity ?? 0) * 0.6) // text weight 60%
+    }
+    for (const s of imageSimilar) {
+      scoreMap.set(s.id, (scoreMap.get(s.id) ?? 0) + (s.similarity ?? 0) * 0.4) // image weight 40%
+    }
+
+    return [...scoreMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([id]) => id)
   } catch (e) {
     console.error('[Feed] getSimilarDishIds error:', e)
     return []

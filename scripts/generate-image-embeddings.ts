@@ -117,11 +117,13 @@ async function getImageEmbeddingOpenAI(imageUrl: string): Promise<number[] | nul
 }
 
 async function main() {
+  const onlyFeed = process.argv.includes('--feed-only')
   const dishes = await prisma.dish.findMany({
     where: {
       isActive: true,
       deletedAt: null,
       photos: { isEmpty: false },
+      ...(onlyFeed ? { restaurant: { isActive: true, isDemo: false, lat: { not: null }, lng: { not: null } } } : {}),
     },
     select: { id: true, name: true, photos: true, imageEmbeddingHash: true },
   })
