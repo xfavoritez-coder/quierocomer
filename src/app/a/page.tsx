@@ -2,7 +2,6 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getFeedDishes } from './lib/feed-queries'
-import { getScoredFeed } from './lib/taste-engine'
 import NewHome from './preview/NewHome'
 
 export default async function FeedPage() {
@@ -35,14 +34,21 @@ export default async function FeedPage() {
 
   const dishes = await getFeedDishes()
 
-  // pgvector: if user has enough interactions, get taste-scored feed
+  // pgvector: if user has enough interactions, get taste-scored feed (with timeout)
   let vectorScoredIds: string[] = []
   if (user.totalInteractions >= 8) {
     try {
-      const scored = await getScoredFeed(user.id, 120)
+      const { getScoredFeed } = await import('./lib/taste-engine')
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 5000)
+      )
+      const scored = await Promise.race([
+        getScoredFeed(user.id, 120),
+        timeoutPromise,
+      ])
       vectorScoredIds = scored.map(s => s.dishId)
-    } catch (e) {
-      // fallback to keyword scoring — pgvector might not have embeddings yet
+    } catch {
+      // fallback to keyword scoring — pgvector might not have embeddings yet or timed out
     }
   }
 
