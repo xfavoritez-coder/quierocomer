@@ -373,6 +373,9 @@ export async function getProfileData(): Promise<{
   categoryScores: Record<string, number>
   keywordScores: Record<string, number>
   totalInteractions: number
+  likeCount: number
+  passCount: number
+  likedDishIds: string[]
   tasteData: { antojoSessionDate: string | null; antojoDishIds: string[]; antojoRejectIds: string[]; tasteEmbeddingsCount: number; hasGustoVector: boolean }
   diet: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
 } | null> {
@@ -397,10 +400,25 @@ export async function getProfileData(): Promise<{
       hasGustoVector = !!vr[0]?.v
     } catch {}
 
+    // Count likes and passes from interactions
+    const [likeCount, passCount, likedDishIds] = await Promise.all([
+      prisma.feedInteraction.count({ where: { feedUserId: userId, action: 'LIKE' } }),
+      prisma.feedInteraction.count({ where: { feedUserId: userId, action: 'PASS' } }),
+      prisma.feedInteraction.findMany({
+        where: { feedUserId: userId, action: 'LIKE' },
+        select: { dishId: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+    ])
+
     return {
       categoryScores: (user.categoryScores as Record<string, number>) ?? {},
       keywordScores: (user.keywordScores as Record<string, number>) ?? {},
       totalInteractions: user.totalInteractions,
+      likeCount,
+      passCount,
+      likedDishIds: likedDishIds.map(l => l.dishId),
       tasteData: {
         antojoSessionDate: user.antojoSessionDate,
         antojoDishIds: (user.antojoDishIds as string[]) ?? [],

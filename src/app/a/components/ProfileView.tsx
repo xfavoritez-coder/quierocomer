@@ -38,6 +38,8 @@ export default function ProfileView({
   diet,
   tasteData,
   dishes,
+  likeCount,
+  passCount,
   onReset,
   onUpdateDiet,
 }: {
@@ -45,6 +47,8 @@ export default function ProfileView({
   diet: UserDiet
   tasteData?: TasteData
   dishes: FeedDish[]
+  likeCount?: number
+  passCount?: number
   onReset: () => void
   onUpdateDiet: (d: UserDiet) => void
 }) {
@@ -357,8 +361,8 @@ export default function ProfileView({
       {/* ─── Stats ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
         <StatCard value={profile.totalInteractions} label="Explorados" icon="👁" />
-        <StatCard value={profile.likedDishIds.size} label="Te gustaron" icon="👍" />
-        <StatCard value={profile.passedDishIds.size} label="No te gustaron" icon="👎" />
+        <StatCard value={likeCount ?? profile.likedDishIds.size} label="Te gustaron" icon="👍" />
+        <StatCard value={passCount ?? profile.passedDishIds.size} label="No te gustaron" icon="👎" />
       </div>
 
       {/* ─── Reset ─── */}

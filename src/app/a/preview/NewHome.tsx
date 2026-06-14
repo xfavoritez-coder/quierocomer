@@ -95,6 +95,8 @@ export default function NewHome({
   // Profile for DishModal — refreshable
   const [liveProfile, setLiveProfile] = useState<FeedProfile | null>(null)
   const [liveTasteData, setLiveTasteData] = useState(tasteData)
+  const [likeCount, setLikeCount] = useState(0)
+  const [passCount, setPassCount] = useState(0)
   const profile = useMemo<FeedProfile>(() => {
     if (liveProfile) return liveProfile
     const base = createEmptyProfile()
@@ -104,9 +106,9 @@ export default function NewHome({
     return base
   }, [categoryScores, keywordScores, totalInteractions, liveProfile])
 
-  // Refresh profile data when entering profile view
+  // Load liked dishes from server when entering historial or profile
   useEffect(() => {
-    if (view !== 'perfil') return
+    if (view !== 'perfil' && view !== 'historial') return
     import('../lib/feed-actions').then(({ getProfileData }) =>
       getProfileData().then(data => {
         if (!data) return
@@ -114,9 +116,20 @@ export default function NewHome({
         p.categoryScores = data.categoryScores
         p.keywordScores = data.keywordScores
         p.totalInteractions = data.totalInteractions
+        p.likedDishIds = new Set(data.likedDishIds ?? [])
         setLiveProfile(p)
         setLiveTasteData(data.tasteData)
         setActiveDiet(data.diet)
+        setLikeCount(data.likeCount ?? 0)
+        setPassCount(data.passCount ?? 0)
+        // Merge server liked IDs into session
+        if (data.likedDishIds?.length) {
+          setSessionLikedIds(prev => {
+            const merged = new Set(prev)
+            for (const id of data.likedDishIds) merged.add(id)
+            return merged
+          })
+        }
       })
     ).catch(() => {})
   }, [view])
@@ -911,6 +924,8 @@ export default function NewHome({
             diet={activeDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
             tasteData={liveTasteData ?? tasteData}
             dishes={dishes}
+            likeCount={likeCount}
+            passCount={passCount}
             onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
             onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
           />
