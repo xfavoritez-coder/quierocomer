@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 import { extractKeywords, keywordAffinity } from '../lib/keywords'
@@ -82,7 +82,8 @@ export default function DishModal({
     setSwipeX(0)
   }
 
-  // Related dishes: embedding similarity (pgvector) with keyword fallback
+  // Related dishes — live feed: scored, reactive to likes/dislikes, infinite scroll
+  const [relatedSwipedIds, setRelatedSwipedIds] = useState<Set<string>>(new Set())
   const [visibleRelated, setVisibleRelated] = useState(20)
   const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
 
@@ -93,33 +94,51 @@ export default function DishModal({
   }, [dish.id])
 
   const relatedDishes = useMemo(() => {
-    if (embeddingSimilarIds && embeddingSimilarIds.length > 0) {
-      const dishMap = new Map(allDishes.filter(d => d.fotoUrl).map(d => [d.id, d]))
-      return embeddingSimilarIds
-        .map(id => dishMap.get(id))
-        .filter(Boolean) as FeedDish[]
+    const excluded = new Set([dish.id, ...relatedSwipedIds])
+    const candidates = allDishes.filter(d => d.fotoUrl && !excluded.has(d.id))
+
+    // Build score map from embeddings (if available)
+    const embeddingRank = new Map<string, number>()
+    if (embeddingSimilarIds) {
+      embeddingSimilarIds.forEach((id, i) => embeddingRank.set(id, 1 - i / embeddingSimilarIds.length))
     }
 
     const thisKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
-    return allDishes
-      .filter(d => d.id !== dish.id && d.fotoUrl)
+
+    return candidates
       .map(d => {
         let score = 0
+        // Embedding similarity (strongest signal)
+        const embScore = embeddingRank.get(d.id) ?? 0
+        score += embScore * 10
+        // Same category
+        if (d.categoriaNorm === dish.categoriaNorm) score += 3
+        // Keyword overlap
         const dKws = extractKeywords(d.nombre, d.descripcion)
         for (const kw of dKws) if (thisKws.has(kw)) score += 4
-        if (d.categoriaNorm === dish.categoriaNorm) score += 3
+        // User preference
+        const catScore = profile.categoryScores[d.categoriaNorm] ?? 0
+        if (catScore > 0) score += Math.min(catScore * 0.1, 3)
         for (const kw of dKws) {
           const kwScore = profile.keywordScores[kw] ?? 0
           if (kwScore > 0) score += 1
         }
-        const catScore = profile.categoryScores[d.categoriaNorm] ?? 0
-        if (catScore > 0) score += catScore * 0.1
         return { dish: d, score }
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 60)
       .map(x => x.dish)
-  }, [dish, allDishes, profile, embeddingSimilarIds])
+  }, [dish, allDishes, profile, embeddingSimilarIds, relatedSwipedIds])
+
+  // Handlers for related dish swipes
+  const handleRelatedLike = useCallback((d: FeedDish) => {
+    setRelatedSwipedIds(prev => new Set([...prev, d.id]))
+    onLike(d)
+  }, [onLike])
+
+  const handleRelatedPass = useCallback((d: FeedDish) => {
+    setRelatedSwipedIds(prev => new Set([...prev, d.id]))
+    onPass(d)
+  }, [onPass])
 
   // Infinite scroll for related dishes inside modal
   useEffect(() => {
@@ -323,8 +342,8 @@ export default function DishModal({
                         key={d.id}
                         dish={d}
                         onTap={onDishTap}
-                        onLike={onLike}
-                        onDislike={onPass}
+                        onLike={handleRelatedLike}
+                        onDislike={handleRelatedPass}
                       />
                     ))}
                   </div>
