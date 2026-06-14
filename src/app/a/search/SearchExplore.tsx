@@ -207,11 +207,7 @@ export default function SearchExplore({
                 <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
                   <img src={heroDish.fotoUrl!} alt={heroDish.nombre}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
-                  }} />
-                  <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                  <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}>
                     <span style={{
                       padding: '5px 12px', borderRadius: 20,
                       background: '#F4A623', color: '#000',
@@ -220,13 +216,21 @@ export default function SearchExplore({
                       ✨ Recomendado para {hour >= 5 && hour < 12 ? 'desayunar' : hour >= 12 && hour < 18 ? 'almorzar' : 'cenar'}
                     </span>
                   </div>
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 14px' }}>
-                    <h3 style={{
-                      fontFamily: 'var(--font-feed-display), serif',
-                      fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 4px',
-                    }}>
-                      {heroDish.nombre}
-                    </h3>
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+                    padding: '40px 16px 14px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <h3 style={{
+                        fontFamily: 'var(--font-feed-display), serif',
+                        fontSize: 20, fontWeight: 700, color: '#fff', margin: 0,
+                      }}>
+                        {heroDish.nombre}
+                      </h3>
+                      {heroDish.dieta.tipo === 'VEGAN' && <span style={{ fontSize: 14 }}>🌱</span>}
+                      {heroDish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 14 }}>🥬</span>}
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 14, color: '#F4A623', fontWeight: 700 }}>
                         ${(heroDish.precioDescuento ?? heroDish.precio).toLocaleString('es-CL')}
@@ -235,8 +239,6 @@ export default function SearchExplore({
                       <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
                         {heroDish.restaurante}
                       </span>
-                      {heroDish.dieta.tipo === 'VEGAN' && <span style={{ fontSize: 14 }}>🌱</span>}
-                      {heroDish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 14 }}>🥬</span>}
                     </div>
                   </div>
                 </div>
