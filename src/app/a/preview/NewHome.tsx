@@ -142,33 +142,39 @@ export default function NewHome({
     }
   }, [dishes])
 
-  // Communes for location dropdown — only communes, not cities or streets
-  const communes = useMemo(() => {
-    const CITIES = new Set(['Santiago', 'Santiago Centro', 'Valparaíso', 'La Serena', 'Araucanía'])
-    const set = new Set<string>()
+  // Cities and communes for location dropdown
+  const CITY_NAMES = new Set(['Santiago', 'Santiago Centro', 'Valparaíso', 'La Serena', 'Victoria'])
+  const { cities, communes } = useMemo(() => {
+    const citySet = new Set<string>()
+    const communeSet = new Set<string>()
     dishes.forEach(d => {
       if (d.restauranteDireccion) {
         const parts = d.restauranteDireccion.split(',').map(p => p.trim())
-          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i))
-        // Commune is second-to-last (before city). If only 2 parts, last is the commune.
+          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Araucanía' && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i))
         if (parts.length >= 3) {
+          const city = parts[parts.length - 1]
           const commune = parts[parts.length - 2]
-          if (commune && !CITIES.has(commune)) set.add(commune)
+          if (city && CITY_NAMES.has(city)) citySet.add(city)
+          if (commune && !CITY_NAMES.has(commune)) communeSet.add(commune)
         } else if (parts.length === 2) {
-          set.add(parts[parts.length - 1])
+          const last = parts[parts.length - 1]
+          if (CITY_NAMES.has(last)) citySet.add(last)
+          else communeSet.add(last)
         }
       }
     })
-    const sorted = [...set].sort()
-    return ['Santiago', ...sorted.filter(c => c !== 'Santiago')]
+    return { cities: [...citySet].sort(), communes: [...communeSet].sort() }
   }, [dishes])
 
-  // Filtered communes for search
-  const filteredCommunes = useMemo(() => {
-    if (!locationQuery.trim()) return communes
+  // Filtered locations for search
+  const { filteredCities, filteredCommunes } = useMemo(() => {
+    if (!locationQuery.trim()) return { filteredCities: cities, filteredCommunes: communes }
     const q = locationQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    return communes.filter(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q))
-  }, [communes, locationQuery])
+    return {
+      filteredCities: cities.filter(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)),
+      filteredCommunes: communes.filter(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)),
+    }
+  }, [cities, communes, locationQuery])
 
   // Available categories
   const allCategories = useMemo(() => getDisplayCategories(), [])
@@ -719,21 +725,53 @@ export default function NewHome({
                       style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 13 }} />
                   </div>
 
-                  {filteredCommunes.map(commune => (
-                    <button key={commune} onClick={() => {
-                      setLocationName(commune)
-                      setLocationOpen(false); setLocationQuery('')
-                    }} style={{
-                      display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
-                      background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
-                      fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
-                      color: locationName === commune ? '#F4A623' : 'rgba(255,255,255,0.7)',
-                    }}>
-                      {commune}
-                    </button>
-                  ))}
-                  {filteredCommunes.length === 0 && (
+                  {/* Cities */}
+                  {filteredCities.length > 0 && (
+                    <>
+                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '4px 12px 4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ciudades</p>
+                      {filteredCities.map(city => (
+                        <button key={city} onClick={() => {
+                          setLocationName(city)
+                          setLocationOpen(false); setLocationQuery('')
+                        }} style={{
+                          display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
+                          background: locationName === city ? 'rgba(244,166,35,0.1)' : 'transparent',
+                          border: 'none', cursor: 'pointer', textAlign: 'left',
+                          fontSize: 13, fontWeight: locationName === city ? 600 : 400,
+                          color: locationName === city ? '#F4A623' : 'rgba(255,255,255,0.7)',
+                        }}>
+                          {city}
+                        </button>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Separator */}
+                  {filteredCities.length > 0 && filteredCommunes.length > 0 && (
+                    <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 12px' }} />
+                  )}
+
+                  {/* Communes */}
+                  {filteredCommunes.length > 0 && (
+                    <>
+                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '4px 12px 4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Comunas</p>
+                      {filteredCommunes.map(commune => (
+                        <button key={commune} onClick={() => {
+                          setLocationName(commune)
+                          setLocationOpen(false); setLocationQuery('')
+                        }} style={{
+                          display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
+                          background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
+                          border: 'none', cursor: 'pointer', textAlign: 'left',
+                          fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
+                          color: locationName === commune ? '#F4A623' : 'rgba(255,255,255,0.7)',
+                        }}>
+                          {commune}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {filteredCities.length === 0 && filteredCommunes.length === 0 && (
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center', padding: 12, margin: 0 }}>
                       Sin resultados
                     </p>
