@@ -311,10 +311,54 @@ export default function NewHome({
     return final
   }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, activeDiet])
 
-  // Live feed: stable order minus interacted dishes — no reordering
+  // Live feed: stable order + inject similar dishes when likes create gaps
   const feedDishes = useMemo(() => {
-    return baseFeedOrder.filter(d => !sessionLikedIds.has(d.id) && !sessionDislikedIds.has(d.id))
-  }, [baseFeedOrder, sessionLikedIds, sessionDislikedIds])
+    const interacted = new Set([...sessionLikedIds, ...sessionDislikedIds])
+    if (interacted.size === 0) return baseFeedOrder
+
+    // Build preference from likes: which categories/types the user likes this session
+    const likedCatCount: Record<string, number> = {}
+    const likedTypeCount: Record<string, number> = {}
+    for (const d of dishes) {
+      if (sessionLikedIds.has(d.id)) {
+        likedCatCount[d.categoriaNorm] = (likedCatCount[d.categoriaNorm] ?? 0) + 1
+        likedTypeCount[d.categoriaTipo] = (likedTypeCount[d.categoriaTipo] ?? 0) + 1
+      }
+    }
+
+    // Separate: keep order of non-interacted dishes, collect similar bonus dishes
+    const kept = baseFeedOrder.filter(d => !interacted.has(d.id))
+
+    // If user liked something, find bonus dishes (same category/type, not in base order)
+    const baseIds = new Set(baseFeedOrder.map(d => d.id))
+    const bonusPool = dishes.filter(d =>
+      d.fotoUrl && !interacted.has(d.id) && !baseIds.has(d.id) &&
+      (likedCatCount[d.categoriaNorm] || likedTypeCount[d.categoriaTipo])
+    ).sort(() => Math.random() - 0.5)
+
+    // Inject bonus dishes to fill gaps left by interacted ones
+    const result: FeedDish[] = []
+    let bonusIdx = 0
+    let gapCount = 0
+
+    for (const d of baseFeedOrder) {
+      if (interacted.has(d.id)) {
+        // Gap: inject a bonus similar dish if available
+        gapCount++
+        if (bonusIdx < bonusPool.length) {
+          result.push(bonusPool[bonusIdx++])
+        }
+      } else {
+        result.push(d)
+      }
+    }
+    // Append remaining bonus dishes at the end
+    while (bonusIdx < bonusPool.length) {
+      result.push(bonusPool[bonusIdx++])
+    }
+
+    return result
+  }, [baseFeedOrder, sessionLikedIds, sessionDislikedIds, dishes])
 
   // Infinite scroll
   useEffect(() => {
