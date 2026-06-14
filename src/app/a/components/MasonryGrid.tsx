@@ -56,7 +56,7 @@ export default function MasonryGrid({
               className="feed-grid-item"
               style={{ animationDelay: `${di * 30}ms` }}
             >
-              <DishCard dish={dish} onTap={onDishTap} onLike={onDishLike} onDislike={onDishDislike} onDwell={onDishDwell} userLocation={userLocation} />
+              <DishCard dish={dish} onTap={onDishTap} onLike={onDishLike} onDislike={onDishDislike} onDwell={onDishDwell} userLocation={userLocation} eager={di < 4} />
             </div>
           ))}
         </div>

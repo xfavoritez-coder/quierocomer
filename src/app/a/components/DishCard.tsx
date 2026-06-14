@@ -14,6 +14,7 @@ export default function DishCard({
   onDislike,
   onDwell,
   userLocation,
+  eager,
 }: {
   dish: FeedDish
   onTap: (dish: FeedDish) => void
@@ -21,6 +22,7 @@ export default function DishCard({
   onDislike?: (dish: FeedDish) => void
   onDwell?: (dishId: string) => void
   userLocation?: { lat: number; lng: number } | null
+  eager?: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [imgError, setImgError] = useState(false)
@@ -159,7 +161,7 @@ export default function DishCard({
               opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.3s ease',
             }}
             onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)} loading="lazy" />
+            onError={() => setImgError(true)} loading={eager ? 'eager' : 'lazy'} />
         ) : (
           <div className="dish-card-gradient" style={{ background: gradient }}><span>{dish.nombre}</span></div>
         )}
