@@ -34,18 +34,11 @@ export default function DishModal({
   const [imgError, setImgError] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showLocalFicha, setShowLocalFicha] = useState(false)
-  const [showSwipeTip, setShowSwipeTip] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    // Show swipe tip on first modal open ever
-    const tipKey = 'qc_modal_tip_seen'
-    if (!localStorage.getItem(tipKey)) {
-      setShowSwipeTip(true)
-      localStorage.setItem(tipKey, '1')
-    }
     return () => { document.body.style.overflow = '' }
   }, [])
 
@@ -56,7 +49,6 @@ export default function DishModal({
   const [flyAway, setFlyAway] = useState<'left' | 'right' | null>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setShowSwipeTip(false)
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
@@ -181,26 +173,6 @@ export default function DishModal({
               fontSize: 14, fontWeight: 700,
             }}>
               {swipeX > 0 ? '👍 Me gusta' : '👎 Paso'}
-            </div>
-          )}
-
-          {/* Swipe tip for first-time modal users — subtle banner on image */}
-          {showSwipeTip && (
-            <div onClick={() => setShowSwipeTip(false)} style={{
-              position: 'absolute', bottom: 60, left: 0, right: 0, zIndex: 20,
-              display: 'flex', justifyContent: 'center', pointerEvents: 'none',
-              animation: 'fadeIn 0.3s ease-out',
-            }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 18px', borderRadius: 20,
-                background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-                pointerEvents: 'auto', cursor: 'pointer',
-              }}>
-                <span style={{ fontSize: 14 }}>👈</span>
-                <span style={{ fontSize: 13, color: '#fff', fontWeight: 500 }}>Desliza para indicar si te antoja</span>
-                <span style={{ fontSize: 14 }}>👉</span>
-              </div>
             </div>
           )}
 
