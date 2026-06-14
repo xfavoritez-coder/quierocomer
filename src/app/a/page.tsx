@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { getFeedDishes } from './lib/feed-queries'
+import { getFeedDishes, getDishesById } from './lib/feed-queries'
 import NewHome from './preview/NewHome'
 
 export default async function FeedPage() {
@@ -65,6 +65,12 @@ export default async function FeedPage() {
       : Promise.resolve([] as string[]),
   ])
 
+  // Fetch personalized dishes missing from the cached pool
+  const cachedIds = new Set(dishes.map(d => d.id))
+  const missingIds = vectorScoredIds.filter(id => !cachedIds.has(id))
+  const extraDishes = missingIds.length > 0 ? await getDishesById(missingIds) : []
+  const allDishes = extraDishes.length > 0 ? [...dishes, ...extraDishes] : dishes
+
   const tasteData = {
     antojoSessionDate: user.antojoSessionDate,
     antojoDishIds: (user.antojoDishIds as string[]) ?? [],
@@ -82,7 +88,7 @@ export default async function FeedPage() {
 
   return (
     <NewHome
-      dishes={dishes}
+      dishes={allDishes}
       categoryScores={(user.categoryScores as Record<string, number>) ?? {}}
       keywordScores={(user.keywordScores as Record<string, number>) ?? {}}
       totalInteractions={user.totalInteractions}
