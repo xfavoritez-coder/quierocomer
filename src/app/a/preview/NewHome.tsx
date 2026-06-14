@@ -21,10 +21,28 @@ import {
 // ─── Meal time detection ──────────────────────────────────────────
 type MealSlot = 'desayuno' | 'almuerzo' | 'cena'
 
-const MEAL_SLOTS: { id: MealSlot; label: string; emoji: string; feedFilter: 'desayuno' | 'almuerzo_cena' }[] = [
-  { id: 'desayuno', label: 'Desayuno', emoji: '🌅', feedFilter: 'desayuno' },
-  { id: 'almuerzo', label: 'Almuerzo', emoji: '☀️', feedFilter: 'almuerzo_cena' },
-  { id: 'cena',     label: 'Cena',     emoji: '🌙', feedFilter: 'almuerzo_cena' },
+const MealIcons = {
+  desayuno: (color: string) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><line x1="6" y1="2" x2="6" y2="4" /><line x1="10" y1="2" x2="10" y2="4" /><line x1="14" y1="2" x2="14" y2="4" />
+    </svg>
+  ),
+  almuerzo: (color: string) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  ),
+  cena: (color: string) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  ),
+}
+
+const MEAL_SLOTS: { id: MealSlot; label: string; feedFilter: 'desayuno' | 'almuerzo_cena' }[] = [
+  { id: 'desayuno', label: 'Desayuno', feedFilter: 'desayuno' },
+  { id: 'almuerzo', label: 'Almuerzo', feedFilter: 'almuerzo_cena' },
+  { id: 'cena',     label: 'Cena',     feedFilter: 'almuerzo_cena' },
 ]
 
 function detectMealSlot(): MealSlot {
@@ -616,7 +634,7 @@ export default function NewHome({
                     fontFamily: 'var(--font-feed-display), serif',
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
-                    <span>{currentMealSlot.emoji}</span>
+                    {MealIcons[currentMealSlot.id]('rgba(255,255,255,0.55)')}
                     <span>{currentMealSlot.label}</span>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
                       stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -779,7 +797,7 @@ export default function NewHome({
                       background: activeMeal === slot.id ? 'rgba(244,166,35,0.1)' : 'transparent',
                       border: 'none', cursor: 'pointer', textAlign: 'left',
                     }}>
-                      <span style={{ fontSize: 16 }}>{slot.emoji}</span>
+                      {MealIcons[slot.id](activeMeal === slot.id ? '#F4A623' : 'rgba(255,255,255,0.4)')}
                       <span style={{
                         fontSize: 14,
                         fontWeight: activeMeal === slot.id ? 600 : 400,
