@@ -221,18 +221,6 @@ export default function DishCard({
           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, transparent 100%)',
           padding: '24px 10px 10px',
         }}>
-          {/* Popular badge */}
-          {dish.popularityScore > 3 && state === 'normal' && (
-            <div style={{
-              display: 'inline-block', marginBottom: 4,
-              padding: '3px 10px', borderRadius: 20,
-              background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
-              color: 'rgba(255,255,255,0.85)',
-              fontSize: 10, fontWeight: 600, letterSpacing: 0.3,
-            }}>
-              🔥 Popular
-            </div>
-          )}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 4,
             margin: '0 0 5px', minWidth: 0,
