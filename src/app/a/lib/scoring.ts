@@ -2,6 +2,17 @@ import type { FeedDish } from '../types'
 import { ADJACENT_CATEGORIES } from './categories'
 import { extractKeywords, keywordAffinity } from './keywords'
 
+// Deterministic noise based on dish ID + date (stable within a day, varies across days)
+const _today = new Date().toISOString().slice(0, 10)
+function deterministicNoise(id: string): number {
+  let hash = 0
+  const str = id + _today
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+  }
+  return ((hash & 0x7fffffff) % 1000) / 1000 * 6 // 0-6 range, same as before
+}
+
 // ─── Pesos de scoring ──────────────────────────────────────────────
 export const SCORE_WEIGHTS = {
   VIEW:        { category: 2,  restaurant: 1  },
@@ -175,8 +186,8 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
     if (price < p20 || price > p80) score -= 3
   }
 
-  // Ruido para variedad
-  score += Math.random() * 6
+  // Deterministic noise for variety (stable within session, changes daily)
+  score += deterministicNoise(dish.id)
 
   return score
 }

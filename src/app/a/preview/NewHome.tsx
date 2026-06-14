@@ -18,26 +18,20 @@ import {
   updateTasteAction,
 } from '../lib/feed-actions'
 
-// ─── Meal time detection (aligned with taste-engine periods) ───────
-type MealSlot = 'desayuno' | 'brunch' | 'almuerzo' | 'once' | 'cena' | 'madrugada'
+// ─── Meal time detection ──────────────────────────────────────────
+type MealSlot = 'desayuno' | 'almuerzo' | 'cena'
 
 const MEAL_SLOTS: { id: MealSlot; label: string; emoji: string; feedFilter: 'desayuno' | 'almuerzo_cena' }[] = [
-  { id: 'desayuno',  label: 'Desayuno',  emoji: '🌅', feedFilter: 'desayuno' },
-  { id: 'brunch',    label: 'Brunch',    emoji: '🥐', feedFilter: 'desayuno' },
-  { id: 'almuerzo',  label: 'Almuerzo',  emoji: '☀️', feedFilter: 'almuerzo_cena' },
-  { id: 'once',      label: 'Once',      emoji: '🍵', feedFilter: 'desayuno' },
-  { id: 'cena',      label: 'Cena',      emoji: '🌙', feedFilter: 'almuerzo_cena' },
-  { id: 'madrugada', label: 'Antojo nocturno', emoji: '🦉', feedFilter: 'almuerzo_cena' },
+  { id: 'desayuno', label: 'Desayuno', emoji: '🌅', feedFilter: 'desayuno' },
+  { id: 'almuerzo', label: 'Almuerzo', emoji: '☀️', feedFilter: 'almuerzo_cena' },
+  { id: 'cena',     label: 'Cena',     emoji: '🌙', feedFilter: 'almuerzo_cena' },
 ]
 
 function detectMealSlot(): MealSlot {
   const h = new Date().getHours()
-  if (h >= 6 && h < 10) return 'desayuno'
-  if (h >= 10 && h < 12) return 'brunch'
-  if (h >= 12 && h < 15) return 'almuerzo'
-  if (h >= 15 && h < 19) return 'once'
-  if (h >= 19 && h < 23) return 'cena'
-  return 'madrugada'
+  if (h >= 6 && h < 12) return 'desayuno'
+  if (h >= 12 && h < 19) return 'almuerzo'
+  return 'cena'
 }
 
 type View = 'feed' | 'guardados' | 'historial' | 'perfil'
@@ -260,41 +254,7 @@ export default function NewHome({
     // Remove interacted dishes
     filtered = filtered.filter(d => !sessionLikedIds.has(d.id) && !sessionDislikedIds.has(d.id))
 
-    // Meal time: separate matching vs non-matching dishes
-    const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
-    const mealMatch = filtered.filter(d => d.mealTime === mealFilter)
-    const mealRest = filtered.filter(d => d.mealTime !== mealFilter)
-
-    // ── pgvector path: use server-scored order ──
-    if (vectorScoredIds.length > 0 && !activeCategory) {
-      // Order both groups by vector score, meal-matching first
-      const orderByVector = (list: FeedDish[]) => {
-        const map = new Map(list.map(d => [d.id, d]))
-        const ordered: FeedDish[] = []
-        for (const id of vectorScoredIds) {
-          const d = map.get(id)
-          if (d) { ordered.push(d); map.delete(id) }
-        }
-        return [...ordered, ...map.values()]
-      }
-      const combined = [...orderByVector(mealMatch), ...orderByVector(mealRest)]
-
-      // Max 3 consecutive same category
-      const final: FeedDish[] = []
-      const rem = [...combined]
-      while (rem.length > 0) {
-        const recent = final.slice(-3).map(d => d.categoriaNorm)
-        const allSame = recent.length === 3 && recent.every(c => c === recent[0])
-        if (allSame) {
-          const diffIdx = rem.findIndex(d => d.categoriaNorm !== recent[0])
-          if (diffIdx >= 0) { final.push(rem.splice(diffIdx, 1)[0]); continue }
-        }
-        final.push(rem.shift()!)
-      }
-      return final
-    }
-
-    // ── Fallback: keyword scoring with real-time session boosts ──
+    // Session momentum boosts (used by both paths)
     const mergedKw: Record<string, number> = { ...keywordScores }
     const sessionCatBoost: Record<string, number> = {}
     for (const d of dishes) {
@@ -312,6 +272,54 @@ export default function NewHome({
       }
     }
 
+    // Meal time filter
+    const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
+
+    // ── pgvector path: combine vector order with keyword/category signals ──
+    if (vectorScoredIds.length > 0 && !activeCategory) {
+      // Normalize vector position to 0-1 score (first = 1.0, last = 0.0)
+      const vectorRank = new Map<string, number>()
+      vectorScoredIds.forEach((id, i) => vectorRank.set(id, 1 - i / vectorScoredIds.length))
+
+      // Score each dish: vector * 0.5 + keywords * 0.3 + category * 0.1 + momentum * 0.1
+      const scored = filtered.map(d => {
+        const vScore = vectorRank.get(d.id) ?? 0
+        const kws = extractKeywords(d.nombre, d.descripcion)
+        let kwTotal = 0
+        for (const kw of kws) kwTotal += (keywordScores[kw] ?? 0)
+        const kwNorm = Math.min(kwTotal, 30) / 30 // normalize to 0-1
+
+        const catRaw = categoryScores[d.categoriaNorm] ?? 0
+        const catNorm = catRaw > 0 ? Math.min(Math.log2(catRaw + 1) / 6, 1) : 0
+
+        const sessionBoost = (sessionCatBoost[d.categoriaNorm] ?? 0) +
+          (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
+        const momentumNorm = Math.min(Math.max(sessionBoost, 0), 30) / 30
+
+        let score = vScore * 0.5 + kwNorm * 0.3 + catNorm * 0.1 + momentumNorm * 0.1
+        // Meal time boost
+        if (d.mealTime === mealFilter) score += 0.15
+        return { dish: d, score }
+      })
+
+      scored.sort((a, b) => b.score - a.score)
+
+      // Max 3 consecutive same category
+      const final: FeedDish[] = []
+      const rem = scored.map(s => s.dish)
+      while (rem.length > 0) {
+        const recent = final.slice(-3).map(d => d.categoriaNorm)
+        const allSame = recent.length === 3 && recent.every(c => c === recent[0])
+        if (allSame) {
+          const diffIdx = rem.findIndex(d => d.categoriaNorm !== recent[0])
+          if (diffIdx >= 0) { final.push(rem.splice(diffIdx, 1)[0]); continue }
+        }
+        final.push(rem.shift()!)
+      }
+      return final
+    }
+
+    // ── Fallback: keyword scoring with real-time session boosts ──
     const scored = filtered.map(d => {
       let score = 0
       score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
@@ -625,12 +633,6 @@ export default function NewHome({
                       style={{ transform: mealPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
-                  </p>
-                  <p style={{
-                    fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: '1px 0 0',
-                    fontWeight: 400,
-                  }}>
-                    ¿Qué se te antoja?
                   </p>
                 </button>
               )}

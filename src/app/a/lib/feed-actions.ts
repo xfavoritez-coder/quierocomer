@@ -246,7 +246,7 @@ async function updateDishStats(dishId: string, action: FeedAction) {
     PASS: 'totalPasses',
     SCROLL_BACK: 'totalViews',
     FAVORITE: 'totalSaves',
-    UNFAVORITE: 'totalSaves',
+    UNFAVORITE: '', // don't increment — handled separately
     UNDO: '',
   }
   const field = fieldMap[action]

@@ -99,7 +99,14 @@ export async function updateTaste(
     antojoDishIds = antojoDishIds.filter((id: string) => id !== dishId)
     antojoRejectIds = antojoRejectIds.filter((id: string) => id !== dishId)
     // Remove from taste history
+    const wasLiked = tasteEmbeddings.some((t: any) => t.dishId === dishId)
     tasteEmbeddings = tasteEmbeddings.filter((t: any) => t.dishId !== dishId)
+    // Reverse the gustoVector drift
+    if (wasLiked) {
+      await moveGustoVector(userId, dishEmbedding, -LEARNING_RATE_LIKE)
+    } else {
+      await moveGustoVector(userId, dishEmbedding, LEARNING_RATE_DISLIKE)
+    }
   }
 
   // Persist antojo state + taste history
@@ -187,6 +194,9 @@ export async function getScoredFeed(
     return getColdStartFeed(limit, allExcludes, dietFilter)
   }
 
+  // Build parameterized exclude clause using ANY()
+  const excludeArr = allExcludes.length > 0 ? allExcludes : null
+
   // Check if user has gustoVector
   const vectorResult = await prisma.$queryRawUnsafe<{ v: string }[]>(
     `SELECT "gustoVector"::text as v FROM "FeedUser" WHERE id = $1`,
@@ -206,14 +216,17 @@ export async function getScoredFeed(
   if (dietFilter?.isGlutenFree) dietClause += ` AND d."isGlutenFree" = true`
   if (dietFilter?.isLactoseFree) dietClause += ` AND d."isLactoseFree" = true`
 
-  const excludeClause = allExcludes.length > 0
-    ? `AND d.id NOT IN (${allExcludes.map(id => `'${id}'`).join(',')})`
+  const excludeClause = excludeArr
+    ? `AND d.id != ALL($3::text[])`
     : ''
 
   const embStr = `[${gustoVector.join(',')}]`
 
-  // 70% — scored by taste similarity
+  // 70% — scored by taste similarity (preserves cosine order)
   const scoredLimit = Math.ceil(limit * 0.7)
+  const scoredParams: any[] = [embStr, scoredLimit]
+  if (excludeArr) scoredParams.push(excludeArr)
+
   const scored = await prisma.$queryRawUnsafe<any[]>(`
     SELECT d.id as "dishId", 1 - (d.embedding <=> $1::vector) as score
     FROM "Dish" d
@@ -225,13 +238,10 @@ export async function getScoredFeed(
       ${dietClause} ${excludeClause}
     ORDER BY d.embedding <=> $1::vector
     LIMIT $2
-  `, embStr, scoredLimit)
+  `, ...scoredParams)
 
-  // Boost antojo dishes
+  // Tag each with reason, keep original score order
   for (const s of scored) {
-    if (antojoDishIds.includes(s.dishId)) {
-      s.score = (s.score as number) + 0.1 // strong boost for today's cravings
-    }
     s.reason = 'Para ti'
   }
 
@@ -239,9 +249,6 @@ export async function getScoredFeed(
   const popularLimit = Math.ceil(limit * 0.15)
   const scoredIds = scored.map((s: any) => s.dishId)
   const allUsedIds = [...allExcludes, ...scoredIds]
-  const popularExclude = allUsedIds.length > 0
-    ? `AND d.id NOT IN (${allUsedIds.map(id => `'${id}'`).join(',')})`
-    : ''
 
   const popular = await prisma.$queryRawUnsafe<any[]>(`
     SELECT d.id as "dishId", COALESCE(fs."popularityScore", 0) as score
@@ -251,22 +258,19 @@ export async function getScoredFeed(
     WHERE d."isActive" = true AND d."deletedAt" IS NULL
       AND r."isActive" = true AND r."isDemo" = false
       AND d.photos != '{}'
-      ${dietClause} ${popularExclude}
+      AND d.id != ALL($2::text[])
+      ${dietClause}
     ORDER BY COALESCE(fs."popularityScore", 0) DESC
     LIMIT $1
-  `, popularLimit)
+  `, popularLimit, allUsedIds)
 
   for (const p of popular) {
     p.reason = 'Popular'
-    p.score = 0.3 // baseline score for popular
   }
 
-  // 15% — discovery (far from gustoVector or unexplored categories)
+  // 15% — discovery (random, unexplored)
   const discoveryLimit = Math.ceil(limit * 0.15)
   const allUsedIds2 = [...allUsedIds, ...popular.map((p: any) => p.dishId)]
-  const discoveryExclude = allUsedIds2.length > 0
-    ? `AND d.id NOT IN (${allUsedIds2.map(id => `'${id}'`).join(',')})`
-    : ''
 
   const discovery = await prisma.$queryRawUnsafe<any[]>(`
     SELECT d.id as "dishId", RANDOM() as score
@@ -276,19 +280,19 @@ export async function getScoredFeed(
       AND d."isActive" = true AND d."deletedAt" IS NULL
       AND r."isActive" = true AND r."isDemo" = false
       AND d.photos != '{}'
-      ${dietClause} ${discoveryExclude}
+      AND d.id != ALL($2::text[])
+      ${dietClause}
     ORDER BY RANDOM()
     LIMIT $1
-  `, discoveryLimit)
+  `, discoveryLimit, allUsedIds2)
 
   for (const d of discovery) {
     d.reason = 'Para descubrir'
-    d.score = 0.2
   }
 
-  // Interleave: don't group by type
-  const all = [...scored, ...popular, ...discovery]
-  return interleave(all)
+  // Score-preserving interleave: scored first (by vector order), then popular
+  // (by popularity), then discovery — only break runs of 3+ same reason
+  return interleave([...scored, ...popular, ...discovery])
 }
 
 // ─── Cold start feed ───────────────────────────────────────────────
@@ -304,10 +308,13 @@ async function getColdStartFeed(
   if (dietFilter?.isLactoseFree) dietClause += ` AND d."isLactoseFree" = true`
 
   const excludeClause = excludeIds.length > 0
-    ? `AND d.id NOT IN (${excludeIds.map(id => `'${id}'`).join(',')})`
+    ? `AND d.id != ALL($2::text[])`
     : ''
 
-  // Mix of popular + varied (1-2 per category)
+  // Mix of popular + varied (top 2-3 per category for denser cold start)
+  const params: any[] = [limit]
+  if (excludeIds.length > 0) params.push(excludeIds)
+
   const results = await prisma.$queryRawUnsafe<any[]>(`
     SELECT DISTINCT ON (c.name) d.id as "dishId",
       COALESCE(fs."popularityScore", 0) + RANDOM() * 5 as score
@@ -321,32 +328,31 @@ async function getColdStartFeed(
       ${dietClause} ${excludeClause}
     ORDER BY c.name, COALESCE(fs."popularityScore", 0) + RANDOM() * 5 DESC
     LIMIT $1
-  `, limit)
+  `, ...params)
 
   return results.map(r => ({ ...r, reason: 'Descubre' }))
 }
 
-// ─── Interleave results so types aren't grouped ────────────────────
+// ─── Score-preserving interleave ──────────────────────────────────
+// Keeps the original order (vector similarity → popularity → random)
+// but breaks runs of 3+ consecutive items with the same reason.
 function interleave(items: any[]): any[] {
-  // Shuffle then stable-sort by score descending with some randomness
-  const shuffled = items.sort(() => Math.random() - 0.5)
-
-  // Ensure no more than 2 consecutive items of same reason
   const result: any[] = []
-  const remaining = [...shuffled]
+  const remaining = [...items]
 
   while (remaining.length > 0) {
     const recent = result.slice(-2).map(r => r.reason)
     const allSame = recent.length === 2 && recent[0] === recent[1]
 
     if (allSame) {
+      // Find the next item with a different reason
       const diffIdx = remaining.findIndex(r => r.reason !== recent[0])
       if (diffIdx >= 0) {
         result.push(remaining.splice(diffIdx, 1)[0])
         continue
       }
     }
-    result.push(remaining.shift())
+    result.push(remaining.shift()!)
   }
 
   return result

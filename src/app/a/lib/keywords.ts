@@ -42,7 +42,7 @@ const STOPWORDS = new Set([
   'acompana', 'incluye', 'contiene', 'viene', 'lleva',
   'pan', 'masa', 'harina', 'aceite', 'sal', 'salsa', 'salsas',
   'arroz', 'papas', 'papa', 'queso', 'crema', 'leche', 'huevo', 'huevos',
-  'carne', 'pollo', 'pescado', 'verduras', 'lechuga', 'tomate', 'cebolla',
+  'verduras', 'lechuga', 'tomate', 'cebolla',
   'plato', 'porcion', 'servicio', 'preparacion',
   'opcion', 'alternativa', 'disponible',
   'pequeño', 'pequena', 'mediana', 'grande', 'extra',
@@ -73,9 +73,10 @@ function norm(word: string): string {
 
 /** Whitelist: real ingredients, flavors, proteins, and cooking styles worth tracking */
 const FLAVOR_WORDS = new Set([
-  // Proteins
+  // Proteins — strongest dietary signals
+  'pollo', 'carne', 'pescado', 'cerdo', 'res', 'vacuno',
   'salmon', 'atun', 'pulpo', 'camaron', 'camarones', 'langostino', 'langostinos',
-  'cerdo', 'cordero', 'lomo', 'wagyu', 'costilla', 'costillas', 'churrasco',
+  'cordero', 'lomo', 'wagyu', 'costilla', 'costillas', 'churrasco',
   'pavo', 'jamon', 'tocino', 'chorizo', 'mechada', 'plateada',
   'reineta', 'corvina', 'merluza', 'jibia', 'calamar', 'mariscos', 'marisco',
   // Key ingredients
