@@ -55,19 +55,6 @@ export default function DishModal({
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  // Infinite scroll for related dishes inside modal
-  useEffect(() => {
-    const el = modalRef.current
-    if (!el) return
-    const handleScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 400 && visibleRelated < relatedDishes.length) {
-        setVisibleRelated(prev => Math.min(prev + 12, relatedDishes.length))
-      }
-    }
-    el.addEventListener('scroll', handleScroll, { passive: true })
-    return () => el.removeEventListener('scroll', handleScroll)
-  }, [visibleRelated, relatedDishes.length])
-
   // Swipe: horizontal = like/dislike, vertical down = close
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -144,6 +131,19 @@ export default function DishModal({
       .slice(0, 60)
       .map(x => x.dish)
   }, [dish, allDishes, profile, embeddingSimilarIds])
+
+  // Infinite scroll for related dishes inside modal
+  useEffect(() => {
+    const el = modalRef.current
+    if (!el) return
+    const handleScroll = () => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 400 && visibleRelated < relatedDishes.length) {
+        setVisibleRelated(prev => Math.min(prev + 12, relatedDishes.length))
+      }
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [visibleRelated, relatedDishes.length])
 
   // Restaurant dishes
   const restDishes = useMemo(() =>
