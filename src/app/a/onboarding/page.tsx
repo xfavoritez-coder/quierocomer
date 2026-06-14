@@ -52,7 +52,6 @@ export default function OnboardingPage() {
         {/* Question */}
         <div className="onboard-question">
           <h2>¿Tienes alguna restricción alimentaria?</h2>
-          <p>✨ Mientras explores, aprenderemos de tus gustos</p>
         </div>
 
         {/* Cards — single select */}
@@ -83,13 +82,13 @@ export default function OnboardingPage() {
 
         {error && <p className="onboard-error">{error}</p>}
 
-      </div>
+        {/* CTA right after options */}
+        <div style={{ marginTop: 24 }}>
+          <button onClick={handleContinue} disabled={loading} className="onboard-cta">
+            {loading ? 'Preparando tu feed...' : 'Continuar'}
+          </button>
+        </div>
 
-      {/* Fixed bottom CTA */}
-      <div className="onboard-footer">
-        <button onClick={handleContinue} disabled={loading} className="onboard-cta">
-          {loading ? 'Preparando tu feed...' : 'Continuar'}
-        </button>
       </div>
     </div>
   )
