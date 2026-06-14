@@ -12,44 +12,58 @@ export default async function FeedPage() {
     redirect('/a/onboarding')
   }
 
-  const user = await prisma.feedUser.findUnique({
-    where: { fingerprint },
-    select: {
-      id: true,
-      onboardingDone: true,
-      categoryScores: true,
-      keywordScores: true,
-      totalInteractions: true,
-      isVegan: true,
-      isVegetarian: true,
-      isGlutenFree: true,
-      isLactoseFree: true,
-      antojoSessionDate: true,
-      antojoDishIds: true,
-      antojoRejectIds: true,
-      tasteEmbeddings: true,
-    },
-  })
+  // Parallel: fetch user + dishes at the same time
+  const [user, dishes] = await Promise.all([
+    prisma.feedUser.findUnique({
+      where: { fingerprint },
+      select: {
+        id: true,
+        onboardingDone: true,
+        categoryScores: true,
+        keywordScores: true,
+        totalInteractions: true,
+        isVegan: true,
+        isVegetarian: true,
+        isGlutenFree: true,
+        isLactoseFree: true,
+        antojoSessionDate: true,
+        antojoDishIds: true,
+        antojoRejectIds: true,
+        tasteEmbeddings: true,
+      },
+    }),
+    getFeedDishes(),
+  ])
 
   if (!user || !user.onboardingDone) {
     redirect('/a/onboarding')
   }
 
+  // Fire-and-forget: update lastSeenAt
   prisma.feedUser.update({
     where: { fingerprint },
     data: { lastSeenAt: new Date() },
   }).catch(() => {})
 
-  const dishes = await getFeedDishes()
+  // Parallel: gustoVector check + vector scoring (if eligible)
+  const needsVector = user.totalInteractions >= 8
 
-  // Check if user has gustoVector
-  let hasGustoVector = false
-  try {
-    const vr = await prisma.$queryRawUnsafe<{ v: string }[]>(
+  const [hasGustoVector, vectorScoredIds] = await Promise.all([
+    // Check gustoVector
+    prisma.$queryRawUnsafe<{ v: string }[]>(
       `SELECT "gustoVector"::text as v FROM "FeedUser" WHERE id = $1`, user.id
-    )
-    hasGustoVector = !!vr[0]?.v
-  } catch {}
+    ).then(vr => !!vr[0]?.v).catch(() => false),
+
+    // Vector scoring with timeout
+    needsVector
+      ? import('./lib/taste-engine').then(({ getScoredFeed }) =>
+          Promise.race([
+            getScoredFeed(user.id, 120),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+          ])
+        ).then(scored => scored.map(s => s.dishId)).catch(() => [] as string[])
+      : Promise.resolve([] as string[]),
+  ])
 
   const tasteData = {
     antojoSessionDate: user.antojoSessionDate,
@@ -64,24 +78,6 @@ export default async function FeedPage() {
     isVegetarian: user.isVegetarian,
     isGlutenFree: user.isGlutenFree,
     isLactoseFree: user.isLactoseFree,
-  }
-
-  // pgvector: if user has enough interactions, get taste-scored feed (with timeout)
-  let vectorScoredIds: string[] = []
-  if (user.totalInteractions >= 8) {
-    try {
-      const { getScoredFeed } = await import('./lib/taste-engine')
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), 5000)
-      )
-      const scored = await Promise.race([
-        getScoredFeed(user.id, 120),
-        timeoutPromise,
-      ])
-      vectorScoredIds = scored.map(s => s.dishId)
-    } catch {
-      // fallback to keyword scoring — pgvector might not have embeddings yet or timed out
-    }
   }
 
   return (
