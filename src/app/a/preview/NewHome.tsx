@@ -103,10 +103,11 @@ export default function NewHome({
     if (navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' }).then(result => {
         if (result.state === 'granted') {
-          // Permission already granted — get precise location silently
+          // Permission already granted — GPS takes priority over IP
           navigator.geolocation.getCurrentPosition(pos => {
             const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
             setUserLocation(loc)
+            setLocationName(null) // Clear IP-based city filter, GPS filter takes over
             const nearest = dishes
               .filter(d => d.restauranteLat && d.restauranteLng)
               .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
@@ -126,6 +127,7 @@ export default function NewHome({
       navigator.geolocation?.getCurrentPosition(pos => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setUserLocation(loc)
+        setLocationName(null) // GPS takes priority
         const nearest = dishes
           .filter(d => d.restauranteLat && d.restauranteLng)
           .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
