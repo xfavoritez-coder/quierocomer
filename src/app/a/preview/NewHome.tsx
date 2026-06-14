@@ -251,24 +251,43 @@ export default function NewHome({
 
     scored.sort((a, b) => b.score - a.score)
 
-    // 70/15/15 mix
-    const total = scored.length
-    const scoredCount = Math.ceil(total * 0.7)
-    const popularCount = Math.ceil(total * 0.15)
-    const topScored = scored.slice(0, scoredCount)
-    const topIds = new Set(topScored.map(s => s.dish.id))
-    const popular = scored.filter(s => !topIds.has(s.dish.id)).sort((a, b) => b.dish.popularityScore - a.dish.popularityScore).slice(0, popularCount)
-    const usedIds = new Set([...topIds, ...popular.map(p => p.dish.id)])
-    const discovery = scored.filter(s => !usedIds.has(s.dish.id)).sort(() => Math.random() - 0.5)
+    const hasSessionPreference = sessionLikedIds.size > 0 || sessionDislikedIds.size > 0
 
-    const result: FeedDish[] = []
-    let sI = 0, pI = 0, dI = 0
-    for (let i = 0; i < total; i++) {
-      if (i % 7 === 5 && pI < popular.length) result.push(popular[pI++].dish)
-      else if (i % 7 === 6 && dI < discovery.length) result.push(discovery[dI++].dish)
-      else if (sI < topScored.length) result.push(topScored[sI++].dish)
-      else if (pI < popular.length) result.push(popular[pI++].dish)
-      else if (dI < discovery.length) result.push(discovery[dI++].dish)
+    let result: FeedDish[]
+
+    if (hasSessionPreference) {
+      // User has expressed preferences this session → respect score order directly
+      // Just add a small discovery element every 10th dish
+      const byScore = scored.map(s => s.dish)
+      result = []
+      const discoveryPool = byScore.filter(d => d.popularityScore <= 1).sort(() => Math.random() - 0.5)
+      let dIdx = 0
+      for (let i = 0; i < byScore.length; i++) {
+        result.push(byScore[i])
+        if (i > 0 && i % 10 === 0 && dIdx < discoveryPool.length) {
+          result.push(discoveryPool[dIdx++])
+        }
+      }
+    } else {
+      // No session preference → classic 70/15/15 mix
+      const total = scored.length
+      const scoredCount = Math.ceil(total * 0.7)
+      const popularCount = Math.ceil(total * 0.15)
+      const topScored = scored.slice(0, scoredCount)
+      const topIds = new Set(topScored.map(s => s.dish.id))
+      const popular = scored.filter(s => !topIds.has(s.dish.id)).sort((a, b) => b.dish.popularityScore - a.dish.popularityScore).slice(0, popularCount)
+      const usedIds = new Set([...topIds, ...popular.map(p => p.dish.id)])
+      const discovery = scored.filter(s => !usedIds.has(s.dish.id)).sort(() => Math.random() - 0.5)
+
+      result = []
+      let sI = 0, pI = 0, dI = 0
+      for (let i = 0; i < total; i++) {
+        if (i % 7 === 5 && pI < popular.length) result.push(popular[pI++].dish)
+        else if (i % 7 === 6 && dI < discovery.length) result.push(discovery[dI++].dish)
+        else if (sI < topScored.length) result.push(topScored[sI++].dish)
+        else if (pI < popular.length) result.push(popular[pI++].dish)
+        else if (dI < discovery.length) result.push(discovery[dI++].dish)
+      }
     }
 
     // Max 3 consecutive same category
