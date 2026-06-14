@@ -168,12 +168,12 @@ export default function ProfileView({
               </div>
               <div>
                 <p style={{
-                  fontSize: 12, fontWeight: step.done ? 600 : 400, margin: 0,
-                  color: step.done ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)',
+                  fontSize: 13, fontWeight: 600, margin: 0,
+                  color: step.done ? '#fff' : 'rgba(255,255,255,0.4)',
                 }}>
                   {step.label}
                 </p>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '1px 0 0' }}>
+                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', margin: '2px 0 0', fontWeight: 400 }}>
                   {step.sub}
                 </p>
               </div>
