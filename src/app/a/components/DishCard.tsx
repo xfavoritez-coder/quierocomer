@@ -188,6 +188,34 @@ export default function DishCard({
 
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
 
+        {/* Restaurant badge — top right */}
+        <div style={{
+          position: 'absolute', bottom: 'auto', top: 8, right: 8, zIndex: 5,
+          display: 'flex', alignItems: 'center', gap: 4,
+          padding: '3px 8px 3px 4px', borderRadius: 20,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)',
+          maxWidth: 'calc(100% - 50px)',
+        }}>
+          {dish.restauranteLogo ? (
+            <img src={dish.restauranteLogo} alt="" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+              background: 'rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(255,255,255,0.6)', fontSize: 8, fontWeight: 700,
+            }}>
+              {dish.restaurante.charAt(0)}
+            </div>
+          )}
+          <span style={{
+            fontSize: 9, color: 'rgba(255,255,255,0.75)', fontWeight: 500,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {dish.restaurante}
+          </span>
+        </div>
+
         {/* Gradient overlay with info */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -244,30 +272,6 @@ export default function DishCard({
             </span>
           </div>
         </div>
-      </div>
-      {/* Restaurant name below card */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 5,
-        padding: '6px 8px 2px',
-      }}>
-        {dish.restauranteLogo ? (
-          <img src={dish.restauranteLogo} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-        ) : (
-          <div style={{
-            width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
-            background: 'rgba(255,255,255,0.08)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(255,255,255,0.3)', fontSize: 8, fontWeight: 700,
-          }}>
-            {dish.restaurante.charAt(0)}
-          </div>
-        )}
-        <span style={{
-          fontSize: 10, color: 'rgba(255,255,255,0.35)',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {dish.restaurante}
-        </span>
       </div>
     </div>
   )
