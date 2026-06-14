@@ -818,17 +818,6 @@ export default function NewHome({
       {/* ─── Guardados View ─── */}
       {view === 'guardados' && (
         <>
-          <div style={{ padding: '16px 20px 8px' }}>
-            <button onClick={() => setView('feed')} style={{
-              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
-              display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontSize: 13,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Volver
-            </button>
-          </div>
           <SavedList
             antojos={likedDishes}
             saved={savedDishes}
@@ -841,20 +830,6 @@ export default function NewHome({
       {/* ─── Historial (Me han gustado) View ─── */}
       {view === 'historial' && (
         <>
-          <div style={{ padding: '16px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <button onClick={() => setView('feed')} style={{
-              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
-              display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontSize: 13,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Volver
-            </button>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
-              {likedDishes.length} plato{likedDishes.length !== 1 ? 's' : ''}
-            </span>
-          </div>
           <h2 style={{
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 18, fontWeight: 700, color: '#fff', margin: 0,
@@ -912,17 +887,6 @@ export default function NewHome({
       {/* ─── Perfil View ─── */}
       {view === 'perfil' && (
         <>
-          <div style={{ padding: '16px 20px 8px' }}>
-            <button onClick={() => setView('feed')} style={{
-              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
-              display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontSize: 13,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Volver
-            </button>
-          </div>
           <ProfileView
             profile={profile}
             diet={activeDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
