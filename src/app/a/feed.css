@@ -530,6 +530,27 @@ body:has(.feed-root) {
   .home-card { width: 320px; }
 }
 
+/* Skeleton shimmer for loading cards */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 14px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Card fade out on like/dislike */
+.dish-card-exit {
+  animation: cardFadeOut 0.35s ease-out forwards;
+}
+@keyframes cardFadeOut {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); max-height: 0; margin-bottom: 0; overflow: hidden; }
+}
+
 /* Location search placeholder */
 .location-search-input::placeholder {
   color: rgba(255, 255, 255, 0.25) !important;

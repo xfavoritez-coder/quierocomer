@@ -5,7 +5,7 @@ import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 import { distanceKm, formatDistance } from '../lib/geo'
 
-type CardState = 'normal' | 'liked' | 'disliked' | 'undone'
+type CardState = 'normal' | 'liked' | 'disliked' | 'undone' | 'exiting'
 
 export default function DishCard({
   dish,
@@ -26,6 +26,7 @@ export default function DishCard({
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const [state, setState] = useState<CardState>('normal')
   const [swipeX, setSwipeX] = useState(0)
   const touchStartX = useRef(0)
@@ -73,16 +74,15 @@ export default function DishCard({
   const handleTouchEnd = useCallback(() => {
     if (Math.abs(swipeX) > 80) {
       if (swipeX > 0) {
-        // Like: show badge briefly then return to normal
+        // Like: show badge, then fade out
         setState('liked')
         setSwipeX(0)
-        onLike?.(dish)
-        setTimeout(() => setState('normal'), 2000)
+        setTimeout(() => { setState('exiting'); onLike?.(dish) }, 600)
       } else {
-        // Dislike: set state immediately to B/W
+        // Dislike: show B/W briefly, then fade out
         setState('disliked')
         setSwipeX(0)
-        onDislike?.(dish)
+        setTimeout(() => { setState('exiting'); onDislike?.(dish) }, 400)
       }
     } else {
       setSwipeX(0)
@@ -134,7 +134,7 @@ export default function DishCard({
   return (
     <div
       ref={cardRef}
-      className="dish-card"
+      className={`dish-card${state === 'exiting' ? ' dish-card-exit' : ''}`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -177,13 +177,21 @@ export default function DishCard({
       )}
 
       {/* Photo */}
-      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: gradient }}>
+      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: '#1a1a1a' }}>
+        {/* Skeleton shimmer while image loads */}
+        {!showFallback && !imgLoaded && (
+          <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+        )}
         {!showFallback ? (
           <img src={dish.fotoUrl!} alt={dish.nombre}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+              opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.3s ease',
+            }}
+            onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)} loading="lazy" />
         ) : (
-          <div className="dish-card-gradient"><span>{dish.nombre}</span></div>
+          <div className="dish-card-gradient" style={{ background: gradient }}><span>{dish.nombre}</span></div>
         )}
 
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
