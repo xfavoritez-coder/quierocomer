@@ -53,14 +53,34 @@ export default function NewHome({
   const [locationQuery, setLocationQuery] = useState('')
   const categoryScrollRef = useRef<HTMLDivElement>(null)
 
-  // Profile for DishModal
+  // Profile for DishModal — refreshable
+  const [liveProfile, setLiveProfile] = useState<FeedProfile | null>(null)
+  const [liveTasteData, setLiveTasteData] = useState(tasteData)
   const profile = useMemo<FeedProfile>(() => {
+    if (liveProfile) return liveProfile
     const base = createEmptyProfile()
     base.categoryScores = categoryScores
     base.keywordScores = keywordScores
     base.totalInteractions = totalInteractions
     return base
-  }, [categoryScores, keywordScores, totalInteractions])
+  }, [categoryScores, keywordScores, totalInteractions, liveProfile])
+
+  // Refresh profile data when entering profile view
+  useEffect(() => {
+    if (view !== 'perfil') return
+    import('../lib/feed-actions').then(({ getProfileData }) =>
+      getProfileData().then(data => {
+        if (!data) return
+        const p = createEmptyProfile()
+        p.categoryScores = data.categoryScores
+        p.keywordScores = data.keywordScores
+        p.totalInteractions = data.totalInteractions
+        setLiveProfile(p)
+        setLiveTasteData(data.tasteData)
+        setActiveDiet(data.diet)
+      })
+    ).catch(() => {})
+  }, [view])
 
   // Geolocation — auto-detect on load, GPS only (no locationName filter)
   const [gpsLabel, setGpsLabel] = useState<string | null>(null)
@@ -753,7 +773,7 @@ export default function NewHome({
           <ProfileView
             profile={profile}
             diet={activeDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
-            tasteData={tasteData}
+            tasteData={liveTasteData ?? tasteData}
             dishes={dishes}
             onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
             onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}

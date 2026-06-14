@@ -340,6 +340,54 @@ export async function getSimilarDishIds(dishId: string): Promise<string[]> {
   }
 }
 
+// ─── Get fresh profile data ───────────────────────────────────────
+export async function getProfileData(): Promise<{
+  categoryScores: Record<string, number>
+  keywordScores: Record<string, number>
+  totalInteractions: number
+  tasteData: { antojoSessionDate: string | null; antojoDishIds: string[]; antojoRejectIds: string[]; tasteEmbeddingsCount: number; hasGustoVector: boolean }
+  diet: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
+} | null> {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return null
+    const user = await prisma.feedUser.findUnique({
+      where: { id: userId },
+      select: {
+        categoryScores: true, keywordScores: true, totalInteractions: true,
+        isVegan: true, isVegetarian: true, isGlutenFree: true, isLactoseFree: true,
+        antojoSessionDate: true, antojoDishIds: true, antojoRejectIds: true, tasteEmbeddings: true,
+      },
+    })
+    if (!user) return null
+
+    let hasGustoVector = false
+    try {
+      const vr = await prisma.$queryRawUnsafe<{ v: string }[]>(
+        `SELECT "gustoVector"::text as v FROM "FeedUser" WHERE id = $1`, userId
+      )
+      hasGustoVector = !!vr[0]?.v
+    } catch {}
+
+    return {
+      categoryScores: (user.categoryScores as Record<string, number>) ?? {},
+      keywordScores: (user.keywordScores as Record<string, number>) ?? {},
+      totalInteractions: user.totalInteractions,
+      tasteData: {
+        antojoSessionDate: user.antojoSessionDate,
+        antojoDishIds: (user.antojoDishIds as string[]) ?? [],
+        antojoRejectIds: (user.antojoRejectIds as string[]) ?? [],
+        tasteEmbeddingsCount: Array.isArray(user.tasteEmbeddings) ? user.tasteEmbeddings.length : 0,
+        hasGustoVector,
+      },
+      diet: { isVegan: user.isVegan, isVegetarian: user.isVegetarian, isGlutenFree: user.isGlutenFree, isLactoseFree: user.isLactoseFree },
+    }
+  } catch (e) {
+    console.error('[Feed] getProfileData error:', e)
+    return null
+  }
+}
+
 // ─── Refresh vector-scored feed ───────────────────────────────────
 export async function getVectorFeed(excludeIds: string[] = []): Promise<string[]> {
   try {
