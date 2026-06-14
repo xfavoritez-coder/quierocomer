@@ -25,8 +25,16 @@ export default function DishCard({
   eager?: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
+
+  // Check if image already loaded (cached) before React attached onLoad
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalHeight > 0) {
+      setImgLoaded(true)
+    }
+  }, [])
 
   // Timeout: if image doesn't load in 8s, show fallback
   useEffect(() => {
@@ -155,7 +163,7 @@ export default function DishCard({
           <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
         )}
         {!showFallback ? (
-          <img src={dish.fotoUrl!} alt={dish.nombre}
+          <img ref={imgRef} src={dish.fotoUrl!} alt={dish.nombre}
             style={{
               width: '100%', height: '100%', objectFit: 'cover', display: 'block',
               opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.3s ease',
