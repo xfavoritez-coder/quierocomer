@@ -9,6 +9,7 @@ import MasonryGrid from '../components/MasonryGrid'
 import DishModal from '../components/DishModal'
 import SavedList from '../components/SavedList'
 import ProfileView from '../components/ProfileView'
+import WelcomeTutorial from '../components/WelcomeTutorial'
 import { createEmptyProfile, getRecommendationReason, type FeedProfile } from '../lib/scoring'
 import {
   trackInteraction,
@@ -82,6 +83,7 @@ export default function NewHome({
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(totalInteractions === 0)
   const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
   const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
@@ -916,6 +918,9 @@ export default function NewHome({
       )}
 
       {/* ─── DishModal ─── */}
+      {/* ─── Welcome Tutorial ─── */}
+      {showTutorial && <WelcomeTutorial onDismiss={() => setShowTutorial(false)} />}
+
       {selectedDish && (
         <DishModal
           key={selectedDish.id}
