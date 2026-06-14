@@ -71,15 +71,45 @@ function norm(word: string): string {
   return word.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
+/** Whitelist: real ingredients, flavors, proteins, and cooking styles worth tracking */
+const FLAVOR_WORDS = new Set([
+  // Proteins
+  'salmon', 'atun', 'pulpo', 'camaron', 'camarones', 'langostino', 'langostinos',
+  'cerdo', 'cordero', 'lomo', 'wagyu', 'costilla', 'costillas', 'churrasco',
+  'pavo', 'jamon', 'tocino', 'chorizo', 'mechada', 'plateada',
+  'reineta', 'corvina', 'merluza', 'jibia', 'calamar', 'mariscos', 'marisco',
+  // Key ingredients
+  'palta', 'aguacate', 'mango', 'maracuya', 'frambuesa', 'frutilla',
+  'chocolate', 'nutella', 'manjar', 'caramelo', 'vainilla', 'canela',
+  'trufa', 'aceituna', 'aceitunas', 'alcaparra', 'rucula',
+  'champiñon', 'champinon', 'champiñones', 'champinones', 'hongos',
+  'jalapeño', 'jalapeno', 'chipotle', 'habanero',
+  // Cheeses
+  'mozzarella', 'parmesano', 'cheddar', 'gouda', 'brie', 'gorgonzola', 'roquefort',
+  // Flavors / styles
+  'picante', 'ahumado', 'ahumada', 'teriyaki', 'curry', 'wasabi', 'kimchi',
+  'bbq', 'barbacoa', 'mostaza', 'pesto', 'hummus', 'guacamole',
+  'agridulce', 'dulce', 'acido', 'umami',
+  'nikkei', 'thai', 'peruano', 'peruana', 'mexicano', 'mexicana',
+  'italiano', 'italiana', 'mediterraneo', 'mediterranea',
+  // Dish types (useful for preference learning)
+  'ceviche', 'tiradito', 'tartar', 'carpaccio',
+  'brownie', 'cheesecake', 'tiramisu', 'flan', 'mousse', 'crepe', 'waffle',
+  'empanada', 'empanadas', 'arepa', 'taco', 'tacos', 'burrito', 'quesadilla',
+  'pizza', 'calzone', 'focaccia',
+  'ramen', 'pad', 'dim', 'sum', 'wonton', 'dumpling',
+  'risotto', 'gnocchi', 'ravioli', 'lasagna', 'lasaña',
+  'milanesa', 'schnitzel',
+])
+
 /** Extract keywords from dish name + optional description */
 export function extractKeywords(name: string, description?: string | null): string[] {
-  // Name keywords have higher priority, but we extract from both
   const text = description ? `${name} ${description}` : name
   const words = text
     .replace(/[^a-záéíóúüñ\s]/gi, ' ')
     .split(/\s+/)
     .map(norm)
-    .filter(w => w.length >= 3 && !STOPWORDS.has(w))
+    .filter(w => w.length >= 3 && FLAVOR_WORDS.has(w))
 
   return [...new Set(words)]
 }
