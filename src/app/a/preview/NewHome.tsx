@@ -85,14 +85,14 @@ export default function NewHome({
   // Geolocation — IP fallback + GPS upgrade
   const [gpsLabel, setGpsLabel] = useState<string | null>(null)
 
-  // Step 1: IP-based city detection (no permission needed)
+  // Step 1: IP-based city detection (no permission needed) — sets locationName to filter feed
   useEffect(() => {
-    if (gpsLabel) return // already have a label
+    if (locationName || userLocation) return // already have location
     fetch('https://ipapi.co/json/')
       .then(r => r.json())
       .then(data => {
-        if (data.city && !gpsLabel) {
-          setGpsLabel(data.city)
+        if (data.city) {
+          setLocationName(data.city)
         }
       })
       .catch(() => {})
