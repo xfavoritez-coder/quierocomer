@@ -25,6 +25,13 @@ export default function DishCard({
   const cardRef = useRef<HTMLDivElement>(null)
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
+
+  // Timeout: if image doesn't load in 8s, show fallback
+  useEffect(() => {
+    if (imgLoaded || imgError || !dish.fotoUrl) return
+    const t = setTimeout(() => { if (!imgLoaded) setImgError(true) }, 8000)
+    return () => clearTimeout(t)
+  }, [dish.fotoUrl, imgLoaded, imgError])
   const [state, setState] = useState<CardState>('normal')
   const [swipeX, setSwipeX] = useState(0)
   const touchStartX = useRef(0)
