@@ -185,8 +185,8 @@ export default function NewHome({
     return allCategories.filter(c => available.has(c.norm))
   }, [dishes, allCategories])
 
-  // Stable feed order — computed once, not reordered by likes/dislikes
-  const baseFeedOrder = useMemo(() => {
+  // Feed dishes — reacts to likes/dislikes in real-time
+  const feedDishes = useMemo(() => {
     let filtered = dishes.filter(d => d.fotoUrl)
 
     // Diet filter
@@ -233,8 +233,8 @@ export default function NewHome({
       filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
     }
 
-    // Note: liked/disliked filtering happens in feedDishes, not here
-    // This keeps baseFeedOrder stable when user swipes
+    // Remove interacted dishes
+    filtered = filtered.filter(d => !sessionLikedIds.has(d.id) && !sessionDislikedIds.has(d.id))
 
     // ── pgvector path: use server-scored order ──
     if (vectorScoredIds.length > 0 && !activeCategory) {
@@ -263,38 +263,39 @@ export default function NewHome({
       return final
     }
 
-    // ── Fallback: keyword scoring (from DB, stable) ──
+    // ── Fallback: keyword scoring with real-time session boosts ──
+    const mergedKw: Record<string, number> = { ...keywordScores }
+    const sessionCatBoost: Record<string, number> = {}
+    for (const d of dishes) {
+      if (sessionLikedIds.has(d.id)) {
+        const kws = extractKeywords(d.nombre, d.descripcion)
+        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) + 8
+        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) + 15
+        if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) + 10
+      }
+      if (sessionDislikedIds.has(d.id)) {
+        const kws = extractKeywords(d.nombre, d.descripcion)
+        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 15
+        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) - 20
+        if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) - 12
+      }
+    }
+
     const scored = filtered.map(d => {
       let score = 0
       score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
+      score += (sessionCatBoost[d.categoriaNorm] ?? 0)
+      score += (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
       const kws = extractKeywords(d.nombre, d.descripcion)
       let kwTotal = 0
-      for (const kw of kws) kwTotal += (keywordScores[kw] ?? 0)
+      for (const kw of kws) kwTotal += (mergedKw[kw] ?? 0)
       score += Math.min(kwTotal, 15)
       return { dish: d, score }
     })
 
     scored.sort((a, b) => b.score - a.score)
 
-    // 70/15/15 mix
-    const total = scored.length
-    const scoredCount = Math.ceil(total * 0.7)
-    const popularCount = Math.ceil(total * 0.15)
-    const topScored = scored.slice(0, scoredCount)
-    const topIds = new Set(topScored.map(s => s.dish.id))
-    const popular = scored.filter(s => !topIds.has(s.dish.id)).sort((a, b) => b.dish.popularityScore - a.dish.popularityScore).slice(0, popularCount)
-    const usedIds = new Set([...topIds, ...popular.map(p => p.dish.id)])
-    const discovery = scored.filter(s => !usedIds.has(s.dish.id)).sort(() => Math.random() - 0.5)
-
-    let result: FeedDish[] = []
-    let sI = 0, pI = 0, dI = 0
-    for (let i = 0; i < total; i++) {
-      if (i % 7 === 5 && pI < popular.length) result.push(popular[pI++].dish)
-      else if (i % 7 === 6 && dI < discovery.length) result.push(discovery[dI++].dish)
-      else if (sI < topScored.length) result.push(topScored[sI++].dish)
-      else if (pI < popular.length) result.push(popular[pI++].dish)
-      else if (dI < discovery.length) result.push(discovery[dI++].dish)
-    }
+    let result: FeedDish[] = scored.map(s => s.dish)
 
     // Max 3 consecutive same category
     const final: FeedDish[] = []
@@ -309,56 +310,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, activeDiet])
-
-  // Live feed: stable order + inject similar dishes when likes create gaps
-  const feedDishes = useMemo(() => {
-    const interacted = new Set([...sessionLikedIds, ...sessionDislikedIds])
-    if (interacted.size === 0) return baseFeedOrder
-
-    // Build preference from likes: which categories/types the user likes this session
-    const likedCatCount: Record<string, number> = {}
-    const likedTypeCount: Record<string, number> = {}
-    for (const d of dishes) {
-      if (sessionLikedIds.has(d.id)) {
-        likedCatCount[d.categoriaNorm] = (likedCatCount[d.categoriaNorm] ?? 0) + 1
-        likedTypeCount[d.categoriaTipo] = (likedTypeCount[d.categoriaTipo] ?? 0) + 1
-      }
-    }
-
-    // Separate: keep order of non-interacted dishes, collect similar bonus dishes
-    const kept = baseFeedOrder.filter(d => !interacted.has(d.id))
-
-    // If user liked something, find bonus dishes (same category/type, not in base order)
-    const baseIds = new Set(baseFeedOrder.map(d => d.id))
-    const bonusPool = dishes.filter(d =>
-      d.fotoUrl && !interacted.has(d.id) && !baseIds.has(d.id) &&
-      (likedCatCount[d.categoriaNorm] || likedTypeCount[d.categoriaTipo])
-    ).sort(() => Math.random() - 0.5)
-
-    // Inject bonus dishes to fill gaps left by interacted ones
-    const result: FeedDish[] = []
-    let bonusIdx = 0
-    let gapCount = 0
-
-    for (const d of baseFeedOrder) {
-      if (interacted.has(d.id)) {
-        // Gap: inject a bonus similar dish if available
-        gapCount++
-        if (bonusIdx < bonusPool.length) {
-          result.push(bonusPool[bonusIdx++])
-        }
-      } else {
-        result.push(d)
-      }
-    }
-    // Append remaining bonus dishes at the end
-    while (bonusIdx < bonusPool.length) {
-      result.push(bonusPool[bonusIdx++])
-    }
-
-    return result
-  }, [baseFeedOrder, sessionLikedIds, sessionDislikedIds, dishes])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet])
 
   // Infinite scroll
   useEffect(() => {
