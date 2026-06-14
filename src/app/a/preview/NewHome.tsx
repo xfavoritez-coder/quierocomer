@@ -312,16 +312,15 @@ export default function NewHome({
       ? new Map(vectorScoredIds.map((id, i) => [id, 1 - i / vectorScoredIds.length]))
       : undefined
 
-    // Split by meal time: matching first, rest after — each group scored independently
-    const mealDishes = filtered.filter(d => d.mealTime === mealFilter)
-    const restDishes = filtered.filter(d => d.mealTime !== mealFilter)
+    // Filter by meal time — only show dishes matching the selected moment
+    filtered = filtered.filter(d => d.mealTime === mealFilter)
 
     const sortByScore = (list: FeedDish[]) =>
       list.map(d => ({ dish: d, score: scoreDish(d, vectorRank) }))
         .sort((a, b) => b.score - a.score)
         .map(s => s.dish)
 
-    const combined = [...sortByScore(mealDishes), ...sortByScore(restDishes)]
+    const combined = sortByScore(filtered)
 
     // Max 3 consecutive same category
     const final: FeedDish[] = []

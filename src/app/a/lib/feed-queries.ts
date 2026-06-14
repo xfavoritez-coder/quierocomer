@@ -4,7 +4,7 @@ import type { FeedDish } from '../types'
 import { unstable_cache } from 'next/cache'
 
 /** Trae todos los platos para el feed: con foto, activos, restaurantes reales */
-async function _getFeedDishes(limit = 200): Promise<FeedDish[]> {
+async function _getFeedDishes(limit = 400): Promise<FeedDish[]> {
   const dishes = await prisma.dish.findMany({
     where: {
       isActive: true,
