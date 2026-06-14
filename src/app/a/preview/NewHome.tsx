@@ -991,7 +991,7 @@ function CategoryCircle({ icon, label, active, onClick }: {
         {icon}
       </div>
       <span style={{
-        fontSize: 11, fontWeight: active ? 600 : 500,
+        fontSize: 13, fontWeight: active ? 600 : 500,
         color: active ? '#F4A623' : 'rgba(255,255,255,0.45)',
         maxWidth: 64, textAlign: 'center',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
