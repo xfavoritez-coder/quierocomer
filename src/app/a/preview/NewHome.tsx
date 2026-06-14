@@ -260,17 +260,24 @@ export default function NewHome({
     // Remove interacted dishes
     filtered = filtered.filter(d => !sessionLikedIds.has(d.id) && !sessionDislikedIds.has(d.id))
 
+    // Meal time: separate matching vs non-matching dishes
+    const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
+    const mealMatch = filtered.filter(d => d.mealTime === mealFilter)
+    const mealRest = filtered.filter(d => d.mealTime !== mealFilter)
+
     // ── pgvector path: use server-scored order ──
     if (vectorScoredIds.length > 0 && !activeCategory) {
-      const dishMap = new Map(filtered.map(d => [d.id, d]))
-      const vectorOrdered: FeedDish[] = []
-      for (const id of vectorScoredIds) {
-        const d = dishMap.get(id)
-        if (d) { vectorOrdered.push(d); dishMap.delete(id) }
+      // Order both groups by vector score, meal-matching first
+      const orderByVector = (list: FeedDish[]) => {
+        const map = new Map(list.map(d => [d.id, d]))
+        const ordered: FeedDish[] = []
+        for (const id of vectorScoredIds) {
+          const d = map.get(id)
+          if (d) { ordered.push(d); map.delete(id) }
+        }
+        return [...ordered, ...map.values()]
       }
-      // Append remaining (discovery)
-      const remaining = [...dishMap.values()].sort(() => Math.random() - 0.5)
-      const combined = [...vectorOrdered, ...remaining]
+      const combined = [...orderByVector(mealMatch), ...orderByVector(mealRest)]
 
       // Max 3 consecutive same category
       const final: FeedDish[] = []
@@ -304,9 +311,6 @@ export default function NewHome({
         if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) - 12
       }
     }
-
-    // Meal time boost — prioritize dishes matching selected meal period
-    const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
 
     const scored = filtered.map(d => {
       let score = 0
@@ -633,16 +637,16 @@ export default function NewHome({
             </div>
 
             <button onClick={() => setLocationOpen(!locationOpen)} style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '5px 10px', borderRadius: 20, flexShrink: 0,
-              background: 'none', border: '1px solid rgba(255,255,255,0.08)',
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '7px 14px', borderRadius: 22, flexShrink: 0,
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
               cursor: 'pointer',
             }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
               <span style={{
-                fontSize: 14, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+                fontSize: 13, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
                 maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {locationName || gpsLabel || 'Ubicación'}
