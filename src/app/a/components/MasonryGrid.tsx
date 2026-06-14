@@ -29,14 +29,12 @@ export default function MasonryGrid({
   onDishLike,
   onDishDwell,
   onDishDislike,
-  onDishUndo,
   userLocation,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
   onDishLike?: (dish: FeedDish) => void
   onDishDislike?: (dish: FeedDish) => void
-  onDishUndo?: (dish: FeedDish) => void
   onDishDwell?: (dishId: string) => void
   userLocation?: { lat: number; lng: number } | null
 }) {
@@ -58,7 +56,7 @@ export default function MasonryGrid({
               className="feed-grid-item"
               style={{ animationDelay: `${di * 30}ms` }}
             >
-              <DishCard dish={dish} onTap={onDishTap} onLike={onDishLike} onDislike={onDishDislike} onUndo={onDishUndo} onDwell={onDishDwell} userLocation={userLocation} />
+              <DishCard dish={dish} onTap={onDishTap} onLike={onDishLike} onDislike={onDishDislike} onDwell={onDishDwell} userLocation={userLocation} />
             </div>
           ))}
         </div>

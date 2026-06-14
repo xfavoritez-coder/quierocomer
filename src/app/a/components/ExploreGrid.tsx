@@ -188,7 +188,7 @@ export default function ExploreGrid({
       </div>
 
       {sorted.length > 0 ? (
-        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onDishLike={onDishLike} onDishDislike={onDishDislike} onDishUndo={onDishUndo} userLocation={userLocation} />
+        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onDishLike={onDishLike} onDishDislike={onDishDislike} userLocation={userLocation} />
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
           No hay platos en esta categoría

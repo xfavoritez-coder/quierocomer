@@ -18,6 +18,28 @@ import {
   updateTasteAction,
 } from '../lib/feed-actions'
 
+// ─── Meal time detection (aligned with taste-engine periods) ───────
+type MealSlot = 'desayuno' | 'brunch' | 'almuerzo' | 'once' | 'cena' | 'madrugada'
+
+const MEAL_SLOTS: { id: MealSlot; label: string; emoji: string; feedFilter: 'desayuno' | 'almuerzo_cena' }[] = [
+  { id: 'desayuno',  label: 'Desayuno',  emoji: '🌅', feedFilter: 'desayuno' },
+  { id: 'brunch',    label: 'Brunch',    emoji: '🥐', feedFilter: 'desayuno' },
+  { id: 'almuerzo',  label: 'Almuerzo',  emoji: '☀️', feedFilter: 'almuerzo_cena' },
+  { id: 'once',      label: 'Once',      emoji: '🍵', feedFilter: 'desayuno' },
+  { id: 'cena',      label: 'Cena',      emoji: '🌙', feedFilter: 'almuerzo_cena' },
+  { id: 'madrugada', label: 'Antojo nocturno', emoji: '🦉', feedFilter: 'almuerzo_cena' },
+]
+
+function detectMealSlot(): MealSlot {
+  const h = new Date().getHours()
+  if (h >= 6 && h < 10) return 'desayuno'
+  if (h >= 10 && h < 12) return 'brunch'
+  if (h >= 12 && h < 15) return 'almuerzo'
+  if (h >= 15 && h < 19) return 'once'
+  if (h >= 19 && h < 23) return 'cena'
+  return 'madrugada'
+}
+
 type View = 'feed' | 'guardados' | 'historial' | 'perfil'
 
 export default function NewHome({
@@ -45,6 +67,8 @@ export default function NewHome({
   const [locationName, setLocationName] = useState<string | null>(null)
   const [locationOpen, setLocationOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
+  const [mealPickerOpen, setMealPickerOpen] = useState(false)
   const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
   const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
@@ -281,6 +305,9 @@ export default function NewHome({
       }
     }
 
+    // Meal time boost — prioritize dishes matching selected meal period
+    const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
+
     const scored = filtered.map(d => {
       let score = 0
       score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
@@ -290,6 +317,8 @@ export default function NewHome({
       let kwTotal = 0
       for (const kw of kws) kwTotal += (mergedKw[kw] ?? 0)
       score += Math.min(kwTotal, 15)
+      // Boost dishes that match the active meal time
+      if (d.mealTime === mealFilter) score += 10
       return { dish: d, score }
     })
 
@@ -310,7 +339,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal])
 
   // Infinite scroll
   useEffect(() => {
@@ -388,8 +417,7 @@ export default function NewHome({
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
-  const hour = new Date().getHours()
-  const greeting = hour >= 5 && hour < 12 ? 'desayunar' : hour >= 12 && hour < 18 ? 'almorzar' : 'cenar'
+  const currentMealSlot = MEAL_SLOTS.find(s => s.id === activeMeal)!
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh' }}>
@@ -560,19 +588,49 @@ export default function NewHome({
             </div>
           </div>
 
-          {/* Contextual greeting + location */}
+          {/* Contextual greeting + meal time + location */}
           <div style={{
             padding: '6px 20px 10px', position: 'relative',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
           }}>
-            <p style={{
-              fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: 0,
-              fontFamily: 'var(--font-feed-display), serif', flex: 1, minWidth: 0,
-            }}>
-              {activeCategory
-                ? `Lo mejor en ${categories.find(c => c.norm === activeCategory)?.label || activeCategory}`
-                : '¿Qué se te antoja?'}
-            </p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {activeCategory ? (
+                <p style={{
+                  fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: 0,
+                  fontFamily: 'var(--font-feed-display), serif',
+                }}>
+                  Lo mejor en {categories.find(c => c.norm === activeCategory)?.label || activeCategory}
+                </p>
+              ) : (
+                <button
+                  onClick={() => setMealPickerOpen(!mealPickerOpen)}
+                  style={{
+                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                    textAlign: 'left', display: 'block', width: '100%',
+                  }}
+                >
+                  <p style={{
+                    fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0,
+                    fontFamily: 'var(--font-feed-display), serif',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <span>{currentMealSlot.emoji}</span>
+                    <span>{currentMealSlot.label}</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                      stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ transform: mealPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </p>
+                  <p style={{
+                    fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: '1px 0 0',
+                    fontWeight: 400,
+                  }}>
+                    ¿Qué se te antoja?
+                  </p>
+                </button>
+              )}
+            </div>
 
             <button onClick={() => setLocationOpen(!locationOpen)} style={{
               display: 'flex', alignItems: 'center', gap: 4,
@@ -703,6 +761,44 @@ export default function NewHome({
                 </div>
               </>
             )}
+
+            {/* Meal time picker dropdown */}
+            {mealPickerOpen && !activeCategory && (
+              <>
+                <div onClick={() => setMealPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+                <div style={{
+                  position: 'absolute', top: '100%', left: 20, zIndex: 45,
+                  background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+                  padding: 6, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  width: 200,
+                }}>
+                  {MEAL_SLOTS.map(slot => (
+                    <button key={slot.id} onClick={() => {
+                      setActiveMeal(slot.id)
+                      setMealPickerOpen(false)
+                    }} style={{
+                      display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                      padding: '10px 12px', borderRadius: 10,
+                      background: activeMeal === slot.id ? 'rgba(244,166,35,0.1)' : 'transparent',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                    }}>
+                      <span style={{ fontSize: 16 }}>{slot.emoji}</span>
+                      <span style={{
+                        fontSize: 14,
+                        fontWeight: activeMeal === slot.id ? 600 : 400,
+                        color: activeMeal === slot.id ? '#F4A623' : 'rgba(255,255,255,0.6)',
+                      }}>
+                        {slot.label}
+                      </span>
+                      {slot.id === detectMealSlot() && activeMeal !== slot.id && (
+                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>ahora</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Feed masonry */}
@@ -712,7 +808,6 @@ export default function NewHome({
               onDishTap={handleDishTap}
               onDishLike={handleLike}
               onDishDislike={handleDislike}
-              onDishUndo={handleUndo}
               userLocation={userLocation}
             />
           ) : (

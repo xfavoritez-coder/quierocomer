@@ -5,14 +5,13 @@ import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 import { distanceKm, formatDistance } from '../lib/geo'
 
-type CardState = 'normal' | 'liked' | 'disliked' | 'undone' | 'exiting'
+type CardState = 'normal' | 'liked' | 'disliked'
 
 export default function DishCard({
   dish,
   onTap,
   onLike,
   onDislike,
-  onUndo,
   onDwell,
   userLocation,
 }: {
@@ -20,7 +19,6 @@ export default function DishCard({
   onTap: (dish: FeedDish) => void
   onLike?: (dish: FeedDish) => void
   onDislike?: (dish: FeedDish) => void
-  onUndo?: (dish: FeedDish) => void
   onDwell?: (dishId: string) => void
   userLocation?: { lat: number; lng: number } | null
 }) {
@@ -73,16 +71,15 @@ export default function DishCard({
 
   const handleTouchEnd = useCallback(() => {
     if (Math.abs(swipeX) > 80) {
+      // Fly the card off-screen in the swipe direction
+      const flyDirection = swipeX > 0 ? window.innerWidth : -window.innerWidth
+      setSwipeX(flyDirection)
       if (swipeX > 0) {
-        // Like: show badge, then fade out
         setState('liked')
-        setSwipeX(0)
-        setTimeout(() => { setState('exiting'); onLike?.(dish) }, 600)
+        setTimeout(() => { onLike?.(dish) }, 350)
       } else {
-        // Dislike: show B/W briefly, then fade out
         setState('disliked')
-        setSwipeX(0)
-        setTimeout(() => { setState('exiting'); onDislike?.(dish) }, 400)
+        setTimeout(() => { onDislike?.(dish) }, 350)
       }
     } else {
       setSwipeX(0)
@@ -94,54 +91,20 @@ export default function DishCard({
     if (!isSwiping.current && state === 'normal') onTap(dish)
   }, [dish, onTap, state])
 
-  const handleUndo = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    setState('normal')
-    onUndo?.(dish)
-  }, [dish, onUndo])
-
-  // Disliked state: B/W card with undo
-  if (state === 'disliked') {
-    return (
-      <div ref={cardRef} className="dish-card" style={{ position: 'relative' }}>
-        <div style={{
-          aspectRatio, overflow: 'hidden', borderRadius: 14,
-          background: '#1a1a1a', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 8,
-          filter: 'grayscale(1)', opacity: 0.4,
-        }}>
-          {!showFallback && (
-            <img src={dish.fotoUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0 }} />
-          )}
-        </div>
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 6,
-        }}>
-          <button onClick={handleUndo} style={{
-            padding: '8px 16px', borderRadius: 20,
-            background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-            color: '#fff', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-          }}>
-            Deshacer
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div
       ref={cardRef}
-      className={`dish-card${state === 'exiting' ? ' dish-card-exit' : ''}`}
+      className="dish-card"
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
         transform: swipeX !== 0 ? `translateX(${swipeX}px) rotate(${swipeX * 0.04}deg)` : undefined,
-        transition: swipeX === 0 ? 'transform 0.2s ease' : 'none',
+        opacity: state === 'liked' || state === 'disliked' ? 0 : 1,
+        transition: state === 'liked' || state === 'disliked'
+          ? 'transform 0.35s ease-out, opacity 0.3s ease-out'
+          : swipeX === 0 ? 'transform 0.2s ease' : 'none',
         position: 'relative',
       }}
     >

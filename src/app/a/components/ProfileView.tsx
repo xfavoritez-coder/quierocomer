@@ -28,10 +28,6 @@ const DIET_OPTIONS: { id: DietOption; label: string; emoji: string }[] = [
   { id: 'isGlutenFree', label: 'Sin gluten', emoji: '🌾' },
 ]
 
-const GENERIC_CATEGORIES = new Set([
-  'Platos de fondo', 'Desayunos', 'Cafetería', 'Postres', 'Combos',
-  'Acompañamientos', 'Extras', 'Entradas',
-])
 
 const JUNK_WORDS = new Set([
   'salsa', 'salsas', 'blanco', 'blanca', 'negro', 'negra', 'rojo', 'roja', 'verde',
@@ -68,7 +64,7 @@ export default function ProfileView({
 
   const topCategories = useMemo(() => {
     return Object.entries(profile.categoryScores)
-      .filter(([cat, score]) => score > 0 && !GENERIC_CATEGORIES.has(cat))
+      .filter(([, score]) => score > 0)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 6)
   }, [profile.categoryScores])
