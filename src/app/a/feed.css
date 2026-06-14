@@ -532,7 +532,7 @@ body:has(.feed-root) {
 
 /* Location search placeholder */
 .location-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Scrollbar hide */
