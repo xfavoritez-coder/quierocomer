@@ -144,16 +144,16 @@ export default function ProfileView({
         </p>
 
         {/* Progress steps */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
-            { label: 'Explorar platos', sub: 'Desliza para que aprenda', done: stepsCompleted[0] },
-            { label: 'Motor activado', sub: 'Necesita 8 interacciones', done: stepsCompleted[1] },
-            { label: 'Feed personalizado', sub: 'Recomendaciones basadas en ti', done: stepsCompleted[2] },
-            { label: 'Totalmente calibrado', sub: 'Te conoce muy bien', done: stepsCompleted[3] },
+            { label: 'Explorar platos', sub: 'Desliza para que aprenda', done: stepsCompleted[0], current: interactions, goal: 1 },
+            { label: 'Motor activado', sub: `${Math.min(interactions, 8)} de 8 interacciones`, done: stepsCompleted[1], current: interactions, goal: 8 },
+            { label: 'Feed personalizado', sub: hasVector ? 'Recomendaciones basadas en ti' : `${Math.min(interactions, 8)} de 8 para activar`, done: stepsCompleted[2], current: interactions, goal: 8 },
+            { label: 'Totalmente calibrado', sub: `${Math.min(learned, 30)} de 30 platos aprendidos`, done: stepsCompleted[3], current: learned, goal: 30 },
           ].map((step, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
-                width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                 background: step.done ? engine.color : 'rgba(255,255,255,0.06)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'background 0.3s ease',
@@ -166,7 +166,7 @@ export default function ProfileView({
                   <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>{i + 1}</span>
                 )}
               </div>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   fontSize: 13, fontWeight: 600, margin: 0,
                   color: step.done ? '#fff' : 'rgba(255,255,255,0.4)',
@@ -176,6 +176,17 @@ export default function ProfileView({
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: '2px 0 0', fontWeight: 400 }}>
                   {step.sub}
                 </p>
+                {/* Mini progress bar for incomplete steps */}
+                {!step.done && step.current > 0 && (
+                  <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginTop: 5 }}>
+                    <div style={{
+                      height: '100%', borderRadius: 2,
+                      background: 'rgba(244,166,35,0.5)',
+                      width: `${Math.min((step.current / step.goal) * 100, 100)}%`,
+                      transition: 'width 0.5s ease',
+                    }} />
+                  </div>
+                )}
               </div>
             </div>
           ))}
