@@ -38,6 +38,7 @@ export default function NewHome({
   userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
 }) {
   const [view, setView] = useState<View>('feed')
+  const [activeDiet, setActiveDiet] = useState(userDiet)
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -119,6 +120,16 @@ export default function NewHome({
   // Feed dishes — pgvector when available, fallback to keyword scoring
   const feedDishes = useMemo(() => {
     let filtered = dishes.filter(d => d.fotoUrl)
+
+    // Diet filter
+    if (activeDiet?.isVegan) {
+      filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
+    } else if (activeDiet?.isVegetarian) {
+      filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
+    }
+    if (activeDiet?.isGlutenFree) {
+      filtered = filtered.filter(d => d.dieta.sinGluten)
+    }
 
     // Location filter
     if (locationName) {
@@ -306,7 +317,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet])
 
   // Infinite scroll
   useEffect(() => {
@@ -741,11 +752,11 @@ export default function NewHome({
           </div>
           <ProfileView
             profile={profile}
-            diet={userDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
+            diet={activeDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
             tasteData={tasteData}
             dishes={dishes}
             onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
-            onUpdateDiet={(d) => { import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
+            onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
           />
         </>
       )}
