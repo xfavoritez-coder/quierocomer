@@ -328,7 +328,7 @@ export default function NewHome({
         const momentumNorm = sessionBoost >= 0
           ? Math.min(sessionBoost, 30) / 30
           : Math.max(sessionBoost, -60) / 60
-        score = vScore * 0.5 + kwNorm * 0.3 + catNorm * 0.1 + momentumNorm * 0.2
+        score = vScore * 0.35 + kwNorm * 0.2 + catNorm * 0.1 + momentumNorm * 0.35
       } else {
         // Fallback path: keyword/category scoring
         score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
@@ -347,8 +347,10 @@ export default function NewHome({
       ? new Map(vectorScoredIds.map((id, i) => [id, 1 - i / vectorScoredIds.length]))
       : undefined
 
-    // Filter by meal time — only show dishes matching the selected moment
-    filtered = filtered.filter(d => d.mealTime === mealFilter)
+    // Filter by meal time — only when no category is selected
+    if (!activeCategory) {
+      filtered = filtered.filter(d => d.mealTime === mealFilter)
+    }
 
     const sortByScore = (list: FeedDish[]) =>
       list.map(d => ({ dish: d, score: scoreDish(d, vectorRank) }))
