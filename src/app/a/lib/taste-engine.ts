@@ -12,6 +12,23 @@
 import { prisma } from '@/lib/prisma'
 import { averageEmbeddings, getDishEmbedding } from './vectors'
 
+/**
+ * Meal period: resets antojo when switching between periods.
+ * Desayuno (6-10), Brunch (10-12), Almuerzo (12-15), Once (15-19), Cena (19-23), Madrugada (23-6)
+ */
+function getMealPeriod(): string {
+  const now = new Date()
+  const date = now.toISOString().slice(0, 10)
+  const hour = now.getHours()
+  const period = hour >= 6 && hour < 10 ? 'desayuno'
+    : hour >= 10 && hour < 12 ? 'brunch'
+    : hour >= 12 && hour < 15 ? 'almuerzo'
+    : hour >= 15 && hour < 19 ? 'once'
+    : hour >= 19 && hour < 23 ? 'cena'
+    : 'madrugada'
+  return `${date}_${period}`
+}
+
 const LEARNING_RATE_LIKE = 0.05    // gustoVector moves slowly toward liked dishes
 const LEARNING_RATE_DISLIKE = 0.02 // moves even slower away from disliked
 const MAX_TASTE_HISTORY = 50       // keep last N liked embeddings for clustering
@@ -36,12 +53,12 @@ export async function updateTaste(
   })
   if (!user) return
 
-  const today = new Date().toISOString().slice(0, 10) // "2026-06-13"
-  const isNewDay = user.antojoSessionDate !== today
+  const currentPeriod = getMealPeriod() // "2026-06-14_almuerzo"
+  const isNewPeriod = user.antojoSessionDate !== currentPeriod
 
-  // Reset antojo if new day
-  let antojoDishIds = isNewDay ? [] : (user.antojoDishIds as string[] ?? [])
-  let antojoRejectIds = isNewDay ? [] : (user.antojoRejectIds as string[] ?? [])
+  // Reset antojo if meal period changed (desayuno→brunch→almuerzo→once→cena)
+  let antojoDishIds = isNewPeriod ? [] : (user.antojoDishIds as string[] ?? [])
+  let antojoRejectIds = isNewPeriod ? [] : (user.antojoRejectIds as string[] ?? [])
   let tasteEmbeddings = (user.tasteEmbeddings as any[] ?? [])
 
   if (action === 'LIKE' || action === 'ANTOJO') {
@@ -89,7 +106,7 @@ export async function updateTaste(
   await prisma.feedUser.update({
     where: { id: userId },
     data: {
-      antojoSessionDate: today,
+      antojoSessionDate: currentPeriod,
       antojoDishIds: antojoDishIds,
       antojoRejectIds: antojoRejectIds,
       tasteEmbeddings: tasteEmbeddings,
@@ -157,10 +174,10 @@ export async function getScoredFeed(
   })
   if (!user) return []
 
-  const today = new Date().toISOString().slice(0, 10)
-  const isNewDay = user.antojoSessionDate !== today
-  const antojoRejectIds = isNewDay ? [] : (user.antojoRejectIds as string[] ?? [])
-  const antojoDishIds = isNewDay ? [] : (user.antojoDishIds as string[] ?? [])
+  const currentPeriod = getMealPeriod()
+  const isNewPeriod = user.antojoSessionDate !== currentPeriod
+  const antojoRejectIds = isNewPeriod ? [] : (user.antojoRejectIds as string[] ?? [])
+  const antojoDishIds = isNewPeriod ? [] : (user.antojoDishIds as string[] ?? [])
 
   // Merge excludes
   const allExcludes = [...new Set([...excludeIds, ...antojoRejectIds])]

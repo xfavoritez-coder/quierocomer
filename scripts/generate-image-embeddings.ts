@@ -8,6 +8,9 @@
  * Note: Hugging Face free tier is rate-limited. For production, use OpenAI CLIP or run locally.
  */
 
+import { config } from 'dotenv'
+config({ path: '.env.local' })
+
 import { PrismaClient } from '@prisma/client'
 import crypto from 'crypto'
 
@@ -120,12 +123,12 @@ async function main() {
       deletedAt: null,
       photos: { isEmpty: false },
     },
-    select: { id: true, name: true, photos: true },
+    select: { id: true, name: true, photos: true, imageEmbeddingHash: true },
   })
 
   console.log(`Total dishes with photos: ${dishes.length}`)
 
-  // Check which need processing
+  // Check which need processing (single query, no N+1)
   const toProcess: { id: string; name: string; photoUrl: string; photoHash: string }[] = []
 
   for (const dish of dishes) {
@@ -133,12 +136,7 @@ async function main() {
     if (!photoUrl) continue
     const photoHash = hash(photoUrl)
 
-    const existing = await prisma.dish.findUnique({
-      where: { id: dish.id },
-      select: { imageEmbeddingHash: true },
-    })
-
-    if (existing?.imageEmbeddingHash !== photoHash) {
+    if (dish.imageEmbeddingHash !== photoHash) {
       toProcess.push({ id: dish.id, name: dish.name, photoUrl, photoHash })
     }
   }

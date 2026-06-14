@@ -47,6 +47,23 @@ const STOPWORDS = new Set([
   'opcion', 'alternativa', 'disponible',
   'pequeño', 'pequena', 'mediana', 'grande', 'extra',
   'coronado', 'coronada', 'especial', 'original', 'clasico', 'clasica',
+  // Format/presentation words (no taste signal)
+  'roll', 'rolls', 'hot', 'hand', 'california', 'special', 'tabla', 'tablas',
+  'bowl', 'bowls', 'poke', 'wrap', 'wraps', 'box', 'set',
+  'apanado', 'apanada', 'apanados', 'tempura', 'tempurizado', 'tempurizada',
+  'flambeado', 'flambeada', 'panko', 'crispy', 'furay',
+  'unidades', 'unidad', 'piezas', 'pieza', 'bocados', 'bocado',
+  'bandeja', 'combo', 'promo', 'promocion', 'menu', 'barco', 'barcos',
+  // Generic ingredient words (too common to be useful)
+  'queso crema', 'cebolla morada', 'cebollin', 'ciboulette', 'ciboullete',
+  'toques', 'puntos', 'banado', 'banada', 'envuelto', 'envuelta',
+  'sesamo', 'masago', 'nori', 'furikake', 'wakame',
+  'palta', 'limon', 'cilantro', 'pepino',
+  // Sushi/Asian generic terms
+  'maki', 'makis', 'niguiri', 'niguiris', 'sashimi', 'tataki', 'gohan',
+  'gyosa', 'gyosas', 'edamame', 'edamames',
+  // Numbers and measures
+  'gramos', 'litro', 'litros', 'mililitros',
 ])
 
 /** Normalize: lowercase + remove accents */

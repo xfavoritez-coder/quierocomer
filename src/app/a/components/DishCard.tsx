@@ -73,10 +73,11 @@ export default function DishCard({
   const handleTouchEnd = useCallback(() => {
     if (Math.abs(swipeX) > 80) {
       if (swipeX > 0) {
-        // Like: set state immediately, no fly away
+        // Like: show badge briefly then return to normal
         setState('liked')
         setSwipeX(0)
         onLike?.(dish)
+        setTimeout(() => setState('normal'), 2000)
       } else {
         // Dislike: set state immediately to B/W
         setState('disliked')
@@ -149,8 +150,8 @@ export default function DishCard({
         <div style={{
           position: 'absolute', top: 16, left: swipeX > 0 ? 16 : undefined, right: swipeX < 0 ? 16 : undefined,
           zIndex: 10, padding: '6px 12px', borderRadius: 8,
-          background: swipeX > 0 ? 'rgba(244,166,35,0.9)' : 'rgba(255,255,255,0.2)',
-          color: swipeX > 0 ? '#000' : '#fff',
+          background: swipeX > 0 ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)',
+          color: '#fff',
           fontSize: 12, fontWeight: 700,
         }}>
           {swipeX > 0 ? '👍 Me gusta' : '👎 Paso'}
@@ -166,9 +167,9 @@ export default function DishCard({
         }}>
           <div style={{
             padding: '6px 12px', borderRadius: 8,
-            background: 'rgba(244,166,35,0.85)', color: '#000',
+            background: 'rgba(34,197,94,0.9)', color: '#fff',
             fontSize: 11, fontWeight: 700, transform: 'rotate(3deg)',
-            boxShadow: '0 2px 8px rgba(244,166,35,0.3)',
+            boxShadow: '0 2px 8px rgba(34,197,94,0.3)',
           }}>
             Me antojé 🤤
           </div>
@@ -185,18 +186,6 @@ export default function DishCard({
           <div className="dish-card-gradient"><span>{dish.nombre}</span></div>
         )}
 
-        {/* Popular badge — like cards.png */}
-        {dish.popularityScore > 3 && state === 'normal' && (
-          <div style={{
-            position: 'absolute', top: 10, left: 10, zIndex: 6,
-            padding: '4px 10px', borderRadius: 6,
-            background: '#F4A623', color: '#000',
-            fontSize: 10, fontWeight: 700,
-          }}>
-            #1 Más popular
-          </div>
-        )}
-
         {dish.enOferta && <span className="dish-card-oferta">Oferta</span>}
 
         {/* Gradient overlay with info */}
@@ -205,6 +194,17 @@ export default function DishCard({
           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, transparent 100%)',
           padding: '24px 10px 10px',
         }}>
+          {/* Popular badge — above dish name */}
+          {dish.popularityScore > 3 && state === 'normal' && (
+            <div style={{
+              display: 'inline-block', marginBottom: 4,
+              padding: '3px 8px', borderRadius: 4,
+              background: '#F4A623', color: '#000',
+              fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
+            }}>
+              Más popular
+            </div>
+          )}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 4,
             margin: '0 0 5px', minWidth: 0,
@@ -221,21 +221,21 @@ export default function DishCard({
             {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🥬</span>}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
-            <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 700, flexShrink: 0 }}>
               {dish.enOferta && dish.precioDescuento != null
                 ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
                 : `$${dish.precio.toLocaleString('es-CL')}`}
             </span>
-            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
-              📍 {userLocation && dish.restauranteLat && dish.restauranteLng
+            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>·</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+              {userLocation && dish.restauranteLat && dish.restauranteLng
                 ? formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))
                 : `${((seed % 30) * 0.1 + 0.3).toFixed(1)} km`}
             </span>
-            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
-              ⭐ {dish.avgRating != null && dish.avgRating > 0
+            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>·</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+              ⭐{dish.avgRating != null && dish.avgRating > 0
                 ? dish.avgRating.toFixed(1)
                 : ((seed % 10) * 0.1 + 4.0).toFixed(1)}
             </span>

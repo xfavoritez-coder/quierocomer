@@ -294,7 +294,7 @@ export default function SearchExplore({
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
           </svg>
         </a>
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
+        <button onClick={() => { const input = document.querySelector('input[type="text"]') as HTMLInputElement; if (input) { window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => input.focus(), 300) } }} style={{
           width: 52, height: 52, borderRadius: '50%',
           background: 'rgba(20,20,20,0.75)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
@@ -302,7 +302,7 @@ export default function SearchExplore({
           cursor: 'pointer', pointerEvents: 'auto', color: 'rgba(255,255,255,0.7)',
         }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M18 15l-6-6-6 6" />
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
         </button>
       </div>

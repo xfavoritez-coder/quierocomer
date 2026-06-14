@@ -26,12 +26,16 @@ export default function NewHome({
   keywordScores,
   totalInteractions,
   vectorScoredIds = [],
+  tasteData,
+  userDiet,
 }: {
   dishes: FeedDish[]
   categoryScores: Record<string, number>
   keywordScores: Record<string, number>
   totalInteractions: number
   vectorScoredIds?: string[]
+  tasteData?: { antojoSessionDate: string | null; antojoDishIds: string[]; antojoRejectIds: string[]; tasteEmbeddingsCount: number; hasGustoVector: boolean }
+  userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
 }) {
   const [view, setView] = useState<View>('feed')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
@@ -45,6 +49,7 @@ export default function NewHome({
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
   const [showCategoryFade, setShowCategoryFade] = useState(true)
+  const [locationQuery, setLocationQuery] = useState('')
   const categoryScrollRef = useRef<HTMLDivElement>(null)
 
   // Profile for DishModal
@@ -87,6 +92,13 @@ export default function NewHome({
     return [...set].sort()
   }, [dishes])
 
+  // Filtered communes for search
+  const filteredCommunes = useMemo(() => {
+    if (!locationQuery.trim()) return communes
+    const q = locationQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return communes.filter(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q))
+  }, [communes, locationQuery])
+
   // Available categories
   const allCategories = useMemo(() => getDisplayCategories(), [])
   const categories = useMemo(() => {
@@ -106,31 +118,45 @@ export default function NewHome({
     // Remove disliked
     filtered = filtered.filter(d => !sessionDislikedIds.has(d.id))
 
-    // ── pgvector path: use server-scored order ──
+    // ── pgvector path: use server-scored order + session boosts ──
     if (vectorScoredIds.length > 0 && !activeCategory) {
+      // Build session category preferences
+      const likedCats = new Set<string>()
+      const likedTypes = new Set<string>()
+      for (const d of filtered) {
+        if (sessionLikedIds.has(d.id)) { likedCats.add(d.categoriaNorm); likedTypes.add(d.categoriaTipo) }
+      }
+
       const dishMap = new Map(filtered.map(d => [d.id, d]))
-      // Start with pgvector order (taste similarity from DB)
       const vectorOrdered: FeedDish[] = []
       for (const id of vectorScoredIds) {
         const d = dishMap.get(id)
         if (d) { vectorOrdered.push(d); dishMap.delete(id) }
       }
-      // Append remaining dishes not in vector results (discovery)
       const remaining = [...dishMap.values()].sort(() => Math.random() - 0.5)
       const combined = [...vectorOrdered, ...remaining]
 
-      // Boost session likes to top
+      // Reorder: boost dishes matching liked categories/types to top
       const boosted: FeedDish[] = []
+      const similar: FeedDish[] = []
       const rest: FeedDish[] = []
       for (const d of combined) {
         if (sessionLikedIds.has(d.id)) boosted.push(d)
+        else if (likedCats.has(d.categoriaNorm) || likedTypes.has(d.categoriaTipo)) similar.push(d)
         else rest.push(d)
+      }
+      // Interleave similar (every 2nd) with rest for variety
+      const reordered = [...boosted]
+      let sIdx = 0, rIdx = 0
+      while (sIdx < similar.length || rIdx < rest.length) {
+        if (sIdx < similar.length) reordered.push(similar[sIdx++])
+        if (sIdx < similar.length) reordered.push(similar[sIdx++])
+        if (rIdx < rest.length) reordered.push(rest[rIdx++])
       }
 
       // Max 3 consecutive same category
-      const source = [...boosted, ...rest]
       const final: FeedDish[] = []
-      const rem = [...source]
+      const rem = [...reordered]
       while (rem.length > 0) {
         const recent = final.slice(-3).map(d => d.categoriaNorm)
         const allSame = recent.length === 3 && recent.every(c => c === recent[0])
@@ -144,20 +170,38 @@ export default function NewHome({
     }
 
     // ── Fallback: keyword scoring (cold start or category filter) ──
+    // Build session-boosted keyword and category scores
     const mergedKw: Record<string, number> = { ...keywordScores }
+    const sessionCatBoost: Record<string, number> = {}
     for (const d of dishes) {
-      const kws = extractKeywords(d.nombre, d.descripcion)
-      if (sessionLikedIds.has(d.id)) for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) + 8
-      if (sessionDislikedIds.has(d.id)) for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 12
+      if (sessionLikedIds.has(d.id)) {
+        const kws = extractKeywords(d.nombre, d.descripcion)
+        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) + 8
+        // Boost category aggressively for session likes
+        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) + 15
+        // Also boost same dishType (food/dessert/drink)
+        if (d.categoriaTipo) sessionCatBoost[`_type_${d.categoriaTipo}`] = (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) + 10
+      }
+      if (sessionDislikedIds.has(d.id)) {
+        const kws = extractKeywords(d.nombre, d.descripcion)
+        for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 12
+        sessionCatBoost[d.categoriaNorm] = (sessionCatBoost[d.categoriaNorm] ?? 0) - 8
+      }
     }
 
     const scored = filtered.map(d => {
       let score = 0
+      // DB category score
       score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
+      // Session category boost (much stronger, immediate effect)
+      score += (sessionCatBoost[d.categoriaNorm] ?? 0)
+      // Session dishType boost (e.g., like a dessert → all desserts rise)
+      score += (sessionCatBoost[`_type_${d.categoriaTipo}`] ?? 0) * 0.5
+      // Keywords
       const kws = extractKeywords(d.nombre, d.descripcion)
       let kwTotal = 0
       for (const kw of kws) kwTotal += (mergedKw[kw] ?? 0)
-      score += Math.min(kwTotal, 10)
+      score += Math.min(kwTotal, 15)
       return { dish: d, score }
     })
 
@@ -282,16 +326,14 @@ export default function NewHome({
 
       {/* ─── Header: logo centered + hamburger ─── */}
       <header style={{
-        position: 'sticky', top: 0, zIndex: 40,
-        background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
-        padding: '14px 16px', display: 'flex', alignItems: 'center',
+        background: '#0e0e0e',
+        padding: '10px 16px', display: 'flex', alignItems: 'center',
       }}>
         <div style={{ width: 36 }} />
         <div style={{ flex: 1, textAlign: 'center' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 19, fontWeight: 700, color: '#fff',
+            fontSize: 20, fontWeight: 700, color: '#fff',
           }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
@@ -305,79 +347,119 @@ export default function NewHome({
           </svg>
         </button>
       </header>
+      <div style={{ height: 1, background: '#222' }} />
 
-      {/* ─── Hamburger menu ─── */}
+      {/* ─── Hamburger menu — slide from right ─── */}
       {menuOpen && (
         <>
           <div onClick={() => setMenuOpen(false)} style={{
             position: 'fixed', inset: 0, zIndex: 55,
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
           }} />
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
-            width: 280, maxWidth: '80vw',
-            background: '#141414', borderLeft: '1px solid rgba(255,255,255,0.06)',
-            padding: '0 20px 40px', display: 'flex', flexDirection: 'column',
-            animation: 'slideRight 0.2s ease-out', overflow: 'hidden',
+            width: 300, maxWidth: '85vw',
+            background: '#111',
+            borderLeft: '1px solid rgba(255,255,255,0.06)',
+            animation: 'slideRight 0.25s ease-out',
+            display: 'flex', flexDirection: 'column',
           }}>
-            {/* Logo watermark */}
+            {/* Header */}
             <div style={{
-              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-              fontFamily: 'var(--font-feed-display), serif',
-              fontSize: 60, fontWeight: 700, color: 'rgba(255,255,255,0.02)',
-              whiteSpace: 'nowrap', pointerEvents: 'none', userSelect: 'none',
+              padding: '20px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
             }}>
-              QC
-            </div>
-
-            {/* Close */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0' }}>
-              <button onClick={() => setMenuOpen(false)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4,
+              <div style={{
+                fontFamily: 'var(--font-feed-display), Georgia, serif',
+                fontSize: 22, fontWeight: 700, letterSpacing: -0.5, color: '#fff',
               }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+              </div>
+              <button onClick={() => setMenuOpen(false)} style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)', border: 'none',
+                cursor: 'pointer', color: 'rgba(255,255,255,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* Logo in menu */}
+            {/* Nav */}
+            <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {[
+                { label: 'Inicio', color: '#F4A623', active: view === 'feed',
+                  icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+                  action: () => { setMenuOpen(false); setView('feed'); window.scrollTo(0, 0) } },
+                { label: 'Buscar', color: '#7b8cff',
+                  icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
+                  href: '/a/search' },
+                { label: 'Mis antojos', color: '#ff5b5b',
+                  icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.7 4.5 6.4 4.5c2 0 3.5 1 4.3 2.3.8-1.3 2.3-2.3 4.3-2.3 3.7 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z" /></svg>,
+                  action: () => { setMenuOpen(false); setView('guardados'); window.scrollTo(0, 0) } },
+                { label: 'Mi perfil', color: '#855bd8',
+                  icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>,
+                  action: () => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) } },
+              ].map((item, i) => {
+                const s: React.CSSProperties = {
+                  position: 'relative', display: 'flex', alignItems: 'center', gap: 16,
+                  padding: '14px 16px', borderRadius: 14,
+                  color: '#fff', textDecoration: 'none',
+                  fontSize: 17, fontWeight: 600,
+                  background: item.active ? 'rgba(244,166,35,0.08)' : 'transparent',
+                  border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
+                  WebkitTapHighlightColor: 'transparent',
+                  transition: 'background 0.15s',
+                }
+                const inner = (
+                  <>
+                    {item.active && (
+                      <div style={{
+                        position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+                        width: 3, height: 24, borderRadius: 999,
+                        background: '#F4A623', boxShadow: '0 0 12px rgba(245,164,0,0.4)',
+                      }} />
+                    )}
+                    <span style={{ color: item.color, display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+                    {item.label}
+                  </>
+                )
+                return item.href ? (
+                  <a key={i} href={item.href} style={s}>{inner}</a>
+                ) : (
+                  <button key={i} onClick={item.action} style={s}>{inner}</button>
+                )
+              })}
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 16px' }} />
+
+              <button onClick={() => { setMenuOpen(false); setLocationOpen(true) }} style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '14px 16px', borderRadius: 14,
+                color: 'rgba(255,255,255,0.4)', fontSize: 17, fontWeight: 500,
+                background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
+                  <path d="M12 21s7-6.1 7-12a7 7 0 0 0-14 0c0 5.9 7 12 7 12z" /><circle cx="12" cy="9" r="2.5" />
+                </svg>
+                Cerca de ti
+              </button>
+            </nav>
+
+            {/* Footer */}
             <div style={{
-              textAlign: 'center', marginBottom: 24, paddingBottom: 16,
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
+              textAlign: 'center',
             }}>
               <span style={{
-                fontFamily: 'var(--font-feed-display), serif',
-                fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.15)',
+                fontFamily: 'var(--font-feed-display), Georgia, serif',
+                fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.1)',
               }}>
-                Quiero<span style={{ color: 'rgba(244,166,35,0.2)' }}>Comer</span>
+                Quiero<span style={{ color: 'rgba(244,166,35,0.15)' }}>Comer</span>
               </span>
-            </div>
-
-            {/* Menu items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', zIndex: 1 }}>
-              {[
-                { label: '🏠 Inicio', action: () => { setMenuOpen(false); setView('feed'); window.scrollTo(0, 0) } },
-                { label: '🔍 Buscar', href: '/a/search' },
-                { label: '💛 Favoritos', action: () => { setMenuOpen(false); setView('guardados'); window.scrollTo(0, 0) } },
-                { label: '👤 Mi perfil', action: () => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) } },
-              ].map((item, i) => (
-                item.href ? (
-                  <a key={i} href={item.href} style={{
-                    display: 'block', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
-                    color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,0.03)',
-                  }}>
-                    {item.label}
-                  </a>
-                ) : (
-                  <button key={i} onClick={item.action} style={{
-                    display: 'block', width: '100%', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
-                    color: '#fff', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left',
-                  }}>
-                    {item.label}
-                  </button>
-                )
-              ))}
             </div>
           </div>
         </>
@@ -386,118 +468,10 @@ export default function NewHome({
       {/* ─── Feed View ─── */}
       {view === 'feed' && (
         <>
-          {/* Greeting + location */}
-          <div style={{
-            padding: '14px 20px 0',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-          }}>
-            <h2 style={{
-              fontFamily: 'var(--font-feed-display), serif',
-              fontSize: 20, fontWeight: 700, color: '#fff', margin: 0,
-            }}>
-              ¿Qué se te antoja?
-            </h2>
-
-            {/* Location button */}
-            <button onClick={() => {
-              if (!userLocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                  const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-                  setUserLocation(loc)
-                  const nearest = dishes
-                    .filter(d => d.restauranteLat && d.restauranteLng)
-                    .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
-                    .sort((a, b) => a.dist - b.dist)[0]
-                  if (nearest?.d.restauranteDireccion) {
-                    setLocationName(nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim() || 'Santiago')
-                  }
-                }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
-              } else {
-                setLocationOpen(!locationOpen)
-              }
-            }} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '7px 12px', borderRadius: 20,
-              background: locationName ? 'rgba(244,166,35,0.08)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${locationName ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.08)'}`,
-              cursor: 'pointer', flexShrink: 0,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={locationName ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{
-                fontSize: 12, fontWeight: 500, maxWidth: 100,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                color: locationName ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)',
-              }}>
-                {locationName || 'Ubicación'}
-              </span>
-              {locationName && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" strokeLinecap="round"
-                  style={{ transform: locationOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Location dropdown */}
-          {locationOpen && (
-            <>
-              <div onClick={() => setLocationOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
-              <div style={{
-                position: 'absolute', top: 110, right: 20, zIndex: 45,
-                background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
-                padding: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                maxHeight: 280, overflowY: 'auto', minWidth: 200,
-              }}>
-                <button onClick={() => {
-                  setLocationOpen(false)
-                  navigator.geolocation.getCurrentPosition(pos => {
-                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-                    setUserLocation(loc)
-                    const nearest = dishes
-                      .filter(d => d.restauranteLat && d.restauranteLng)
-                      .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
-                      .sort((a, b) => a.dist - b.dist)[0]
-                    if (nearest?.d.restauranteDireccion) {
-                      setLocationName(nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim() || 'Santiago')
-                    }
-                  }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
-                }} style={{
-                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                  padding: '10px 14px', borderRadius: 10, background: 'rgba(244,166,35,0.08)',
-                  border: 'none', cursor: 'pointer', textAlign: 'left',
-                  fontSize: 13, fontWeight: 600, color: '#F4A623', marginBottom: 4,
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-                  </svg>
-                  Usar mi ubicación
-                </button>
-                {communes.map(commune => (
-                  <button key={commune} onClick={() => {
-                    setLocationName(commune)
-                    setUserLocation(null)
-                    setLocationOpen(false)
-                  }} style={{
-                    display: 'block', width: '100%', padding: '10px 14px', borderRadius: 10,
-                    background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
-                    fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
-                    color: locationName === commune ? '#F4A623' : '#fff',
-                  }}>
-                    {commune}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
 
           {/* ─── Categories — sticky ─── */}
           <div style={{
-            position: 'sticky', top: 55, zIndex: 35,
+            position: 'sticky', top: 0, zIndex: 35,
             background: 'rgba(14,14,14,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
             padding: '12px 0 8px',
           }}>
@@ -532,10 +506,109 @@ export default function NewHome({
             </div>
           </div>
 
-          {/* Feed info */}
-          <div style={{ padding: '4px 20px 8px', color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
-            {feedDishes.length} platos
-            {activeCategory && ` en ${categories.find(c => c.norm === activeCategory)?.label || activeCategory}`}
+          {/* Contextual greeting + location */}
+          <div style={{
+            padding: '6px 20px 10px', position: 'relative',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          }}>
+            <p style={{
+              fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0,
+              fontFamily: 'var(--font-feed-display), serif', flex: 1, minWidth: 0,
+            }}>
+              {activeCategory
+                ? `Lo mejor en ${categories.find(c => c.norm === activeCategory)?.label || activeCategory}`
+                : hour >= 5 && hour < 12 ? '¿Qué desayunamos?'
+                : hour >= 12 && hour < 18 ? '¿Qué comemos?'
+                : '¿Qué cenamos?'}
+            </p>
+
+            <button onClick={() => setLocationOpen(!locationOpen)} style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '5px 10px', borderRadius: 20, flexShrink: 0,
+              background: 'none', border: '1px solid rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={locationName ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{
+                fontSize: 13, color: locationName ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+                maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {locationName || 'Ubicación'}
+              </span>
+            </button>
+
+            {/* Location dropdown */}
+            {locationOpen && (
+              <>
+                <div onClick={() => setLocationOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+                <div style={{
+                  position: 'absolute', top: '100%', right: 20, zIndex: 45,
+                  background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+                  padding: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  maxHeight: 320, overflowY: 'auto', width: 240,
+                }}>
+                  <button onClick={() => {
+                    setLocationOpen(false)
+                    navigator.geolocation.getCurrentPosition(pos => {
+                      const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+                      setUserLocation(loc)
+                      const nearest = dishes
+                        .filter(d => d.restauranteLat && d.restauranteLng)
+                        .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
+                        .sort((a, b) => a.dist - b.dist)[0]
+                      if (nearest?.d.restauranteDireccion) {
+                        setLocationName(nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim() || 'Santiago')
+                      }
+                    }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
+                  }} style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '10px 12px', borderRadius: 10, background: 'rgba(244,166,35,0.08)',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    fontSize: 13, fontWeight: 600, color: '#F4A623', marginBottom: 6,
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Usar mi ubicación
+                  </button>
+
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 10px', borderRadius: 8,
+                    background: 'rgba(255,255,255,0.05)', marginBottom: 6,
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input type="text" placeholder="Buscar comuna..." value={locationQuery}
+                      onChange={e => setLocationQuery(e.target.value)}
+                      style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 12 }} />
+                  </div>
+
+                  {filteredCommunes.map(commune => (
+                    <button key={commune} onClick={() => {
+                      setLocationName(commune); setUserLocation(null); setLocationOpen(false); setLocationQuery('')
+                    }} style={{
+                      display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
+                      background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
+                      color: locationName === commune ? '#F4A623' : 'rgba(255,255,255,0.7)',
+                    }}>
+                      {commune}
+                    </button>
+                  ))}
+                  {filteredCommunes.length === 0 && (
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center', padding: 12, margin: 0 }}>
+                      Sin resultados
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Feed masonry */}
@@ -595,10 +668,11 @@ export default function NewHome({
           </div>
           <ProfileView
             profile={profile}
-            diet={{ isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
+            diet={userDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
+            tasteData={tasteData}
             dishes={dishes}
-            onReset={() => {}}
-            onUpdateDiet={() => {}}
+            onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
+            onUpdateDiet={(d) => { import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
           />
         </>
       )}
@@ -664,7 +738,7 @@ function CategoryCircle({ icon, label, active, onClick }: {
       WebkitTapHighlightColor: 'transparent',
     }}>
       <div style={{
-        width: 60, height: 60, borderRadius: '50%',
+        width: 50, height: 50, borderRadius: '50%',
         background: active ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.05)',
         border: active ? '2px solid #F4A623' : '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',

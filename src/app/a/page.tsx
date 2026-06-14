@@ -20,6 +20,14 @@ export default async function FeedPage() {
       categoryScores: true,
       keywordScores: true,
       totalInteractions: true,
+      isVegan: true,
+      isVegetarian: true,
+      isGlutenFree: true,
+      isLactoseFree: true,
+      antojoSessionDate: true,
+      antojoDishIds: true,
+      antojoRejectIds: true,
+      tasteEmbeddings: true,
     },
   })
 
@@ -33,6 +41,30 @@ export default async function FeedPage() {
   }).catch(() => {})
 
   const dishes = await getFeedDishes()
+
+  // Check if user has gustoVector
+  let hasGustoVector = false
+  try {
+    const vr = await prisma.$queryRawUnsafe<{ v: string }[]>(
+      `SELECT "gustoVector"::text as v FROM "FeedUser" WHERE id = $1`, user.id
+    )
+    hasGustoVector = !!vr[0]?.v
+  } catch {}
+
+  const tasteData = {
+    antojoSessionDate: user.antojoSessionDate,
+    antojoDishIds: (user.antojoDishIds as string[]) ?? [],
+    antojoRejectIds: (user.antojoRejectIds as string[]) ?? [],
+    tasteEmbeddingsCount: Array.isArray(user.tasteEmbeddings) ? user.tasteEmbeddings.length : 0,
+    hasGustoVector,
+  }
+
+  const userDiet = {
+    isVegan: user.isVegan,
+    isVegetarian: user.isVegetarian,
+    isGlutenFree: user.isGlutenFree,
+    isLactoseFree: user.isLactoseFree,
+  }
 
   // pgvector: if user has enough interactions, get taste-scored feed (with timeout)
   let vectorScoredIds: string[] = []
@@ -59,6 +91,8 @@ export default async function FeedPage() {
       keywordScores={(user.keywordScores as Record<string, number>) ?? {}}
       totalInteractions={user.totalInteractions}
       vectorScoredIds={vectorScoredIds}
+      tasteData={tasteData}
+      userDiet={userDiet}
     />
   )
 }
