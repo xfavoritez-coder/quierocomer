@@ -5,6 +5,7 @@ import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 import { extractKeywords, keywordAffinity } from '../lib/keywords'
 import type { FeedProfile } from '../lib/scoring'
+import { getSimilarDishIds } from '../lib/feed-actions'
 
 export default function DishModal({
   dish,
@@ -60,38 +61,47 @@ export default function DishModal({
     if (diff > 100 && modalRef.current && modalRef.current.scrollTop <= 0) onClose()
   }
 
-  // Related dishes: keyword similarity to THIS dish + profile affinity
+  // Related dishes: embedding similarity (pgvector) with keyword fallback
+  const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
+
+  useEffect(() => {
+    getSimilarDishIds(dish.id).then(ids => {
+      if (ids.length > 0) setEmbeddingSimilarIds(ids)
+    }).catch(() => {})
+  }, [dish.id])
+
   const relatedDishes = useMemo(() => {
+    // If we have embedding-based results, use those
+    if (embeddingSimilarIds && embeddingSimilarIds.length > 0) {
+      const dishMap = new Map(allDishes.filter(d => d.fotoUrl).map(d => [d.id, d]))
+      return embeddingSimilarIds
+        .map(id => dishMap.get(id))
+        .filter(Boolean) as FeedDish[]
+    }
+
+    // Fallback: keyword similarity
     const thisKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
 
     return allDishes
       .filter(d => d.id !== dish.id && d.fotoUrl)
       .map(d => {
         let score = 0
-        // Keyword overlap with THIS dish (strongest signal for "similar")
         const dKws = extractKeywords(d.nombre, d.descripcion)
         for (const kw of dKws) if (thisKws.has(kw)) score += 4
-
-        // Same category bonus
         if (d.categoriaNorm === dish.categoriaNorm) score += 3
-
-        // Profile affinity (what the user generally likes)
         for (const kw of dKws) {
           const kwScore = profile.keywordScores[kw] ?? 0
           if (kwScore > 0) score += 1
         }
         const catScore = profile.categoryScores[d.categoriaNorm] ?? 0
         if (catScore > 0) score += catScore * 0.1
-
-        // Variety: random noise
         score += Math.random() * 2
-
         return { dish: d, score }
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, 12)
       .map(x => x.dish)
-  }, [dish, allDishes, profile])
+  }, [dish, allDishes, profile, embeddingSimilarIds])
 
   // Restaurant dishes
   const restDishes = useMemo(() =>

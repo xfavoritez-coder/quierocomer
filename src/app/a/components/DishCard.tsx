@@ -205,31 +205,36 @@ export default function DishCard({
           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, transparent 100%)',
           padding: '24px 10px 10px',
         }}>
-          <h3 style={{
-            fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 14, fontWeight: 700, lineHeight: 1.25, color: '#fff',
-            margin: '0 0 5px',
-            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            margin: '0 0 5px', minWidth: 0,
           }}>
-            {dish.nombre}
-            {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 4 }}>🌱</span>}
-            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 4 }}>🥬</span>}
-          </h3>
+            <h3 style={{
+              fontFamily: 'var(--font-feed-display), serif',
+              fontSize: 14, fontWeight: 700, lineHeight: 1.25, color: '#fff',
+              margin: 0, flex: 1, minWidth: 0,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {dish.nombre}
+            </h3>
+            {dish.dieta.tipo === 'VEGAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🌱</span>}
+            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🥬</span>}
+          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
+            <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 700 }}>
               {dish.enOferta && dish.precioDescuento != null
                 ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
                 : `$${dish.precio.toLocaleString('es-CL')}`}
             </span>
             <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
               📍 {userLocation && dish.restauranteLat && dish.restauranteLng
                 ? formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))
                 : `${((seed % 30) * 0.1 + 0.3).toFixed(1)} km`}
             </span>
             <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
               ⭐ {dish.avgRating != null && dish.avgRating > 0
                 ? dish.avgRating.toFixed(1)
                 : ((seed % 10) * 0.1 + 4.0).toFixed(1)}

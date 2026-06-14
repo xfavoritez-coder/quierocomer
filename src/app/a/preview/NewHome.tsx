@@ -5,39 +5,58 @@ import type { FeedDish } from '../types'
 import { getDisplayCategories } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
 import { distanceKm, formatDistance } from '../lib/geo'
-import { applyFilters, type Filters } from '../components/FeedFilters'
 import MasonryGrid from '../components/MasonryGrid'
+import DishModal from '../components/DishModal'
+import SavedList from '../components/SavedList'
+import ProfileView from '../components/ProfileView'
+import { createEmptyProfile, getRecommendationReason, type FeedProfile } from '../lib/scoring'
+import {
+  trackInteraction,
+  saveDish,
+  unsaveDish,
+  rateDish,
+  updateTasteAction,
+} from '../lib/feed-actions'
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'Pizzas': '🍕', 'Hamburguesas': '🍔', 'Sushi': '🍣',
-  'Ceviches & Mariscos': '🐟', 'Ensaladas': '🥗', 'Parrilla & Carnes': '🥩',
-  'Sandwiches': '🥪', 'Pastas': '🍝', 'Empanadas': '🥟',
-  'Mexicana': '🌮', 'Asiática': '🍜', 'Postres': '🍰',
-  'Completos': '🌭', 'Vegano': '🌱',
-}
+type View = 'feed' | 'guardados' | 'perfil'
 
 export default function NewHome({
   dishes,
   categoryScores,
   keywordScores,
   totalInteractions,
+  vectorScoredIds = [],
 }: {
   dishes: FeedDish[]
   categoryScores: Record<string, number>
   keywordScores: Record<string, number>
   totalInteractions: number
+  vectorScoredIds?: string[]
 }) {
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [locationName, setLocationName] = useState<string | null>(null)
-  const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [activeDishType, setActiveDishType] = useState<string | null>('food')
-  const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
-  const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
+  const [view, setView] = useState<View>('feed')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationName, setLocationName] = useState<string | null>(null)
   const [locationOpen, setLocationOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [sessionLikedIds, setSessionLikedIds] = useState<Set<string>>(new Set())
+  const [sessionDislikedIds, setSessionDislikedIds] = useState<Set<string>>(new Set())
+  const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
+  const [showCategoryFade, setShowCategoryFade] = useState(true)
+  const categoryScrollRef = useRef<HTMLDivElement>(null)
 
+  // Profile for DishModal
+  const profile = useMemo<FeedProfile>(() => {
+    const base = createEmptyProfile()
+    base.categoryScores = categoryScores
+    base.keywordScores = keywordScores
+    base.totalInteractions = totalInteractions
+    return base
+  }, [categoryScores, keywordScores, totalInteractions])
+
+  // Geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(pos => {
@@ -55,10 +74,7 @@ export default function NewHome({
     }
   }, [dishes])
 
-  const hour = new Date().getHours()
-  const greeting = hour >= 5 && hour < 12 ? 'desayunar' : hour >= 12 && hour < 18 ? 'almorzar' : 'cenar'
-
-  // Extract communes from restaurant addresses
+  // Communes for location dropdown
   const communes = useMemo(() => {
     const set = new Set<string>()
     dishes.forEach(d => {
@@ -71,31 +87,16 @@ export default function NewHome({
     return [...set].sort()
   }, [dishes])
 
+  // Available categories
+  const allCategories = useMemo(() => getDisplayCategories(), [])
   const categories = useMemo(() => {
-    const display = getDisplayCategories()
     const available = new Set(dishes.map(d => d.categoriaNorm))
-    return display.filter(c => available.has(c)).slice(0, 8)
-  }, [dishes])
+    return allCategories.filter(c => available.has(c.norm))
+  }, [dishes, allCategories])
 
-  // Dish type filter
-  const DISH_TYPES: { id: string; label: string; matches: string[] }[] = [
-    { id: 'food', label: '🍽 Platos', matches: ['food', 'entry'] },
-    { id: 'dessert', label: '🍰 Postres', matches: ['dessert'] },
-    { id: 'drink', label: '🍹 Bebidas', matches: ['drink', 'coffee'] },
-  ]
-
-  // Filter + score dishes
+  // Feed dishes — pgvector when available, fallback to keyword scoring
   const feedDishes = useMemo(() => {
     let filtered = dishes.filter(d => d.fotoUrl)
-
-    // Dish type filter
-    if (activeDishType) {
-      const dt = DISH_TYPES.find(t => t.id === activeDishType)
-      if (dt && dt.matches.length > 0) {
-        const matchSet = new Set(dt.matches)
-        filtered = filtered.filter(d => matchSet.has(d.categoriaTipo))
-      }
-    }
 
     // Category filter
     if (activeCategory) {
@@ -105,7 +106,44 @@ export default function NewHome({
     // Remove disliked
     filtered = filtered.filter(d => !sessionDislikedIds.has(d.id))
 
-    // Build keyword scores
+    // ── pgvector path: use server-scored order ──
+    if (vectorScoredIds.length > 0 && !activeCategory) {
+      const dishMap = new Map(filtered.map(d => [d.id, d]))
+      // Start with pgvector order (taste similarity from DB)
+      const vectorOrdered: FeedDish[] = []
+      for (const id of vectorScoredIds) {
+        const d = dishMap.get(id)
+        if (d) { vectorOrdered.push(d); dishMap.delete(id) }
+      }
+      // Append remaining dishes not in vector results (discovery)
+      const remaining = [...dishMap.values()].sort(() => Math.random() - 0.5)
+      const combined = [...vectorOrdered, ...remaining]
+
+      // Boost session likes to top
+      const boosted: FeedDish[] = []
+      const rest: FeedDish[] = []
+      for (const d of combined) {
+        if (sessionLikedIds.has(d.id)) boosted.push(d)
+        else rest.push(d)
+      }
+
+      // Max 3 consecutive same category
+      const source = [...boosted, ...rest]
+      const final: FeedDish[] = []
+      const rem = [...source]
+      while (rem.length > 0) {
+        const recent = final.slice(-3).map(d => d.categoriaNorm)
+        const allSame = recent.length === 3 && recent.every(c => c === recent[0])
+        if (allSame) {
+          const diffIdx = rem.findIndex(d => d.categoriaNorm !== recent[0])
+          if (diffIdx >= 0) { final.push(rem.splice(diffIdx, 1)[0]); continue }
+        }
+        final.push(rem.shift()!)
+      }
+      return final
+    }
+
+    // ── Fallback: keyword scoring (cold start or category filter) ──
     const mergedKw: Record<string, number> = { ...keywordScores }
     for (const d of dishes) {
       const kws = extractKeywords(d.nombre, d.descripcion)
@@ -113,7 +151,6 @@ export default function NewHome({
       if (sessionDislikedIds.has(d.id)) for (const kw of kws) mergedKw[kw] = (mergedKw[kw] ?? 0) - 12
     }
 
-    // Score
     const scored = filtered.map(d => {
       let score = 0
       score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
@@ -159,7 +196,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeDishType, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds])
 
   // Infinite scroll
   useEffect(() => {
@@ -172,40 +209,104 @@ export default function NewHome({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [visibleCount, feedDishes.length])
 
+  // Reset visible count on category change
+  useEffect(() => { setVisibleCount(20) }, [activeCategory])
+
+  // Handlers
   const handleLike = useCallback((dish: FeedDish) => {
     setSessionLikedIds(prev => new Set([...prev, dish.id]))
     setSessionDislikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
+    trackInteraction(dish.id, 'LIKE', dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
+    updateTasteAction(dish.id, 'LIKE').catch(() => {})
   }, [])
 
   const handleDislike = useCallback((dish: FeedDish) => {
     setSessionDislikedIds(prev => new Set([...prev, dish.id]))
     setSessionLikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
+    trackInteraction(dish.id, 'PASS', dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
+    updateTasteAction(dish.id, 'DISLIKE').catch(() => {})
   }, [])
 
   const handleUndo = useCallback((dish: FeedDish) => {
     setSessionDislikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
     setSessionLikedIds(prev => { const n = new Set(prev); n.delete(dish.id); return n })
+    updateTasteAction(dish.id, 'UNDO').catch(() => {})
   }, [])
+
+  const handleDishTap = useCallback((d: FeedDish) => {
+    setSelectedDish(d)
+    trackInteraction(d.id, 'TAP', d.categoriaNorm, d.precioDescuento ?? d.precio).catch(() => {})
+  }, [])
+
+  const handleDishSave = useCallback((dish: FeedDish) => {
+    setSavedDishIds(prev => new Set([...prev, dish.id]))
+    saveDish(dish.id, 'SAVED').catch(() => {})
+    updateTasteAction(dish.id, 'FAVORITE').catch(() => {})
+  }, [])
+
+  const handleDishRate = useCallback((dish: FeedDish, stars: number) => {
+    rateDish(dish.id, stars).catch(() => {})
+  }, [])
+
+  const handleRemoveSaved = useCallback((dishId: string) => {
+    setSavedDishIds(prev => { const n = new Set(prev); n.delete(dishId); return n })
+    setSessionLikedIds(prev => { const n = new Set(prev); n.delete(dishId); return n })
+    unsaveDish(dishId).catch(() => {})
+  }, [])
+
+  // Dishes for guardados view
+  const likedDishes = useMemo(() =>
+    [...sessionLikedIds].map(id => dishes.find(d => d.id === id)).filter(Boolean) as FeedDish[],
+    [sessionLikedIds, dishes]
+  )
+  const savedDishes = useMemo(() =>
+    [...savedDishIds].map(id => dishes.find(d => d.id === id)).filter(Boolean) as FeedDish[],
+    [savedDishIds, dishes]
+  )
+
+  // Category scroll fade
+  const handleCategoryScroll = useCallback(() => {
+    const el = categoryScrollRef.current
+    if (!el) return
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 20
+    setShowCategoryFade(!atEnd)
+  }, [])
+
+  const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
+
+  const hour = new Date().getHours()
+  const greeting = hour >= 5 && hour < 12 ? 'desayunar' : hour >= 12 && hour < 18 ? 'almorzar' : 'cenar'
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh' }}>
 
-      {/* Logo header */}
-      <div style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <img src="/genio-lamp.png" alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
-          <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 17, fontWeight: 700, color: '#fff' }}>
+      {/* ─── Header: logo centered + hamburger ─── */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        padding: '14px 16px', display: 'flex', alignItems: 'center',
+      }}>
+        <div style={{ width: 36 }} />
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <span style={{
+            fontFamily: 'var(--font-feed-display), serif',
+            fontSize: 19, fontWeight: 700, color: '#fff',
+          }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
         </div>
-        <button onClick={() => setMenuOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.5)' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <button onClick={() => setMenuOpen(true)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: 6,
+          color: 'rgba(255,255,255,0.5)', width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-      </div>
+      </header>
 
-      {/* Hamburger menu slide-in */}
+      {/* ─── Hamburger menu ─── */}
       {menuOpen && (
         <>
           <div onClick={() => setMenuOpen(false)} style={{
@@ -214,93 +315,145 @@ export default function NewHome({
           }} />
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
-            width: 260, maxWidth: '75vw',
+            width: 280, maxWidth: '80vw',
             background: '#141414', borderLeft: '1px solid rgba(255,255,255,0.06)',
-            padding: '60px 20px 40px', display: 'flex', flexDirection: 'column', gap: 4,
-            animation: 'slideRight 0.2s ease-out',
+            padding: '0 20px 40px', display: 'flex', flexDirection: 'column',
+            animation: 'slideRight 0.2s ease-out', overflow: 'hidden',
           }}>
-            <button onClick={() => setMenuOpen(false)} style={{
-              position: 'absolute', top: 16, right: 16,
-              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4,
+            {/* Logo watermark */}
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              fontFamily: 'var(--font-feed-display), serif',
+              fontSize: 60, fontWeight: 700, color: 'rgba(255,255,255,0.02)',
+              whiteSpace: 'nowrap', pointerEvents: 'none', userSelect: 'none',
             }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-            {[
-              { label: '🏠 Inicio', href: '/a' },
-              { label: '🔍 Buscar', href: '/a/search' },
-              { label: '💛 Favoritos', href: '#' },
-              { label: '👤 Mi perfil', href: '#' },
-            ].map((item, i) => (
-              <a key={i} href={item.href} style={{
-                display: 'block', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
-                color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,0.03)',
+              QC
+            </div>
+
+            {/* Close */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0' }}>
+              <button onClick={() => setMenuOpen(false)} style={{
+                background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4,
               }}>
-                {item.label}
-              </a>
-            ))}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Logo in menu */}
+            <div style={{
+              textAlign: 'center', marginBottom: 24, paddingBottom: 16,
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-feed-display), serif',
+                fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.15)',
+              }}>
+                Quiero<span style={{ color: 'rgba(244,166,35,0.2)' }}>Comer</span>
+              </span>
+            </div>
+
+            {/* Menu items */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', zIndex: 1 }}>
+              {[
+                { label: '🏠 Inicio', action: () => { setMenuOpen(false); setView('feed'); window.scrollTo(0, 0) } },
+                { label: '🔍 Buscar', href: '/a/search' },
+                { label: '💛 Favoritos', action: () => { setMenuOpen(false); setView('guardados'); window.scrollTo(0, 0) } },
+                { label: '👤 Mi perfil', action: () => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) } },
+              ].map((item, i) => (
+                item.href ? (
+                  <a key={i} href={item.href} style={{
+                    display: 'block', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
+                    color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,0.03)',
+                  }}>
+                    {item.label}
+                  </a>
+                ) : (
+                  <button key={i} onClick={item.action} style={{
+                    display: 'block', width: '100%', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
+                    color: '#fff', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  }}>
+                    {item.label}
+                  </button>
+                )
+              ))}
+            </div>
           </div>
         </>
       )}
 
-      {/* Greeting */}
-      <div style={{ padding: '14px 20px 0' }}>
-        <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-          Descubre qué comer
-        </p>
-      </div>
-
-      {/* Location + filter */}
-      <div style={{ padding: '10px 20px 14px', position: 'relative', display: 'flex', gap: 8 }}>
-        <button onClick={() => setLocationOpen(!locationOpen)} style={{
-          flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-          padding: '9px 14px', borderRadius: 12,
-          background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)',
-          cursor: 'pointer',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={locationName ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-          </svg>
-          <span style={{ fontSize: 13, color: locationName ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)' }}>
-            {locationName ? `${locationName}` : 'Seleccionar ubicación'}
-          </span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" strokeLinecap="round"
-            style={{ transform: locationOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-
-        {/* Filter button */}
-        <button style={{
-          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-          background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-            <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-            <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-          </svg>
-        </button>
-
-        {/* Location dropdown */}
-        {locationOpen && (
-          <>
-            <div onClick={() => setLocationOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
-            <div style={{
-              position: 'absolute', top: '100%', left: 20, zIndex: 45,
-              background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
-              padding: 6, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-              maxHeight: 280, overflowY: 'auto', minWidth: 220,
+      {/* ─── Feed View ─── */}
+      {view === 'feed' && (
+        <>
+          {/* Greeting + location */}
+          <div style={{
+            padding: '14px 20px 0',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          }}>
+            <h2 style={{
+              fontFamily: 'var(--font-feed-display), serif',
+              fontSize: 20, fontWeight: 700, color: '#fff', margin: 0,
             }}>
-              {/* Use my location */}
-              <button onClick={() => {
-                setLocationOpen(false)
-                if (navigator.geolocation) {
+              ¿Qué se te antoja?
+            </h2>
+
+            {/* Location button */}
+            <button onClick={() => {
+              if (!userLocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                  const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+                  setUserLocation(loc)
+                  const nearest = dishes
+                    .filter(d => d.restauranteLat && d.restauranteLng)
+                    .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
+                    .sort((a, b) => a.dist - b.dist)[0]
+                  if (nearest?.d.restauranteDireccion) {
+                    setLocationName(nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim() || 'Santiago')
+                  }
+                }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
+              } else {
+                setLocationOpen(!locationOpen)
+              }
+            }} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '7px 12px', borderRadius: 20,
+              background: locationName ? 'rgba(244,166,35,0.08)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${locationName ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.08)'}`,
+              cursor: 'pointer', flexShrink: 0,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={locationName ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{
+                fontSize: 12, fontWeight: 500, maxWidth: 100,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                color: locationName ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)',
+              }}>
+                {locationName || 'Ubicación'}
+              </span>
+              {locationName && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" strokeLinecap="round"
+                  style={{ transform: locationOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              )}
+            </button>
+          </div>
+
+          {/* Location dropdown */}
+          {locationOpen && (
+            <>
+              <div onClick={() => setLocationOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+              <div style={{
+                position: 'absolute', top: 110, right: 20, zIndex: 45,
+                background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+                padding: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                maxHeight: 280, overflowY: 'auto', minWidth: 200,
+              }}>
+                <button onClick={() => {
+                  setLocationOpen(false)
                   navigator.geolocation.getCurrentPosition(pos => {
                     const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
                     setUserLocation(loc)
@@ -312,108 +465,187 @@ export default function NewHome({
                       setLocationName(nearest.d.restauranteDireccion.split(',').slice(-2, -1)[0]?.trim() || 'Santiago')
                     }
                   }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
-                }
-              }} style={{
-                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                padding: '10px 14px', borderRadius: 10, background: 'rgba(244,166,35,0.08)',
-                border: 'none', cursor: 'pointer', textAlign: 'left',
-                fontSize: 13, fontWeight: 600, color: '#F4A623', marginBottom: 4,
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-                </svg>
-                Usar mi ubicación
-              </button>
-
-              {/* Communes */}
-              {communes.map(commune => (
-                <button key={commune} onClick={() => {
-                  setLocationName(commune)
-                  setUserLocation(null)
-                  setLocationOpen(false)
                 }} style={{
-                  display: 'block', width: '100%', padding: '10px 14px', borderRadius: 10,
-                  background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                  padding: '10px 14px', borderRadius: 10, background: 'rgba(244,166,35,0.08)',
                   border: 'none', cursor: 'pointer', textAlign: 'left',
-                  fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
-                  color: locationName === commune ? '#F4A623' : '#fff',
+                  fontSize: 13, fontWeight: 600, color: '#F4A623', marginBottom: 4,
                 }}>
-                  {commune}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
+                  </svg>
+                  Usar mi ubicación
                 </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+                {communes.map(commune => (
+                  <button key={commune} onClick={() => {
+                    setLocationName(commune)
+                    setUserLocation(null)
+                    setLocationOpen(false)
+                  }} style={{
+                    display: 'block', width: '100%', padding: '10px 14px', borderRadius: 10,
+                    background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
+                    color: locationName === commune ? '#F4A623' : '#fff',
+                  }}>
+                    {commune}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-      {/* Categories with Postres + Bebidas */}
-      <div style={{ padding: '0 20px 16px' }}>
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
-            <CategoryCircle icon="🔥" label="Tendencia" active={!activeCategory && !activeDishType} onClick={() => { setActiveCategory(null); setActiveDishType(null) }} />
-            {categories.map(cat => (
-              <CategoryCircle key={cat} icon={CATEGORY_ICONS[cat] || '🍽'} label={cat.split('&')[0].trim().split(' ')[0]}
-                active={activeCategory === cat} onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); setActiveDishType(null) }} />
-            ))}
-            <CategoryCircle icon="🍰" label="Postres" active={activeDishType === 'dessert'} onClick={() => { setActiveDishType(activeDishType === 'dessert' ? null : 'dessert'); setActiveCategory(null) }} />
-            <CategoryCircle icon="🍹" label="Bebidas" active={activeDishType === 'drink'} onClick={() => { setActiveDishType(activeDishType === 'drink' ? null : 'drink'); setActiveCategory(null) }} />
-          </div>
-          {/* Fade right */}
+          {/* ─── Categories — sticky ─── */}
           <div style={{
-            position: 'absolute', top: 0, right: 0, bottom: 4, width: 40,
-            background: 'linear-gradient(to left, #0e0e0e, transparent)',
-            pointerEvents: 'none',
-          }} />
-        </div>
-      </div>
+            position: 'sticky', top: 55, zIndex: 35,
+            background: 'rgba(14,14,14,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            padding: '12px 0 8px',
+          }}>
+            <div style={{ position: 'relative' }}>
+              <div
+                ref={categoryScrollRef}
+                onScroll={handleCategoryScroll}
+                style={{
+                  display: 'flex', gap: 16, overflowX: 'auto', padding: '0 20px 4px',
+                  scrollbarWidth: 'none', msOverflowStyle: 'none',
+                }}
+              >
+                <CategoryCircle icon="🔥" label="Todo" active={!activeCategory}
+                  onClick={() => setActiveCategory(null)} />
+                {categories.map(cat => (
+                  <CategoryCircle
+                    key={cat.norm}
+                    icon={cat.icon}
+                    label={cat.label}
+                    active={activeCategory === cat.norm}
+                    onClick={() => setActiveCategory(activeCategory === cat.norm ? null : cat.norm)}
+                  />
+                ))}
+              </div>
+              {showCategoryFade && (
+                <div style={{
+                  position: 'absolute', top: 0, right: 0, bottom: 4, width: 50,
+                  background: 'linear-gradient(to left, rgba(14,14,14,0.95), transparent)',
+                  pointerEvents: 'none',
+                }} />
+              )}
+            </div>
+          </div>
 
-      {/* Feed title */}
-      <div style={{ padding: '4px 20px 12px' }}>
-        <h2 style={{
-          fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 18, fontWeight: 700, color: '#fff', margin: 0,
-        }}>
-          ¿Qué se te antoja?
-        </h2>
-      </div>
+          {/* Feed info */}
+          <div style={{ padding: '4px 20px 8px', color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
+            {feedDishes.length} platos
+            {activeCategory && ` en ${categories.find(c => c.norm === activeCategory)?.label || activeCategory}`}
+          </div>
 
-      {/* Feed masonry */}
-      <MasonryGrid
-        dishes={feedDishes.slice(0, visibleCount)}
-        onDishTap={(d) => setSelectedDish(d)}
-        onDishLike={handleLike}
-        onDishDislike={handleDislike}
-        onDishUndo={handleUndo}
-        userLocation={userLocation}
-      />
+          {/* Feed masonry */}
+          {feedDishes.length > 0 ? (
+            <MasonryGrid
+              dishes={feedDishes.slice(0, visibleCount)}
+              onDishTap={handleDishTap}
+              onDishLike={handleLike}
+              onDishDislike={handleDislike}
+              onDishUndo={handleUndo}
+              userLocation={userLocation}
+            />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
+              No hay platos en esta categoría
+            </div>
+          )}
+        </>
+      )}
 
-      {/* Floating buttons — Pinterest style */}
+      {/* ─── Guardados View ─── */}
+      {view === 'guardados' && (
+        <>
+          <div style={{ padding: '16px 20px 8px' }}>
+            <button onClick={() => setView('feed')} style={{
+              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
+              display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontSize: 13,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Volver
+            </button>
+          </div>
+          <SavedList
+            antojos={likedDishes}
+            saved={savedDishes}
+            onDishTap={handleDishTap}
+            onRemove={handleRemoveSaved}
+          />
+        </>
+      )}
+
+      {/* ─── Perfil View ─── */}
+      {view === 'perfil' && (
+        <>
+          <div style={{ padding: '16px 20px 8px' }}>
+            <button onClick={() => setView('feed')} style={{
+              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
+              display: 'flex', alignItems: 'center', gap: 6, padding: 0, fontSize: 13,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Volver
+            </button>
+          </div>
+          <ProfileView
+            profile={profile}
+            diet={{ isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
+            dishes={dishes}
+            onReset={() => {}}
+            onUpdateDiet={() => {}}
+          />
+        </>
+      )}
+
+      {/* ─── DishModal ─── */}
+      {selectedDish && (
+        <DishModal
+          key={selectedDish.id}
+          dish={selectedDish}
+          allDishes={dishes}
+          profile={profile}
+          reason={selectedReason}
+          onClose={() => setSelectedDish(null)}
+          onLike={handleLike}
+          onSave={handleDishSave}
+          onPass={handleDislike}
+          onRate={handleDishRate}
+          onDishTap={handleDishTap}
+        />
+      )}
+
+      {/* ─── Floating buttons (bigger) ─── */}
       <div style={{
         position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 50, display: 'flex', gap: 10, pointerEvents: 'none',
+        zIndex: 50, display: 'flex', gap: 12, pointerEvents: 'none',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} title="Inicio" style={{
-          width: 44, height: 44, borderRadius: '50%',
-          background: 'rgba(20,20,20,0.7)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        <button onClick={() => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) }} title="Inicio" style={{
+          width: 52, height: 52, borderRadius: '50%',
+          background: 'rgba(20,20,20,0.75)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', pointerEvents: 'auto', color: 'rgba(255,255,255,0.7)',
         }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
           </svg>
         </button>
         <a href="/a/search" style={{
-          width: 44, height: 44, borderRadius: '50%',
-          background: 'rgba(20,20,20,0.7)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          width: 52, height: 52, borderRadius: '50%',
+          background: 'rgba(20,20,20,0.75)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', pointerEvents: 'auto', color: 'rgba(255,255,255,0.7)',
+          textDecoration: 'none',
         }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
         </a>
@@ -422,22 +654,32 @@ export default function NewHome({
   )
 }
 
-function CategoryCircle({ icon, label, active, onClick }: { icon: string; label: string; active?: boolean; onClick: () => void }) {
+function CategoryCircle({ icon, label, active, onClick }: {
+  icon: string; label: string; active?: boolean; onClick: () => void
+}) {
   return (
     <button onClick={onClick} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
       background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
+      WebkitTapHighlightColor: 'transparent',
     }}>
       <div style={{
-        width: 52, height: 52, borderRadius: '50%',
+        width: 60, height: 60, borderRadius: '50%',
         background: active ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.05)',
         border: active ? '2px solid #F4A623' : '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 22, transition: 'all 0.2s',
+        fontSize: 26, transition: 'all 0.2s',
       }}>
         {icon}
       </div>
-      <span style={{ fontSize: 10, color: active ? '#F4A623' : 'rgba(255,255,255,0.45)', fontWeight: active ? 600 : 500 }}>{label}</span>
+      <span style={{
+        fontSize: 11, fontWeight: active ? 600 : 500,
+        color: active ? '#F4A623' : 'rgba(255,255,255,0.45)',
+        maxWidth: 64, textAlign: 'center',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {label}
+      </span>
     </button>
   )
 }

@@ -35,7 +35,7 @@ export default function ExploreGrid({
   const categories = useMemo(() => {
     const display = getDisplayCategories()
     const available = new Set(dishes.map(d => d.categoriaNorm))
-    return display.filter(c => available.has(c))
+    return display.filter(c => available.has(c.norm))
   }, [dishes])
 
   const hasOfertas = useMemo(() => dishes.some(d => d.enOferta), [dishes])
@@ -174,9 +174,9 @@ export default function ExploreGrid({
           </button>
         )}
         {categories.map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)}
-            className={`category-chip ${activeCategory === cat ? 'active' : ''}`}>
-            {cat}
+          <button key={cat.norm} onClick={() => setActiveCategory(cat.norm)}
+            className={`category-chip ${activeCategory === cat.norm ? 'active' : ''}`}>
+            {cat.icon} {cat.label}
           </button>
         ))}
       </div>

@@ -325,3 +325,31 @@ export async function updateTasteAction(
     console.error('[Feed] updateTaste error:', e)
   }
 }
+
+// ─── Similar dishes by embedding ──────────────────────────────────
+export async function getSimilarDishIds(dishId: string): Promise<string[]> {
+  try {
+    const { getDishEmbedding, findSimilarDishes } = await import('./vectors')
+    const embedding = await getDishEmbedding(dishId)
+    if (!embedding) return []
+    const similar = await findSimilarDishes(embedding, 12, [dishId])
+    return similar.map(s => s.id)
+  } catch (e) {
+    console.error('[Feed] getSimilarDishIds error:', e)
+    return []
+  }
+}
+
+// ─── Refresh vector-scored feed ───────────────────────────────────
+export async function getVectorFeed(excludeIds: string[] = []): Promise<string[]> {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return []
+    const { getScoredFeed } = await import('./taste-engine')
+    const scored = await getScoredFeed(userId, 120, excludeIds)
+    return scored.map(s => s.dishId)
+  } catch (e) {
+    console.error('[Feed] getVectorFeed error:', e)
+    return []
+  }
+}

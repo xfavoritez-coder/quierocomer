@@ -63,7 +63,7 @@ export default function SearchExplore({
   const categories = useMemo(() => {
     const display = getDisplayCategories()
     const available = new Set(dishes.map(d => d.categoriaNorm))
-    return display.filter(c => available.has(c))
+    return display.filter(c => available.has(c.norm))
   }, [dishes])
 
   // Popular

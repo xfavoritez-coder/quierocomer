@@ -49,14 +49,14 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Avocado / Sake': 'Sushi',
 
   // ─── Ceviches & Mariscos ────────────────────────────────────
-  'Ceviches': 'Ceviches & Mariscos',
-  'Ceviche': 'Ceviches & Mariscos',
-  'CEVICHES': 'Ceviches & Mariscos',
-  'Ceviches Y Tiraditos': 'Ceviches & Mariscos',
-  'Pescados y Mariscos': 'Ceviches & Mariscos',
-  'Pescados': 'Ceviches & Mariscos',
-  'Mariscos': 'Ceviches & Mariscos',
-  'Carpaccio': 'Ceviches & Mariscos',
+  'Ceviches': 'Ceviches',
+  'Ceviche': 'Ceviches',
+  'CEVICHES': 'Ceviches',
+  'Ceviches Y Tiraditos': 'Ceviches',
+  'Pescados y Mariscos': 'Ceviches',
+  'Pescados': 'Ceviches',
+  'Mariscos': 'Ceviches',
+  'Carpaccio': 'Ceviches',
 
   // ─── Pizzas ─────────────────────────────────────────────────
   'Pizzas': 'Pizzas',
@@ -82,32 +82,34 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Completos Especial': 'Completos',
   'Perros Calientes': 'Completos',
 
-  // ─── Sandwiches ─────────────────────────────────────────────
-  'Sandwiches': 'Sandwiches',
-  'Sandwich': 'Sandwiches',
-  'SANDWICH': 'Sandwiches',
-  'SANDWICHES': 'Sandwiches',
-  'Sándwiches': 'Sandwiches',
-  'Sánguchez': 'Sandwiches',
-  'Sandwichs': 'Sandwiches',
-  'Sandwich y Hamburguesas': 'Sandwiches',
-  'Antojos Salados - Sandwich': 'Sandwiches',
-  'SANDWICHERIA "LOS CLASICOS DE SIEMPRE"': 'Sandwiches',
-  'SANDWICHERIA "SELECCION OASIS"': 'Sandwiches',
-  'PROMO SANDWICH': 'Sandwiches',
-  'Panes Ciabatta': 'Sandwiches',
-  'Churrascos': 'Sandwiches',
-  'Churrasco Carne': 'Sandwiches',
-  'Churrascos de Pollo': 'Sandwiches',
-  'Lomo': 'Sandwiches',
-  'Lomos c/ Papas': 'Sandwiches',
-  'Pepitos': 'Sandwiches',
+  // ─── Sándwiches ─────────────────────────────────────────────
+  'Sandwiches': 'Sándwiches',
+  'Sandwich': 'Sándwiches',
+  'SANDWICH': 'Sándwiches',
+  'SANDWICHES': 'Sándwiches',
+  'Sándwiches': 'Sándwiches',
+  'Sánguchez': 'Sándwiches',
+  'Sandwichs': 'Sándwiches',
+  'Sandwich y Hamburguesas': 'Sándwiches',
+  'Antojos Salados - Sandwich': 'Sándwiches',
+  'SANDWICHERIA "LOS CLASICOS DE SIEMPRE"': 'Sándwiches',
+  'SANDWICHERIA "SELECCION OASIS"': 'Sándwiches',
+  'PROMO SANDWICH': 'Sándwiches',
+  'Panes Ciabatta': 'Sándwiches',
+  'Churrascos': 'Sándwiches',
+  'Churrasco Carne': 'Sándwiches',
+  'Churrascos de Pollo': 'Sándwiches',
+  'Lomo': 'Sándwiches',
+  'Lomos c/ Papas': 'Sándwiches',
+  'Pepitos': 'Sándwiches',
 
-  // ─── Ensaladas ──────────────────────────────────────────────
-  'Ensaladas': 'Ensaladas',
-  'Ensalada': 'Ensaladas',
-  'Cremas y Ensaladas': 'Ensaladas',
-  'Antojos Salados - Ensaladas': 'Ensaladas',
+  // ─── Saludable (ensaladas, vegano) ────────────────────────
+  'Ensaladas': 'Saludable',
+  'Ensalada': 'Saludable',
+  'Cremas y Ensaladas': 'Saludable',
+  'Antojos Salados - Ensaladas': 'Saludable',
+  '100% Vegano': 'Saludable',
+  'Aperitivos 100% Veganos': 'Saludable',
 
   // ─── Entradas ───────────────────────────────────────────────
   'Entradas': 'Entradas',
@@ -116,7 +118,6 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Entradas para compartir': 'Entradas',
   'Para Comenzar': 'Entradas',
   'Aperitivos': 'Entradas',
-  'Aperitivos 100% Veganos': 'Entradas',
   'Para Compartir': 'Entradas',
   'Para compartir': 'Entradas',
   'PARA COMPARTIR': 'Entradas',
@@ -146,21 +147,30 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Recomendaciones': 'Platos de fondo',
   'Menú Clásico': 'Platos de fondo',
   'ALMUERZOS': 'Platos de fondo',
-  'Tradiciones Peruanas': 'Platos de fondo',
   'Guisos y Estofados': 'Platos de fondo',
   'Sopas': 'Platos de fondo',
   'Sopas y Caldos': 'Platos de fondo',
   'Carnes y Risottos': 'Platos de fondo',
   'Risottos': 'Platos de fondo',
 
-  // ─── Parrilla & Carnes ─────────────────────────────────────
-  'Parrilladas': 'Parrilla & Carnes',
-  'Parrilla': 'Parrilla & Carnes',
-  'Carnes': 'Parrilla & Carnes',
-  'Pollo': 'Parrilla & Carnes',
-  'Pollo Crispy': 'Parrilla & Carnes',
-  'Buckets De Pollo Frito': 'Parrilla & Carnes',
-  'Chorrillanas': 'Parrilla & Carnes',
+  // ─── Peruana ──────────────────────────────────────────────
+  'Tradiciones Peruanas': 'Peruana',
+  'Comida Peruana': 'Peruana',
+  'Peruana': 'Peruana',
+
+  // ─── Parrilla ─────────────────────────────────────────────
+  'Parrilladas': 'Parrilla',
+  'Parrilla': 'Parrilla',
+  'Carnes': 'Parrilla',
+  'Chorrillanas': 'Parrilla',
+
+  // ─── Pollo y alitas ──────────────────────────────────────
+  'Pollo': 'Pollo y alitas',
+  'Pollo Crispy': 'Pollo y alitas',
+  'Buckets De Pollo Frito': 'Pollo y alitas',
+  'Pollo Frito': 'Pollo y alitas',
+  'Alitas': 'Pollo y alitas',
+  'Wings': 'Pollo y alitas',
 
   // ─── Empanadas ──────────────────────────────────────────────
   'Empanadas': 'Empanadas',
@@ -175,13 +185,25 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Nachos': 'Mexicana',
   'Arepas': 'Arepas & Venezolana',
 
-  // ─── Asiática ───────────────────────────────────────────────
-  'Asian Street Food': 'Asiática',
+  // ─── Thai ─────────────────────────────────────────────────
+  'Asian Street Food': 'Thai',
+  'Fideos de Arroz': 'Thai',
+  'Thai': 'Thai',
+  'Comida Thai': 'Thai',
+
+  // ─── China ────────────────────────────────────────────────
+  'Arroz Chino': 'China',
+  'Arroz': 'China',
+  'China': 'China',
+  'Comida China': 'China',
+
+  // ─── India ────────────────────────────────────────────────
+  'Currys': 'India',
+  'India': 'India',
+  'Comida India': 'India',
+
+  // ─── Asiática (genérica) ──────────────────────────────────
   'Orientales': 'Asiática',
-  'Currys': 'Asiática',
-  'Fideos de Arroz': 'Asiática',
-  'Arroz': 'Asiática',
-  'Arroz Chino': 'Asiática',
 
   // ─── Pastas ─────────────────────────────────────────────────
   'Pastas': 'Pastas',
@@ -262,9 +284,6 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Salsa Extra': 'Extras',
   'Salsas': 'Extras',
   'Salsas y Extras': 'Extras',
-
-  // ─── Vegano ─────────────────────────────────────────────────
-  '100% Vegano': 'Vegano',
 }
 
 /** Solo se excluyen extras/salsas (no son platos ni bebidas reales) */
@@ -317,50 +336,58 @@ export function getSuggestedMealTime(): { mealTime: MealTime; label: string } {
 
 /** Mapa de adyacencia — para recomendaciones de descubrimiento */
 export const ADJACENT_CATEGORIES: Record<string, string[]> = {
-  'Sushi': ['Ceviches & Mariscos', 'Asiática'],
-  'Ceviches & Mariscos': ['Sushi', 'Entradas'],
-  'Hamburguesas': ['Sandwiches', 'Combos', 'Completos'],
-  'Sandwiches': ['Hamburguesas', 'Completos'],
-  'Completos': ['Hamburguesas', 'Sandwiches'],
+  'Sushi': ['Ceviches', 'Thai', 'China'],
+  'Ceviches': ['Sushi', 'Peruana', 'Entradas'],
+  'Hamburguesas': ['Sándwiches', 'Combos', 'Completos', 'Pollo y alitas'],
+  'Sándwiches': ['Hamburguesas', 'Completos'],
+  'Completos': ['Hamburguesas', 'Sándwiches'],
   'Pizzas': ['Combos', 'Hamburguesas', 'Pastas'],
-  'Parrilla & Carnes': ['Entradas', 'Empanadas', 'Platos de fondo'],
-  'Platos de fondo': ['Parrilla & Carnes', 'Pastas', 'Asiática'],
-  'Entradas': ['Ceviches & Mariscos', 'Ensaladas'],
-  'Ensaladas': ['Entradas', 'Vegano'],
-  'Empanadas': ['Parrilla & Carnes', 'Entradas'],
-  'Mexicana': ['Entradas', 'Parrilla & Carnes', 'Arepas & Venezolana'],
-  'Arepas & Venezolana': ['Mexicana', 'Sandwiches'],
-  'Asiática': ['Sushi', 'Platos de fondo'],
+  'Parrilla': ['Entradas', 'Empanadas', 'Platos de fondo'],
+  'Platos de fondo': ['Parrilla', 'Pastas', 'Peruana'],
+  'Entradas': ['Ceviches', 'Saludable'],
+  'Saludable': ['Entradas', 'Peruana'],
+  'Empanadas': ['Parrilla', 'Entradas'],
+  'Mexicana': ['Entradas', 'Parrilla', 'Arepas & Venezolana'],
+  'Arepas & Venezolana': ['Mexicana', 'Sándwiches'],
+  'Thai': ['China', 'India', 'Sushi'],
+  'China': ['Thai', 'India', 'Sushi'],
+  'India': ['Thai', 'China'],
+  'Peruana': ['Ceviches', 'Platos de fondo', 'Mexicana'],
+  'Pollo y alitas': ['Hamburguesas', 'Sándwiches', 'Parrilla'],
+  'Asiática': ['Sushi', 'Thai', 'China', 'India'],
   'Postres': ['Cafetería', 'Desayunos'],
   'Cafetería': ['Postres', 'Desayunos'],
   'Desayunos': ['Cafetería', 'Postres'],
   'Pastas': ['Pizzas', 'Platos de fondo'],
-  'Vegano': ['Ensaladas', 'Asiática'],
 }
 
 /** Gradientes por categoría normalizada — fallback cuando no hay foto */
 export const CATEGORY_GRADIENTS: Record<string, string> = {
   'Sushi':       'linear-gradient(135deg, #1a1a2e, #e94560)',
-  'Ceviches & Mariscos': 'linear-gradient(135deg, #0f3460, #16c79a)',
+  'Ceviches':    'linear-gradient(135deg, #0f3460, #16c79a)',
   'Pizzas':              'linear-gradient(135deg, #b83b5e, #f08a5d)',
   'Hamburguesas':        'linear-gradient(135deg, #3d1e00, #f4a623)',
   'Completos':           'linear-gradient(135deg, #5c3d2e, #e6a157)',
-  'Sandwiches':          'linear-gradient(135deg, #5c3d2e, #e6a157)',
-  'Ensaladas':           'linear-gradient(135deg, #1b4332, #52b788)',
+  'Sándwiches':          'linear-gradient(135deg, #5c3d2e, #e6a157)',
+  'Saludable':           'linear-gradient(135deg, #1b4332, #52b788)',
   'Entradas':            'linear-gradient(135deg, #3a0ca3, #f72585)',
   'Postres':             'linear-gradient(135deg, #7b2869, #f4a9c0)',
-  'Parrilla & Carnes':   'linear-gradient(135deg, #2d0000, #c1121f)',
+  'Parrilla':            'linear-gradient(135deg, #2d0000, #c1121f)',
   'Platos de fondo':     'linear-gradient(135deg, #2d0000, #a4161a)',
   'Empanadas':           'linear-gradient(135deg, #6b4226, #d4a373)',
   'Mexicana':            'linear-gradient(135deg, #3d0c02, #e36414)',
   'Arepas & Venezolana': 'linear-gradient(135deg, #3d0c02, #e6a157)',
+  'Thai':                'linear-gradient(135deg, #4a1942, #e6a157)',
+  'China':               'linear-gradient(135deg, #8b0000, #d4a373)',
+  'India':               'linear-gradient(135deg, #b8860b, #e36414)',
+  'Peruana':             'linear-gradient(135deg, #8b4513, #f4a623)',
+  'Pollo y alitas':      'linear-gradient(135deg, #8b4513, #f08a5d)',
   'Asiática':            'linear-gradient(135deg, #1a1a2e, #d4a373)',
   'Combos':              'linear-gradient(135deg, #1b1b2f, #f4a623)',
   'Acompañamientos':     'linear-gradient(135deg, #4a4e69, #c9ada7)',
   'Cafetería':           'linear-gradient(135deg, #2b1a0e, #a67c52)',
   'Desayunos':           'linear-gradient(135deg, #4a3728, #f4a623)',
   'Pastas':              'linear-gradient(135deg, #6b4226, #e6a157)',
-  'Vegano':              'linear-gradient(135deg, #1b4332, #95d5b2)',
 }
 
 export const DEFAULT_GRADIENT = 'linear-gradient(135deg, #1a1a2e, #f4a623)'
@@ -369,22 +396,29 @@ export function getCategoryGradient(categoriaNorm: string): string {
   return CATEGORY_GRADIENTS[categoriaNorm] ?? DEFAULT_GRADIENT
 }
 
-/** Lista ordenada de categorías normalizadas para los chips de Explorar */
-export function getDisplayCategories(): string[] {
+/** Categorías del feed para los chips de UI */
+export type DisplayCategory = {
+  icon: string
+  label: string
+  norm: string
+}
+
+export function getDisplayCategories(): DisplayCategory[] {
   return [
-    'Pizzas',
-    'Hamburguesas',
-    'Sushi',
-    'Ceviches & Mariscos',
-    'Ensaladas',
-    'Parrilla & Carnes',
-    'Sandwiches',
-    'Pastas',
-    'Empanadas',
-    'Mexicana',
-    'Asiática',
-    'Postres',
-    'Completos',
-    'Vegano',
+    { icon: '🍔', label: 'Hamburguesas', norm: 'Hamburguesas' },
+    { icon: '🍕', label: 'Pizzas', norm: 'Pizzas' },
+    { icon: '🍣', label: 'Sushi', norm: 'Sushi' },
+    { icon: '🌮', label: 'Mexicana', norm: 'Mexicana' },
+    { icon: '🍛', label: 'Peruana', norm: 'Peruana' },
+    { icon: '🇹🇭', label: 'Thai', norm: 'Thai' },
+    { icon: '🥡', label: 'China', norm: 'China' },
+    { icon: '🍛', label: 'India', norm: 'India' },
+    { icon: '🥩', label: 'Parrilla', norm: 'Parrilla' },
+    { icon: '🐟', label: 'Ceviches', norm: 'Ceviches' },
+    { icon: '🍗', label: 'Pollo', norm: 'Pollo y alitas' },
+    { icon: '🥪', label: 'Sándwiches', norm: 'Sándwiches' },
+    { icon: '🥗', label: 'Saludable', norm: 'Saludable' },
+    { icon: '🍰', label: 'Postres', norm: 'Postres' },
+    { icon: '☕', label: 'Cafetería', norm: 'Cafetería' },
   ]
 }
