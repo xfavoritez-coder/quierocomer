@@ -38,19 +38,25 @@ export default function ProfileView({
   diet,
   tasteData,
   dishes,
+  likedDishes,
+  savedDishes,
   likeCount,
   passCount,
   onReset,
   onUpdateDiet,
+  onDishTap,
 }: {
   profile: FeedProfile
   diet: UserDiet
   tasteData?: TasteData
   dishes: FeedDish[]
+  likedDishes?: FeedDish[]
+  savedDishes?: FeedDish[]
   likeCount?: number
   passCount?: number
   onReset: () => void
   onUpdateDiet: (d: UserDiet) => void
+  onDishTap?: (d: FeedDish) => void
 }) {
   const [editingDiet, setEditingDiet] = useState(false)
   const dietToOption = (d: UserDiet): DietOption => {
@@ -364,6 +370,71 @@ export default function ProfileView({
         <StatCard value={likeCount ?? profile.likedDishIds.size} label="Te gustaron" icon="👍" />
         <StatCard value={passCount ?? profile.passedDishIds.size} label="No te gustaron" icon="👎" />
       </div>
+
+      {/* ─── Me han gustado ─── */}
+      {likedDishes && likedDishes.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' }}>
+            Me han gustado
+          </h3>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3,
+            borderRadius: 12, overflow: 'hidden',
+          }}>
+            {likedDishes.slice(0, 9).map(d => (
+              <div key={d.id} onClick={() => onDishTap?.(d)} style={{
+                position: 'relative', aspectRatio: '1', overflow: 'hidden',
+                cursor: 'pointer', background: '#1a1a1a',
+              }}>
+                {d.fotoUrl ? (
+                  <img src={d.fotoUrl} alt={d.nombre}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    loading="lazy" />
+                ) : (
+                  <div style={{
+                    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', fontSize: 10, padding: 4, textAlign: 'center',
+                  }}>
+                    {d.nombre}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {likedDishes.length > 9 && (
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', margin: '8px 0 0' }}>
+              +{likedDishes.length - 9} más
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ─── Guardados ─── */}
+      {savedDishes && savedDishes.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' }}>
+            Guardados
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {savedDishes.map(d => (
+              <div key={d.id} onClick={() => onDishTap?.(d)} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 12px', borderRadius: 12, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.03)',
+              }}>
+                {d.fotoUrl && (
+                  <img src={d.fotoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0' }}>{d.restaurante}</p>
+                </div>
+                <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 600, flexShrink: 0 }}>${(d.precioDescuento ?? d.precio).toLocaleString('es-CL')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ─── Reset ─── */}
       <button onClick={onReset} style={{

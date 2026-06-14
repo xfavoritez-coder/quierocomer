@@ -53,7 +53,7 @@ function detectMealSlot(): MealSlot {
   return 'cena'
 }
 
-type View = 'feed' | 'guardados' | 'historial' | 'perfil'
+type View = 'feed' | 'perfil'
 
 export default function NewHome({
   dishes,
@@ -108,7 +108,7 @@ export default function NewHome({
 
   // Load liked dishes from server when entering historial or profile
   useEffect(() => {
-    if (view !== 'perfil' && view !== 'historial') return
+    if (view !== 'perfil') return
     import('../lib/feed-actions').then(({ getProfileData }) =>
       getProfileData().then(data => {
         if (!data) return
@@ -520,50 +520,38 @@ export default function NewHome({
               </button>
             </div>
 
-            {/* Nav */}
+            {/* Nav — only B2B links */}
             <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[
-                { label: 'Inicio', color: '#F4A623', active: view === 'feed',
-                  icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
-                  action: () => { setMenuOpen(false); setView('feed'); window.scrollTo(0, 0) } },
-                { label: 'Favoritos', color: '#F4A623',
-                  icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.7 4.5 6.4 4.5c2 0 3.5 1 4.3 2.3.8-1.3 2.3-2.3 4.3-2.3 3.7 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z" /></svg>,
-                  action: () => { setMenuOpen(false); setView('guardados'); window.scrollTo(0, 0) } },
-                { label: 'Me han gustado', color: '#22c55e',
-                  icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></svg>,
-                  action: () => { setMenuOpen(false); setView('historial'); window.scrollTo(0, 0) } },
-                { label: 'Mi perfil', color: '#855bd8',
-                  icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>,
-                  action: () => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) } },
-              ].map((item, i) => {
-                const s: React.CSSProperties = {
-                  position: 'relative', display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '14px 16px', borderRadius: 14,
-                  color: '#fff', textDecoration: 'none',
-                  fontSize: 17, fontWeight: 600,
-                  background: item.active ? 'rgba(244,166,35,0.08)' : 'transparent',
-                  border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
-                  WebkitTapHighlightColor: 'transparent',
-                  transition: 'background 0.15s',
-                }
-                const inner = (
-                  <>
-                    {item.active && (
-                      <div style={{
-                        position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                        width: 3, height: 24, borderRadius: 999,
-                        background: '#F4A623', boxShadow: '0 0 12px rgba(245,164,0,0.4)',
-                      }} />
-                    )}
-                    <span style={{ color: item.color, display: 'flex', flexShrink: 0 }}>{item.icon}</span>
-                    {item.label}
-                  </>
-                )
-                return (
-                  <button key={i} onClick={item.action} style={s}>{inner}</button>
-                )
-              })}
-
+              <a href="/landing" style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '14px 16px', borderRadius: 14,
+                color: '#fff', textDecoration: 'none',
+                fontSize: 17, fontWeight: 600,
+                background: 'transparent', border: 'none',
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <span style={{ color: '#F4A623', display: 'flex', flexShrink: 0 }}>
+                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+                  </svg>
+                </span>
+                ¿Tienes un local?
+              </a>
+              <a href="mailto:hola@quierocomer.cl" style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '14px 16px', borderRadius: 14,
+                color: '#fff', textDecoration: 'none',
+                fontSize: 17, fontWeight: 600,
+                background: 'transparent', border: 'none',
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <span style={{ color: 'rgba(255,255,255,0.4)', display: 'flex', flexShrink: 0 }}>
+                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </span>
+                Contacto
+              </a>
             </nav>
 
             {/* Footer */}
@@ -847,76 +835,7 @@ export default function NewHome({
         </>
       )}
 
-      {/* ─── Guardados View ─── */}
-      {view === 'guardados' && (
-        <>
-          <SavedList
-            antojos={likedDishes}
-            saved={savedDishes}
-            onDishTap={handleLikedDishTap}
-            onRemove={handleRemoveSaved}
-          />
-        </>
-      )}
-
-      {/* ─── Historial (Me han gustado) View ─── */}
-      {view === 'historial' && (
-        <>
-          <h2 style={{
-            fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 18, fontWeight: 700, color: '#fff', margin: 0,
-            padding: '0 20px 12px',
-          }}>
-            Me han gustado
-          </h2>
-          {likedDishes.length > 0 ? (
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3,
-              padding: '0 3px 100px',
-            }}>
-              {likedDishes.map(d => (
-                <div key={d.id} onClick={() => handleLikedDishTap(d)} style={{
-                  position: 'relative', aspectRatio: '1', overflow: 'hidden',
-                  cursor: 'pointer', background: '#1a1a1a',
-                }}>
-                  {d.fotoUrl ? (
-                    <img src={d.fotoUrl} alt={d.nombre}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      loading="lazy" />
-                  ) : (
-                    <div style={{
-                      width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', fontSize: 12, padding: 8, textAlign: 'center',
-                    }}>
-                      {d.nombre}
-                    </div>
-                  )}
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                    padding: '20px 6px 6px',
-                  }}>
-                    <p style={{
-                      fontSize: 11, fontWeight: 600, color: '#fff', margin: 0,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                      {d.nombre}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
-              <p style={{ fontSize: 32, marginBottom: 8 }}>👍</p>
-              <p style={{ fontSize: 14 }}>Aún no tienes platos que te gusten</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)', marginTop: 4 }}>Desliza hacia la derecha en el feed</p>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ─── Perfil View ─── */}
+      {/* ─── Perfil View (unified: profile + liked + saved) ─── */}
       {view === 'perfil' && (
         <>
           <ProfileView
@@ -924,10 +843,13 @@ export default function NewHome({
             diet={activeDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
             tasteData={liveTasteData ?? tasteData}
             dishes={dishes}
+            likedDishes={likedDishes}
+            savedDishes={savedDishes}
             likeCount={likeCount}
             passCount={passCount}
             onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
             onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
+            onDishTap={handleLikedDishTap}
           />
         </>
       )}
@@ -952,35 +874,46 @@ export default function NewHome({
         />
       )}
 
-      {/* ─── Floating buttons (bigger) ─── */}
+      {/* ─── Bottom Nav — 3 tabs ─── */}
       <div style={{
-        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 50, display: 'flex', gap: 12, pointerEvents: 'none',
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+        background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        <button onClick={() => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) }} title="Inicio" style={{
-          width: 52, height: 52, borderRadius: '50%',
-          background: 'rgba(20,20,20,0.75)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', pointerEvents: 'auto', color: 'rgba(255,255,255,0.7)',
+        <div style={{
+          maxWidth: 480, margin: '0 auto',
+          display: 'flex', justifyContent: 'space-around', padding: '8px 0 6px',
         }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        </button>
-        <a href="/a/search" style={{
-          width: 52, height: 52, borderRadius: '50%',
-          background: 'rgba(20,20,20,0.75)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', pointerEvents: 'auto', color: 'rgba(255,255,255,0.7)',
-          textDecoration: 'none',
-        }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
-        </a>
+          {[
+            { id: 'feed' as View, label: 'Inicio',
+              icon: (active: boolean) => <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? '#F4A623' : 'none'} stroke={active ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+              action: () => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) } },
+            { id: 'search' as any, label: 'Buscar',
+              icon: (active: boolean) => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
+              action: () => { window.location.href = '/a/search' } },
+            { id: 'perfil' as View, label: 'Mi perfil',
+              icon: (active: boolean) => <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? '#F4A623' : 'none'} stroke={active ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7" /></svg>,
+              action: () => { setView('perfil'); window.scrollTo(0, 0) } },
+          ].map(tab => {
+            const active = view === tab.id
+            return (
+              <button key={tab.id} onClick={tab.action} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                padding: '4px 16px', WebkitTapHighlightColor: 'transparent',
+              }}>
+                {tab.icon(active)}
+                <span style={{
+                  fontSize: 10, fontWeight: active ? 600 : 400,
+                  color: active ? '#F4A623' : 'rgba(255,255,255,0.35)',
+                }}>
+                  {tab.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
