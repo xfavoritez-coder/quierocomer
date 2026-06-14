@@ -82,14 +82,50 @@ export default function NewHome({
     ).catch(() => {})
   }, [view])
 
-  // Geolocation — auto-detect on load, GPS only (no locationName filter)
+  // Geolocation — IP fallback + GPS upgrade
   const [gpsLabel, setGpsLabel] = useState<string | null>(null)
+
+  // Step 1: IP-based city detection (no permission needed)
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
+    if (gpsLabel) return // already have a label
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        if (data.city && !gpsLabel) {
+          setGpsLabel(data.city)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Step 2: GPS upgrade (if permission already granted, silently upgrade)
+  useEffect(() => {
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then(result => {
+        if (result.state === 'granted') {
+          // Permission already granted — get precise location silently
+          navigator.geolocation.getCurrentPosition(pos => {
+            const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+            setUserLocation(loc)
+            const nearest = dishes
+              .filter(d => d.restauranteLat && d.restauranteLng)
+              .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
+              .sort((a, b) => a.dist - b.dist)[0]
+            if (nearest?.d.restauranteDireccion) {
+              const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
+                .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
+              const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
+              setGpsLabel(commune || 'Cerca de ti')
+            }
+          }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
+        }
+        // If not granted, don't ask — IP label is enough
+      }).catch(() => {})
+    } else {
+      // No permissions API — try GPS directly (will prompt user)
+      navigator.geolocation?.getCurrentPosition(pos => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setUserLocation(loc)
-        // Find nearest restaurant to derive commune name (display only)
         const nearest = dishes
           .filter(d => d.restauranteLat && d.restauranteLng)
           .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
@@ -97,7 +133,6 @@ export default function NewHome({
         if (nearest?.d.restauranteDireccion) {
           const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
             .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
-          // Prefer commune (shorter, more specific) over city
           const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
           setGpsLabel(commune || 'Cerca de ti')
         } else {
