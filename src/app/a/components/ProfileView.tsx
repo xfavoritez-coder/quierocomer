@@ -5,6 +5,8 @@ import type { FeedProfile } from '../lib/scoring'
 import type { FeedDish } from '../types'
 import { getCategoryGradient, getDisplayCategories } from '../lib/categories'
 
+const GOLD = '#F4A623'
+
 type UserDiet = {
   isVegan: boolean
   isVegetarian: boolean
@@ -47,6 +49,8 @@ export default function ProfileView({
   onUpdateDiet,
   onDishTap,
   onUpdateName,
+  onViewAllLiked,
+  onViewAllSaved,
 }: {
   profile: FeedProfile
   diet: UserDiet
@@ -61,6 +65,8 @@ export default function ProfileView({
   onUpdateDiet: (d: UserDiet) => void
   onDishTap?: (d: FeedDish) => void
   onUpdateName?: (name: string) => void
+  onViewAllLiked?: () => void
+  onViewAllSaved?: () => void
 }) {
   const [editingDiet, setEditingDiet] = useState(false)
   const [editingName, setEditingName] = useState(false)
@@ -439,9 +445,18 @@ export default function ProfileView({
       {/* ─── Me han gustado ─── */}
       {likedDishes && likedDishes.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' }}>
-            Me han gustado
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+              Me han gustado
+            </h3>
+            {likedDishes.length > 9 && onViewAllLiked && (
+              <button onClick={onViewAllLiked} style={{
+                background: 'none', border: 'none', color: GOLD, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0,
+              }}>
+                Ver todos ({likedDishes.length})
+              </button>
+            )}
+          </div>
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3,
             borderRadius: 12, overflow: 'hidden',
@@ -477,11 +492,20 @@ export default function ProfileView({
       {/* ─── Guardados ─── */}
       {savedDishes && savedDishes.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' }}>
-            Guardados
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+              Guardados
+            </h3>
+            {savedDishes.length > 3 && onViewAllSaved && (
+              <button onClick={onViewAllSaved} style={{
+                background: 'none', border: 'none', color: GOLD, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0,
+              }}>
+                Ver todos ({savedDishes.length})
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {savedDishes.map(d => (
+            {savedDishes.slice(0, 3).map(d => (
               <div key={d.id} onClick={() => onDishTap?.(d)} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '8px 12px', borderRadius: 12, cursor: 'pointer',

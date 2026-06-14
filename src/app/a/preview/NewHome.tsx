@@ -53,7 +53,7 @@ function detectMealSlot(): MealSlot {
   return 'cena'
 }
 
-type View = 'feed' | 'perfil'
+type View = 'feed' | 'perfil' | 'all-liked' | 'all-saved'
 
 export default function NewHome({
   dishes,
@@ -854,8 +854,65 @@ export default function NewHome({
             onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
             onDishTap={handleLikedDishTap}
             onUpdateName={(name) => { setDisplayName(name); import('../lib/feed-actions').then(({ updateDisplayName }) => updateDisplayName(name)) }}
+            onViewAllLiked={() => { setView('all-liked'); window.scrollTo(0, 0) }}
+            onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
           />
         </>
+      )}
+
+      {/* ─── All Liked View ─── */}
+      {view === 'all-liked' && (
+        <div style={{ padding: '8px 3px 100px' }}>
+          <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            </button>
+            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#fff', margin: 0 }}>
+              Me han gustado
+            </h2>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>({likedDishes.length})</span>
+          </div>
+          {likedDishes.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+              {likedDishes.map(d => (
+                <div key={d.id} onClick={() => handleLikedDishTap(d)} style={{
+                  position: 'relative', aspectRatio: '1', overflow: 'hidden',
+                  cursor: 'pointer', background: '#1a1a1a',
+                }}>
+                  {d.fotoUrl ? (
+                    <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', fontSize: 10, padding: 4, textAlign: 'center' }}>{d.nombre}</div>
+                  )}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', padding: '20px 6px 6px' }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
+              <p style={{ fontSize: 32, marginBottom: 8 }}>👍</p>
+              <p style={{ fontSize: 14 }}>Aún no tienes platos que te gusten</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── All Saved View ─── */}
+      {view === 'all-saved' && (
+        <div style={{ padding: '8px 16px 100px' }}>
+          <div style={{ padding: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            </button>
+            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#fff', margin: 0 }}>
+              Guardados
+            </h2>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>({savedDishes.length})</span>
+          </div>
+          <SavedList antojos={[]} saved={savedDishes} onDishTap={handleLikedDishTap} onRemove={handleRemoveSaved} />
+        </div>
       )}
 
       {/* ─── DishModal ─── */}
@@ -878,46 +935,38 @@ export default function NewHome({
         />
       )}
 
-      {/* ─── Bottom Nav — 3 tabs ─── */}
+      {/* ─── Floating nav — 3 buttons ─── */}
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 50, display: 'flex', gap: 10,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        <div style={{
-          maxWidth: 480, margin: '0 auto',
-          display: 'flex', justifyContent: 'space-around', padding: '8px 0 6px',
-        }}>
-          {[
-            { id: 'feed' as View, label: 'Inicio',
-              icon: (active: boolean) => <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? '#F4A623' : 'none'} stroke={active ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
-              action: () => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) } },
-            { id: 'search' as any, label: 'Buscar',
-              icon: (active: boolean) => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
-              action: () => { window.location.href = '/a/search' } },
-            { id: 'perfil' as View, label: 'Mi perfil',
-              icon: (active: boolean) => <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? '#F4A623' : 'none'} stroke={active ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7" /></svg>,
-              action: () => { setView('perfil'); window.scrollTo(0, 0) } },
-          ].map(tab => {
-            const active = view === tab.id
-            return (
-              <button key={tab.id} onClick={tab.action} style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                padding: '4px 16px', WebkitTapHighlightColor: 'transparent',
-              }}>
-                {tab.icon(active)}
-                <span style={{
-                  fontSize: 10, fontWeight: active ? 600 : 400,
-                  color: active ? '#F4A623' : 'rgba(255,255,255,0.35)',
-                }}>
-                  {tab.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+        {[
+          { id: 'feed' as View, label: 'Inicio',
+            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill={a ? '#F4A623' : 'none'} stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            action: () => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) } },
+          { id: 'search' as any, label: 'Buscar',
+            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
+            action: () => { window.location.href = '/a/search' } },
+          { id: 'perfil' as View, label: 'Mi perfil',
+            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill={a ? '#F4A623' : 'none'} stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7" /></svg>,
+            action: () => { setView('perfil'); window.scrollTo(0, 0) } },
+        ].map(tab => {
+          const active = view === tab.id || (tab.id === 'perfil' && (view === 'all-liked' || view === 'all-saved'))
+          return (
+            <button key={tab.id} onClick={tab.action} style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: active ? 'rgba(244,166,35,0.15)' : 'rgba(20,20,20,0.75)',
+              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+              border: active ? '1.5px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+            }}>
+              {tab.icon(active)}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
