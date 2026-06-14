@@ -58,7 +58,7 @@ export default async function FeedPage() {
     needsVector
       ? import('./lib/taste-engine').then(({ getScoredFeed }) =>
           Promise.race([
-            getScoredFeed(user.id, 120),
+            getScoredFeed(user.id, 80),
             new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
           ])
         ).then(scored => scored.map(s => s.dishId)).catch(() => [] as string[])

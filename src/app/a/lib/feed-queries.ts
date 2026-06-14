@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { normalizeCategory, isExcludedCategory, inferMealTime, inferDishType } from './categories'
 import type { FeedDish } from '../types'
+import { unstable_cache } from 'next/cache'
 
 /** Trae todos los platos para el feed: con foto, activos, restaurantes reales */
-export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
+async function _getFeedDishes(limit = 200): Promise<FeedDish[]> {
   const dishes = await prisma.dish.findMany({
     where: {
       isActive: true,
@@ -57,6 +58,9 @@ export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
         },
       },
     },
+    orderBy: [
+      { feedStats: { popularityScore: 'desc' } },
+    ],
     take: limit,
   })
 
@@ -106,3 +110,10 @@ export async function getFeedDishes(limit = 2000): Promise<FeedDish[]> {
 
   return feedDishes
 }
+
+/** Cached version — shared across all users, revalidates every 5 minutes */
+export const getFeedDishes = unstable_cache(
+  _getFeedDishes,
+  ['feed-dishes'],
+  { revalidate: 300 }, // 5 minutes
+)
