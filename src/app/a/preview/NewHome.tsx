@@ -872,6 +872,21 @@ export default function NewHome({
             )}
           </div>
 
+          {/* Eureka debug — temporary */}
+          {sessionLikedIds.size > 0 && (
+            <div style={{
+              padding: '4px 12px', margin: '0 16px 8px', borderRadius: 8,
+              background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.15)',
+              fontSize: 11, color: 'rgba(244,166,35,0.6)',
+              display: 'flex', gap: 12,
+            }}>
+              <span>Confianza: {eurekaState.confidence}%</span>
+              <span>Top: {eurekaState.topCategory ?? '—'}</span>
+              <span>Likes: {eurekaState.totalLikes}</span>
+              <span>Hint: {eurekaState.hintLevel}</span>
+            </div>
+          )}
+
           {/* Feed masonry */}
           {feedDishes.length > 0 ? (
             <MasonryGrid
