@@ -182,21 +182,22 @@ export default function NewHome({
   // Cities and communes for location dropdown
   const CITY_NAMES = new Set(['Santiago', 'Santiago Centro', 'Valparaíso', 'La Serena', 'Victoria'])
   const { cities, communes } = useMemo(() => {
-    const citySet = new Set<string>()
-    const communeSet = new Set<string>()
+    // Extract from dishes + add static Santiago communes
+    const citySet = new Set<string>(['Santiago'])
+    const communeSet = new Set<string>([
+      'Ñuñoa', 'Providencia', 'Las Condes', 'Vitacura', 'La Reina',
+      'La Florida', 'Peñalolén', 'Macul', 'San Miguel', 'Maipú',
+      'Independencia', 'Recoleta', 'Estación Central', 'Lo Barnechea',
+      'San Joaquín', 'Huechuraba', 'Quinta Normal', 'Pudahuel', 'Cerrillos',
+      'La Cisterna', 'San Bernardo', 'Puente Alto', 'Conchalí',
+    ])
     dishes.forEach(d => {
       if (d.restauranteDireccion) {
         const parts = d.restauranteDireccion.split(',').map(p => p.trim())
-          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Araucanía' && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i))
-        if (parts.length >= 3) {
-          const city = parts[parts.length - 1]
-          const commune = parts[parts.length - 2]
-          if (city && CITY_NAMES.has(city)) citySet.add(city)
-          if (commune && !CITY_NAMES.has(commune)) communeSet.add(commune)
-        } else if (parts.length === 2) {
-          const last = parts[parts.length - 1]
-          if (CITY_NAMES.has(last)) citySet.add(last)
-          else communeSet.add(last)
+          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s|^Calle\s/i))
+        if (parts.length >= 2) {
+          const commune = parts[parts.length - 2] || parts[parts.length - 1]
+          if (commune && commune.length > 2) communeSet.add(commune)
         }
       }
     })
@@ -365,19 +366,20 @@ export default function NewHome({
     return final
   }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm])
 
-  // Infinite scroll via IntersectionObserver on sentinel
-  const sentinelRef = useRef<HTMLDivElement>(null)
+  // Infinite scroll — check every 500ms if near bottom
   useEffect(() => {
-    const el = sentinelRef.current
-    if (!el) return
-    const obs = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && visibleCount < feedDishes.length) {
-        setVisibleCount(prev => Math.min(prev + 10, feedDishes.length))
+    const check = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1000) {
+        setVisibleCount(prev => {
+          if (prev < feedDishes.length) return Math.min(prev + 10, feedDishes.length)
+          return prev
+        })
       }
-    }, { rootMargin: '600px' })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [visibleCount, feedDishes.length])
+    }
+    const interval = setInterval(check, 500)
+    window.addEventListener('scroll', check, { passive: true })
+    return () => { clearInterval(interval); window.removeEventListener('scroll', check) }
+  }, [feedDishes.length])
 
   // Reset visible count on category change
   useEffect(() => { setVisibleCount(10) }, [activeCategory])
@@ -526,7 +528,7 @@ export default function NewHome({
           </svg>
           <span style={{
             fontSize: 13, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-            maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {locationName || gpsLabel || 'Ubicación'}
           </span>
@@ -568,7 +570,7 @@ export default function NewHome({
 
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 34 }}>
-              <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#f5f5f5' }}>Filtros</h2>
+              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#f5f5f5' }}>Filtros</h2>
               <button onClick={() => setFilterOpen(false)} style={{
                 width: 44, height: 44, borderRadius: 999,
                 border: '1px solid #333', background: '#191919', color: '#aaa',
@@ -579,11 +581,11 @@ export default function NewHome({
             {/* Distancia */}
             <div style={{ marginBottom: 34 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#f6a51a', fontSize: 26 }}>📍</span>
-                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Distancia</h3>
+                <span style={{ color: '#f6a51a', fontSize: 20 }}>📍</span>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Distancia</h3>
               </div>
               <div style={{ border: '1px solid #2c2c2c', borderRadius: 22, padding: '22px 18px', background: 'rgba(255,255,255,0.025)' }}>
-                <p style={{ margin: '0 0 26px', fontSize: 22, fontWeight: 700, color: '#f5f5f5' }}>
+                <p style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>
                   Hasta <strong style={{ color: '#f6a51a', marginLeft: 8 }}>{filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
                 </p>
                 <div style={{ position: 'relative', height: 6, background: '#3a3a3a', borderRadius: 999 }}>
@@ -603,8 +605,8 @@ export default function NewHome({
             {/* Momento */}
             <div style={{ marginBottom: 34 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#f6a51a', fontSize: 26 }}>🕒</span>
-                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Momento</h3>
+                <span style={{ color: '#f6a51a', fontSize: 20 }}>🕒</span>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Momento</h3>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {[
@@ -631,8 +633,8 @@ export default function NewHome({
             {/* Dieta */}
             <div style={{ marginBottom: 34 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#62c945', fontSize: 26 }}>🌿</span>
-                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Dieta</h3>
+                <span style={{ color: '#62c945', fontSize: 20 }}>🌿</span>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Dieta</h3>
               </div>
               <div style={{ display: 'flex', gap: 10, overflowX: 'auto' }}>
                 {[
@@ -656,8 +658,8 @@ export default function NewHome({
             {/* Ordenar */}
             <div style={{ marginBottom: 34 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#f6a51a', fontSize: 26 }}>↕</span>
-                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Ordenar por</h3>
+                <span style={{ color: '#f6a51a', fontSize: 20 }}>↕</span>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Ordenar por</h3>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {[
@@ -968,8 +970,7 @@ export default function NewHome({
                 userLocation={userLocation}
               />
               {/* Loading skeleton when more dishes are available */}
-              {/* Sentinel + skeleton for infinite scroll */}
-              <div ref={sentinelRef} style={{ height: 1 }} />
+              {/* Skeleton for loading more */}
               {visibleCount < feedDishes.length && (
                 <div style={{ display: 'flex', gap: 10, padding: '10px 12px 40px' }}>
                   {[0, 1].map(col => (
