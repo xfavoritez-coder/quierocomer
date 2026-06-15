@@ -525,30 +525,79 @@ export default function NewHome({
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh' }}>
 
-      {/* ─── Header: logo centered + hamburger ─── */}
+      {/* ─── Header: logo left + search center + location + hamburger ─── */}
       <header style={{
         background: '#0e0e0e',
-        padding: '10px 16px', display: 'flex', alignItems: 'center',
+        padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <div style={{ width: 36 }} />
-        <a href="/" style={{ flex: 1, textAlign: 'center', textDecoration: 'none', cursor: 'pointer' }}>
+        {/* Logo left */}
+        <a href="/" style={{ textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 20, fontWeight: 700, color: '#fff',
+            fontSize: 18, fontWeight: 700, color: '#fff',
           }}>
-            Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+            Q<span style={{ color: '#F4A623' }}>C</span>
           </span>
         </a>
-        <button onClick={() => setMenuOpen(true)} style={{
-          background: 'none', border: 'none', cursor: 'pointer', padding: 6,
-          color: 'rgba(255,255,255,0.5)', width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+
+        {/* Search input — always visible */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round"
+            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            ref={searchInputRef}
+            type="text" value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Buscar plato o restaurante..."
+            style={{
+              width: '100%', padding: '9px 12px 9px 32px', borderRadius: 12, fontSize: 16,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+              color: '#fff', outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} style={{
+              position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(255,255,255,0.3)',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Location */}
+        <button onClick={() => setLocationOpen(!locationOpen)} style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          padding: '7px 10px', borderRadius: 14, flexShrink: 0,
+          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+          cursor: 'pointer',
         }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+          </svg>
+          <span style={{
+            fontSize: 12, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+            maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {locationName || gpsLabel || 'Ubicación'}
+          </span>
+        </button>
+
+        {/* Hamburger */}
+        <button onClick={() => setMenuOpen(true)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+          color: 'rgba(255,255,255,0.5)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
       </header>
-      <div style={{ height: 1, background: '#222' }} />
 
       {/* ─── Hamburger menu — slide from right ─── */}
       {menuOpen && (
@@ -657,92 +706,8 @@ export default function NewHome({
       {view === 'feed' && (
         <>
 
-          {/* ─── Search input ─── */}
-          {searchOpen && (
-            <div style={{ padding: '8px 16px' }}>
-              <input
-                ref={searchInputRef}
-                type="text" value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Buscar plato, restaurante, ingrediente..."
-                style={{
-                  width: '100%', padding: '12px 16px', borderRadius: 14, fontSize: 14,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#fff', outline: 'none', boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          )}
-
-          {/* Contextual greeting + meal time + location */}
-          <div style={{
-            padding: '6px 20px 10px', position: 'relative',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-          }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {activeCategory ? (
-                <p style={{
-                  fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: 0,
-                  fontFamily: 'var(--font-feed-display), serif',
-                }}>
-                  Lo mejor en {categories.find(c => c.norm === activeCategory)?.label || activeCategory}
-                </p>
-              ) : (
-                <button
-                  onClick={() => setMealPickerOpen(!mealPickerOpen)}
-                  style={{
-                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                    textAlign: 'left', display: 'block', width: '100%',
-                  }}
-                >
-                  <p style={{
-                    fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.55)', margin: 0,
-                    fontFamily: 'var(--font-feed-display), serif',
-                    display: 'flex', alignItems: 'center', gap: 6,
-                  }}>
-                    {MealIcons[currentMealSlot.id]('rgba(255,255,255,0.55)')}
-                    <span>{currentMealSlot.label}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                      stroke="rgba(255,255,255,0.45)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                      style={{ transform: mealPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </p>
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              {/* Search button */}
-              <button onClick={() => { setSearchOpen(!searchOpen); setSearchQuery(''); setTimeout(() => searchInputRef.current?.focus(), 100) }} style={{
-                width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                background: searchOpen ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.03)',
-                border: searchOpen ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={searchOpen ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2.5" strokeLinecap="round">
-                  {searchOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></>}
-                </svg>
-              </button>
-              {/* Location button */}
-              <button onClick={() => setLocationOpen(!locationOpen)} style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '7px 14px', borderRadius: 22, flexShrink: 0,
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-                cursor: 'pointer',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-                </svg>
-                <span style={{
-                  fontSize: 14, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-                  maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {locationName || gpsLabel || 'Ubicación'}
-                </span>
-              </button>
-            </div>
+          {/* Location dropdown anchor */}
+          <div style={{ position: 'relative', padding: '0 16px' }}>
 
             {/* Location dropdown */}
             {locationOpen && (
