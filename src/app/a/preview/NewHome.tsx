@@ -525,25 +525,37 @@ export default function NewHome({
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh' }}>
 
-      {/* ─── Header: logo left + search center + location + hamburger ─── */}
+      {/* ─── Header: logo left + hamburger right ─── */}
       <header style={{
         background: '#0e0e0e',
-        padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8,
+        padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        {/* Logo left */}
-        <a href="/" style={{ textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }}>
+        <a href="/" style={{ textDecoration: 'none', cursor: 'pointer' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 18, fontWeight: 700, color: '#fff',
+            fontSize: 20, fontWeight: 700, color: '#fff',
           }}>
-            Q<span style={{ color: '#F4A623' }}>C</span>
+            Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
         </a>
+        <button onClick={() => setMenuOpen(true)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: 6,
+          color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </header>
 
-        {/* Search input — always visible */}
+      {/* ─── Search + Location bar ─── */}
+      <div style={{
+        padding: '8px 16px 10px', display: 'flex', alignItems: 'center', gap: 8,
+        background: '#0e0e0e',
+      }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round"
-            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
           <input
@@ -552,14 +564,14 @@ export default function NewHome({
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Buscar plato o restaurante..."
             style={{
-              width: '100%', padding: '9px 12px 9px 32px', borderRadius: 12, fontSize: 16,
+              width: '100%', padding: '10px 36px 10px 34px', borderRadius: 14, fontSize: 16,
               background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
               color: '#fff', outline: 'none', boxSizing: 'border-box',
             }}
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery('')} style={{
-              position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
               background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(255,255,255,0.3)',
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -569,35 +581,23 @@ export default function NewHome({
           )}
         </div>
 
-        {/* Location */}
         <button onClick={() => setLocationOpen(!locationOpen)} style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          padding: '7px 10px', borderRadius: 14, flexShrink: 0,
-          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex', alignItems: 'center', gap: 5,
+          padding: '10px 12px', borderRadius: 14, flexShrink: 0,
+          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
           cursor: 'pointer',
         }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
           </svg>
           <span style={{
-            fontSize: 12, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-            maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            fontSize: 13, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+            maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {locationName || gpsLabel || 'Ubicación'}
           </span>
         </button>
-
-        {/* Hamburger */}
-        <button onClick={() => setMenuOpen(true)} style={{
-          background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-          color: 'rgba(255,255,255,0.5)', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-      </header>
+      </div>
 
       {/* ─── Hamburger menu — slide from right ─── */}
       {menuOpen && (
