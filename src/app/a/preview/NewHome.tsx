@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
 import type { FeedDish } from '../types'
 import { distanceKm } from '../lib/geo'
 import MasonryGrid from '../components/MasonryGrid'
@@ -80,9 +79,18 @@ export default function NewHome({
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
-  const searchParams = useSearchParams()
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
-  const [searchInput, setSearchInput] = useState(searchParams.get('q') || '')
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('q') || ''
+    }
+    return ''
+  })
+  const [searchInput, setSearchInput] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('q') || ''
+    }
+    return ''
+  })
   const [showSuggestions, setShowSuggestions] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filterOpen, setFilterOpen] = useState(false)
