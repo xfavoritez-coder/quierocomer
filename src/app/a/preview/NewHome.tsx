@@ -87,9 +87,12 @@ export default function NewHome({
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
   const [showTutorial, setShowTutorial] = useState(totalInteractions === 0)
-  const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
+  const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular' | 'distance'>('recent')
+  const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN' | 'gluten'>('all')
   const [eurekaThreshold, setEurekaThreshold] = useState(65)
   const [eurekaDismissed, setEurekaDismissed] = useState(false)
   const [currentHintLevel, setCurrentHintLevel] = useState(0)
@@ -362,8 +365,15 @@ export default function NewHome({
       }
     }
 
-    // Meal time filter
-    const mealFilter = MEAL_SLOTS.find(s => s.id === activeMeal)?.feedFilter ?? 'almuerzo_cena'
+    // Meal time filter (from filter dropdown)
+    if (filterMeal !== 'all') {
+      filtered = filtered.filter(d => d.mealTime === filterMeal)
+    }
+
+    // Diet filter (from filter dropdown — overrides onboarding diet)
+    if (filterDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
+    else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
+    else if (filterDiet === 'gluten') filtered = filtered.filter(d => d.dieta.sinGluten)
 
     // Eureka feed focusing — boost the detected category as confidence grows
     const focusCategory = eurekaState.topCategory
@@ -411,17 +421,29 @@ export default function NewHome({
       ? new Map(vectorScoredIds.map((id, i) => [id, 1 - i / vectorScoredIds.length]))
       : undefined
 
-    // Filter by meal time — only when no category is selected
-    if (!activeCategory) {
-      filtered = filtered.filter(d => d.mealTime === mealFilter)
-    }
-
-    const sortByScore = (list: FeedDish[]) =>
-      list.map(d => ({ dish: d, score: scoreDish(d, vectorRank) }))
+    // Sort based on filter selection
+    let combined: FeedDish[]
+    if (filterSort === 'price-asc') {
+      combined = [...filtered].sort((a, b) => (a.precioDescuento ?? a.precio) - (b.precioDescuento ?? b.precio))
+    } else if (filterSort === 'price-desc') {
+      combined = [...filtered].sort((a, b) => (b.precioDescuento ?? b.precio) - (a.precioDescuento ?? a.precio))
+    } else if (filterSort === 'popular') {
+      combined = [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
+    } else if (filterSort === 'distance' && userLocation) {
+      combined = [...filtered]
+        .filter(d => d.restauranteLat && d.restauranteLng)
+        .sort((a, b) => {
+          const da = distanceKm(userLocation.lat, userLocation.lng, a.restauranteLat!, a.restauranteLng!)
+          const db = distanceKm(userLocation.lat, userLocation.lng, b.restauranteLat!, b.restauranteLng!)
+          return da - db
+        })
+    } else {
+      // Default: score-based (recent + taste)
+      combined = filtered
+        .map(d => ({ dish: d, score: scoreDish(d, vectorRank) }))
         .sort((a, b) => b.score - a.score)
         .map(s => s.dish)
-
-    const combined = sortByScore(filtered)
+    }
 
     // Max 3 consecutive same category
     const final: FeedDish[] = []
@@ -436,7 +458,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence, searchQuery])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence, searchQuery, filterMeal, filterSort, filterDiet])
 
   // Infinite scroll
   useEffect(() => {
@@ -533,7 +555,7 @@ export default function NewHome({
         <a href="/" style={{ textDecoration: 'none', cursor: 'pointer' }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 20, fontWeight: 700, color: '#fff',
+            fontSize: 22, fontWeight: 700, color: '#fff',
           }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
@@ -599,7 +621,100 @@ export default function NewHome({
             {locationName || gpsLabel || 'Ubicación'}
           </span>
         </button>
+
+        {/* Filter button */}
+        <button onClick={() => setFilterOpen(!filterOpen)} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '10px', borderRadius: 14, flexShrink: 0,
+          background: filterOpen || filterMeal !== (detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena') || filterSort !== 'recent' || filterDiet !== 'all'
+            ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.06)',
+          border: filterOpen || filterMeal !== (detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena') || filterSort !== 'recent' || filterDiet !== 'all'
+            ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
+          cursor: 'pointer', alignSelf: 'stretch',
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke={filterOpen || filterSort !== 'recent' || filterDiet !== 'all' ? '#F4A623' : 'rgba(255,255,255,0.4)'}
+            strokeWidth="2" strokeLinecap="round">
+            <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" />
+            <circle cx="6" cy="12" r="2" fill="currentColor" /><circle cx="14" cy="18" r="2" fill="currentColor" />
+          </svg>
+        </button>
       </div>
+
+      {/* ─── Filter dropdown ─── */}
+      {filterOpen && (
+        <>
+          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+          <div style={{
+            position: 'absolute', top: '100%', right: 16, zIndex: 45,
+            background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
+            padding: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+            width: 260,
+          }}>
+            {/* Momento */}
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Momento</p>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+              {[
+                { id: 'all' as const, label: 'Todo' },
+                { id: 'desayuno' as const, label: 'Desayuno' },
+                { id: 'almuerzo_cena' as const, label: 'Almuerzo/Cena' },
+              ].map(m => (
+                <button key={m.id} onClick={() => setFilterMeal(m.id)} style={{
+                  padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  background: filterMeal === m.id ? 'rgba(244,166,35,0.15)' : 'transparent',
+                  color: filterMeal === m.id ? '#F4A623' : 'rgba(255,255,255,0.5)',
+                  border: filterMeal === m.id ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                }}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Ordenar */}
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ordenar por</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+              {[
+                { id: 'recent' as const, label: 'Recientes' },
+                { id: 'price-asc' as const, label: 'Precio ↑' },
+                { id: 'price-desc' as const, label: 'Precio ↓' },
+                { id: 'popular' as const, label: 'Popular' },
+                { id: 'distance' as const, label: 'Cercanía' },
+              ].map(s => (
+                <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
+                  padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  background: filterSort === s.id ? 'rgba(244,166,35,0.15)' : 'transparent',
+                  color: filterSort === s.id ? '#F4A623' : 'rgba(255,255,255,0.5)',
+                  border: filterSort === s.id ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                }}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Dieta */}
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Dieta</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[
+                { id: 'all' as const, label: 'Todo', emoji: '🍽' },
+                { id: 'VEGAN' as const, label: 'Vegano', emoji: '🌱' },
+                { id: 'VEGETARIAN' as const, label: 'Vegetariano', emoji: '🥬' },
+                { id: 'gluten' as const, label: 'Sin gluten', emoji: '🌾' },
+              ].map(d => (
+                <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
+                  padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  background: filterDiet === d.id ? 'rgba(244,166,35,0.15)' : 'transparent',
+                  color: filterDiet === d.id ? '#F4A623' : 'rgba(255,255,255,0.5)',
+                  border: filterDiet === d.id ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}>
+                  <span style={{ fontSize: 13 }}>{d.emoji}</span> {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ─── Hamburger menu — slide from right ─── */}
       {menuOpen && (
