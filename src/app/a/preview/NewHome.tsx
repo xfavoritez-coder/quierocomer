@@ -634,17 +634,31 @@ export default function NewHome({
         </button>
       </div>
 
-      {/* ─── Filter dropdown ─── */}
+      {/* ─── Filter panel — almost fullscreen ─── */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80 }} />
+          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)' }} />
           <div style={{
-            position: 'fixed', top: 100, right: 16, zIndex: 81,
-            background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
-            padding: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-            width: 280, maxHeight: '70vh', overflowY: 'auto',
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
+            background: '#141414',
+            borderRadius: '20px 20px 0 0',
+            padding: '20px 20px 32px', maxHeight: '85vh', overflowY: 'auto',
+            animation: 'slideUp 0.25s ease-out',
           }}>
+            {/* Handle + title */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', margin: 0 }}>Filtros</h3>
+              <button onClick={() => setFilterOpen(false)} style={{
+                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4,
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             {/* Momento */}
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Momento</p>
             <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
@@ -749,6 +763,15 @@ export default function NewHome({
                 </button>
               ))}
             </div>
+
+            {/* Apply button */}
+            <button onClick={() => setFilterOpen(false)} style={{
+              width: '100%', padding: 14, borderRadius: 14, marginTop: 20,
+              background: '#F4A623', border: 'none',
+              color: '#000', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            }}>
+              Aplicar filtros
+            </button>
           </div>
         </>
       )}
