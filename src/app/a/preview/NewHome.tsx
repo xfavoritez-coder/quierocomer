@@ -87,6 +87,9 @@ export default function NewHome({
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
   const [showTutorial, setShowTutorial] = useState(totalInteractions === 0)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [eurekaThreshold, setEurekaThreshold] = useState(65)
   const [eurekaDismissed, setEurekaDismissed] = useState(false)
   const [currentHintLevel, setCurrentHintLevel] = useState(0)
@@ -327,6 +330,17 @@ export default function NewHome({
       filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
     }
 
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      filtered = filtered.filter(d => {
+        const name = d.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const rest = d.restaurante.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const desc = (d.descripcion || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        return name.includes(q) || rest.includes(q) || desc.includes(q) || d.categoriaNorm.toLowerCase().includes(q)
+      })
+    }
+
     // Remove interacted dishes
     filtered = filtered.filter(d => !sessionLikedIds.has(d.id) && !sessionDislikedIds.has(d.id))
 
@@ -422,7 +436,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence, searchQuery])
 
   // Infinite scroll
   useEffect(() => {
@@ -643,6 +657,23 @@ export default function NewHome({
       {view === 'feed' && (
         <>
 
+          {/* ─── Search input ─── */}
+          {searchOpen && (
+            <div style={{ padding: '8px 16px' }}>
+              <input
+                ref={searchInputRef}
+                type="text" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar plato, restaurante, ingrediente..."
+                style={{
+                  width: '100%', padding: '12px 16px', borderRadius: 14, fontSize: 14,
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#fff', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          )}
+
           {/* ─── Categories — sticky ─── */}
           <div style={{
             position: 'sticky', top: 0, zIndex: 35,
@@ -720,16 +751,17 @@ export default function NewHome({
 
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
               {/* Search button */}
-              <a href="/a/search" style={{
+              <button onClick={() => { setSearchOpen(!searchOpen); setSearchQuery(''); setTimeout(() => searchInputRef.current?.focus(), 100) }} style={{
                 width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                background: searchOpen ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.03)',
+                border: searchOpen ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', textDecoration: 'none',
+                cursor: 'pointer',
               }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={searchOpen ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2.5" strokeLinecap="round">
+                  {searchOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></>}
                 </svg>
-              </a>
+              </button>
               {/* Location button */}
               <button onClick={() => setLocationOpen(!locationOpen)} style={{
                 display: 'flex', alignItems: 'center', gap: 5,
@@ -927,6 +959,13 @@ export default function NewHome({
                 {eurekaState.confidence >= 65 && 'Casi listos para recomendarte'}
               </p>
             </div>
+          )}
+
+          {/* Search results count */}
+          {searchQuery.trim() && (
+            <p style={{ padding: '0 16px 8px', fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+              {feedDishes.length} resultado{feedDishes.length !== 1 ? 's' : ''} para "{searchQuery}"
+            </p>
           )}
 
           {/* Feed masonry */}
