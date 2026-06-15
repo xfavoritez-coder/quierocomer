@@ -87,7 +87,7 @@ export default function NewHome({
   const [filterMaxKm, setFilterMaxKm] = useState(20)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
-  const [visibleCount, setVisibleCount] = useState(20)
+  const [visibleCount, setVisibleCount] = useState(10)
   const [locationQuery, setLocationQuery] = useState('')
 
   // Profile for DishModal — refreshable
@@ -342,7 +342,7 @@ export default function NewHome({
   }, [visibleCount, feedDishes.length])
 
   // Reset visible count on category change
-  useEffect(() => { setVisibleCount(20) }, [activeCategory])
+  useEffect(() => { setVisibleCount(10) }, [activeCategory])
 
   // Handlers
   const handleDishTap = useCallback((d: FeedDish) => {
