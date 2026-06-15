@@ -930,7 +930,7 @@ export default function NewHome({
             likeCount={likeCount}
             passCount={passCount}
             displayName={displayName}
-            onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile()); window.location.reload() }}
+            onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile().then(() => window.location.reload())) }}
             onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
             onDishTap={handleLikedDishTap}
             onUpdateName={(name) => { setDisplayName(name); import('../lib/feed-actions').then(({ updateDisplayName }) => updateDisplayName(name)) }}
