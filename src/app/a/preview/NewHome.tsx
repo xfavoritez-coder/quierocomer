@@ -288,12 +288,7 @@ export default function NewHome({
           dist: distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!)
         }))
         .sort((a, b) => a.dist - b.dist)
-      const nearby = withDist.filter(x => x.dist <= maxDist)
-      if (nearby.length >= 3) {
-        filtered = nearby.map(x => x.dish)
-      } else {
-        filtered = withDist.slice(0, 30).map(x => x.dish)
-      }
+      filtered = withDist.filter(x => x.dist <= maxDist).map(x => x.dish)
     }
 
     // Category filter
@@ -1000,8 +995,25 @@ export default function NewHome({
               )}
             </>
           ) : (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
-              No hay platos en esta categoría
+            <div style={{ textAlign: 'center', padding: '80px 30px', color: 'rgba(255,255,255,0.3)' }}>
+              <p style={{ fontSize: 40, margin: '0 0 16px' }}>🍽</p>
+              <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px', color: 'rgba(255,255,255,0.4)' }}>
+                No encontramos platos aquí
+              </p>
+              <p style={{ fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>
+                {searchQuery ? `No hay resultados para "${searchQuery}"` :
+                 (locationName || gpsLabel) ? `Aún no tenemos platos en ${locationName || gpsLabel}. Prueba cambiando la ubicación.` :
+                 'Intenta cambiar los filtros o la ubicación.'}
+              </p>
+              {(locationName || gpsLabel) && (
+                <button onClick={() => { setLocationName(null); setUserLocation(null); setGpsLabel(null) }} style={{
+                  padding: '10px 20px', borderRadius: 14, fontSize: 14, fontWeight: 600,
+                  background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.2)',
+                  color: '#F4A623', cursor: 'pointer',
+                }}>
+                  Ver todos los platos
+                </button>
+              )}
             </div>
           )}
         </>
