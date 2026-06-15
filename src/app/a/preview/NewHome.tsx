@@ -548,10 +548,11 @@ export default function NewHome({
         </button>
       </header>
 
-      {/* ─── Search + Location bar ─── */}
+      {/* ─── Search + Location bar — sticky ─── */}
       <div style={{
+        position: 'sticky', top: 0, zIndex: 35,
         padding: '8px 16px 10px', display: 'flex', alignItems: 'center', gap: 8,
-        background: '#0e0e0e',
+        background: 'rgba(14,14,14,0.97)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round"
