@@ -311,15 +311,18 @@ export default function NewHome({
     return final
   }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm])
 
-  // Infinite scroll
+  // Infinite scroll via IntersectionObserver on sentinel
+  const sentinelRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500 && visibleCount < feedDishes.length) {
+    const el = sentinelRef.current
+    if (!el) return
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleCount < feedDishes.length) {
         setVisibleCount(prev => Math.min(prev + 10, feedDishes.length))
       }
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    }, { rootMargin: '600px' })
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [visibleCount, feedDishes.length])
 
   // Reset visible count on category change
@@ -880,6 +883,8 @@ export default function NewHome({
                 userLocation={userLocation}
               />
               {/* Loading skeleton when more dishes are available */}
+              {/* Sentinel + skeleton for infinite scroll */}
+              <div ref={sentinelRef} style={{ height: 1 }} />
               {visibleCount < feedDishes.length && (
                 <div style={{ display: 'flex', gap: 10, padding: '10px 12px 40px' }}>
                   {[0, 1].map(col => (
