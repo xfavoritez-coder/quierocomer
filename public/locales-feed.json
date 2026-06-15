@@ -666,7 +666,7 @@
     "rating": 4.4,
     "reviews": 32,
     "comuna": "8320000 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "BAR EL BAJO",
@@ -726,7 +726,7 @@
     "rating": 4.6,
     "reviews": 2174,
     "comuna": "8330021 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Hotel Almasur Providencia",
@@ -750,7 +750,7 @@
     "rating": 4.5,
     "reviews": 1419,
     "comuna": "Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Dark Kitchen Factory",
@@ -810,7 +810,7 @@
     "rating": 4.3,
     "reviews": 73,
     "comuna": "Vitacura",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Santiago Speaks Café | Cafeteria de especialidad| Culture exchange",
@@ -822,7 +822,7 @@
     "rating": 5,
     "reviews": 32,
     "comuna": "8320125 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Imperium Restobar",
@@ -918,7 +918,7 @@
     "rating": 4.5,
     "reviews": 714,
     "comuna": "Vitacura",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Pasta & Pizza",
@@ -930,7 +930,7 @@
     "rating": 3,
     "reviews": 4,
     "comuna": "",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "The Singular Restaurant",
@@ -954,7 +954,7 @@
     "rating": 4,
     "reviews": 133,
     "comuna": "Las Condes",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Johnny Rockets Fantasilandia",
@@ -966,7 +966,7 @@
     "rating": 2.6,
     "reviews": 66,
     "comuna": "Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "La Fonda Paisa Restaurante",
@@ -1002,7 +1002,7 @@
     "rating": 3.9,
     "reviews": 7,
     "comuna": "8330240 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Vituperio Restobar",
@@ -1014,19 +1014,19 @@
     "rating": 0,
     "reviews": 0,
     "comuna": "8330036 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Sushiban San Isidro",
     "address": "San Isidro 319, 8320000 Santiago, Región Metropolitana",
     "lat": -33.4480966,
     "lng": -70.6436935,
-    "website": "https://gour.media/sushi-sun/carta/",
+    "website": "https://gour.media/sushi-sun/carta/comer/",
     "provider": "Gourmedia",
     "rating": 2.6,
     "reviews": 40,
     "comuna": "8320000 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Potato patata",
@@ -1050,7 +1050,7 @@
     "rating": 4.7,
     "reviews": 3621,
     "comuna": "Providencia",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Los Buenos Muchachos Cumming",
@@ -1098,7 +1098,7 @@
     "rating": 4.3,
     "reviews": 6921,
     "comuna": "Providencia",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Restaurante El Quijote",
@@ -1122,7 +1122,7 @@
     "rating": 3.1,
     "reviews": 35,
     "comuna": "Las Condes",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Búfalo Blanco Restaurante",
@@ -1206,7 +1206,7 @@
     "rating": 4.3,
     "reviews": 938,
     "comuna": "Providencia",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Delisosa Bistro",
@@ -1326,7 +1326,7 @@
     "rating": 4.3,
     "reviews": 1313,
     "comuna": "Las Condes",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Café Altura Bulnes",
@@ -1350,7 +1350,7 @@
     "rating": 4,
     "reviews": 72,
     "comuna": "8320000 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Dulcentorno - LASTARRIA (Santiago Centro)",
@@ -1386,7 +1386,7 @@
     "rating": 2.6,
     "reviews": 66,
     "comuna": "Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "Puelo Specialty Coffee Bar",
@@ -1446,7 +1446,7 @@
     "rating": 4.3,
     "reviews": 4594,
     "comuna": "8320054 Santiago",
-    "extracted": "fail"
+    "extracted": null
   },
   {
     "name": "KrossBar BordeRío",
