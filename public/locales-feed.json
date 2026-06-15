@@ -30,7 +30,8 @@
     "provider": "Gourmedia",
     "rating": 4.6,
     "reviews": 265,
-    "comuna": "Ñuñoa"
+    "comuna": "Ñuñoa",
+    "extracted": "fail"
   },
   {
     "name": "Abbatia Casona Restaurant",
@@ -173,7 +174,8 @@
     "provider": "Gourmedia",
     "rating": 4.1,
     "reviews": 325,
-    "comuna": "Las Condes"
+    "comuna": "Las Condes",
+    "extracted": "fail"
   },
   {
     "name": "Kame House Sushi & Ramen",
@@ -279,11 +281,12 @@
     "address": "Av Vitacura 3396, Casa 9, 7630633 Vitacura, Región Metropolitana",
     "lat": -33.4049367,
     "lng": -70.5976754,
-    "website": "https://gour.media/romaria/menu/",
+    "website": "https://gour.media/romaria/menu/comida/",
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 1123,
-    "comuna": "Vitacura"
+    "comuna": "Vitacura",
+    "extracted": "fail"
   },
   {
     "name": "China Town",
@@ -602,7 +605,8 @@
     "provider": "Gourmedia",
     "rating": 4.8,
     "reviews": 1994,
-    "comuna": "Vitacura"
+    "comuna": "Vitacura",
+    "extracted": "fail"
   },
   {
     "name": "La Diana Restaurante",
@@ -613,7 +617,8 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 1434,
-    "comuna": "8330484 Santiago"
+    "comuna": "8330484 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Alto Japón Sushi Bar lounge & Delivery",
@@ -624,7 +629,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 1411,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Raíces Nativas",
@@ -635,7 +641,8 @@
     "provider": "Gourmedia",
     "rating": 4.6,
     "reviews": 334,
-    "comuna": "8350311 Santiago"
+    "comuna": "8350311 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Raíces Bar",
@@ -646,7 +653,8 @@
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 585,
-    "comuna": "8350239 Santiago"
+    "comuna": "8350239 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Petit Bernard",
@@ -657,7 +665,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 32,
-    "comuna": "8320000 Santiago"
+    "comuna": "8320000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "BAR EL BAJO",
@@ -668,7 +677,8 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 1864,
-    "comuna": "8320161 Santiago"
+    "comuna": "8320161 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Brussels Heart of Chocolate Lastarria",
@@ -679,7 +689,8 @@
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 911,
-    "comuna": "8320000 Santiago"
+    "comuna": "8320000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "La picá de la Adela",
@@ -690,7 +701,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 252,
-    "comuna": "8330952 Santiago"
+    "comuna": "8330952 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "La Cabaña Restobar",
@@ -701,7 +713,8 @@
     "provider": "Gourmedia",
     "rating": 4.8,
     "reviews": 27,
-    "comuna": "8330137 Santiago"
+    "comuna": "8330137 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Restaurant Japón",
@@ -723,7 +736,8 @@
     "provider": "Gourmedia",
     "rating": 4.6,
     "reviews": 858,
-    "comuna": "Providencia"
+    "comuna": "Providencia",
+    "extracted": "fail"
   },
   {
     "name": "Incantum Chile",
@@ -745,7 +759,8 @@
     "provider": "Gourmedia",
     "rating": 4.6,
     "reviews": 65,
-    "comuna": "8330289 Santiago"
+    "comuna": "8330289 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "KrossBar BordeRío",
@@ -756,7 +771,8 @@
     "provider": "Gourmedia",
     "rating": 4.7,
     "reviews": 4112,
-    "comuna": "Vitacura"
+    "comuna": "Vitacura",
+    "extracted": "fail"
   },
   {
     "name": "Demo Magnolia",
@@ -767,7 +783,8 @@
     "provider": "Gourmedia",
     "rating": 4.9,
     "reviews": 58,
-    "comuna": "8320150 Santiago"
+    "comuna": "8320150 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Segreta Pizzeria",
@@ -811,7 +828,8 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 4,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Ijole Taquería",
@@ -822,7 +840,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 1319,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Le Bistrot Lastarria",
@@ -833,7 +852,8 @@
     "provider": "Gourmedia",
     "rating": 4.8,
     "reviews": 450,
-    "comuna": "8320159 Santiago"
+    "comuna": "8320159 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Barbaros Resto Bar",
@@ -844,7 +864,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 227,
-    "comuna": "8330780 Santiago"
+    "comuna": "8330780 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Tramonto Bar & Terrace",
@@ -862,7 +883,7 @@
     "address": "Av. Italia 975, 7501184 Santiago, Providencia, Región Metropolitana",
     "lat": -33.443702699999996,
     "lng": -70.6260698,
-    "website": "https://gour.media/tio-tomate/",
+    "website": "https://gour.media/tio-tomate/italia/para-comer/",
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 6733,
@@ -877,7 +898,8 @@
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 259,
-    "comuna": "Independencia"
+    "comuna": "Independencia",
+    "extracted": "fail"
   },
   {
     "name": "Casa Animal",
@@ -899,7 +921,8 @@
     "provider": "Gourmedia",
     "rating": 3,
     "reviews": 4,
-    "comuna": ""
+    "comuna": "",
+    "extracted": "fail"
   },
   {
     "name": "The Singular Restaurant",
@@ -921,7 +944,8 @@
     "provider": "Gourmedia",
     "rating": 4,
     "reviews": 133,
-    "comuna": "Las Condes"
+    "comuna": "Las Condes",
+    "extracted": "fail"
   },
   {
     "name": "Johnny Rockets Fantasilandia",
@@ -932,7 +956,8 @@
     "provider": "Gourmedia",
     "rating": 2.6,
     "reviews": 66,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "La Fonda Paisa Restaurante",
@@ -943,7 +968,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 2395,
-    "comuna": "8330288 Santiago"
+    "comuna": "8330288 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "El Arabito Zaidan",
@@ -954,7 +980,8 @@
     "provider": "Gourmedia",
     "rating": 4.8,
     "reviews": 56,
-    "comuna": "9320000 Santiago"
+    "comuna": "9320000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Cosa Bien Hecha",
@@ -987,7 +1014,8 @@
     "provider": "Gourmedia",
     "rating": 2.6,
     "reviews": 40,
-    "comuna": "8320000 Santiago"
+    "comuna": "8320000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Potato patata",
@@ -998,7 +1026,8 @@
     "provider": "Gourmedia",
     "rating": 2,
     "reviews": 83,
-    "comuna": "Las Condes"
+    "comuna": "Las Condes",
+    "extracted": "fail"
   },
   {
     "name": "Marasushi",
@@ -1009,7 +1038,8 @@
     "provider": "Gourmedia",
     "rating": 4.7,
     "reviews": 3621,
-    "comuna": "Providencia"
+    "comuna": "Providencia",
+    "extracted": "fail"
   },
   {
     "name": "Los Buenos Muchachos Cumming",
@@ -1020,7 +1050,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 11720,
-    "comuna": "8340089 Santiago"
+    "comuna": "8340089 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Patio Girolamo",
@@ -1031,7 +1062,8 @@
     "provider": "Gourmedia",
     "rating": 4.6,
     "reviews": 91,
-    "comuna": "8330717 Santiago"
+    "comuna": "8330717 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Chilenazo Santiago",
@@ -1042,7 +1074,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 3481,
-    "comuna": "8350638 Santiago"
+    "comuna": "8350638 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Insert Coin Bar - Providencia",
@@ -1064,7 +1097,8 @@
     "provider": "Gourmedia",
     "rating": 4,
     "reviews": 212,
-    "comuna": "8330165 Santiago"
+    "comuna": "8330165 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Freddo",
@@ -1075,7 +1109,8 @@
     "provider": "Gourmedia",
     "rating": 3.1,
     "reviews": 35,
-    "comuna": "Las Condes"
+    "comuna": "Las Condes",
+    "extracted": "fail"
   },
   {
     "name": "Búfalo Blanco Restaurante",
@@ -1097,7 +1132,8 @@
     "provider": "Gourmedia",
     "rating": 3.6,
     "reviews": 60,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "BAR EL BAJO",
@@ -1108,7 +1144,8 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 1864,
-    "comuna": "8320161 Santiago"
+    "comuna": "8320161 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "The Singular Restaurant",
@@ -1119,7 +1156,8 @@
     "provider": "Gourmedia",
     "rating": 4.6,
     "reviews": 280,
-    "comuna": "8320128 Santiago"
+    "comuna": "8320128 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Toro y Pan",
@@ -1130,7 +1168,8 @@
     "provider": "Gourmedia",
     "rating": 4.9,
     "reviews": 16,
-    "comuna": "8320000 Santiago"
+    "comuna": "8320000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "BOBIBOBI Innovación del té",
@@ -1141,7 +1180,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 352,
-    "comuna": "8320263 Santiago"
+    "comuna": "8320263 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Chá Wu",
@@ -1152,7 +1192,8 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 938,
-    "comuna": "Providencia"
+    "comuna": "Providencia",
+    "extracted": "fail"
   },
   {
     "name": "Delisosa Bistro",
@@ -1174,7 +1215,8 @@
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 2199,
-    "comuna": "8330199 Santiago"
+    "comuna": "8330199 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Restaurant Club de Golf",
@@ -1185,7 +1227,8 @@
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 161,
-    "comuna": "Lo Barnechea"
+    "comuna": "Lo Barnechea",
+    "extracted": "fail"
   },
   {
     "name": "Movistar Arena",
@@ -1196,14 +1239,15 @@
     "provider": "Gourmedia",
     "rating": 4.7,
     "reviews": 46101,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Ramen Kintaro",
     "address": "Monjitas 460, 8320112 Santiago, Región Metropolitana",
     "lat": -33.4366926,
     "lng": -70.644074,
-    "website": "https://gour.media/kintaro-ramen/bellas-artes/",
+    "website": "https://gour.media/kintaro-ramen/bellas-artes/comida/",
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 7386,
@@ -1218,7 +1262,8 @@
     "provider": "Gourmedia",
     "rating": 3.8,
     "reviews": 614,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Lila Restaurante",
@@ -1240,7 +1285,8 @@
     "provider": "Gourmedia",
     "rating": 4.2,
     "reviews": 157,
-    "comuna": "Las Condes"
+    "comuna": "Las Condes",
+    "extracted": "fail"
   },
   {
     "name": "Al Kawzar",
@@ -1284,7 +1330,8 @@
     "provider": "Gourmedia",
     "rating": 4,
     "reviews": 72,
-    "comuna": "8320000 Santiago"
+    "comuna": "8320000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Dulcentorno - LASTARRIA (Santiago Centro)",
@@ -1295,7 +1342,8 @@
     "provider": "Gourmedia",
     "rating": 4.1,
     "reviews": 84,
-    "comuna": "8350000 Santiago"
+    "comuna": "8350000 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Akun Chile",
@@ -1306,7 +1354,8 @@
     "provider": "Gourmedia",
     "rating": 5,
     "reviews": 1,
-    "comuna": "8340263 Santiago"
+    "comuna": "8340263 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Johnny Rockets Fantasilandia",
@@ -1317,14 +1366,15 @@
     "provider": "Gourmedia",
     "rating": 2.6,
     "reviews": 66,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Puelo Specialty Coffee Bar",
     "address": "Las Catalpas 1522, 7630578 Santiago, Vitacura, Región Metropolitana",
     "lat": -33.406725099999996,
     "lng": -70.5984732,
-    "website": "https://gour.media/puelo/menu/",
+    "website": "https://gour.media/puelo/menu/comida/",
     "provider": "Gourmedia",
     "rating": 4.4,
     "reviews": 716,
@@ -1339,7 +1389,8 @@
     "provider": "Gourmedia",
     "rating": 4.7,
     "reviews": 7956,
-    "comuna": "8350538 Santiago"
+    "comuna": "8350538 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Sky Club 23",
@@ -1350,7 +1401,8 @@
     "provider": "Gourmedia",
     "rating": 3.9,
     "reviews": 613,
-    "comuna": "7560812 Las Condes"
+    "comuna": "7560812 Las Condes",
+    "extracted": "fail"
   },
   {
     "name": "La Casa del Chef",
@@ -1361,7 +1413,8 @@
     "provider": "Gourmedia",
     "rating": 4.5,
     "reviews": 2187,
-    "comuna": "Santiago"
+    "comuna": "Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Castillo Forestal",
@@ -1372,14 +1425,15 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 4594,
-    "comuna": "8320054 Santiago"
+    "comuna": "8320054 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "KrossBar BordeRío",
     "address": "Costanera Sur S.J.E. de Balaguer 6400, LOCAL 2B, 7640859 Santiago, Vitacura, Región Metropolitana",
     "lat": -33.3817897,
     "lng": -70.5799215,
-    "website": "https://gour.media/krossbar/",
+    "website": "https://gour.media/krossbar/antofagasta/cocina/",
     "provider": "Gourmedia",
     "rating": 4.7,
     "reviews": 4112,
@@ -1394,7 +1448,8 @@
     "provider": "Gourmedia",
     "rating": 4.3,
     "reviews": 4594,
-    "comuna": "8320054 Santiago"
+    "comuna": "8320054 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Fogón Andino - Somos Sabor Y Tradición",
@@ -1405,7 +1460,8 @@
     "provider": "Gourmedia",
     "rating": 4.9,
     "reviews": 137,
-    "comuna": "8350604 Santiago"
+    "comuna": "8350604 Santiago",
+    "extracted": "fail"
   },
   {
     "name": "Fenix Chile",
