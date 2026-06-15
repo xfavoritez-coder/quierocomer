@@ -381,8 +381,8 @@ export default function NewHome({
     return () => { clearInterval(interval); window.removeEventListener('scroll', check) }
   }, [feedDishes.length])
 
-  // Reset visible count on category change
-  useEffect(() => { setVisibleCount(10) }, [activeCategory])
+  // Reset visible count on any filter change
+  useEffect(() => { setVisibleCount(10) }, [activeCategory, filterMeal, filterSort, filterDiet, filterMaxKm, searchQuery, locationName])
 
   // Handlers
   const handleDishTap = useCallback((d: FeedDish) => {
@@ -464,9 +464,9 @@ export default function NewHome({
             ref={searchInputRef}
             className="feed-search-input"
             type="text" value={searchInput}
-            onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true) }}
+            onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true); setSearchQuery(e.target.value) }}
             onFocus={() => setShowSuggestions(true)}
-            onKeyDown={e => { if (e.key === 'Enter') executeSearch(searchInput) }}
+            onKeyDown={e => { if (e.key === 'Enter') { executeSearch(searchInput); searchInputRef.current?.blur() } }}
             placeholder="Buscar plato o restaurante..."
             style={{
               width: '100%', padding: '10px 36px 10px 34px', borderRadius: 14, fontSize: 16,
@@ -559,17 +559,17 @@ export default function NewHome({
           <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)' }} />
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
-            minHeight: '85vh', maxHeight: '95vh', overflowY: 'auto',
-            padding: 18, boxSizing: 'border-box',
-            background: 'radial-gradient(circle at top left, rgba(255,170,30,0.08), transparent 35%), #121212',
-            borderRadius: '32px 32px 0 0',
+            maxHeight: '90vh', overflowY: 'auto',
+            padding: '12px 16px', boxSizing: 'border-box',
+            background: 'radial-gradient(circle at top left, rgba(255,170,30,0.06), transparent 35%), #121212',
+            borderRadius: '24px 24px 0 0',
             animation: 'slideUp 0.25s ease-out',
           }}>
             {/* Drag handle */}
-            <div style={{ width: 56, height: 6, background: '#555', borderRadius: 999, margin: '0 auto 28px' }} />
+            <div style={{ width: 40, height: 5, background: '#555', borderRadius: 999, margin: '0 auto 16px' }} />
 
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 34 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
               <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#f5f5f5' }}>Filtros</h2>
               <button onClick={() => setFilterOpen(false)} style={{
                 width: 44, height: 44, borderRadius: 999,
@@ -579,7 +579,7 @@ export default function NewHome({
             </div>
 
             {/* Distancia */}
-            <div style={{ marginBottom: 34 }}>
+            <div style={{ marginBottom: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span style={{ color: '#f6a51a', fontSize: 20 }}>📍</span>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Distancia</h3>
@@ -603,7 +603,7 @@ export default function NewHome({
             </div>
 
             {/* Momento */}
-            <div style={{ marginBottom: 34 }}>
+            <div style={{ marginBottom: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span style={{ color: '#f6a51a', fontSize: 20 }}>🕒</span>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Momento</h3>
@@ -616,7 +616,7 @@ export default function NewHome({
                   { id: 'all' as const, label: 'Todos', emoji: '▦' },
                 ].map((m, i) => (
                   <button key={i} onClick={() => setFilterMeal(m.id)} style={{
-                    minHeight: 100, borderRadius: 22,
+                    minHeight: 76, borderRadius: 16,
                     border: filterMeal === m.id ? '1px solid #a66a13' : '1px solid #303030',
                     background: filterMeal === m.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
                     color: filterMeal === m.id ? '#f6a51a' : '#cfcfcf',
@@ -631,7 +631,7 @@ export default function NewHome({
             </div>
 
             {/* Dieta */}
-            <div style={{ marginBottom: 34 }}>
+            <div style={{ marginBottom: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span style={{ color: '#62c945', fontSize: 20 }}>🌿</span>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Dieta</h3>
@@ -656,7 +656,7 @@ export default function NewHome({
             </div>
 
             {/* Ordenar */}
-            <div style={{ marginBottom: 34 }}>
+            <div style={{ marginBottom: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span style={{ color: '#f6a51a', fontSize: 20 }}>↕</span>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Ordenar por</h3>
@@ -681,12 +681,21 @@ export default function NewHome({
               </div>
             </div>
 
-            {/* Apply */}
+            {/* Spacer for fixed button */}
+            <div style={{ height: 80 }} />
+          </div>
+
+          {/* Fixed apply button */}
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 82,
+            padding: '12px 18px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+            background: 'linear-gradient(to top, #121212, rgba(18,18,18,0.95))',
+          }}>
             <button onClick={() => setFilterOpen(false)} style={{
-              width: '100%', height: 70, border: 'none', borderRadius: 22,
-              background: '#f6a51a', color: '#111', fontSize: 20, fontWeight: 800, cursor: 'pointer',
+              width: '100%', height: 56, border: 'none', borderRadius: 18,
+              background: '#f6a51a', color: '#111', fontSize: 17, fontWeight: 800, cursor: 'pointer',
             }}>
-              Aplicar filtros ({feedDishes.length} platos)
+              Ver {feedDishes.length} platos
             </button>
           </div>
         </>
