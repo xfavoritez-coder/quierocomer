@@ -417,7 +417,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
       )}
 
       {activeTab === 'perfil' && (
-        <ProfileView profile={profile} diet={diet} tasteData={tasteData} dishes={dishes} onReset={handleResetProfile} onUpdateDiet={handleUpdateDiet} />
+        <ProfileView />
       )}
 
       {/* Modal */}

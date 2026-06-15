@@ -105,7 +105,8 @@ export default function NewHome({
     return base
   }, [categoryScores, keywordScores, totalInteractions, liveProfile])
 
-  // Liked dishes for profile view — loaded from server when entering profile
+  // Viewed/saved dishes for profile — loaded from server
+  const [viewedDishIds, setViewedDishIds] = useState<string[]>([])
   const [likedDishIds, setLikedDishIds] = useState<Set<string>>(new Set())
 
   // Load profile data from server when entering perfil view
@@ -125,9 +126,8 @@ export default function NewHome({
         setLikeCount(data.likeCount ?? 0)
         setPassCount(data.passCount ?? 0)
         setDisplayName(data.displayName ?? null)
-        if (data.likedDishIds?.length) {
-          setLikedDishIds(new Set(data.likedDishIds))
-        }
+        if (data.likedDishIds?.length) setLikedDishIds(new Set(data.likedDishIds))
+        if (data.viewedDishIds?.length) setViewedDishIds(data.viewedDishIds)
       })
     ).catch(() => {})
   }, [view])
@@ -376,6 +376,10 @@ export default function NewHome({
   const savedDishes = useMemo(() =>
     [...savedDishIds].map(id => dishes.find(d => d.id === id)).filter(Boolean) as FeedDish[],
     [savedDishIds, dishes]
+  )
+  const viewedDishes = useMemo(() =>
+    viewedDishIds.map(id => dishes.find(d => d.id === id)).filter(Boolean) as FeedDish[],
+    [viewedDishIds, dishes]
   )
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
@@ -907,21 +911,11 @@ export default function NewHome({
       {view === 'perfil' && (
         <>
           <ProfileView
-            profile={profile}
-            diet={activeDiet ?? { isVegan: false, isVegetarian: false, isGlutenFree: false, isLactoseFree: false }}
-            tasteData={liveTasteData ?? tasteData}
-            dishes={dishes}
-            likedDishes={likedDishes}
             savedDishes={savedDishes}
-            likeCount={likeCount}
-            passCount={passCount}
-            displayName={displayName}
-            onReset={() => { import('../lib/feed-actions').then(({ resetProfile }) => resetProfile().then(() => window.location.reload())) }}
-            onUpdateDiet={(d) => { setActiveDiet(d); import('../lib/feed-actions').then(({ completeOnboarding }) => completeOnboarding(d)) }}
+            viewedDishes={viewedDishes}
             onDishTap={handleLikedDishTap}
-            onUpdateName={(name) => { setDisplayName(name); import('../lib/feed-actions').then(({ updateDisplayName }) => updateDisplayName(name)) }}
-            onViewAllLiked={() => { setView('all-liked'); window.scrollTo(0, 0) }}
             onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
+            onViewAllViewed={() => { setView('all-liked'); window.scrollTo(0, 0) }}
           />
         </>
       )}
