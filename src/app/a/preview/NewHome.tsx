@@ -91,7 +91,8 @@ export default function NewHome({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
-  const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular' | 'distance'>('recent')
+  const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular'>('recent')
+  const [filterMaxKm, setFilterMaxKm] = useState(20)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN' | 'gluten'>('all')
   const [eurekaThreshold, setEurekaThreshold] = useState(65)
   const [eurekaDismissed, setEurekaDismissed] = useState(false)
@@ -310,8 +311,9 @@ export default function NewHome({
       })
       if (inCommune.length > 0) filtered = inCommune
     }
-    // GPS: filter to <3km, sort by distance. Show only truly nearby restaurants.
+    // Distance filter — uses slider value (filterMaxKm) or GPS auto
     if (userLocation && !locationName) {
+      const maxDist = filterMaxKm < 20 ? filterMaxKm : 999
       const withDist = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
         .map(d => ({
@@ -319,11 +321,10 @@ export default function NewHome({
           dist: distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!)
         }))
         .sort((a, b) => a.dist - b.dist)
-      const nearby = withDist.filter(x => x.dist < 3)
-      if (nearby.length >= 5) {
+      const nearby = withDist.filter(x => x.dist <= maxDist)
+      if (nearby.length >= 3) {
         filtered = nearby.map(x => x.dish)
       } else {
-        // Not enough nearby, show closest 30
         filtered = withDist.slice(0, 30).map(x => x.dish)
       }
     }
@@ -429,14 +430,6 @@ export default function NewHome({
       combined = [...filtered].sort((a, b) => (b.precioDescuento ?? b.precio) - (a.precioDescuento ?? a.precio))
     } else if (filterSort === 'popular') {
       combined = [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
-    } else if (filterSort === 'distance' && userLocation) {
-      combined = [...filtered]
-        .filter(d => d.restauranteLat && d.restauranteLng)
-        .sort((a, b) => {
-          const da = distanceKm(userLocation.lat, userLocation.lng, a.restauranteLat!, a.restauranteLng!)
-          const db = distanceKm(userLocation.lat, userLocation.lng, b.restauranteLat!, b.restauranteLng!)
-          return da - db
-        })
     } else {
       // Default: score-based (recent + taste)
       combined = filtered
@@ -458,7 +451,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence, searchQuery, filterMeal, filterSort, filterDiet])
+  }, [dishes, activeCategory, categoryScores, keywordScores, sessionLikedIds, sessionDislikedIds, vectorScoredIds, locationName, userLocation, activeDiet, activeMeal, eurekaState.topCategory, eurekaState.confidence, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm])
 
   // Infinite scroll
   useEffect(() => {
@@ -679,7 +672,6 @@ export default function NewHome({
                 { id: 'price-asc' as const, label: 'Precio ↑' },
                 { id: 'price-desc' as const, label: 'Precio ↓' },
                 { id: 'popular' as const, label: 'Popular' },
-                { id: 'distance' as const, label: 'Cercanía' },
               ].map(s => (
                 <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
                   padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
@@ -691,6 +683,51 @@ export default function NewHome({
                 </button>
               ))}
             </div>
+
+            {/* Distancia — slider con histograma */}
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Distancia: {filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}
+            </p>
+            {(() => {
+              // Build histogram: count dishes per km bucket
+              const buckets = Array(20).fill(0)
+              if (userLocation) {
+                for (const d of dishes) {
+                  if (!d.restauranteLat || !d.restauranteLng || !d.fotoUrl) continue
+                  const dist = distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng)
+                  const bucket = Math.min(Math.floor(dist), 19)
+                  buckets[bucket]++
+                }
+              }
+              const maxBucket = Math.max(...buckets, 1)
+              return (
+                <div style={{ marginBottom: 14 }}>
+                  {/* Histogram bars */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 32, marginBottom: 6 }}>
+                    {buckets.map((count, i) => (
+                      <div key={i} style={{
+                        flex: 1, borderRadius: 2,
+                        height: `${Math.max((count / maxBucket) * 100, 4)}%`,
+                        background: i < filterMaxKm ? 'rgba(244,166,35,0.5)' : 'rgba(255,255,255,0.08)',
+                        transition: 'background 0.15s',
+                      }} />
+                    ))}
+                  </div>
+                  {/* Slider */}
+                  <input type="range" min={1} max={20} value={filterMaxKm}
+                    onChange={e => setFilterMaxKm(Number(e.target.value))}
+                    style={{
+                      width: '100%', height: 4, appearance: 'none', background: 'transparent', cursor: 'pointer',
+                      accentColor: '#F4A623',
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>1 km</span>
+                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>20 km</span>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Dieta */}
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Dieta</p>
