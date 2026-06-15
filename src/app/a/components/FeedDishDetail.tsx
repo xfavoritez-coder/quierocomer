@@ -232,28 +232,10 @@ function DishSlide({
           </svg>
         </button>
 
-        {/* Save button */}
-        <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
-          position: 'absolute', top: 14, right: 62, zIndex: 10,
-          width: 38, height: 38, borderRadius: '50%',
-          background: saved ? 'rgba(244,166,35,0.3)' : 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(8px)', border: saved ? '1px solid rgba(244,166,35,0.5)' : 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : '#fff'} strokeWidth="2" strokeLinecap="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
-
-        {/* Gradient bottom */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 120,
-          background: 'linear-gradient(to top, #0e0e0e, transparent)',
-        }} />
       </div>
 
       {/* Content */}
-      <div style={{ padding: '0 20px 20px', marginTop: -40, position: 'relative', zIndex: 2 }}>
+      <div style={{ padding: '16px 20px 20px' }}>
         {/* Category tag */}
         <span style={{
           display: 'inline-block', padding: '4px 10px', borderRadius: 8, marginBottom: 8,
@@ -263,15 +245,24 @@ function DishSlide({
           {dish.categoriaNorm}
         </span>
 
-        {/* Name */}
-        <h2 style={{
-          fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 24, fontWeight: 700, color: '#fff', margin: '0 0 8px', lineHeight: 1.2,
-        }}>
-          {dish.nombre}
-          {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🌱</span>}
-          {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🥬</span>}
-        </h2>
+        {/* Name + save */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+          <h2 style={{
+            fontFamily: 'var(--font-feed-display), serif',
+            fontSize: 24, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2, flex: 1,
+          }}>
+            {dish.nombre}
+            {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🌱</span>}
+            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🥬</span>}
+          </h2>
+          <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+        </div>
 
         {/* Price + distance */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
