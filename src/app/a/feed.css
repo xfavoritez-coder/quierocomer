@@ -408,11 +408,11 @@ body:has(.feed-root) {
 
 /* ─── Modal ─────────────────────────────────────────────────── */
 .dish-modal-overlay {
-  position: fixed; inset: 0; z-index: 60;
+  position: fixed; inset: 0; z-index: 100;
   background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
 }
 .dish-modal {
-  position: fixed; z-index: 70;
+  position: fixed; z-index: 110;
   max-height: 90dvh; overflow-y: auto;
   background: #161616; animation: slideUp 0.3s ease-out;
   /* Mobile: bottom sheet */

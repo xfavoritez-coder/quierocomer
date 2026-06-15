@@ -872,10 +872,15 @@ export default function NewHome({
             )}
           </div>
 
-          {/* Eureka progress — inline below categories */}
+          {/* Eureka progress — fixed at bottom above nav */}
           {(sessionLikedIds.size + sessionDislikedIds.size) > 0 && !showEureka && (
             <div style={{
-              padding: '8px 16px 6px',
+              position: 'fixed', bottom: 80, left: 16, right: 16, zIndex: 45,
+              padding: '10px 16px 8px', borderRadius: 16,
+              background: 'rgba(14,14,14,0.92)', backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+              maxWidth: 440, marginLeft: 'auto', marginRight: 'auto',
             }}>
               <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 5 }}>
                 <div style={{
