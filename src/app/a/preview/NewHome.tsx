@@ -464,142 +464,140 @@ export default function NewHome({
         </button>
       </div>
 
-      {/* ─── Filter panel — almost fullscreen ─── */}
+      {/* ─── Filter sheet ─── */}
       {filterOpen && (
         <>
           <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)' }} />
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
-            background: '#141414',
-            borderRadius: '20px 20px 0 0',
-            padding: '20px 20px 32px', maxHeight: '85vh', overflowY: 'auto',
+            minHeight: '85vh', maxHeight: '95vh', overflowY: 'auto',
+            padding: 18, boxSizing: 'border-box',
+            background: 'radial-gradient(circle at top left, rgba(255,170,30,0.08), transparent 35%), #121212',
+            borderRadius: '32px 32px 0 0',
             animation: 'slideUp 0.25s ease-out',
           }}>
-            {/* Handle + title */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', margin: 0 }}>Filtros</h3>
+            {/* Drag handle */}
+            <div style={{ width: 56, height: 6, background: '#555', borderRadius: 999, margin: '0 auto 28px' }} />
+
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 34 }}>
+              <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#f5f5f5' }}>Filtros</h2>
               <button onClick={() => setFilterOpen(false)} style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4,
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
+                width: 44, height: 44, borderRadius: 999,
+                border: '1px solid #333', background: '#191919', color: '#aaa',
+                fontSize: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              }}>×</button>
             </div>
+
+            {/* Distancia */}
+            <div style={{ marginBottom: 34 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <span style={{ color: '#f6a51a', fontSize: 26 }}>📍</span>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Distancia</h3>
+              </div>
+              <div style={{ border: '1px solid #2c2c2c', borderRadius: 22, padding: '22px 18px', background: 'rgba(255,255,255,0.025)' }}>
+                <p style={{ margin: '0 0 26px', fontSize: 22, fontWeight: 700, color: '#f5f5f5' }}>
+                  Hasta <strong style={{ color: '#f6a51a', marginLeft: 8 }}>{filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
+                </p>
+                <div style={{ position: 'relative', height: 6, background: '#3a3a3a', borderRadius: 999 }}>
+                  <div style={{ width: `${(filterMaxKm / 20) * 100}%`, height: '100%', background: '#f6a51a', borderRadius: 999 }} />
+                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 20) * 100}%`, top: '50%', width: 28, height: 28, background: '#f6a51a', borderRadius: 999, transform: 'translate(-50%, -50%)' }} />
+                </div>
+                <input type="range" min={1} max={20} value={filterMaxKm}
+                  onChange={e => setFilterMaxKm(Number(e.target.value))}
+                  style={{ width: '100%', height: 28, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -17, opacity: 0 }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8e8e8e', fontSize: 14, marginTop: 8 }}>
+                  <span>1 km</span><span>5 km</span><span>10 km</span><span>20 km</span>
+                </div>
+              </div>
+            </div>
+
             {/* Momento */}
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Momento</p>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-              {[
-                { id: 'all' as const, label: 'Todo' },
-                { id: 'desayuno' as const, label: 'Desayuno' },
-                { id: 'almuerzo_cena' as const, label: 'Almuerzo/Cena' },
-              ].map(m => (
-                <button key={m.id} onClick={() => setFilterMeal(m.id)} style={{
-                  padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  background: filterMeal === m.id ? 'rgba(244,166,35,0.15)' : 'transparent',
-                  color: filterMeal === m.id ? '#F4A623' : 'rgba(255,255,255,0.5)',
-                  border: filterMeal === m.id ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                }}>
-                  {m.label}
-                </button>
-              ))}
+            <div style={{ marginBottom: 34 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <span style={{ color: '#f6a51a', fontSize: 26 }}>🕒</span>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Momento</h3>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                {[
+                  { id: 'desayuno' as const, label: 'Desayuno', emoji: '🌅' },
+                  { id: 'almuerzo_cena' as const, label: 'Almuerzo', emoji: '☀️' },
+                  { id: 'almuerzo_cena' as const, label: 'Cena', emoji: '🌙' },
+                  { id: 'all' as const, label: 'Todos', emoji: '▦' },
+                ].map((m, i) => (
+                  <button key={i} onClick={() => setFilterMeal(m.id)} style={{
+                    minHeight: 100, borderRadius: 22,
+                    border: filterMeal === m.id ? '1px solid #a66a13' : '1px solid #303030',
+                    background: filterMeal === m.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
+                    color: filterMeal === m.id ? '#f6a51a' : '#cfcfcf',
+                    fontSize: 15, display: 'flex', flexDirection: 'column', gap: 14,
+                    alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                  }}>
+                    <span style={{ fontSize: 28 }}>{m.emoji}</span>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dieta */}
+            <div style={{ marginBottom: 34 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <span style={{ color: '#62c945', fontSize: 26 }}>🌿</span>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Dieta</h3>
+              </div>
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto' }}>
+                {[
+                  { id: 'all' as const, label: '🥩 Carnívoro' },
+                  { id: 'VEGAN' as const, label: '🌱 Vegano' },
+                  { id: 'VEGETARIAN' as const, label: '🥬 Vegetariano' },
+                ].map(d => (
+                  <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
+                    border: filterDiet === d.id ? '1px solid #a66a13' : '1px solid #303030',
+                    borderRadius: 18, padding: '15px 20px',
+                    background: filterDiet === d.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
+                    color: filterDiet === d.id ? '#f6a51a' : '#cfcfcf',
+                    fontSize: 16, whiteSpace: 'nowrap', cursor: 'pointer',
+                  }}>
+                    {d.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Ordenar */}
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ordenar por</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-              {[
-                { id: 'recent' as const, label: 'Recientes' },
-                { id: 'price-asc' as const, label: 'Precio ↑' },
-                { id: 'price-desc' as const, label: 'Precio ↓' },
-                { id: 'popular' as const, label: 'Popular' },
-              ].map(s => (
-                <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
-                  padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  background: filterSort === s.id ? 'rgba(244,166,35,0.15)' : 'transparent',
-                  color: filterSort === s.id ? '#F4A623' : 'rgba(255,255,255,0.5)',
-                  border: filterSort === s.id ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                }}>
-                  {s.label}
-                </button>
-              ))}
+            <div style={{ marginBottom: 34 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <span style={{ color: '#f6a51a', fontSize: 26 }}>↕</span>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#f5f5f5' }}>Ordenar por</h3>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                {[
+                  { id: 'recent' as const, label: 'Últimos agregados' },
+                  { id: 'popular' as const, label: 'Más populares' },
+                  { id: 'price-asc' as const, label: 'Precio menor a mayor' },
+                  { id: 'price-desc' as const, label: 'Precio mayor a menor' },
+                ].map(s => (
+                  <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
+                    border: filterSort === s.id ? '1px solid #a66a13' : '1px solid #303030',
+                    borderRadius: 18, padding: '15px 20px',
+                    background: filterSort === s.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
+                    color: filterSort === s.id ? '#f6a51a' : '#f5f5f5',
+                    fontSize: 16, cursor: 'pointer',
+                  }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Distancia — slider con histograma */}
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Distancia: {filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}
-            </p>
-            {(() => {
-              // Build histogram: count dishes per km bucket
-              const buckets = Array(20).fill(0)
-              if (userLocation) {
-                for (const d of dishes) {
-                  if (!d.restauranteLat || !d.restauranteLng || !d.fotoUrl) continue
-                  const dist = distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng)
-                  const bucket = Math.min(Math.floor(dist), 19)
-                  buckets[bucket]++
-                }
-              }
-              const maxBucket = Math.max(...buckets, 1)
-              return (
-                <div style={{ marginBottom: 14 }}>
-                  {/* Histogram bars */}
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 32, marginBottom: 6 }}>
-                    {buckets.map((count, i) => (
-                      <div key={i} style={{
-                        flex: 1, borderRadius: 2,
-                        height: `${Math.max((count / maxBucket) * 100, 4)}%`,
-                        background: i < filterMaxKm ? 'rgba(244,166,35,0.5)' : 'rgba(255,255,255,0.08)',
-                        transition: 'background 0.15s',
-                      }} />
-                    ))}
-                  </div>
-                  {/* Slider */}
-                  <input type="range" min={1} max={20} value={filterMaxKm}
-                    onChange={e => setFilterMaxKm(Number(e.target.value))}
-                    style={{
-                      width: '100%', height: 4, appearance: 'none', background: 'transparent', cursor: 'pointer',
-                      accentColor: '#F4A623',
-                    }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>1 km</span>
-                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>20 km</span>
-                  </div>
-                </div>
-              )
-            })()}
-
-            {/* Dieta */}
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Dieta</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {[
-                { id: 'all' as const, label: 'Todo', emoji: '🍽' },
-                { id: 'VEGAN' as const, label: 'Vegano', emoji: '🌱' },
-                { id: 'VEGETARIAN' as const, label: 'Vegetariano', emoji: '🥬' },
-              ].map(d => (
-                <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
-                  padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  background: filterDiet === d.id ? 'rgba(244,166,35,0.15)' : 'transparent',
-                  color: filterDiet === d.id ? '#F4A623' : 'rgba(255,255,255,0.5)',
-                  border: filterDiet === d.id ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}>
-                  <span style={{ fontSize: 13 }}>{d.emoji}</span> {d.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Apply button */}
+            {/* Apply */}
             <button onClick={() => setFilterOpen(false)} style={{
-              width: '100%', padding: 14, borderRadius: 14, marginTop: 20,
-              background: '#F4A623', border: 'none',
-              color: '#000', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+              width: '100%', height: 70, border: 'none', borderRadius: 22,
+              background: '#f6a51a', color: '#111', fontSize: 20, fontWeight: 800, cursor: 'pointer',
             }}>
-              Aplicar filtros
+              Aplicar filtros ({feedDishes.length} platos)
             </button>
           </div>
         </>
