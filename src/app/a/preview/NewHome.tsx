@@ -290,15 +290,6 @@ export default function NewHome({
   const feedDishes = useMemo(() => {
     let filtered = dishes.filter(d => d.fotoUrl)
 
-    // Diet filter
-    if (activeDiet?.isVegan) {
-      filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
-    } else if (activeDiet?.isVegetarian) {
-      filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
-    }
-    if (activeDiet?.isGlutenFree) {
-      filtered = filtered.filter(d => d.dieta.sinGluten)
-    }
 
     // Location filter
     if (locationName) {

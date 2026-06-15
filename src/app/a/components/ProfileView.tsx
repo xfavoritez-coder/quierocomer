@@ -198,66 +198,6 @@ export default function ProfileView({
         )}
       </div>
 
-      {/* ─── Diet ─── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 14px', borderRadius: 14, marginBottom: 16,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 18 }}>{currentLabel?.emoji || '🍽'}</span>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>
-              {currentLabel?.label || 'Como de todo'}
-            </p>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '1px 0 0' }}>Restricción alimentaria</p>
-          </div>
-        </div>
-        <button onClick={() => setEditingDiet(!editingDiet)} style={{
-          background: 'none', border: 'none', color: '#F4A623', fontSize: 13,
-          cursor: 'pointer', fontWeight: 600, padding: '4px 8px',
-        }}>
-          Cambiar
-        </button>
-      </div>
-      {editingDiet && (
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16, marginTop: -8,
-          padding: '12px 14px', borderRadius: 14,
-          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
-          animation: 'fadeIn 0.2s ease-out',
-        }}>
-          {DIET_OPTIONS.map(o => {
-            const active = dietToOption(diet) === o.id
-            return (
-              <button key={o.id} onClick={() => {
-                onUpdateDiet({
-                  isVegan: o.id === 'isVegan',
-                  isVegetarian: o.id === 'isVegetarian',
-                  isGlutenFree: o.id === 'isGlutenFree',
-                  isLactoseFree: false,
-                })
-                setEditingDiet(false)
-              }} style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '8px 14px', borderRadius: 20,
-                background: active ? 'rgba(244,166,35,0.1)' : 'transparent',
-                border: `1px solid ${active ? 'rgba(244,166,35,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-              }}>
-                <span style={{ fontSize: 14 }}>{o.emoji}</span>
-                <span style={{
-                  fontSize: 13, fontWeight: active ? 600 : 400,
-                  color: active ? '#F4A623' : 'rgba(255,255,255,0.5)',
-                }}>
-                  {o.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
       {/* ─── How the engine works ─── */}
       <div style={{
         padding: '16px', borderRadius: 16, marginBottom: 16,

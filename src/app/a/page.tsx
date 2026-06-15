@@ -9,7 +9,15 @@ export default async function FeedPage() {
   const fingerprint = cookieStore.get('qc_feed_user')?.value
 
   if (!fingerprint) {
-    redirect('/a/onboarding')
+    // Auto-create user without onboarding — diet filters are in the feed
+    const newFingerprint = crypto.randomUUID()
+    const cookieStoreWrite = await cookies()
+    cookieStoreWrite.set('qc_feed_user', newFingerprint, {
+      httpOnly: false, secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', maxAge: 365 * 24 * 60 * 60, path: '/',
+    })
+    await prisma.feedUser.create({ data: { fingerprint: newFingerprint, onboardingDone: true } })
+    redirect('/a')
   }
 
   // Parallel: fetch user + dishes at the same time
@@ -35,8 +43,10 @@ export default async function FeedPage() {
     getFeedDishes(),
   ])
 
-  if (!user || !user.onboardingDone) {
-    redirect('/a/onboarding')
+  if (!user) {
+    // User cookie exists but user was deleted — recreate
+    await prisma.feedUser.create({ data: { fingerprint: fingerprint!, onboardingDone: true } })
+    redirect('/a')
   }
 
   // Fire-and-forget: update lastSeenAt
