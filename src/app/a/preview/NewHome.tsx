@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { FeedDish } from '../types'
 import { distanceKm } from '../lib/geo'
 import MasonryGrid from '../components/MasonryGrid'
-import DishModal from '../components/DishModal'
+import FeedDishDetail from '../components/FeedDishDetail'
 import SavedList from '../components/SavedList'
 import ProfileView from '../components/ProfileView'
 import { createEmptyProfile, getRecommendationReason, type FeedProfile } from '../lib/scoring'
@@ -975,16 +975,16 @@ export default function NewHome({
 
       {/* ─── DishModal ─── */}
       {selectedDish && (
-        <DishModal
+        <FeedDishDetail
           key={selectedDish.id}
           dish={selectedDish}
-          allDishes={dishes}
+          allDishes={feedDishes}
           profile={profile}
-          reason={selectedReason}
           hideRelated={hideRelated}
           onClose={() => setSelectedDish(null)}
           onSave={handleDishSave}
           onDishTap={handleDishTap}
+          userLocation={userLocation}
         />
       )}
 
