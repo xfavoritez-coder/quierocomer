@@ -85,7 +85,7 @@ export default function NewHome({
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
   const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular'>('recent')
   const [filterMaxKm, setFilterMaxKm] = useState(20)
-  const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN' | 'gluten'>('all')
+  const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
   const [locationQuery, setLocationQuery] = useState('')
@@ -284,7 +284,6 @@ export default function NewHome({
     // Diet filter
     if (filterDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
     else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
-    else if (filterDiet === 'gluten') filtered = filtered.filter(d => d.dieta.sinGluten)
 
     // Sort based on filter selection
     let combined: FeedDish[]
@@ -597,7 +596,6 @@ export default function NewHome({
                 { id: 'all' as const, label: 'Todo', emoji: '🍽' },
                 { id: 'VEGAN' as const, label: 'Vegano', emoji: '🌱' },
                 { id: 'VEGETARIAN' as const, label: 'Vegetariano', emoji: '🥬' },
-                { id: 'gluten' as const, label: 'Sin gluten', emoji: '🌾' },
               ].map(d => (
                 <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
                   padding: '6px 12px', borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: 'pointer',
