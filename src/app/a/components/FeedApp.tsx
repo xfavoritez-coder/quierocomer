@@ -367,7 +367,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
             {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} para "{searchQuery}"
           </div>
           {searchResults.length > 0 ? (
-            <MasonryGrid dishes={searchResults.slice(0, 40)} onDishTap={handleDishTap} onDishLike={handleDishLike} />
+            <MasonryGrid dishes={searchResults.slice(0, 40)} onDishTap={handleDishTap} />
           ) : (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
               <p style={{ fontSize: 32, marginBottom: 12 }}>🔍</p>
@@ -407,7 +407,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
             </>
           )}
           {activeTab === 'feed' && (
-            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} onDishLike={handleDishLike} onDishDislike={handleDishDislike} onDishUndo={handleDishUndo} userLocation={userLocation} likedIds={sessionLikedIds} dislikedIds={sessionDislikedIds} savedKeywordScores={profile.keywordScores} savedCategoryScores={profile.categoryScores} />
+            <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} userLocation={userLocation} savedKeywordScores={profile.keywordScores} savedCategoryScores={profile.categoryScores} />
           )}
         </>
       )}
@@ -429,9 +429,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
           profile={profile}
           reason={selectedReason}
           onClose={() => setSelectedDish(null)}
-          onLike={handleDishLike}
           onSave={handleDishSave}
-          onPass={handleDishPass}
           onDishTap={handleDishTap}
         />
       )}

@@ -5,26 +5,17 @@ import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 import { distanceKm, formatDistance } from '../lib/geo'
 
-type CardState = 'normal' | 'liked' | 'disliked'
-
 export default function DishCard({
   dish,
   onTap,
-  onLike,
-  onDislike,
-  onDwell,
   userLocation,
   eager,
 }: {
   dish: FeedDish
   onTap: (dish: FeedDish) => void
-  onLike?: (dish: FeedDish) => void
-  onDislike?: (dish: FeedDish) => void
-  onDwell?: (dishId: string) => void
   userLocation?: { lat: number; lng: number } | null
   eager?: boolean
 }) {
-  const cardRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
@@ -42,24 +33,6 @@ export default function DishCard({
     const t = setTimeout(() => { if (!imgLoaded) setImgError(true) }, 8000)
     return () => clearTimeout(t)
   }, [dish.fotoUrl, imgLoaded, imgError])
-  const [state, setState] = useState<CardState>('normal')
-  const [swipeX, setSwipeX] = useState(0)
-  const touchStartX = useRef(0)
-  const touchStartY = useRef(0)
-  const isSwiping = useRef(false)
-
-  // Dwell tracking
-  useEffect(() => {
-    if (!onDwell || !cardRef.current) return
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        timer = setTimeout(() => onDwell(dish.id), 2000)
-      } else if (timer) { clearTimeout(timer); timer = null }
-    }, { threshold: 0.5 })
-    observer.observe(cardRef.current)
-    return () => { observer.disconnect(); if (timer) clearTimeout(timer) }
-  }, [dish.id, onDwell])
 
   const gradient = getCategoryGradient(dish.categoriaNorm)
   const showFallback = !dish.fotoUrl || imgError
@@ -69,93 +42,16 @@ export default function DishCard({
   const ratios = ['3/4', '4/5', '1/1', '5/7', '2/3', '5/6', '4/5', '7/9', '3/4', '5/8', '1/1', '4/5']
   const aspectRatio = ratios[seed % ratios.length]
 
-  // Swipe handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchStartY.current = e.touches[0].clientY
-    isSwiping.current = false
-  }, [])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    const dx = e.touches[0].clientX - touchStartX.current
-    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
-    // Only swipe if horizontal movement > vertical
-    if (Math.abs(dx) > 15 && Math.abs(dx) > dy) {
-      isSwiping.current = true
-      setSwipeX(dx)
-    }
-  }, [])
-
-  const handleTouchEnd = useCallback(() => {
-    if (Math.abs(swipeX) > 80) {
-      // Fly the card off-screen in the swipe direction
-      const flyDirection = swipeX > 0 ? window.innerWidth : -window.innerWidth
-      setSwipeX(flyDirection)
-      if (swipeX > 0) {
-        setState('liked')
-        setTimeout(() => { onLike?.(dish) }, 350)
-      } else {
-        setState('disliked')
-        setTimeout(() => { onDislike?.(dish) }, 350)
-      }
-    } else {
-      setSwipeX(0)
-    }
-    isSwiping.current = false
-  }, [swipeX, dish, onLike, onDislike])
-
   const handleClick = useCallback(() => {
-    if (!isSwiping.current && state === 'normal') onTap(dish)
-  }, [dish, onTap, state])
+    onTap(dish)
+  }, [dish, onTap])
 
   return (
     <div
-      ref={cardRef}
       className="dish-card"
       onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      style={{
-        transform: swipeX !== 0 ? `translateX(${swipeX}px) rotate(${swipeX * 0.04}deg)` : undefined,
-        opacity: state === 'liked' || state === 'disliked' ? 0 : 1,
-        transition: state === 'liked' || state === 'disliked'
-          ? 'transform 0.35s ease-out, opacity 0.3s ease-out'
-          : swipeX === 0 ? 'transform 0.2s ease' : 'none',
-        position: 'relative',
-      }}
+      style={{ position: 'relative', cursor: 'pointer' }}
     >
-      {/* Swipe indicator */}
-      {Math.abs(swipeX) > 40 && (
-        <div style={{
-          position: 'absolute', top: 16, left: swipeX > 0 ? 16 : undefined, right: swipeX < 0 ? 16 : undefined,
-          zIndex: 10, padding: '6px 12px', borderRadius: 8,
-          background: swipeX > 0 ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)',
-          color: '#fff',
-          fontSize: 12, fontWeight: 700,
-        }}>
-          {swipeX > 0 ? '👍 Me gusta' : '👎 Paso'}
-        </div>
-      )}
-
-      {/* "Me antojé" stamp for liked */}
-      {state === 'liked' && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 8,
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
-          padding: 12, pointerEvents: 'none',
-        }}>
-          <div style={{
-            padding: '6px 12px', borderRadius: 8,
-            background: 'rgba(34,197,94,0.9)', color: '#fff',
-            fontSize: 11, fontWeight: 700, transform: 'rotate(3deg)',
-            boxShadow: '0 2px 8px rgba(34,197,94,0.3)',
-          }}>
-            Me antojé 🤤
-          </div>
-        </div>
-      )}
-
       {/* Photo */}
       <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: '#1a1a1a' }}>
         {/* Skeleton shimmer while image loads */}

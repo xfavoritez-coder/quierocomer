@@ -271,9 +271,7 @@ export default function SearchExplore({
           profile={profile}
           reason={selectedReason}
           onClose={() => setSelectedDish(null)}
-          onLike={(d) => { updateTasteAction(d.id, 'LIKE').catch(() => {}) }}
           onSave={(d) => { saveDish(d.id, 'SAVED').catch(() => {}) }}
-          onPass={(d) => { updateTasteAction(d.id, 'DISLIKE').catch(() => {}) }}
           onDishTap={handleDishTap}
         />
       )}

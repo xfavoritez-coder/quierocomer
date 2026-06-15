@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
-import { extractKeywords, keywordAffinity } from '../lib/keywords'
+import { extractKeywords } from '../lib/keywords'
 import type { FeedProfile } from '../lib/scoring'
 import { getSimilarDishIds } from '../lib/feed-actions'
 import DishCard from './DishCard'
@@ -14,9 +14,7 @@ export default function DishModal({
   profile,
   reason,
   onClose,
-  onLike,
   onSave,
-  onPass,
   onDishTap,
   hideRelated,
 }: {
@@ -26,9 +24,7 @@ export default function DishModal({
   reason?: string | null
   hideRelated?: boolean
   onClose: () => void
-  onLike: (dish: FeedDish) => void
   onSave: (dish: FeedDish) => void
-  onPass: (dish: FeedDish) => void
   onDishTap: (dish: FeedDish) => void
 }) {
   const [imgError, setImgError] = useState(false)
@@ -42,40 +38,21 @@ export default function DishModal({
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  // Swipe: horizontal = like/dislike, vertical down = close
-  const touchStartX = useRef(0)
+  // Swipe down to close
   const touchStartY = useRef(0)
-  const [swipeX, setSwipeX] = useState(0)
-  const [flyAway, setFlyAway] = useState<'left' | 'right' | null>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
-  }
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (modalRef.current && modalRef.current.scrollTop > 0) return
-    const dx = e.touches[0].clientX - touchStartX.current
-    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
-    if (Math.abs(dx) > 15 && Math.abs(dx) > dy) {
-      setSwipeX(dx)
-    }
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     const dy = e.changedTouches[0].clientY - touchStartY.current
-    if (Math.abs(swipeX) > 80) {
-      const direction = swipeX > 0 ? 'right' : 'left'
-      if (swipeX > 0) { onLike(dish) } else { onPass(dish) }
-      setFlyAway(direction)
-      setTimeout(() => onClose(), 300)
-    } else if (dy > 100 && modalRef.current && modalRef.current.scrollTop <= 0) {
+    if (dy > 100 && modalRef.current && modalRef.current.scrollTop <= 0) {
       onClose()
     }
-    setSwipeX(0)
   }
 
-  // Related dishes — live feed: scored, reactive to likes/dislikes, infinite scroll
-  const [relatedSwipedIds, setRelatedSwipedIds] = useState<Set<string>>(new Set())
+  // Related dishes — scored by similarity
   const [visibleRelated, setVisibleRelated] = useState(20)
   const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
 
@@ -86,8 +63,7 @@ export default function DishModal({
   }, [dish.id])
 
   const relatedDishes = useMemo(() => {
-    const excluded = new Set([dish.id, ...relatedSwipedIds])
-    const candidates = allDishes.filter(d => d.fotoUrl && !excluded.has(d.id))
+    const candidates = allDishes.filter(d => d.fotoUrl && d.id !== dish.id)
 
     // Build score map from embeddings (if available)
     const embeddingRank = new Map<string, number>()
@@ -119,18 +95,7 @@ export default function DishModal({
       })
       .sort((a, b) => b.score - a.score)
       .map(x => x.dish)
-  }, [dish, allDishes, profile, embeddingSimilarIds, relatedSwipedIds])
-
-  // Handlers for related dish swipes
-  const handleRelatedLike = useCallback((d: FeedDish) => {
-    setRelatedSwipedIds(prev => new Set([...prev, d.id]))
-    onLike(d)
-  }, [onLike])
-
-  const handleRelatedPass = useCallback((d: FeedDish) => {
-    setRelatedSwipedIds(prev => new Set([...prev, d.id]))
-    onPass(d)
-  }, [onPass])
+  }, [dish, allDishes, profile, embeddingSimilarIds])
 
   // Infinite scroll for related dishes inside modal
   useEffect(() => {
@@ -154,27 +119,8 @@ export default function DishModal({
   return (
     <>
       <div className="dish-modal-overlay" onClick={onClose} />
-      <div className="dish-modal" ref={modalRef} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-        style={{
-          transform: flyAway ? `translateX(${flyAway === 'right' ? '120%' : '-120%'}) rotate(${flyAway === 'right' ? '15' : '-15'}deg)`
-            : swipeX !== 0 ? `translateX(${swipeX * 0.3}px) rotate(${swipeX * 0.02}deg)` : undefined,
-          transition: flyAway ? 'transform 0.3s ease-in' : swipeX === 0 ? 'transform 0.2s ease' : 'none',
-          opacity: flyAway ? 0.5 : 1,
-        }}>
+      <div className="dish-modal" ref={modalRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative' }}>
-
-          {/* Swipe indicator */}
-          {Math.abs(swipeX) > 40 && (
-            <div style={{
-              position: 'absolute', top: 20, left: swipeX > 0 ? 20 : undefined, right: swipeX < 0 ? 20 : undefined,
-              zIndex: 15, padding: '8px 16px', borderRadius: 10,
-              background: swipeX > 0 ? 'rgba(244,166,35,0.9)' : 'rgba(239,68,68,0.9)',
-              color: '#fff',
-              fontSize: 14, fontWeight: 700,
-            }}>
-              {swipeX > 0 ? '👍 Me gusta' : '👎 Paso'}
-            </div>
-          )}
 
           {/* Close button — sticky */}
           <div style={{ position: 'sticky', top: 0, zIndex: 15, display: 'flex', justifyContent: 'flex-end', padding: '10px 12px', marginBottom: -46 }}>
@@ -317,8 +263,6 @@ export default function DishModal({
                         key={d.id}
                         dish={d}
                         onTap={onDishTap}
-                        onLike={handleRelatedLike}
-                        onDislike={handleRelatedPass}
                       />
                     ))}
                   </div>

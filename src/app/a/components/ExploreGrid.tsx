@@ -9,23 +9,13 @@ import MasonryGrid from './MasonryGrid'
 export default function ExploreGrid({
   dishes,
   onDishTap,
-  onDishLike,
-  onDishDislike,
-  onDishUndo,
   userLocation,
-  likedIds,
-  dislikedIds,
   savedKeywordScores,
   savedCategoryScores,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
-  onDishLike?: (dish: FeedDish) => void
-  onDishDislike?: (dish: FeedDish) => void
-  onDishUndo?: (dish: FeedDish) => void
   userLocation?: { lat: number; lng: number } | null
-  likedIds?: Set<string>
-  dislikedIds?: Set<string>
   savedKeywordScores?: Record<string, number>
   savedCategoryScores?: Record<string, number>
 }) {
@@ -45,27 +35,14 @@ export default function ExploreGrid({
     // Start with saved scores from BD
     const scores: Record<string, number> = { ...(savedKeywordScores ?? {}) }
 
-    // Add live session likes/dislikes (stronger weight)
-    for (const dish of dishes) {
-      const kws = extractKeywords(dish.nombre, dish.descripcion)
-      if (likedIds?.has(dish.id)) {
-        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) + 8
-      }
-      if (dislikedIds?.has(dish.id)) {
-        for (const kw of kws) scores[kw] = (scores[kw] ?? 0) - 12
-      }
-    }
     return scores
-  }, [dishes, likedIds, dislikedIds, savedKeywordScores])
+  }, [dishes, savedKeywordScores])
 
   // Feed con mezcla 70/15/15: scored + popular + discovery
   const sorted = useMemo(() => {
     let filtered = dishes
     if (activeCategory === 'ofertas') filtered = dishes.filter(d => d.enOferta)
     else if (activeCategory) filtered = dishes.filter(d => d.categoriaNorm === activeCategory)
-
-    // Remove disliked
-    filtered = filtered.filter(d => !dislikedIds?.has(d.id))
 
     // Score each dish
     const scored = filtered.map(d => {
@@ -142,7 +119,7 @@ export default function ExploreGrid({
     }
 
     return final
-  }, [dishes, activeCategory, mergedKeywordScores, dislikedIds, savedCategoryScores])
+  }, [dishes, activeCategory, mergedKeywordScores, savedCategoryScores])
 
   useEffect(() => { setVisibleCount(20) }, [activeCategory])
 
@@ -188,7 +165,7 @@ export default function ExploreGrid({
       </div>
 
       {sorted.length > 0 ? (
-        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onDishLike={onDishLike} onDishDislike={onDishDislike} userLocation={userLocation} />
+        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} userLocation={userLocation} />
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
           No hay platos en esta categoría

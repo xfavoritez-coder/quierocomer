@@ -44,15 +44,11 @@ export default function FeedGrid({
   dishes,
   profile,
   onDishTap,
-  onDishLike,
-  onDishDwell,
   userLocation,
 }: {
   dishes: FeedDish[]
   profile?: FeedProfile
   onDishTap: (dish: FeedDish) => void
-  onDishLike?: (dish: FeedDish) => void
-  onDishDwell?: (dishId: string) => void
   userLocation?: { lat: number; lng: number } | null
 }) {
   // Create a key from dish IDs to detect filter changes
@@ -94,8 +90,6 @@ export default function FeedGrid({
     <MasonryGrid
       dishes={feed.slice(0, visibleCount)}
       onDishTap={onDishTap}
-      onDishLike={onDishLike}
-      onDishDwell={onDishDwell}
       userLocation={userLocation}
     />
   )
