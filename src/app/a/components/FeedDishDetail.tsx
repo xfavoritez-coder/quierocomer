@@ -144,6 +144,7 @@ function DishSlide({
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [showLocal, setShowLocal] = useState(false)
+  const [visibleRelated, setVisibleRelated] = useState(10)
   const slideRef = useRef<HTMLDivElement>(null)
   const pullY = useRef<number | null>(null)
   const gradient = getCategoryGradient(dish.categoriaNorm)
@@ -181,6 +182,19 @@ function DishSlide({
       .map(x => x.dish)
   }, [dish, allDishes, embeddingSimilarIds, hideRelated])
 
+  // Infinite scroll for related dishes inside slide
+  useEffect(() => {
+    const el = slideRef.current
+    if (!el) return
+    const handleScroll = () => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 600 && visibleRelated < relatedDishes.length) {
+        setVisibleRelated(prev => Math.min(prev + 10, relatedDishes.length))
+      }
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [visibleRelated, relatedDishes.length])
+
   // Restaurant dishes
   const restDishes = useMemo(() =>
     allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl).slice(0, 8),
@@ -205,6 +219,19 @@ function DishSlide({
         background: '#0e0e0e',
       }}
     >
+      {/* Close button — sticky */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 15, display: 'flex', justifyContent: 'flex-end', padding: '10px 14px', marginBottom: -48 }}>
+        <button onClick={onClose} style={{
+          width: 38, height: 38, borderRadius: '50%',
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
       {/* Photo — big hero */}
       <div style={{ position: 'relative', width: '100%', height: 'min(55vh, 420px)', overflow: 'hidden' }}>
         {dish.fotoUrl ? (
@@ -219,19 +246,6 @@ function DishSlide({
             <span style={{ fontSize: 48, opacity: 0.5 }}>🍽</span>
           </div>
         )}
-
-        {/* Close button */}
-        <button onClick={onClose} style={{
-          position: 'absolute', top: 14, right: 14, zIndex: 10,
-          width: 38, height: 38, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff',
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-
       </div>
 
       {/* Content */}
@@ -351,12 +365,21 @@ function DishSlide({
             <div style={{ display: 'flex', gap: 10 }}>
               {[0, 1].map(col => (
                 <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {relatedDishes.filter((_, i) => i % 2 === col).map(d => (
+                  {relatedDishes.slice(0, visibleRelated).filter((_, i) => i % 2 === col).map(d => (
                     <DishCard key={d.id} dish={d} onTap={onDishTap} />
                   ))}
                 </div>
               ))}
             </div>
+            {visibleRelated < relatedDishes.length && (
+              <div style={{ display: 'flex', gap: 10, paddingTop: 10 }}>
+                {[0, 1].map(col => (
+                  <div key={col} style={{ flex: 1 }}>
+                    <div className="skeleton-shimmer" style={{ aspectRatio: '3/4', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
