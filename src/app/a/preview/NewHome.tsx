@@ -87,7 +87,7 @@ export default function NewHome({
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
   const [showTutorial, setShowTutorial] = useState(totalInteractions === 0)
-  const [eurekaThreshold, setEurekaThreshold] = useState(75)
+  const [eurekaThreshold, setEurekaThreshold] = useState(65)
   const [eurekaDismissed, setEurekaDismissed] = useState(false)
   const [currentHintLevel, setCurrentHintLevel] = useState(0)
   const shownHintLevels = useRef(new Set<number>())
@@ -872,12 +872,13 @@ export default function NewHome({
             )}
           </div>
 
-          {/* Eureka progress — sticky below categories */}
+          {/* Eureka progress — fixed below header */}
           {(sessionLikedIds.size + sessionDislikedIds.size) > 0 && !showEureka && (
             <div style={{
-              position: 'sticky', top: 0, zIndex: 30,
+              position: 'fixed', top: 44, left: 0, right: 0, zIndex: 40,
               padding: '8px 16px 6px',
               background: 'rgba(14,14,14,0.95)', backdropFilter: 'blur(12px)',
+              borderBottom: '1px solid rgba(255,255,255,0.04)',
             }}>
               <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', marginBottom: 5 }}>
                 <div style={{
@@ -1001,7 +1002,7 @@ export default function NewHome({
           topDishes={eurekaState.topDishes}
           userLocation={userLocation}
           onContinueExploring={handleContinueExploring}
-          onViewCarta={(slug) => window.open(`/qr/${slug}`, '_blank')}
+          onDishTap={(dish) => { handleDishTap(dish) }}
           fallbackMode={eurekaState.fallbackMode}
         />
       )}

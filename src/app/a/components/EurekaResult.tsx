@@ -13,14 +13,14 @@ export default function EurekaResult({
   topDishes,
   userLocation,
   onContinueExploring,
-  onViewCarta,
+  onDishTap,
   fallbackMode,
 }: {
   topCategory: string | null
   topDishes: FeedDish[]
   userLocation: { lat: number; lng: number } | null
   onContinueExploring: () => void
-  onViewCarta: (slug: string) => void
+  onDishTap: (dish: FeedDish) => void
   fallbackMode: boolean
 }) {
   if (topDishes.length === 0) return null
@@ -82,7 +82,7 @@ export default function EurekaResult({
               : null
 
             return (
-              <button key={dish.id} onClick={() => onViewCarta(dish.restauranteSlug)} style={{
+              <button key={dish.id} onClick={() => onDishTap(dish)} style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: 12, borderRadius: 16, width: '100%',
                 background: 'rgba(255,255,255,0.05)',
@@ -123,7 +123,7 @@ export default function EurekaResult({
                   background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.2)',
                   color: '#F4A623', fontSize: 12, fontWeight: 600, flexShrink: 0,
                 }}>
-                  Ver carta
+                  Ver plato
                 </div>
               </button>
             )

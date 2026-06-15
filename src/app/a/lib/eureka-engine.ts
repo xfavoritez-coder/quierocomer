@@ -69,8 +69,8 @@ export function computeEurekaState(
   const topCategoryShare = likesInSpecificCats > 0 ? topCategoryCount / likesInSpecificCats : 0
 
   // Concentration scales with both share AND absolute count
-  // 1 like in 1 category = share 1.0 but count too low → damped
-  const countDamping = Math.min(totalLikes / 4, 1) // need 4+ likes for full signal
+  // 2 likes in same category = already a signal, 3+ = strong
+  const countDamping = Math.min(topCategoryCount / 3, 1) // need 3+ likes in TOP category for full signal
   const catConcentration = topCategoryShare * countDamping
 
   // ─── Signal B: Keyword Convergence (25%) ────────────────────
@@ -115,8 +115,8 @@ export function computeEurekaState(
 
   // ─── Final confidence ───────────────────────────────────────
   const confidence = Math.round(
-    catConcentration * 35 +
-    keywordConvergence * 25 +
+    catConcentration * 45 +
+    keywordConvergence * 15 +
     historicalConfirmation * 20 +
     dislikeConsistency * 20
   )
