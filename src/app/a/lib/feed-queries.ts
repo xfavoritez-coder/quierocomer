@@ -62,6 +62,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
         },
       },
     },
+    orderBy: { createdAt: 'desc' },
   })
 
   const feedDishes: FeedDish[] = []
