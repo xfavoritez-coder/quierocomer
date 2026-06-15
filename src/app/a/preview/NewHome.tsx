@@ -637,13 +637,13 @@ export default function NewHome({
       {/* ─── Filter dropdown ─── */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80 }} />
           <div style={{
-            position: 'absolute', top: '100%', right: 16, zIndex: 45,
+            position: 'fixed', top: 100, right: 16, zIndex: 81,
             background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
             border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
             padding: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-            width: 260,
+            width: 280, maxHeight: '70vh', overflowY: 'auto',
           }}>
             {/* Momento */}
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Momento</p>
