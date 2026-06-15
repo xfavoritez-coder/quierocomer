@@ -12,6 +12,9 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       deletedAt: null,
       photos: { isEmpty: false },
       price: { gt: 0 },
+      category: {
+        dishType: { not: 'drink' },
+      },
       restaurant: {
         isActive: true,
         isDemo: false,

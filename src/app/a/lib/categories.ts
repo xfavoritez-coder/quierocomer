@@ -419,6 +419,5 @@ export function getDisplayCategories(): DisplayCategory[] {
     { icon: '🥪', label: 'Sándwiches', norm: 'Sándwiches' },
     { icon: '🥗', label: 'Saludable', norm: 'Saludable' },
     { icon: '🍰', label: 'Postres', norm: 'Postres' },
-    { icon: '☕', label: 'Cafetería', norm: 'Cafetería' },
   ]
 }
