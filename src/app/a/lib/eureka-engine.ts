@@ -139,30 +139,31 @@ function selectTopDishes(
   likedIds: Set<string>,
   userLocation: { lat: number; lng: number } | null,
 ): FeedDish[] {
+  // EXCLUDE dishes already liked or disliked — show NEW discoveries only
   const candidates = dishes.filter(d =>
-    d.categoriaNorm === topCategory && d.fotoUrl && !dislikedIds.has(d.id)
+    d.categoriaNorm === topCategory &&
+    d.fotoUrl &&
+    !dislikedIds.has(d.id) &&
+    !likedIds.has(d.id)
   )
 
   if (userLocation) {
+    // Sort by proximity — closest restaurants first
     return candidates
       .map(d => ({
         dish: d,
-        liked: likedIds.has(d.id) ? 1 : 0,
         dist: d.restauranteLat && d.restauranteLng
           ? distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng)
           : 999,
       }))
-      .sort((a, b) => b.liked - a.liked || a.dist - b.dist)
+      .sort((a, b) => a.dist - b.dist)
       .slice(0, 3)
       .map(x => x.dish)
   }
 
+  // No location: sort by popularity
   return candidates
-    .sort((a, b) => {
-      const aL = likedIds.has(a.id) ? 1 : 0
-      const bL = likedIds.has(b.id) ? 1 : 0
-      return bL - aL || b.popularityScore - a.popularityScore
-    })
+    .sort((a, b) => b.popularityScore - a.popularityScore)
     .slice(0, 3)
 }
 
@@ -170,6 +171,8 @@ function selectFallbackDishes(
   likedDishes: FeedDish[],
   userLocation: { lat: number; lng: number } | null,
 ): FeedDish[] {
+  // Fallback: show the liked dishes themselves (user has no clear category)
+  // This IS the case where showing liked dishes makes sense
   const withPhotos = likedDishes.filter(d => d.fotoUrl)
   if (userLocation) {
     return withPhotos
