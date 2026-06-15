@@ -574,8 +574,23 @@ export default function NewHome({
               </button>
             </div>
 
-            {/* Nav — only B2B links */}
+            {/* Nav */}
             <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '14px 16px', borderRadius: 14,
+                color: '#fff', textDecoration: 'none',
+                fontSize: 17, fontWeight: 600,
+                background: view === 'perfil' ? 'rgba(244,166,35,0.08)' : 'transparent',
+                border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <span style={{ color: '#855bd8', display: 'flex', flexShrink: 0 }}>
+                  <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>
+                </span>
+                Mi perfil
+              </button>
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 16px' }} />
               <a href="/qr" style={{
                 display: 'flex', alignItems: 'center', gap: 16,
                 padding: '14px 16px', borderRadius: 14,
@@ -703,22 +718,36 @@ export default function NewHome({
               )}
             </div>
 
-            <button onClick={() => setLocationOpen(!locationOpen)} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '7px 14px', borderRadius: 22, flexShrink: 0,
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-              cursor: 'pointer',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{
-                fontSize: 14, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-                maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              {/* Search button */}
+              <a href="/a/search" style={{
+                width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', textDecoration: 'none',
               }}>
-                {locationName || gpsLabel || 'Ubicación'}
-              </span>
-            </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+              </a>
+              {/* Location button */}
+              <button onClick={() => setLocationOpen(!locationOpen)} style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '7px 14px', borderRadius: 22, flexShrink: 0,
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+                </svg>
+                <span style={{
+                  fontSize: 14, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
+                  maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {locationName || gpsLabel || 'Ubicación'}
+                </span>
+              </button>
+            </div>
 
             {/* Location dropdown */}
             {locationOpen && (
@@ -1028,39 +1057,6 @@ export default function NewHome({
         />
       )}
 
-      {/* ─── Floating nav — 3 buttons ─── */}
-      <div style={{
-        position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 50, display: 'flex', gap: 10,
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}>
-        {[
-          { id: 'feed' as View, label: 'Inicio',
-            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill={a ? '#F4A623' : 'none'} stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12H3l9-9 9 9h-2" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /><path d="M9 21v-6h6v6" /></svg>,
-            action: () => { setView('feed'); window.scrollTo({ top: 0, behavior: 'smooth' }) } },
-          { id: 'search' as any, label: 'Buscar',
-            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
-            action: () => { window.location.href = '/a/search' } },
-          { id: 'perfil' as View, label: 'Mi perfil',
-            icon: (a: boolean) => <svg width="20" height="20" viewBox="0 0 24 24" fill={a ? '#F4A623' : 'none'} stroke={a ? '#F4A623' : 'rgba(255,255,255,0.6)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7" /></svg>,
-            action: () => { setView('perfil'); window.scrollTo(0, 0) } },
-        ].map(tab => {
-          const active = view === tab.id || (tab.id === 'perfil' && (view === 'all-liked' || view === 'all-saved'))
-          return (
-            <button key={tab.id} onClick={tab.action} style={{
-              width: 52, height: 52, borderRadius: '50%',
-              background: active ? 'rgba(244,166,35,0.15)' : 'rgba(20,20,20,0.75)',
-              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-              border: active ? '1.5px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-            }}>
-              {tab.icon(active)}
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }

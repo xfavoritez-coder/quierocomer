@@ -176,10 +176,9 @@ export default function DishModal({
             </div>
           )}
 
-          {/* Hero image */}
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a1a' }}>
+          {/* Close button — sticky */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 15, display: 'flex', justifyContent: 'flex-end', padding: '10px 12px', marginBottom: -46 }}>
             <button onClick={onClose} style={{
-              position: 'absolute', top: 12, right: 12, zIndex: 10,
               width: 36, height: 36, borderRadius: '50%',
               background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
@@ -189,6 +188,10 @@ export default function DishModal({
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
+          </div>
+
+          {/* Hero image */}
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#1a1a1a' }}>
             {dish.fotoUrl && !imgError ? (
               <img src={dish.fotoUrl} alt={dish.nombre}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
