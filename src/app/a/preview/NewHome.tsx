@@ -135,64 +135,45 @@ export default function NewHome({
   // Geolocation — IP fallback + GPS upgrade
   const [gpsLabel, setGpsLabel] = useState<string | null>(null)
 
-  // Step 1: IP-based city detection (no permission needed) — sets locationName to filter feed
+  // Location: ask GPS directly on mount, fallback to IP
   useEffect(() => {
-    if (locationName || userLocation) return // already have location
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(data => {
-        if (data.city) {
-          setLocationName(data.city)
-        }
-      })
-      .catch(() => {})
+    if (userLocation) return
+
+    const reverseGeocode = async (lat: number, lng: number) => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=16`)
+        const data = await res.json()
+        const addr = data.address
+        // Show neighborhood/suburb or road name
+        return addr.suburb || addr.neighbourhood || addr.road || addr.city_district || addr.city || 'Cerca de ti'
+      } catch { return null }
+    }
+
+    const onGPS = async (pos: GeolocationPosition) => {
+      const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+      setUserLocation(loc)
+      setLocationName(null)
+      // Reverse geocode for accurate label
+      const label = await reverseGeocode(loc.lat, loc.lng)
+      setGpsLabel(label || 'Cerca de ti')
+    }
+
+    const onGPSError = () => {
+      // Fallback to IP
+      fetch('https://ipapi.co/json/')
+        .then(r => r.json())
+        .then(data => { if (data.city) setLocationName(data.city) })
+        .catch(() => {})
+    }
+
+    // Request GPS with high accuracy
+    navigator.geolocation?.getCurrentPosition(onGPS, onGPSError, {
+      enableHighAccuracy: true,
+      timeout: 8000,
+      maximumAge: 60000,
+    })
   }, [])
 
-  // Step 2: GPS upgrade (if permission already granted, silently upgrade)
-  useEffect(() => {
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'geolocation' }).then(result => {
-        if (result.state === 'granted') {
-          // Permission already granted — GPS takes priority over IP
-          navigator.geolocation.getCurrentPosition(pos => {
-            const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-            setUserLocation(loc)
-            setLocationName(null) // Clear IP-based city filter, GPS filter takes over
-            const nearest = dishes
-              .filter(d => d.restauranteLat && d.restauranteLng)
-              .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
-              .sort((a, b) => a.dist - b.dist)[0]
-            if (nearest?.d.restauranteDireccion) {
-              const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
-                .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
-              const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
-              setGpsLabel(commune || 'Cerca de ti')
-            }
-          }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
-        }
-        // If not granted, don't ask — IP label is enough
-      }).catch(() => {})
-    } else {
-      // No permissions API — try GPS directly (will prompt user)
-      navigator.geolocation?.getCurrentPosition(pos => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        setUserLocation(loc)
-        setLocationName(null) // GPS takes priority
-        const nearest = dishes
-          .filter(d => d.restauranteLat && d.restauranteLng)
-          .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
-          .sort((a, b) => a.dist - b.dist)[0]
-        if (nearest?.d.restauranteDireccion) {
-          const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
-            .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
-          const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
-          setGpsLabel(commune || 'Cerca de ti')
-        } else {
-          setGpsLabel('Cerca de ti')
-        }
-      }, () => {}, { enableHighAccuracy: false, timeout: 5000 })
-    }
-  }, [dishes])
 
   // Cities and communes for location dropdown
   const CITY_NAMES = new Set(['Santiago', 'Santiago Centro', 'Valparaíso', 'La Serena', 'Victoria'])
