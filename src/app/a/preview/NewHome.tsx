@@ -674,43 +674,6 @@ export default function NewHome({
             </div>
           )}
 
-          {/* ─── Categories — sticky ─── */}
-          <div style={{
-            position: 'sticky', top: 0, zIndex: 35,
-            background: 'rgba(14,14,14,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-            padding: '12px 0 8px',
-          }}>
-            <div style={{ position: 'relative' }}>
-              <div
-                ref={categoryScrollRef}
-                onScroll={handleCategoryScroll}
-                style={{
-                  display: 'flex', gap: 16, overflowX: 'auto', padding: '0 20px 4px',
-                  scrollbarWidth: 'none', msOverflowStyle: 'none',
-                }}
-              >
-                <CategoryCircle icon="🔥" label="Todo" active={!activeCategory}
-                  onClick={() => setActiveCategory(null)} />
-                {categories.map(cat => (
-                  <CategoryCircle
-                    key={cat.norm}
-                    icon={cat.icon}
-                    label={cat.label}
-                    active={activeCategory === cat.norm}
-                    onClick={() => setActiveCategory(activeCategory === cat.norm ? null : cat.norm)}
-                  />
-                ))}
-              </div>
-              {showCategoryFade && (
-                <div style={{
-                  position: 'absolute', top: 0, right: 0, bottom: 4, width: 50,
-                  background: 'linear-gradient(to left, rgba(14,14,14,0.95), transparent)',
-                  pointerEvents: 'none',
-                }} />
-              )}
-            </div>
-          </div>
-
           {/* Contextual greeting + meal time + location */}
           <div style={{
             padding: '6px 20px 10px', position: 'relative',
