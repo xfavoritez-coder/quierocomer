@@ -376,41 +376,33 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
 
   console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "", extractionConfig ? `(config: ${JSON.stringify(extractionConfig)})` : "");
 
-  // Gourmedia: multi-page menus — fetch all food sub-pages and combine
+  // Gourmedia: fetch via Jina + raw HTML for photos (CDN images only visible in raw HTML)
   if (getDomain(menuUrl).includes("gour.media")) {
-    console.log("[Scraper] Gourmedia detected — fetching sub-pages...");
+    console.log("[Scraper] Gourmedia detected — fetching Jina content + raw HTML for photos...");
     try {
-      const mainPage = await fetchPage(menuUrl, true);
-      // Extract sub-page links for this restaurant
-      const slug = menuUrl.replace(/https?:\/\/gour\.media\//, "").replace(/\/$/, "");
-      const subPageRegex = new RegExp(`gour\\.media/${slug}/([a-z0-9-]+)/?`, "gi");
-      const subMatches = mainPage.match(subPageRegex) || [];
-      const subSlugs = [...new Set(subMatches.map(m => m.replace(`gour.media/${slug}/`, "").replace(/\/$/, "")))];
-      // Filter food-related sub-pages (skip bar, vinos, reservas, etc.)
-      const drinkPages = new Set(["bar", "barra", "carta-de-vinos", "vinos", "vinos-y-espumantes", "cocteles", "cocktails", "tragos", "cervezas", "bebidas", "reservas", "reservar"]);
-      const foodPages = subSlugs.filter(s => !drinkPages.has(s) && s.length > 1);
-      console.log(`[Scraper] Gourmedia sub-pages: ${subSlugs.join(", ")} → food: ${foodPages.join(", ")}`);
+      // Fetch Jina (text content) + raw HTML (photos) in parallel
+      const [jinaContent, rawHtml] = await Promise.all([
+        fetchPage(menuUrl, true),
+        fetchWithTimeout(menuUrl, 10000).catch(() => ""),
+      ]);
 
-      if (foodPages.length > 0) {
-        let combined = mainPage;
-        for (const sub of foodPages) {
-          const subUrl = `https://gour.media/${slug}/${sub}/`;
-          console.log(`[Scraper] Fetching Gourmedia sub-page: ${subUrl}`);
-          try {
-            const subContent = await fetchPage(subUrl, true);
-            combined += `\n\n--- SECCIÓN: ${sub.toUpperCase().replace(/-/g, " ")} ---\n\n` + subContent;
-          } catch (e) { console.log(`[Scraper] Sub-page failed: ${sub}`); }
-          await new Promise(r => setTimeout(r, 1000));
-        }
-        // Continue with combined content
-        const pageContent = combined;
-        const isMarkdown = true;
-        let cleaned = pageContent;
-        console.log("[Scraper] Gourmedia combined length:", cleaned.length);
-        const content = cleaned.length > cfgMaxChars * 2 ? cleaned.slice(0, cfgMaxChars * 2) : cleaned;
-        console.log("[Scraper] Trimmed to:", content.length, "| Calling Claude...");
+      // Extract CDN photo URLs from raw HTML
+      const photoUrls = [...new Set(
+        (rawHtml.match(/gourmedia-content\.b-cdn\.net\/wp-content\/uploads\/[^\s"'\\]+\.webp/gi) || [])
+          .map((u: string) => "https://" + u.replace(/\\\//g, "/"))
+      )];
+      console.log(`[Scraper] Gourmedia: ${jinaContent.length} chars Jina | ${photoUrls.length} CDN photos from raw HTML`);
 
-        const gourResult = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
+      // Append photo URLs to content so Claude can match them to dishes
+      let combined = jinaContent;
+      if (photoUrls.length > 0) {
+        combined += "\n\n[DISH PHOTOS FROM PAGE DATA]\n" + photoUrls.map((url, i) => `Photo ${i + 1}: ${url}`).join("\n");
+      }
+
+      const content = combined.length > cfgMaxChars * 2 ? combined.slice(0, cfgMaxChars * 2) : combined;
+      console.log("[Scraper] Trimmed to:", content.length, "| Calling Claude...");
+
+      const gourResult = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
 URL: ${menuUrl}
 Contenido:
 ${content}
@@ -420,37 +412,36 @@ Responde con JSON:
 
 REGLAS IMPORTANTES:
 - Precios: busca números que parezcan precios. Conviértelos a enteros sin puntos: $8.990→8990
-- Fotos: busca URLs de imágenes y asócialas al plato correspondiente
-- Las URLs de fotos deben ser absolutas
+- Fotos: busca URLs de imágenes en [DISH PHOTOS FROM PAGE DATA] y asócialas al plato correspondiente por posición
+- Las URLs de fotos deben ser absolutas (https://gourmedia-content.b-cdn.net/...)
 - NO incluyas bebidas, tragos, vinos, cervezas ni bebestibles
 - diet: "VEGAN" si vegano, "VEGETARIAN" si vegetariano, "OMNIVORE" si no
 - SOLO JSON, sin texto adicional.`);
 
-        const gourParsed = parseJSON(gourResult);
-        const gourDishes: ExtractedDish[] = [];
-        for (const cat of (gourParsed.categories || [])) {
-          for (const dish of (cat.dishes || [])) {
-            if (!dish.name) continue;
-            gourDishes.push({
-              name: dish.name.trim(),
-              description: dish.description || "",
-              price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
-              imageUrl: dish.photo || null,
-              category: cat.name || "General",
-              diet: ["VEGAN", "VEGETARIAN"].includes(dish.diet) ? dish.diet : "OMNIVORE",
-              isSpicy: dish.isSpicy || false,
-            });
-          }
+      const gourParsed = parseJSON(gourResult);
+      const gourDishes: ExtractedDish[] = [];
+      for (const cat of (gourParsed.categories || [])) {
+        for (const dish of (cat.dishes || [])) {
+          if (!dish.name) continue;
+          gourDishes.push({
+            name: dish.name.trim(),
+            description: dish.description || "",
+            price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
+            imageUrl: dish.photo || null,
+            category: cat.name || "General",
+            diet: ["VEGAN", "VEGETARIAN"].includes(dish.diet) ? dish.diet : "OMNIVORE",
+            isSpicy: dish.isSpicy || false,
+          });
         }
-        console.log(`[Scraper] Gourmedia extracted ${gourDishes.length} dishes`);
-        return {
-          restaurantName: cleanName(gourParsed.restaurantName || "Restaurante"),
-          dishes: gourDishes,
-          logoUrl: gourParsed.logo || null,
-          bannerUrl: null,
-        };
       }
-    } catch (e) { console.log("[Scraper] Gourmedia multi-page failed, falling back to single page"); }
+      console.log(`[Scraper] Gourmedia extracted ${gourDishes.length} dishes`);
+      return {
+        restaurantName: cleanName(gourParsed.restaurantName || "Restaurante"),
+        dishes: gourDishes,
+        logoUrl: gourParsed.logo || null,
+        bannerUrl: null,
+      };
+    } catch (e) { console.log("[Scraper] Gourmedia extraction failed, falling back to generic scraper"); }
   }
 
   const pageContent = await fetchPage(menuUrl, needsJina);
