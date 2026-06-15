@@ -334,7 +334,7 @@ export default function NewHome({
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500 && visibleCount < feedDishes.length) {
-        setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
+        setVisibleCount(prev => Math.min(prev + 10, feedDishes.length))
       }
     }
     window.addEventListener('scroll', handleScroll, { passive: true })

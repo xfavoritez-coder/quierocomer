@@ -53,7 +53,7 @@ export default function DishCard({
       style={{ position: 'relative', cursor: 'pointer' }}
     >
       {/* Photo */}
-      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: '#1a1a1a' }}>
+      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: '#1a1a1a', borderRadius: 14 }}>
         {/* Skeleton shimmer while image loads */}
         {!showFallback && !imgLoaded && (
           <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
