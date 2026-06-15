@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { FeedDish } from '../types'
 import { distanceKm } from '../lib/geo'
 import MasonryGrid from '../components/MasonryGrid'
@@ -79,7 +80,10 @@ export default function NewHome({
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  const [searchInput, setSearchInput] = useState(searchParams.get('q') || '')
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
@@ -208,6 +212,56 @@ export default function NewHome({
       filteredCommunes: communes.filter(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)),
     }
   }, [cities, communes, locationQuery])
+
+  // Search suggestions
+  const suggestions = useMemo(() => {
+    if (!searchInput.trim() || searchInput.length < 2) return []
+    const q = searchInput.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const results: { label: string; type: 'categoria' | 'restaurante' | 'plato' }[] = []
+    const seen = new Set<string>()
+
+    // Categories
+    const cats = [...new Set(dishes.map(d => d.categoriaNorm))]
+    for (const cat of cats) {
+      if (cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) && !seen.has(cat)) {
+        seen.add(cat)
+        results.push({ label: cat, type: 'categoria' })
+      }
+    }
+
+    // Restaurants
+    for (const d of dishes) {
+      const name = d.restaurante
+      if (!seen.has(name) && name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)) {
+        seen.add(name)
+        results.push({ label: name, type: 'restaurante' })
+      }
+    }
+
+    // Dishes (top 5)
+    let dishCount = 0
+    for (const d of dishes) {
+      if (dishCount >= 5) break
+      if (d.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) && !seen.has(d.nombre)) {
+        seen.add(d.nombre)
+        results.push({ label: d.nombre, type: 'plato' })
+        dishCount++
+      }
+    }
+
+    return results.slice(0, 8)
+  }, [searchInput, dishes])
+
+  const executeSearch = useCallback((query: string) => {
+    setSearchQuery(query)
+    setSearchInput(query)
+    setShowSuggestions(false)
+    // Update URL
+    const url = new URL(window.location.href)
+    if (query) url.searchParams.set('q', query)
+    else url.searchParams.delete('q')
+    window.history.replaceState({}, '', url.toString())
+  }, [])
 
   // Feed dishes — simple filter + sort, no swipe state
   const feedDishes = useMemo(() => {
@@ -401,14 +455,16 @@ export default function NewHome({
       }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round"
-            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
           <input
             ref={searchInputRef}
             className="feed-search-input"
-            type="text" value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            type="text" value={searchInput}
+            onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true) }}
+            onFocus={() => setShowSuggestions(true)}
+            onKeyDown={e => { if (e.key === 'Enter') executeSearch(searchInput) }}
             placeholder="Buscar plato o restaurante..."
             style={{
               width: '100%', padding: '10px 36px 10px 34px', borderRadius: 14, fontSize: 16,
@@ -416,15 +472,46 @@ export default function NewHome({
               color: '#fff', outline: 'none', boxSizing: 'border-box',
             }}
           />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} style={{
+          {searchInput && (
+            <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(255,255,255,0.3)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(255,255,255,0.3)', zIndex: 2,
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
+          )}
+
+          {/* Suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && searchInput.length >= 2 && (
+            <>
+              <div onClick={() => setShowSuggestions(false)} style={{ position: 'fixed', inset: 0, zIndex: 36 }} />
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 37, marginTop: 4,
+                background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)', overflow: 'hidden',
+              }}>
+                {suggestions.map((s, i) => (
+                  <button key={i} onClick={() => executeSearch(s.label)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                    padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                    textAlign: 'left', borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  }}>
+                    <span style={{ fontSize: 14, flexShrink: 0 }}>
+                      {s.type === 'categoria' ? '📂' : s.type === 'restaurante' ? '🏪' : '🍽'}
+                    </span>
+                    <div>
+                      <p style={{ fontSize: 14, color: '#fff', margin: 0 }}>{s.label}</p>
+                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '1px 0 0' }}>
+                        {s.type === 'categoria' ? 'Categoría' : s.type === 'restaurante' ? 'Restaurante' : 'Plato'}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
 

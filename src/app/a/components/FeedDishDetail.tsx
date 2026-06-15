@@ -250,15 +250,6 @@ function DishSlide({
 
       {/* Content */}
       <div style={{ padding: '16px 20px 20px' }}>
-        {/* Category tag */}
-        <span style={{
-          display: 'inline-block', padding: '4px 10px', borderRadius: 8, marginBottom: 8,
-          fontSize: 11, fontWeight: 600, color: '#F4A623',
-          background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.2)',
-        }}>
-          {dish.categoriaNorm}
-        </span>
-
         {/* Name + save */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
           <h2 style={{
@@ -296,9 +287,16 @@ function DishSlide({
           )}
         </div>
 
+        {/* Category — subtle, clickeable */}
+        <a href={`/?q=${encodeURIComponent(dish.categoriaNorm)}`} style={{
+          fontSize: 13, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', display: 'inline-block', marginBottom: 10,
+        }}>
+          {dish.categoriaNorm}
+        </a>
+
         {/* Description */}
         {dish.descripcion && (
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 16px' }}>
             {dish.descripcion}
           </p>
         )}
