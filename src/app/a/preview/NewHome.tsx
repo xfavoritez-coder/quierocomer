@@ -222,44 +222,32 @@ export default function NewHome({
     }
   }, [cities, communes, locationQuery])
 
-  // Search suggestions
-  const suggestions = useMemo(() => {
-    if (!searchInput.trim() || searchInput.length < 2) return []
-    const q = searchInput.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    const results: { label: string; type: 'categoria' | 'restaurante' | 'plato' }[] = []
-    const seen = new Set<string>()
+  // Server-side search with debounce
+  const [suggestions, setSuggestions] = useState<{ label: string; type: 'categoria' | 'restaurante' | 'plato' }[]>([])
+  const [searchResults, setSearchResults] = useState<FeedDish[] | null>(null)
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    // Categories
-    const cats = [...new Set(dishes.map(d => d.categoriaNorm))]
-    for (const cat of cats) {
-      if (cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) && !seen.has(cat)) {
-        seen.add(cat)
-        results.push({ label: cat, type: 'categoria' })
-      }
+  useEffect(() => {
+    if (!searchInput.trim() || searchInput.length < 2) {
+      setSuggestions([])
+      setSearchResults(null)
+      return
     }
-
-    // Restaurants
-    for (const d of dishes) {
-      const name = d.restaurante
-      if (!seen.has(name) && name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)) {
-        seen.add(name)
-        results.push({ label: name, type: 'restaurante' })
-      }
-    }
-
-    // Dishes (top 5)
-    let dishCount = 0
-    for (const d of dishes) {
-      if (dishCount >= 5) break
-      if (d.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) && !seen.has(d.nombre)) {
-        seen.add(d.nombre)
-        results.push({ label: d.nombre, type: 'plato' })
-        dishCount++
-      }
-    }
-
-    return results.slice(0, 8)
-  }, [searchInput, dishes])
+    // Debounce 300ms
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => {
+      fetch(`/api/feed/search?q=${encodeURIComponent(searchInput)}`)
+        .then(r => r.json())
+        .then(data => {
+          setSuggestions(data.suggestions || [])
+          if (data.dishes?.length > 0) {
+            setSearchResults(data.dishes)
+          }
+        })
+        .catch(() => {})
+    }, 300)
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current) }
+  }, [searchInput])
 
   const executeSearch = useCallback((query: string) => {
     setSearchQuery(query)
@@ -270,10 +258,24 @@ export default function NewHome({
     if (query) url.searchParams.set('q', query)
     else url.searchParams.delete('q')
     window.history.replaceState({}, '', url.toString())
+    // Fetch results from server
+    if (query.trim()) {
+      fetch(`/api/feed/search?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => { if (data.dishes) setSearchResults(data.dishes) })
+        .catch(() => {})
+    } else {
+      setSearchResults(null)
+    }
   }, [])
 
-  // Feed dishes — simple filter + sort, no swipe state
+  // Feed dishes — use server search results if searching, otherwise local filter
   const feedDishes = useMemo(() => {
+    // If we have server search results, use those directly
+    if (searchResults && searchQuery.trim()) {
+      return searchResults
+    }
+
     let filtered = dishes.filter(d => d.fotoUrl)
 
     // Location filter
@@ -304,16 +306,7 @@ export default function NewHome({
       filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
     }
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      filtered = filtered.filter(d => {
-        const name = d.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        const rest = d.restaurante.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        const desc = (d.descripcion || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        return name.includes(q) || rest.includes(q) || desc.includes(q) || d.categoriaNorm.toLowerCase().includes(q)
-      })
-    }
+
 
     // Meal time filter (from filter dropdown)
     if (filterMeal !== 'all') {
@@ -367,7 +360,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm])
+  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm, searchResults])
 
   // Infinite scroll — check every 500ms if near bottom
   useEffect(() => {
