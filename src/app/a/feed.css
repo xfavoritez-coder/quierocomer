@@ -566,3 +566,8 @@ body:has(.feed-root) {
 .feed-root div[style*="overflow-x"]::-webkit-scrollbar { display: none; }
 .feed-root div[style*="overflowX"],
 .feed-root div[style*="overflow-x"] { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Search placeholder darker */
+.feed-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.15) !important;
+}
