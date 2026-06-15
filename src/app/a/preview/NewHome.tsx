@@ -426,12 +426,12 @@ export default function NewHome({
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh' }}>
 
-      {/* ─── Header: logo left + hamburger right ─── */}
+      {/* ─── Header: logo + location + hamburger ─── */}
       <header style={{
         background: '#0e0e0e',
-        padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 16px', display: 'flex', alignItems: 'center',
       }}>
-        <a href="/" style={{ textDecoration: 'none', cursor: 'pointer' }}>
+        <a href="/" style={{ textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }}>
           <span style={{
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 22, fontWeight: 700, color: '#fff',
@@ -439,8 +439,29 @@ export default function NewHome({
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
         </a>
+
+        {/* Location — text style, clickeable */}
+        <button onClick={() => setLocationOpen(!locationOpen)} style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px',
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.25)'} strokeWidth="2.5" strokeLinecap="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+          </svg>
+          <span style={{
+            fontSize: 14, fontWeight: 500,
+            color: (locationName || gpsLabel) ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {locationName || gpsLabel || 'Seleccionar ubicación'}
+          </span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2.5" strokeLinecap="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
         <button onClick={() => setMenuOpen(true)} style={{
-          background: 'none', border: 'none', cursor: 'pointer', padding: 6,
+          background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0,
           color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -449,10 +470,10 @@ export default function NewHome({
         </button>
       </header>
 
-      {/* ─── Search + Location bar — sticky ─── */}
+      {/* ─── Search + Filter — sticky ─── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 35,
-        padding: '8px 16px 10px', display: 'flex', alignItems: 'center', gap: 8,
+        padding: '6px 16px 8px', display: 'flex', alignItems: 'center', gap: 8,
         background: 'rgba(14,14,14,0.97)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       }}>
         <div style={{ flex: 1, position: 'relative' }}>
@@ -517,35 +538,18 @@ export default function NewHome({
           )}
         </div>
 
-        <button onClick={() => setLocationOpen(!locationOpen)} style={{
-          display: 'flex', alignItems: 'center', gap: 5,
-          padding: '10px 12px', borderRadius: 14, flexShrink: 0,
-          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
-          cursor: 'pointer', alignSelf: 'stretch',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-          </svg>
-          <span style={{
-            fontSize: 13, color: (locationName || userLocation) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-            maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {locationName || gpsLabel || 'Ubicación'}
-          </span>
-        </button>
-
         {/* Filter button */}
         <button onClick={() => setFilterOpen(!filterOpen)} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '10px', borderRadius: 14, flexShrink: 0,
-          background: filterOpen || filterMeal !== (detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena') || filterSort !== 'recent' || filterDiet !== 'all'
+          background: filterSort !== 'recent' || filterDiet !== 'all' || filterMeal !== 'all'
             ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.06)',
-          border: filterOpen || filterMeal !== (detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena') || filterSort !== 'recent' || filterDiet !== 'all'
+          border: filterSort !== 'recent' || filterDiet !== 'all' || filterMeal !== 'all'
             ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
           cursor: 'pointer', alignSelf: 'stretch',
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke={filterOpen || filterSort !== 'recent' || filterDiet !== 'all' ? '#F4A623' : 'rgba(255,255,255,0.4)'}
+            stroke={filterSort !== 'recent' || filterDiet !== 'all' || filterMeal !== 'all' ? '#F4A623' : 'rgba(255,255,255,0.4)'}
             strokeWidth="2" strokeLinecap="round">
             <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" />
             <circle cx="6" cy="12" r="2" fill="currentColor" /><circle cx="14" cy="18" r="2" fill="currentColor" />
