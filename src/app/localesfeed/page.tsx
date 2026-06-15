@@ -12,6 +12,7 @@ type Local = {
   rating: number
   reviews: number
   comuna: string
+  extracted?: 'ok' | 'fail' | null
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -121,7 +122,7 @@ export default function LocalesFeedPage() {
 
         {/* Table header */}
         <div style={{
-          display: 'grid', gridTemplateColumns: '2fr 2fr 100px 80px',
+          display: 'grid', gridTemplateColumns: '2fr 2fr 100px 60px 80px',
           padding: '8px 14px', fontSize: 11, color: '#555', fontWeight: 600,
           textTransform: 'uppercase', letterSpacing: 0.5,
           borderBottom: '1px solid #222',
@@ -129,6 +130,7 @@ export default function LocalesFeedPage() {
           <span>Local</span>
           <span>Dirección</span>
           <span>Proveedor</span>
+          <span>Estado</span>
           <span style={{ textAlign: 'right' }}>Rating</span>
         </div>
 
@@ -136,7 +138,7 @@ export default function LocalesFeedPage() {
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {filtered.map((l, i) => (
             <div key={i} style={{
-              display: 'grid', gridTemplateColumns: '2fr 2fr 100px 80px',
+              display: 'grid', gridTemplateColumns: '2fr 2fr 100px 60px 80px',
               padding: '12px 14px', alignItems: 'center',
               borderBottom: '1px solid #1a1a1a',
               transition: 'background 0.1s',
@@ -167,6 +169,19 @@ export default function LocalesFeedPage() {
               }}>
                 {l.provider}
               </span>
+
+              {/* Extraction status */}
+              <div>
+                {l.extracted === 'ok' && (
+                  <span style={{ fontSize: 10, color: '#4ade80', fontWeight: 600 }}>Extraído</span>
+                )}
+                {l.extracted === 'fail' && (
+                  <span style={{ fontSize: 10, color: '#ef4444', fontWeight: 600 }}>Falló</span>
+                )}
+                {!l.extracted && (
+                  <span style={{ fontSize: 10, color: '#555' }}>Pendiente</span>
+                )}
+              </div>
 
               {/* Rating */}
               <div style={{ textAlign: 'right' }}>
