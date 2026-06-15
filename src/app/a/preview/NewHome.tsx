@@ -333,7 +333,7 @@ export default function NewHome({
   // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800 && visibleCount < feedDishes.length) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500 && visibleCount < feedDishes.length) {
         setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
       }
     }
@@ -892,11 +892,28 @@ export default function NewHome({
 
           {/* Feed masonry */}
           {feedDishes.length > 0 ? (
-            <MasonryGrid
-              dishes={feedDishes.slice(0, visibleCount)}
-              onDishTap={handleDishTap}
-              userLocation={userLocation}
-            />
+            <>
+              <MasonryGrid
+                dishes={feedDishes.slice(0, visibleCount)}
+                onDishTap={handleDishTap}
+                userLocation={userLocation}
+              />
+              {/* Loading skeleton when more dishes are available */}
+              {visibleCount < feedDishes.length && (
+                <div style={{ display: 'flex', gap: 10, padding: '10px 12px 40px' }}>
+                  {[0, 1].map(col => (
+                    <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[0, 1].map(i => (
+                        <div key={i} className="skeleton-shimmer" style={{
+                          aspectRatio: col === 0 ? '3/4' : '4/5',
+                          borderRadius: 14, background: 'rgba(255,255,255,0.04)',
+                        }} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
               No hay platos en esta categoría
