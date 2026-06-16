@@ -306,10 +306,28 @@ export async function POST(req: NextRequest) {
         if (photos) {
           encontrados++
           const provider = mapsProvider ?? detectProviderFromHtml(html)
-          // Si es Justo embebido en web propia, la carta está en /pedir
-          const cartaUrl = provider === 'Justo' && !place.website!.includes('/pedir')
-            ? new URL('/pedir', place.website!).toString()
-            : place.website!
+
+          // Si el proveedor detectado en el HTML es una plataforma externa, extraer su URL real
+          let cartaUrl = place.website!
+          if (provider === 'Justo' && !place.website!.includes('/pedir')) {
+            cartaUrl = new URL('/pedir', place.website!).toString()
+          } else if (provider === 'UberEats') {
+            const m = html.match(/https?:\/\/www\.ubereats\.com\/cl\/store\/[^"'\s<>&]{5,}/i)
+            if (m) cartaUrl = m[0].split('?')[0]
+          } else if (provider === 'PedidosYa') {
+            const m = html.match(/https?:\/\/www\.pedidosya\.cl\/restaurantes\/[^"'\s<>&]{5,}/i)
+            if (m) cartaUrl = m[0].split('?')[0]
+          } else if (provider === 'Fudo') {
+            const m = html.match(/https?:\/\/(?:menu|app)\.fu\.do\/[^"'\s<>&]{3,}/i)
+            if (m) cartaUrl = m[0].split('?')[0]
+          } else if (provider === 'OlaClick') {
+            const m = html.match(/https?:\/\/[^"'\s<>&]+\.ola\.click[^"'\s<>&]*/i)
+            if (m) cartaUrl = m[0].split('?')[0]
+          } else if (provider === 'Gourmedia') {
+            const m = html.match(/https?:\/\/gour\.media\/[^"'\s<>&]{3,}/i)
+            if (m) cartaUrl = m[0].split('?')[0]
+          }
+
           const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl, fuenteMatch: 'maps-website' }
           saveResult(result).catch(() => {})
           send({ type: 'result', result })

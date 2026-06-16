@@ -829,6 +829,7 @@ export async function importFromProspecto(params: {
           lat: params.lat ?? null,
           lng: params.lng ?? null,
           website: params.cartaUrl,
+          googleMapsUrl: params.mapsUrl || null,
           logoUrl: extraction.logoUrl ?? null,
           cartaTheme: "PREMIUM",
           cartaColorMode: "DARK",
@@ -854,6 +855,7 @@ export async function importFromProspecto(params: {
             googleMapsUrl: placeInfo.mapsUrl,
             googleRating: placeInfo.rating,
             googleRatingCount: placeInfo.ratingCount,
+            ...(placeInfo.scheduleJson ? { scheduleJson: placeInfo.scheduleJson } : {}),
           },
         })
       }

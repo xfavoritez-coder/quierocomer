@@ -264,6 +264,42 @@ function TabMapa() {
   const [importMap, setImportMap] = useState<Record<string, ImportResult>>({})
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; name: string } | null>(null)
 
+  // Manual carta URL editing
+  const [editingCartaId, setEditingCartaId] = useState<string | null>(null)
+  const [editingCartaUrl, setEditingCartaUrl] = useState('')
+
+  async function saveCartaUrl(placeId: string, url: string) {
+    if (!url.trim()) return
+    // Detect provider from URL
+    const u = url.toLowerCase()
+    const provider = u.includes('ubereats.com') ? 'UberEats'
+      : u.includes('pedidosya.cl') ? 'PedidosYa'
+      : u.includes('getjusto.com') || u.includes('/pedir') ? 'Justo'
+      : u.includes('fu.do') ? 'Fudo'
+      : u.includes('ola.click') ? 'OlaClick'
+      : u.includes('gour.media') ? 'Gourmedia'
+      : u.includes('toteat.app') ? 'Toteat'
+      : 'Web propia'
+    const result: ProspectoResult = {
+      id: placeId,
+      name: places.find(p => p.id === placeId)?.name ?? '',
+      address: places.find(p => p.id === placeId)?.address ?? '',
+      mapsUrl: places.find(p => p.id === placeId)?.mapsUrl ?? '',
+      status: 'encontrado',
+      provider,
+      cartaUrl: url.trim(),
+      fuenteMatch: 'maps-website',
+    }
+    await fetch('/api/mapalocales/prospectos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result }),
+    })
+    setProspectMap(m => ({ ...m, [placeId]: result }))
+    setEditingCartaId(null)
+    setEditingCartaUrl('')
+  }
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -334,7 +370,11 @@ function TabMapa() {
   }
 
   function removePlace(id: string) {
-    fetch(`/api/mapalocales/prospectos?id=${id}`, { method: 'DELETE' }).catch(() => {})
+    fetch('/api/mapalocales/prospectos', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [id] }),
+    }).catch(() => {})
     setPlaces(prev => prev.filter(p => p.id !== id))
     setSelected(prev => { const s = new Set(prev); s.delete(id); return s })
     setProspectMap(m => { const n = { ...m }; delete n[id]; return n })
@@ -357,7 +397,7 @@ function TabMapa() {
   }
 
   async function runProspecting() {
-    const toProcess = places.filter(p => selected.has(p.id)).map(p => ({
+    const toProcess = places.filter(p => selected.has(p.id) && (p.rating == null || p.rating > 4) && (p.reviews == null || p.reviews >= 10)).map(p => ({
       id: p.id,
       name: p.name,
       address: p.address,
@@ -580,11 +620,14 @@ function TabMapa() {
             <button
               onClick={async () => {
                 const ids = [...selected]
-                await Promise.all(ids.map(id =>
-                  fetch(`/api/mapalocales/prospectos?id=${id}`, { method: 'DELETE' }).catch(() => {})
-                ))
+                await fetch('/api/mapalocales/prospectos', {
+                  method: 'DELETE',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ids }),
+                }).catch(() => {})
                 setPlaces(prev => prev.filter(p => !ids.includes(p.id)))
                 setProspectMap(m => { const n = { ...m }; ids.forEach(id => delete n[id]); return n })
+                setImportMap(m => { const n = { ...m }; ids.forEach(id => delete n[id]); return n })
                 setSelected(new Set())
               }}
               style={{ fontSize: 12, color: '#ef4444', background: 'none', border: '1px solid #ef444430', borderRadius: 8, padding: '10px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -732,31 +775,54 @@ function TabMapa() {
             </div>
 
             {/* Columna carta prospectada */}
-            <div>
-              {isProcessing ? (
+            <div style={{ position: 'relative' }}>
+              {editingCartaId === p.id ? (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <input
+                    autoFocus
+                    value={editingCartaUrl}
+                    onChange={e => setEditingCartaUrl(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveCartaUrl(p.id, editingCartaUrl)
+                      if (e.key === 'Escape') { setEditingCartaId(null); setEditingCartaUrl('') }
+                    }}
+                    placeholder="https://..."
+                    style={{ fontSize: 11, background: '#1a1a1a', border: '1px solid #444', color: '#fff', borderRadius: 4, padding: '2px 6px', width: 140 }}
+                  />
+                  <button onClick={() => saveCartaUrl(p.id, editingCartaUrl)} style={{ fontSize: 11, background: '#22c55e', color: '#000', border: 'none', borderRadius: 4, padding: '2px 6px', cursor: 'pointer' }}>✓</button>
+                </div>
+              ) : isProcessing ? (
                 <span style={{ fontSize: 11, color: '#888', fontStyle: 'italic' }}>buscando...</span>
               ) : prospecto ? (
-                prospecto.status === 'encontrado' ? (
-                  <div>
-                    <a href={prospecto.cartaUrl} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 12, fontWeight: 600, color: '#4ade80', textDecoration: 'none', display: 'block' }}>
-                      ✓ Ver carta ↗
-                    </a>
-                    <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
-                  </div>
-                ) : prospecto.status === 'sin_fotos' ? (
-                  <div>
-                    <a href={prospecto.cartaUrl} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 11, color: '#d97706', textDecoration: 'none', display: 'block' }}>
-                      ⚠ Sin fotos ↗
-                    </a>
-                    <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: 11, color: '#444' }}>✗ Sin carta</span>
-                )
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {prospecto.status === 'encontrado' ? (
+                    <div>
+                      <a href={prospecto.cartaUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, fontWeight: 600, color: '#4ade80', textDecoration: 'none', display: 'block' }}>
+                        ✓ Ver carta ↗
+                      </a>
+                      <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
+                    </div>
+                  ) : prospecto.status === 'sin_fotos' ? (
+                    <div>
+                      <a href={prospecto.cartaUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 11, color: '#d97706', textDecoration: 'none', display: 'block' }}>
+                        ⚠ Sin fotos ↗
+                      </a>
+                      <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 11, color: '#444' }}>✗ Sin carta</span>
+                  )}
+                  <button onClick={() => { setEditingCartaId(p.id); setEditingCartaUrl(prospecto.cartaUrl ?? '') }}
+                    style={{ fontSize: 10, background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0 2px', flexShrink: 0 }}>✏</button>
+                </div>
               ) : (
-                <span style={{ fontSize: 11, color: '#2a2a2a' }}>—</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 11, color: '#2a2a2a' }}>—</span>
+                  <button onClick={() => { setEditingCartaId(p.id); setEditingCartaUrl('') }}
+                    style={{ fontSize: 10, background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0 2px' }}>✏</button>
+                </div>
               )}
             </div>
 
