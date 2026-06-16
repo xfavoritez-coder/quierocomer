@@ -27,20 +27,18 @@ export default function ProfileView({
     <div style={{ paddingBottom: 100 }}>
 
       <div style={{ padding: '10px 16px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <button onClick={onBack} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0,
-            color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center',
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
-            Mi perfil
-          </h1>
-        </div>
+        <button onClick={onBack} style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: '4px 4px 4px 0', marginBottom: 8,
+          color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '0 0 16px' }}>
+          Mi perfil
+        </h1>
 
         {/* ─── Guardados ─── */}
         <section style={{ marginBottom: 32 }}>
