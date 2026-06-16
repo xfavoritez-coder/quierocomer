@@ -769,6 +769,7 @@ model Dish {
   tags           DishTag[]
   isHero         Boolean      @default(false)
   isActive       Boolean      @default(true)
+  hiddenFromFeed Boolean      @default(false)  // ocultar del feed B2C sin desactivar de la carta
   deletedAt      DateTime?    // soft delete — null = activo, fecha = eliminado
   stockCountdown Int?
   ingredients    String?      // legacy text field (kept for backwards compat)

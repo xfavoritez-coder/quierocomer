@@ -26,6 +26,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       JOIN "Restaurant" r ON r.id = d."restaurantId"
       WHERE d."isActive" = true
         AND d."deletedAt" IS NULL
+        AND d."hiddenFromFeed" = false
         AND array_length(d.photos, 1) > 0
         AND d.price > 0
         AND c."dishType" != 'drink'
