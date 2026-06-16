@@ -15,6 +15,7 @@ import {
   saveDish,
   unsaveDish,
   updateTasteAction,
+  getSavedDishIds,
 } from '../lib/feed-actions'
 import { QC_PARENTS } from '../lib/categories'
 import { slugify } from '@/lib/slugify'
@@ -171,6 +172,13 @@ export default function NewHome({
   // Viewed/saved dishes for profile — loaded from server
   const [viewedDishIds, setViewedDishIds] = useState<string[]>([])
   const [likedDishIds, setLikedDishIds] = useState<Set<string>>(new Set())
+
+  // Load saved dish IDs on mount so they survive page reload
+  useEffect(() => {
+    getSavedDishIds().then(ids => {
+      if (ids.length > 0) setSavedDishIds(new Set(ids))
+    }).catch(() => {})
+  }, [])
 
   // Load profile data from server when entering perfil view
   useEffect(() => {

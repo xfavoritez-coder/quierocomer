@@ -221,6 +221,20 @@ export async function unsaveDish(dishId: string) {
   }
 }
 
+export async function getSavedDishIds(): Promise<string[]> {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return []
+    const rows = await prisma.feedSaved.findMany({
+      where: { feedUserId: userId, type: 'SAVED' },
+      select: { dishId: true },
+    })
+    return rows.map(r => r.dishId)
+  } catch (e) {
+    return []
+  }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────
 function getActionWeights(action: string): { category: number; restaurant: number } | null {
   const map: Record<string, { category: number; restaurant: number }> = {
