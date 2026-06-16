@@ -1500,7 +1500,7 @@ function CartaModal({ slug, name, onClose }: {
                             style={{
                               fontSize: 11, background: '#0d0d0d',
                               border: `1px solid ${dishLeaf ? '#a78bfa55' : '#1a1a1a'}`,
-                              color: dishLeaf ? '#c4b5fd' : '#444',
+                              color: dishLeaf ? '#c4b5fd' : '#999',
                               borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
                             }}
                           >
