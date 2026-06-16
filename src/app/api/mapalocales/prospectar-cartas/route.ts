@@ -75,9 +75,17 @@ function detectProviderFromHtml(html: string): string {
 
 // Intenta extraer la URL real de Justo desde el HTML
 function extractJustoUrl(html: string, websiteBase: string): string {
-  // Buscar iframe o script con URL de getjusto.com
-  const m = html.match(/https?:\/\/[^"'\s<>&]*getjusto\.com[^"'\s<>&]*/i)
-  if (m) return m[0].split('?')[0]
+  // Preferir /pedir del mismo sitio (más limpio y siempre funciona)
+  if (html.includes('/pedir')) return new URL('/pedir', websiteBase).toString()
+  // Buscar iframe o script con URL de getjusto.com — excluir CDN de imágenes (tofuu.getjusto.com)
+  const matches = html.matchAll(/https?:\/\/([^"'\s<>&]*getjusto\.com[^"'\s<>&]*)/gi)
+  for (const m of matches) {
+    const u = m[0].split('?')[0]
+    // Skip CDN image URLs
+    if (u.includes('tofuu.getjusto.com')) continue
+    if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(u)) continue
+    return u
+  }
   // Fallback: /pedir
   return new URL('/pedir', websiteBase).toString()
 }
