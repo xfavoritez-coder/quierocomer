@@ -1078,13 +1078,12 @@ export default function NewHome({
             <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
 
             <div style={{ marginBottom: 22 }}>
-              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111' }}>Filtros</h2>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
             </div>
 
             {/* Distancia */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Distancia
               </h3>
               <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
@@ -1107,8 +1106,7 @@ export default function NewHome({
 
             {/* Dieta */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></svg>
+              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Dieta
               </h3>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1155,8 +1153,7 @@ export default function NewHome({
 
             {/* Momento */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Momento
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -1182,17 +1179,16 @@ export default function NewHome({
 
             {/* Categorías */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M4 6h16M4 12h8M4 18h4" /></svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Categorías
-                </span>
+                </h3>
                 {draftCategories.size > 0 && (
-                  <button onClick={() => setDraftCategories(new Set())} style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <button onClick={() => setDraftCategories(new Set())} style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                     Limpiar
                   </button>
                 )}
-              </h3>
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {QC_PARENTS
                   .filter(cat => (categoryCountMap[cat] ?? 0) > 0)
@@ -1224,8 +1220,7 @@ export default function NewHome({
 
             {/* Ordenar */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" /></svg>
+              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Ordenar por
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
