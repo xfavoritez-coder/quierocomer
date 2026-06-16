@@ -8,6 +8,7 @@ export default function ProfileView({
   onDishTap,
   onViewAllSaved,
   onViewAllViewed,
+  onBack,
   isDark,
 }: {
   savedDishes?: FeedDish[]
@@ -15,91 +16,137 @@ export default function ProfileView({
   onDishTap?: (d: FeedDish) => void
   onViewAllSaved?: () => void
   onViewAllViewed?: () => void
+  onBack?: () => void
   isDark?: boolean
 }) {
-  return (
-    <div style={{ padding: '16px 16px 100px' }}>
+  const saved = savedDishes ?? []
+  const viewed = viewedDishes ?? []
 
-      {/* ─── Header ─── */}
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{
+  return (
+    <div style={{ paddingBottom: 100 }}>
+
+      {/* ─── Sticky header ─── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 30,
+        background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        padding: '14px 16px 12px',
+        display: 'flex', alignItems: 'center', gap: 10,
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+      }}>
+        <button onClick={onBack} style={{
+          background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+          color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span style={{
           fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 26, fontWeight: 800, color: isDark ? '#fff' : '#111', margin: '0 0 4px',
+          fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#111',
         }}>
           Mi perfil
-        </h2>
-        <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', margin: 0 }}>
-          Tus platos guardados y vistos
-        </p>
+        </span>
       </div>
 
-      {/* ─── Guardados ─── */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
-            Guardados
-          </h3>
-          {savedDishes && savedDishes.length > 3 && onViewAllSaved && (
-            <button onClick={onViewAllSaved} style={{
-              background: 'none', border: 'none', color: '#F4A623', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}>
-              Ver todos ({savedDishes.length})
-            </button>
-          )}
-        </div>
-        {savedDishes && savedDishes.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {savedDishes.slice(0, 3).map(d => (
-              <DishRow key={d.id} dish={d} onTap={onDishTap} isDark={isDark} />
-            ))}
-          </div>
-        ) : (
-          <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.3)', margin: 0 }}>
-            Guarda platos tocando el corazón en el detalle
-          </p>
-        )}
-      </div>
+      <div style={{ padding: '20px 16px 0' }}>
 
-      {/* ─── Vistos recientemente ─── */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
-            Vistos recientemente
-          </h3>
-        </div>
-        {viewedDishes && viewedDishes.length > 0 ? (
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3,
-            borderRadius: 12, overflow: 'hidden',
-          }}>
-            {viewedDishes.slice(0, 9).map((d, i) => (
-              <div key={d.id} onClick={() => onDishTap?.(d)} style={{
-                position: 'relative', aspectRatio: '1', overflow: 'hidden',
-                cursor: 'pointer', background: isDark ? '#1a1a1a' : '#e8e8e8',
+        {/* ─── Guardados ─── */}
+        <section style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Guardados
+            </h3>
+            {saved.length > 3 && onViewAllSaved && (
+              <button onClick={onViewAllSaved} style={{
+                background: 'none', border: 'none', color: '#F4A623', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0,
               }}>
-                {d.fotoUrl ? (
-                  <img src={d.fotoUrl} alt={d.nombre}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    loading={i < 3 ? 'eager' : 'lazy'}
-                    fetchPriority={i < 3 ? 'high' : 'low'} />
-                ) : (
-                  <div style={{
-                    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                    fontSize: 10, padding: 4, textAlign: 'center',
-                  }}>
-                    {d.nombre}
-                  </div>
-                )}
-              </div>
-            ))}
+                Ver todos ({saved.length})
+              </button>
+            )}
           </div>
-        ) : (
-          <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.3)', margin: 0 }}>
-            Los platos que abras aparecerán aquí
-          </p>
-        )}
+
+          {saved.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {saved.slice(0, 4).map(d => (
+                <DishRow key={d.id} dish={d} onTap={onDishTap} isDark={isDark} />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              padding: '28px 20px', borderRadius: 14, textAlign: 'center',
+              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+              border: `1px dashed ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'} strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.3)', margin: 0 }}>
+                Guarda platos tocando el corazón
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* ─── Vistos recientemente ─── */}
+        <section>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Vistos recientemente
+            </h3>
+          </div>
+
+          {viewed.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+              {viewed.slice(0, 9).map((d, i) => (
+                <div key={d.id} onClick={() => onDishTap?.(d)} style={{
+                  position: 'relative', aspectRatio: '1', overflow: 'hidden',
+                  borderRadius: 10, cursor: 'pointer',
+                  background: isDark ? '#1a1a1a' : '#e8e8e8',
+                }}>
+                  {d.fotoUrl ? (
+                    <img src={d.fotoUrl} alt={d.nombre}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      loading={i < 3 ? 'eager' : 'lazy'} />
+                  ) : (
+                    <div style={{
+                      width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, padding: 4, textAlign: 'center',
+                      color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    }}>
+                      {d.nombre}
+                    </div>
+                  )}
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
+                    padding: '18px 6px 6px',
+                  }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {d.nombre}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              padding: '28px 20px', borderRadius: 14, textAlign: 'center',
+              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+              border: `1px dashed ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'} strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.3)', margin: 0 }}>
+                Los platos que abras aparecerán aquí
+              </p>
+            </div>
+          )}
+        </section>
+
       </div>
     </div>
   )
@@ -108,18 +155,21 @@ export default function ProfileView({
 function DishRow({ dish, onTap, isDark }: { dish: FeedDish; onTap?: (d: FeedDish) => void; isDark?: boolean }) {
   return (
     <div onClick={() => onTap?.(dish)} style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '8px 12px', borderRadius: 12, cursor: 'pointer',
-      background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 12px', borderRadius: 12, cursor: 'pointer',
+      background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
     }}>
       {dish.fotoUrl && (
-        <img src={dish.fotoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+        <img src={dish.fotoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.nombre}</p>
-        <p style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)', margin: '2px 0 0' }}>{dish.restaurante}</p>
+        <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? '#f0f0f0' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.nombre}</p>
+        <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.42)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</p>
       </div>
-      <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 600, flexShrink: 0 }}>${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}</span>
+      <span style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)', fontWeight: 600, flexShrink: 0 }}>
+        ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
+      </span>
     </div>
   )
 }
