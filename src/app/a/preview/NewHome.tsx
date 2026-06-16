@@ -817,7 +817,7 @@ export default function NewHome({
       <header
         ref={headerRef}
         style={{
-          display: isDesktop ? 'none' : view === 'perfil' ? 'none' : 'flex',
+          display: isDesktop ? 'none' : (view === 'perfil' || view === 'contacto') ? 'none' : 'flex',
           background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
           backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
           padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
