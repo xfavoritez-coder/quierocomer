@@ -123,7 +123,7 @@ function extractDishesFromRenderedHtml(html: string): ExtractedDish[] {
   for (const tag of scriptTags) {
     const content = tag.replace(/<script[^>]*>|<\/script>/gi, '')
     // Buscar arrays de productos: [{name:...,price:...}]
-    const productArrayMatch = content.match(/\[\s*\{[^}]*"name"\s*:[^}]*"price"[^}]*\}/s)
+    const productArrayMatch = content.match(/\[\s*\{[\s\S]*?"name"\s*:[\s\S]*?"price"[\s\S]*?\}/)
     if (productArrayMatch) {
       try {
         // Encontrar y parsear el array completo

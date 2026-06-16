@@ -26,8 +26,8 @@ async function _buildSearchIndex(): Promise<SearchIndex> {
         photos: true, dishDiet: true, isSpicy: true, isGlutenFree: true,
         isLactoseFree: true, isSoyFree: true, containsNuts: true,
         flavorTags: true, isHero: true, tags: true,
-        category: { select: { name: true, dishType: true } },
-        restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true } },
+        category: { select: { name: true, dishType: true, normOverride: true } },
+        restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true, description: true } },
         feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -42,7 +42,7 @@ async function _buildSearchIndex(): Promise<SearchIndex> {
   const indexedDishes: SearchIndexEntry[] = dishes
     .filter(d => !isExcludedCategory(d.category.name))
     .map(d => {
-      const categoriaNorm = normalizeCategory(d.category.name)
+      const categoriaNorm = d.category.normOverride ?? normalizeCategory(d.category.name)
       const dish: FeedDish = {
         id: d.id,
         nombre: d.name,
@@ -77,6 +77,7 @@ async function _buildSearchIndex(): Promise<SearchIndex> {
       }
       const _search = [
         d.name, d.description ?? '', d.restaurant.name,
+        d.restaurant.description ?? '',
         categoriaNorm, ...(d.flavorTags ?? []),
       ].join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 

@@ -24,7 +24,7 @@ export type ProspectoMapaData = {
   address: string
   lat: number
   lng: number
-  mapsUrl: string
+  mapsUrl: string | null
   rating: number | null
   reviews: number | null
   cartaUrl: string | null
@@ -73,7 +73,7 @@ async function getRestaurantesActivos(): Promise<RestauranteMapaData[]> {
 
 async function getProspectos(): Promise<ProspectoMapaData[]> {
   const rows = await prisma.mapaProspecto.findMany({
-    where: { lat: { not: null }, lng: { not: null }, importedSlug: null },
+    where: { lat: { not: null }, lng: { not: null }, importedSlug: null, dismissed: false },
     select: { id: true, name: true, address: true, lat: true, lng: true, mapsUrl: true, rating: true, reviews: true, cartaUrl: true, provider: true },
   })
   return rows
@@ -81,7 +81,7 @@ async function getProspectos(): Promise<ProspectoMapaData[]> {
     .map(r => ({
       id: r.id,
       name: r.name,
-      address: r.address,
+      address: r.address ?? '',
       lat: r.lat as number,
       lng: r.lng as number,
       mapsUrl: r.mapsUrl,

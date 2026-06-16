@@ -269,6 +269,8 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Marraquetas': 'Amasandería',
   'Hallullas': 'Amasandería',
   'Sopaipillas': 'Amasandería',
+  'Quiches': 'Amasandería',
+  'Bollería y Panadería': 'Amasandería',
   'Empanadas de horno': 'Empanadas',
 
   // ─── Desayunos & Brunch (comida) ──────────────────────────
@@ -308,6 +310,90 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Salsa Extra': 'Extras',
   'Salsas': 'Extras',
   'Salsas y Extras': 'Extras',
+
+  // ─── Casos específicos de locales ─────────────────────────────────
+
+  // Completos / vienesas
+  'Vienesas': 'Completos',
+  'Vienesa': 'Completos',
+  'Completo': 'Completos',
+
+  // Sándwiches
+  'Lomos': 'Sándwiches',
+  'Sandwich 2x1': 'Sándwiches',
+
+  // Platos de fondo (variantes de capitalización y nombres alternativos)
+  'Platos de Fondo': 'Platos de fondo',
+  'Platos a la Carta': 'Platos de fondo',
+  'PLATOS A LA CARTA': 'Platos de fondo',
+  'PLATO DEL CHEF': 'Platos de fondo',
+  'Fuertes de la Casa': 'Platos de fondo',
+  'Social Food': 'Platos de fondo',
+  'Típicos': 'Platos de fondo',
+  'Sopas y Cremas': 'Platos de fondo',
+
+  // Entradas (variantes)
+  'Entradas Calientes': 'Entradas',
+  'ENTRADAS CALIENTES': 'Entradas',
+  'ENTRADAS': 'Entradas',
+  'PARA COMENZAR': 'Entradas',
+  'Antipastos Italianos': 'Entradas',
+  'Anti pasti': 'Entradas',
+  'Snack': 'Entradas',
+
+  // Empanadas
+  'Empanadas Clásicas': 'Empanadas',
+  'Empanadas venezolanas': 'Empanadas',
+
+  // Pollo
+  'Pollos': 'Pollo y alitas',
+
+  // Hamburguesas (Shaka Burger)
+  'Burgers Clásicas': 'Hamburguesas',
+  'Burgers de Autor': 'Hamburguesas',
+  'Green Burgers': 'Hamburguesas',
+
+  // Mariscos (Shaka Burger)
+  'Especialidad del Mar': 'Mariscos',
+
+  // Pastas
+  'Pastas y Salsas': 'Pastas',
+  'Carnes y Pescados': 'Parrilla',
+
+  // Postres
+  'Waffles 🧇': 'Postres',
+
+  // Sushi (categorías sin mapear de locales existentes)
+  'Tempura Rolls': 'Sushi',
+  'Gunkan': 'Sushi',
+  'Acevichados': 'Sushi',
+  'ACEVICHADOS (roll + salsa acevichada)': 'Sushi',
+  'Cheese Rolls': 'Sushi',
+  'Sugerencias del mes': 'Sushi',
+  'TABLAS INDIVIDUALES': 'Sushi',
+  'BANDEJA PREMIUM': 'Sushi',
+  'Combinaciones': 'Sushi',
+  'Appetizers Fríos': 'Sushi',
+  'Platos calientes': 'Sushi',  // Magnolia Sushi
+  'B.3 HOSOMAKIS - NIGUIRIS': 'Sushi',
+  'A.1 PROMOCIONES': 'Sushi',  // More Sushi
+  'RECOMENDADO': 'Sushi',
+  'PROMOS INDIVIDUALES': 'Sushi',
+  'PROMO DE LA SEMANA': 'Sushi',
+  'PROMOCIONES FRITAS': 'Sushi',
+
+  // Ceviches
+  'Tiraditos': 'Ceviches',
+
+  // China (categorías específicas de restaurantes chinos)
+  'Diente de dragón': 'China',
+  'Chapsui': 'China',
+  'Chapsui Verduras De Temporada': 'China',
+  'Agridulce': 'China',
+  'Comida Especlal': 'China',
+  'Arrollados': 'China',
+  'Fuyón': 'China',
+  'Arroces': 'China',  // La Fonda Paisa también tiene pero es plato genérico → China más probable
 
   // ─── MAPEOS GENERADOS 2026-06-15 ──────────────────────────────────
 
@@ -477,6 +563,8 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Bebidas calientes': 'Cafetería',
 
   // Ceviches
+  'Pa\' Comenzar': 'Entradas',
+  'Pa\' Compartir': 'Entradas',
   'Appetizer—Entradas': 'Ceviches',
   'Causas y Entradas': 'Ceviches',
   'Cebiches': 'Ceviches',
@@ -551,6 +639,12 @@ export const CATEGORY_MAP: Record<string, string> = {
   'CACHAPAS': 'Mexicana',
   'COMIDA RAPIDA VENEZOLANA': 'Mexicana',
   'PATACONES': 'Mexicana',
+  // El Zocalo
+  'Pa\' Taquear': 'Mexicana',
+  'PA\'. TAQUEAR': 'Mexicana',
+  'Los Burritos': 'Mexicana',
+  'Los Recomendados': 'Mexicana',
+  'Especialidades Mexicanas': 'Mexicana',
 
   // Parrilla
   'CHORRILLANAS Y PAPAS FRITAS': 'Parrilla',
@@ -608,6 +702,10 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Pollo a la Brasa': 'Pollo',
 
   // Postres
+  'Porción de tarta': 'Postres',
+  'Tarta': 'Postres',
+  'Torta Completa': 'Postres',
+  'Cheesecake': 'Postres',
   'Bombones Proteicos': 'Postres',
   'Donuts Proteicas': 'Postres',
   'Dulces': 'Postres',
@@ -655,6 +753,7 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Vegetarianos': 'Saludable',
 
   // Sándwiches
+  'As': 'Sándwiches',
   'CHURRASCO': 'Sándwiches',
   'CLASSIC SANDWICH': 'Sándwiches',
   'Chicken Sandwich': 'Sándwiches',
@@ -673,7 +772,7 @@ export const CATEGORY_MAP: Record<string, string> = {
 export const QC_CATEGORIES = new Set([
   'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
   'Parrilla', 'Pollo', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
-  'Mexicana', 'Asiática', 'Empanadas', 'Saludable', 'Postres',
+  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres',
   'Desayunos', 'Cafetería', 'Amasandería',
 ])
 
@@ -689,8 +788,32 @@ export const EXCLUDED_CATEGORIES = new Set([
 ])
 
 /** Normaliza una categoría de la BD. Si no está en el mapa, usa el nombre original. */
+// Reglas por patrón para variantes que no vale la pena listar una a una
+// (tamaños de pizza, formatos de sándwich, etc.)
+const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
+  // Pizza + cualquier tamaño/variante: "Pizza XL", "Pizza Familiar", "Pizza Mediana"...
+  { pattern: /^pizzas?\b/i, norm: 'Pizzas' },
+  // Hamburguesa singular o con apellido: "Hamburguesa Clásica", "Hamburguesa Gourmet"...
+  { pattern: /^hamburguesa\b/i, norm: 'Hamburguesas' },
+  // Sándwich singular o variantes: "Sandwich de Pollo", "Sándwich Caliente"...
+  { pattern: /^s[aá]ndwich\b/i, norm: 'Sándwiches' },
+  // Empanada singular: "Empanada de Pino", "Empanada Frita"...
+  { pattern: /^empanada\b/i, norm: 'Empanadas' },
+  // Breadsticks, palitos de ajo y similares → Entradas
+  { pattern: /^breadstick|palitos?\s+de\s+(ajo|pan|queso)/i, norm: 'Entradas' },
+  // "Entrada " + cualquier cosa: "Entrada Caliente", "Entrada Vegetariana"...
+  { pattern: /^entrada\b/i, norm: 'Entradas' },
+  // Completo singular: "Completo Italiano", "Completo Dinámico"...
+  { pattern: /^completo\b/i, norm: 'Completos' },
+]
+
 export function normalizeCategory(name: string): string {
-  return CATEGORY_MAP[name] ?? name
+  if (CATEGORY_MAP[name]) return CATEGORY_MAP[name]
+  const n = name.trim()
+  for (const { pattern, norm } of CATEGORY_PATTERNS) {
+    if (pattern.test(n)) return norm
+  }
+  return name
 }
 
 /** Palabras clave que indican una categoría que NO es un plato del feed */

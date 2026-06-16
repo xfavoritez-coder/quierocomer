@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export type PlaceResult = {
   id: string
@@ -92,6 +93,74 @@ export async function POST(req: NextRequest) {
         'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus',
       }
 
+      // Buscar por tipo separado para superar el límite de 20 por request
+      // Todos los tipos de comida de la API de Google Places (Table A)
+      // Se buscan por separado porque el límite es 20 resultados por tipo.
+      // Tipos de cocina específicos a veces NO están etiquetados como "restaurant" genérico.
+      const PLACE_TYPES = [
+        // Generales (capturan la mayoría)
+        'restaurant',
+        'cafe',
+        'coffee_shop',
+        'bar',
+        'bakery',
+        'fast_food_restaurant',
+        'meal_takeaway',
+        'meal_delivery',
+        // Dieta especial (frecuentemente NO tienen tipo "restaurant")
+        'vegan_restaurant',
+        'vegetarian_restaurant',
+        // Cocinas específicas (pueden no tener tipo "restaurant")
+        'sushi_restaurant',
+        'japanese_restaurant',
+        'chinese_restaurant',
+        'korean_restaurant',
+        'thai_restaurant',
+        'vietnamese_restaurant',
+        'indian_restaurant',
+        'indonesian_restaurant',
+        'middle_eastern_restaurant',
+        'lebanese_restaurant',
+        'turkish_restaurant',
+        'greek_restaurant',
+        'mediterranean_restaurant',
+        'italian_restaurant',
+        'french_restaurant',
+        'spanish_restaurant',
+        'american_restaurant',
+        'mexican_restaurant',
+        'brazilian_restaurant',
+        'pizza_restaurant',
+        'hamburger_restaurant',
+        'barbecue_restaurant',
+        'seafood_restaurant',
+        'steak_house',
+        'ramen_restaurant',
+        'sandwich_shop',
+        // Postres y bebidas
+        'ice_cream_shop',
+        'wine_bar',
+        // Horario específico
+        'breakfast_restaurant',
+        'brunch_restaurant',
+      ]
+
+      // Cargar IDs ya existentes para no mostrar locales que ya tenemos
+      const [existingRestaurants, existingProspectos] = await Promise.all([
+        prisma.restaurant.findMany({
+          where: { isActive: true, isDemo: false, googlePlaceId: { not: null } },
+          select: { googlePlaceId: true },
+        }),
+        prisma.mapaProspecto.findMany({
+          where: { OR: [{ importedSlug: { not: null } }, { dismissed: true }] },
+          select: { id: true },
+        }),
+      ])
+      const importedPlaceIds = new Set([
+        ...existingRestaurants.map(r => r.googlePlaceId!),
+        ...existingProspectos.map(p => p.id),
+      ])
+
       const seenIds = new Set<string>()
       let totalFound = 0
 
@@ -103,67 +172,74 @@ export async function POST(req: NextRequest) {
 
           send({ type: 'status', message: `Buscando en zona ${cellNum}/${totalCells}...` })
 
-          const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              includedTypes: ['restaurant', 'cafe', 'bar', 'bakery', 'meal_takeaway', 'fast_food_restaurant'],
-              locationRestriction: {
-                circle: { center: { latitude: cellLat, longitude: cellLng }, radius: cellRadius },
-              },
-              maxResultCount: 20,
-              rankPreference: 'DISTANCE',
-              languageCode: 'es',
-            }),
-          })
-
-          if (!res.ok) {
-            const errText = await res.text()
-            let msg = `Error en zona ${cellNum} (${res.status})`
-            try { msg = JSON.parse(errText)?.error?.message ?? msg } catch {}
-            send({ type: 'status', message: `⚠ ${msg}` })
-            continue
-          }
-
-          const json = (await res.json()) as { places?: any[]; error?: any }
-          if (json.error) {
-            send({ type: 'status', message: `⚠ ${json.error.message}` })
-            continue
-          }
-
           let newInCell = 0
-          for (const p of json.places ?? []) {
-            if (seenIds.has(p.id)) continue
-            if (p.businessStatus && p.businessStatus !== 'OPERATIONAL') continue
-            const lat = p.location?.latitude
-            const lng = p.location?.longitude
-            if (!lat || !lng || !pointInPolygon([lat, lng], polygon)) continue
 
-            seenIds.add(p.id)
-            totalFound++
-            newInCell++
-            send({
-              type: 'place',
-              place: {
-                id: p.id ?? '',
-                name: p.displayName?.text ?? '',
-                address: p.formattedAddress ?? '',
-                lat,
-                lng,
-                mapsUrl: p.googleMapsUri ?? '',
-                website: p.websiteUri ?? null,
-                rating: p.rating ?? null,
-                reviews: p.userRatingCount ?? null,
-              } satisfies PlaceResult,
+          for (const placeType of PLACE_TYPES) {
+            const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                includedTypes: [placeType],
+                excludedTypes: ['general_store', 'convenience_store', 'grocery_store', 'supermarket', 'liquor_store'],
+                locationRestriction: {
+                  circle: { center: { latitude: cellLat, longitude: cellLng }, radius: cellRadius },
+                },
+                maxResultCount: 20,
+                rankPreference: 'DISTANCE',
+                languageCode: 'es',
+              }),
             })
+
+            if (!res.ok) {
+              const errText = await res.text()
+              let msg = `Error en zona ${cellNum}/${placeType} (${res.status})`
+              try { msg = JSON.parse(errText)?.error?.message ?? msg } catch {}
+              send({ type: 'status', message: `⚠ ${msg}` })
+              continue
+            }
+
+            const json = (await res.json()) as { places?: any[]; error?: any }
+            if (json.error) {
+              send({ type: 'status', message: `⚠ ${json.error.message}` })
+              continue
+            }
+
+            for (const p of json.places ?? []) {
+              if (seenIds.has(p.id)) continue
+              if (importedPlaceIds.has(p.id)) continue
+              if (p.businessStatus && p.businessStatus !== 'OPERATIONAL') continue
+              const lat = p.location?.latitude
+              const lng = p.location?.longitude
+              if (!lat || !lng || !pointInPolygon([lat, lng], polygon)) continue
+
+              seenIds.add(p.id)
+              totalFound++
+              newInCell++
+              send({
+                type: 'place',
+                place: {
+                  id: p.id ?? '',
+                  name: p.displayName?.text ?? '',
+                  address: p.formattedAddress ?? '',
+                  lat,
+                  lng,
+                  mapsUrl: p.googleMapsUri ?? '',
+                  website: p.websiteUri ?? null,
+                  rating: p.rating ?? null,
+                  reviews: p.userRatingCount ?? null,
+                } satisfies PlaceResult,
+              })
+            }
+
+            // Pausa breve entre tipos para no saturar la API
+            await new Promise(r => setTimeout(r, 100))
           }
 
           if (totalCells > 1) {
             send({ type: 'status', message: `Zona ${cellNum}: ${newInCell} nuevo${newInCell !== 1 ? 's' : ''} — total acumulado: ${totalFound}` })
           }
 
-          // Pequeña pausa para no saturar la API en grillas grandes
-          if (cellNum < totalCells) await new Promise(r => setTimeout(r, 300))
+          if (cellNum < totalCells) await new Promise(r => setTimeout(r, 200))
         }
       }
 

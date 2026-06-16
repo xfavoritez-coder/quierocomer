@@ -230,6 +230,7 @@ type ImportResult = {
   slug?: string
   dishCount?: number
   error?: string
+  unmappedCategories?: string[]
 }
 
 const EXTRACTABLE_PROVIDERS = new Set([
@@ -269,6 +270,12 @@ function TabMapa() {
   // Manual carta URL editing
   const [editingCartaId, setEditingCartaId] = useState<string | null>(null)
   const [editingCartaUrl, setEditingCartaUrl] = useState('')
+
+  // Modal de categorías sin mapear
+  const [normModal, setNormModal] = useState<{ slug: string; placeId: string; categories: string[] } | null>(null)
+
+  // Modal agregar manual
+  const [addModal, setAddModal] = useState(false)
 
   async function saveCartaUrl(placeId: string, url: string) {
     if (!url.trim()) return
@@ -347,7 +354,11 @@ function TabMapa() {
             }
           }
           if (r.importedSlug) {
-            impMap[r.id] = { status: 'ok', slug: r.importedSlug }
+            impMap[r.id] = {
+              status: 'ok',
+              slug: r.importedSlug,
+              unmappedCategories: r.unmappedCategories?.length > 0 ? r.unmappedCategories : undefined,
+            }
           }
         }
         setProspectMap(map)
@@ -547,7 +558,7 @@ function TabMapa() {
             } else if (msg.type === 'progress') {
               setImportProgress({ current: msg.current, total, name: msg.name })
             } else if (msg.type === 'result') {
-              setImportMap(m => ({ ...m, [msg.id]: { status: msg.status, slug: msg.slug, dishCount: msg.dishCount, error: msg.error } }))
+              setImportMap(m => ({ ...m, [msg.id]: { status: msg.status, slug: msg.slug, dishCount: msg.dishCount, error: msg.error, unmappedCategories: msg.unmappedCategories } }))
               if (msg.status === 'error') {
                 setImportProgress(p => p ? { ...p, name: `✗ ${msg.name ?? ''}: ${msg.error ?? 'error'}` } : p)
               }
@@ -559,6 +570,15 @@ function TabMapa() {
       }
     } catch {}
     finally { setImporting(false); setImportProgress(null) }
+  }
+
+  function handleNormSaved(placeId: string, savedCategories: string[]) {
+    setImportMap(m => {
+      const imp = m[placeId]
+      if (!imp) return m
+      const remaining = (imp.unmappedCategories ?? []).filter(c => !savedCategories.includes(c))
+      return { ...m, [placeId]: { ...imp, unmappedCategories: remaining.length > 0 ? remaining : undefined } }
+    })
   }
 
   const filtered = useMemo(() => {
@@ -598,6 +618,9 @@ function TabMapa() {
           {places.length} local{places.length !== 1 ? 'es' : ''} · {selected.size} seleccionado{selected.size !== 1 ? 's' : ''}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setAddModal(true)} style={{ fontSize: 12, color: '#a78bfa', background: 'none', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
+            + Agregar manual
+          </button>
           <a href="/mapalocales" style={{ fontSize: 12, color: '#ff7a3c', textDecoration: 'none', padding: '6px 12px', border: '1px solid rgba(255,122,60,0.3)', borderRadius: 8 }}>
             + Buscar más áreas
           </a>
@@ -827,7 +850,11 @@ function TabMapa() {
                       <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
                     </div>
                   ) : (
-                    <span style={{ fontSize: 11, color: '#444' }}>✗ Sin carta</span>
+                    <button
+                      onClick={() => { setEditingCartaId(p.id); setEditingCartaUrl('') }}
+                      style={{ fontSize: 11, color: '#f59e0b', background: 'none', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>
+                      + Pegar URL
+                    </button>
                   )}
                   <button onClick={() => { setEditingCartaId(p.id); setEditingCartaUrl(prospecto.cartaUrl ?? '') }}
                     style={{ fontSize: 12, background: 'rgba(255,255,255,0.07)', border: '1px solid #333', color: '#aaa', cursor: 'pointer', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>✏</button>
@@ -854,6 +881,14 @@ function TabMapa() {
                       ✓ /qr/{imp.slug} ↗
                     </a>
                     <span style={{ fontSize: 10, color: '#555' }}>{imp.dishCount} platos</span>
+                    {imp.unmappedCategories && imp.unmappedCategories.length > 0 && (
+                      <button
+                        onClick={() => setNormModal({ slug: imp.slug!, placeId: p.id, categories: imp.unmappedCategories! })}
+                        title={`Click para mapear: ${imp.unmappedCategories.join(', ')}`}
+                        style={{ fontSize: 9, color: '#f59e0b', marginTop: 2, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left', display: 'block' }}>
+                        ⚠ {imp.unmappedCategories.length} cat. sin mapear
+                      </button>
+                    )}
                   </div>
                 )
                 if (imp.status === 'error') return (
@@ -875,7 +910,294 @@ function TabMapa() {
       {filtered.length === 0 && search && (
         <div style={{ padding: 40, textAlign: 'center', color: '#444' }}>No se encontraron resultados</div>
       )}
+
+      {addModal && (
+        <AddManualModal
+          onClose={() => setAddModal(false)}
+          onAdded={(place, prospecto) => {
+            setPlaces(prev => {
+              if (prev.some(p => p.id === place.id)) return prev
+              return [place, ...prev]
+            })
+            if (prospecto) setProspectMap(m => ({ ...m, [place.id]: prospecto }))
+            setAddModal(false)
+          }}
+        />
+      )}
+
+      {normModal && (
+        <NormModal
+          slug={normModal.slug}
+          placeId={normModal.placeId}
+          categories={normModal.categories}
+          onClose={() => setNormModal(null)}
+          onSaved={handleNormSaved}
+        />
+      )}
     </>
+  )
+}
+
+// ---- Modal agregar prospecto manual ----
+
+function detectProvider(url: string): string {
+  const u = url.toLowerCase()
+  if (u.includes('ubereats.com')) return 'UberEats'
+  if (u.includes('pedidosya.cl')) return 'PedidosYa'
+  if (u.includes('rappi.cl') || u.includes('rappi.com')) return 'Rappi'
+  if (u.includes('getjusto.com') || u.includes('/pedir')) return 'Justo'
+  if (u.includes('fu.do')) return 'Fudo'
+  if (u.includes('ola.click')) return 'OlaClick'
+  if (u.includes('gour.media')) return 'Gourmedia'
+  if (u.includes('toteat.app')) return 'Toteat'
+  return 'Web propia'
+}
+
+function AddManualModal({ onClose, onAdded }: {
+  onClose: () => void
+  onAdded: (place: PlaceResult, prospecto?: ProspectoResult) => void
+}) {
+  const [mapsUrl, setMapsUrl] = useState('')
+  const [cartaUrl, setCartaUrl] = useState('')
+  const [resolving, setResolving] = useState(false)
+  const [resolved, setResolved] = useState<{ name: string; address: string; lat: number | null; lng: number | null; placeId: string | null; mapsUrl: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  async function resolve() {
+    if (!mapsUrl.trim()) return
+    setResolving(true)
+    setError(null)
+    setResolved(null)
+    try {
+      const res = await fetch('/api/mapalocales/resolve-maps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mapsUrl: mapsUrl.trim() }),
+      })
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      setResolved(data)
+    } catch (e: any) {
+      setError(e?.message ?? 'Error resolviendo URL')
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  async function save() {
+    if (!resolved) return
+    setSaving(true)
+    try {
+      const id = resolved.placeId ?? `manual-${Date.now().toString(36)}`
+      const provider = cartaUrl.trim() ? detectProvider(cartaUrl) : undefined
+      const res = await fetch('/api/mapalocales/prospectos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          manual: {
+            id,
+            name: resolved.name,
+            address: resolved.address,
+            lat: resolved.lat,
+            lng: resolved.lng,
+            mapsUrl: resolved.mapsUrl,
+            cartaUrl: cartaUrl.trim() || undefined,
+            provider,
+          },
+        }),
+      })
+      if (!res.ok) { setError('Error guardando'); return }
+
+      const place: PlaceResult = {
+        id,
+        name: resolved.name,
+        address: resolved.address,
+        lat: resolved.lat ?? 0,
+        lng: resolved.lng ?? 0,
+        mapsUrl: resolved.mapsUrl,
+        website: null,
+        rating: null,
+        reviews: null,
+      }
+      const prospecto: ProspectoResult | undefined = cartaUrl.trim() ? {
+        id,
+        name: resolved.name,
+        address: resolved.address,
+        mapsUrl: resolved.mapsUrl,
+        status: 'encontrado',
+        provider,
+        cartaUrl: cartaUrl.trim(),
+        fuenteMatch: 'manual',
+      } : undefined
+
+      onAdded(place, prospecto)
+    } catch (e: any) {
+      setError(e?.message ?? 'Error guardando')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <div style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 16, padding: 28, width: 460, maxWidth: '95vw' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h3 style={{ margin: 0, fontSize: 16, color: '#fff' }}>Agregar prospecto manual</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 20, cursor: 'pointer', padding: 0 }}>×</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Maps URL */}
+          <div>
+            <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Link de Google Maps *</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={mapsUrl}
+                onChange={e => { setMapsUrl(e.target.value); setResolved(null) }}
+                onKeyDown={e => e.key === 'Enter' && resolve()}
+                placeholder="https://maps.app.goo.gl/..."
+                style={{ flex: 1, fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#fff', borderRadius: 8, padding: '8px 12px', outline: 'none' }}
+              />
+              <button
+                onClick={resolve}
+                disabled={resolving || !mapsUrl.trim()}
+                style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, background: resolving || !mapsUrl.trim() ? '#222' : '#a78bfa', color: resolving || !mapsUrl.trim() ? '#444' : '#000', border: 'none', cursor: resolving || !mapsUrl.trim() ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                {resolving ? '...' : 'Resolver'}
+              </button>
+            </div>
+          </div>
+
+          {/* Resolved info */}
+          {resolved && (
+            <div style={{ background: '#0d0d0d', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{resolved.name || '—'}</div>
+              <div style={{ fontSize: 12, color: '#666' }}>{resolved.address || 'Sin dirección'}</div>
+              {resolved.lat && <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{resolved.lat.toFixed(5)}, {resolved.lng?.toFixed(5)}</div>}
+            </div>
+          )}
+
+          {/* Carta URL */}
+          <div>
+            <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>URL de carta (opcional)</label>
+            <input
+              value={cartaUrl}
+              onChange={e => setCartaUrl(e.target.value)}
+              placeholder="https://www.rappi.cl/... / ubereats / justo / ..."
+              style={{ width: '100%', fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#fff', borderRadius: 8, padding: '8px 12px', outline: 'none', boxSizing: 'border-box' }}
+            />
+            {cartaUrl.trim() && (
+              <div style={{ fontSize: 11, color: '#a78bfa', marginTop: 4 }}>Proveedor detectado: {detectProvider(cartaUrl)}</div>
+            )}
+          </div>
+
+          {error && <div style={{ fontSize: 12, color: '#ef4444' }}>✗ {error}</div>}
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
+            Cancelar
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || !resolved}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: !resolved || saving ? '#222' : '#a78bfa', color: !resolved || saving ? '#444' : '#000', border: 'none', cursor: !resolved || saving ? 'not-allowed' : 'pointer' }}
+          >
+            {saving ? 'Guardando...' : 'Agregar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---- Modal mapeo de categorías ----
+
+const QC_OPTS = [
+  'Entradas', 'Platos de fondo',
+  'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
+  'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
+  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres',
+  'Desayunos', 'Cafetería', 'Amasandería',
+]
+
+function NormModal({ slug, placeId, categories, onClose, onSaved }: {
+  slug: string
+  placeId: string
+  categories: string[]
+  onClose: () => void
+  onSaved: (placeId: string, savedCategories: string[]) => void
+}) {
+  const [mappings, setMappings] = useState<Record<string, string>>(
+    Object.fromEntries(categories.map(c => [c, '']))
+  )
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    const toSave = Object.entries(mappings).filter(([, v]) => v)
+    if (!toSave.length) { onClose(); return }
+    setSaving(true)
+    try {
+      await fetch('/api/mapalocales/category-norm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mappings: toSave.map(([categoryName, norm]) => ({ restaurantSlug: slug, categoryName, norm })),
+        }),
+      })
+      onSaved(placeId, toSave.map(([categoryName]) => categoryName))
+    } finally {
+      setSaving(false)
+      onClose()
+    }
+  }
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <div style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 16, padding: 28, width: 480, maxWidth: '95vw', maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, color: '#fff' }}>Mapear categorías sin asignar</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 20, cursor: 'pointer', padding: 0 }}>×</button>
+        </div>
+        <p style={{ fontSize: 12, color: '#555', margin: '0 0 20px' }}>
+          Local: <span style={{ color: '#aaa' }}>/qr/{slug}</span>
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {categories.map(cat => (
+            <div key={cat} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cat}>{cat}</span>
+              <select
+                value={mappings[cat] ?? ''}
+                onChange={e => setMappings(m => ({ ...m, [cat]: e.target.value }))}
+                style={{ fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: mappings[cat] ? '#fff' : '#555', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}
+              >
+                <option value="">— sin cambio —</option>
+                {QC_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
+            Cancelar
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || !Object.values(mappings).some(v => v)}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: '#22c55e', color: '#000', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving || !Object.values(mappings).some(v => v) ? 0.5 : 1 }}
+          >
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

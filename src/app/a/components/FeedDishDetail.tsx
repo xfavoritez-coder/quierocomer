@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient, isValidQcCategory } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
@@ -34,11 +34,21 @@ export default function FeedDishDetail({
   userLocation?: { lat: number; lng: number } | null
   isDark?: boolean
 }) {
+  const [isDesktop, setIsDesktop] = useState(false)
+  const [visible, setVisible] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const currentIndex = allDishes.findIndex(d => d.id === dish.id)
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0)
-  const [visible, setVisible] = useState(true)
   const programmaticScrollRef = useRef(false)
+
+  useLayoutEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // Lock body scroll
   useEffect(() => {
@@ -58,18 +68,20 @@ export default function FeedDishDetail({
     }
   }, [])
 
-  // Scroll to current dish on mount
+  // Scroll to current dish on mount (mobile only)
   useEffect(() => {
     const el = scrollRef.current
-    if (el && currentIndex >= 0) {
+    if (!el || isDesktop) return
+    if (currentIndex >= 0) {
       programmaticScrollRef.current = true
       el.scrollTo({ left: currentIndex * el.clientWidth, behavior: 'instant' as any })
       setTimeout(() => { programmaticScrollRef.current = false }, 300)
     }
-  }, [currentIndex])
+  }, [currentIndex, isDesktop])
 
-  // Observe which slide is active
+  // Observe which slide is active (mobile only)
   useEffect(() => {
+    if (isDesktop) return
     const el = scrollRef.current
     if (!el) return
     let mounted = false
@@ -86,13 +98,144 @@ export default function FeedDishDetail({
     }, { root: el, threshold: [0.6] })
     slides.forEach(s => obs.observe(s))
     return () => { clearTimeout(timer); obs.disconnect() }
-  }, [allDishes.length])
+  }, [allDishes.length, isDesktop])
+
+  // Keyboard navigation on desktop
+  useEffect(() => {
+    if (!isDesktop) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+      if (e.key === 'ArrowLeft' && activeIdx > 0) setActiveIdx(i => i - 1)
+      if (e.key === 'ArrowRight' && activeIdx < allDishes.length - 1) setActiveIdx(i => i + 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isDesktop, activeIdx, allDishes.length])
+
+  // Reset card scroll when navigating to another dish
+  useEffect(() => {
+    cardRef.current?.scrollTo({ top: 0 })
+  }, [activeIdx])
 
   const close = () => {
     setVisible(false)
     setTimeout(onClose, 200)
   }
 
+  const activeDish = allDishes[activeIdx] ?? dish
+
+  // ─── Desktop dialog layout ─────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <div
+        onClick={e => { if (e.target === e.currentTarget) close() }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 120,
+          background: 'rgba(0,0,0,0.72)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: visible ? 1 : 0, transition: 'opacity 0.2s ease-out',
+          backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+        }}
+      >
+        {/* Prev arrow */}
+        {activeIdx > 0 && (
+          <button onClick={() => setActiveIdx(i => i - 1)} style={{
+            position: 'absolute', left: 20,
+            width: 44, height: 44, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.12)', border: 'none',
+            cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            transition: 'background 0.15s',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+        )}
+
+        {/* Card */}
+        <div ref={cardRef} style={{
+          background: isDark ? '#1a1a1a' : '#fff',
+          borderRadius: 20,
+          width: '92%', maxWidth: 560, maxHeight: '90vh',
+          display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
+          position: 'relative',
+          scrollbarWidth: 'none',
+        }}>
+          {/* Close button */}
+          <button onClick={close} style={{
+            position: 'absolute', top: 14, right: 14, zIndex: 10,
+            width: 34, height: 34, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.25)', border: 'none',
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff',
+          }}>
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="1" y1="1" x2="13" y2="13" />
+              <line x1="13" y1="1" x2="1" y2="13" />
+            </svg>
+          </button>
+
+          {/* Left: Photo */}
+          <DesktopDishContent
+            key={activeDish.id}
+            dish={activeDish}
+            allDishes={allDishes}
+            dishPool={dishPool}
+            profile={profile}
+            onClose={close}
+            onSave={onSave}
+            onDishTap={(d) => {
+              const idx = allDishes.findIndex(x => x.id === d.id)
+              if (idx >= 0) setActiveIdx(idx)
+              else onDishTap(d)
+            }}
+            onCategoryClick={onCategoryClick}
+            hideRelated={hideRelated}
+            userLocation={userLocation}
+            isDark={isDark}
+          />
+        </div>
+
+        {/* Next arrow */}
+        {activeIdx < allDishes.length - 1 && (
+          <button onClick={() => setActiveIdx(i => i + 1)} style={{
+            position: 'absolute', right: 20,
+            width: 44, height: 44, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.12)', border: 'none',
+            cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            transition: 'background 0.15s',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+          </button>
+        )}
+
+        {/* Dot counter */}
+        {allDishes.length > 1 && (
+          <div style={{
+            position: 'absolute', bottom: 20,
+            display: 'flex', gap: 6, alignItems: 'center',
+          }}>
+            {allDishes.slice(Math.max(0, activeIdx - 3), Math.min(allDishes.length, activeIdx + 4)).map((_, relIdx) => {
+              const absIdx = Math.max(0, activeIdx - 3) + relIdx
+              return (
+                <div key={absIdx} style={{
+                  width: absIdx === activeIdx ? 20 : 6,
+                  height: 6, borderRadius: 3,
+                  background: absIdx === activeIdx ? '#fff' : 'rgba(255,255,255,0.35)',
+                  transition: 'all 0.2s',
+                }} />
+              )
+            })}
+          </div>
+        )}
+
+        <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+      </div>
+    )
+  }
+
+  // ─── Mobile: horizontal scroll carousel ───────────────────────────────────
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 120,
@@ -140,7 +283,260 @@ export default function FeedDishDetail({
   )
 }
 
-/* ── Individual dish slide ── */
+/* ── Desktop: dish content in a two-column card layout ── */
+function DesktopDishContent({
+  dish, allDishes, dishPool, profile, onClose, onSave, onDishTap, onCategoryClick, hideRelated, userLocation, isDark,
+}: {
+  dish: FeedDish; allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile;
+  onClose: () => void; onSave: (d: FeedDish) => void; onDishTap: (d: FeedDish) => void;
+  onCategoryClick?: (category: string) => void; hideRelated?: boolean;
+  userLocation?: { lat: number; lng: number } | null; isDark?: boolean;
+}) {
+  const [saved, setSaved] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [logoError, setLogoError] = useState(false)
+  const gradient = getCategoryGradient(dish.categoriaNorm)
+
+  const dist = userLocation && dish.restauranteLat && dish.restauranteLng
+    ? distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng) : null
+
+  // Related dishes
+  const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
+  useEffect(() => {
+    if (hideRelated) return
+    getSimilarDishIds(dish.id).then(ids => {
+      if (ids.length > 0) setEmbeddingSimilarIds(ids)
+    }).catch(() => {})
+  }, [dish.id, hideRelated])
+
+  const relatedDishes = useMemo(() => {
+    if (hideRelated) return []
+    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const candidates = pool.filter(d => d.fotoUrl && d.id !== dish.id && d.restauranteId !== dish.restauranteId)
+    const embRank = new Map<string, number>()
+    if (embeddingSimilarIds) {
+      embeddingSimilarIds.forEach((id, i) => embRank.set(id, 1 - i / embeddingSimilarIds.length))
+    }
+    const thisKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
+    const scored = candidates.map(d => {
+      let relevance = embRank.get(d.id) ? (embRank.get(d.id)! * 10) : 0
+      if (d.categoriaNorm === dish.categoriaNorm) relevance += 3
+      const dKws = extractKeywords(d.nombre, d.descripcion)
+      for (const kw of dKws) { if (thisKws.has(kw)) relevance += 4 }
+      const dist = userLocation && d.restauranteLat && d.restauranteLng
+        ? distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) : null
+      return { dish: d, relevance, dist }
+    })
+    const relevant = scored.filter(x => x.relevance > 0)
+    const pool2 = relevant.length >= 4 ? relevant : scored
+    const sorted = pool2.sort((a, b) => {
+      const distA = a.dist ?? 999; const distB = b.dist ?? 999
+      return (b.relevance * 5 - distB * 0.3) - (a.relevance * 5 - distA * 0.3)
+    })
+    const perLocal = new Map<string, number>()
+    const result: FeedDish[] = []
+    for (const x of sorted) {
+      const count = perLocal.get(x.dish.restauranteId) ?? 0
+      if (count >= 2) continue
+      perLocal.set(x.dish.restauranteId, count + 1)
+      result.push(x.dish)
+      if (result.length >= 12) break
+    }
+    return result
+  }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
+
+  const restDishes = useMemo(() =>
+    allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl).slice(0, 8),
+    [dish, allDishes]
+  )
+
+  return (
+    <>
+      {/* Top: Photo */}
+      <div style={{ flexShrink: 0, height: 280, position: 'relative', background: isDark ? '#111' : '#f0efec' }}>
+        {dish.fotoUrl ? (
+          <>
+            <img
+              src={dish.fotoUrl} alt={dish.nombre}
+              onLoad={() => setImgLoaded(true)}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.3s', display: 'block' }}
+            />
+            {!imgLoaded && <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />}
+          </>
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 64, opacity: 0.5 }}>🍽</span>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom: Content */}
+      <div style={{ padding: '22px 24px 28px' }}>
+        {/* Name + save */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
+          <h2 style={{
+            fontFamily: 'var(--font-feed-display), serif',
+            fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0, lineHeight: 1.2, flex: 1,
+          }}>
+            {dish.nombre}
+            {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6, fontSize: 18 }}>🌱</span>}
+            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6, fontSize: 18 }}>🥬</span>}
+          </h2>
+          <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Categoría */}
+        <button
+          onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
+          style={{
+            background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
+            fontSize: 14, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 500,
+            display: 'block', marginBottom: 12, textAlign: 'left',
+          }}
+        >
+          {dish.categoriaNorm}
+        </button>
+
+        {/* Price */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          {dish.enOferta && dish.precioDescuento != null ? (
+            <>
+              <span style={{ fontSize: 22, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            </>
+          ) : (
+            <span style={{ fontSize: 22, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
+          )}
+        </div>
+
+        {/* Description */}
+        {dish.descripcion && (
+          <p style={{ fontSize: 16, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)', lineHeight: 1.6, margin: '0 0 18px' }}>
+            {dish.descripcion}
+          </p>
+        )}
+
+        {/* Restaurant */}
+        <a href={
+            dish.googleMapsUrl
+              ? dish.googleMapsUrl
+              : dish.restauranteLat && dish.restauranteLng
+                ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ?? '') + ' ' + dish.restaurante)}`
+          }
+          target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+            padding: '12px 14px', borderRadius: 12, textAlign: 'left',
+            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+            textDecoration: 'none', marginBottom: 14, boxSizing: 'border-box',
+          }}>
+          {dish.restauranteLogo && !logoError ? (
+            <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
+              style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: 38, height: 38, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 15, fontWeight: 700 }}>
+              {dish.restaurante.charAt(0)}
+            </div>
+          )}
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
+            {dish.restauranteDireccion && <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0' }}>
+              {(() => {
+                const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
+                if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
+                return parts.join(', ')
+              })()}
+            </p>}
+            {dist != null && (
+              <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                A {formatDistance(dist)}
+              </p>
+            )}
+            {dish.googleRating != null && (
+              <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ color: '#F4A623', fontSize: 11 }}>★</span>
+                <span style={{ fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)' }}>{dish.googleRating.toFixed(1)}</span>
+                {dish.googleRatingCount != null && (
+                  <span style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
+                    ({dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(1)}k` : dish.googleRatingCount})
+                  </span>
+                )}
+                <span style={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', fontSize: 10 }}>en Google</span>
+              </p>
+            )}
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </a>
+
+        {/* Más platos del local */}
+        {restDishes.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Más de {dish.restaurante}</p>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', marginRight: -28 }}>
+              {restDishes.map(d => (
+                <div key={d.id} onClick={() => onDishTap(d)} style={{
+                  flexShrink: 0, width: 130, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                  background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                }}>
+                  <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 130, height: 90, objectFit: 'cover', display: 'block' }} />
+                  <div style={{ padding: '5px 7px' }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                    <p style={{ fontSize: 11, color: '#F4A623', margin: '2px 0 0', fontWeight: 700 }}>${d.precio.toLocaleString('es-CL')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Ver carta completa */}
+        <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            width: '100%', padding: '10px 16px', borderRadius: 12, boxSizing: 'border-box',
+            background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.3)',
+            color: '#c97d00', textDecoration: 'none',
+            fontSize: 13, fontWeight: 600, marginBottom: 18,
+          }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/>
+            <path d="M14 14h2v2h-2zM18 14h3M18 18h3M14 18v3M14 21h3"/>
+          </svg>
+          Ver carta completa
+        </a>
+
+        {/* Related dishes */}
+        {!hideRelated && relatedDishes.length > 0 && (
+          <div style={{ paddingTop: 16, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 10px' }}>También te podría gustar</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[0, 1].map(col => (
+                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {relatedDishes.filter((_, i) => i % 2 === col).map(d => (
+                    <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+/* ── Mobile: individual dish slide ── */
 function DishSlide({
   dish, index, isActive, onClose, onSave, onDishTap, onCategoryClick,
   allDishes, dishPool, profile, hideRelated, userLocation, isDark,
@@ -154,7 +550,6 @@ function DishSlide({
 }) {
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [showLocal, setShowLocal] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [visibleRelated, setVisibleRelated] = useState(10)
   const [restScrollEnd, setRestScrollEnd] = useState(false)
@@ -196,12 +591,10 @@ function DishSlide({
       return { dish: d, relevance, dist }
     })
 
-    // Filtrar sin ninguna relevancia (evita sugerencias totalmente ajenas)
     const relevant = scored.filter(x => x.relevance > 0)
     const pool2 = relevant.length >= 4 ? relevant : scored
 
     const sorted = pool2.sort((a, b) => {
-      // Score combinado: relevancia pesa más que distancia
       const distA = a.dist ?? 999
       const distB = b.dist ?? 999
       const scoreA = a.relevance * 5 - distA * 0.3
@@ -209,7 +602,6 @@ function DishSlide({
       return scoreB - scoreA
     })
 
-    // Máx 2 platos por local para que haya variedad
     const perLocal = new Map<string, number>()
     const result: FeedDish[] = []
     for (const x of sorted) {
@@ -259,9 +651,9 @@ function DishSlide({
         background: isDark ? '#0e0e0e' : '#fff',
       }}
     >
-      {/* Photo — big hero (close button inside to avoid extra space) */}
+      {/* Photo — big hero */}
       <div style={{ position: 'relative', width: '100%', height: 'min(55vh, 420px)', overflow: 'hidden' }}>
-        {/* Close button — fixed so it stays visible while scrolling */}
+        {/* Close button */}
         <button onClick={onClose} style={{
           position: 'fixed', top: 14, right: 14, zIndex: 130,
           width: 36, height: 36, borderRadius: '50%',
@@ -309,7 +701,6 @@ function DishSlide({
           </button>
         </div>
 
-
         {/* Categoría */}
         <button
           onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
@@ -341,7 +732,7 @@ function DishSlide({
           </p>
         )}
 
-        {/* Restaurant — abre Google Maps al tocar */}
+        {/* Restaurant */}
         <a href={
             dish.googleMapsUrl
               ? dish.googleMapsUrl
@@ -397,7 +788,7 @@ function DishSlide({
           </svg>
         </a>
 
-        {/* Más platos del local — siempre visible */}
+        {/* Más platos del local */}
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 14 }}>
             <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Más de {dish.restaurante}</p>

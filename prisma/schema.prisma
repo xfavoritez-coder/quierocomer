@@ -728,6 +728,7 @@ model Category {
   position     Int
   isActive     Boolean  @default(true)
   dishType     String   @default("food") // "food" | "drink" | "dessert"
+  normOverride String?  // override manual de categoría QC (ej: "Mexicana")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -2177,6 +2178,7 @@ model MapaProspecto {
   cartaUrl    String?
   fuenteMatch String?
   importedSlug String?  // slug del restaurante creado al importar al feed
+  dismissed   Boolean  @default(false)  // true = descartado, no volver a mostrar ni guardar
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

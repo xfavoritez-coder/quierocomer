@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 import { importFromProspecto } from '@/lib/extractors/pipeline'
+import { prisma } from '@/lib/prisma'
+import { normalizeCategory, isValidQcCategory, isExcludedCategory } from '@/app/a/lib/categories'
 
 export const maxDuration = 300
 
@@ -68,7 +70,15 @@ export async function POST(req: NextRequest) {
             p.name,
           )
           ok++
-          send({ type: 'result', id: p.id, slug: result.slug, dishCount: result.dishCount, status: 'ok' })
+          // Check for unmapped categories
+          const cats = await prisma.category.findMany({
+            where: { restaurant: { slug: result.slug }, dishes: { some: { isActive: true, photos: { isEmpty: false } } } },
+            select: { name: true },
+          })
+          const unmapped = cats
+            .map(c => c.name.trim())
+            .filter(n => !isValidQcCategory(normalizeCategory(n)) && !isExcludedCategory(n))
+          send({ type: 'result', id: p.id, slug: result.slug, dishCount: result.dishCount, status: 'ok', unmappedCategories: unmapped.length > 0 ? unmapped : undefined })
         } catch (e: any) {
           failed++
           send({ type: 'result', id: p.id, status: 'error', error: e?.message ?? 'Error desconocido' })

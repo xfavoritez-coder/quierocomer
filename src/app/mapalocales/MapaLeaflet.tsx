@@ -187,7 +187,8 @@ export default function MapaLeaflet({ restaurantes, prospectos, drawMode, onPoin
     const prospectoCircles = new globalThis.Map<string, L.CircleMarker>()
 
     function buildProspectoPopup(p: ProspectoMapaData) {
-      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(p.name + ' ' + p.address)}`
+      const comuna = p.address?.split(',').slice(-3, -2)[0]?.trim() ?? ''
+      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(p.name + (comuna ? ' ' + comuna : ''))}`
       return `
         <div style="background:#1a1a1a;border-radius:14px;padding:14px;min-width:210px;color:#fff;font-family:system-ui,sans-serif;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">

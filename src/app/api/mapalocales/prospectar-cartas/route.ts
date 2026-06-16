@@ -187,54 +187,94 @@ async function urlExists(url: string): Promise<boolean> {
   }
 }
 
-// Busca URL de UberEats o PedidosYa usando Bing HTML (mejor cobertura que DDG para estas plataformas)
+// Busca en DuckDuckGo HTML vía POST — funciona sin bot-blocking, retorna URLs sin protocolo.
+async function ddgSearch(query: string, fragment: string, timeoutMs = 12000): Promise<string | null> {
+  try {
+    const ctrl = new AbortController()
+    setTimeout(() => ctrl.abort(), timeoutMs)
+    const res = await fetch('https://html.duckduckgo.com/html/', {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'text/html',
+        'Accept-Language': 'es-CL,es;q=0.9',
+      },
+      body: `q=${encodeURIComponent(query)}&kl=cl-es`,
+    })
+    if (!res.ok) return null
+    const html = await res.text()
+
+    // DDG muestra URLs sin protocolo en el HTML: "ubereats.com/cl/store/slug/HASH"
+    // Buscar el fragment directamente y extraer la URL completa
+    const idx = html.indexOf(fragment)
+    if (idx !== -1) {
+      // Buscar el inicio de la URL (puede tener https:// o www. delante o nada)
+      const start = Math.max(0, idx - 12) // retroceder para capturar posible "https://www."
+      const chunk = html.slice(start, idx + fragment.length + 200)
+      const m = chunk.match(/(?:https?:\/\/(?:www\.)?|(?:www\.)?)?([a-z0-9.-]+\.(?:com|cl)\/[^\s"'<>&]{5,})/)
+      if (m) {
+        const path = m[1].split('?')[0]
+        if (path.includes(fragment)) return `https://www.${path.replace(/^www\./, '')}`
+      }
+      // Fallback: tomar directamente desde el índice del fragment
+      const raw = html.slice(idx).match(/^[^\s"'<>&]+/)
+      if (raw) return `https://www.${fragment}${raw[0].slice(fragment.length)}`.split('?')[0]
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Busca URL de UberEats / PedidosYa / Rappi via DuckDuckGo.
+// Prueba múltiples queries en cascada hasta encontrar la URL.
 async function searchDeliveryUrl(name: string, address: string): Promise<Array<{ provider: string; url: string }>> {
   const commune = address.split(',').slice(-3)[0]?.trim() ?? ''
   const results: Array<{ provider: string; url: string }> = []
 
-  const searches = [
+  const platforms = [
     {
       provider: 'UberEats',
-      query: `${name} ${commune} ubereats`,
-      pattern: /https?:\/\/www\.ubereats\.com\/cl\/store\/[^"'\s<>&]{5,}/gi,
-    },
-    {
-      provider: 'PedidosYa',
-      query: `${name} ${commune} pedidosya`,
-      pattern: /https?:\/\/www\.pedidosya\.cl\/restaurantes\/[^"'\s<>&]{5,}/gi,
+      fragment: 'ubereats.com/cl/store/',
+      queries: [
+        `${name} ubereats`,
+        `${name} ${commune} ubereats`,
+        `${name} santiago ubereats`,
+      ],
     },
     {
       provider: 'Rappi',
-      query: `${name} ${commune} rappi restaurantes`,
-      pattern: /https?:\/\/www\.rappi\.cl\/restaurantes\/[^"'\s<>&]{5,}/gi,
+      fragment: 'rappi.cl/restaurantes/',
+      queries: [
+        `${name} rappi chile`,
+        `${name} ${commune} rappi`,
+        `${name} santiago rappi`,
+      ],
+    },
+    {
+      provider: 'PedidosYa',
+      fragment: 'pedidosya.cl/restaurantes/',
+      queries: [
+        `${name} pedidosya chile`,
+        `${name} ${commune} pedidosya`,
+        `${name} santiago pedidosya`,
+      ],
     },
   ]
 
-  for (const { provider, query, pattern } of searches) {
-    try {
-      const ctrl = new AbortController()
-      setTimeout(() => ctrl.abort(), 9000)
-      const res = await fetch(
-        `https://www.bing.com/search?q=${encodeURIComponent(query)}&mkt=es-CL&setmkt=es-CL&setlang=es-CL`,
-        {
-          signal: ctrl.signal,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'es-CL,es;q=0.9',
-          },
-        }
-      )
-      if (!res.ok) continue
-      const html = await res.text()
-
-      const matches = [...html.matchAll(pattern)]
-      if (matches.length > 0) {
-        // Limpiar tracking params y entidades HTML
-        const url = matches[0][0].replace(/&amp;/g, '&').split('?')[0]
+  for (const { provider, fragment, queries } of platforms) {
+    for (const query of queries) {
+      const url = await ddgSearch(query, fragment)
+      if (url) {
         results.push({ provider, url })
+        break
       }
-    } catch {}
+      // Pausa breve entre queries para no saturar DDG
+      await new Promise(r => setTimeout(r, 300))
+    }
   }
 
   return results

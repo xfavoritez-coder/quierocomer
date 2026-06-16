@@ -79,10 +79,16 @@ export default function NewHome({
 }) {
   const [view, setView] = useState<View>('feed')
   const [isDark, setIsDark] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
 
   // useLayoutEffect corre antes del primer paint — sin flash
   useLayoutEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'))
+    const mq = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
   }, [])
 
   const toggleTheme = () => {
@@ -97,6 +103,7 @@ export default function NewHome({
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [hideRelated, setHideRelated] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationName, setLocationName] = useState<string | null>(null)
   const [locationOpen, setLocationOpen] = useState(false)
@@ -121,8 +128,8 @@ export default function NewHome({
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : detectMealSlot())
-  const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular'>('recent')
-  const [filterMaxKm, setFilterMaxKm] = useState(40)
+  const [filterSort, setFilterSort] = useState<'nearby' | 'recent' | 'price-asc' | 'price-desc' | 'popular'>('nearby')
+  const [filterMaxKm, setFilterMaxKm] = useState(30)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
@@ -369,7 +376,7 @@ export default function NewHome({
     }
     // Distance filter — uses slider value (filterMaxKm) or GPS auto
     if (userLocation) {
-      const maxDist = filterMaxKm < 40 ? filterMaxKm : 999
+      const maxDist = filterMaxKm
       const noiseScale = Math.max(0.5, maxDist * 0.25) // ruido = 25% del radio, mín 0.5km
       const withDist = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
@@ -401,7 +408,13 @@ export default function NewHome({
 
     // Sort based on filter selection
     let combined: FeedDish[]
-    if (filterSort === 'price-asc') {
+    if (filterSort === 'nearby') {
+      // Si hay ubicación, el orden de distancia ya está aplicado arriba; solo re-score con popularidad como desempate
+      combined = filtered
+        .map(d => ({ dish: d, score: Math.min((d.popularityScore ?? 0) / 100, 1) }))
+        .sort((a, b) => b.score - a.score)
+        .map(s => s.dish)
+    } else if (filterSort === 'price-asc') {
       combined = [...filtered].sort((a, b) => (a.precioDescuento ?? a.precio) - (b.precioDescuento ?? b.precio))
     } else if (filterSort === 'price-desc') {
       combined = [...filtered].sort((a, b) => (b.precioDescuento ?? b.precio) - (a.precioDescuento ?? a.precio))
@@ -415,12 +428,14 @@ export default function NewHome({
       combined = filtered
         .map(d => {
           let score = 0
+          const popBase = Math.min((d.popularityScore ?? 0) / 100, 1) * 0.3
           if (vectorRank) {
             const vScore = vectorRank.get(d.id) ?? 0
             const catRaw = categoryScores[d.categoriaNorm] ?? 0
             const catNorm = catRaw > 0 ? Math.min(Math.log2(catRaw + 1) / 6, 1) : 0
-            score = vScore * 0.6 + catNorm * 0.4
+            score = vScore * 0.6 + catNorm * 0.4 + popBase
           } else {
+            score += popBase
             score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
           }
           return { dish: d, score }
@@ -429,14 +444,21 @@ export default function NewHome({
         .map(s => s.dish)
     }
 
-    // Max 3 consecutive same category
+    // Max 3 consecutive same category + max 2 consecutive same restaurant
     const final: FeedDish[] = []
     const rem = [...combined]
     while (rem.length > 0) {
       const recent = final.slice(-3).map(d => d.categoriaNorm)
-      const allSame = recent.length === 3 && recent.every(c => c === recent[0])
-      if (allSame) {
-        const diffIdx = rem.findIndex(d => d.categoriaNorm !== recent[0])
+      const allSameCat = recent.length === 3 && recent.every(c => c === recent[0])
+      const recentRest = final.slice(-2).map(d => d.restauranteId)
+      const allSameRest = recentRest.length === 2 && recentRest[0] === recentRest[1]
+      if (allSameCat || allSameRest) {
+        const blockedCat = allSameCat ? recent[0] : null
+        const blockedRest = allSameRest ? recentRest[0] : null
+        const diffIdx = rem.findIndex(d =>
+          (!blockedCat || d.categoriaNorm !== blockedCat) &&
+          (!blockedRest || d.restauranteId !== blockedRest)
+        )
         if (diffIdx >= 0) { final.push(rem.splice(diffIdx, 1)[0]); continue }
       }
       final.push(rem.shift()!)
@@ -504,10 +526,174 @@ export default function NewHome({
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
+    <div style={{ minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
 
-      {/* ─── Logo row — NO sticky, scrolls con el contenido ─── */}
+      {/* ─── Desktop Top Navbar ─── */}
+      {isDesktop && (
+        <nav style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, height: 64,
+          background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+          display: 'flex', alignItems: 'center',
+        }}><div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px' }}>
+          {/* Logo */}
+          <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px' }}>
+              Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+            </span>
+          </a>
+
+          {/* Search bar — centro, ocupa todo el espacio */}
+          <div style={{ flex: 1, position: 'relative', maxWidth: 480, margin: '0 auto' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
+              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              className="feed-search-input"
+              type="text" value={searchInput}
+              onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true) }}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={e => { if (e.key === 'Enter') executeSearch(searchInput) }}
+              placeholder="Buscar plato, restaurante o ingrediente..."
+              style={{
+                width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 14,
+                background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            {searchInput && (
+              <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+            {/* Suggestions dropdown */}
+            {showSuggestions && suggestions.length > 0 && searchInput.length >= 2 && (
+              <>
+                <div onClick={() => setShowSuggestions(false)} style={{ position: 'fixed', inset: 0, zIndex: 36 }} />
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 37, marginTop: 4,
+                  background: isDark ? '#1e1e1e' : '#fff',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
+                }}>
+                  {suggestions.map((s, i) => (
+                    <button key={i} onClick={() => {
+                      if (s.type === 'categoria') { setActiveCategory(s.label); setSearchInput(''); setSearchQuery(''); setShowSuggestions(false) }
+                      else { executeSearch(s.label) }
+                    }} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                      borderBottom: i < suggestions.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none',
+                    }}>
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>{s.type === 'categoria' ? '🏷️' : s.type === 'local' ? '🏪' : '🍽'}</span>
+                      <span style={{ fontSize: 13, color: isDark ? '#fff' : '#111' }}>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Hamburger menu desktop */}
+          <div style={{ position: 'relative', flexShrink: 0, marginLeft: 'auto' }}>
+            <button
+              onClick={() => setDesktopMenuOpen(o => !o)}
+              style={{
+                width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: desktopMenuOpen
+                  ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')
+                  : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.55)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <svg width="16" height="14" viewBox="0 0 16 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <line x1="0" y1="1" x2="16" y2="1"/>
+                <line x1="0" y1="7" x2="16" y2="7"/>
+                <line x1="0" y1="13" x2="16" y2="13"/>
+              </svg>
+            </button>
+
+            {desktopMenuOpen && (
+              <>
+                {/* Overlay para cerrar */}
+                <div onClick={() => setDesktopMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 148 }} />
+
+                {/* Dropdown */}
+                <div style={{
+                  position: 'absolute', top: 44, right: 0, zIndex: 149,
+                  background: isDark ? '#1e1e1e' : '#fff',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                  padding: '8px 0', minWidth: 200,
+                  display: 'flex', flexDirection: 'column',
+                }}>
+                  {/* Mi perfil */}
+                  <button onClick={() => { setView('perfil'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%',
+                  }}>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z"/></svg>
+                    Mi perfil
+                  </button>
+
+                  {/* Tienes un local */}
+                  <a href="/qr" onClick={() => setDesktopMenuOpen(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 18px', color: isDark ? 'rgba(255,255,255,0.85)' : '#111',
+                    fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box',
+                  }}>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Tienes un local
+                  </a>
+
+                  {/* Contáctanos */}
+                  <a href="mailto:hola@quierocomer.cl" onClick={() => setDesktopMenuOpen(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 18px', color: isDark ? 'rgba(255,255,255,0.85)' : '#111',
+                    fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box',
+                  }}>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Contáctanos
+                  </a>
+
+                  <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', margin: '6px 14px' }} />
+
+                  {/* Modo oscuro/claro */}
+                  <button onClick={() => { toggleTheme(); setDesktopMenuOpen(false) }} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%',
+                  }}>
+                    {isDark
+                      ? <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                      : <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    }
+                    {isDark ? 'Modo claro' : 'Modo oscuro'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>{/* end inner max-width wrapper */}
+        </nav>
+      )}
+
+      {/* ─── Main content ─── */}
       <div style={{
+        ...(isDesktop ? { paddingTop: 82, maxWidth: 1100, margin: '0 auto' } : { maxWidth: 480, margin: '0 auto' }),
+      }}>
+
+      {/* ─── Logo row — mobile only ─── */}
+      {!isDesktop && <div style={{
         padding: '10px 16px 0',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
@@ -524,15 +710,15 @@ export default function NewHome({
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-      </div>
+      </div>}
 
-      {/* ─── Sticky: search + ubicación/filtros ─── */}
+      {/* ─── Sticky: search + ubicación/filtros — mobile only ─── */}
       <header style={{
-        display: view === 'perfil' ? 'none' : 'flex',
+        display: isDesktop ? 'none' : view === 'perfil' ? 'none' : 'flex',
         position: 'sticky', top: 0, zIndex: 35,
         background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
+        padding: isDesktop ? '12px 24px 10px' : '8px 16px 8px', flexDirection: 'column', gap: 7,
       }}>
 
         {/* Row 1: Search bar full width */}
@@ -559,7 +745,7 @@ export default function NewHome({
           {searchInput && (
             <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 2,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
@@ -687,18 +873,18 @@ export default function NewHome({
               </h3>
               <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: isDark ? '#fff' : '#111' }}>
-                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{filterMaxKm < 40 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
+                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{filterMaxKm} km</strong>
                 </p>
                 <div style={{ position: 'relative', height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
-                  <div style={{ width: `${(filterMaxKm / 40) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
-                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 40) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
+                  <div style={{ width: `${(filterMaxKm / 30) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
+                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 30) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
                 </div>
-                <input type="range" min={1} max={40} value={filterMaxKm}
+                <input type="range" min={1} max={30} value={filterMaxKm}
                   onChange={e => setFilterMaxKm(Number(e.target.value))}
                   style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
-                  <span>1 km</span><span>10 km</span><span>20 km</span><span>40+ km</span>
+                  <span>1 km</span><span>10 km</span><span>20 km</span><span>30 km</span>
                 </div>
               </div>
             </div>
@@ -763,8 +949,9 @@ export default function NewHome({
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {[
-                  { id: 'recent' as const, label: 'Últimos agregados' },
+                  { id: 'nearby' as const, label: 'Más cercano' },
                   { id: 'popular' as const, label: 'Más populares' },
+                  { id: 'recent' as const, label: 'Últimos agregados' },
                   { id: 'price-asc' as const, label: 'Precio ↑' },
                   { id: 'price-desc' as const, label: 'Precio ↓' },
                 ].map(s => (
@@ -974,12 +1161,37 @@ export default function NewHome({
 
           {/* Results count strip */}
           {feedDishes.length > 0 && (
-            <div style={{ padding: '6px 16px 4px' }}>
+            <div style={{ padding: '6px 16px 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isDesktop && (
+                <button onClick={() => setLocationModalOpen(true)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                  padding: '6px 12px', borderRadius: 20, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                  background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                  color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  cursor: 'pointer', fontSize: 13,
+                }}>
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {locationName || gpsLabel || 'Ubicación'}
+                </button>
+              )}
+              <div style={{ flex: 1 }} />
               <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
                 {searchQuery.trim()
                   ? `${feedDishes.length} resultado${feedDishes.length !== 1 ? 's' : ''} para "${searchQuery}"`
                   : `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} encontrados`}
               </p>
+              {isDesktop && (
+                <button onClick={() => setFilterOpen(true)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                  padding: '6px 12px', borderRadius: 20, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                  background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                  cursor: 'pointer', fontSize: 13,
+                }}>
+                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                  Filtros
+                </button>
+              )}
             </div>
           )}
 
@@ -996,10 +1208,10 @@ export default function NewHome({
               <div ref={sentinelRef} style={{ height: 1 }} />
               {visibleCount < feedDishes.length && (
                 <div style={{ display: 'flex', gap: 10, padding: '10px 12px 40px' }}>
-                  {[0, 1].map(col => (
+                  {(isDesktop ? [0, 1, 2, 3] : [0, 1]).map(col => (
                     <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {[0, 1, 2].map(i => (
-                        <div key={i} className="skeleton-shimmer" style={{ aspectRatio: col === 0 ? '3/4' : '4/5', borderRadius: 14 }} />
+                        <div key={i} className="skeleton-shimmer" style={{ aspectRatio: col % 2 === 0 ? '3/4' : '4/5', borderRadius: 14 }} />
                       ))}
                     </div>
                   ))}
@@ -1017,15 +1229,6 @@ export default function NewHome({
                  (locationName || gpsLabel) ? `Aún no tenemos platos en ${locationName || gpsLabel}. Prueba cambiando la ubicación.` :
                  'Intenta cambiar los filtros o la ubicación.'}
               </p>
-              {(locationName || gpsLabel) && (
-                <button onClick={() => { setLocationName(null); setUserLocation(null); setGpsLabel(null) }} style={{
-                  padding: '10px 20px', borderRadius: 14, fontSize: 14, fontWeight: 600,
-                  background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.25)',
-                  color: '#c97d00', cursor: 'pointer',
-                }}>
-                  Ver todos los platos
-                </button>
-              )}
             </div>
           )}
         </>
@@ -1118,6 +1321,7 @@ export default function NewHome({
         />
       )}
 
+      </div>{/* end main content */}
     </div>
   )
 }

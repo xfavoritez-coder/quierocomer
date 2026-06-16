@@ -320,5 +320,5 @@ export async function GET(req: NextRequest) {
     },
   }).catch(() => {});
 
-  return NextResponse.json({ ok: true, sent, demosSent, errors, insightsGenerated, durationMs });
+  return NextResponse.json({ ok: true, sent, demosSent, errors, durationMs });
 }
