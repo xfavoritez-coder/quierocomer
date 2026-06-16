@@ -637,7 +637,7 @@ function TabMapa() {
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <p style={{ fontSize: 14, color: '#666', margin: 0 }}>
-          {places.length} local{places.length !== 1 ? 'es' : ''} · {selected.size} seleccionado{selected.size !== 1 ? 's' : ''}
+          {filtered.length} local{filtered.length !== 1 ? 'es' : ''}{isFiltering ? ` de ${places.length}` : ''} · {selected.size} seleccionado{selected.size !== 1 ? 's' : ''}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setAddModal(true)} style={{ fontSize: 12, color: '#a78bfa', background: 'none', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
