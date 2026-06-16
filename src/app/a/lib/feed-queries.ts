@@ -5,7 +5,7 @@ import { unstable_cache } from 'next/cache'
 
 /** Trae platos para el feed: hasta 5 por restaurante usando una sola query SQL */
 async function _getFeedDishes(): Promise<FeedDish[]> {
-  const MAX_PER = 15
+  const MAX_PER = 8
 
   // Una sola query con ROW_NUMBER() — eficiente con cualquier cantidad de restaurantes
   const rows = await prisma.$queryRaw<any[]>`

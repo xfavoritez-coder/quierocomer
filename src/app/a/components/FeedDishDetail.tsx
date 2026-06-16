@@ -295,6 +295,7 @@ function DesktopDishContent({
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const [showDietTooltip, setShowDietTooltip] = useState(false)
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
   const dist = userLocation && dish.restauranteLat && dish.restauranteLng
@@ -345,11 +346,6 @@ function DesktopDishContent({
     return result
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
-  const restDishes = useMemo(() =>
-    allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl).slice(0, 8),
-    [dish, allDishes]
-  )
-
   return (
     <>
       {/* Top: Photo */}
@@ -379,8 +375,25 @@ function DesktopDishContent({
             fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0, lineHeight: 1.2, flex: 1,
           }}>
             {dish.nombre}
-            {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6, fontSize: 18 }}>🌱</span>}
-            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6, fontSize: 18 }}>🥬</span>}
+            {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
+              <span
+                onClick={e => { e.stopPropagation(); setShowDietTooltip(true); setTimeout(() => setShowDietTooltip(false), 2200) }}
+                style={{ marginLeft: 6, fontSize: 18, cursor: 'pointer', position: 'relative', display: 'inline-block', verticalAlign: 'middle' }}
+              >
+                {dish.dieta.tipo === 'VEGAN' ? '🌱' : '🥬'}
+                {showDietTooltip && (
+                  <span style={{
+                    position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                    background: dish.dieta.tipo === 'VEGAN' ? '#15803d' : '#16a34a',
+                    color: '#fff', fontSize: 14, fontWeight: 700, padding: '7px 14px', borderRadius: 10,
+                    whiteSpace: 'nowrap', pointerEvents: 'none',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+                  }}>
+                    {dish.dieta.tipo === 'VEGAN' ? '🌱 Vegano' : '🥬 Vegetariano'}
+                  </span>
+                )}
+              </span>
+            )}
           </h2>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
@@ -397,7 +410,7 @@ function DesktopDishContent({
           style={{
             background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
             fontSize: 14, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 500,
-            display: 'block', marginBottom: 12, textAlign: 'left',
+            display: 'block', marginTop: -2, marginBottom: 12, textAlign: 'left',
           }}
         >
           {dish.categoriaNorm}
@@ -478,27 +491,6 @@ function DesktopDishContent({
           </svg>
         </a>
 
-        {/* Más platos del local */}
-        {restDishes.length > 0 && (
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Más de {dish.restaurante}</p>
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', marginRight: -28 }}>
-              {restDishes.map(d => (
-                <div key={d.id} onClick={() => onDishTap(d)} style={{
-                  flexShrink: 0, width: 130, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
-                  background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                }}>
-                  <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 130, height: 90, objectFit: 'cover', display: 'block' }} />
-                  <div style={{ padding: '5px 7px' }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
-                    <p style={{ fontSize: 11, color: '#F4A623', margin: '2px 0 0', fontWeight: 700 }}>${d.precio.toLocaleString('es-CL')}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Ver carta completa */}
         <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
           style={{
@@ -551,11 +543,9 @@ function DishSlide({
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const [showDietTooltip, setShowDietTooltip] = useState(false)
   const [visibleRelated, setVisibleRelated] = useState(10)
-  const [restScrollEnd, setRestScrollEnd] = useState(false)
-  const [restScrollStart, setRestScrollStart] = useState(true)
   const slideRef = useRef<HTMLDivElement>(null)
-  const restScrollRef = useRef<HTMLDivElement>(null)
   const pullY = useRef<number | null>(null)
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
@@ -627,12 +617,6 @@ function DishSlide({
     return () => el.removeEventListener('scroll', handleScroll)
   }, [visibleRelated, relatedDishes.length])
 
-  // Restaurant dishes
-  const restDishes = useMemo(() =>
-    allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl).slice(0, 8),
-    [dish, allDishes]
-  )
-
   return (
     <div
       ref={slideRef}
@@ -657,7 +641,7 @@ function DishSlide({
         <button onClick={onClose} style={{
           position: 'fixed', top: 14, right: 14, zIndex: 130,
           width: 36, height: 36, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.35)', border: 'none',
+          background: 'rgba(0,0,0,0.18)', border: 'none',
           backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff',
         }}>
@@ -689,8 +673,25 @@ function DishSlide({
             fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0, lineHeight: 1.2, flex: 1,
           }}>
             {dish.nombre}
-            {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🌱</span>}
-            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🥬</span>}
+            {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
+              <span
+                onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v) }}
+                style={{ marginLeft: 6, fontSize: 16, cursor: 'pointer', position: 'relative', display: 'inline-block', verticalAlign: 'middle' }}
+              >
+                {dish.dieta.tipo === 'VEGAN' ? '🌱' : '🥬'}
+                {showDietTooltip && (
+                  <span style={{
+                    position: 'absolute', bottom: '120%', left: '50%', transform: 'translateX(-50%)',
+                    background: dish.dieta.tipo === 'VEGAN' ? '#15803d' : '#16a34a',
+                    color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 8,
+                    whiteSpace: 'nowrap', pointerEvents: 'none',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                  }}>
+                    {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
+                  </span>
+                )}
+              </span>
+            )}
           </h2>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
@@ -707,7 +708,7 @@ function DishSlide({
           style={{
             background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
             fontSize: 15, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 500,
-            display: 'block', marginBottom: 10, textAlign: 'left',
+            display: 'block', marginTop: -2, marginBottom: 10, textAlign: 'left',
           }}
         >
           {dish.categoriaNorm}
@@ -787,45 +788,6 @@ function DishSlide({
             <path d="M9 18l6-6-6-6" />
           </svg>
         </a>
-
-        {/* Más platos del local */}
-        {restDishes.length > 0 && (
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Más de {dish.restaurante}</p>
-            <div style={{ position: 'relative', overflow: 'hidden', marginRight: -20 }}>
-              <div ref={restScrollRef} onScroll={e => { const el = e.currentTarget; setRestScrollEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 8); setRestScrollStart(el.scrollLeft <= 0) }} style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingRight: 20 }}>
-                {restDishes.map(d => (
-                  <div key={d.id} onClick={() => onDishTap(d)} style={{
-                    flexShrink: 0, width: 148, cursor: 'pointer', borderRadius: 12, overflow: 'hidden',
-                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                  }}>
-                    <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 148, height: 104, objectFit: 'cover', display: 'block' }} />
-                    <div style={{ padding: '5px 7px' }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
-                      <p style={{ fontSize: 11, color: '#F4A623', margin: '2px 0 0', fontWeight: 700 }}>${d.precio.toLocaleString('es-CL')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {!restScrollStart && (
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, bottom: 0, width: 28, pointerEvents: 'none',
-                  background: isDark
-                    ? 'linear-gradient(to left, transparent 0%, rgba(14,14,14,0.6) 100%)'
-                    : 'linear-gradient(to left, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.6) 100%)',
-                }} />
-              )}
-              {!restScrollEnd && (
-                <div style={{
-                  position: 'absolute', top: 0, right: 0, bottom: 0, width: 28, pointerEvents: 'none',
-                  background: isDark
-                    ? 'linear-gradient(to right, transparent 0%, rgba(14,14,14,0.6) 100%)'
-                    : 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.6) 100%)',
-                }} />
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Ver carta completa */}
         <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
