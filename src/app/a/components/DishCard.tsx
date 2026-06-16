@@ -109,7 +109,7 @@ export default function DishCard({
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 55%, transparent 100%)',
-          padding: '24px 10px 10px',
+          padding: '24px 10px 11px',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 4,
