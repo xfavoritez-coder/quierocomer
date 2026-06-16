@@ -347,7 +347,7 @@ function DishSlide({
           }
           target="_blank" rel="noopener noreferrer"
           style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%',
+            display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '14px 16px', borderRadius: 14, textAlign: 'left',
             background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)',
             textDecoration: 'none', marginBottom: 14, boxSizing: 'border-box',
