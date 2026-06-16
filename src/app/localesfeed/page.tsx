@@ -610,7 +610,8 @@ function TabMapa() {
     })
   }, [places, search, hideImported, importMap])
 
-  const allSelected = filtered.length > 0 && selected.size === filtered.length
+  const allFilteredSelected = filtered.length > 0 && filtered.every(p => selected.has(p.id))
+  const isFiltering = search.trim().length > 0 || hideImported
 
   if (loading) {
     return <div style={{ padding: '60px 0', textAlign: 'center', color: '#555', fontSize: 14 }}>Cargando prospectos...</div>
@@ -672,10 +673,20 @@ function TabMapa() {
             {hideImported ? '✓ Ocultando importados' : 'Ocultar importados'}
           </button>
           <button
-            onClick={() => selected.size === filtered.length ? setSelected(new Set()) : setSelected(new Set(filtered.map(p => p.id)))}
+            onClick={() => {
+              if (allFilteredSelected) {
+                // Quitar solo los filtrados de la selección
+                setSelected(prev => { const s = new Set(prev); filtered.forEach(p => s.delete(p.id)); return s })
+              } else {
+                // Añadir los filtrados a la selección (sin tocar el resto)
+                setSelected(prev => { const s = new Set(prev); filtered.forEach(p => s.add(p.id)); return s })
+              }
+            }}
             style={{ fontSize: 12, color: '#888', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >
-            {selected.size === filtered.length && filtered.length > 0 ? 'Desmarcar todo' : 'Marcar todo'}
+            {allFilteredSelected
+              ? (isFiltering ? 'Desmarcar filtrados' : 'Desmarcar todo')
+              : (isFiltering ? 'Marcar filtrados' : 'Marcar todo')}
           </button>
           {selected.size > 0 && !prospecting && (
             <button
