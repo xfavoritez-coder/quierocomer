@@ -450,6 +450,10 @@ model Restaurant {
   address     String?
   lat         Float?
   lng         Float?
+  googlePlaceId    String?    // ChIJxxxxxx
+  googleMapsUrl    String?    // https://maps.app.goo.gl/... o URL larga
+  googleRating     Float?     // 4.3
+  googleRatingCount Int?      // cantidad de reseñas
   instagram   String?
   website     String?
   whatsapp    String?     // formato +56 9 1234 5678

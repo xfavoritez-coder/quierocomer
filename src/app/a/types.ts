@@ -28,6 +28,10 @@ export type FeedDish = {
   mealTime: 'desayuno' | 'almuerzo_cena'
   tags: string[]           // RECOMMENDED, NEW, MOST_ORDERED
   isHero: boolean
+  // Google Places
+  googleRating?: number | null
+  googleRatingCount?: number | null
+  googleMapsUrl?: string | null
   // Stats (de FeedDishStats, si existen)
   avgRating: number | null
   ratingCount: number

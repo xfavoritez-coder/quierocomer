@@ -319,14 +319,15 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 1️⃣ Buscar en UberEats / PedidosYa vía DuckDuckGo
+      // 1️⃣ Buscar en UberEats / PedidosYa vía Bing
+      // UberEats y PedidosYa bloquean bots — si Bing encontró la URL, confiamos que tiene fotos (lo exigen)
       send({ type: 'status', name: place.name, message: `Buscando en UberEats y PedidosYa...` })
       const deliveryHits = await searchDeliveryUrl(place.name, place.address)
       let deliveryFound = false
       for (const { provider, url } of deliveryHits) {
-        send({ type: 'status', name: place.name, message: `${provider}: encontrado — verificando fotos...` })
-        const photos = await hasPhotos(url)
-        if (photos) {
+        send({ type: 'status', name: place.name, message: `${provider}: verificando que existe...` })
+        const exists = await urlExists(url)
+        if (exists) {
           encontrados++
           deliveryFound = true
           const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl: url, fuenteMatch: 'maps-website' }
@@ -334,7 +335,7 @@ export async function POST(req: NextRequest) {
           send({ type: 'result', result })
           break
         } else {
-          send({ type: 'status', name: place.name, message: `${provider}: sin fotos detectadas (SPA)` })
+          send({ type: 'status', name: place.name, message: `${provider}: URL no válida, siguiendo...` })
         }
       }
       if (deliveryFound) continue

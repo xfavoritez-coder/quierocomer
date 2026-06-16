@@ -337,9 +337,11 @@ function DishSlide({
 
         {/* Restaurant — abre Google Maps al tocar */}
         <a href={
-            dish.restauranteLat && dish.restauranteLng
-              ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
-              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ?? '') + ' ' + dish.restaurante)}`
+            dish.googleMapsUrl
+              ? dish.googleMapsUrl
+              : dish.restauranteLat && dish.restauranteLng
+                ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ?? '') + ' ' + dish.restaurante)}`
           }
           target="_blank" rel="noopener noreferrer"
           style={{
@@ -369,6 +371,18 @@ function DishSlide({
               <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 A {formatDistance(dist)}
+              </p>
+            )}
+            {dish.googleRating != null && (
+              <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ color: '#F4A623', fontSize: 12 }}>★</span>
+                <span style={{ fontWeight: 600, color: 'rgba(0,0,0,0.65)' }}>{dish.googleRating.toFixed(1)}</span>
+                {dish.googleRatingCount != null && (
+                  <span style={{ color: 'rgba(0,0,0,0.4)' }}>
+                    ({dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(1)}k` : dish.googleRatingCount})
+                  </span>
+                )}
+                <span style={{ color: 'rgba(0,0,0,0.3)', fontSize: 11 }}>en Google</span>
               </p>
             )}
           </div>

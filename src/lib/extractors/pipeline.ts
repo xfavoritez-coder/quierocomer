@@ -15,7 +15,8 @@ import { extractCanva } from "./canva";
 import { extractAvocaty } from "./avocaty";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { logClaudeUsage } from "@/lib/costTracker";
-import type { ExtractionResult, ExtractedDish } from "./types";
+import type { ExtractionResult, ExtractedDish } from "./types"
+import { findPlaceInfo } from "@/lib/google-places";
 
 function slugify(name: string): string {
   return name
@@ -840,6 +841,26 @@ export async function importFromProspecto(params: {
           qrActivatedAt: new Date(),
         },
       })
+
+  // Enrich with Google Places data if we have lat/lng
+  if (params.lat && params.lng) {
+    try {
+      const placeInfo = await findPlaceInfo(cleanedName, params.lat, params.lng)
+      if (placeInfo) {
+        await prisma.restaurant.update({
+          where: { id: restaurant.id },
+          data: {
+            googlePlaceId: placeInfo.placeId,
+            googleMapsUrl: placeInfo.mapsUrl,
+            googleRating: placeInfo.rating,
+            googleRatingCount: placeInfo.ratingCount,
+          },
+        })
+      }
+    } catch (err) {
+      console.warn(`[Pipeline] Google Places lookup failed for ${cleanedName}:`, err)
+    }
+  }
 
   // Create categories + dishes — batch inserts to avoid timeout with large menus
   const categoryMap = new Map<string, typeof extraction.dishes>()

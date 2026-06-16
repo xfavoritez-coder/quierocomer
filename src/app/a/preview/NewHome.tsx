@@ -675,31 +675,6 @@ export default function NewHome({
               <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#111' }}>Filtros</h2>
             </div>
 
-            {/* Dieta */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M2 22 12 2l10 20" /><path d="M12 2c0 6-4 10-4 10s4 4 4 10" /></svg>
-                Dieta
-              </h3>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[
-                  { id: 'all' as const, label: '🍽 Como de todo' },
-                  { id: 'VEGAN' as const, label: '🌱 Vegano' },
-                  { id: 'VEGETARIAN' as const, label: '🥬 Vegetariano' },
-                ].map(d => (
-                  <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
-                    border: filterDiet === d.id ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: 14, padding: '10px 16px',
-                    background: filterDiet === d.id ? 'rgba(244,166,35,0.07)' : '#fff',
-                    color: filterDiet === d.id ? '#c97d00' : 'rgba(0,0,0,0.6)',
-                    fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
-                  }}>
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Distancia */}
             <div style={{ marginBottom: 22 }}>
               <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -721,6 +696,31 @@ export default function NewHome({
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
                   <span>1 km</span><span>5 km</span><span>10 km</span><span>20+ km</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Dieta */}
+            <div style={{ marginBottom: 22 }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></svg>
+                Dieta
+              </h3>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[
+                  { id: 'all' as const, label: '🍽 Como de todo' },
+                  { id: 'VEGAN' as const, label: '🌱 Vegano' },
+                  { id: 'VEGETARIAN' as const, label: '🥬 Vegetariano' },
+                ].map(d => (
+                  <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
+                    border: filterDiet === d.id ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: 14, padding: '10px 16px',
+                    background: filterDiet === d.id ? 'rgba(244,166,35,0.07)' : '#fff',
+                    color: filterDiet === d.id ? '#c97d00' : 'rgba(0,0,0,0.6)',
+                    fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
+                  }}>
+                    {d.label}
+                  </button>
+                ))}
               </div>
             </div>
 

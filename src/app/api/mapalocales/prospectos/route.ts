@@ -76,15 +76,16 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 }
 
-// DELETE — eliminar por id (?id=xxx) o todos (?all=1)
+// DELETE — eliminar todos (?all=1) o por IDs en el body ({ ids: string[] })
 export async function DELETE(req: NextRequest) {
   const url = new URL(req.url)
   if (url.searchParams.get('all') === '1') {
     await prisma.mapaProspecto.deleteMany()
     return NextResponse.json({ ok: true })
   }
-  const id = url.searchParams.get('id')
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-  await prisma.mapaProspecto.delete({ where: { id } }).catch(() => {})
-  return NextResponse.json({ ok: true })
+  const body = await req.json().catch(() => ({}))
+  const ids: string[] = body.ids ?? []
+  if (ids.length === 0) return NextResponse.json({ error: 'Missing ids' }, { status: 400 })
+  await prisma.mapaProspecto.deleteMany({ where: { id: { in: ids } } })
+  return NextResponse.json({ ok: true, count: ids.length })
 }
