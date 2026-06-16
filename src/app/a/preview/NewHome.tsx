@@ -776,14 +776,16 @@ export default function NewHome({
               </svg>
             </button>
           )}
-          {/* Dropdown de sugerencias */}
-          {showSuggestions && searchSuggestions && (
+          {/* Dropdown de sugerencias — fixed para escapar stacking context del header */}
+          {showSuggestions && searchSuggestions && searchInputRef.current && (() => {
+            const r = searchInputRef.current!.getBoundingClientRect()
+            return (
             <div style={{
-              position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 200,
+              position: 'fixed', top: r.bottom + 6, left: r.left, width: r.width, zIndex: 9000,
               background: isDark ? '#1a1a1a' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
               borderRadius: 16, overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
             }}>
               {searchSuggestions.dishNames.length > 0 && (
                 <>
@@ -820,7 +822,8 @@ export default function NewHome({
                 </>
               )}
             </div>
-          )}
+            )
+          })()}
         </form>{/* end search input */}
         <button onClick={() => setMenuOpen(true)} style={{
           flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,

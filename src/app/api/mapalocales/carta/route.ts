@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
     dishes: {
       id: string
       name: string
+      description: string | null
       price: number
       photo: string | null
       isActive: boolean

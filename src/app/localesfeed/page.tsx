@@ -1485,9 +1485,9 @@ function CartaModal({ slug, name, onClose }: {
                   {/* Dishes: batch-fill header + per-dish rows en grid */}
                   <div style={{ padding: '4px 24px 10px' }}>
                     {/* Batch fill header row — alineado con columnas de platos */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 86px 110px 120px', gap: 6, alignItems: 'center', paddingBottom: 4, marginBottom: 4, borderBottom: '1px solid #181818' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 86px 110px 120px', gap: 6, alignItems: 'center', padding: '5px 8px', marginBottom: 6, borderRadius: 6, background: '#0a0f1a', border: '1px solid #1a2540' }}>
                       <div />
-                      <span style={{ fontSize: 11, color: '#333' }}>rellenar sección ↓</span>
+                      <span style={{ fontSize: 11, color: '#4a6080', fontStyle: 'italic' }}>↓ rellenar todos</span>
                       <select
                         value={batchDiets[cat.categoryName] ?? ''}
                         onChange={e => {
