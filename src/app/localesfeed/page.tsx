@@ -1039,7 +1039,7 @@ function AddManualModal({ onClose, onAdded }: {
   const [urlInput, setUrlInput] = useState('')       // Maps URL or any carta URL (for resolve)
   const [cartaUrl, setCartaUrl] = useState('')        // Carta URL (optional, if different from urlInput)
   const [resolving, setResolving] = useState(false)
-  const [resolved, setResolved] = useState<{ name: string; address: string; lat: number | null; lng: number | null; placeId: string | null; mapsUrl: string } | null>(null)
+  const [resolved, setResolved] = useState<{ name: string; address: string; lat: number | null; lng: number | null; placeId: string | null; mapsUrl: string; googleMapsUrl?: string | null; rating?: number | null; reviews?: number | null; website?: string | null; phone?: string | null; openingHours?: string[] | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -1080,6 +1080,7 @@ function AddManualModal({ onClose, onAdded }: {
       const id = resolved?.placeId ?? `manual-${Date.now().toString(36)}`
       const finalCartaUrl = effectiveCartaUrl
       const provider = finalCartaUrl ? detectProvider(finalCartaUrl) : undefined
+      const finalMapsUrl = resolved?.googleMapsUrl ?? resolved?.mapsUrl ?? urlInput.trim()
       const res = await fetch('/api/mapalocales/prospectos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1090,7 +1091,10 @@ function AddManualModal({ onClose, onAdded }: {
             address: resolved?.address ?? '',
             lat: resolved?.lat ?? null,
             lng: resolved?.lng ?? null,
-            mapsUrl: resolved?.mapsUrl ?? urlInput.trim(),
+            mapsUrl: finalMapsUrl,
+            rating: resolved?.rating ?? null,
+            reviews: resolved?.reviews ?? null,
+            website: resolved?.website ?? null,
             cartaUrl: finalCartaUrl || undefined,
             provider,
           },
@@ -1104,10 +1108,10 @@ function AddManualModal({ onClose, onAdded }: {
         address: resolved?.address ?? '',
         lat: resolved?.lat ?? 0,
         lng: resolved?.lng ?? 0,
-        mapsUrl: resolved?.mapsUrl ?? urlInput.trim(),
-        website: null,
-        rating: null,
-        reviews: null,
+        mapsUrl: finalMapsUrl,
+        website: resolved?.website ?? null,
+        rating: resolved?.rating ?? null,
+        reviews: resolved?.reviews ?? null,
       }
       const prospecto: ProspectoResult | undefined = finalCartaUrl ? {
         id,
@@ -1168,11 +1172,32 @@ function AddManualModal({ onClose, onAdded }: {
 
           {/* Resolved info */}
           {resolved && (
-            <div style={{ background: '#0d0d0d', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{resolved.name || '—'}</div>
-              <div style={{ fontSize: 12, color: '#666' }}>{resolved.address || 'Sin dirección (se usarán coordenadas de la carta)'}</div>
-              {resolved.lat && <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{resolved.lat.toFixed(5)}, {resolved.lng?.toFixed(5)}</div>}
-              {!resolved.lat && <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>⚠ Sin ubicación exacta — el local se agregará sin coordenadas</div>}
+            <div style={{ background: '#0d0d0d', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{resolved.name || '—'}</div>
+              <div style={{ fontSize: 12, color: '#888' }}>{resolved.address || 'Sin dirección'}</div>
+              {resolved.lat
+                ? <div style={{ fontSize: 11, color: '#555' }}>{resolved.lat.toFixed(5)}, {resolved.lng?.toFixed(5)}</div>
+                : <div style={{ fontSize: 11, color: '#666' }}>⚠ Sin ubicación exacta</div>
+              }
+              {(resolved.rating || resolved.reviews) && (
+                <div style={{ fontSize: 11, color: '#a78bfa' }}>
+                  {resolved.rating ? `★ ${resolved.rating}` : ''}{resolved.reviews ? ` (${resolved.reviews.toLocaleString()} reseñas)` : ''}
+                </div>
+              )}
+              {resolved.website && (
+                <div style={{ fontSize: 11, color: '#60a5fa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resolved.website}</div>
+              )}
+              {resolved.googleMapsUrl && resolved.googleMapsUrl !== resolved.mapsUrl && (
+                <div style={{ fontSize: 11, color: '#34d399' }}>Maps: {resolved.googleMapsUrl}</div>
+              )}
+              {resolved.openingHours && resolved.openingHours.length > 0 && (
+                <details style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
+                  <summary style={{ cursor: 'pointer', color: '#888' }}>Horarios</summary>
+                  <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {resolved.openingHours.map((h, i) => <span key={i}>{h}</span>)}
+                  </div>
+                </details>
+              )}
             </div>
           )}
 

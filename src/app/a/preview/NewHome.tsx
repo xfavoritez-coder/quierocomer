@@ -131,12 +131,14 @@ export default function NewHome({
   const [filterSort, setFilterSort] = useState<'nearby' | 'recent' | 'price-asc' | 'price-desc' | 'popular'>('nearby')
   const [filterMaxKm, setFilterMaxKm] = useState(30)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
+  const [filterCategories, setFilterCategories] = useState<Set<string>>(new Set())
   // Draft state — se usan dentro del panel, solo se aplican al hacer "Guardar cambios"
   const [draftMeal, setDraftMeal] = useState(filterMeal)
   const [draftMealDisplay, setDraftMealDisplay] = useState(filterMealDisplay)
   const [draftSort, setDraftSort] = useState(filterSort)
   const [draftMaxKm, setDraftMaxKm] = useState(filterMaxKm)
   const [draftDiet, setDraftDiet] = useState(filterDiet)
+  const [draftCategories, setDraftCategories] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -396,9 +398,11 @@ export default function NewHome({
       filtered = withDist.map(x => x.dish)
     }
 
-    // Category filter
+    // Category filter — activeCategory (chips del header) o filterCategories (panel de filtros)
     if (activeCategory) {
       filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
+    } else if (filterCategories.size > 0) {
+      filtered = filtered.filter(d => filterCategories.has(d.categoriaNorm))
     }
 
 
@@ -470,7 +474,32 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm, searchResults, shuffleSeed])
+  }, [dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm, searchResults, shuffleSeed])
+
+  // Counts por categoría (sobre el pool completo con foto) para mostrar en el panel de filtros
+  const categoryCountMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    const base = dishes.filter(d => d.fotoUrl)
+    for (const d of base) {
+      if (d.categoriaNorm) map[d.categoriaNorm] = (map[d.categoriaNorm] ?? 0) + 1
+    }
+    return map
+  }, [dishes])
+
+  // Preview count para el botón "Guardar cambios" — calcula platos con los draft filters
+  const draftDishCount = useMemo(() => {
+    let filtered = dishes.filter(d => d.fotoUrl)
+    if (userLocation) {
+      filtered = filtered
+        .filter(d => d.restauranteLat && d.restauranteLng)
+        .filter(d => distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!) <= draftMaxKm)
+    }
+    if (draftMeal !== 'all') filtered = filtered.filter(d => d.mealTime === draftMeal)
+    if (draftDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
+    else if (draftDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
+    if (draftCategories.size > 0) filtered = filtered.filter(d => draftCategories.has(d.categoriaNorm))
+    return filtered.length
+  }, [dishes, userLocation, draftMaxKm, draftMeal, draftDiet, draftCategories])
 
   // Infinite scroll — IntersectionObserver sobre sentinel al final del feed
   useEffect(() => {
@@ -562,7 +591,7 @@ export default function NewHome({
               onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true) }}
               onFocus={() => setShowSuggestions(true)}
               onKeyDown={e => { if (e.key === 'Enter') executeSearch(searchInput) }}
-              placeholder="Buscar plato, restaurante o ingrediente..."
+              placeholder="Buscar en QuieroComer"
               style={{
                 width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 14,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
@@ -698,27 +727,6 @@ export default function NewHome({
         ...(isDesktop ? { paddingTop: 82, maxWidth: 1100, margin: '0 auto' } : { maxWidth: 480, margin: '0' }),
       }}>
 
-      {/* ─── Row 1: logo + hamburger — NO sticky, desaparece al scrollear — mobile only ─── */}
-      {!isDesktop && view !== 'perfil' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 16px 0',
-        }}>
-          <a href="/" style={{ textDecoration: 'none' }}>
-            <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.5px' }}>
-              Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-            </span>
-          </a>
-          <button onClick={() => setMenuOpen(true)} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-            color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-        </div>
-      )}
 
       {/* ─── Sticky: search / ubicación + filtros — mobile only ─── */}
       <header style={{
@@ -728,6 +736,29 @@ export default function NewHome({
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
         padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
       }}>
+
+        {/* Row 1: Logo (izq) + Ubicación (der) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+          <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 21, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px' }}>
+              Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+            </span>
+          </a>
+          <button onClick={() => setLocationModalOpen(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer',
+            color: (locationName || gpsLabel) ? '#c97d00' : isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+            fontSize: 15, fontWeight: 400,
+            minWidth: 0, overflow: 'hidden',
+          }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {locationName || gpsLabel || 'Agregar ubicación'}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{ flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        </div>
 
         {/* Row 2: Search bar full width */}
         <div style={{ position: 'relative', marginBottom: 4, marginTop: 6 }}>
@@ -742,7 +773,7 @@ export default function NewHome({
             onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true) }}
             onFocus={() => setShowSuggestions(true)}
             onKeyDown={e => { if (e.key === 'Enter') { executeSearch(searchInput); searchInputRef.current?.blur() } }}
-            placeholder="Buscar plato, restaurante o ingrediente..."
+            placeholder="Buscar en QuieroComer"
             style={{
               width: '100%', padding: '12px 38px 12px 36px', borderRadius: 999, fontSize: 16,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
@@ -751,13 +782,24 @@ export default function NewHome({
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
-          {searchInput && (
+          {searchInput ? (
             <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
               background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          ) : (
+            <button onClick={() => setMenuOpen(true)} style={{
+              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+              color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', zIndex: 38,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
           )}
@@ -806,39 +848,28 @@ export default function NewHome({
           )}
         </div>{/* end Row 2: search */}
 
-        {/* Row 3: Ubicación (izq) + Filtros (der) */}
+        {/* Row 3: Conteo platos (izq) + Filtros (der) */}
         {(() => {
-          const hasActiveFilters = filterSort !== 'nearby' || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory
+          const hasActiveFilters = filterSort !== 'nearby' || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
           return (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {/* Ubicación — texto linkeable con chevron */}
-            <button onClick={() => setLocationModalOpen(true)} style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              color: (locationName || gpsLabel) ? '#c97d00' : isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
-              fontSize: 16, fontWeight: 500,
-              minWidth: 0, maxWidth: 'calc(100% - 100px)', overflow: 'hidden',
+            {/* Conteo de platos */}
+            <span style={{
+              fontSize: 14, fontWeight: 500,
+              color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
             }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {locationName || gpsLabel || 'Agregar ubicación'}
-              </span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.6 }}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
+              {feedDishes.length} platos cerca
+            </span>
 
             {/* Filtros — gris por defecto, amarillo si hay filtros activos */}
             <button onClick={() => {
-                // Al abrir, inicializar drafts con los valores actuales aplicados
                 if (!filterOpen) {
                   setDraftSort(filterSort)
                   setDraftMaxKm(filterMaxKm)
                   setDraftDiet(filterDiet)
                   setDraftMeal(filterMeal)
                   setDraftMealDisplay(filterMealDisplay)
+                  setDraftCategories(new Set(filterCategories))
                 }
                 setFilterOpen(!filterOpen)
               }} style={{
@@ -963,6 +994,48 @@ export default function NewHome({
               </div>
             </div>
 
+            {/* Categorías */}
+            <div style={{ marginBottom: 22 }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M4 6h16M4 12h8M4 18h4" /></svg>
+                  Categorías
+                </span>
+                {draftCategories.size > 0 && (
+                  <button onClick={() => setDraftCategories(new Set())} style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    Limpiar
+                  </button>
+                )}
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[...QC_CATEGORIES]
+                  .filter(cat => (categoryCountMap[cat] ?? 0) > 0)
+                  .sort((a, b) => (categoryCountMap[b] ?? 0) - (categoryCountMap[a] ?? 0))
+                  .map(cat => {
+                    const active = draftCategories.has(cat)
+                    const count = categoryCountMap[cat] ?? 0
+                    return (
+                      <button key={cat} onClick={() => {
+                        const next = new Set(draftCategories)
+                        if (active) next.delete(cat)
+                        else next.add(cat)
+                        setDraftCategories(next)
+                      }} style={{
+                        border: active ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                        borderRadius: 14, padding: '8px 14px',
+                        background: active ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                        color: active ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
+                        fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                      }}>
+                        {cat}
+                        <span style={{ fontSize: 11, color: active ? '#c97d00' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)' }}>({count})</span>
+                      </button>
+                    )
+                  })
+                }
+              </div>
+            </div>
+
             {/* Ordenar */}
             <div style={{ marginBottom: 22 }}>
               <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -1004,6 +1077,7 @@ export default function NewHome({
               setFilterDiet(draftDiet)
               setFilterMeal(draftMeal)
               setFilterMealDisplay(draftMealDisplay)
+              setFilterCategories(new Set(draftCategories))
               setFilterOpen(false)
               setShuffleSeed(Math.random())
               window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1011,7 +1085,7 @@ export default function NewHome({
               width: '100%', height: 52, border: 'none', borderRadius: 16,
               background: '#F4A623', color: '#000', fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}>
-              Guardar cambios
+              Ver {draftDishCount} {draftDishCount === 1 ? 'plato' : 'platos'}
             </button>
           </div>
         </>

@@ -101,7 +101,7 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Churrascos de Pollo': 'Sándwiches',
   'Lomo': 'Sándwiches',
   'Lomos c/ Papas': 'Sándwiches',
-  'Pepitos': 'Sándwiches',
+  'Pepitos': 'Venezolana',
 
   // ─── Saludable (ensaladas, vegano) ────────────────────────
   'Ensaladas': 'Saludable',
@@ -183,7 +183,10 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Quesadillas': 'Mexicana',
   'QUESADILLAS': 'Mexicana',
   'Nachos': 'Mexicana',
-  'Arepas': 'Arepas & Venezolana',
+  'Arepas': 'Venezolana',
+  'Cachapas': 'Venezolana',
+  'Tequeños': 'Venezolana',
+  'Pabellón': 'Venezolana',
 
   // ─── Thai ─────────────────────────────────────────────────
   'Asian Street Food': 'Thai',
@@ -343,7 +346,7 @@ export const CATEGORY_MAP: Record<string, string> = {
 
   // Empanadas
   'Empanadas Clásicas': 'Empanadas',
-  'Empanadas venezolanas': 'Empanadas',
+  'Empanadas venezolanas': 'Venezolana',
 
   // Pollo
   'Pollos': 'Pollo y alitas',
@@ -774,7 +777,7 @@ export const QC_CATEGORIES = new Set([
   'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
   'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres', 'Helados',
   'Desayunos', 'Cafetería', 'Amasandería',
-  'Entradas', 'Platos de fondo', 'Combos', 'Arepas & Venezolana',
+  'Entradas', 'Platos de fondo', 'Combos', 'Venezolana',
 ])
 
 /** Devuelve true si el nombre es una categoría canónica válida de QC */
@@ -1086,8 +1089,8 @@ export const ADJACENT_CATEGORIES: Record<string, string[]> = {
   'Entradas': ['Ceviches', 'Saludable'],
   'Saludable': ['Entradas', 'Peruana'],
   'Empanadas': ['Parrilla', 'Entradas'],
-  'Mexicana': ['Entradas', 'Parrilla', 'Arepas & Venezolana'],
-  'Arepas & Venezolana': ['Mexicana', 'Sándwiches'],
+  'Mexicana': ['Entradas', 'Parrilla', 'Venezolana'],
+  'Venezolana': ['Mexicana', 'Sándwiches'],
   'Thai': ['China', 'India', 'Sushi'],
   'China': ['Thai', 'India', 'Sushi'],
   'India': ['Thai', 'China'],
@@ -1115,7 +1118,7 @@ export const CATEGORY_GRADIENTS: Record<string, string> = {
   'Platos de fondo':     'linear-gradient(135deg, #2d0000, #a4161a)',
   'Empanadas':           'linear-gradient(135deg, #6b4226, #d4a373)',
   'Mexicana':            'linear-gradient(135deg, #3d0c02, #e36414)',
-  'Arepas & Venezolana': 'linear-gradient(135deg, #3d0c02, #e6a157)',
+  'Venezolana': 'linear-gradient(135deg, #3d0c02, #e6a157)',
   'Thai':                'linear-gradient(135deg, #4a1942, #e6a157)',
   'China':               'linear-gradient(135deg, #8b0000, #d4a373)',
   'India':               'linear-gradient(135deg, #b8860b, #e36414)',

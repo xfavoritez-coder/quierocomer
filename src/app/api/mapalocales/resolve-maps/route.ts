@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// POST { mapsUrl } → { name, address, lat, lng, placeId?, mapsUrl }
+// POST { mapsUrl } → { name, address, lat, lng, placeId?, mapsUrl, googleMapsUrl?, rating?, reviews?, website? }
 // Accepts: Google Maps URL, UberEats URL, Rappi URL, or any other URL (extracts name from slug)
 export async function POST(req: NextRequest) {
   const { mapsUrl } = await req.json() as { mapsUrl: string }
@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
       if (lat && lng) {
         body.locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: 300 } }
       } else {
-        // Bias towards Santiago de Chile
         body.locationBias = { circle: { center: { latitude: -33.45, longitude: -70.65 }, radius: 50000 } }
       }
       const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location',
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.websiteUri,places.googleMapsUri,places.nationalPhoneNumber,places.regularOpeningHours',
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(5000),
@@ -43,6 +42,12 @@ export async function POST(req: NextRequest) {
         lat: place.location?.latitude ?? null,
         lng: place.location?.longitude ?? null,
         placeId: place.id ?? null,
+        googleMapsUrl: place.googleMapsUri ?? null,
+        rating: place.rating ?? null,
+        reviews: place.userRatingCount ?? null,
+        website: place.websiteUri ?? null,
+        phone: place.nationalPhoneNumber ?? null,
+        openingHours: place.regularOpeningHours?.weekdayDescriptions ?? null,
       }
     } catch { return null }
   }
@@ -59,7 +64,6 @@ export async function POST(req: NextRequest) {
       extractedName = ueMatch[1]
         .replace(/-/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase())
-        // Strip trailing hash-like segments (all caps/numbers at end)
         .replace(/\s+[A-Z0-9]{10,}$/, '')
         .trim()
     }
@@ -100,7 +104,6 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    // Try to find the restaurant on Google Places using the extracted name
     const found = await searchByName(extractedName)
     if (found) {
       return NextResponse.json({
@@ -109,11 +112,16 @@ export async function POST(req: NextRequest) {
         lat: found.lat,
         lng: found.lng,
         placeId: found.placeId,
-        mapsUrl: url,
+        mapsUrl: found.googleMapsUrl ?? url,
+        googleMapsUrl: found.googleMapsUrl,
+        rating: found.rating,
+        reviews: found.reviews,
+        website: found.website,
+        phone: found.phone,
+        openingHours: found.openingHours,
       })
     }
 
-    // Return with just the extracted name (no location) — still useful
     return NextResponse.json({
       name: extractedName || url,
       address: '',
@@ -121,61 +129,88 @@ export async function POST(req: NextRequest) {
       lng: null,
       placeId: null,
       mapsUrl: url,
+      googleMapsUrl: null,
+      rating: null,
+      reviews: null,
+      website: null,
+      phone: null,
+      openingHours: null,
     })
   }
 
   // ── Google Maps URL flow ──────────────────────────────────────────────────
   try {
-    // Follow redirect to get the canonical Google Maps URL
+    // Must use GET (not HEAD) and a browser User-Agent — Google ignores HEAD from servers
     const res = await fetch(url, {
-      method: 'HEAD',
+      method: 'GET',
       redirect: 'follow',
       signal: AbortSignal.timeout(8000),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      },
     })
     const finalUrl = res.url
 
-    // Extract name from URL path: /maps/place/Name+Here/@lat,lng,...
     const namePath = finalUrl.match(/\/maps\/place\/([^/@?]+)/)?.[1]
     const nameFromUrl = namePath ? decodeURIComponent(namePath.replace(/\+/g, ' ')) : ''
 
-    // Extract lat/lng from /@lat,lng,...
     const coordMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
     const lat = coordMatch ? parseFloat(coordMatch[1]) : null
     const lng = coordMatch ? parseFloat(coordMatch[2]) : null
 
     if (!lat || !lng) {
+      const fallbackUrl = finalUrl || url
       return NextResponse.json({
         name: nameFromUrl,
         address: '',
         lat: null,
         lng: null,
         placeId: null,
-        mapsUrl: finalUrl || url,
+        mapsUrl: fallbackUrl,
+        googleMapsUrl: null,
+        rating: null,
+        reviews: null,
+        website: null,
+        phone: null,
+        openingHours: null,
       })
     }
 
-    // Use Google Places nearby search to get formal address and placeId
     if (apiKey && nameFromUrl) {
       const found = await searchByName(nameFromUrl, lat, lng)
       if (found) {
+        const bestUrl = found.googleMapsUrl ?? finalUrl
         return NextResponse.json({
           name: found.name,
           address: found.address,
           lat: found.lat ?? lat,
           lng: found.lng ?? lng,
           placeId: found.placeId,
-          mapsUrl: finalUrl || url,
+          mapsUrl: bestUrl,
+          googleMapsUrl: found.googleMapsUrl,
+          rating: found.rating,
+          reviews: found.reviews,
+          website: found.website,
+          phone: found.phone,
+          openingHours: found.openingHours,
         })
       }
     }
 
+    const fallbackUrl = finalUrl || url
     return NextResponse.json({
       name: nameFromUrl,
       address: '',
       lat,
       lng,
       placeId: null,
-      mapsUrl: finalUrl || url,
+      mapsUrl: fallbackUrl,
+      googleMapsUrl: null,
+      rating: null,
+      reviews: null,
+      website: null,
+      phone: null,
+      openingHours: null,
     })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Error resolviendo URL' }, { status: 500 })

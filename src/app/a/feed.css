@@ -648,7 +648,7 @@ html.dark .feed-root .dish-card-img-wrap {
 
 /* Search placeholder */
 .feed-search-input::placeholder {
-  color: rgba(0, 0, 0, 0.3) !important;
+  color: rgba(0, 0, 0, 0.5) !important;
 }
 
 /* ─── Dark mode component overrides ──────────────────────────── */
@@ -669,7 +669,7 @@ html.dark .feed-root .feed-search-input {
   color: #fff !important;
 }
 html.dark .feed-root .feed-search-input::placeholder {
-  color: rgba(255,255,255,0.25) !important;
+  color: rgba(255,255,255,0.45) !important;
 }
 html.dark .feed-root .location-search-input::placeholder {
   color: rgba(255,255,255,0.25) !important;

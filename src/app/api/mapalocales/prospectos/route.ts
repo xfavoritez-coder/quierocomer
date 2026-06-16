@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
     const m = body.manual as {
       id: string; name: string; address: string; lat: number | null; lng: number | null
       mapsUrl: string; cartaUrl?: string; provider?: string
+      rating?: number | null; reviews?: number | null; website?: string | null
     }
     const row = await prisma.mapaProspecto.upsert({
       where: { id: m.id },
@@ -116,6 +117,8 @@ export async function POST(req: NextRequest) {
         id: m.id, name: m.name, address: m.address ?? '',
         lat: m.lat ?? undefined, lng: m.lng ?? undefined,
         mapsUrl: m.mapsUrl,
+        rating: m.rating ?? undefined, reviews: m.reviews ?? undefined,
+        website: m.website ?? undefined,
         cartaUrl: m.cartaUrl, provider: m.provider,
         status: m.cartaUrl ? 'encontrado' : undefined,
         fuenteMatch: 'manual',
@@ -124,6 +127,8 @@ export async function POST(req: NextRequest) {
         name: m.name, address: m.address ?? '',
         lat: m.lat ?? undefined, lng: m.lng ?? undefined,
         mapsUrl: m.mapsUrl,
+        rating: m.rating ?? undefined, reviews: m.reviews ?? undefined,
+        website: m.website ?? undefined,
         cartaUrl: m.cartaUrl, provider: m.provider,
         status: m.cartaUrl ? 'encontrado' : undefined,
         fuenteMatch: 'manual',
