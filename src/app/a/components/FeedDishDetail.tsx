@@ -743,7 +743,7 @@ function DishSlide({
         <h2 style={{
           fontFamily: 'var(--font-feed-display), serif',
           fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 7px', lineHeight: 1.2,
-          paddingRight: 88,
+          paddingRight: 130,
         }}>
           {dish.nombre}
           {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
