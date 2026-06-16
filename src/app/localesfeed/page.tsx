@@ -1325,7 +1325,7 @@ function CartaModal({ slug, name, onClose }: {
         const dl: Record<string, string> = {}
         const dd: Record<string, string> = {}
         for (const cat of d.categories) {
-          m[cat.categoryName] = cat.normOverride ?? ''
+          m[cat.categoryName] = cat.leafResolved  // siempre pre-popular con el valor efectivo
           di[cat.categoryName] = ''
           for (const dish of cat.dishes) {
             dl[dish.id] = dish.leafOverride ?? ''
@@ -1343,7 +1343,10 @@ function CartaModal({ slug, name, onClose }: {
 
   async function save() {
     if (!data) return
-    const catToSave = Object.entries(mappings).filter(([, v]) => v)
+    const catToSave = Object.entries(mappings).filter(([catName, v]) => {
+      const original = data.categories.find(c => c.categoryName === catName)
+      return v !== (original?.leafResolved ?? '')
+    })
     const dietToSave = Object.entries(diets).filter(([, v]) => v)
     const allDishes = data.categories.flatMap(c => c.dishes)
     const dishesToSave = Object.entries(dishLeafs).filter(([dishId, leaf]) => {
@@ -1393,7 +1396,10 @@ function CartaModal({ slug, name, onClose }: {
   }
 
   const allDishesFlat = data?.categories.flatMap(c => c.dishes) ?? []
-  const hasChanges = Object.values(mappings).some(v => v) || Object.values(diets).some(v => v)
+  const hasChanges = Object.entries(mappings).some(([catName, v]) => {
+    const original = data?.categories.find(c => c.categoryName === catName)
+    return v !== (original?.leafResolved ?? '')
+  }) || Object.values(diets).some(v => v)
     || Object.entries(dishLeafs).some(([dishId, leaf]) => {
       const original = allDishesFlat.find(d => d.id === dishId)
       return leaf !== (original?.leafOverride ?? '')
@@ -1469,17 +1475,18 @@ function CartaModal({ slug, name, onClose }: {
                       {!cat.isMapped && (
                         <span style={{ fontSize: 10, color: '#f59e0b', marginLeft: 6 }}>sin mapear</span>
                       )}
-                      {cat.isMapped && (
-                        <span style={{ fontSize: 10, color: '#555', marginLeft: 6 }}>→ {cat.leafResolved}</span>
-                      )}
                       <span style={{ fontSize: 10, color: '#333', marginLeft: 6 }}>{cat.dishes.length} platos</span>
                     </div>
                     <select
                       value={mappings[cat.categoryName] ?? ''}
                       onChange={e => setMappings(m => ({ ...m, [cat.categoryName]: e.target.value }))}
-                      style={{ fontSize: 12, background: '#1a1a1a', border: `1px solid ${mappings[cat.categoryName] ? '#a78bfa' : '#2a2a2a'}`, color: mappings[cat.categoryName] ? '#c4b5fd' : '#aaa', borderRadius: 6, padding: '5px 8px', cursor: 'pointer' }}
+                      style={{
+                        fontSize: 12, background: '#1a1a1a', borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
+                        border: `1px solid ${mappings[cat.categoryName] !== cat.leafResolved ? '#a78bfa' : cat.isMapped ? '#2a2a2a' : '#f59e0b55'}`,
+                        color: mappings[cat.categoryName] !== cat.leafResolved ? '#c4b5fd' : cat.isMapped ? '#bbb' : '#f59e0b',
+                      }}
                     >
-                      <option value="">— sin cambio —</option>
+                      <option value="">— sin asignar —</option>
                       {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                     <select
@@ -1535,7 +1542,7 @@ function CartaModal({ slug, name, onClose }: {
                                 borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
                               }}
                             >
-                              <option value="">— heredar —</option>
+                              <option value="">— heredar ({cat.leafResolved}) —</option>
                               {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
