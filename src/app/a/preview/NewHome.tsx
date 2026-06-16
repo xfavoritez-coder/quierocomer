@@ -1071,24 +1071,31 @@ export default function NewHome({
           <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.3)' }} />
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
-            maxHeight: 'min(88vh, calc(100dvh - 72px))', overflowY: 'auto',
-            padding: '12px 16px calc(16px + env(safe-area-inset-bottom))', boxSizing: 'border-box',
+            maxHeight: 'min(88vh, calc(100dvh - 72px))',
+            display: 'flex', flexDirection: 'column',
             background: isDark ? '#1a1a1a' : '#fff',
             borderRadius: '24px 24px 0 0',
             animation: 'slideUp 0.25s ease-out',
           }}>
-            <button onClick={() => setFilterOpen(false)} style={{
-              position: 'absolute', top: 28, right: 16,
-              background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-              fontSize: 30, lineHeight: 1, padding: 0, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>×</button>
-
-            <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
-
-            <div style={{ marginBottom: 22 }}>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
+            {/* Header fijo — no scrollea */}
+            <div style={{
+              flexShrink: 0,
+              padding: '12px 16px 10px',
+              borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+            }}>
+              <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 12px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
+                <button onClick={() => setFilterOpen(false)} style={{
+                  background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  fontSize: 30, lineHeight: 1, padding: 0, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32,
+                }}>×</button>
+              </div>
             </div>
+
+            {/* Contenido scrolleable */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '16px 16px calc(16px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
 
             {/* Distancia */}
             <div style={{ marginBottom: 22 }}>
@@ -1293,11 +1300,12 @@ export default function NewHome({
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }} style={{
               width: '100%', height: 52, border: 'none', borderRadius: 16,
-              background: '#F4A623', color: '#000', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+              background: '#F4A623', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}>
               Ver {draftDishCount} {draftDishCount === 1 ? 'plato' : 'platos'}
             </button>
           </div>
+          </div>{/* end scrollable content */}
         </>
       )}
 
