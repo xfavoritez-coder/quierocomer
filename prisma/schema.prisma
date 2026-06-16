@@ -730,6 +730,7 @@ model Category {
   isActive     Boolean  @default(true)
   dishType     String   @default("food") // "food" | "drink" | "dessert"
   normOverride String?  // override manual de categoría QC (ej: "Mexicana")
+  cuisineTag   String?  // cocina detectada del nombre de sección (ej: "Peruana", "China")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

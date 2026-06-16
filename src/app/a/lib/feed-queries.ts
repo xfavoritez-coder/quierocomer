@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { normalizeCategory, inferCategoryFromDishName, isExcludedCategory, inferMealTime, inferDishType, QC_LEAVES, AMBIGUOUS_CATEGORIES, getParentCategory } from './categories'
+import { normalizeCategory, inferCategoryFromDishName, isExcludedCategory, inferMealTime, inferDishType, QC_LEAVES, AMBIGUOUS_CATEGORIES, getParentCategory, CUISINE_TAGS } from './categories'
 import type { FeedDish } from '../types'
 import { unstable_cache } from 'next/cache'
 
@@ -16,15 +16,25 @@ export function resolveDishLeaf(
   catName: string,
   leafOverride: string | null,
   restaurantPrimaryCategory: string | null,
+  dishDescription?: string | null,
 ): string {
   if (leafOverride && QC_LEAVES.has(leafOverride)) return leafOverride
   const catNorm = normalizeCategory(catName)
-  if (QC_LEAVES.has(catNorm)) return catNorm
+  // Si la categoría normaliza a una cocina pura (ej: "Peruana", "China"),
+  // preferimos inferir el tipo de plato desde el nombre/descripción primero.
+  if (QC_LEAVES.has(catNorm) && !CUISINE_TAGS.has(catNorm)) return catNorm
   if (AMBIGUOUS_CATEGORIES.has(catName.trim()) || AMBIGUOUS_CATEGORIES.has(catNorm)) {
     if (restaurantPrimaryCategory && QC_LEAVES.has(restaurantPrimaryCategory)) return restaurantPrimaryCategory
   }
-  const fromDish = inferCategoryFromDishName(dishName)
-  if (fromDish) return fromDish
+  // Inferir desde nombre del plato primero, luego descripción como fallback
+  const fromName = inferCategoryFromDishName(dishName)
+  if (fromName) return fromName
+  if (dishDescription) {
+    const fromDesc = inferCategoryFromDishName(dishDescription)
+    if (fromDesc) return fromDesc
+  }
+  // Si la categoría es una cocina, úsala como leaf de último recurso
+  if (QC_LEAVES.has(catNorm)) return catNorm
   return ''  // no inventar leaf — si nada matchea, queda sin mapear
 }
 
@@ -38,7 +48,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       d.id, d.name, d.description, d.price, d."discountPrice",
       d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
       d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride",
-      c.name AS "categoryName", c."dishType",
+      c.name AS "categoryName", c."dishType", c."cuisineTag",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
       r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory",
       r."googleRating", r."googleRatingCount", r."googleMapsUrl",
@@ -76,8 +86,9 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
   for (const d of dishes) {
     const catName = d.categoryName as string
     if (isExcludedCategory(catName)) continue
-    const categoriaNorm = resolveDishLeaf(d.name as string, catName, d.leafOverride ?? null, d.primaryCategory ?? null)
+    const categoriaNorm = resolveDishLeaf(d.name as string, catName, d.leafOverride ?? null, d.primaryCategory ?? null, d.description ?? null)
     const categoriaParent = getParentCategory(categoriaNorm)
+    const cuisineTag = (d.cuisineTag as string | null) ?? null
     const photos = Array.isArray(d.photos) ? d.photos : []
     feedDishes.push({
       id: d.id,
@@ -117,6 +128,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       ratingCount: Number(d.ratingCount ?? 0),
       commentCount: Number(d.commentCount ?? 0),
       popularityScore: Number(d.popularityScore ?? 0),
+      cuisineTag,
     })
   }
 
@@ -141,7 +153,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       photos: true, dishDiet: true, isSpicy: true, isGlutenFree: true,
       isLactoseFree: true, isSoyFree: true, containsNuts: true, flavorTags: true,
       isHero: true, tags: true, leafOverride: true,
-      category: { select: { name: true, dishType: true } },
+      category: { select: { name: true, dishType: true, cuisineTag: true } },
       restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, primaryCategory: true } },
       feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
     },
@@ -150,13 +162,14 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   return dishes
     .filter(d => !isExcludedCategory(d.category.name))
     .map(dish => {
-      const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null)
+      const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)
       return {
         id: dish.id, nombre: dish.name, descripcion: dish.description,
         precio: dish.price, precioDescuento: dish.discountPrice,
         fotoUrl: dish.photos[0] ?? null, categoria: dish.category.name,
         categoriaNorm, categoriaParent, categoriaTipo: inferDishType(categoriaNorm, dish.category.dishType),
+        cuisineTag: dish.category.cuisineTag ?? null,
         sabores: dish.flavorTags,
         dieta: {
           tipo: dish.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',

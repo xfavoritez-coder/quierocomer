@@ -797,7 +797,6 @@ export const PARENT_TO_LEAVES: Record<string, string[]> = {
   'Postres':       ['Postres', 'Helados'],
   'Bebidas':       ['Smoothies', 'Milkshakes', 'Bebidas'],
   'Entradas':      ['Entradas'],
-  'Platos de fondo': ['Platos de fondo'],
 }
 
 /** Leaves que aparecen bajo múltiples parents (para filtro del feed) */
@@ -928,23 +927,21 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^del\s+mar\b/i,           norm: 'Mariscos' },
   { pattern: /^mariscos?\b/i,           norm: 'Mariscos' },
 
-  // ── Peruana ─────────────────────────────────────────────────────────────────
-  // "Platos Peruanos", "Cocina Peruana", "Comida Peruana"...
-  { pattern: /^(cocina|comida|platos?)\s+peruana?/i, norm: 'Peruana' },
+  // ── Cocinas por nombre — el adjetivo de cocina en cualquier posición gana ────
+  // "Gastronomía Peruana", "Platos Peruanos", "Cocina Peruana", "Especialidades Peruanas"...
+  { pattern: /\bperuana?s?\b|\bperuano\b/i,     norm: 'Peruana' },
+  { pattern: /\bchina?s?\b|\bchinos?\b/i,       norm: 'China' },
+  { pattern: /\bthai\b|\btailand[eé]/i,         norm: 'Thai' },
+  { pattern: /\bindias?\b|\bindio\b/i,           norm: 'India' },
+  { pattern: /\bmexicana?s?\b|\bmexicano\b/i,   norm: 'Mexicana' },
+  { pattern: /\bvenezolana?s?\b|\bvenezolano\b/i, norm: 'Venezolana' },
+  { pattern: /\bjaponesa?s?\b|\bjapon[eé]s\b/i, norm: 'Japonesa' },
 
-  // ── Mexicana ────────────────────────────────────────────────────────────────
-  // "Tacos", "Fajitas", "Quesadillas", "Nachos"...
+  // ── Mexicana por tipo de plato ───────────────────────────────────────────────
   { pattern: /^tacos?\b/i,        norm: 'Mexicana' },
   { pattern: /^fajitas?\b/i,      norm: 'Mexicana' },
   { pattern: /^quesadillas?\b/i,  norm: 'Mexicana' },
   { pattern: /^nachos?\b/i,       norm: 'Mexicana' },
-
-  // ── China ───────────────────────────────────────────────────────────────────
-  // "Cocina China", "Comida China", "Platos Chinos"...
-  { pattern: /^(cocina|comida|platos?)\s+china?/i, norm: 'China' },
-
-  // ── Thai ────────────────────────────────────────────────────────────────────
-  { pattern: /^(cocina|comida|platos?)\s+thai/i, norm: 'Thai' },
 
   // ── Platos de fondo ─────────────────────────────────────────────────────────
   // Primero los que implican cocina específica (para no caer en el catch-all)
@@ -1063,19 +1060,19 @@ export function inferCategoryFromDishName(dishName: string): string | null {
   // Japonesa
   if (/ramen|tonkotsu|shoyu|miso\s*soup/.test(n)) return 'Ramen'
   if (/gyoza|dumpling|edamame/.test(n)) return 'Gyoza'
+  if (/yakimeshi|yakisoba|yakiudon|teriyaki|katsu\b|tonkatsu|udon\b|tempura|karaage|donburi/.test(n)) return 'Japonesa'
   // Cocinas específicas
   if (/pad\s*thai|curry\s*thai|tom\s*yum/.test(n)) return 'Thai'
   if (/arepa|cachapa|tequeno|pabell[oó]n/.test(n)) return 'Venezolana'
   if (/taco|burrito|quesadilla|fajita|nacho/.test(n)) return 'Mexicana'
   // Mariscos / Peruana
   if (/ceviche|tiradito/.test(n)) return 'Ceviches'
-  if (/marisco|jaiba|camaron|langostino|pulpo|calamar|mejillon/.test(n)) return 'Mariscos'
+  if (/marisco|jaiba|camaron|langostino|pulpo|calamar|mejillon|\bpescado\b|merluza|reineta|congrio|corvina|trucha\b/.test(n)) return 'Mariscos'
   // Proteínas
   if (/empanada/.test(n)) return 'Empanadas'
   if (/pasta|tallar[ií]n|fettuccin|spaghett|linguini|rigatoni|penne|carbonara|bolognesa/.test(n)) return 'Pastas'
   if (/pollo|pechuga|alita|wing|broaster|tenders/.test(n)) return 'Pollo y alitas'
-  if (/\bpescado\b|merluza|reineta|congrio|corvina|trucha\b/.test(n)) return 'Platos de fondo'
-  if (/\blomo\b|bistec|bife\b|costill|chuleta\b|cerdo\b|vacuno\b/.test(n)) return 'Platos de fondo'
+  if (/\blomo\b|bistec|bife\b|costill|chuleta\b/.test(n)) return 'Parrilla'
   // Saludable
   if (/ensalada/.test(n)) return 'Ensaladas'
   if (/bowl\b|poke/.test(n)) return 'Bowls'
@@ -1280,19 +1277,51 @@ export function getDisplayCategories(): DisplayCategory[] {
   ]
 }
 
-// ─── Auto-detección de flavorTags ────────────────────────────────────────────
-// Detecta preparaciones e ingredientes clave desde nombre, categoría y descripción.
-// Solo para uso interno (pipeline de importación / panel localesfeed).
+// ─── Taxonomía de cocinas ─────────────────────────────────────────────────────
+// Cocinas son una segunda dimensión independiente del tipo de plato (leaf).
+// Un "Pollo Salteado" puede ser leaf="Pollo y alitas" + cuisineTag="Peruana".
 
-export function inferFlavorTags(name: string, categoryName: string, description: string | null): string[] {
-  const text = `${name} ${categoryName} ${description ?? ''}`.toLowerCase()
+/** Cocinas que se detectan como segunda dimensión (no reemplazan el leaf del plato) */
+export const CUISINE_TAGS = new Set([
+  'Peruana', 'China', 'Thai', 'India', 'Japonesa', 'Italiana', 'Griega',
+])
+
+const CUISINE_DETECT_PATTERNS: Array<{ pattern: RegExp; cuisine: string }> = [
+  { pattern: /\bperuana?s?\b|\bperuano\b/i,        cuisine: 'Peruana' },
+  { pattern: /\bchina?s?\b|\bchinos?\b/i,          cuisine: 'China' },
+  { pattern: /\bthai\b|\btailand[eé]/i,            cuisine: 'Thai' },
+  { pattern: /\bindias?\b|\bindio\b/i,              cuisine: 'India' },
+  { pattern: /\bjaponesa?s?\b|\bjapon[eé]s\b/i,   cuisine: 'Japonesa' },
+  { pattern: /\bitaliana?s?\b|\bitaliano\b/i,       cuisine: 'Italiana' },
+  { pattern: /\bgriega?s?\b|\bgriego\b/i,          cuisine: 'Griega' },
+]
+
+/**
+ * Detecta si el nombre de una categoría implica una cocina específica.
+ * Usado para setear Category.cuisineTag en el pipeline de importación.
+ */
+export function detectCuisineTag(catName: string): string | null {
+  for (const { pattern, cuisine } of CUISINE_DETECT_PATTERNS) {
+    if (pattern.test(catName)) return cuisine
+  }
+  return null
+}
+
+// ─── Auto-detección de flavorTags ────────────────────────────────────────────
+// Solo detecta PREPARACIONES y TÉCNICAS de cocina (no ingredientes — esos van en Ingredient).
+// Se usa en el pipeline de importación para el futuro sistema de preferencias.
+
+export function inferFlavorTags(name: string, _categoryName: string, _description: string | null): string[] {
+  // Solo usamos el NOMBRE del plato para preparaciones — la descripción tiene complementos
+  // (ej: "papas fritas" como acompañamiento no implica que el plato principal sea frito)
+  const text = name.toLowerCase()
   const tags: string[] = []
 
-  // Preparaciones
   if (/\bpanko\b/.test(text))                               tags.push('panko')
   if (/\btempura\b/.test(text))                             tags.push('tempura')
   if (/\bfrit[ao]s?\b/.test(text))                          tags.push('frito')
   if (/\bgrill(ado|ed)?\b/.test(text))                      tags.push('grillado')
+  if (/\bplancha\b/.test(text))                             tags.push('a la plancha')
   if (/\bal\s+vapor\b/.test(text))                          tags.push('al vapor')
   if (/\bhorneado\b/.test(text))                            tags.push('horneado')
   if (/\bgratinado\b/.test(text))                           tags.push('gratinado')
@@ -1300,27 +1329,8 @@ export function inferFlavorTags(name: string, categoryName: string, description:
   if (/\bcrudo\b/.test(text))                               tags.push('crudo')
   if (/\bsalteado\b/.test(text))                            tags.push('salteado')
   if (/\brebozado\b/.test(text))                            tags.push('rebozado')
-
-  // Ingredientes
-  if (/\bsalm[oó]n\b|\bsalmon\b/.test(text))               tags.push('salmón')
-  if (/\bpalta\b|\bavocado\b/.test(text))                   tags.push('palta')
-  if (/\bqueso\s*crema\b|\bcream\s*cheese\b/.test(text))   tags.push('queso crema')
-  if (/\bjalap[eé]/.test(text))                             tags.push('jalapeño')
-  if (/\bcamar[oó]n\b|\bcamarones\b/.test(text))           tags.push('camarón')
-  if (/\bat[uú]n\b|\btuna\b/.test(text))                    tags.push('atún')
-  if (/\bmango\b/.test(text))                               tags.push('mango')
-  if (/\btofu\b/.test(text))                                tags.push('tofu')
-  if (/\bpulpo\b/.test(text))                               tags.push('pulpo')
-  if (/champi[nñ][oó]n/.test(text))                         tags.push('champiñón')
   if (/\bteriyaki\b/.test(text))                            tags.push('teriyaki')
-  if (/\bmiso\b/.test(text))                                tags.push('miso')
   if (/\bcurry\b/.test(text))                               tags.push('curry')
-  if (/\btruf[ao]\b/.test(text))                            tags.push('trufa')
-  if (/\byuzu\b/.test(text))                                tags.push('yuzu')
-  if (/\bespinac/.test(text))                               tags.push('espinaca')
-  if (/\blangosta\b/.test(text))                            tags.push('langosta')
-  if (/\boctopu|pulpo\b/.test(text))                        tags.push('pulpo')
 
-  // Deduplicate (por si 'pulpo' entró dos veces)
-  return [...new Set(tags)]
+  return tags
 }

@@ -1276,6 +1276,7 @@ type CartaCategory = {
   categoryId: string
   categoryName: string
   normOverride: string | null
+  cuisineTag: string | null
   leafResolved: string
   isMapped: boolean
   dishes: CartaDish[]
@@ -1289,7 +1290,7 @@ type CartaData = {
 }
 
 const ALL_LEAF_OPTS = [
-  'Entradas', 'Platos de fondo', 'Mariscos', 'Ceviches',
+  'Entradas', 'Mariscos', 'Ceviches',
   'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos', 'Papas fritas',
   'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana',
   'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Ramen', 'Gyoza', 'Japonesa',
@@ -1423,9 +1424,9 @@ function CartaModal({ slug, name, onClose }: {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #1a1a1a' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 16, color: '#fff' }}>{name}</h3>
+            <h3 style={{ margin: 0, fontSize: 18, color: '#fff' }}>{name}</h3>
             {data && (
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#555' }}>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>
                 {data.totalDishes} platos · {data.categories.length} secciones
                 {data.unmappedCount > 0 && (
                   <span style={{ color: '#f59e0b', marginLeft: 8 }}>⚠ {data.unmappedCount} sin mapear</span>
@@ -1450,12 +1451,12 @@ function CartaModal({ slug, name, onClose }: {
             <div style={{ display: 'flex', gap: 8, padding: '12px 24px', borderBottom: '1px solid #1a1a1a', alignItems: 'center' }}>
               <button
                 onClick={() => setShowAll(false)}
-                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: !showAll ? '#ff4c00' : '#222', color: !showAll ? '#fff' : '#666' }}>
+                style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: !showAll ? '#ff4c00' : '#222', color: !showAll ? '#fff' : '#666' }}>
                 Sin mapear ({data.unmappedCount})
               </button>
               <button
                 onClick={() => setShowAll(true)}
-                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showAll ? '#a78bfa' : '#222', color: showAll ? '#000' : '#666' }}>
+                style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showAll ? '#a78bfa' : '#222', color: showAll ? '#000' : '#666' }}>
                 Todas las secciones ({data.categories.length})
               </button>
             </div>
@@ -1472,17 +1473,22 @@ function CartaModal({ slug, name, onClose }: {
                   {/* Category header */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px 130px', gap: 10, padding: '10px 24px', alignItems: 'center', background: cat.isMapped ? 'transparent' : 'rgba(245,158,11,0.04)' }}>
                     <div>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: cat.isMapped ? '#aaa' : '#fff' }}>{cat.categoryName}</span>
-                      {!cat.isMapped && (
-                        <span style={{ fontSize: 10, color: '#f59e0b', marginLeft: 6 }}>sin mapear</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: cat.isMapped ? '#aaa' : '#fff' }}>{cat.categoryName}</span>
+                      {cat.cuisineTag && (
+                        <span style={{ fontSize: 10, background: '#1a1040', color: '#a78bfa', border: '1px solid #3b1fa0', borderRadius: 3, padding: '1px 5px', marginLeft: 6 }}>
+                          cocina: {cat.cuisineTag}
+                        </span>
                       )}
-                      <span style={{ fontSize: 10, color: '#333', marginLeft: 6 }}>{cat.dishes.length} platos</span>
+                      {!cat.isMapped && !cat.cuisineTag && (
+                        <span style={{ fontSize: 11, color: '#f59e0b', marginLeft: 6 }}>sin mapear</span>
+                      )}
+                      <span style={{ fontSize: 11, color: '#333', marginLeft: 6 }}>{cat.dishes.length} platos</span>
                     </div>
                     <select
                       value={mappings[cat.categoryName] ?? ''}
                       onChange={e => setMappings(m => ({ ...m, [cat.categoryName]: e.target.value }))}
                       style={{
-                        fontSize: 12, background: '#1a1a1a', borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
+                        fontSize: 13, background: '#1a1a1a', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
                         border: `1px solid ${mappings[cat.categoryName] !== cat.leafResolved ? '#a78bfa' : cat.isMapped ? '#2a2a2a' : '#f59e0b55'}`,
                         color: mappings[cat.categoryName] !== cat.leafResolved ? '#c4b5fd' : cat.isMapped ? '#bbb' : '#f59e0b',
                       }}
@@ -1493,7 +1499,7 @@ function CartaModal({ slug, name, onClose }: {
                     <select
                       value={diets[cat.categoryName] ?? ''}
                       onChange={e => setDiets(d => ({ ...d, [cat.categoryName]: e.target.value }))}
-                      style={{ fontSize: 12, background: '#1a1a1a', border: `1px solid ${diets[cat.categoryName] ? '#22c55e' : '#2a2a2a'}`, color: diets[cat.categoryName] === 'VEGAN' ? '#22c55e' : diets[cat.categoryName] === 'VEGETARIAN' ? '#86efac' : '#aaa', borderRadius: 6, padding: '5px 8px', cursor: 'pointer' }}
+                      style={{ fontSize: 13, background: '#1a1a1a', border: `1px solid ${diets[cat.categoryName] ? '#22c55e' : '#2a2a2a'}`, color: diets[cat.categoryName] === 'VEGAN' ? '#22c55e' : diets[cat.categoryName] === 'VEGETARIAN' ? '#86efac' : '#aaa', borderRadius: 6, padding: '6px 8px', cursor: 'pointer' }}
                     >
                       <option value="">— dieta —</option>
                       <option value="VEGETARIAN">🥬 Vegetariano</option>
@@ -1514,7 +1520,7 @@ function CartaModal({ slug, name, onClose }: {
                             ) : (
                               <div style={{ width: 26, height: 26, borderRadius: 3, background: '#1a1a1a', flexShrink: 0 }} />
                             )}
-                            <span style={{ fontSize: 12, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 13, color: '#aaa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {dish.name}
                             </span>
                             {/* Per-dish diet */}
@@ -1522,10 +1528,10 @@ function CartaModal({ slug, name, onClose }: {
                               value={currentDiet}
                               onChange={e => setDishDiets(m => ({ ...m, [dish.id]: e.target.value }))}
                               style={{
-                                fontSize: 10, background: '#0d0d0d',
+                                fontSize: 12, background: '#0d0d0d',
                                 border: `1px solid ${currentDiet !== dish.diet ? '#22c55e55' : '#1a1a1a'}`,
                                 color: currentDiet === 'VEGAN' ? '#22c55e' : currentDiet === 'VEGETARIAN' ? '#86efac' : '#888',
-                                borderRadius: 4, padding: '2px 5px', cursor: 'pointer', maxWidth: 100,
+                                borderRadius: 4, padding: '3px 6px', cursor: 'pointer', maxWidth: 110,
                               }}
                             >
                               <option value="OMNIVORE">omnívoro</option>
@@ -1537,24 +1543,37 @@ function CartaModal({ slug, name, onClose }: {
                               value={dishLeaf}
                               onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
                               style={{
-                                fontSize: 11, background: '#0d0d0d',
+                                fontSize: 12, background: '#0d0d0d',
                                 border: `1px solid ${dishLeaf ? '#a78bfa55' : '#1a1a1a'}`,
                                 color: dishLeaf ? '#c4b5fd' : '#999',
-                                borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
+                                borderRadius: 4, padding: '3px 7px', cursor: 'pointer', maxWidth: 140,
                               }}
                             >
-                              <option value="">{ALL_LEAF_OPTS.includes(dish.dishLeafResolved) ? dish.dishLeafResolved : (ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved : 'sin mapear')}</option>
+                              <option value="">{
+                                ALL_LEAF_OPTS.includes(dish.dishLeafResolved) ? dish.dishLeafResolved
+                                : ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved
+                                : cat.cuisineTag ? cat.cuisineTag
+                                : 'sin mapear'
+                              }</option>
                               {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
-                          {/* FlavorTags badges */}
+                          {/* FlavorTags badges: naranja=preparación, azul=ingrediente */}
                           {dish.flavorTags.length > 0 && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, marginLeft: 34 }}>
-                              {dish.flavorTags.map(tag => (
-                                <span key={tag} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: '#1e1a2e', color: '#9d84f5', border: '1px solid #2d2450' }}>
-                                  {tag}
-                                </span>
-                              ))}
+                              {dish.flavorTags.map(tag => {
+                                const isPrep = ['panko','tempura','frito','grillado','al vapor','horneado','gratinado','ahumado','crudo','salteado','rebozado'].includes(tag)
+                                return (
+                                  <span key={tag} style={{
+                                    fontSize: 11, padding: '2px 6px', borderRadius: 3,
+                                    background: isPrep ? '#1e1208' : '#0d1a1e',
+                                    color: isPrep ? '#fb923c' : '#38bdf8',
+                                    border: `1px solid ${isPrep ? '#7c3010' : '#0e4a6a'}`,
+                                  }}>
+                                    {tag}
+                                  </span>
+                                )
+                              })}
                             </div>
                           )}
                         </div>
@@ -1567,14 +1586,14 @@ function CartaModal({ slug, name, onClose }: {
 
             {/* Footer */}
             <div style={{ display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #1a1a1a', justifyContent: 'flex-end', alignItems: 'center' }}>
-              {saved && <span style={{ fontSize: 12, color: '#22c55e' }}>✓ Guardado</span>}
-              <button onClick={onClose} style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
+              {saved && <span style={{ fontSize: 14, color: '#22c55e' }}>✓ Guardado</span>}
+              <button onClick={onClose} style={{ fontSize: 14, padding: '9px 20px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
                 Cerrar
               </button>
               <button
                 onClick={save}
                 disabled={saving || !hasChanges}
-                style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: hasChanges && !saving ? '#a78bfa' : '#222', color: hasChanges && !saving ? '#000' : '#444', border: 'none', cursor: saving || !hasChanges ? 'not-allowed' : 'pointer' }}
+                style={{ fontSize: 14, fontWeight: 600, padding: '9px 20px', borderRadius: 8, background: hasChanges && !saving ? '#a78bfa' : '#222', color: hasChanges && !saving ? '#000' : '#444', border: 'none', cursor: saving || !hasChanges ? 'not-allowed' : 'pointer' }}
               >
                 {saving ? 'Guardando...' : 'Guardar cambios'}
               </button>

@@ -399,11 +399,18 @@ export default function NewHome({
     }
 
     // Category filter — activeCategory (chips del header) o filterCategories (panel de filtros)
-    // Filtramos por PARENT category (ej: "Japonesa") que agrupa leaves (Ramen, Gyoza, Japonesa)
+    // Dos dimensiones: leaf/tipo del plato Y cocina de la sección.
+    // "Peruana" matchea platos con categoriaNorm="Peruana" O cuisineTag="Peruana".
+    // Eso permite que Pollo Salteado de Oceanika (cuisineTag=Peruana, leaf=Pollo y alitas)
+    // aparezca tanto al filtrar "Pollo" como al filtrar "Peruana".
+    const matchesCategory = (d: (typeof filtered)[0], cat: string) => {
+      const parent = d.categoriaParent ?? d.categoriaNorm
+      return parent === cat || d.categoriaNorm === cat || d.cuisineTag === cat
+    }
     if (activeCategory) {
-      filtered = filtered.filter(d => (d.categoriaParent ?? d.categoriaNorm) === activeCategory)
+      filtered = filtered.filter(d => matchesCategory(d, activeCategory))
     } else if (filterCategories.size > 0) {
-      filtered = filtered.filter(d => filterCategories.has(d.categoriaParent ?? d.categoriaNorm))
+      filtered = filtered.filter(d => [...filterCategories].some(cat => matchesCategory(d, cat)))
     }
 
 
@@ -740,11 +747,11 @@ export default function NewHome({
       }}>
 
 
-        {/* Row 2: Search bar + Filtros */}
+        {/* Row 2: Search bar */}
         {(() => {
           const hasActiveFilters = filterSort !== 'nearby' || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
           return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
@@ -831,44 +838,85 @@ export default function NewHome({
             </>
           )}
         </div>{/* end search input */}
-
-          {/* Filtros pill */}
-          <button onClick={() => {
-              if (!filterOpen) {
-                setDraftSort(filterSort)
-                setDraftMaxKm(filterMaxKm)
-                setDraftDiet(filterDiet)
-                setDraftMeal(filterMeal)
-                setDraftMealDisplay(filterMealDisplay)
-                setDraftCategories(new Set(filterCategories))
-              }
-              setFilterOpen(!filterOpen)
-            }} style={{
-            display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
-            background: hasActiveFilters ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-            border: `1px solid ${hasActiveFilters ? 'rgba(244,166,35,0.35)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-            borderRadius: 999, padding: '12px 14px', cursor: 'pointer',
-            color: hasActiveFilters ? '#c97d00' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-            fontSize: 15, fontWeight: 500,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-              <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-            </svg>
-          </button>
         </div>
           )
         })()}{/* end Row 2 */}
 
-        {/* Row 3: Conteo platos */}
-        <span style={{
-          fontSize: 13, fontWeight: 400,
-          color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
-        }}>
-          {feedDishes.length} platos encontrados
-        </span>
+        {/* Row 3: Quick-filter pills (scroll) + botón Filtros siempre visible con fade */}
+        {(() => {
+          const openFilters = () => {
+            setDraftSort(filterSort)
+            setDraftMaxKm(filterMaxKm)
+            setDraftDiet(filterDiet)
+            setDraftMeal(filterMeal)
+            setDraftMealDisplay(filterMealDisplay)
+            setDraftCategories(new Set(filterCategories))
+            setFilterOpen(true)
+          }
+          const pillBase = {
+            flex: 1, padding: '7px 4px', borderRadius: 999, fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', whiteSpace: 'nowrap' as const,
+            textAlign: 'center' as const, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis',
+          }
+          const pill = (label: string, active: boolean, onClick: () => void) => (
+            <button key={label} onClick={onClick} style={{
+              ...pillBase,
+              background: active
+                ? (isDark ? 'rgba(244,166,35,0.18)' : 'rgba(244,166,35,0.15)')
+                : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+              border: `1px solid ${active
+                ? 'rgba(244,166,35,0.5)'
+                : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)')}`,
+              color: active ? '#c97d00' : (isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)'),
+            }}>{label}</button>
+          )
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
+              {pill('📍 Cerca',   filterSort === 'nearby',  () => setFilterSort('nearby'))}
+              {pill('🔥 Popular', filterSort === 'popular', () => setFilterSort('popular'))}
+              {pill('🥬 Veggie',  filterDiet === 'VEGETARIAN', () => setFilterDiet(filterDiet === 'VEGETARIAN' ? 'all' : 'VEGETARIAN'))}
+              <button onClick={openFilters} style={{
+                ...pillBase,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)'}`,
+                color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+                  <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+                  <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+                </svg>
+                Más filtros
+              </button>
+            </div>
+          )
+        })()}{/* end Row 3 quick pills */}
+
+        {/* Row 4: Ubicación (izq) + platos encontrados (der) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button onClick={() => setLocationModalOpen(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+            fontSize: 13,
+          }}>
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            {locationName || gpsLabel || 'Selecciona tu dirección'}
+            <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+          <span style={{
+            fontSize: 13, fontWeight: 400,
+            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+          }}>
+            {feedDishes.length} platos encontrados
+          </span>
+        </div>
       </header>
 
       {/* ─── Filter sheet ─── */}

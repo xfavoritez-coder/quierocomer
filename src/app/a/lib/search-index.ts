@@ -26,7 +26,7 @@ async function _buildSearchIndex(): Promise<SearchIndex> {
         photos: true, dishDiet: true, isSpicy: true, isGlutenFree: true,
         isLactoseFree: true, isSoyFree: true, containsNuts: true,
         flavorTags: true, isHero: true, tags: true,
-        category: { select: { name: true, dishType: true, normOverride: true } },
+        category: { select: { name: true, dishType: true, normOverride: true, cuisineTag: true } },
         restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true, description: true } },
         feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
       },
@@ -74,6 +74,7 @@ async function _buildSearchIndex(): Promise<SearchIndex> {
         ratingCount: d.feedStats?.ratingCount ?? 0,
         commentCount: d.feedStats?.commentCount ?? 0,
         popularityScore: d.feedStats?.popularityScore ?? 0,
+        cuisineTag: d.category.cuisineTag ?? null,
       }
       const _search = [
         d.name, d.description ?? '', d.restaurant.name,

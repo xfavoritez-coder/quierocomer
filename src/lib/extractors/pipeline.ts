@@ -16,7 +16,7 @@ import { extractCanva } from "./canva";
 import { extractAvocaty } from "./avocaty";
 import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
-import { inferFlavorTags } from "@/app/a/lib/categories";
+import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo } from "@/lib/google-places";
@@ -486,6 +486,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           position: catPosition++,
           dishType: detectDishType(catName),
           isActive: true,
+          cuisineTag: detectCuisineTag(catName) ?? undefined,
         },
       });
 
@@ -911,6 +912,7 @@ export async function importFromProspecto(params: {
           position,
           dishType: detectDishType(catName),
           isActive: true,
+          cuisineTag: detectCuisineTag(catName) ?? undefined,
         },
       })
     )

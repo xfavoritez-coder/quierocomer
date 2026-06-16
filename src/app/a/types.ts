@@ -6,8 +6,9 @@ export type FeedDish = {
   precioDescuento: number | null
   fotoUrl: string | null
   categoria: string        // Category.name original (del restaurante)
-  categoriaNorm: string    // Leaf category (ej: "Ramen", "Hamburguesas") — para modal y recomendaciones
+  categoriaNorm: string    // Leaf category (ej: "Pollo y alitas", "Ceviches") — tipo del plato
   categoriaParent?: string // Parent category (ej: "Japonesa", "Comida rápida") — para filtro del feed
+  cuisineTag: string | null // Cocina de la sección (ej: "Peruana", "China") — segunda dimensión
   categoriaTipo: string    // "food" | "drink" | "dessert"
   sabores: string[]        // Dish.flavorTags
   dieta: {

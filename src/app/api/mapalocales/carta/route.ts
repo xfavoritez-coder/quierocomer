@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isExcludedCategory, QC_LEAVES, normalizeCategory, AMBIGUOUS_CATEGORIES } from '@/app/a/lib/categories'
+import { isExcludedCategory, QC_LEAVES, normalizeCategory, AMBIGUOUS_CATEGORIES, detectCuisineTag } from '@/app/a/lib/categories'
 import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
 
 export const dynamic = 'force-dynamic'
@@ -17,6 +17,7 @@ function resolveCatLeaf(catName: string, normOverride: string | null, primaryCat
 }
 
 export async function GET(req: NextRequest) {
+  try {
   const slug = req.nextUrl.searchParams.get('slug')
   if (!slug) return NextResponse.json({ error: 'slug requerido' }, { status: 400 })
 
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
   const dishes = await prisma.dish.findMany({
     where: { restaurantId: restaurant.id, deletedAt: null },
     select: {
-      id: true, name: true, price: true, photos: true,
+      id: true, name: true, description: true, price: true, photos: true,
       dishDiet: true, isActive: true, hiddenFromFeed: true, leafOverride: true, flavorTags: true,
       category: { select: { id: true, name: true, normOverride: true } },
     },
@@ -44,7 +45,8 @@ export async function GET(req: NextRequest) {
     categoryId: string
     categoryName: string
     normOverride: string | null
-    leafResolved: string   // leaf de la categoría (solo por nombre)
+    cuisineTag: string | null  // cocina detectada de la sección (ej: "Peruana")
+    leafResolved: string       // leaf de la categoría (solo por nombre)
     isMapped: boolean
     dishes: {
       id: string
@@ -56,7 +58,7 @@ export async function GET(req: NextRequest) {
       diet: string
       leafOverride: string | null
       flavorTags: string[]
-      dishLeafResolved: string  // leaf efectivo del plato (con inferencia por nombre)
+      dishLeafResolved: string  // leaf efectivo del plato (nombre → descripción → cocina)
     }[]
   }>()
 
@@ -66,18 +68,20 @@ export async function GET(req: NextRequest) {
 
     if (!categoryMap.has(catName)) {
       const leafResolved = resolveCatLeaf(catName, dish.category.normOverride, primaryCategory)
+      const cuisineTag = detectCuisineTag(catName)
       categoryMap.set(catName, {
         categoryId: dish.category.id,
         categoryName: catName,
         normOverride: dish.category.normOverride,
+        cuisineTag,
         leafResolved,
-        isMapped: QC_LEAVES.has(leafResolved),
+        isMapped: QC_LEAVES.has(leafResolved) || !!cuisineTag,
         dishes: [],
       })
     }
 
-    // Per-dish resolution: usa inferencia por nombre del plato también
-    const dishLeafResolved = resolveDishLeaf(dish.name, catName, dish.leafOverride ?? null, primaryCategory)
+    // Per-dish resolution: nombre → descripción → cocina como fallback
+    const dishLeafResolved = resolveDishLeaf(dish.name, catName, dish.leafOverride ?? null, primaryCategory, dish.description ?? null)
 
     const photos = Array.isArray(dish.photos) ? dish.photos : []
     categoryMap.get(catName)!.dishes.push({
@@ -106,4 +110,8 @@ export async function GET(req: NextRequest) {
     totalDishes: dishes.length,
     unmappedCount: categories.filter(c => !c.isMapped).length,
   })
+  } catch (e: any) {
+    console.error('[carta route ERROR]', e?.message, e?.stack)
+    return NextResponse.json({ error: e?.message ?? 'Error interno' }, { status: 500 })
+  }
 }
