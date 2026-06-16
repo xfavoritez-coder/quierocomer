@@ -63,8 +63,8 @@ export default function ContactView({
   return (
     <div style={{ paddingBottom: 100 }}>
 
-      <div style={{ padding: '20px 16px 0' }}>
-        <h1 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '0 0 20px' }}>
+      <div style={{ padding: '10px 16px 0' }}>
+        <h1 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '0 0 16px' }}>
           Contacto
         </h1>
 

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     await Promise.all([
       resend.emails.send({
-        from: process.env.FROM_EMAIL || 'noreply@quierocomer.cl',
+        from: process.env.FROM_EMAIL || 'QuieroComer <soporte@quierocomer.cl>',
         to: TO,
         subject: `Contacto feed — ${nombre || email}`,
         html,
