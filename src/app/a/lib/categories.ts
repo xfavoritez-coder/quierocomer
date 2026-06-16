@@ -1318,6 +1318,7 @@ export function inferFlavorTags(name: string, _categoryName: string, _descriptio
   const text = name.toLowerCase()
   const tags: string[] = []
 
+  // ── Preparaciones ───────────────────────────────────────────────────────────
   if (/\bpanko\b/.test(text))                               tags.push('panko')
   if (/\btempura\b/.test(text))                             tags.push('tempura')
   if (/\bfrit[ao]s?\b/.test(text))                          tags.push('frito')
@@ -1332,6 +1333,14 @@ export function inferFlavorTags(name: string, _categoryName: string, _descriptio
   if (/\brebozado\b/.test(text))                            tags.push('rebozado')
   if (/\bteriyaki\b/.test(text))                            tags.push('teriyaki')
   if (/\bcurry\b/.test(text))                               tags.push('curry')
+
+  // ── Ingredientes principales ─────────────────────────────────────────────────
+  if (/\bpollo\b|\bpechuga\b|\bmuslo\b|\balitas?\b|\bwings?\b|\bnuggets?\b|\btenders?\b|\bbroaster\b|\bkaraage\b/.test(text))
+    tags.push('pollo')
+  if (/\bcarne\b|\bvacuno\b|\bbistec\b|\bbife\b|\bcostill|\bplateada\b|\bmechada\b|\blomo\s+saltado\b|\basado\s+de\s+tira\b/.test(text))
+    tags.push('carne')
+  if (/\bpescado\b|\bmerluza\b|\breineta\b|\bcongrio\b|\bcorvina\b|\btrucha\b|\bsalm[oó]n\b|\bat[uú]n\b|\blenguado\b|\bcojinova\b|\btilapia\b/.test(text))
+    tags.push('pescado')
 
   return tags
 }
