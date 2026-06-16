@@ -573,7 +573,7 @@ export default function NewHome({
         headerVisible.current = entry.isIntersecting
         if (entry.isIntersecting) setShowFloatingSearch(false)
       },
-      { threshold: 0, rootMargin: '-180px 0px 0px 0px' }
+      { threshold: 0 }
     )
     observer.observe(headerRef.current)
     return () => observer.disconnect()
@@ -586,7 +586,7 @@ export default function NewHome({
       scrollTicking.current = true
       requestAnimationFrame(() => {
         const y = window.scrollY
-        if (headerVisible.current) {
+        if (headerVisible.current || y < 10) {
           setShowFloatingSearch(false)
         } else if (y < lastScrollY.current - 4) {
           setShowFloatingSearch(true)
@@ -968,14 +968,15 @@ export default function NewHome({
       </header>
 
       {/* ─── Floating search bar — aparece al subir el scroll — mobile only ─── */}
-      {!isDesktop && view !== 'perfil' && showFloatingSearch && (
+      {!isDesktop && view !== 'perfil' && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 36,
           padding: '10px 16px',
           background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
           backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-          animation: 'slideDown 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)',
-          boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
+          transform: showFloatingSearch ? 'translateY(0)' : 'translateY(-110%)',
+          transition: showFloatingSearch ? 'transform 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)' : 'none',
+          boxShadow: showFloatingSearch ? '0 2px 16px rgba(0,0,0,0.10)' : 'none',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
