@@ -527,7 +527,6 @@ export default function NewHome({
         position: 'sticky', top: 0, zIndex: 35,
         background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
         padding: '8px 16px 8px', display: 'flex', flexDirection: 'column', gap: 7,
       }}>
 
@@ -973,9 +972,7 @@ export default function NewHome({
               <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: 0 }}>
                 {searchQuery.trim()
                   ? `${feedDishes.length} resultado${feedDishes.length !== 1 ? 's' : ''} para "${searchQuery}"`
-                  : (userLocation || locationName)
-                    ? `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} cerca de ${gpsLabel || locationName}`
-                    : `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} disponibles`}
+                  : `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} encontrados`}
               </p>
             </div>
           )}
