@@ -1,6 +1,7 @@
 'use client'
 
 import type { FeedDish } from '../types'
+import FeedFooter from './FeedFooter'
 
 export default function ProfileView({
   savedDishes,
@@ -153,6 +154,8 @@ export default function ProfileView({
         </section>
 
       </div>
+
+      <FeedFooter isDark={isDark} />
     </div>
   )
 }

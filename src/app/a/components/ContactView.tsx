@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import FeedFooter from './FeedFooter'
 
 export default function ContactView({
   isDark,
@@ -167,6 +168,8 @@ export default function ContactView({
         )}
 
       </div>
+
+      <FeedFooter isDark={isDark} />
     </div>
   )
 }
