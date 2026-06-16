@@ -311,7 +311,7 @@ function DishSlide({
           onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
           style={{
             background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
-            fontSize: 13, color: 'rgba(0,0,0,0.38)', fontWeight: 500,
+            fontSize: 15, color: 'rgba(0,0,0,0.38)', fontWeight: 500,
             display: 'block', marginBottom: 10, textAlign: 'left',
           }}
         >
