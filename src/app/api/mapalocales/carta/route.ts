@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isExcludedCategory, QC_LEAVES } from '@/app/a/lib/categories'
+import { isExcludedCategory, QC_LEAVES, normalizeCategory, AMBIGUOUS_CATEGORIES } from '@/app/a/lib/categories'
 import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
 
 export const dynamic = 'force-dynamic'
+
+/** Resuelve el leaf de una categoría SOLO desde el nombre (sin inferir desde platos) */
+function resolveCatLeaf(catName: string, normOverride: string | null, primaryCategory: string | null): string {
+  if (normOverride && QC_LEAVES.has(normOverride)) return normOverride
+  const catNorm = normalizeCategory(catName)
+  if (QC_LEAVES.has(catNorm)) return catNorm
+  if (AMBIGUOUS_CATEGORIES.has(catName.trim()) || AMBIGUOUS_CATEGORIES.has(catNorm)) {
+    if (primaryCategory && QC_LEAVES.has(primaryCategory)) return primaryCategory
+  }
+  return ''
+}
 
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get('slug')
@@ -26,12 +37,14 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: 'asc' },
   })
 
+  const primaryCategory = restaurant.primaryCategory ?? null
+
   // Group dishes by category
   const categoryMap = new Map<string, {
     categoryId: string
     categoryName: string
     normOverride: string | null
-    leafResolved: string
+    leafResolved: string   // leaf de la categoría (solo por nombre)
     isMapped: boolean
     dishes: {
       id: string
@@ -43,6 +56,7 @@ export async function GET(req: NextRequest) {
       diet: string
       leafOverride: string | null
       flavorTags: string[]
+      dishLeafResolved: string  // leaf efectivo del plato (con inferencia por nombre)
     }[]
   }>()
 
@@ -50,24 +64,20 @@ export async function GET(req: NextRequest) {
     const catName = dish.category.name
     if (isExcludedCategory(catName)) continue
 
-    const leafResolved = resolveDishLeaf(
-      dish.name,
-      catName,
-      dish.leafOverride ?? null,
-      restaurant.primaryCategory ?? null,
-    )
-    const isMapped = QC_LEAVES.has(leafResolved)
-
     if (!categoryMap.has(catName)) {
+      const leafResolved = resolveCatLeaf(catName, dish.category.normOverride, primaryCategory)
       categoryMap.set(catName, {
         categoryId: dish.category.id,
         categoryName: catName,
         normOverride: dish.category.normOverride,
         leafResolved,
-        isMapped,
+        isMapped: QC_LEAVES.has(leafResolved),
         dishes: [],
       })
     }
+
+    // Per-dish resolution: usa inferencia por nombre del plato también
+    const dishLeafResolved = resolveDishLeaf(dish.name, catName, dish.leafOverride ?? null, primaryCategory)
 
     const photos = Array.isArray(dish.photos) ? dish.photos : []
     categoryMap.get(catName)!.dishes.push({
@@ -80,11 +90,11 @@ export async function GET(req: NextRequest) {
       diet: dish.dishDiet,
       leafOverride: dish.leafOverride ?? null,
       flavorTags: Array.isArray(dish.flavorTags) ? (dish.flavorTags as string[]) : [],
+      dishLeafResolved,
     })
   }
 
   const categories = [...categoryMap.values()].sort((a, b) => {
-    // Unmapped first
     if (!a.isMapped && b.isMapped) return -1
     if (a.isMapped && !b.isMapped) return 1
     return a.categoryName.localeCompare(b.categoryName)

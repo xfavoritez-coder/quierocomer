@@ -1073,7 +1073,9 @@ export function inferCategoryFromDishName(dishName: string): string | null {
   // Proteínas
   if (/empanada/.test(n)) return 'Empanadas'
   if (/pasta|tallar[ií]n|fettuccin|spaghett|linguini|rigatoni|penne|carbonara|bolognesa/.test(n)) return 'Pastas'
-  if (/pollo|alita|wing|broaster|tenders/.test(n)) return 'Pollo y alitas'
+  if (/pollo|pechuga|alita|wing|broaster|tenders/.test(n)) return 'Pollo y alitas'
+  if (/\bpescado\b|merluza|reineta|congrio|corvina|trucha\b/.test(n)) return 'Platos de fondo'
+  if (/\blomo\b|bistec|bife\b|costill|chuleta\b|cerdo\b|vacuno\b/.test(n)) return 'Platos de fondo'
   // Saludable
   if (/ensalada/.test(n)) return 'Ensaladas'
   if (/bowl\b|poke/.test(n)) return 'Bowls'
