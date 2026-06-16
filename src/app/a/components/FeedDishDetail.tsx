@@ -346,6 +346,13 @@ function DesktopDishContent({
     return result
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
+  const restDishes = useMemo(() => {
+    const candidates = allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
+    const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
+    const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
+    return [...sameLeaf, ...others].slice(0, 4)
+  }, [dish, allDishes])
+
   return (
     <>
       {/* Top: Photo */}
@@ -368,53 +375,60 @@ function DesktopDishContent({
 
       {/* Bottom: Content */}
       <div style={{ padding: '22px 24px 28px' }}>
-        {/* Name + save */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
-          <h2 style={{
-            fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0, lineHeight: 1.2, flex: 1,
-          }}>
-            {dish.nombre}
-            {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
-              <span
-                onClick={e => { e.stopPropagation(); setShowDietTooltip(true); setTimeout(() => setShowDietTooltip(false), 2200) }}
-                style={{ marginLeft: 6, fontSize: 18, cursor: 'pointer', position: 'relative', display: 'inline-block', verticalAlign: 'middle' }}
-              >
-                {dish.dieta.tipo === 'VEGAN' ? '🌱' : '🥬'}
-                {showDietTooltip && (
-                  <span style={{
-                    position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
-                    background: dish.dieta.tipo === 'VEGAN' ? '#15803d' : '#16a34a',
-                    color: '#fff', fontSize: 14, fontWeight: 700, padding: '7px 14px', borderRadius: 10,
-                    whiteSpace: 'nowrap', pointerEvents: 'none',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
-                  }}>
-                    {dish.dieta.tipo === 'VEGAN' ? '🌱 Vegano' : '🥬 Vegetariano'}
-                  </span>
-                )}
-              </span>
-            )}
-          </h2>
+        {/* Categoría + corazón — misma fila */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
+          <button
+            onClick={() => { window.location.href = `/?q=${encodeURIComponent(dish.categoriaNorm)}` }}
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
+              textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}
+          >
+            {dish.categoriaNorm}
+          </button>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
+            background: saved ? (isDark ? 'rgba(244,166,35,0.15)' : 'rgba(244,166,35,0.1)') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+            border: saved ? '1px solid rgba(244,166,35,0.4)' : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+            transition: 'all 0.15s',
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'} strokeWidth="2.5" strokeLinecap="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}>
+              {saved ? 'Guardado' : 'Guardar'}
+            </span>
           </button>
         </div>
 
-        {/* Categoría */}
-        <button
-          onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
-          style={{
-            background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
-            fontSize: 14, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 500,
-            display: 'block', marginTop: -2, marginBottom: 12, textAlign: 'left',
-          }}
-        >
-          {dish.categoriaNorm}
-        </button>
+        {/* Name */}
+        <h2 style={{
+          fontFamily: 'var(--font-feed-display), serif',
+          fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 8px', lineHeight: 1.2,
+        }}>
+          {dish.nombre}
+          {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
+            <span
+              onClick={e => { e.stopPropagation(); setShowDietTooltip(true); setTimeout(() => setShowDietTooltip(false), 2200) }}
+              style={{ marginLeft: 6, fontSize: 18, cursor: 'pointer', position: 'relative', display: 'inline-block', verticalAlign: 'middle' }}
+            >
+              {dish.dieta.tipo === 'VEGAN' ? '🌱' : '🥬'}
+              {showDietTooltip && (
+                <span style={{
+                  position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                  background: dish.dieta.tipo === 'VEGAN' ? '#15803d' : '#16a34a',
+                  color: '#fff', fontSize: 14, fontWeight: 700, padding: '7px 14px', borderRadius: 10,
+                  whiteSpace: 'nowrap', pointerEvents: 'none',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+                }}>
+                  {dish.dieta.tipo === 'VEGAN' ? '🌱 Vegano' : '🥬 Vegetariano'}
+                </span>
+              )}
+            </span>
+          )}
+        </h2>
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -424,13 +438,13 @@ function DesktopDishContent({
               <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
             </>
           ) : (
-            <span style={{ fontSize: 22, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            <span style={{ fontSize: 21, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
           )}
         </div>
 
         {/* Description */}
         {dish.descripcion && (
-          <p style={{ fontSize: 16, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)', lineHeight: 1.6, margin: '0 0 18px' }}>
+          <p style={{ fontSize: 16, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)', lineHeight: 1.6, margin: '0 0 28px' }}>
             {dish.descripcion}
           </p>
         )}
@@ -448,7 +462,7 @@ function DesktopDishContent({
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '12px 14px', borderRadius: 12, textAlign: 'left',
             background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
-            textDecoration: 'none', marginBottom: 14, boxSizing: 'border-box',
+            textDecoration: 'none', marginBottom: 22, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
             <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
@@ -486,31 +500,54 @@ function DesktopDishContent({
               </p>
             )}
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-            <path d="M9 18l6-6-6-6" />
-          </svg>
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.32)'} strokeWidth="1.8" strokeLinecap="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{ fontSize: 10, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }}>Maps</span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} strokeWidth="2.2" strokeLinecap="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </div>
         </a>
 
-        {/* Ver carta completa */}
-        <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: '100%', padding: '10px 16px', borderRadius: 12, boxSizing: 'border-box',
-            background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.3)',
-            color: '#c97d00', textDecoration: 'none',
-            fontSize: 13, fontWeight: 600, marginBottom: 18,
-          }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/>
-            <path d="M14 14h2v2h-2zM18 14h3M18 18h3M14 18v3M14 21h3"/>
-          </svg>
-          Ver carta completa
-        </a>
+        {/* Más de restaurante */}
+        {restDishes.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)', margin: 0 }}>
+                Más de {dish.restaurante}
+              </p>
+              <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                ver carta
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {restDishes.map(d => (
+                  <div key={d.id} onClick={() => onDishTap(d)} style={{
+                    flex: 1, minWidth: 0, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                  }}>
+                    <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (
-          <div style={{ paddingTop: 16, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
+          <div style={{ paddingTop: 28, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 10px' }}>También te podría gustar</p>
             <div style={{ display: 'flex', gap: 8 }}>
               {[0, 1].map(col => (
@@ -604,6 +641,13 @@ function DishSlide({
     return result
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
+  const restDishes = useMemo(() => {
+    const candidates = allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
+    const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
+    const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
+    return [...sameLeaf, ...others].slice(0, 4)
+  }, [dish, allDishes])
+
   // Infinite scroll for related dishes inside slide
   useEffect(() => {
     const el = slideRef.current
@@ -666,53 +710,60 @@ function DishSlide({
 
       {/* Content */}
       <div style={{ padding: '16px 20px 20px' }}>
-        {/* Name + save */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 3 }}>
-          <h2 style={{
-            fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0, lineHeight: 1.2, flex: 1,
-          }}>
-            {dish.nombre}
-            {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
-              <span
-                onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v) }}
-                style={{ marginLeft: 6, fontSize: 16, cursor: 'pointer', position: 'relative', display: 'inline-block', verticalAlign: 'middle' }}
-              >
-                {dish.dieta.tipo === 'VEGAN' ? '🌱' : '🥬'}
-                {showDietTooltip && (
-                  <span style={{
-                    position: 'absolute', bottom: '120%', left: '50%', transform: 'translateX(-50%)',
-                    background: dish.dieta.tipo === 'VEGAN' ? '#15803d' : '#16a34a',
-                    color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 8,
-                    whiteSpace: 'nowrap', pointerEvents: 'none',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-                  }}>
-                    {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
-                  </span>
-                )}
-              </span>
-            )}
-          </h2>
+        {/* Categoría + corazón — misma fila */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
+          <button
+            onClick={() => { window.location.href = `/?q=${encodeURIComponent(dish.categoriaNorm)}` }}
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
+              textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}
+          >
+            {dish.categoriaNorm}
+          </button>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
+            background: saved ? (isDark ? 'rgba(244,166,35,0.15)' : 'rgba(244,166,35,0.1)') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+            border: saved ? '1px solid rgba(244,166,35,0.4)' : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+            transition: 'all 0.15s',
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'} strokeWidth="2.5" strokeLinecap="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}>
+              {saved ? 'Guardado' : 'Guardar'}
+            </span>
           </button>
         </div>
 
-        {/* Categoría */}
-        <button
-          onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
-          style={{
-            background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
-            fontSize: 15, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 500,
-            display: 'block', marginTop: -2, marginBottom: 10, textAlign: 'left',
-          }}
-        >
-          {dish.categoriaNorm}
-        </button>
+        {/* Name */}
+        <h2 style={{
+          fontFamily: 'var(--font-feed-display), serif',
+          fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 7px', lineHeight: 1.2,
+        }}>
+          {dish.nombre}
+          {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
+            <span
+              onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v) }}
+              style={{ marginLeft: 6, fontSize: 16, cursor: 'pointer', position: 'relative', display: 'inline-block', verticalAlign: 'middle' }}
+            >
+              {dish.dieta.tipo === 'VEGAN' ? '🌱' : '🥬'}
+              {showDietTooltip && (
+                <span style={{
+                  position: 'absolute', bottom: '120%', left: '50%', transform: 'translateX(-50%)',
+                  background: dish.dieta.tipo === 'VEGAN' ? '#15803d' : '#16a34a',
+                  color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 8,
+                  whiteSpace: 'nowrap', pointerEvents: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}>
+                  {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
+                </span>
+              )}
+            </span>
+          )}
+        </h2>
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -722,13 +773,13 @@ function DishSlide({
               <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
             </>
           ) : (
-            <span style={{ fontSize: 20, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            <span style={{ fontSize: 19, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
           )}
         </div>
 
         {/* Description */}
         {dish.descripcion && (
-          <p style={{ fontSize: 17, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontSize: 17, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.45)', lineHeight: 1.6, margin: '0 0 26px' }}>
             {dish.descripcion}
           </p>
         )}
@@ -746,7 +797,7 @@ function DishSlide({
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '14px 16px', borderRadius: 14, textAlign: 'left',
             background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
-            textDecoration: 'none', marginBottom: 14, boxSizing: 'border-box',
+            textDecoration: 'none', marginBottom: 22, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
             <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
@@ -784,31 +835,54 @@ function DishSlide({
               </p>
             )}
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-            <path d="M9 18l6-6-6-6" />
-          </svg>
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.32)'} strokeWidth="1.8" strokeLinecap="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{ fontSize: 10, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)', letterSpacing: '0.02em' }}>Maps</span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} strokeWidth="2.2" strokeLinecap="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </div>
         </a>
 
-        {/* Ver carta completa */}
-        <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: '100%', padding: '11px 16px', borderRadius: 14, boxSizing: 'border-box',
-            background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.3)',
-            color: '#c97d00', textDecoration: 'none',
-            fontSize: 14, fontWeight: 600, marginBottom: 14,
-          }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/>
-            <path d="M14 14h2v2h-2zM18 14h3M18 18h3M14 18v3M14 21h3"/>
-          </svg>
-          Ver carta completa
-        </a>
+        {/* Más de restaurante */}
+        {restDishes.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)', margin: 0 }}>
+                Más de {dish.restaurante}
+              </p>
+              <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                ver carta
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {restDishes.map(d => (
+                  <div key={d.id} onClick={() => onDishTap(d)} style={{
+                    flex: 1, minWidth: 0, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                  }}>
+                    <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (
-          <div style={{ paddingTop: 16, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
+          <div style={{ paddingTop: 28, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
             <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 12px' }}>También te podría gustar</p>
             <div style={{ display: 'flex', gap: 10 }}>
               {[0, 1].map(col => (

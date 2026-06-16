@@ -123,20 +123,33 @@ export default function DishCard({
             }}>
               {dish.nombre}
             </h3>
-            {dish.dieta.tipo === 'VEGAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🌱</span>}
-            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🥬</span>}
+            {dish.dieta.tipo === 'VEGAN' && (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M12 22V11"/>
+                <path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/>
+                <path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/>
+                <path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/>
+                <path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
+              </svg>
+            )}
+            {dish.dieta.tipo === 'VEGETARIAN' && (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66BB6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+              </svg>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 700, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 600, flexShrink: 0 }}>
               {dish.enOferta && dish.precioDescuento != null
                 ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
                 : `$${dish.precio.toLocaleString('es-CL')}`}
             </span>
             {userLocation && dish.restauranteLat && dish.restauranteLng && (
               <>
-                <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>·</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500, flexShrink: 0 }}>
                   {formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))}
                 </span>
               </>

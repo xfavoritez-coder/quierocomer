@@ -36,6 +36,7 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [gpsLoading, setGpsLoading] = useState(false)
+  const [gpsError, setGpsError] = useState<string | null>(null)
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -89,8 +90,12 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
   }, [goToMap])
 
   const handleGPS = useCallback(() => {
-    if (!navigator.geolocation) return
+    if (!navigator.geolocation) {
+      setGpsError('Tu dispositivo no soporta geolocalización')
+      return
+    }
     setGpsLoading(true)
+    setGpsError(null)
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude
@@ -109,8 +114,15 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
           setGpsLoading(false)
         }
       },
-      () => {
+      (err) => {
         setGpsLoading(false)
+        if (err.code === 1) {
+          setGpsError('Permiso denegado. Activa la ubicación en tu navegador y vuelve a intentarlo.')
+        } else if (err.code === 3) {
+          setGpsError('Tiempo de espera agotado. Intenta de nuevo o busca tu dirección.')
+        } else {
+          setGpsError('No se pudo obtener tu ubicación. Busca tu dirección manualmente.')
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     )
@@ -252,9 +264,10 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
                 disabled={gpsLoading}
                 style={{
                   width: '100%', height: 50, borderRadius: 16,
-                  background: 'rgba(244,166,35,0.1)',
-                  border: '1px solid rgba(244,166,35,0.35)',
-                  color: gpsLoading ? 'rgba(180,110,0,0.5)' : '#c97d00', fontSize: 15, fontWeight: 600, cursor: gpsLoading ? 'default' : 'pointer',
+                  background: gpsError ? 'rgba(220,38,38,0.07)' : 'rgba(244,166,35,0.1)',
+                  border: gpsError ? '1px solid rgba(220,38,38,0.3)' : '1px solid rgba(244,166,35,0.35)',
+                  color: gpsLoading ? 'rgba(180,110,0,0.5)' : gpsError ? '#dc2626' : '#c97d00',
+                  fontSize: 15, fontWeight: 600, cursor: gpsLoading ? 'default' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 }}
               >
@@ -277,10 +290,15 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
                       <line x1="2" y1="12" x2="5" y2="12" />
                       <line x1="19" y1="12" x2="22" y2="12" />
                     </svg>
-                    Usar mi ubicación actual
+                    {gpsError ? 'Reintentar' : 'Usar mi ubicación actual'}
                   </>
                 )}
               </button>
+              {gpsError && (
+                <p style={{ margin: '8px 0 0', fontSize: 13, color: '#dc2626', lineHeight: 1.4 }}>
+                  {gpsError}
+                </p>
+              )}
             </div>
 
             {/* Spacer */}
