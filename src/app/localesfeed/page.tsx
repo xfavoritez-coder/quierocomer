@@ -252,6 +252,7 @@ function TabMapa() {
   const [places, setPlaces] = useState<PlaceResult[]>([])
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null)
 
   // Prospecting state
   const [prospecting, setProspecting] = useState(false)
@@ -810,9 +811,9 @@ function TabMapa() {
           return (
           <div
             key={p.id}
-            style={{ display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 70px 120px 120px 110px 36px', padding: '10px 14px', alignItems: 'center', borderBottom: '1px solid #1a1a1a', transition: 'background 0.1s', background: selected.has(p.id) ? '#1a1100' : 'transparent' }}
-            onMouseOver={e => { if (!selected.has(p.id)) e.currentTarget.style.background = '#1a1a1a' }}
-            onMouseOut={e => { e.currentTarget.style.background = selected.has(p.id) ? '#1a1100' : 'transparent' }}
+            style={{ display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 70px 120px 120px 110px 36px', padding: '10px 14px', alignItems: 'center', borderBottom: '1px solid #1a1a1a', border: lastAddedId === p.id ? '2px solid #a78bfa' : undefined, transition: 'background 0.1s', background: lastAddedId === p.id ? 'rgba(167,139,250,0.07)' : selected.has(p.id) ? '#1a1100' : 'transparent' }}
+            onMouseOver={e => { if (!selected.has(p.id) && lastAddedId !== p.id) e.currentTarget.style.background = '#1a1a1a' }}
+            onMouseOut={e => { e.currentTarget.style.background = lastAddedId === p.id ? 'rgba(167,139,250,0.07)' : selected.has(p.id) ? '#1a1100' : 'transparent' }}
           >
             {/* Checkbox */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -994,11 +995,10 @@ function TabMapa() {
         <AddManualModal
           onClose={() => setAddModal(false)}
           onAdded={(place, prospecto) => {
-            setPlaces(prev => {
-              if (prev.some(p => p.id === place.id)) return prev
-              return [place, ...prev]
-            })
+            setPlaces(prev => [place, ...prev.filter(p => p.id !== place.id)])
             if (prospecto) setProspectMap(m => ({ ...m, [place.id]: prospecto }))
+            setLastAddedId(place.id)
+            setTimeout(() => setLastAddedId(null), 3000)
             setAddModal(false)
           }}
         />
@@ -1036,15 +1036,19 @@ function AddManualModal({ onClose, onAdded }: {
   onClose: () => void
   onAdded: (place: PlaceResult, prospecto?: ProspectoResult) => void
 }) {
-  const [mapsUrl, setMapsUrl] = useState('')
-  const [cartaUrl, setCartaUrl] = useState('')
+  const [urlInput, setUrlInput] = useState('')       // Maps URL or any carta URL (for resolve)
+  const [cartaUrl, setCartaUrl] = useState('')        // Carta URL (optional, if different from urlInput)
   const [resolving, setResolving] = useState(false)
   const [resolved, setResolved] = useState<{ name: string; address: string; lat: number | null; lng: number | null; placeId: string | null; mapsUrl: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
+  // The effective carta URL: cartaUrl if provided, else urlInput if it's a delivery URL
+  const effectiveCartaUrl = cartaUrl.trim() || (['ubereats', 'rappi', 'pedidosya', 'getjusto', 'justo', 'fu.do', 'ola.click', 'gour.media', 'toteat'].some(p => urlInput.toLowerCase().includes(p)) ? urlInput.trim() : '')
+
   async function resolve() {
-    if (!mapsUrl.trim()) return
+    const toResolve = urlInput.trim()
+    if (!toResolve) return
     setResolving(true)
     setError(null)
     setResolved(null)
@@ -1052,11 +1056,15 @@ function AddManualModal({ onClose, onAdded }: {
       const res = await fetch('/api/mapalocales/resolve-maps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mapsUrl: mapsUrl.trim() }),
+        body: JSON.stringify({ mapsUrl: toResolve }),
       })
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setResolved(data)
+      // Auto-fill carta URL if the input was a delivery URL and carta field is empty
+      if (!cartaUrl.trim() && effectiveCartaUrl) {
+        setCartaUrl(effectiveCartaUrl)
+      }
     } catch (e: any) {
       setError(e?.message ?? 'Error resolviendo URL')
     } finally {
@@ -1065,23 +1073,25 @@ function AddManualModal({ onClose, onAdded }: {
   }
 
   async function save() {
-    if (!resolved) return
+    const name = resolved?.name || ''
+    if (!name) { setError('Necesito al menos el nombre del local'); return }
     setSaving(true)
     try {
-      const id = resolved.placeId ?? `manual-${Date.now().toString(36)}`
-      const provider = cartaUrl.trim() ? detectProvider(cartaUrl) : undefined
+      const id = resolved?.placeId ?? `manual-${Date.now().toString(36)}`
+      const finalCartaUrl = effectiveCartaUrl
+      const provider = finalCartaUrl ? detectProvider(finalCartaUrl) : undefined
       const res = await fetch('/api/mapalocales/prospectos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           manual: {
             id,
-            name: resolved.name,
-            address: resolved.address,
-            lat: resolved.lat,
-            lng: resolved.lng,
-            mapsUrl: resolved.mapsUrl,
-            cartaUrl: cartaUrl.trim() || undefined,
+            name,
+            address: resolved?.address ?? '',
+            lat: resolved?.lat ?? null,
+            lng: resolved?.lng ?? null,
+            mapsUrl: resolved?.mapsUrl ?? urlInput.trim(),
+            cartaUrl: finalCartaUrl || undefined,
             provider,
           },
         }),
@@ -1090,23 +1100,23 @@ function AddManualModal({ onClose, onAdded }: {
 
       const place: PlaceResult = {
         id,
-        name: resolved.name,
-        address: resolved.address,
-        lat: resolved.lat ?? 0,
-        lng: resolved.lng ?? 0,
-        mapsUrl: resolved.mapsUrl,
+        name,
+        address: resolved?.address ?? '',
+        lat: resolved?.lat ?? 0,
+        lng: resolved?.lng ?? 0,
+        mapsUrl: resolved?.mapsUrl ?? urlInput.trim(),
         website: null,
         rating: null,
         reviews: null,
       }
-      const prospecto: ProspectoResult | undefined = cartaUrl.trim() ? {
+      const prospecto: ProspectoResult | undefined = finalCartaUrl ? {
         id,
-        name: resolved.name,
-        address: resolved.address,
-        mapsUrl: resolved.mapsUrl,
+        name,
+        address: resolved?.address ?? '',
+        mapsUrl: resolved?.mapsUrl ?? urlInput.trim(),
         status: 'encontrado',
         provider,
-        cartaUrl: cartaUrl.trim(),
+        cartaUrl: finalCartaUrl,
         fuenteMatch: 'manual',
       } : undefined
 
@@ -1117,6 +1127,9 @@ function AddManualModal({ onClose, onAdded }: {
       setSaving(false)
     }
   }
+
+  const canResolve = !!urlInput.trim()
+  const canSave = !!resolved?.name
 
   return (
     <div
@@ -1130,21 +1143,23 @@ function AddManualModal({ onClose, onAdded }: {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Maps URL */}
+          {/* URL input — Maps, UberEats, Rappi, or any delivery URL */}
           <div>
-            <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>Link de Google Maps *</label>
+            <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Link de Google Maps o URL de UberEats / Rappi *
+            </label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
-                value={mapsUrl}
-                onChange={e => { setMapsUrl(e.target.value); setResolved(null) }}
+                value={urlInput}
+                onChange={e => { setUrlInput(e.target.value); setResolved(null) }}
                 onKeyDown={e => e.key === 'Enter' && resolve()}
-                placeholder="https://maps.app.goo.gl/..."
+                placeholder="maps.app.goo.gl/... o ubereats.com/cl/store/..."
                 style={{ flex: 1, fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#fff', borderRadius: 8, padding: '8px 12px', outline: 'none' }}
               />
               <button
                 onClick={resolve}
-                disabled={resolving || !mapsUrl.trim()}
-                style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, background: resolving || !mapsUrl.trim() ? '#222' : '#a78bfa', color: resolving || !mapsUrl.trim() ? '#444' : '#000', border: 'none', cursor: resolving || !mapsUrl.trim() ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                disabled={resolving || !canResolve}
+                style={{ fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 8, background: resolving || !canResolve ? '#222' : '#a78bfa', color: resolving || !canResolve ? '#444' : '#000', border: 'none', cursor: resolving || !canResolve ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
               >
                 {resolving ? '...' : 'Resolver'}
               </button>
@@ -1155,22 +1170,27 @@ function AddManualModal({ onClose, onAdded }: {
           {resolved && (
             <div style={{ background: '#0d0d0d', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px' }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{resolved.name || '—'}</div>
-              <div style={{ fontSize: 12, color: '#666' }}>{resolved.address || 'Sin dirección'}</div>
+              <div style={{ fontSize: 12, color: '#666' }}>{resolved.address || 'Sin dirección (se usarán coordenadas de la carta)'}</div>
               {resolved.lat && <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{resolved.lat.toFixed(5)}, {resolved.lng?.toFixed(5)}</div>}
+              {!resolved.lat && <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>⚠ Sin ubicación exacta — el local se agregará sin coordenadas</div>}
             </div>
           )}
 
-          {/* Carta URL */}
+          {/* Carta URL — optional if urlInput is already a delivery URL */}
           <div>
-            <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>URL de carta (opcional)</label>
+            <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              URL de carta {effectiveCartaUrl && urlInput === effectiveCartaUrl ? '(auto-detectada del campo anterior)' : '(opcional si ya pegaste UberEats arriba)'}
+            </label>
             <input
               value={cartaUrl}
               onChange={e => setCartaUrl(e.target.value)}
-              placeholder="https://www.rappi.cl/... / ubereats / justo / ..."
+              placeholder="Solo si es diferente al link de arriba"
               style={{ width: '100%', fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#fff', borderRadius: 8, padding: '8px 12px', outline: 'none', boxSizing: 'border-box' }}
             />
-            {cartaUrl.trim() && (
-              <div style={{ fontSize: 11, color: '#a78bfa', marginTop: 4 }}>Proveedor detectado: {detectProvider(cartaUrl)}</div>
+            {effectiveCartaUrl && (
+              <div style={{ fontSize: 11, color: '#a78bfa', marginTop: 4 }}>
+                Proveedor detectado: {detectProvider(effectiveCartaUrl)}
+              </div>
             )}
           </div>
 
@@ -1183,8 +1203,8 @@ function AddManualModal({ onClose, onAdded }: {
           </button>
           <button
             onClick={save}
-            disabled={saving || !resolved}
-            style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: !resolved || saving ? '#222' : '#a78bfa', color: !resolved || saving ? '#444' : '#000', border: 'none', cursor: !resolved || saving ? 'not-allowed' : 'pointer' }}
+            disabled={saving || !canSave}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: !canSave || saving ? '#222' : '#a78bfa', color: !canSave || saving ? '#444' : '#000', border: 'none', cursor: !canSave || saving ? 'not-allowed' : 'pointer' }}
           >
             {saving ? 'Guardando...' : 'Agregar'}
           </button>
