@@ -26,10 +26,12 @@ function useColumnCount() {
 export default function MasonryGrid({
   dishes,
   onDishTap,
+  onCategoryClick,
   userLocation,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
+  onCategoryClick?: (category: string) => void
   userLocation?: { lat: number; lng: number } | null
 }) {
   const colCount = useColumnCount()
@@ -50,7 +52,7 @@ export default function MasonryGrid({
               className="feed-grid-item"
               style={{ animationDelay: `${di * 30}ms` }}
             >
-              <DishCard dish={dish} onTap={onDishTap} userLocation={userLocation} eager={di < 4} />
+              <DishCard dish={dish} onTap={onDishTap} onCategoryClick={onCategoryClick} userLocation={userLocation} eager={di < 4} />
             </div>
           ))}
         </div>

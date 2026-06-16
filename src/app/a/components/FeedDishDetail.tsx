@@ -192,14 +192,18 @@ function DishSlide({
       return { dish: d, relevance, dist }
     })
 
-    const sorted = userLocation
-      ? scored.sort((a, b) => {
-          if (a.dist === null && b.dist === null) return b.relevance - a.relevance
-          if (a.dist === null) return 1
-          if (b.dist === null) return -1
-          return a.dist !== b.dist ? a.dist - b.dist : b.relevance - a.relevance
-        })
-      : scored.sort((a, b) => b.relevance - a.relevance)
+    // Filtrar sin ninguna relevancia (evita sugerencias totalmente ajenas)
+    const relevant = scored.filter(x => x.relevance > 0)
+    const pool2 = relevant.length >= 4 ? relevant : scored
+
+    const sorted = pool2.sort((a, b) => {
+      // Score combinado: relevancia pesa más que distancia
+      const distA = a.dist ?? 999
+      const distB = b.dist ?? 999
+      const scoreA = a.relevance * 5 - distA * 0.3
+      const scoreB = b.relevance * 5 - distB * 0.3
+      return scoreB - scoreA
+    })
 
     // Máx 2 platos por local para que haya variedad
     const perLocal = new Map<string, number>()
@@ -377,23 +381,6 @@ function DishSlide({
           </svg>
         </a>
 
-        {/* Ver carta completa */}
-        <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: '100%', padding: '11px 16px', borderRadius: 14, boxSizing: 'border-box',
-            background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.3)',
-            color: '#c97d00', textDecoration: 'none',
-            fontSize: 14, fontWeight: 600, marginBottom: 14,
-          }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-            <rect x="9" y="3" width="6" height="4" rx="1" />
-            <path d="M9 12h6M9 16h4" />
-          </svg>
-          Ver carta completa
-        </a>
-
         {/* Más platos del local — siempre visible */}
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 14 }}>
@@ -428,6 +415,23 @@ function DishSlide({
             </div>
           </div>
         )}
+
+        {/* Ver carta completa */}
+        <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            width: '100%', padding: '11px 16px', borderRadius: 14, boxSizing: 'border-box',
+            background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.3)',
+            color: '#c97d00', textDecoration: 'none',
+            fontSize: 14, fontWeight: 600, marginBottom: 14,
+          }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+            <rect x="9" y="3" width="6" height="4" rx="1" />
+            <path d="M9 12h6M9 16h4" />
+          </svg>
+          Ver carta completa
+        </a>
 
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (

@@ -983,6 +983,7 @@ export default function NewHome({
               <MasonryGrid
                 dishes={feedDishes.slice(0, visibleCount)}
                 onDishTap={handleDishTap}
+                onCategoryClick={cat => setActiveCategory(cat)}
                 userLocation={userLocation}
               />
               {/* Sentinel — IntersectionObserver lo detecta para cargar más */}

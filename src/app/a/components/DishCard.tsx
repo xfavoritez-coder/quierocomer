@@ -8,11 +8,13 @@ import { distanceKm, formatDistance } from '../lib/geo'
 export default function DishCard({
   dish,
   onTap,
+  onCategoryClick,
   userLocation,
   eager,
 }: {
   dish: FeedDish
   onTap: (dish: FeedDish) => void
+  onCategoryClick?: (category: string) => void
   userLocation?: { lat: number; lng: number } | null
   eager?: boolean
 }) {
@@ -109,7 +111,7 @@ export default function DishCard({
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            margin: '0 0 5px', minWidth: 0,
+            margin: '0 0 3px', minWidth: 0,
           }}>
             <h3 style={{
               fontFamily: 'var(--font-feed-display), serif',
@@ -122,6 +124,18 @@ export default function DishCard({
               {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 3 }}>🥬</span>}
             </h3>
           </div>
+
+          <button
+            onClick={e => { e.stopPropagation(); onCategoryClick?.(dish.categoriaNorm) }}
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
+              fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 500,
+              display: 'block', textAlign: 'left', marginBottom: 4,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%',
+            }}
+          >
+            {dish.categoriaNorm}
+          </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap' }}>
             <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 700, flexShrink: 0 }}>
