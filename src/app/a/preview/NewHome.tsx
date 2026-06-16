@@ -586,7 +586,8 @@ export default function NewHome({
       scrollTicking.current = true
       requestAnimationFrame(() => {
         const y = window.scrollY
-        if (headerVisible.current || y < 10) {
+        const headerH = headerRef.current?.offsetHeight ?? 160
+        if (headerVisible.current || y < headerH + 40) {
           setShowFloatingSearch(false)
         } else if (y < lastScrollY.current - 4) {
           setShowFloatingSearch(true)
