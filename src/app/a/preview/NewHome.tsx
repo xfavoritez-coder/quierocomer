@@ -1181,12 +1181,11 @@ export default function NewHome({
                 </button>
               )}
               <div style={{ flex: 1 }} />
-              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
-                {searchQuery.trim()
-                  ? <>{feedDishes.length} resultado{feedDishes.length !== 1 ? 's' : ''} para &ldquo;{searchQuery}&rdquo;</>
-                  : <>{feedDishes.length} plato{feedDishes.length !== 1 ? 's' : ''}</>
-                }
-              </p>
+              {searchQuery.trim() && (
+                <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
+                  {feedDishes.length} resultado{feedDishes.length !== 1 ? 's' : ''} para &ldquo;{searchQuery}&rdquo;
+                </p>
+              )}
               {isDesktop && (
                 <button onClick={() => setFilterOpen(true)} style={{
                   display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
