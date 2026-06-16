@@ -11,25 +11,29 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
       gap: 10,
       borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
     }}>
-      {/* Plato SVG */}
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 11l19-9-9 19-2-8-8-2z"/>
-      </svg>
-
-      {/* Wordmark */}
-      <span style={{
-        fontFamily: 'var(--font-feed-display), serif',
-        fontSize: 20,
-        fontWeight: 700,
-        letterSpacing: '-0.3px',
-        color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.4)',
-      }}>
-        Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-      </span>
+      {/* Lamp + Wordmark en fila */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <img
+          src="/genio-lamp.png"
+          alt=""
+          width={22}
+          height={22}
+          style={{ filter: 'grayscale(1)', opacity: isDark ? 0.3 : 0.25, objectFit: 'contain' }}
+        />
+        <span style={{
+          fontFamily: 'var(--font-feed-display), serif',
+          fontSize: 20,
+          fontWeight: 700,
+          letterSpacing: '-0.3px',
+          color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.4)',
+        }}>
+          Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+        </span>
+      </div>
 
       {/* Tagline */}
       <p style={{
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 600,
         color: isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.35)',
         margin: 0,
