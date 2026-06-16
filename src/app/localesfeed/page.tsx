@@ -1542,7 +1542,7 @@ function CartaModal({ slug, name, onClose }: {
                                 borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
                               }}
                             >
-                              <option value="">— heredar ({ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved : 'sin mapear'}) —</option>
+                              <option value="">{ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved : 'sin mapear'}</option>
                               {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
