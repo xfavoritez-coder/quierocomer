@@ -1262,6 +1262,7 @@ function AddManualModal({ onClose, onAdded }: {
 type CartaDish = {
   id: string
   name: string
+  description: string | null
   price: number
   photo: string | null
   isActive: boolean
@@ -1289,17 +1290,34 @@ type CartaData = {
   unmappedCount: number
 }
 
-const ALL_LEAF_OPTS = [
-  'Entradas', 'Mariscos', 'Ceviches',
-  'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos', 'Papas fritas',
-  'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana',
-  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Ramen', 'Gyoza', 'Japonesa',
-  'Empanadas', 'Venezolana',
-  'Ensaladas', 'Bowls', 'Saludable',
-  'Postres', 'Helados',
-  'Desayunos', 'Cafetería', 'Amasandería',
-  'Smoothies', 'Milkshakes', 'Bebidas',
-]
+const PARENT_LEAVES_MAP: Record<string, string[]> = {
+  'Comida rápida': ['Hamburguesas', 'Completos', 'Sándwiches', 'Papas fritas'],
+  'Pizza':         ['Pizzas'],
+  'Sushi':         ['Sushi'],
+  'Japonesa':      ['Ramen', 'Gyoza', 'Japonesa'],
+  'China':         ['China'],
+  'Thai':          ['Thai'],
+  'India':         ['India'],
+  'Asiática':      ['Asiática'],
+  'Peruana':       ['Ceviches', 'Peruana'],
+  'Mariscos':      ['Mariscos'],
+  'Parrilla':      ['Parrilla'],
+  'Pastas':        ['Pastas'],
+  'Venezolana':    ['Venezolana'],
+  'Mexicana':      ['Mexicana'],
+  'Pollo':         ['Pollo y alitas'],
+  'Empanadas':     ['Empanadas'],
+  'Saludable':     ['Ensaladas', 'Bowls', 'Saludable'],
+  'Desayunos':     ['Desayunos', 'Cafetería', 'Amasandería'],
+  'Postres':       ['Postres', 'Helados'],
+  'Bebidas':       ['Smoothies', 'Milkshakes', 'Bebidas'],
+  'Entradas':      ['Entradas'],
+}
+const LEAF_TO_PARENT_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(PARENT_LEAVES_MAP).flatMap(([p, ls]) => ls.map(l => [l, p]))
+)
+const ALL_PARENTS = Object.keys(PARENT_LEAVES_MAP)
+const ALL_LEAF_OPTS = Object.values(PARENT_LEAVES_MAP).flat()
 
 function CartaModal({ slug, name, onClose }: {
   slug: string
@@ -1309,24 +1327,31 @@ function CartaModal({ slug, name, onClose }: {
   const [data, setData] = useState<CartaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [dishLeafs, setDishLeafs] = useState<Record<string, string>>({})  // dishId → leaf override
-  const [dishDiets, setDishDiets] = useState<Record<string, string>>({})  // dishId → diet override
-  const [batchLeafs, setBatchLeafs] = useState<Record<string, string>>({}) // catName → batch fill leaf
-  const [batchDiets, setBatchDiets] = useState<Record<string, string>>({}) // catName → batch fill diet
+  const [dishLeafs, setDishLeafs] = useState<Record<string, string>>({})    // dishId → leaf override
+  const [dishParents, setDishParents] = useState<Record<string, string>>({}) // dishId → parent (UI only)
+  const [dishDiets, setDishDiets] = useState<Record<string, string>>({})    // dishId → diet override
+  const [batchLeafs, setBatchLeafs] = useState<Record<string, string>>({})  // catName → batch fill leaf
+  const [batchParents, setBatchParents] = useState<Record<string, string>>({}) // catName → batch fill parent
+  const [batchDiets, setBatchDiets] = useState<Record<string, string>>({})  // catName → batch fill diet
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [hoverDish, setHoverDish] = useState<{ name: string; description: string | null; photo: string; x: number; y: number } | null>(null)
 
   function initFromData(d: CartaData) {
     const dl: Record<string, string> = {}
+    const dp: Record<string, string> = {}
     const dd: Record<string, string> = {}
     for (const cat of d.categories) {
       for (const dish of cat.dishes) {
+        const leaf = dish.leafOverride ?? dish.dishLeafResolved ?? ''
         dl[dish.id] = dish.leafOverride ?? ''
+        dp[dish.id] = leaf ? (LEAF_TO_PARENT_MAP[leaf] ?? '') : ''
         dd[dish.id] = dish.diet
       }
     }
     setDishLeafs(dl)
+    setDishParents(dp)
     setDishDiets(dd)
   }
 
@@ -1387,6 +1412,7 @@ function CartaModal({ slug, name, onClose }: {
     : (data?.categories ?? []).filter(c => !c.isMapped)
 
   return (
+    <>
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 16px', overflowY: 'auto' }}
@@ -1459,7 +1485,7 @@ function CartaModal({ slug, name, onClose }: {
                   {/* Dishes: batch-fill header + per-dish rows en grid */}
                   <div style={{ padding: '4px 24px 10px' }}>
                     {/* Batch fill header row — alineado con columnas de platos */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 110px 160px', gap: 8, alignItems: 'center', paddingBottom: 4, marginBottom: 4, borderBottom: '1px solid #181818' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 86px 110px 120px', gap: 6, alignItems: 'center', paddingBottom: 4, marginBottom: 4, borderBottom: '1px solid #181818' }}>
                       <div />
                       <span style={{ fontSize: 11, color: '#333' }}>rellenar sección ↓</span>
                       <select
@@ -1475,39 +1501,73 @@ function CartaModal({ slug, name, onClose }: {
                         }}
                         style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
                       >
-                        <option value="">— dieta todos —</option>
+                        <option value="">— dieta —</option>
                         <option value="OMNIVORE">omnívoro</option>
                         <option value="VEGETARIAN">vegetariano</option>
                         <option value="VEGAN">vegano</option>
+                      </select>
+                      <select
+                        value={batchParents[cat.categoryName] ?? ''}
+                        onChange={e => {
+                          const parent = e.target.value
+                          setBatchParents(m => ({ ...m, [cat.categoryName]: parent }))
+                          if (parent) {
+                            setDishParents(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = parent; return next })
+                            const leaves = PARENT_LEAVES_MAP[parent] ?? []
+                            if (leaves.length === 1) {
+                              setBatchLeafs(m => ({ ...m, [cat.categoryName]: leaves[0] }))
+                              setDishLeafs(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = leaves[0]; return next })
+                            } else {
+                              setBatchLeafs(m => ({ ...m, [cat.categoryName]: '' }))
+                            }
+                          }
+                        }}
+                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
+                      >
+                        <option value="">— categoría —</option>
+                        {ALL_PARENTS.map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                       <select
                         value={batchLeafs[cat.categoryName] ?? ''}
                         onChange={e => {
                           const v = e.target.value
                           setBatchLeafs(m => ({ ...m, [cat.categoryName]: v }))
-                          if (v) setDishLeafs(prev => {
-                            const next = { ...prev }
-                            for (const d of cat.dishes) next[d.id] = v
-                            return next
-                          })
+                          if (v) {
+                            setDishLeafs(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = v; return next })
+                            const parent = LEAF_TO_PARENT_MAP[v] ?? ''
+                            if (parent) {
+                              setBatchParents(m => ({ ...m, [cat.categoryName]: parent }))
+                              setDishParents(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = parent; return next })
+                            }
+                          }
                         }}
                         style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
                       >
-                        <option value="">— cat. todos —</option>
-                        {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                        <option value="">— subcategoría —</option>
+                        {(batchParents[cat.categoryName] ? (PARENT_LEAVES_MAP[batchParents[cat.categoryName]] ?? ALL_LEAF_OPTS) : ALL_LEAF_OPTS).map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
                     </div>
 
                     {/* Per-dish rows */}
                     {cat.dishes.map(dish => {
                       const dishLeaf = dishLeafs[dish.id] ?? ''
+                      const dishParent = dishParents[dish.id] ?? ''
                       const currentDiet = dishDiets[dish.id] ?? dish.diet
-                      const hasManualOverride = !!dishLeaf
+                      const hasLeafOverride = !!dishLeaf
+                      const leafOptions = dishParent ? (PARENT_LEAVES_MAP[dishParent] ?? ALL_LEAF_OPTS) : ALL_LEAF_OPTS
                       return (
                         <div key={dish.id} style={{ opacity: dish.isActive ? 1 : 0.4, marginBottom: 3 }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 110px 160px', gap: 8, alignItems: 'center' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 86px 110px 120px', gap: 6, alignItems: 'center' }}>
                             {dish.photo ? (
-                              <img src={dish.photo} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover' }} />
+                              <img
+                                src={dish.photo} alt=""
+                                style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover', cursor: 'zoom-in' }}
+                                onMouseEnter={e => {
+                                  const r = (e.target as HTMLElement).getBoundingClientRect()
+                                  setHoverDish({ name: dish.name, description: dish.description, photo: dish.photo!, x: r.right + 8, y: r.top })
+                                }}
+                                onMouseLeave={() => setHoverDish(null)}
+                              />
                             ) : (
                               <div style={{ width: 26, height: 26, borderRadius: 3, background: '#1a1a1a' }} />
                             )}
@@ -1529,19 +1589,46 @@ function CartaModal({ slug, name, onClose }: {
                               <option value="VEGETARIAN">vegetariano</option>
                               <option value="VEGAN">vegano</option>
                             </select>
-                            {/* Per-dish categoría override */}
+                            {/* Per-dish categoría madre */}
                             <select
-                              value={dishLeaf}
-                              onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
+                              value={dishParent}
+                              onChange={e => {
+                                const parent = e.target.value
+                                setDishParents(m => ({ ...m, [dish.id]: parent }))
+                                const leaves = parent ? (PARENT_LEAVES_MAP[parent] ?? []) : []
+                                if (leaves.length === 1) {
+                                  setDishLeafs(m => ({ ...m, [dish.id]: leaves[0] }))
+                                } else {
+                                  setDishLeafs(m => ({ ...m, [dish.id]: '' }))
+                                }
+                              }}
                               style={{
                                 fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${hasManualOverride ? '#a78bfa55' : '#2a2a2a'}`,
-                                color: hasManualOverride ? '#c4b5fd' : '#888',
+                                border: `1px solid ${dishParent ? '#60a5fa44' : '#2a2a2a'}`,
+                                color: dishParent ? '#93c5fd' : '#888',
                                 borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
                               }}
                             >
-                              <option value="">{dish.dishLeafResolved || '— categoría —'}</option>
-                              {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                              <option value="">{LEAF_TO_PARENT_MAP[dish.dishLeafResolved] || '— categoría —'}</option>
+                              {ALL_PARENTS.map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                            {/* Per-dish subcategoría (leaf) */}
+                            <select
+                              value={dishLeaf}
+                              onChange={e => {
+                                const v = e.target.value
+                                setDishLeafs(m => ({ ...m, [dish.id]: v }))
+                                if (v) setDishParents(m => ({ ...m, [dish.id]: LEAF_TO_PARENT_MAP[v] ?? '' }))
+                              }}
+                              style={{
+                                fontSize: 12, background: '#0d0d0d',
+                                border: `1px solid ${hasLeafOverride ? '#a78bfa55' : '#2a2a2a'}`,
+                                color: hasLeafOverride ? '#c4b5fd' : '#888',
+                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
+                              }}
+                            >
+                              <option value="">{dish.dishLeafResolved || '— subcategoría —'}</option>
+                              {leafOptions.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
                           {/* FlavorTags */}
@@ -1586,6 +1673,34 @@ function CartaModal({ slug, name, onClose }: {
         )}
       </div>
     </div>
+
+    {/* Hover popup: foto grande + nombre + descripción */}
+    {hoverDish && (
+      <div style={{
+        position: 'fixed',
+        left: hoverDish.x,
+        top: hoverDish.y,
+        zIndex: 9999,
+        background: '#1a1a1a',
+        border: '1px solid #333',
+        borderRadius: 10,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+        padding: 12,
+        maxWidth: 260,
+        pointerEvents: 'none',
+      }}>
+        <img
+          src={hoverDish.photo}
+          alt=""
+          style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6, display: 'block', marginBottom: 8 }}
+        />
+        <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#e5e5e5', lineHeight: 1.3 }}>{hoverDish.name}</p>
+        {hoverDish.description && (
+          <p style={{ margin: 0, fontSize: 12, color: '#888', lineHeight: 1.4 }}>{hoverDish.description}</p>
+        )}
+      </div>
+    )}
+    </>
   )
 }
 

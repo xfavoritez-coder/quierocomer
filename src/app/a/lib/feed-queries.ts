@@ -53,7 +53,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     SELECT
       d.id, d.name, d.description, d.price, d."discountPrice",
       d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
-      d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride",
+      d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt",
       c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
       r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory",
@@ -135,6 +135,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       commentCount: Number(d.commentCount ?? 0),
       popularityScore: Number(d.popularityScore ?? 0),
       cuisineTag,
+      createdAt: d.createdAt ? new Date(d.createdAt).toISOString() : null,
     })
   }
 

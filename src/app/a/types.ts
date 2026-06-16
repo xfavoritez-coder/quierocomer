@@ -39,4 +39,5 @@ export type FeedDish = {
   ratingCount: number
   commentCount: number
   popularityScore: number
+  createdAt?: string | null
 }

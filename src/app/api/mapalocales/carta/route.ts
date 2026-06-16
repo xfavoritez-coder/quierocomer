@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
     categoryMap.get(catName)!.dishes.push({
       id: dish.id,
       name: dish.name,
+      description: dish.description ?? null,
       price: Number(dish.price),
       photo: photos[0] ?? null,
       isActive: dish.isActive,
