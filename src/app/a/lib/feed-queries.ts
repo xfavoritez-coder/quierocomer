@@ -31,6 +31,10 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
         AND c."dishType" != 'drink'
         AND r."isActive" = true
         AND r."isDemo" = false
+        AND r.lat IS NOT NULL
+        AND r.lng IS NOT NULL
+        AND r."googleMapsUrl" IS NOT NULL
+        AND r."googleRating" IS NOT NULL
     ) ranked
     JOIN "Dish" d ON d.id = ranked.id
     JOIN "Category" c ON c.id = d."categoryId"
