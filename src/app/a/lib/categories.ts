@@ -660,7 +660,6 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Chicken Sandwich': 'Sándwiches',
   'Lomitos': 'Sándwiches',
   'Los Infaltables': 'Sándwiches',
-  'Panadería': 'Sándwiches',
   'SANDWICHS': 'Sándwiches',
   'Sandwich Ave': 'Sándwiches',
   'Sandwich Churrasco': 'Sándwiches',
