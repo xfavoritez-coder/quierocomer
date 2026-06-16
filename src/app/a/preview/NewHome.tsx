@@ -390,14 +390,10 @@ export default function NewHome({
     }
   }, [])
 
-  // Feed dishes — use server search results if searching, otherwise local filter
+  // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {
-    // If we have server search results, use those directly
-    if (searchResults && searchQuery.trim()) {
-      return searchResults
-    }
-
-    let filtered = dishes.filter(d => d.fotoUrl)
+    // Base: resultados de búsqueda si hay query, si no todos los platos con foto
+    let filtered = (searchResults && searchQuery.trim() ? searchResults : dishes).filter(d => d.fotoUrl)
 
     // Location filter
     if (locationName) {
