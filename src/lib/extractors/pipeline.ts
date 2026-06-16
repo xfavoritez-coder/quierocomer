@@ -489,10 +489,15 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       });
 
       const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName);
+      const isVeganCat = /\bvegan[ao]?\b|plant.based/i.test(catName);
+      const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie|verde\b|sin carne/i.test(catName);
 
       for (let j = 0; j < catDishes.length; j++) {
         const dish = catDishes[j];
         const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" });
+
+        const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE";
+        const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat ? "VEGAN" : isVeggieCat ? "VEGETARIAN" : dishDietFromAI;
 
         const created = await prisma.dish.create({
           data: {
@@ -503,7 +508,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             price: dish.price,
             photos: [],
             position: j,
-            dishDiet: isDrinkCat ? "OMNIVORE" : ((dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"),
+            dishDiet,
             isSpicy: (dish as any).isSpicy || detected.isSpicy,
             tags: j === 0 && catPosition <= 2 ? ["RECOMMENDED"] : [],
             containsNuts: isDrinkCat ? false : detected.containsNuts,
@@ -910,8 +915,12 @@ export async function importFromProspecto(params: {
   catEntries.forEach(([catName, catDishes], catIdx) => {
     const category = createdCategories[catIdx]
     const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName)
+    const isVeganCat = /\bvegan[ao]?\b|plant.based/i.test(catName)
+    const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie|verde\b|sin carne/i.test(catName)
     catDishes.forEach((dish, j) => {
       const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" })
+      const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"
+      const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat ? "VEGAN" : isVeggieCat ? "VEGETARIAN" : dishDietFromAI
       allDishData.push({
         restaurantId: restaurant.id,
         categoryId: category.id,
@@ -920,7 +929,7 @@ export async function importFromProspecto(params: {
         price: dish.price,
         photos: dish.imageUrl ? [upgradePhotoUrl(dish.imageUrl)] : [],
         position: j,
-        dishDiet: isDrinkCat ? "OMNIVORE" : ((dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"),
+        dishDiet,
         isSpicy: (dish as any).isSpicy || detected.isSpicy,
         tags: j === 0 && catIdx <= 1 ? ["RECOMMENDED"] : [],
         containsNuts: isDrinkCat ? false : detected.containsNuts,

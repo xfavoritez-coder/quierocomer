@@ -464,6 +464,7 @@ model Restaurant {
   cartaAccentColor String?       // hex color override, default #F4A623 (amber)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
+  primaryCategory    String?      // categoría principal del local (ej: "Pizzas", "Sushi") — usada como fallback para combos/especiales
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
   showCategoryLobby  Boolean    @default(false) // mostrar índice visual de categorías al abrir la carta
   waiterPanelActive  Boolean    @default(false)
@@ -816,6 +817,7 @@ model Dish {
   embeddingText       String?                         // source text used to generate text embedding
   embeddingHash       String?                         // hash of embeddingText to detect changes
   imageEmbeddingHash  String?                         // hash of photo URL to detect changes
+  leafOverride        String?                         // override manual de leaf category QC (ej: "Ramen", "Gyoza")
 
   // Feed B2C (/a) — relations
   feedInteractions    FeedInteraction[]

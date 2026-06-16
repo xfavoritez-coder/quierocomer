@@ -15,7 +15,7 @@ import {
   unsaveDish,
   updateTasteAction,
 } from '../lib/feed-actions'
-import { QC_CATEGORIES } from '../lib/categories'
+import { QC_PARENTS } from '../lib/categories'
 import { slugify } from '@/lib/slugify'
 
 function normStr(s: string) {
@@ -305,7 +305,7 @@ export default function NewHome({
     const q = normStr(searchInput)
 
     // 1. Categorías QC
-    const cats = [...QC_CATEGORIES]
+    const cats = QC_PARENTS
       .filter(c => normStr(c).includes(q))
       .slice(0, 2)
       .map(c => ({ label: c, type: 'categoria' as const, count: 0 }))
@@ -399,10 +399,11 @@ export default function NewHome({
     }
 
     // Category filter — activeCategory (chips del header) o filterCategories (panel de filtros)
+    // Filtramos por PARENT category (ej: "Japonesa") que agrupa leaves (Ramen, Gyoza, Japonesa)
     if (activeCategory) {
-      filtered = filtered.filter(d => d.categoriaNorm === activeCategory)
+      filtered = filtered.filter(d => (d.categoriaParent ?? d.categoriaNorm) === activeCategory)
     } else if (filterCategories.size > 0) {
-      filtered = filtered.filter(d => filterCategories.has(d.categoriaNorm))
+      filtered = filtered.filter(d => filterCategories.has(d.categoriaParent ?? d.categoriaNorm))
     }
 
 
@@ -476,12 +477,13 @@ export default function NewHome({
     return final
   }, [dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm, searchResults, shuffleSeed])
 
-  // Counts por categoría (sobre el pool completo con foto) para mostrar en el panel de filtros
+  // Counts por parent category (sobre el pool completo con foto) para mostrar en el panel de filtros
   const categoryCountMap = useMemo(() => {
     const map: Record<string, number> = {}
     const base = dishes.filter(d => d.fotoUrl)
     for (const d of base) {
-      if (d.categoriaNorm) map[d.categoriaNorm] = (map[d.categoriaNorm] ?? 0) + 1
+      const parent = d.categoriaParent ?? d.categoriaNorm
+      if (parent) map[parent] = (map[parent] ?? 0) + 1
     }
     return map
   }, [dishes])
@@ -737,31 +739,13 @@ export default function NewHome({
         padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
       }}>
 
-        {/* Row 1: Logo (izq) + Ubicación (der) */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-          <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 21, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px' }}>
-              Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-            </span>
-          </a>
-          <button onClick={() => setLocationModalOpen(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer',
-            color: (locationName || gpsLabel) ? '#c97d00' : isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
-            fontSize: 15, fontWeight: 400,
-            minWidth: 0, overflow: 'hidden',
-          }}>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {locationName || gpsLabel || 'Agregar ubicación'}
-            </span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{ flexShrink: 0 }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        </div>
 
-        {/* Row 2: Search bar full width */}
-        <div style={{ position: 'relative', marginBottom: 4, marginTop: 6 }}>
+        {/* Row 2: Search bar + Filtros */}
+        {(() => {
+          const hasActiveFilters = filterSort !== 'nearby' || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
+          return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, marginTop: 12 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -846,51 +830,45 @@ export default function NewHome({
               </div>
             </>
           )}
-        </div>{/* end Row 2: search */}
+        </div>{/* end search input */}
 
-        {/* Row 3: Conteo platos (izq) + Filtros (der) */}
-        {(() => {
-          const hasActiveFilters = filterSort !== 'nearby' || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
-          return (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {/* Conteo de platos */}
-            <span style={{
-              fontSize: 14, fontWeight: 500,
-              color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-            }}>
-              {feedDishes.length} platos cerca
-            </span>
-
-            {/* Filtros — gris por defecto, amarillo si hay filtros activos */}
-            <button onClick={() => {
-                if (!filterOpen) {
-                  setDraftSort(filterSort)
-                  setDraftMaxKm(filterMaxKm)
-                  setDraftDiet(filterDiet)
-                  setDraftMeal(filterMeal)
-                  setDraftMealDisplay(filterMealDisplay)
-                  setDraftCategories(new Set(filterCategories))
-                }
-                setFilterOpen(!filterOpen)
-              }} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              background: hasActiveFilters ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-              border: `1px solid ${hasActiveFilters ? 'rgba(244,166,35,0.35)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              borderRadius: 20, padding: '6px 14px', cursor: 'pointer',
-              color: hasActiveFilters ? '#c97d00' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-              fontSize: 15, fontWeight: 500,
-            }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-              </svg>
-              Filtros
-            </button>
-          </div>
+          {/* Filtros pill */}
+          <button onClick={() => {
+              if (!filterOpen) {
+                setDraftSort(filterSort)
+                setDraftMaxKm(filterMaxKm)
+                setDraftDiet(filterDiet)
+                setDraftMeal(filterMeal)
+                setDraftMealDisplay(filterMealDisplay)
+                setDraftCategories(new Set(filterCategories))
+              }
+              setFilterOpen(!filterOpen)
+            }} style={{
+            display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+            background: hasActiveFilters ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+            border: `1px solid ${hasActiveFilters ? 'rgba(244,166,35,0.35)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+            borderRadius: 999, padding: '12px 14px', cursor: 'pointer',
+            color: hasActiveFilters ? '#c97d00' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+            fontSize: 15, fontWeight: 500,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+          </button>
+        </div>
           )
-        })()}
+        })()}{/* end Row 2 */}
+
+        {/* Row 3: Conteo platos */}
+        <span style={{
+          fontSize: 13, fontWeight: 400,
+          color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+        }}>
+          {feedDishes.length} platos encontrados
+        </span>
       </header>
 
       {/* ─── Filter sheet ─── */}
@@ -1008,7 +986,7 @@ export default function NewHome({
                 )}
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {[...QC_CATEGORIES]
+                {QC_PARENTS
                   .filter(cat => (categoryCountMap[cat] ?? 0) > 0)
                   .sort((a, b) => (categoryCountMap[b] ?? 0) - (categoryCountMap[a] ?? 0))
                   .map(cat => {

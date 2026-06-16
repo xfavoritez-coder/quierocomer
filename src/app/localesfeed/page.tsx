@@ -291,6 +291,9 @@ function TabMapa() {
   // Modal de categorías sin mapear
   const [normModal, setNormModal] = useState<{ slug: string; placeId: string; categories: string[] } | null>(null)
 
+  // Modal de revisión de carta completa
+  const [cartaModal, setCartaModal] = useState<{ slug: string; name: string } | null>(null)
+
   // Modal agregar manual
   const [addModal, setAddModal] = useState(false)
 
@@ -960,7 +963,14 @@ function TabMapa() {
                       style={{ fontSize: 12, fontWeight: 600, color: '#22c55e', textDecoration: 'none', display: 'block' }}>
                       ✓ /qr/{imp.slug} ↗
                     </a>
-                    <span style={{ fontSize: 10, color: '#555' }}>{imp.dishCount} platos</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
+                      <span style={{ fontSize: 10, color: '#555' }}>{imp.dishCount} platos</span>
+                      <button
+                        onClick={() => setCartaModal({ slug: imp.slug!, name: p.name })}
+                        style={{ fontSize: 10, color: '#a78bfa', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline dotted' }}>
+                        Ver carta
+                      </button>
+                    </div>
                     {imp.unmappedCategories && imp.unmappedCategories.length > 0 && (
                       <button
                         onClick={() => setNormModal({ slug: imp.slug!, placeId: p.id, categories: imp.unmappedCategories! })}
@@ -1011,6 +1021,14 @@ function TabMapa() {
           categories={normModal.categories}
           onClose={() => setNormModal(null)}
           onSaved={handleNormSaved}
+        />
+      )}
+
+      {cartaModal && (
+        <CartaModal
+          slug={cartaModal.slug}
+          name={cartaModal.name}
+          onClose={() => setCartaModal(null)}
         />
       )}
     </>
@@ -1239,15 +1257,299 @@ function AddManualModal({ onClose, onAdded }: {
   )
 }
 
+// ---- Modal revisión carta completa ----
+
+type CartaDish = {
+  id: string
+  name: string
+  price: number
+  photo: string | null
+  isActive: boolean
+  hiddenFromFeed: boolean
+  diet: string
+  leafOverride: string | null
+}
+
+type CartaCategory = {
+  categoryId: string
+  categoryName: string
+  normOverride: string | null
+  leafResolved: string
+  isMapped: boolean
+  dishes: CartaDish[]
+}
+
+type CartaData = {
+  restaurant: { id: string; name: string; slug: string }
+  categories: CartaCategory[]
+  totalDishes: number
+  unmappedCount: number
+}
+
+const ALL_LEAF_OPTS = [
+  'Entradas', 'Platos de fondo', 'Mariscos', 'Ceviches',
+  'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos', 'Papas fritas',
+  'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana',
+  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Ramen', 'Gyoza', 'Japonesa',
+  'Empanadas', 'Venezolana',
+  'Ensaladas', 'Bowls', 'Saludable',
+  'Postres', 'Helados',
+  'Desayunos', 'Cafetería', 'Amasandería',
+  'Smoothies', 'Milkshakes', 'Bebidas',
+]
+
+function CartaModal({ slug, name, onClose }: {
+  slug: string
+  name: string
+  onClose: () => void
+}) {
+  const [data, setData] = useState<CartaData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [mappings, setMappings] = useState<Record<string, string>>({})   // catName → leaf
+  const [diets, setDiets] = useState<Record<string, string>>({})          // catName → diet
+  const [dishLeafs, setDishLeafs] = useState<Record<string, string>>({})  // dishId → leaf override
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
+      .then(r => r.json())
+      .then((d: CartaData) => {
+        setData(d)
+        const m: Record<string, string> = {}
+        const di: Record<string, string> = {}
+        const dl: Record<string, string> = {}
+        for (const cat of d.categories) {
+          m[cat.categoryName] = cat.normOverride ?? ''
+          di[cat.categoryName] = ''
+          for (const dish of cat.dishes) {
+            dl[dish.id] = dish.leafOverride ?? ''
+          }
+        }
+        setMappings(m)
+        setDiets(di)
+        setDishLeafs(dl)
+      })
+      .catch(e => setError(e?.message ?? 'Error'))
+      .finally(() => setLoading(false))
+  }, [slug])
+
+  async function save() {
+    if (!data) return
+    const catToSave = Object.entries(mappings).filter(([, v]) => v)
+    const dietToSave = Object.entries(diets).filter(([, v]) => v)
+    const dishesToSave = Object.entries(dishLeafs).filter(([dishId, leaf]) => {
+      // Only save if different from the dish's current leafOverride
+      const original = data.categories.flatMap(c => c.dishes).find(d => d.id === dishId)
+      return leaf !== (original?.leafOverride ?? '')
+    })
+    if (!catToSave.length && !dietToSave.length && !dishesToSave.length) { onClose(); return }
+    setSaving(true)
+    try {
+      if (catToSave.length) {
+        await fetch('/api/mapalocales/category-norm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mappings: catToSave.map(([categoryName, norm]) => ({ restaurantSlug: slug, categoryName, norm })),
+          }),
+        })
+      }
+      if (dietToSave.length) {
+        await fetch('/api/mapalocales/category-diet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mappings: dietToSave.map(([categoryName, diet]) => ({ restaurantSlug: slug, categoryName, diet })),
+          }),
+        })
+      }
+      if (dishesToSave.length) {
+        await fetch('/api/mapalocales/carta/remap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            overrides: dishesToSave.map(([dishId, leafOverride]) => ({ dishId, leafOverride: leafOverride || null })),
+          }),
+        })
+      }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const hasChanges = Object.values(mappings).some(v => v) || Object.values(diets).some(v => v)
+    || Object.entries(dishLeafs).some(([dishId, leaf]) => {
+      const original = data?.categories.flatMap(c => c.dishes).find(d => d.id === dishId)
+      return leaf !== (original?.leafOverride ?? '')
+    })
+
+  const displayCategories = showAll
+    ? (data?.categories ?? [])
+    : (data?.categories ?? []).filter(c => !c.isMapped)
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 16px', overflowY: 'auto' }}
+    >
+      <div style={{ background: '#111', border: '1px solid #222', borderRadius: 16, width: '100%', maxWidth: 800 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #1a1a1a' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 16, color: '#fff' }}>{name}</h3>
+            {data && (
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#555' }}>
+                {data.totalDishes} platos · {data.categories.length} secciones
+                {data.unmappedCount > 0 && (
+                  <span style={{ color: '#f59e0b', marginLeft: 8 }}>⚠ {data.unmappedCount} sin mapear</span>
+                )}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 20, cursor: 'pointer', padding: 0 }}>×</button>
+        </div>
+
+        {loading && (
+          <div style={{ padding: '60px 24px', textAlign: 'center', color: '#555', fontSize: 14 }}>Cargando carta...</div>
+        )}
+
+        {error && (
+          <div style={{ padding: '40px 24px', textAlign: 'center', color: '#ef4444', fontSize: 13 }}>{error}</div>
+        )}
+
+        {data && !loading && (
+          <>
+            {/* Toggle */}
+            <div style={{ display: 'flex', gap: 8, padding: '12px 24px', borderBottom: '1px solid #1a1a1a', alignItems: 'center' }}>
+              <button
+                onClick={() => setShowAll(false)}
+                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: !showAll ? '#ff4c00' : '#222', color: !showAll ? '#fff' : '#666' }}>
+                Sin mapear ({data.unmappedCount})
+              </button>
+              <button
+                onClick={() => setShowAll(true)}
+                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showAll ? '#a78bfa' : '#222', color: showAll ? '#000' : '#666' }}>
+                Todas las secciones ({data.categories.length})
+              </button>
+            </div>
+
+            {/* Category list */}
+            <div style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+              {displayCategories.length === 0 && (
+                <div style={{ padding: '40px 24px', textAlign: 'center', color: '#555', fontSize: 13 }}>
+                  {showAll ? 'Sin secciones' : '✓ Todas las secciones están mapeadas'}
+                </div>
+              )}
+              {displayCategories.map(cat => (
+                <div key={cat.categoryName} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                  {/* Category header */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px 130px', gap: 10, padding: '10px 24px', alignItems: 'center', background: cat.isMapped ? 'transparent' : 'rgba(245,158,11,0.04)' }}>
+                    <div>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: cat.isMapped ? '#aaa' : '#fff' }}>{cat.categoryName}</span>
+                      {!cat.isMapped && (
+                        <span style={{ fontSize: 10, color: '#f59e0b', marginLeft: 6 }}>sin mapear</span>
+                      )}
+                      {cat.isMapped && (
+                        <span style={{ fontSize: 10, color: '#555', marginLeft: 6 }}>→ {cat.leafResolved}</span>
+                      )}
+                      <span style={{ fontSize: 10, color: '#333', marginLeft: 6 }}>{cat.dishes.length} platos</span>
+                    </div>
+                    <select
+                      value={mappings[cat.categoryName] ?? ''}
+                      onChange={e => setMappings(m => ({ ...m, [cat.categoryName]: e.target.value }))}
+                      style={{ fontSize: 12, background: '#1a1a1a', border: `1px solid ${mappings[cat.categoryName] ? '#a78bfa' : '#2a2a2a'}`, color: mappings[cat.categoryName] ? '#c4b5fd' : '#aaa', borderRadius: 6, padding: '5px 8px', cursor: 'pointer' }}
+                    >
+                      <option value="">— sin cambio —</option>
+                      {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    <select
+                      value={diets[cat.categoryName] ?? ''}
+                      onChange={e => setDiets(d => ({ ...d, [cat.categoryName]: e.target.value }))}
+                      style={{ fontSize: 12, background: '#1a1a1a', border: `1px solid ${diets[cat.categoryName] ? '#22c55e' : '#2a2a2a'}`, color: diets[cat.categoryName] === 'VEGAN' ? '#22c55e' : diets[cat.categoryName] === 'VEGETARIAN' ? '#86efac' : '#aaa', borderRadius: 6, padding: '5px 8px', cursor: 'pointer' }}
+                    >
+                      <option value="">— dieta —</option>
+                      <option value="VEGETARIAN">🥬 Vegetariano</option>
+                      <option value="VEGAN">🌱 Vegano</option>
+                    </select>
+                  </div>
+
+                  {/* Dishes — todos visibles con leaf override per-dish */}
+                  <div style={{ padding: '0 24px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {cat.dishes.map(dish => {
+                      const dishLeaf = dishLeafs[dish.id] ?? ''
+                      const hasOverride = dishLeaf && dishLeaf !== (dish.leafOverride ?? '')
+                      return (
+                        <div key={dish.id} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: dish.isActive ? 1 : 0.4 }}>
+                          {dish.photo ? (
+                            <img src={dish.photo} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover', flexShrink: 0 }} />
+                          ) : (
+                            <div style={{ width: 26, height: 26, borderRadius: 3, background: '#1a1a1a', flexShrink: 0 }} />
+                          )}
+                          <span style={{ fontSize: 12, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {dish.name}
+                          </span>
+                          {/* Per-dish leaf override */}
+                          <select
+                            value={dishLeaf}
+                            onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
+                            style={{
+                              fontSize: 11, background: '#0d0d0d',
+                              border: `1px solid ${dishLeaf ? '#a78bfa55' : '#1a1a1a'}`,
+                              color: dishLeaf ? '#c4b5fd' : '#444',
+                              borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
+                            }}
+                          >
+                            <option value="">— heredar —</option>
+                            {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                          {dish.diet === 'VEGAN' && <span style={{ fontSize: 9, color: '#22c55e' }}>V</span>}
+                          {dish.diet === 'VEGETARIAN' && <span style={{ fontSize: 9, color: '#86efac' }}>veg</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #1a1a1a', justifyContent: 'flex-end', alignItems: 'center' }}>
+              {saved && <span style={{ fontSize: 12, color: '#22c55e' }}>✓ Guardado</span>}
+              <button onClick={onClose} style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
+                Cerrar
+              </button>
+              <button
+                onClick={save}
+                disabled={saving || !hasChanges}
+                style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: hasChanges && !saving ? '#a78bfa' : '#222', color: hasChanges && !saving ? '#000' : '#444', border: 'none', cursor: saving || !hasChanges ? 'not-allowed' : 'pointer' }}
+              >
+                {saving ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ---- Modal mapeo de categorías ----
 
 const QC_OPTS = [
-  'Entradas', 'Platos de fondo',
+  'Entradas', 'Platos de fondo', 'Combos',
   'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
   'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
-  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres',
-  'Desayunos', 'Cafetería', 'Amasandería',
+  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Venezolana',
+  'Saludable', 'Postres', 'Helados', 'Desayunos', 'Cafetería', 'Amasandería',
 ]
+
+const DIET_OPTS = ['VEGETARIAN', 'VEGAN'] as const
+type DietOpt = typeof DIET_OPTS[number]
 
 function NormModal({ slug, placeId, categories, onClose, onSaved }: {
   slug: string
@@ -1259,33 +1561,51 @@ function NormModal({ slug, placeId, categories, onClose, onSaved }: {
   const [mappings, setMappings] = useState<Record<string, string>>(
     Object.fromEntries(categories.map(c => [c, '']))
   )
+  const [diets, setDiets] = useState<Record<string, string>>(
+    Object.fromEntries(categories.map(c => [c, '']))
+  )
   const [saving, setSaving] = useState(false)
 
   async function save() {
-    const toSave = Object.entries(mappings).filter(([, v]) => v)
-    if (!toSave.length) { onClose(); return }
+    const catToSave = Object.entries(mappings).filter(([, v]) => v)
+    const dietToSave = Object.entries(diets).filter(([, v]) => v)
+    if (!catToSave.length && !dietToSave.length) { onClose(); return }
     setSaving(true)
     try {
-      await fetch('/api/mapalocales/category-norm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mappings: toSave.map(([categoryName, norm]) => ({ restaurantSlug: slug, categoryName, norm })),
-        }),
-      })
-      onSaved(placeId, toSave.map(([categoryName]) => categoryName))
+      if (catToSave.length) {
+        await fetch('/api/mapalocales/category-norm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mappings: catToSave.map(([categoryName, norm]) => ({ restaurantSlug: slug, categoryName, norm })),
+          }),
+        })
+      }
+      if (dietToSave.length) {
+        await fetch('/api/mapalocales/category-diet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mappings: dietToSave.map(([categoryName, diet]) => ({ restaurantSlug: slug, categoryName, diet })),
+          }),
+        })
+      }
+      const saved = new Set([...catToSave.map(([c]) => c), ...dietToSave.map(([c]) => c)])
+      onSaved(placeId, [...saved])
     } finally {
       setSaving(false)
       onClose()
     }
   }
 
+  const hasChanges = Object.values(mappings).some(v => v) || Object.values(diets).some(v => v)
+
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
-      <div style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 16, padding: 28, width: 480, maxWidth: '95vw', maxHeight: '80vh', overflowY: 'auto' }}>
+      <div style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 16, padding: 28, width: 560, maxWidth: '95vw', maxHeight: '80vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, color: '#fff' }}>Mapear categorías sin asignar</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 20, cursor: 'pointer', padding: 0 }}>×</button>
@@ -1293,17 +1613,32 @@ function NormModal({ slug, placeId, categories, onClose, onSaved }: {
         <p style={{ fontSize: 12, color: '#555', margin: '0 0 20px' }}>
           Local: <span style={{ color: '#aaa' }}>/qr/{slug}</span>
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* Header */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 10, marginBottom: 8 }}>
+          <span style={{ fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categoría original</span>
+          <span style={{ fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mapear a</span>
+          <span style={{ fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dieta</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {categories.map(cat => (
-            <div key={cat} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'center' }}>
+            <div key={cat} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 10, alignItems: 'center' }}>
               <span style={{ fontSize: 13, color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cat}>{cat}</span>
               <select
                 value={mappings[cat] ?? ''}
                 onChange={e => setMappings(m => ({ ...m, [cat]: e.target.value }))}
-                style={{ fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: mappings[cat] ? '#fff' : '#555', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}
+                style={{ fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: mappings[cat] ? '#fff' : '#aaa', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}
               >
                 <option value="">— sin cambio —</option>
                 {QC_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+              <select
+                value={diets[cat] ?? ''}
+                onChange={e => setDiets(d => ({ ...d, [cat]: e.target.value }))}
+                style={{ fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: diets[cat] ? (diets[cat] === 'VEGAN' ? '#22c55e' : '#86efac') : '#aaa', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}
+              >
+                <option value="">—</option>
+                <option value="VEGETARIAN">🥬 Vegetariano</option>
+                <option value="VEGAN">🌱 Vegano</option>
               </select>
             </div>
           ))}
@@ -1314,8 +1649,8 @@ function NormModal({ slug, placeId, categories, onClose, onSaved }: {
           </button>
           <button
             onClick={save}
-            disabled={saving || !Object.values(mappings).some(v => v)}
-            style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: '#22c55e', color: '#000', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving || !Object.values(mappings).some(v => v) ? 0.5 : 1 }}
+            disabled={saving || !hasChanges}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 18px', borderRadius: 8, background: '#22c55e', color: '#000', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving || !hasChanges ? 0.5 : 1 }}
           >
             {saving ? 'Guardando...' : 'Guardar'}
           </button>

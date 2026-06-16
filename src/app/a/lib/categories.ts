@@ -771,18 +771,71 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Sándwich Pollo': 'Sándwiches',
 }
 
-/** Categorías canónicas válidas del feed de QC */
-export const QC_CATEGORIES = new Set([
-  'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
-  'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
-  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres', 'Helados',
-  'Desayunos', 'Cafetería', 'Amasandería',
-  'Entradas', 'Platos de fondo', 'Combos', 'Venezolana',
+// ─── Taxonomía QC: parents → leaves ──────────────────────────────────────────
+// Parents: lo que ve el usuario en filtros del feed (chips)
+// Leaves: lo que se muestra en modal del plato + usado internamente para recomendaciones
+
+export const PARENT_TO_LEAVES: Record<string, string[]> = {
+  'Comida rápida': ['Hamburguesas', 'Completos', 'Sándwiches', 'Papas fritas'],
+  'Pizza':         ['Pizzas'],
+  'Sushi':         ['Sushi'],
+  'Japonesa':      ['Ramen', 'Gyoza', 'Japonesa'],
+  'China':         ['China'],
+  'Thai':          ['Thai'],
+  'India':         ['India'],
+  'Asiática':      ['Asiática'],
+  'Peruana':       ['Ceviches', 'Peruana'],
+  'Mariscos':      ['Mariscos'],
+  'Parrilla':      ['Parrilla'],
+  'Pastas':        ['Pastas'],
+  'Venezolana':    ['Venezolana'],
+  'Mexicana':      ['Mexicana'],
+  'Pollo':         ['Pollo y alitas'],
+  'Empanadas':     ['Empanadas'],
+  'Saludable':     ['Ensaladas', 'Bowls', 'Saludable'],
+  'Desayunos':     ['Desayunos', 'Cafetería', 'Amasandería'],
+  'Postres':       ['Postres', 'Helados'],
+  'Bebidas':       ['Smoothies', 'Milkshakes', 'Bebidas'],
+  'Entradas':      ['Entradas'],
+  'Platos de fondo': ['Platos de fondo'],
+}
+
+/** Leaves que aparecen bajo múltiples parents (para filtro del feed) */
+export const DUAL_PARENT_LEAVES: Record<string, string[]> = {
+  'Gyoza': ['Japonesa', 'Entradas'],
+}
+
+/** Lookup leaf → parent primario */
+export const LEAF_TO_PARENT: Record<string, string> = Object.fromEntries(
+  Object.entries(PARENT_TO_LEAVES).flatMap(([parent, leaves]) => leaves.map(leaf => [leaf, parent]))
+)
+
+/** Lista ordenada de parents para el feed filter */
+export const QC_PARENTS: string[] = Object.keys(PARENT_TO_LEAVES)
+
+/** Todas las leaves válidas */
+export const QC_LEAVES = new Set(Object.values(PARENT_TO_LEAVES).flat())
+
+/** Alias para compatibilidad con código existente */
+export const QC_CATEGORIES = QC_LEAVES
+
+/** Categorías de restaurante que heredan el primaryCategory del local (combos, promos, etc.) */
+export const AMBIGUOUS_CATEGORIES = new Set([
+  'Combos', 'Combo', 'Box', 'Boxes', 'Promo', 'Promos', 'Promociones',
+  'Especiales', 'Especial', 'Lo más pedido', 'Más pedidos', 'Lo más vendido',
+  'Menú del día', 'Menu del dia', 'Menú', 'Menu', 'Sets', 'Set',
+  'Favoritos', 'Favoritas', 'Destacados', 'Destacadas',
+  'Recomendados', 'Recomendadas', 'Preferidos', 'Preferidas',
 ])
 
-/** Devuelve true si el nombre es una categoría canónica válida de QC */
+/** Devuelve true si el nombre es una leaf válida de QC */
 export function isValidQcCategory(name: string): boolean {
-  return QC_CATEGORIES.has(name)
+  return QC_LEAVES.has(name)
+}
+
+/** Devuelve el parent de una leaf, o la propia leaf si no tiene parent definido */
+export function getParentCategory(leaf: string): string {
+  return LEAF_TO_PARENT[leaf] ?? leaf
 }
 
 /** Solo se excluyen extras/salsas (no son platos ni bebidas reales) */
@@ -823,7 +876,6 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^empanadas?\b/i, norm: 'Empanadas' },
 
   // ── Parrilla ────────────────────────────────────────────────────────────────
-  // "Carnes", "Carnes a la Parrilla", "Cortes de Carne", "Asados", "Parrilladas"...
   { pattern: /^carnes?\b/i,       norm: 'Parrilla' },
   { pattern: /^cortes?\b/i,       norm: 'Parrilla' },
   { pattern: /^asados?\b/i,       norm: 'Parrilla' },
@@ -832,11 +884,10 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^vacuno\b/i,        norm: 'Parrilla' },
 
   // ── Pollo ───────────────────────────────────────────────────────────────────
-  // "Pollo Asado / al Disco / Broaster", "Pechugas", "Alitas"...
-  { pattern: /^pollo\b/i,     norm: 'Pollo' },
-  { pattern: /^pechugas?\b/i, norm: 'Pollo' },
-  { pattern: /^alitas?\b/i,   norm: 'Pollo' },
-  { pattern: /^nuggets?\b/i,  norm: 'Pollo' },
+  { pattern: /^pollo\b/i,     norm: 'Pollo y alitas' },
+  { pattern: /^pechugas?\b/i, norm: 'Pollo y alitas' },
+  { pattern: /^alitas?\b/i,   norm: 'Pollo y alitas' },
+  { pattern: /^nuggets?\b/i,  norm: 'Pollo y alitas' },
 
   // ── Pastas ──────────────────────────────────────────────────────────────────
   // "Pasta Fresca / Rellena / Casera", "Ñoquis", "Pastas y Salsas"...
@@ -846,7 +897,6 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^fettucine\b|^tagliatelle\b|^linguine\b|^penne\b|^rigatoni\b/i, norm: 'Pastas' },
 
   // ── Sushi ───────────────────────────────────────────────────────────────────
-  // "Roll", "Rolls", "Temaki", "Sashimi", "Niguiri"...
   { pattern: /^rolls?\b/i,    norm: 'Sushi' },
   { pattern: /^temakis?\b/i,  norm: 'Sushi' },
   { pattern: /^sashimis?\b/i, norm: 'Sushi' },
@@ -854,6 +904,17 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^makis?\b/i,    norm: 'Sushi' },
   { pattern: /^hosomakis?\b/i, norm: 'Sushi' },
   { pattern: /^uramakis?\b/i, norm: 'Sushi' },
+
+  // ── Japonesa ────────────────────────────────────────────────────────────────
+  { pattern: /^ramens?\b/i,                              norm: 'Ramen' },
+  { pattern: /^gyozas?\b|^dumplings?\b/i,                norm: 'Gyoza' },
+  { pattern: /^(cocina|comida|platos?)\s+japones[ae]/i,  norm: 'Japonesa' },
+  { pattern: /^japonesa?\b/i,                            norm: 'Japonesa' },
+
+  // ── Asiática (catch-all) ─────────────────────────────────────────────────────
+  { pattern: /^(cocina|comida|platos?)\s+asi[aá]tic[ao]/i, norm: 'Asiática' },
+  { pattern: /^asi[aá]tic[ao]\b/i,                         norm: 'Asiática' },
+  { pattern: /^wok\b/i,                                    norm: 'Asiática' },
 
   // ── Ceviches ────────────────────────────────────────────────────────────────
   // "Ceviche", "Ceviches Clásicos", "Tiraditos"...
@@ -894,8 +955,12 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^segundos?\s*(platos?)?\b/i, norm: 'Platos de fondo' }, // "Segundo", "Segundo Plato"
   { pattern: /^fondos?\b/i, norm: 'Platos de fondo' }, // "Fondo", "Fondos"
 
+  // ── Papas fritas (Comida rápida) ─────────────────────────────────────────────
+  { pattern: /papas?\s*(fritas?|chips?)/i, norm: 'Papas fritas' },
+  { pattern: /^fritas?\b|^fried\b/i,       norm: 'Papas fritas' },
+  { pattern: /^salchipapa/i,               norm: 'Papas fritas' },
+
   // ── Entradas ────────────────────────────────────────────────────────────────
-  // "Entrada Caliente / Vegetariana", "Para Compartir", "Picadas", "Tapas"...
   { pattern: /^entradas?\b/i,   norm: 'Entradas' },
   { pattern: /^para\s+(compartir|picar|comenzar|abrir|partir)/i, norm: 'Entradas' },
   { pattern: /^acompa[nñ]amientos?\b/i, norm: 'Entradas' },
@@ -908,23 +973,17 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^snacks?\b/i,     norm: 'Entradas' },
   { pattern: /^appetizers?\b/i, norm: 'Entradas' },
   { pattern: /^breadsticks?|palitos?\s+de\s+(ajo|pan|queso)/i, norm: 'Entradas' },
-  { pattern: /^provoleta[s]?\b/i, norm: 'Entradas' }, // queso a la parrilla
-  { pattern: /^patitas?\b/i,    norm: 'Entradas' },   // "Patitas de Cerdo"
-  { pattern: /papas?\s*(fritas?|chips?)/i, norm: 'Entradas' }, // "Papas Fritas", "Papa Chips"
-  { pattern: /^fritas?\b|^fried\b/i, norm: 'Entradas' },       // "Fritas", "Fried"
-  { pattern: /^guarniciones?\b/i,    norm: 'Entradas' },
-  { pattern: /^salchipapa/i,         norm: 'Entradas' },
-  { pattern: /^acompa[nñ]amientos?\b/i, norm: 'Entradas' },
+  { pattern: /^provoleta[s]?\b/i, norm: 'Entradas' },
+  { pattern: /^patitas?\b/i,      norm: 'Entradas' },
+  { pattern: /^guarniciones?\b/i, norm: 'Entradas' },
 
   // ── Saludable ───────────────────────────────────────────────────────────────
-  // "Ensalada / Ensaladas / Ensalada del Chef / Ensaladas y otros"...
-  { pattern: /^ensaladas?\b/i,     norm: 'Saludable' },
-  { pattern: /^bowls?\b|power\s+bowl/i, norm: 'Saludable' },
-  { pattern: /^pok[eé]\b/i,        norm: 'Saludable' },
-  { pattern: /^wraps?\b/i,         norm: 'Saludable' },
-  { pattern: /^opciones?\s+saludables?/i, norm: 'Saludable' },
-  { pattern: /^vegano\b|^vegana\b/i,      norm: 'Saludable' },
-  { pattern: /^vegetariano\b|^vegetariana\b/i, norm: 'Saludable' },
+  { pattern: /^ensaladas?\b/i,              norm: 'Ensaladas' },
+  { pattern: /^bowls?\b|power\s+bowl/i,     norm: 'Bowls' },
+  { pattern: /^pok[eé]\b/i,                norm: 'Bowls' },
+  { pattern: /^wraps?\b/i,                 norm: 'Saludable' },
+  { pattern: /^opciones?\s+saludables?/i,  norm: 'Saludable' },
+  // vegano/vegetariana → NO son categorías de comida, solo indican dieta
 
   // ── Desayunos ───────────────────────────────────────────────────────────────
   // "Desayuno", "Desayunos y Brunch", "Once", "Onces", "Meriendas"...
@@ -948,8 +1007,16 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^pasteler[íi]a\b/i, norm: 'Amasandería' },
   { pattern: /^masas?\b/i,        norm: 'Amasandería' },
 
+  // ── Bebidas ─────────────────────────────────────────────────────────────────
+  { pattern: /^smoothies?\b/i,              norm: 'Smoothies' },
+  { pattern: /^milkshakes?\b|^malteadas?\b/, norm: 'Milkshakes' },
+  { pattern: /^batidos?\b/i,                norm: 'Milkshakes' },
+  { pattern: /^jugos?\b|^zumos?\b/i,        norm: 'Bebidas' },
+  { pattern: /^bebidas?\b/i,                norm: 'Bebidas' },
+  { pattern: /^licuados?\b/i,               norm: 'Bebidas' },
+  { pattern: /^refrescos?\b/i,              norm: 'Bebidas' },
+
   // ── Postres ─────────────────────────────────────────────────────────────────
-  // "Postre / Postres Caseros / Postres del Chef"...
   { pattern: /^postres?\b/i,    norm: 'Postres' },
   { pattern: /^helados?\b|^heladeri[ao]/i, norm: 'Helados' },
   { pattern: /^gelato\b|^gelateria\b/i, norm: 'Helados' },
@@ -974,6 +1041,52 @@ export function normalizeCategory(name: string): string {
     if (pattern.test(n)) return norm
   }
   return name
+}
+
+/**
+ * Infiere la categoría QC desde el nombre de un plato individual.
+ * Úsalo como fallback cuando la categoría del restaurante no es reconocida
+ * (ej: "Rincón verde", "Especiales", "Lo más pedido").
+ */
+export function inferCategoryFromDishName(dishName: string): string | null {
+  const n = dishName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  // Comida rápida
+  if (/hamburguesa|burger|smash|cheeseburger/.test(n)) return 'Hamburguesas'
+  if (/completo|vienesa|hot.?dog|italiana\b/.test(n)) return 'Completos'
+  if (/\bsandwich\b|sandwic|lomito|churrasco|sanguch/.test(n)) return 'Sándwiches'
+  if (/\bas\b/.test(n)) return 'Sándwiches'
+  if (/papas?\s*fritas?|papas?\s*chips?|salchipapa/.test(n)) return 'Papas fritas'
+  // Pizza
+  if (/pizza/.test(n)) return 'Pizzas'
+  // Sushi
+  if (/sushi|roll\b|maki|temaki|nigiri|uramaki|sashimi/.test(n)) return 'Sushi'
+  // Japonesa
+  if (/ramen|tonkotsu|shoyu|miso\s*soup/.test(n)) return 'Ramen'
+  if (/gyoza|dumpling|edamame/.test(n)) return 'Gyoza'
+  // Cocinas específicas
+  if (/pad\s*thai|curry\s*thai|tom\s*yum/.test(n)) return 'Thai'
+  if (/arepa|cachapa|tequeno|pabell[oó]n/.test(n)) return 'Venezolana'
+  if (/taco|burrito|quesadilla|fajita|nacho/.test(n)) return 'Mexicana'
+  // Mariscos / Peruana
+  if (/ceviche|tiradito/.test(n)) return 'Ceviches'
+  if (/marisco|jaiba|camaron|langostino|pulpo|calamar|mejillon/.test(n)) return 'Mariscos'
+  // Proteínas
+  if (/empanada/.test(n)) return 'Empanadas'
+  if (/pasta|tallar[ií]n|fettuccin|spaghett|linguini|rigatoni|penne|carbonara|bolognesa/.test(n)) return 'Pastas'
+  if (/pollo|alita|wing|broaster|tenders/.test(n)) return 'Pollo y alitas'
+  // Saludable
+  if (/ensalada/.test(n)) return 'Ensaladas'
+  if (/bowl\b|poke/.test(n)) return 'Bowls'
+  // Desayunos
+  if (/desayuno|tostada|granola|avena|acai/.test(n)) return 'Desayunos'
+  // Bebidas
+  if (/smoothie/.test(n)) return 'Smoothies'
+  if (/milkshake|malteada|batido/.test(n)) return 'Milkshakes'
+  if (/jugo|zumo|licuado/.test(n)) return 'Bebidas'
+  // Postres
+  if (/helado|ice\s*cream|gelato|sorbete/.test(n)) return 'Helados'
+  if (/postre|torta\b|brownie|mousse|cheesecake|waffle|crepe|panqueque/.test(n)) return 'Postres'
+  return null
 }
 
 /** Infiere el tipo principal del restaurante a partir de su nombre */
