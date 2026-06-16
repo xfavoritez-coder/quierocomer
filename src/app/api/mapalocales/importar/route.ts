@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
               cartaUrl: p.cartaUrl,
               providerName: p.provider,
             }),
-            120_000,
+            150_000,
             p.name,
           )
           ok++

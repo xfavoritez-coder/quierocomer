@@ -157,15 +157,18 @@ function extractDishesFromRenderedHtml(html: string): ExtractedDish[] {
   return dishes
 }
 
-async function fetchWithJina(url: string, waitSelector?: string): Promise<string> {
+async function fetchWithJina(url: string, waitSelector?: string, timeoutMs = 35000): Promise<string> {
   const headers: Record<string, string> = {
     'Accept': 'text/html,*/*',
     'X-Return-Format': 'html',
-    'X-Timeout': '45000',
+    'X-Timeout': String(timeoutMs - 2000), // tell Jina slightly less than our local timeout
   }
   if (waitSelector) headers['X-Wait-For-Selector'] = waitSelector
 
-  const res = await fetch(`https://r.jina.ai/${url}`, { headers })
+  const res = await fetch(`https://r.jina.ai/${url}`, {
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  })
   if (!res.ok) throw new Error(`Jina HTTP ${res.status}`)
   return res.text()
 }
@@ -183,6 +186,7 @@ export async function extractRappi(url: string): Promise<ExtractionResult> {
         'Accept-Language': 'es-CL,es;q=0.9',
         'Referer': 'https://www.rappi.cl/',
       },
+      signal: AbortSignal.timeout(12000),
     })
     if (res.ok) {
       html = await res.text()
@@ -225,6 +229,7 @@ export async function extractRappi(url: string): Promise<ExtractionResult> {
               'Referer': 'https://www.rappi.cl/',
               'Origin': 'https://www.rappi.cl',
             },
+            signal: AbortSignal.timeout(10000),
           })
           if (res.ok) {
             const text = await res.text()

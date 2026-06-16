@@ -918,7 +918,7 @@ export async function importFromProspecto(params: {
         name: dish.name.trim(),
         description: dish.description || null,
         price: dish.price,
-        photos: dish.imageUrl ? [dish.imageUrl] : [],
+        photos: dish.imageUrl ? [upgradePhotoUrl(dish.imageUrl)] : [],
         position: j,
         dishDiet: isDrinkCat ? "OMNIVORE" : ((dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"),
         isSpicy: (dish as any).isSpicy || detected.isSpicy,
