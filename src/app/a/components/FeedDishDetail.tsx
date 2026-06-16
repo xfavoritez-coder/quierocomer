@@ -377,6 +377,22 @@ function DishSlide({
           </svg>
         </a>
 
+        {/* Ver carta completa */}
+        <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '13px 16px', borderRadius: 14, boxSizing: 'border-box',
+            background: '#F4A623', color: '#fff', textDecoration: 'none',
+            fontSize: 15, fontWeight: 700, marginBottom: 14,
+          }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+            <rect x="9" y="3" width="6" height="4" rx="1" />
+            <path d="M9 12h6M9 16h4" />
+          </svg>
+          Ver carta completa
+        </a>
+
         {/* Más platos del local — siempre visible */}
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 14 }}>
