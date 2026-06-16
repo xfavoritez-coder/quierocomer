@@ -43,8 +43,9 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
         fontSize: 11,
         color: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.18)',
         margin: 0,
+        textAlign: 'center',
       }}>
-        © {new Date().getFullYear()} QuieroComer
+        © {new Date().getFullYear()} QuieroComer · Santiago de Chile
       </p>
     </footer>
   )
