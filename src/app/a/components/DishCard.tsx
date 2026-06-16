@@ -68,7 +68,9 @@ export default function DishCard({
               opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.3s ease',
             }}
             onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)} loading={eager ? 'eager' : 'lazy'} />
+            onError={() => setImgError(true)}
+            loading={eager ? 'eager' : 'lazy'}
+            fetchPriority={eager ? 'high' : 'low'} />
         ) : (
           <div className="dish-card-gradient" style={{ background: gradient }}><span>{dish.nombre}</span></div>
         )}

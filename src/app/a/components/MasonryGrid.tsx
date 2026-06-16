@@ -52,7 +52,7 @@ export default function MasonryGrid({
               className="feed-grid-item"
               style={{ animationDelay: `${di * 30}ms` }}
             >
-              <DishCard dish={dish} onTap={onDishTap} onCategoryClick={onCategoryClick} userLocation={userLocation} eager={di < 4} />
+              <DishCard dish={dish} onTap={onDishTap} onCategoryClick={onCategoryClick} userLocation={userLocation} eager={di < 6} />
             </div>
           ))}
         </div>
