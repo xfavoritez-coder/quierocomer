@@ -131,6 +131,12 @@ export default function NewHome({
   const [filterSort, setFilterSort] = useState<'nearby' | 'recent' | 'price-asc' | 'price-desc' | 'popular'>('nearby')
   const [filterMaxKm, setFilterMaxKm] = useState(30)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
+  // Draft state — se usan dentro del panel, solo se aplican al hacer "Guardar cambios"
+  const [draftMeal, setDraftMeal] = useState(filterMeal)
+  const [draftMealDisplay, setDraftMealDisplay] = useState(filterMealDisplay)
+  const [draftSort, setDraftSort] = useState(filterSort)
+  const [draftMaxKm, setDraftMaxKm] = useState(filterMaxKm)
+  const [draftDiet, setDraftDiet] = useState(filterDiet)
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -825,7 +831,17 @@ export default function NewHome({
             </button>
 
             {/* Filtros — gris por defecto, amarillo si hay filtros activos */}
-            <button onClick={() => setFilterOpen(!filterOpen)} style={{
+            <button onClick={() => {
+                // Al abrir, inicializar drafts con los valores actuales aplicados
+                if (!filterOpen) {
+                  setDraftSort(filterSort)
+                  setDraftMaxKm(filterMaxKm)
+                  setDraftDiet(filterDiet)
+                  setDraftMeal(filterMeal)
+                  setDraftMealDisplay(filterMealDisplay)
+                }
+                setFilterOpen(!filterOpen)
+              }} style={{
               display: 'flex', alignItems: 'center', gap: 5,
               background: hasActiveFilters ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
               border: `1px solid ${hasActiveFilters ? 'rgba(244,166,35,0.35)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
@@ -879,14 +895,14 @@ export default function NewHome({
               </h3>
               <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: isDark ? '#fff' : '#111' }}>
-                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{filterMaxKm} km</strong>
+                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{draftMaxKm} km</strong>
                 </p>
                 <div style={{ position: 'relative', height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
-                  <div style={{ width: `${(filterMaxKm / 30) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
-                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 30) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
+                  <div style={{ width: `${(draftMaxKm / 30) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
+                  <div style={{ position: 'absolute', left: `${(draftMaxKm / 30) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
                 </div>
-                <input type="range" min={1} max={30} value={filterMaxKm}
-                  onChange={e => setFilterMaxKm(Number(e.target.value))}
+                <input type="range" min={1} max={30} value={draftMaxKm}
+                  onChange={e => setDraftMaxKm(Number(e.target.value))}
                   style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
@@ -907,11 +923,11 @@ export default function NewHome({
                   { id: 'VEGAN' as const, label: '🌱 Vegano' },
                   { id: 'VEGETARIAN' as const, label: '🥬 Vegetariano' },
                 ].map(d => (
-                  <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
-                    border: filterDiet === d.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                  <button key={d.id} onClick={() => setDraftDiet(d.id)} style={{
+                    border: draftDiet === d.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 14, padding: '10px 16px',
-                    background: filterDiet === d.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                    color: filterDiet === d.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
+                    background: draftDiet === d.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: draftDiet === d.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
                     fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
                   }}>
                     {d.label}
@@ -932,11 +948,11 @@ export default function NewHome({
                   { display: 'almuerzo' as const, meal: 'almuerzo_cena' as const, label: 'Almuerzo', icon: <svg width="20" height="20" fill="none" stroke="#f97316" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /></svg> },
                   { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', icon: <svg width="20" height="20" fill="none" stroke="#6366f1" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
                 ].map((m, i) => (
-                  <button key={i} onClick={() => { setFilterMeal(m.meal); setFilterMealDisplay(m.display) }} style={{
+                  <button key={i} onClick={() => { setDraftMeal(m.meal); setDraftMealDisplay(m.display) }} style={{
                     minHeight: 68, borderRadius: 12,
-                    border: filterMealDisplay === m.display ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                    background: filterMealDisplay === m.display ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                    color: filterMealDisplay === m.display ? '#c97d00' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
+                    border: draftMealDisplay === m.display ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    background: draftMealDisplay === m.display ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: draftMealDisplay === m.display ? '#c97d00' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
                     fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6,
                     alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   }}>
@@ -961,11 +977,11 @@ export default function NewHome({
                   { id: 'price-asc' as const, label: 'Precio ↑' },
                   { id: 'price-desc' as const, label: 'Precio ↓' },
                 ].map(s => (
-                  <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
-                    border: filterSort === s.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                  <button key={s.id} onClick={() => setDraftSort(s.id)} style={{
+                    border: draftSort === s.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 14, padding: '10px 16px',
-                    background: filterSort === s.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                    color: filterSort === s.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
+                    background: draftSort === s.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: draftSort === s.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
                     fontSize: 13, cursor: 'pointer',
                   }}>
                     {s.label}
@@ -982,11 +998,20 @@ export default function NewHome({
             padding: '12px 18px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
             background: isDark ? 'linear-gradient(to top, #1a1a1a 60%, transparent)' : 'linear-gradient(to top, #fff 60%, transparent)',
           }}>
-            <button onClick={() => { setFilterOpen(false); setShuffleSeed(Math.random()); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
+            <button onClick={() => {
+              setFilterSort(draftSort)
+              setFilterMaxKm(draftMaxKm)
+              setFilterDiet(draftDiet)
+              setFilterMeal(draftMeal)
+              setFilterMealDisplay(draftMealDisplay)
+              setFilterOpen(false)
+              setShuffleSeed(Math.random())
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }} style={{
               width: '100%', height: 52, border: 'none', borderRadius: 16,
               background: '#F4A623', color: '#000', fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}>
-              Ver {feedDishes.length} platos
+              Guardar cambios
             </button>
           </div>
         </>
