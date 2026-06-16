@@ -69,9 +69,36 @@ export default function ProfileView({
           </div>
 
           {saved.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {saved.slice(0, 4).map(d => (
-                <DishRow key={d.id} dish={d} onTap={onDishTap} isDark={isDark} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+              {saved.slice(0, 6).map((d, i) => (
+                <div key={d.id} onClick={() => onDishTap?.(d)} style={{
+                  position: 'relative', aspectRatio: '1', overflow: 'hidden',
+                  borderRadius: 10, cursor: 'pointer',
+                  background: isDark ? '#1a1a1a' : '#e8e8e8',
+                }}>
+                  {d.fotoUrl ? (
+                    <img src={d.fotoUrl} alt={d.nombre}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      loading={i < 3 ? 'eager' : 'lazy'} />
+                  ) : (
+                    <div style={{
+                      width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, padding: 4, textAlign: 'center',
+                      color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    }}>
+                      {d.nombre}
+                    </div>
+                  )}
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
+                    padding: '18px 6px 6px',
+                  }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {d.nombre}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
@@ -152,24 +179,3 @@ export default function ProfileView({
   )
 }
 
-function DishRow({ dish, onTap, isDark }: { dish: FeedDish; onTap?: (d: FeedDish) => void; isDark?: boolean }) {
-  return (
-    <div onClick={() => onTap?.(dish)} style={{
-      display: 'flex', alignItems: 'center', gap: 12,
-      padding: '10px 12px', borderRadius: 12, cursor: 'pointer',
-      background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-    }}>
-      {dish.fotoUrl && (
-        <img src={dish.fotoUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-      )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? '#f0f0f0' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.nombre}</p>
-        <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.42)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</p>
-      </div>
-      <span style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)', fontWeight: 600, flexShrink: 0 }}>
-        ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
-      </span>
-    </div>
-  )
-}
