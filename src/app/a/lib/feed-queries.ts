@@ -17,8 +17,11 @@ export function resolveDishLeaf(
   leafOverride: string | null,
   restaurantPrimaryCategory: string | null,
   dishDescription?: string | null,
+  catNormOverride?: string | null,
 ): string {
   if (leafOverride && QC_LEAVES.has(leafOverride)) return leafOverride
+  // Asignación manual de la sección (normOverride en Category) — tiene prioridad sobre inferencia automática
+  if (catNormOverride && QC_LEAVES.has(catNormOverride)) return catNormOverride
   const catNorm = normalizeCategory(catName)
   // Si la categoría normaliza a una cocina pura (ej: "Peruana", "China"),
   // preferimos inferir el tipo de plato desde el nombre/descripción primero.
@@ -35,7 +38,10 @@ export function resolveDishLeaf(
   }
   // Si la categoría es una cocina, úsala como leaf de último recurso
   if (QC_LEAVES.has(catNorm)) return catNorm
-  return ''  // no inventar leaf — si nada matchea, queda sin mapear
+  // Último recurso: primaryCategory del restaurante (aunque la categoría no sea ambigua)
+  if (restaurantPrimaryCategory && QC_LEAVES.has(restaurantPrimaryCategory)) return restaurantPrimaryCategory
+  // Nada funcionó — marcar explícitamente como sin categoría
+  return 'Sin categoría'
 }
 
 /** Trae platos para el feed: hasta 5 por restaurante usando una sola query SQL */
@@ -48,7 +54,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       d.id, d.name, d.description, d.price, d."discountPrice",
       d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
       d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride",
-      c.name AS "categoryName", c."dishType", c."cuisineTag",
+      c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
       r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory",
       r."googleRating", r."googleRatingCount", r."googleMapsUrl",
@@ -86,7 +92,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
   for (const d of dishes) {
     const catName = d.categoryName as string
     if (isExcludedCategory(catName)) continue
-    const categoriaNorm = resolveDishLeaf(d.name as string, catName, d.leafOverride ?? null, d.primaryCategory ?? null, d.description ?? null)
+    const categoriaNorm = resolveDishLeaf(d.name as string, catName, d.leafOverride ?? null, d.primaryCategory ?? null, d.description ?? null, (d as any).catNormOverride ?? null)
     const categoriaParent = getParentCategory(categoriaNorm)
     const cuisineTag = (d.cuisineTag as string | null) ?? null
     const photos = Array.isArray(d.photos) ? d.photos : []
@@ -153,7 +159,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       photos: true, dishDiet: true, isSpicy: true, isGlutenFree: true,
       isLactoseFree: true, isSoyFree: true, containsNuts: true, flavorTags: true,
       isHero: true, tags: true, leafOverride: true,
-      category: { select: { name: true, dishType: true, cuisineTag: true } },
+      category: { select: { name: true, dishType: true, cuisineTag: true, normOverride: true } },
       restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, primaryCategory: true } },
       feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
     },
@@ -162,7 +168,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   return dishes
     .filter(d => !isExcludedCategory(d.category.name))
     .map(dish => {
-      const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null)
+      const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null, dish.category.normOverride ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)
       return {
         id: dish.id, nombre: dish.name, descripcion: dish.description,

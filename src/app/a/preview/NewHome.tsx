@@ -146,6 +146,7 @@ export default function NewHome({
   const headerRef = useRef<HTMLElement>(null)
   const [headerHeight, setHeaderHeight] = useState(130)
   const [showFloatingSearch, setShowFloatingSearch] = useState(false)
+  const headerVisible = useRef(true)
   const lastScrollY = useRef(0)
   const scrollTicking = useRef(false)
   const [locationQuery, setLocationQuery] = useState('')
@@ -306,6 +307,18 @@ export default function NewHome({
   )
 
   // Sugerencias — 100% cliente, instantáneas (sin red)
+  const searchSuggestions = useMemo(() => {
+    const trimmed = searchInput.trim()
+    if (trimmed.length < 2) return null
+    const q = normStr(trimmed)
+    const matches = dishSearchIndex.filter(d => d._search.includes(q))
+    const dishNames = [...new Set(matches.map(d => d.nombre))].slice(0, 5)
+    const restaurantNames = [...new Set(matches.map(d => d.restaurante))].slice(0, 3)
+    if (!dishNames.length && !restaurantNames.length) return null
+    return { dishNames, restaurantNames }
+  }, [searchInput, dishSearchIndex])
+
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Resultados de búsqueda — también 100% cliente
   const searchResults = useMemo(() => {
@@ -499,7 +512,20 @@ export default function NewHome({
     return () => ro.disconnect()
   }, [view])
 
-  // Floating search bar: aparece al subir, se oculta al bajar o al llegar al top
+  // Floating search bar: se oculta cuando el header es visible, aparece al subir cuando no lo es
+  useEffect(() => {
+    if (isDesktop || !headerRef.current) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        headerVisible.current = entry.isIntersecting
+        if (entry.isIntersecting) setShowFloatingSearch(false)
+      },
+      { threshold: 0, rootMargin: '-180px 0px 0px 0px' }
+    )
+    observer.observe(headerRef.current)
+    return () => observer.disconnect()
+  }, [isDesktop])
+
   useEffect(() => {
     if (isDesktop) return
     const onScroll = () => {
@@ -507,7 +533,7 @@ export default function NewHome({
       scrollTicking.current = true
       requestAnimationFrame(() => {
         const y = window.scrollY
-        if (y <= headerHeight + 10) {
+        if (headerVisible.current) {
           setShowFloatingSearch(false)
         } else if (y < lastScrollY.current - 4) {
           setShowFloatingSearch(true)
@@ -520,7 +546,7 @@ export default function NewHome({
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [isDesktop, headerHeight])
+  }, [isDesktop])
 
   // Handlers
   const handleDishTap = useCallback((d: FeedDish) => {
@@ -718,7 +744,7 @@ export default function NewHome({
           const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
           return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
-        <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur() }}>
+        <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -726,9 +752,12 @@ export default function NewHome({
           <input
             ref={searchInputRef}
             className="feed-search-input"
-            type="search" value={searchInput}
+            type="text" value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="Buscar en QuieroComer"
+            autoComplete="off"
             style={{
               width: '100%', padding: '12px 38px 12px 36px', borderRadius: 999, fontSize: 17,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
@@ -738,16 +767,60 @@ export default function NewHome({
             }}
           />
           {searchInput && (
-            <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
-              position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
+            <button onClick={() => { setSearchInput(''); executeSearch(''); setShowSuggestions(false) }} style={{
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
           )}
-
+          {/* Dropdown de sugerencias */}
+          {showSuggestions && searchSuggestions && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 200,
+              background: isDark ? '#1a1a1a' : '#fff',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+              borderRadius: 16, overflow: 'hidden',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+            }}>
+              {searchSuggestions.dishNames.length > 0 && (
+                <>
+                  <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>Platos</div>
+                  {searchSuggestions.dishNames.map(name => (
+                    <button key={name} onMouseDown={e => e.preventDefault()} onClick={() => { executeSearch(name); setShowSuggestions(false) }} style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                      color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                    }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.4 }}>
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                      </svg>
+                      {name}
+                    </button>
+                  ))}
+                </>
+              )}
+              {searchSuggestions.restaurantNames.length > 0 && (
+                <>
+                  <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', borderTop: searchSuggestions.dishNames.length > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` : 'none' }}>Restaurantes</div>
+                  {searchSuggestions.restaurantNames.map(name => (
+                    <button key={name} onMouseDown={e => e.preventDefault()} onClick={() => { executeSearch(name); setShowSuggestions(false) }} style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                      color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                    }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.4 }}>
+                        <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+                      </svg>
+                      {name}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </form>{/* end search input */}
         <button onClick={() => setMenuOpen(true)} style={{
           flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,

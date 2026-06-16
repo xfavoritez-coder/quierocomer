@@ -903,6 +903,7 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^makis?\b/i,    norm: 'Sushi' },
   { pattern: /^hosomakis?\b/i, norm: 'Sushi' },
   { pattern: /^uramakis?\b/i, norm: 'Sushi' },
+  { pattern: /^gunkans?\b/i,  norm: 'Sushi' },
 
   // ── Japonesa ────────────────────────────────────────────────────────────────
   { pattern: /^ramens?\b/i,                              norm: 'Ramen' },
@@ -1056,7 +1057,7 @@ export function inferCategoryFromDishName(dishName: string): string | null {
   // Pizza
   if (/pizza/.test(n)) return 'Pizzas'
   // Sushi
-  if (/sushi|roll\b|maki|temaki|nigiri|uramaki|sashimi/.test(n)) return 'Sushi'
+  if (/sushi|roll\b|maki|temaki|nigiri|uramaki|sashimi|gunkan/.test(n)) return 'Sushi'
   // Japonesa
   if (/ramen|tonkotsu|shoyu|miso\s*soup/.test(n)) return 'Ramen'
   if (/gyoza|dumpling|edamame/.test(n)) return 'Gyoza'

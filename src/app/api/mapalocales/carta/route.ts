@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Per-dish resolution: nombre → descripción → cocina como fallback
-    const dishLeafResolved = resolveDishLeaf(dish.name, catName, dish.leafOverride ?? null, primaryCategory, dish.description ?? null)
+    const dishLeafResolved = resolveDishLeaf(dish.name, catName, dish.leafOverride ?? null, primaryCategory, dish.description ?? null, dish.category.normOverride ?? null)
 
     const photos = Array.isArray(dish.photos) ? dish.photos : []
     categoryMap.get(catName)!.dishes.push({

@@ -1512,6 +1512,11 @@ function CartaModal({ slug, name, onClose }: {
                     {cat.dishes.map(dish => {
                       const dishLeaf = dishLeafs[dish.id] ?? ''
                       const currentDiet = dishDiets[dish.id] ?? dish.diet
+                      // Leaf efectivo: override manual > sección seleccionada en UI > resuelto por servidor
+                      const catLeafInUI = mappings[cat.categoryName] ?? ''
+                      const effectiveLeaf = dishLeaf || catLeafInUI || dish.dishLeafResolved || 'sin mapear'
+                      const hasManualOverride = !!dishLeaf
+                      const inheritsFromCat = !dishLeaf && !!catLeafInUI
                       return (
                         <div key={dish.id} style={{ opacity: dish.isActive ? 1 : 0.4 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1522,6 +1527,15 @@ function CartaModal({ slug, name, onClose }: {
                             )}
                             <span style={{ fontSize: 13, color: '#aaa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {dish.name}
+                            </span>
+                            {/* Categoría: herencia de la sección (informativo) */}
+                            <span style={{
+                              fontSize: 11, padding: '2px 7px', borderRadius: 3, whiteSpace: 'nowrap', flexShrink: 0,
+                              background: catLeafInUI ? '#0f1e10' : cat.normOverride ? '#1e0f40' : '#1a1a1a',
+                              color: catLeafInUI ? '#4ade80' : cat.normOverride ? '#a78bfa' : '#444',
+                              border: `1px solid ${catLeafInUI ? '#166534' : cat.normOverride ? '#4c1d95' : '#222'}`,
+                            }}>
+                              {catLeafInUI || cat.normOverride || cat.leafResolved || '—'}
                             </span>
                             {/* Per-dish diet */}
                             <select
@@ -1538,23 +1552,18 @@ function CartaModal({ slug, name, onClose }: {
                               <option value="VEGETARIAN">vegetariano</option>
                               <option value="VEGAN">vegano</option>
                             </select>
-                            {/* Per-dish leaf override */}
+                            {/* Leaf: override específico por plato */}
                             <select
                               value={dishLeaf}
                               onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
                               style={{
                                 fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${dishLeaf ? '#a78bfa55' : '#1a1a1a'}`,
-                                color: dishLeaf ? '#c4b5fd' : '#999',
-                                borderRadius: 4, padding: '3px 7px', cursor: 'pointer', maxWidth: 140,
+                                border: `1px solid ${hasManualOverride ? '#a78bfa55' : '#222'}`,
+                                color: hasManualOverride ? '#c4b5fd' : '#444',
+                                borderRadius: 4, padding: '3px 7px', cursor: 'pointer', maxWidth: 150,
                               }}
                             >
-                              <option value="">{
-                                ALL_LEAF_OPTS.includes(dish.dishLeafResolved) ? dish.dishLeafResolved
-                                : ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved
-                                : cat.cuisineTag ? cat.cuisineTag
-                                : 'sin mapear'
-                              }</option>
+                              <option value="">{dish.dishLeafResolved || '— leaf —'}</option>
                               {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
