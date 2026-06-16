@@ -270,8 +270,6 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Hallullas': 'Amasandería',
   'Sopaipillas': 'Amasandería',
   'Empanadas de horno': 'Empanadas',
-  'Pastelería': 'Postres',
-  'Pasteles': 'Postres',
 
   // ─── Desayunos & Brunch (comida) ──────────────────────────
   'BOLLERIA': 'Desayunos',
