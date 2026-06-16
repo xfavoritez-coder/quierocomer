@@ -521,6 +521,10 @@ html.dark .feed-root {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+@keyframes slideDown {
+  from { transform: translateY(-110%); }
+  to { transform: translateY(0); }
+}
 @keyframes fadeInScale {
   from { opacity: 0; transform: translate(-50%, -48%); }
   to { opacity: 1; transform: translate(-50%, -50%); }

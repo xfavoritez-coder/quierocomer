@@ -910,7 +910,37 @@ export default function NewHome({
           )
         })()}{/* end Row 2 */}
 
-        {/* Row 3 (eliminada — pills ahora solo en floating header) */}
+        {/* Row 3: Quick-filter pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
+          <button onClick={() => setQuickNearby(p => !p)} style={pillStyle(quickNearby, 'nearby')}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            Cerca
+          </button>
+          <button onClick={() => setQuickPopular(p => !p)} style={pillStyle(quickPopular, 'popular')}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
+            Popular
+          </button>
+          <button onClick={() => setFilterDiet(filterDiet === 'VEGETARIAN' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet === 'VEGETARIAN', 'green')}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+            </svg>
+            Veggie
+          </button>
+          <button onClick={openFilters} style={pillStyle(false, 'default')}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
+            Más filtros
+          </button>
+        </div>
 
         {/* Row 4: Ubicación (izq) + platos encontrados (der) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -938,15 +968,14 @@ export default function NewHome({
       </header>
 
       {/* ─── Floating search bar — aparece al subir el scroll — mobile only ─── */}
-      {!isDesktop && view !== 'perfil' && (
+      {!isDesktop && view !== 'perfil' && showFloatingSearch && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 36,
           padding: '10px 16px',
           background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
           backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-          transform: showFloatingSearch ? 'translateY(0)' : 'translateY(-110%)',
-          transition: 'transform 0.32s cubic-bezier(0.0, 0.0, 0.2, 1)',
-          boxShadow: showFloatingSearch ? '0 2px 16px rgba(0,0,0,0.10)' : 'none',
+          animation: 'slideDown 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)',
+          boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
