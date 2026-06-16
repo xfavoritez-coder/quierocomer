@@ -814,7 +814,7 @@ export default function NewHome({
           display: isDesktop ? 'none' : view === 'perfil' ? 'none' : 'flex',
           background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
           backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-          padding: '4px 16px 6px', flexDirection: 'column', gap: 4,
+          padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
         }}
       >
 
@@ -823,7 +823,7 @@ export default function NewHome({
         {(() => {
           const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
           return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, marginTop: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
         <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
@@ -839,7 +839,7 @@ export default function NewHome({
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
-              width: '100%', padding: '9px 36px 9px 34px', borderRadius: 999, fontSize: 16,
+              width: '100%', padding: '12px 38px 12px 36px', borderRadius: 999, fontSize: 17,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
               boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
@@ -896,13 +896,13 @@ export default function NewHome({
         </form>{/* end search input */}
         <button onClick={() => setMenuOpen(true)} style={{
           flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
-          width: 40, height: 40, borderRadius: '50%',
+          width: 49, height: 49, borderRadius: '50%',
           background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
           boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
           color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
