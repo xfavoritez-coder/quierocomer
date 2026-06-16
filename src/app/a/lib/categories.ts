@@ -247,6 +247,32 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Para Llevar o Encargar - Café para disfrutar en casa': 'Cafetería',
   'Hot Drinks': 'Cafetería',
 
+  // ─── Amasandería / Panadería ──────────────────────────────
+  'Amasandería': 'Amasandería',
+  'Panadería': 'Amasandería',
+  'Panaderia': 'Amasandería',
+  'PANADERIA': 'Amasandería',
+  'Pan': 'Amasandería',
+  'Panes': 'Amasandería',
+  'PANES': 'Amasandería',
+  'Pan artesanal': 'Amasandería',
+  'Panes artesanales': 'Amasandería',
+  'Bollería': 'Amasandería',
+  'Bolleria': 'Amasandería',
+  'Kuchen': 'Amasandería',
+  'Kuchenes': 'Amasandería',
+  'Strudel': 'Amasandería',
+  'Croissant': 'Amasandería',
+  'Croissants': 'Amasandería',
+  'Medialunas': 'Amasandería',
+  'Facturas': 'Amasandería',
+  'Marraquetas': 'Amasandería',
+  'Hallullas': 'Amasandería',
+  'Sopaipillas': 'Amasandería',
+  'Empanadas de horno': 'Empanadas',
+  'Pastelería': 'Postres',
+  'Pasteles': 'Postres',
+
   // ─── Desayunos & Brunch (comida) ──────────────────────────
   'BOLLERIA': 'Desayunos',
   'PROMO BOLLERIA': 'Desayunos',
@@ -651,7 +677,7 @@ export const QC_CATEGORIES = new Set([
   'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
   'Parrilla', 'Pollo', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
   'Mexicana', 'Asiática', 'Empanadas', 'Saludable', 'Postres',
-  'Desayunos', 'Cafetería',
+  'Desayunos', 'Cafetería', 'Amasandería',
 ])
 
 /** Devuelve true si el nombre es una categoría canónica válida de QC */
@@ -715,7 +741,7 @@ export function inferDishType(categoriaNorm: string, dbDishType: string): string
 
 /** Categorías normalizadas que son desayuno */
 export const BREAKFAST_CATEGORIES = new Set([
-  'Desayunos', 'Cafetería',
+  'Desayunos', 'Cafetería', 'Amasandería',
 ])
 
 /** Inferir momento del día de un plato basado en su categoría normalizada */
