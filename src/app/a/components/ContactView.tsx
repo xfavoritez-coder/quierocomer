@@ -96,7 +96,7 @@ export default function ContactView({
             background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
           }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 14 }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 14px' }}>
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
