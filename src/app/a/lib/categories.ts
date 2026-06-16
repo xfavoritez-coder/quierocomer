@@ -1300,12 +1300,12 @@ export function inferFlavorTags(name: string, categoryName: string, description:
   if (/\brebozado\b/.test(text))                            tags.push('rebozado')
 
   // Ingredientes
-  if (/\bsalm[oó]n\b|salmon\b/.test(text))                 tags.push('salmón')
-  if (/\bpalta\b|avocado/.test(text))                       tags.push('palta')
-  if (/queso\s*crema|cream\s*cheese/.test(text))            tags.push('queso crema')
-  if (/jalap[eé]/.test(text))                               tags.push('jalapeño')
-  if (/\bcamar[oó]n|camarones/.test(text))                  tags.push('camarón')
-  if (/\bat[uú]n\b|tuna\b/.test(text))                      tags.push('atún')
+  if (/\bsalm[oó]n\b|\bsalmon\b/.test(text))               tags.push('salmón')
+  if (/\bpalta\b|\bavocado\b/.test(text))                   tags.push('palta')
+  if (/\bqueso\s*crema\b|\bcream\s*cheese\b/.test(text))   tags.push('queso crema')
+  if (/\bjalap[eé]/.test(text))                             tags.push('jalapeño')
+  if (/\bcamar[oó]n\b|\bcamarones\b/.test(text))           tags.push('camarón')
+  if (/\bat[uú]n\b|\btuna\b/.test(text))                    tags.push('atún')
   if (/\bmango\b/.test(text))                               tags.push('mango')
   if (/\btofu\b/.test(text))                                tags.push('tofu')
   if (/\bpulpo\b/.test(text))                               tags.push('pulpo')
