@@ -886,7 +886,18 @@ export default function NewHome({
                         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                       </svg>
                       <span style={{ flex: 1 }}>{s.text}</span>
-                      <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)', fontStyle: 'italic', flexShrink: 0 }}>({s.type})</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 500, flexShrink: 0,
+                        padding: '2px 7px', borderRadius: 99,
+                        background: s.type === 'categoría' ? (isDark ? 'rgba(167,139,250,0.15)' : 'rgba(139,92,246,0.10)')
+                          : s.type === 'restaurante' ? (isDark ? 'rgba(96,165,250,0.15)' : 'rgba(59,130,246,0.10)')
+                          : s.type === 'ingrediente' ? (isDark ? 'rgba(34,197,94,0.15)' : 'rgba(22,163,74,0.10)')
+                          : (isDark ? 'rgba(251,146,60,0.15)' : 'rgba(234,88,12,0.10)'),
+                        color: s.type === 'categoría' ? (isDark ? '#c4b5fd' : '#7c3aed')
+                          : s.type === 'restaurante' ? (isDark ? '#93c5fd' : '#2563eb')
+                          : s.type === 'ingrediente' ? (isDark ? '#86efac' : '#16a34a')
+                          : (isDark ? '#fdba74' : '#ea580c'),
+                      }}>{s.type}</span>
                     </button>
                   ))}
                 </div>
