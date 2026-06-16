@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Carta QR Viva — Mobile First</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#030303;
+      --ink:#fff7ed;
+      --muted:#b8ada1;
+      --soft:#181818;
+      --line:rgba(255,255,255,.13);
+      --gold:#ffb21a;
+      --orange:#ff5b00;
+      --hot:#ff2d1f;
+      --purple:#9b5cff;
+      --green:#18d47b;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:Inter,system-ui,sans-serif;
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:-3;
+      background:
+        radial-gradient(circle at 70% 0%, rgba(255,91,0,.33), transparent 27%),
+        radial-gradient(circle at 8% 28%, rgba(155,92,255,.22), transparent 30%),
+        radial-gradient(circle at 90% 72%, rgba(255,178,26,.14), transparent 24%),
+        linear-gradient(#050505,#000);
+    }
+    body:after{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      pointer-events:none;
+      opacity:.28;
+      background-image:linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size:38px 38px;
+      mask-image:linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent);
+    }
+    .app{max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:94px;position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.015),transparent 20%)}
+    .smoke{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;background:radial-gradient(ellipse at 50% 8%, rgba(255,194,92,.16), transparent 32%),radial-gradient(ellipse at 70% 24%, rgba(255,91,0,.1), transparent 28%);filter:blur(10px)}
+    .topbar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(430px,100%);z-index:30;padding:calc(12px + env(safe-area-inset-top)) 16px 10px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(3,3,3,.92),rgba(3,3,3,.55),transparent);backdrop-filter:blur(12px)}
+    .logo{font-weight:1000;font-size:25px;line-height:.82;letter-spacing:-1.1px;color:var(--gold);text-shadow:0 0 18px rgba(255,178,26,.32)}
+    .logo span{display:block;color:#ff4933;font-size:18px;margin-left:19px}
+    .mini-actions{display:flex;align-items:center;gap:10px}
+    .icon-btn{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      display:grid;
+      place-items:center;
+      color:#fff;
+      text-decoration:none;
+      font-size:18px;
+      backdrop-filter:blur(10px);
+      box-shadow:inset 0 0 18px rgba(255,255,255,.03);
+    }
+    .lang-btn{
+      height:42px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      padding:0 14px;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.3px;
+      backdrop-filter:blur(10px);
+      box-shadow:inset 0 0 18px rgba(255,255,255,.03);
+    }
+    .hero{min-height:670px;position:relative;display:flex;align-items:flex-end;padding:92px 14px 34px;isolation:isolate;overflow:hidden;margin-bottom:0}
+    .hero-photo{position:absolute;inset:0;z-index:-3;background:url('https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=90&w=1200&auto=format&fit=crop') center/cover;transform:scale(1.03);filter:saturate(1.1) contrast(1.08)}
+    .hero:before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(to bottom,rgba(0,0,0,.18),rgba(0,0,0,.34) 36%,rgba(0,0,0,.88) 78%,#030303 100%),linear-gradient(to right,rgba(0,0,0,.88),rgba(0,0,0,.42) 58%,rgba(0,0,0,.25))}
+    .hero:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:58%;z-index:-1;background:linear-gradient(to top,#030303 0%,#030303 12%,rgba(3,3,3,.94) 38%,rgba(3,3,3,.58) 72%,transparent 100%)}
+    .hero-card{width:100%;border:0;border-radius:0;padding:0 4px 8px;background:transparent;backdrop-filter:none;box-shadow:none}
+    .live{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(255,178,26,.55);background:rgba(255,106,0,.18);color:var(--gold);font-size:12px;font-weight:1000;text-transform:uppercase;letter-spacing:.45px;border-radius:999px;padding:8px 12px;margin-bottom:13px;box-shadow:0 0 24px rgba(255,178,26,.13)}
+    .hero h1{margin:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:77px;line-height:.78;letter-spacing:.5px;text-shadow:0 5px 30px rgba(0,0,0,.92)}
+    .hero h1 span{display:block;color:var(--gold);font-size:61px;transform:none;text-shadow:0 0 24px rgba(255,178,26,.32)}
+    .hero p{max-width:300px;margin:15px 0 16px;color:#f0e6d8;font-size:15px;line-height:1.52}
+    .hero-bottom{display:flex;align-items:end;justify-content:space-between;gap:12px}.price{font-size:34px;font-weight:1000;color:var(--gold);letter-spacing:-1.2px}.social-proof{font-size:12px;line-height:1.35;color:#e8dfd3;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.13);padding:10px 11px;border-radius:18px;max-width:139px}.dots{display:flex;gap:7px;margin-top:17px}.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.38)}.dot.active{width:22px;background:var(--gold)}
+    .section{padding:24px 14px 0;margin:0 0 24px;position:relative;background:#030303;z-index:2}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}.title{font-family:'Bebas Neue';font-size:32px;letter-spacing:.8px;margin:0;line-height:.9}.sub{font-size:12px;color:var(--muted)}
+    .mood-row{display:flex;gap:10px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}.mood-row::-webkit-scrollbar{display:none}.mood{min-width:116px;height:140px;border-radius:28px;border:1px solid rgba(255,255,255,.14);background:#101010;position:relative;overflow:hidden;padding:13px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 0 28px rgba(255,255,255,.025)}.mood:before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.08),rgba(0,0,0,.82)),var(--img) center/cover;opacity:.9}.mood.active{border-color:rgba(255,178,26,.9);box-shadow:0 0 28px rgba(255,178,26,.2),inset 0 0 28px rgba(255,178,26,.08)}.mood b,.mood span{position:relative;z-index:1}.mood span{font-size:22px}.mood b{font-size:14px;line-height:1.15;text-shadow:0 2px 14px #000}
+    .scene{margin:26px 14px;border-radius:34px;min-height:420px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#111;box-shadow:0 28px 88px rgba(0,0,0,.6)}.scene:before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.96) 18%,rgba(0,0,0,.35) 55%,rgba(0,0,0,.05)),url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=90&w=1200&auto=format&fit=crop') center/cover}.scene-content{position:absolute;inset:auto 0 0 0;padding:20px}.scene-kicker{color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:1000}.scene h2{font-family:'Bebas Neue';font-size:48px;line-height:.88;margin:8px 0 10px}.scene p{margin:0 0 15px;color:#ddd1c4;font-size:14px;line-height:1.45;max-width:310px}.scene-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.scene-box{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);border-radius:18px;padding:10px}.scene-box small{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}.scene-box b{font-size:17px;color:#fff}
+    .cinema-cards{display:grid;gap:13px}.poster{height:260px;border-radius:31px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.13);background:#111}.poster:before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.95),rgba(0,0,0,.18) 62%,transparent),var(--img) center/cover}.poster-content{position:absolute;left:16px;right:16px;bottom:16px}.poster .stamp{display:inline-block;padding:6px 9px;border-radius:999px;background:rgba(255,178,26,.15);border:1px solid rgba(255,178,26,.36);color:var(--gold);font-size:10px;font-weight:1000;text-transform:uppercase;margin-bottom:66px}.poster h3{margin:0 0 6px;font-size:25px;letter-spacing:-.6px}.poster p{margin:0 0 9px;color:#dfd5ca;font-size:13px;line-height:1.35}.poster .price{font-size:24px}
+    .menu-block{padding:0 14px 16px}.chips{display:flex;gap:8px;overflow:auto;margin-bottom:13px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.055);border-radius:999px;padding:9px 13px;color:#d8d1c8;font-size:13px;font-weight:800}.chip.active{border-color:rgba(255,178,26,.55);color:#fff;background:rgba(255,178,26,.1)}
+    .product{display:grid;grid-template-columns:108px 1fr;gap:12px;padding:10px;margin-bottom:11px;border-radius:26px;background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden}.product:after{content:"";position:absolute;right:-35px;top:-35px;width:90px;height:90px;border-radius:50%;background:rgba(255,178,26,.08);filter:blur(10px)}.product img{width:108px;height:108px;border-radius:20px;object-fit:cover}.product h4{margin:4px 0 6px;font-size:16px}.product p{margin:0;color:var(--muted);font-size:12px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.product-foot{display:flex;align-items:center;justify-content:space-between;margin-top:11px}.product b{color:var(--gold);font-size:16px}.label{font-size:10px;font-weight:1000;border-radius:999px;padding:5px 8px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#fff}
+    .bottom-nav{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(402px,calc(100% - 24px));height:72px;border-radius:29px;background:rgba(9,9,9,.9);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(22px);display:grid;grid-template-columns:repeat(4,1fr);z-index:50;box-shadow:0 -14px 44px rgba(0,0,0,.5)}.nav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#aaa;font-size:11px;font-weight:900}.nav.active{color:var(--gold)}.nav i{font-style:normal;font-size:23px}
+  </style>
+</head>
+<body>
+  <div class="smoke"></div>
+  <main class="app">
+    <header class="topbar">
+      <div class="logo">a las<span>papas</span></div>
+      <div class="mini-actions">
+          <a class="icon-btn" href="#">◎</a>
+          <button class="lang-btn">ES ▾</button>
+        </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-photo"></div>
+      <div class="hero-card">
+        <div class="live">🔥 Lo más pedido ahora</div>
+        <h1>Alitas <span>Acevichadas</span></h1>
+        <p>Crujientes, bañadas en salsa acevichada y terminadas con hierbas frescas. Una entrada que se siente viva.</p>
+        <div class="hero-bottom">
+          <div class="price">$6.490</div>
+          <div class="social-proof">12 personas las pidieron hoy en el local</div>
+        </div>
+        <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="head"><h2 class="title">¿Qué te tinca hoy?</h2><span class="sub">elige una intención</span></div>
+      <div class="mood-row">
+        <article class="mood active" style="--img:url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500&auto=format&fit=crop')"><span>🔥</span><b>Algo potente</b></article>
+        <article class="mood" style="--img:url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=500&auto=format&fit=crop')"><span>🥗</span><b>Algo fresco</b></article>
+        <article class="mood" style="--img:url('https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=500&auto=format&fit=crop')"><span>🍟</span><b>Para compartir</b></article>
+        <article class="mood" style="--img:url('https://images.unsplash.com/photo-1603046891744-1f76eb10aecf?q=80&w=500&auto=format&fit=crop')"><span>🌶️</span><b>Picante</b></article>
+      </div>
+    </section>
+
+    
+
+    <section class="section">
+      <div class="head"><h2 class="title">Destacados</h2><span class="sub">no son una lista, son escenas</span></div>
+      <div class="cinema-cards">
+        <article class="poster" style="--img:url('https://images.unsplash.com/photo-1550547660-d9450f859349?q=90&w=900&auto=format&fit=crop')">
+          <div class="poster-content"><span class="stamp">La favorita</span><h3>Box Alas Papas 2</h3><p>3 burgers con cebolla caramelizada, papas cheddar y bebida 1.5L.</p><div class="price">$12.990</div></div>
+        </article>
+        <article class="poster" style="--img:url('https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?q=90&w=900&auto=format&fit=crop')">
+          <div class="poster-content"><span class="stamp">Mix salvador</span><h3>Mix Sushi Burger</h3><p>Dos hamburguesas clásicas, papas y 10 piezas de sushi.</p><div class="price">$14.490</div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="menu-block">
+      <div class="head"><h2 class="title">Menú completo</h2><span class="sub">si quieres ir directo</span></div>
+      <div class="chips"><div class="chip active">Todos</div><div class="chip">Hamburguesas</div><div class="chip">Alitas</div><div class="chip">Papas</div><div class="chip">Promos</div></div>
+      <article class="product"><img src="https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=500&auto=format&fit=crop"><div><h4>Argentina</h4><p>Chorizo ahumado al grill, carne de res, mayo chimichurri, lechuga y tomate.</p><div class="product-foot"><b>$7.490</b><span class="label">Popular</span></div></div></article>
+      <article class="product"><img src="https://images.unsplash.com/photo-1610440042657-612c34d95e9f?q=80&w=500&auto=format&fit=crop"><div><h4>BLUE</h4><p>Pan brioche, champiñones salteados, cebolla caramelizada y queso blue.</p><div class="product-foot"><b>$7.490</b><span class="label">Cremosa</span></div></div></article>
+      <article class="product"><img src="https://images.unsplash.com/photo-1608039755401-742074f0548d?q=80&w=500&auto=format&fit=crop"><div><h4>Cheese Bacon</h4><p>Doble carne, tocino, salsa BBQ y queso. Una bomba intensa.</p><div class="product-foot"><b>$8.990</b><span class="label">Intensa</span></div></div></article>
+    </section>
+  </main>
+
+  
+</body>
+</html>

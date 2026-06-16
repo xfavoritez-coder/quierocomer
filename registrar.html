@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activar Plan Gold | QuieroComer</title>
+
+  <style>
+    :root {
+      --bg: #050505;
+      --card: #11100f;
+      --card-2: #161412;
+      --gold: #f4a623;
+      --gold-soft: #ffc45a;
+      --text: #f5ead8;
+      --muted: #a99d8c;
+      --border: rgba(244, 166, 35, .28);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(244,166,35,.13), transparent 34%),
+        linear-gradient(180deg, #080706 0%, #030303 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 22px 18px 34px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 26px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: Georgia, serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .brand span:first-child {
+      color: var(--gold);
+      font-size: 20px;
+    }
+
+    .help {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      text-decoration: none;
+      background: rgba(255,255,255,.03);
+    }
+
+    .steps {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .step-pill {
+      display: inline-block;
+      color: var(--gold-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+
+    .step-line {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .step-line b {
+      color: var(--gold);
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .hero h1 {
+      font-family: Georgia, serif;
+      font-size: clamp(42px, 12vw, 62px);
+      line-height: .95;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span {
+      color: var(--gold);
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    .hero p {
+      color: #d8cdbd;
+      font-size: 16px;
+      line-height: 1.45;
+      max-width: 330px;
+      margin: 0 auto;
+    }
+
+    .hero p strong {
+      color: var(--gold-soft);
+    }
+
+    .phone-wrap {
+      position: relative;
+      margin: 0 auto 28px;
+      width: 270px;
+      filter: drop-shadow(0 26px 55px rgba(244,166,35,.22));
+    }
+
+    .phone {
+      background: #080808;
+      border: 8px solid #252525;
+      border-radius: 38px;
+      padding: 12px;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.08),
+        0 0 80px rgba(244,166,35,.16);
+    }
+
+    .screen {
+      overflow: hidden;
+      border-radius: 26px;
+      background: #0c0c0c;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .food-img {
+      height: 170px;
+      background:
+        linear-gradient(to bottom, transparent 45%, rgba(0,0,0,.86)),
+        url("https://images.unsplash.com/photo-1601924582975-7e5e3c3a0f57?auto=format&fit=crop&w=900&q=80");
+      background-size: cover;
+      background-position: center;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .tag {
+      align-self: flex-start;
+      background: var(--gold);
+      color: #17110a;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 9px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .food-img h3 {
+      font-size: 21px;
+      line-height: 1.05;
+      margin-bottom: 5px;
+    }
+
+    .food-img small {
+      color: #e9dfcf;
+      font-size: 11px;
+    }
+
+    .price {
+      color: var(--gold);
+      font-weight: 800;
+      margin-top: 6px;
+      font-size: 15px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 7px;
+      padding: 12px 12px 5px;
+    }
+
+    .tabs span {
+      background: #191919;
+      border: 1px solid rgba(255,255,255,.08);
+      color: #cfc7ba;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    .tabs span:first-child {
+      color: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 12px;
+      padding: 9px;
+      border-radius: 14px;
+      background: #151515;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .item img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .item strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .item small {
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    .metric {
+      position: absolute;
+      right: -20px;
+      top: 92px;
+      background: rgba(14,13,12,.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      width: 145px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.45);
+      font-size: 12px;
+    }
+
+    .metric strong {
+      color: var(--gold-soft);
+    }
+
+    .checkout {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.01)),
+        var(--card);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 24px 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.38);
+    }
+
+    .plan-label {
+      color: var(--gold-soft);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .price-main {
+      font-size: 44px;
+      color: var(--gold-soft);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      margin-bottom: 4px;
+    }
+
+    .price-sub {
+      color: #d8cdbd;
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,.12);
+      margin: 20px 0;
+    }
+
+    .benefit {
+      display: flex;
+      gap: 11px;
+      margin-bottom: 16px;
+      color: #eadfce;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .check {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .benefit small {
+      display: block;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .cta {
+      display: block;
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #ffd36a, #f4a623);
+      color: #120d06;
+      padding: 17px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 22px;
+      box-shadow: 0 18px 42px rgba(244,166,35,.25);
+    }
+
+    .secure {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 15px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-family: Georgia, serif;
+      font-size: 25px;
+      margin: 34px 0 18px;
+      line-height: 1.2;
+    }
+
+    .section-title span {
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    .features {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .feature {
+      background: var(--card-2);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .icon {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 15px;
+      background: rgba(244,166,35,.1);
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      font-size: 21px;
+    }
+
+    .feature h3 {
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .proof {
+      border: 1px solid rgba(244,166,35,.18);
+      background: rgba(255,255,255,.03);
+      border-radius: 24px;
+      padding: 22px 18px;
+      text-align: center;
+      margin-top: 26px;
+    }
+
+    .proof h2 {
+      font-size: 18px;
+      color: var(--gold-soft);
+      margin-bottom: 18px;
+    }
+
+    .logos {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .logo-circle {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      font-family: Georgia, serif;
+      font-size: 12px;
+      color: #eadfce;
+      background: #111;
+    }
+
+    .proof-stat {
+      border-top: 1px solid rgba(255,255,255,.1);
+      padding-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .proof-stat strong {
+      display: block;
+      color: var(--gold-soft);
+      font-size: 28px;
+      margin-bottom: 2px;
+    }
+
+    footer {
+      text-align: center;
+      color: #796f63;
+      font-size: 12px;
+      margin-top: 28px;
+    }
+
+    @media (min-width: 860px) {
+      .page {
+        max-width: 1120px;
+        padding: 34px 32px 50px;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1.05fr .95fr;
+        gap: 60px;
+        align-items: center;
+      }
+
+      .hero {
+        text-align: left;
+      }
+
+      .hero p {
+        margin: 0;
+      }
+
+      .phone-wrap {
+        width: 360px;
+      }
+
+      .food-img {
+        height: 230px;
+      }
+
+      .checkout {
+        max-width: 480px;
+        margin: 0;
+      }
+
+      .features {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .feature {
+        display: block;
+        text-align: center;
+        padding: 24px 18px;
+      }
+
+      .icon {
+        margin: 0 auto 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+
+    <header>
+      <div class="brand">
+        <span>⌁</span>
+        <span>QuieroComer</span>
+      </div>
+
+      <a href="#" class="help">¿Necesitas ayuda?</a>
+    </header>
+
+    <section class="steps">
+      <div class="step-pill">PASO 3 DE 3</div>
+      <div class="step-line">
+        <span>✓ Carta creada</span>
+        <span>✓ Datos completados</span>
+        <span><b>3</b> Activar experiencia</span>
+      </div>
+    </section>
+
+    <section class="main-grid">
+
+      <div>
+        <section class="hero">
+          <h1>Tu nueva carta <span>ya está lista.</span></h1>
+          <p>
+            Actívala ahora y empieza a recibir
+            <strong>más pedidos</strong> y clientes con una mejor experiencia.
+          </p>
+        </section>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="screen">
+              <div class="food-img">
+                <div class="tag">Más pedido 🔥</div>
+                <h3>Calzone Margherita</h3>
+                <small>Tomate, mozzarella, albahaca fresca y aceite de oliva.</small>
+                <div class="price">$7.900</div>
+              </div>
+
+              <div class="tabs">
+                <span>Para Comenzar</span>
+                <span>Pizzas</span>
+                <span>Pizza 25cm</span>
+              </div>
+
+              <div class="item">
+                <img src="https://images.unsplash.com/photo-1601924582975-7e5e3c3a0f57?auto=format&fit=crop&w=300&q=80" />
+                <div>
+                  <strong>Calzone Margherita</strong>
+                  <small>$7.900</small>
+                </div>
+              </div>
+
+              <div class="item">
+                <img src="https://images.unsplash.com/photo-1629203432180-71e9b18ef2a1?auto=format&fit=crop&w=300&q=80" />
+                <div>
+                  <strong>Bebidas de Lata</strong>
+                  <small>$1.800</small>
+                </div>
+              </div>
+
+              <div class="item">
+                <img src="https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=300&q=80" />
+                <div>
+                  <strong>Calzone Pepperoni</strong>
+                  <small>$8.200</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric">
+            <strong>+12 clientes</strong><br>
+            vieron postres hoy ↗
+          </div>
+        </div>
+      </div>
+
+      <section class="checkout">
+        <div class="plan-label">PLAN GOLD</div>
+        <div class="price-main">$35.000</div>
+        <div class="price-sub">CLP / mes + IVA</div>
+
+        <div class="divider"></div>
+
+        <div class="benefit">
+          <div class="check">✓</div>
+          <div>
+            Activación inmediata
+            <small>Tu carta online en minutos.</small>
+          </div>
+        </div>
+
+        <div class="benefit">
+          <div class="check">✓</div>
+          <div>
+            Tu carta lista hoy
+            <small>Comienza a recibir pedidos ahora.</small>
+          </div>
+        </div>
+
+        <div class="benefit">
+          <div class="check">✓</div>
+          <div>
+            Puedes cancelar cuando quieras
+            <small>Sin permanencias ni complicaciones.</small>
+          </div>
+        </div>
+
+        <button class="cta">⚡ Activar mi carta</button>
+
+        <div class="secure">🔒 Pago 100% seguro</div>
+      </section>
+
+    </section>
+
+    <h2 class="section-title">
+      Con Plan Gold, tu carta <span>trabaja por ti</span>
+    </h2>
+
+    <section class="features">
+      <article class="feature">
+        <div class="icon">🧠</div>
+        <h3>El Genio IA recomienda por ti</h3>
+        <p>Destaca los platos que tus clientes más prefieren.</p>
+      </article>
+
+      <article class="feature">
+        <div class="icon">📊</div>
+        <h3>Descubre qué vende más</h3>
+        <p>Estadísticas claras para tomar mejores decisiones.</p>
+      </article>
+
+      <article class="feature">
+        <div class="icon">🏷️</div>
+        <h3>Crea ofertas que atraen</h3>
+        <p>Promociones visibles que aumentan tus ventas.</p>
+      </article>
+
+      <article class="feature">
+        <div class="icon">📣</div>
+        <h3>Anuncios en tu carta</h3>
+        <p>Comunica novedades, eventos y más fácilmente.</p>
+      </article>
+    </section>
+
+    <section class="proof">
+      <h2>Restaurantes en Santiago ya están creciendo</h2>
+
+      <div class="logos">
+        <div class="logo-circle">Nascosto</div>
+        <div class="logo-circle">La Nonna</div>
+        <div class="logo-circle">Barrio</div>
+        <div class="logo-circle">Sapore</div>
+      </div>
+
+      <div class="proof-stat">
+        <strong>+1.200</strong>
+        cartas activadas en todo Chile
+      </div>
+    </section>
+
+    <footer>
+      Tu información está protegida. Usamos encriptación de nivel empresarial.
+    </footer>
+
+  </main>
+</body>
+</html>

@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
-import type { RestauranteMapaData } from './page'
+import type { RestauranteMapaData, ProspectoMapaData } from './page'
 
 interface Props {
   restaurantes: RestauranteMapaData[]
+  prospectos: ProspectoMapaData[]
   drawMode: boolean
   onPointAdded: (pt: [number, number], total: number) => void
   onPolygonDblClick: () => void
@@ -27,6 +28,15 @@ const selectedStyle: L.CircleMarkerOptions = {
   weight: 2.5,
   opacity: 1,
   fillOpacity: 1,
+}
+
+const prospectoStyle: L.CircleMarkerOptions = {
+  radius: 6,
+  fillColor: '#888888',
+  color: 'rgba(255,255,255,0.25)',
+  weight: 1.5,
+  opacity: 0.8,
+  fillOpacity: 0.7,
 }
 
 function buildPopupHtml(r: RestauranteMapaData, fotos: string[] | null): string {
@@ -60,7 +70,7 @@ function buildPopupHtml(r: RestauranteMapaData, fotos: string[] | null): string 
   `
 }
 
-export default function MapaLeaflet({ restaurantes, drawMode, onPointAdded, onPolygonDblClick }: Props) {
+export default function MapaLeaflet({ restaurantes, prospectos, drawMode, onPointAdded, onPolygonDblClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<globalThis.Map<string, L.CircleMarker>>(new globalThis.Map())
@@ -172,6 +182,58 @@ export default function MapaLeaflet({ restaurantes, drawMode, onPointAdded, onPo
       markersMap.set(r.id, circle)
     }
     markersRef.current = markersMap
+
+    // Prospectos — puntos grises (debajo de los restaurantes activos)
+    const prospectoCircles = new globalThis.Map<string, L.CircleMarker>()
+
+    function buildProspectoPopup(p: ProspectoMapaData) {
+      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(p.name + ' ' + p.address)}`
+      return `
+        <div style="background:#1a1a1a;border-radius:14px;padding:14px;min-width:210px;color:#fff;font-family:system-ui,sans-serif;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <div style="font-size:13px;font-weight:600;flex:1;margin-right:8px">${p.name}</div>
+            <button data-delete-prospecto="${p.id}" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;flex-shrink:0">Borrar</button>
+          </div>
+          ${p.address ? `<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">${p.address}</div>` : ''}
+          ${p.rating != null ? `<div style="font-size:12px;color:#f4a623;margin-bottom:8px">⭐ ${p.rating}${p.reviews != null ? ` · ${p.reviews} reseñas` : ''}</div>` : ''}
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            ${p.cartaUrl ? `<a href="${p.cartaUrl}" target="_blank" style="display:block;text-align:center;background:#ff4c00;color:#fff;font-size:11px;font-weight:600;padding:7px 0;border-radius:8px;text-decoration:none;">🍽 Ver carta${p.provider ? ` (${p.provider})` : ''} →</a>` : ''}
+            <a href="${googleSearchUrl}" target="_blank" style="display:block;text-align:center;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:11px;font-weight:500;padding:7px 0;border-radius:8px;text-decoration:none;">🔍 Buscar en Google →</a>
+            <a href="${p.mapsUrl}" target="_blank" style="display:block;text-align:center;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:11px;font-weight:500;padding:7px 0;border-radius:8px;text-decoration:none;">📍 Google Maps →</a>
+          </div>
+        </div>
+      `
+    }
+
+    for (const p of prospectos) {
+      const circle = L.circleMarker([p.lat, p.lng], prospectoStyle).addTo(map)
+      const popup = L.popup({ closeButton: false, className: 'qc-popup', maxWidth: 240, offset: [0, -6] })
+      circle.on('click', (e) => {
+        if (drawModeRef.current) return
+        L.DomEvent.stopPropagation(e)
+        popup.setContent(buildProspectoPopup(p))
+        circle.bindPopup(popup).openPopup()
+      })
+      prospectoCircles.set(p.id, circle)
+    }
+
+    // Event delegation para el botón Borrar dentro de popups de prospectos
+    map.getContainer().addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-delete-prospecto]') as HTMLElement | null
+      if (!btn) return
+      const id = btn.getAttribute('data-delete-prospecto')!
+      btn.textContent = '...'
+      btn.style.pointerEvents = 'none'
+      fetch('/api/mapalocales/prospectos', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [id] }),
+      }).then(() => {
+        const circle = prospectoCircles.get(id)
+        if (circle) { circle.remove(); prospectoCircles.delete(id) }
+        map.closePopup()
+      }).catch(() => { btn.textContent = 'Error'; })
+    })
 
     // Icono para vértices draggables
     function makeVertexIcon() {

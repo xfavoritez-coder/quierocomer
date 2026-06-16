@@ -609,6 +609,14 @@ html.dark .feed-root {
   animation: shimmer 1.5s infinite;
   border-radius: 14px;
 }
+html.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%) !important;
+  background-size: 200% 100% !important;
+}
+/* Image placeholder container in dark mode */
+html.dark .feed-root .dish-card-img-wrap {
+  background: rgba(255,255,255,0.08) !important;
+}
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }

@@ -46,7 +46,7 @@ function normName(s: string): string {
 function detectProvider(url: string): string | null {
   if (url.includes('ubereats.com'))    return 'UberEats'
   if (url.includes('pedidosya.com'))   return 'PedidosYa'
-  if (url.includes('rappi.com'))       return 'Rappi'
+  if (url.includes('rappi.com') || url.includes('rappi.cl')) return 'Rappi'
   if (url.includes('fu.do'))           return 'Fudo'
   if (url.includes('/pedir'))          return 'Justo'  // kokai.cl/pedir — Justo embebido
   if (url.includes('gour.media'))      return 'Gourmedia'
@@ -57,16 +57,27 @@ function detectProvider(url: string): string | null {
 }
 
 // Detecta proveedor desde el contenido HTML de la página (para webs propias como Mercat)
+// ORDEN IMPORTA: más específicos primero para evitar falsos positivos
 function detectProviderFromHtml(html: string): string {
-  if (html.includes('mer-cat.com'))                                      return 'Mercat'
-  if (html.includes('fu.do') || html.includes('fudo'))                   return 'Fudo'
-  if (html.includes('toteat'))                                            return 'Toteat'
-  if (html.includes('ola.click'))                                         return 'OlaClick'
-  if (html.includes('gour.media'))                                        return 'Gourmedia'
-  if (html.includes('ubereats.com'))                                      return 'UberEats'
-  if (html.includes('pedidosya'))                                         return 'PedidosYa'
+  if (html.includes('mer-cat.com'))                                                                                          return 'Mercat'
   if (html.includes('getjusto.com') || html.includes('"/pedir"') || html.includes("'/pedir'") || html.includes('/pedir/')) return 'Justo'
+  if (html.includes('ubereats.com'))                                                                                         return 'UberEats'
+  if (html.includes('pedidosya'))                                                                                             return 'PedidosYa'
+  if (html.includes('rappi.cl') || html.includes('rappi.com'))                                                               return 'Rappi'
+  if (html.includes('toteat'))                                                                                                return 'Toteat'
+  if (html.includes('ola.click'))                                                                                             return 'OlaClick'
+  if (html.includes('gour.media'))                                                                                            return 'Gourmedia'
+  if (html.includes('fu.do/') || html.includes('menu.fu.do') || html.includes('app.fu.do'))                                 return 'Fudo'
   return 'Web propia'
+}
+
+// Intenta extraer la URL real de Justo desde el HTML
+function extractJustoUrl(html: string, websiteBase: string): string {
+  // Buscar iframe o script con URL de getjusto.com
+  const m = html.match(/https?:\/\/[^"'\s<>&]*getjusto\.com[^"'\s<>&]*/i)
+  if (m) return m[0].split('?')[0]
+  // Fallback: /pedir
+  return new URL('/pedir', websiteBase).toString()
 }
 
 // Carga locales-feed.json una sola vez
@@ -85,6 +96,10 @@ function matchInFeed(name: string): LocalesFeedEntry | null {
   return feed.find(e => normName(e.name) === needle) ?? null
 }
 
+// Plataformas que siempre tienen fotos si la URL existe (SPAs que no se pueden scraper)
+// No hace falta hasPhotos — si la URL es válida, tiene fotos (lo exigen estas plataformas)
+const TRUSTED_PLATFORMS = new Set(['Fudo', 'Justo', 'OlaClick', 'Toteat', 'Gourmedia', 'UberEats', 'PedidosYa'])
+
 // URLs candidatas por plataforma usando slug
 // Orden de prioridad: primero las que probablemente tienen más fotos de calidad
 function candidateUrls(slug: string): Array<{ provider: string; url: string }> {
@@ -92,10 +107,7 @@ function candidateUrls(slug: string): Array<{ provider: string; url: string }> {
     // PedidosYa Chile usa slugs predecibles → va primero (delivery con fotos)
     { provider: 'PedidosYa', url: `https://www.pedidosya.cl/restaurantes/santiago/${slug}-menu` },
     { provider: 'PedidosYa', url: `https://www.pedidosya.cl/restaurantes/santiago/${slug}` },
-    // Fudo (carta digital con fotos)
-    { provider: 'Fudo',      url: `https://menu.fu.do/${slug}` },
-    { provider: 'Fudo',      url: `https://app.fu.do/${slug}/qr-menu` },
-    // Resto de plataformas
+    // Resto de plataformas (Fudo EXCLUIDO: siempre retorna 200 aunque no exista el restaurante)
     { provider: 'Gourmedia', url: `https://gour.media/${slug}` },
     { provider: 'OlaClick',  url: `https://${slug}.ola.click` },
     { provider: 'Toteat',    url: `https://${slug}.toteat.app` },
@@ -114,7 +126,7 @@ const FOOD_IMAGE_CDNS = [
   // Delivery platforms
   'tb-static.uber.com', 'ubereats.com/image',
   'photos.pystatic.com', 'pedidosya', 'dhmjoppcxbv4f',
-  'rappi.com', 'rappipay',
+  'rappi.com', 'rappi.cl', 'rappipay',
   'getjusto.com',
 ]
 
@@ -191,6 +203,11 @@ async function searchDeliveryUrl(name: string, address: string): Promise<Array<{
       query: `${name} ${commune} pedidosya`,
       pattern: /https?:\/\/www\.pedidosya\.cl\/restaurantes\/[^"'\s<>&]{5,}/gi,
     },
+    {
+      provider: 'Rappi',
+      query: `${name} ${commune} rappi restaurantes`,
+      pattern: /https?:\/\/www\.rappi\.cl\/restaurantes\/[^"'\s<>&]{5,}/gi,
+    },
   ]
 
   for (const { provider, query, pattern } of searches) {
@@ -232,8 +249,10 @@ export async function POST(req: NextRequest) {
   const stream = new TransformStream<Uint8Array, Uint8Array>()
   const writer = stream.writable.getWriter()
 
-  function send(data: object) {
-    writer.write(encoder.encode(JSON.stringify(data) + '\n'))
+  async function send(data: object) {
+    try {
+      await writer.write(encoder.encode(JSON.stringify(data) + '\n'))
+    } catch {} // cliente desconectado — ignorar
   }
 
   async function saveResult(result: ProspectoResult) {
@@ -259,7 +278,8 @@ export async function POST(req: NextRequest) {
   }
 
   ;(async () => {
-    send({ type: 'total', total: places.length })
+    try {
+    await send({ type: 'total', total: places.length })
 
     let encontrados = 0
     let sinPlataforma = 0
@@ -303,14 +323,18 @@ export async function POST(req: NextRequest) {
           } catch { return false }
         })()
 
-        if (photos) {
+        const detectedProvider = mapsProvider ?? (html ? detectProviderFromHtml(html) : null)
+        // Para plataformas confiables (SPAs): si detectamos la plataforma en el HTML, asumir fotos aunque scraper falle
+        const effectivePhotos = photos || (!!detectedProvider && TRUSTED_PLATFORMS.has(detectedProvider) && html.length > 500)
+
+        if (effectivePhotos) {
           encontrados++
-          const provider = mapsProvider ?? detectProviderFromHtml(html)
+          const provider = detectedProvider ?? 'Web propia'
 
           // Si el proveedor detectado en el HTML es una plataforma externa, extraer su URL real
           let cartaUrl = place.website!
-          if (provider === 'Justo' && !place.website!.includes('/pedir')) {
-            cartaUrl = new URL('/pedir', place.website!).toString()
+          if (provider === 'Justo') {
+            cartaUrl = extractJustoUrl(html, place.website!)
           } else if (provider === 'UberEats') {
             const m = html.match(/https?:\/\/www\.ubereats\.com\/cl\/store\/[^"'\s<>&]{5,}/i)
             if (m) cartaUrl = m[0].split('?')[0]
@@ -333,7 +357,7 @@ export async function POST(req: NextRequest) {
           send({ type: 'result', result })
           continue
         } else {
-          send({ type: 'status', name: place.name, message: `${label}: sin fotos detectadas, siguiendo...` })
+          send({ type: 'status', name: place.name, message: `${detectedProvider ?? label}: sin fotos detectadas, siguiendo...` })
         }
       }
 
@@ -389,6 +413,17 @@ export async function POST(req: NextRequest) {
         const exists = await urlExists(url)
         if (!exists) continue
 
+        // Plataformas de carta confiables (SPAs que no se pueden scraper): asumir fotos si existe la URL
+        if (TRUSTED_PLATFORMS.has(provider)) {
+          encontrados++
+          found = true
+          send({ type: 'status', name: place.name, message: `Encontrado en ${provider} ✓` })
+          const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl: url, fuenteMatch: 'slug' }
+          saveResult(result).catch(() => {})
+          send({ type: 'result', result })
+          break
+        }
+
         send({ type: 'status', name: place.name, message: `Encontrado en ${provider} — verificando fotos...` })
         const photos = await hasPhotos(url)
 
@@ -422,8 +457,12 @@ export async function POST(req: NextRequest) {
       if (i < places.length - 1) await new Promise(r => setTimeout(r, 200))
     }
 
-    send({ type: 'done', encontrados, sinPlataforma, sinFotos })
-    writer.close()
+    await send({ type: 'done', encontrados, sinPlataforma, sinFotos })
+    } catch (e: any) {
+      try { await send({ type: 'error', message: e?.message ?? 'Error inesperado' }) } catch {}
+    } finally {
+      try { writer.close() } catch {}
+    }
   })()
 
   return new Response(stream.readable, {

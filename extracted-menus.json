@@ -1,0 +1,818 @@
+{
+  "extracted_date": "2026-06-13",
+  "restaurants": [
+    {
+      "name": "Pasión Andina",
+      "source_url": "https://queresto.com/PASIONANDINA?b=K47S&ref=qr",
+      "platform": "queresto.com",
+      "status": "complete",
+      "categories": [
+        {
+          "category": "Cócteles de Autor",
+          "items": [
+            {"name": "Zombie", "price": 8900, "description": "Ron añejo cubano, ron añejo jamaica, almíbar de piña, jugo de cranberry, jugo de limón, gotas de pernod, gotas de granadina, dash de bitter angostura"},
+            {"name": "La Malcriada", "price": 8900, "description": "Pisco italia, almíbar de piña, sumo de frutas de pasión, mix de cranberry, toque cítricos"},
+            {"name": "Gink", "price": 8900, "description": "Gin Tanqueray, pink tonic, zumo de limón, syrup de pomelo"},
+            {"name": "Pink Paloma", "price": 8900, "description": "Don Julio blanco, zumo de pomelo, pink tonic"},
+            {"name": "Chingón Fashioned", "price": 8900, "description": "Tequila reposado, Jagermeister, almíbar simple, piel de naranja"},
+            {"name": "Tropical Tiki", "price": 8900, "description": "Ron añejo, mix cítrico, piña, naranja y limón, endulzado con agua miel"},
+            {"name": "Pasión Caribeña", "price": 8900, "description": "Ron blanco, leche evaporada, zumo de maracuyá, jarabe de goma"}
+          ]
+        },
+        {
+          "category": "Cócteles",
+          "items": [
+            {"name": "Mojito", "price": 7200, "description": "Ron Bacardí carta blanca, hojas de menta, azúcar granulada, limón, soda"},
+            {"name": "Mojito Sabores", "price": 7900, "description": "Mango, maracuyá, frutilla y frambuesa"},
+            {"name": "Mojito Corona", "price": 9900, "description": "Clásico, maracuyá, frutilla, mango, frambuesa con corona de 330ml"},
+            {"name": "Aperol Spritz", "price": 7200, "description": "Aperol, espumante, soda"},
+            {"name": "Ramazotti Spritz", "price": 7200, "description": ""},
+            {"name": "Ramazzotti Violetto Spritz", "price": 7200, "description": ""},
+            {"name": "Moscow Mule", "price": 7200, "description": "Vodka, jugo de limón, syrup de jengibre, ginger ale"},
+            {"name": "Tanqueray Spritz", "price": 7900, "description": "Tanqueray, espumante, soda"},
+            {"name": "Tropical Gin", "price": 7900, "description": ""},
+            {"name": "Tanqueray Royal Spritz", "price": 7900, "description": "Tanqueray, espumante, soda"},
+            {"name": "Sevilla Splash", "price": 7900, "description": "Tanqueray Sevilla, jugo de naranja, soda"},
+            {"name": "Daiquiri de Frutilla", "price": 6900, "description": ""},
+            {"name": "Daiquiri de Mango", "price": 6900, "description": ""},
+            {"name": "Daiquiri de Maracuyá", "price": 6900, "description": ""},
+            {"name": "Margarita Sabores", "price": 6900, "description": "Tequila, triple sec, sumo de limón - mango, maracuyá, frutilla, frambuesa"},
+            {"name": "Martini Dry", "price": 6500, "description": "Gin, vermouth dry"},
+            {"name": "Manhattan", "price": 7500, "description": "Whisky, vermouth rosso y angostura"},
+            {"name": "Kir Royal", "price": 5900, "description": "Licor de cassis, espumante"},
+            {"name": "Tom Collins", "price": 6900, "description": "Gin, limón, jarabe de goma, soda"},
+            {"name": "Caipirinha", "price": 6900, "description": ""},
+            {"name": "Sangría", "price": 6500, "description": "Vino tinto, fanta y triple sec"},
+            {"name": "Piña Colada", "price": 7200, "description": ""},
+            {"name": "Orgasmo", "price": 7200, "description": "Baileys, disaronno, licor de café"},
+            {"name": "Algarrobina", "price": 5900, "description": "Pisco, leche evaporada y jarabe de goma"},
+            {"name": "Leche de Tigre", "price": 7900, "description": ""}
+          ]
+        },
+        {
+          "category": "Mocteles",
+          "items": [
+            {"name": "Piña Colada Sin Alcohol", "price": 6200, "description": ""},
+            {"name": "Mojito Sin Alcohol Sabores", "price": 6200, "description": "Mango, maracuyá, frutilla y frambuesa"},
+            {"name": "Pinky Promise", "price": 6200, "description": "Syrup de frutilla, zumo de pomelo, pink tonic"}
+          ]
+        },
+        {
+          "category": "Jugos",
+          "items": [
+            {"name": "Chicha Morada", "price": 3900, "description": ""},
+            {"name": "Limonada Sabores", "price": 4500, "description": "Frozen, jengibre"},
+            {"name": "Jugos Naturales", "price": 3900, "description": "Mango, chirimoya, maracuyá, frutilla"}
+          ]
+        },
+        {
+          "category": "Bebidas",
+          "items": [
+            {"name": "Agua", "price": 2200, "description": "Con gas o sin gas"},
+            {"name": "Inka Cola", "price": 2900, "description": "Clásica o light"},
+            {"name": "Coca Cola", "price": 2400, "description": "Clásica o zero"},
+            {"name": "Otras Bebidas", "price": 2400, "description": "Fanta, Pepsi, Ginger ale, Sprite"}
+          ]
+        },
+        {
+          "category": "Querer es Compartir entre Amigos",
+          "items": [
+            {"name": "Pulpo al Olivo", "price": 13500, "description": ""},
+            {"name": "Causa de Atún", "price": 8900, "description": ""},
+            {"name": "Causa de Pulpo Acevichado", "price": 13200, "description": "Coronado con clásico ceviche de pulpo"},
+            {"name": "Causa de Pollo", "price": 9900, "description": ""},
+            {"name": "Causa Camarón", "price": 10900, "description": ""},
+            {"name": "Chicharrón de Pollo", "price": 10900, "description": "Marinado en salsa de soya, especias limeñas, arrebozado, apanado y frito"},
+            {"name": "Causa con Pulpa de Jaiba", "price": 13900, "description": ""},
+            {"name": "Chicharrón Camarón", "price": 12900, "description": ""},
+            {"name": "Chicharrón Pasión Andina", "price": 14900, "description": "Pescado, pulpo, camarón, calamar marinado en salsa inglesa"},
+            {"name": "Chicharrón de Pescado", "price": 10900, "description": ""},
+            {"name": "Brocheta de Filete", "price": 12900, "description": ""},
+            {"name": "Brocheta Tres Sabores", "price": 13300, "description": "Filete, pollo y pescado"},
+            {"name": "Brocheta de Pescado del Día", "price": 12900, "description": ""},
+            {"name": "Camarones al Panko", "price": 13900, "description": ""},
+            {"name": "Pollo a la Plancha", "price": 11900, "description": ""},
+            {"name": "Empanadas Mixta", "price": 12900, "description": "Lomo, ají de gallina y ceviche pescado del día"}
+          ]
+        },
+        {
+          "category": "Piqueos",
+          "items": [
+            {"name": "Piqueo Criollo", "price": 20200, "description": "Ceviche mixto, causa de atún, chicharrón mixto, arroz con mariscos, pulpo a la parrilla"},
+            {"name": "Piqueo Frío", "price": 20200, "description": "Ceviche mixto, causa de atún, pulpo al olivo, ceviche de camarón y palta"},
+            {"name": "Trío Marino", "price": 15500, "description": "Ceviche mixto, chicharrón mixto, arroz con mariscos"}
+          ]
+        },
+        {
+          "category": "Las Aperturas de Pasión Andina",
+          "items": [
+            {"name": "Ceviche de Pescado del Día", "price": 12900, "description": ""},
+            {"name": "Ceviche Pescado, Camarón y Palta", "price": 14900, "description": ""},
+            {"name": "Ceviche Mixto", "price": 13900, "description": "Calamar, pulpo, camarón, pescado"},
+            {"name": "Ceviche Pasión Andina", "price": 15500, "description": "Mix de mariscos, pescado, camarón, pulpo, ostión, uñas de jaiba y aros de calamares fritos"},
+            {"name": "Ceviche de Salmón", "price": 14500, "description": ""},
+            {"name": "Ensalada Mixta", "price": 8900, "description": "Lechuga, apio, tomate, palta y queso fresco"}
+          ]
+        },
+        {
+          "category": "Plato Fondo",
+          "items": [
+            {"name": "Lomo Saltado", "price": 14200, "description": "Salteado en fuego alto al estilo oriental con arroz graneado y papas fritas"},
+            {"name": "Ají de Gallina", "price": 11500, "description": "Delicia de la cocina peruana con arroz, huevo cocinado y aceituna"},
+            {"name": "Filete a lo Macho", "price": 14900, "description": "Filete a la plancha con mariscos flambeados en salsa de langosta"},
+            {"name": "Fettuccine a la Huancaína con Lomo Salteado", "price": 15900, "description": "Lonjas de filete salteadas con cebolla, tomate, cilantro"},
+            {"name": "Pulpo a la Parrilla", "price": 15900, "description": "Marinado con chimichurri, con verduras salteadas y papas rústicas"},
+            {"name": "Lomo Pasión Andina", "price": 14900, "description": "Finos trozos de filete, camarón y champiñón salteados en salsa de soya"},
+            {"name": "Tacu Tacu de Filete", "price": 14200, "description": "Porotos mezclados con arroz criollo, crema de ají amarillo"},
+            {"name": "Saltado Mar y Tierra", "price": 14200, "description": "Filete flambeado al pisco con risotto al azafrán y camarones"},
+            {"name": "Pescado Pasión Andina", "price": 13900, "description": "Pescado a la plancha sobre risotto de espárragos, tomate cherry y queso fresco"},
+            {"name": "Salmón Pasión Andina", "price": 14300, "description": ""},
+            {"name": "Atún Pasión Andina", "price": 14900, "description": ""},
+            {"name": "Pescado a lo Macho", "price": 13900, "description": "Bañado en salsa de mariscos en vino blanco"},
+            {"name": "Salmón a lo Macho", "price": 14300, "description": ""},
+            {"name": "Atún a lo Macho", "price": 14900, "description": ""},
+            {"name": "Pescado a la Meunière", "price": 12900, "description": "Con mantequilla rubia y limón"},
+            {"name": "Salmón a la Meunière", "price": 13900, "description": ""},
+            {"name": "Atún a la Meunière", "price": 14900, "description": ""},
+            {"name": "Pescado al Ajillo", "price": 12900, "description": "Con mantequilla y ajos crocantes"},
+            {"name": "Salmón al Ajillo", "price": 13900, "description": ""},
+            {"name": "Atún al Ajillo", "price": 14900, "description": ""},
+            {"name": "Pescado a la Plancha con Fettuccine a la Huancaína", "price": 13900, "description": ""},
+            {"name": "Salmón a la Plancha con Fettuccine a la Huancaína", "price": 14300, "description": ""},
+            {"name": "Atún a la Plancha con Fettuccine a la Huancaína", "price": 14900, "description": ""},
+            {"name": "Risotto de Camarones", "price": 13300, "description": "Risotto cremoso con camarones, vino blanco, mantequilla y parmesano"},
+            {"name": "Risotto Champiñón con Camarones", "price": 14300, "description": ""},
+            {"name": "Arroz con Mariscos", "price": 13900, "description": "Composición de mariscos con aderezo de panca y arroz"},
+            {"name": "Arroz Chaufa de Mariscos", "price": 13900, "description": ""},
+            {"name": "Arroz Chaufa de Pollo", "price": 11900, "description": ""},
+            {"name": "Arroz Chaufa de Camarón", "price": 13900, "description": ""},
+            {"name": "Chaufa Tres Sabores", "price": 13900, "description": ""},
+            {"name": "Tallarín Saltado con Pollo", "price": 11900, "description": ""},
+            {"name": "Tallarín Saltado con Mariscos", "price": 13900, "description": "Con cebolla, tomate, salsa de soya, cebollín y vino blanco"},
+            {"name": "Tallarín Saltado con Carne", "price": 13900, "description": "Con cebolla, tomate, salsa de soya, cebollín y vino blanco"},
+            {"name": "Tallarín Saltado Tres Sabores", "price": 13900, "description": "Camarones, filete y pechuga de ave flambeado con pisco"},
+            {"name": "Parihuela", "price": 14200, "description": "Mariscos con ají amarillo y ají panca"},
+            {"name": "Sudado de Pescado al Día", "price": 12900, "description": "Pescado al vapor con aderezos de ají, tomate fresco y cebolla"},
+            {"name": "Dieta de Pollo", "price": 9900, "description": ""},
+            {"name": "Ceviche de Champiñones y Palta", "price": 11900, "description": ""},
+            {"name": "Chaufa Vegetariano", "price": 9900, "description": ""},
+            {"name": "Tallarín Salteado Vegetariano", "price": 9900, "description": ""},
+            {"name": "Pasión Vegetariana", "price": 11900, "description": "Risotto de espárragos con panaché de verduras y ensalada de rúcula"}
+          ]
+        },
+        {
+          "category": "Menú Infantil",
+          "items": [
+            {"name": "Nuggets de Pollo", "price": 7900, "description": ""},
+            {"name": "Nuggets de Pescado", "price": 7900, "description": ""},
+            {"name": "Pechuga a la Plancha", "price": 7900, "description": ""}
+          ]
+        },
+        {
+          "category": "Acompañamientos",
+          "items": [
+            {"name": "Arroz", "price": 2900, "description": ""},
+            {"name": "Papas Fritas", "price": 3900, "description": ""},
+            {"name": "Puré de Papas", "price": 3900, "description": ""},
+            {"name": "Panaché de Verduras", "price": 4900, "description": ""},
+            {"name": "Champiñones Salteadas", "price": 4900, "description": ""}
+          ]
+        },
+        {
+          "category": "Para Endulzar",
+          "items": [
+            {"name": "Suspiro Limeño", "price": 4900, "description": ""},
+            {"name": "Crema Volteada", "price": 4900, "description": ""},
+            {"name": "Tiramisú", "price": 4900, "description": ""},
+            {"name": "Torta de Tres Leches", "price": 4900, "description": ""},
+            {"name": "Helados Artesanales", "price": 4900, "description": "Chocolate, pistacho, vainilla, frutos rojos, mango y maracuyá, oreo, menta"}
+          ]
+        },
+        {
+          "category": "Vinos Sauvignon Blanc",
+          "items": [
+            {"name": "Santa Digna Reserva", "price": 16900, "description": ""},
+            {"name": "Las Mulas Reserva", "price": 14900, "description": ""},
+            {"name": "Leyda Reserva", "price": 14900, "description": ""},
+            {"name": "Tarapacá Reserva", "price": 15900, "description": ""},
+            {"name": "Misiones de Rengo Reserva", "price": 14900, "description": ""}
+          ]
+        },
+        {
+          "category": "Vinos Chardonnay",
+          "items": [
+            {"name": "Santa Digna Reserva", "price": 16900, "description": ""}
+          ]
+        },
+        {
+          "category": "Espumantes",
+          "items": [
+            {"name": "Viñamar Brut", "price": 14900, "description": ""},
+            {"name": "Estelado Rosé", "price": 16900, "description": ""},
+            {"name": "Amaranta Brut", "price": 13900, "description": ""}
+          ]
+        },
+        {
+          "category": "Vinos Cabernet Sauvignon",
+          "items": [
+            {"name": "Toro de Piedra Gran Reserva", "price": 19900, "description": ""},
+            {"name": "Santa Digna Reserva", "price": 16900, "description": ""},
+            {"name": "Tarapacá Gran Reserva", "price": 19900, "description": ""},
+            {"name": "Las Mulas Reserva", "price": 14900, "description": ""},
+            {"name": "Lapostolle", "price": 16900, "description": ""}
+          ]
+        },
+        {
+          "category": "Vinos Carmenere",
+          "items": [
+            {"name": "Santa Digna Reserva", "price": 16900, "description": ""},
+            {"name": "Las Mulas Reserva", "price": 14900, "description": ""},
+            {"name": "Toro de Piedra Gran Reserva", "price": 19900, "description": ""},
+            {"name": "Tarapacá Gran Reserva", "price": 19900, "description": ""},
+            {"name": "Tarapacá Reserva", "price": 15900, "description": ""},
+            {"name": "Lapostolle", "price": 16900, "description": ""}
+          ]
+        },
+        {
+          "category": "Medias Botellas de Vino",
+          "items": [
+            {"name": "Santa Digna (CS, Car, SB y Char)", "price": 7900, "description": ""}
+          ]
+        },
+        {
+          "category": "Grandes Reservas",
+          "items": [
+            {"name": "Tarapacá Gran Reserva Etiqueta Negra Carmenere", "price": 29900, "description": ""},
+            {"name": "Tarapacá Gran Reserva Etiqueta Negra Cabernet Sauvignon", "price": 29900, "description": ""}
+          ]
+        },
+        {
+          "category": "Vinos Ensamblajes o Blends",
+          "items": [
+            {"name": "120 Red Blend", "price": 14900, "description": "65% Cabernet Franc, 25% Cabernet Sauvignon, 10% Carmenere"},
+            {"name": "Tarapacá Gran Reserva Etiqueta Azul", "price": 34900, "description": "68% Cabernet Sauvignon, 12% Petit Verdot, 9% Cabernet Franc, 7% Malbec, 4% Merlot"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sombrero Vuelteao",
+      "source_url": "https://www.restomovil.com/mkt/carta/MTky_landing.html",
+      "platform": "restomovil.com",
+      "status": "failed",
+      "reason": "Restomovil uses iframe-based rendering. Menu content is loaded dynamically inside an iframe and not accessible from the static HTML."
+    },
+    {
+      "name": "El Gusto Peruano",
+      "source_url": "https://www.restomovil.com/mkt/carta/MTQ2_landing.html",
+      "platform": "restomovil.com",
+      "status": "failed",
+      "reason": "Restomovil uses iframe-based rendering. Menu content is loaded dynamically inside an iframe and not accessible from the static HTML."
+    },
+    {
+      "name": "Heladería Italia",
+      "source_url": "https://queresto.com/italia1609",
+      "platform": "queresto.com",
+      "status": "complete",
+      "categories": [
+        {
+          "category": "Dubai Collection Desserts",
+          "items": [
+            {"name": "Donuts Dubai", "price": 3500, "description": "Donut bañado en chocolate, relleno de crema de pistacho, con pistacho tostado y kanafeh crocante"},
+            {"name": "Croissant Pistacho", "price": 7200, "description": "Croissant hojaldrado relleno de crema de pistacho y pistacho tostado crocante"},
+            {"name": "Cheesecake Dubai", "price": 6200, "description": "Base de galleta crocante con cheesecake Philadelphia, cubierto con Nutella, crema de pistacho y kanafeh"},
+            {"name": "BomBon Dubai", "price": 5950, "description": "Espresso intenso Lavazza sobre crema de pistacho, crema batida y pistacho tostado"},
+            {"name": "Helado Simple Chocolate Dubai Especial", "price": 5850, "description": "Chocolate profundo con Nutella, crema de pistacho y kanafeh crocante"},
+            {"name": "Helado Doble Chocolate Dubai Especial", "price": 12550, "description": "Dos bolas con Nutella, pistacho, kanafeh y donut relleno de pistacho"},
+            {"name": "Affogato Dubai Especial", "price": 6550, "description": "Gelato artesanal de chocolate con café premium Lavazza, crema de pistacho y pistacho molido tostado"},
+            {"name": "Donuts Dubai con Helado Especial", "price": 9950, "description": "Donut de chocolate con relleno de pistacho, servido con gelato, Nutella y crema de pistacho"},
+            {"name": "Milkshake Chocolate Dubai Especial", "price": 11850, "description": "Shake cremoso con gelato de chocolate, cobertura de Nutella y pistacho, con donut relleno de pistacho"},
+            {"name": "Crepe Dulce Chocolate Dubai", "price": 11650, "description": "Crepe estilo italiano rellena de Nutella, crema de pistacho, pistacho tostado y kanafeh"},
+            {"name": "Crepe Dulce Chocolate Dubai + Gelato", "price": 14850, "description": "Crepe con Nutella y pistacho, servida con bola de gelato artesanal"},
+            {"name": "Waffle Dulce Chocolate Dubai", "price": 11650, "description": "Waffle burbuja relleno de Nutella, crema de pistacho, pistacho tostado y kanafeh crocante"},
+            {"name": "Waffle Dulce Chocolate Dubai + Gelato", "price": 14850, "description": "Waffle burbuja con Nutella y pistacho, servido con bola de gelato artesanal"}
+          ]
+        },
+        {
+          "category": "Helados Artesanales",
+          "items": [
+            {"name": "Helado Simple", "price": 4000, "description": "Una bola de helado artesanal cremoso e intenso. 18 sabores disponibles"},
+            {"name": "Helado Doble", "price": 5200, "description": "Dos bolas de helado artesanal. 18 sabores disponibles"},
+            {"name": "Helado Super Cono", "price": 6400, "description": "Tres bolas de helado artesanal en cono grande. 18 sabores"},
+            {"name": "Helado de 500 ML", "price": 9250, "description": "Envase de 500ml de helado artesanal de un sabor, incluye 2 conos y 2 cucharas"},
+            {"name": "Helado de 750 ML", "price": 13800, "description": "Envase de 750ml de helado artesanal de un sabor, incluye 3 conos y 3 cucharas"},
+            {"name": "Volcán Gelato", "price": 6850, "description": "Volcán de chocolate derretido tibio con helado a elección y topping intenso"},
+            {"name": "Croissant Gelato Nutella", "price": 9990, "description": "Croissant de mantequilla con 2 bolas de helado y salsa de Nutella o caramelo a elección"},
+            {"name": "Brownie Gelato Simple", "price": 7850, "description": "Brownie americano de 120g con 1 bola de helado y cobertura de chocolate"},
+            {"name": "Brownie Gelato Doble", "price": 11450, "description": "Brownie de 120g en copa con 2 bolas de helado, chocolate, crema batida y barquillos"},
+            {"name": "Trio Cookie Gelato Nutella", "price": 14550, "description": "Tres galletas con 3 bolas de helado cubiertas con Nutella o caramelo"},
+            {"name": "Banana Oreo Split", "price": 11250, "description": "Plátano fresco con 3 bolas de helado Cookie Oreo, crema batida y galleta Oreo"},
+            {"name": "Banana Split", "price": 12800, "description": "Plátano fresco con 3 bolas de helado, salsa de chocolate, crema batida y galleta"},
+            {"name": "Frutilla Split", "price": 15800, "description": "Frutillas frescas con 3 bolas de helado, Nutella, crema batida y galleta"}
+          ]
+        },
+        {
+          "category": "Helados Sin Azúcar",
+          "items": [
+            {"name": "Capuccino Stevia", "price": 6200, "description": "Helado artesanal de leche y crema, endulzado con stevia. Envase 250ml"},
+            {"name": "Coco Stevia", "price": 6200, "description": "Helado artesanal de coco endulzado con stevia. Envase 250ml"},
+            {"name": "Maní Stevia", "price": 6200, "description": "Helado artesanal de maní endulzado con stevia. Envase 250ml"},
+            {"name": "Chocolate Stevia", "price": 6200, "description": "Helado artesanal de chocolate endulzado con stevia. Envase 250ml"},
+            {"name": "Maracuyá al Agua Stevia", "price": 6200, "description": "Helado de maracuyá al agua, endulzado con stevia. Sin lácteos ni gluten"},
+            {"name": "Mango al Agua Stevia", "price": 6200, "description": "Helado de mango al agua, endulzado con stevia. Sin lácteos ni gluten"},
+            {"name": "Frutilla al Agua Stevia", "price": 6200, "description": "Helado de frutilla al agua, endulzado con stevia. Sin lácteos ni gluten"},
+            {"name": "Mango Maracuyá al Agua Stevia", "price": 6200, "description": "Helado de mango-maracuyá al agua, endulzado con stevia. Sin lácteos ni gluten"},
+            {"name": "Frambuesa Albahaca al Agua Stevia", "price": 6200, "description": "Helado de frambuesa-albahaca al agua, endulzado con stevia. Sin lácteos ni gluten"},
+            {"name": "Limón con Menta al Agua Stevia", "price": 6200, "description": "Helado de limón-menta al agua, endulzado con stevia. Sin lácteos ni gluten"}
+          ]
+        },
+        {
+          "category": "Pop Corn",
+          "items": [
+            {"name": "Pop Corn Pequeño (25 Oz)", "price": 800, "description": "Palomitas artesanales saladas, crocantes con toppings premium"},
+            {"name": "Pop Corn Mediana (46 Oz)", "price": 2000, "description": "Palomitas artesanales saladas en bolsa de 46oz"},
+            {"name": "Pop Corn Grande (85 Oz)", "price": 2500, "description": "Palomitas artesanales saladas en bolsa de 85oz"}
+          ]
+        },
+        {
+          "category": "Café Gelato",
+          "items": [
+            {"name": "Café Gelato Capuccino", "price": 7200, "description": "Doble espresso Lavazza con gelato de vainilla, crema, salsa de caramelo y crema batida"},
+            {"name": "Café Gelato Mocaccino", "price": 7800, "description": "Doble espresso Lavazza con gelato de chocolate, crema, salsa de chocolate y crema batida"},
+            {"name": "Affogato", "price": 5400, "description": "Doble espresso Lavazza sobre gelato de vainilla con salsa de caramelo"},
+            {"name": "Affogatella (Affogato + Nutella)", "price": 5800, "description": "Doble espresso Lavazza sobre gelato de vainilla con Nutella y salsa de caramelo"}
+          ]
+        },
+        {
+          "category": "Milkshakes",
+          "items": [
+            {"name": "MilkShake Clásico", "price": 6300, "description": "Shake artesanal con helado casero y leche a elección. 18 sabores disponibles"},
+            {"name": "MilkShake Coco", "price": 7400, "description": "Shake cremoso de coco con leche condensada y coco caramelizado"},
+            {"name": "MilkShake Cookie Oreo", "price": 7900, "description": "Shake de helado Oreo con crema, trozos de galleta, barquillos y salsa de chocolate"},
+            {"name": "MilkShake Snicker", "price": 7900, "description": "Shake de helado Snickers con crema, maní, barquillos y salsa de caramelo"},
+            {"name": "MilkShake Ferrero Rocher Nutella", "price": 9600, "description": "Shake de helado Ferrero Nutella con crema, chips de chocolate, barquillos, brownie y Nutella"}
+          ]
+        },
+        {
+          "category": "Frapés",
+          "items": [
+            {"name": "Frapé Clásico", "price": 5800, "description": "Bebida frozen con helado artesanal y leche fresca. 18 sabores a elección"},
+            {"name": "Frapé de Chocolate", "price": 6800, "description": "Bebida frozen con helado de chocolate, salsa de chocolate y chips"},
+            {"name": "Frapé de Frutilla", "price": 6800, "description": "Bebida frozen de frutilla con frutillas naturales y salsa de frutilla"},
+            {"name": "Frapé Caramel", "price": 6800, "description": "Bebida frozen de helado dulce de leche con salsa de caramelo"},
+            {"name": "Frapé de Snicker", "price": 6800, "description": "Frozen de helado Snickers con salsa de chocolate y caramelo"},
+            {"name": "Frapé Limón con Menta", "price": 6800, "description": "Bebida frozen fresca de helado limón-menta"},
+            {"name": "Frapuccino", "price": 6800, "description": "Frozen de helado de vainilla con doble espresso Lavazza y salsa de caramelo"}
+          ]
+        },
+        {
+          "category": "Jugos Naturales",
+          "items": [
+            {"name": "Jugo Natural de Frutilla", "price": 4800, "description": "Jugo natural de fruta congelada, sin azúcar añadida. 500ml"},
+            {"name": "Jugo Natural de Frambuesas", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Mora", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Arándanos", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Maracuyá", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Mango", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Piña", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Piña Coco", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Limón", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Guayaba", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Lulo", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Tomate de Árbol", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Guanábana", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Chirimoya", "price": 4800, "description": "500ml"},
+            {"name": "Jugo Natural de Mix Berries", "price": 4800, "description": "500ml"}
+          ]
+        },
+        {
+          "category": "Bebidas Frías",
+          "items": [
+            {"name": "Coca Cola Original 591ml", "price": 3000, "description": ""},
+            {"name": "Coca Cola Light 591ml", "price": 3000, "description": ""},
+            {"name": "Coca Cola Zero 591ml", "price": 3000, "description": ""},
+            {"name": "Sprite Original 591ml", "price": 3000, "description": ""},
+            {"name": "Sprite Zero 591ml", "price": 3000, "description": ""},
+            {"name": "Fanta Original 591ml", "price": 3000, "description": ""},
+            {"name": "Agua Benedictino 500ml Sin Gas", "price": 2500, "description": ""},
+            {"name": "Agua Benedictino 500ml Con Gas", "price": 2500, "description": ""},
+            {"name": "Agua Benedictino 500ml Sabor Manzana", "price": 2500, "description": ""},
+            {"name": "Monster Energy", "price": 3600, "description": ""},
+            {"name": "Monster Energy Ultra", "price": 3600, "description": ""},
+            {"name": "Monster Energy Absolutely Zero", "price": 3600, "description": ""}
+          ]
+        },
+        {
+          "category": "Cafés, Chocolates Calientes e Infusiones",
+          "items": [
+            {"name": "Ristretto / Espresso / Lungo", "price": 3200, "description": "Café intenso Lavazza en taza de 4oz"},
+            {"name": "Americano", "price": 3600, "description": "1-2 shots de espresso con agua caliente, taza de 9oz"},
+            {"name": "Capuccino", "price": 4000, "description": "1-2 shots de espresso con leche texturizada, taza de 9oz"},
+            {"name": "Mocaccino", "price": 4600, "description": "1-2 shots de espresso, chocolate Torani y leche texturizada, taza de 12oz"},
+            {"name": "Cortado", "price": 4000, "description": "1-2 shots de espresso con leche texturizada, taza de 12oz"},
+            {"name": "Latte", "price": 5200, "description": "1-2 shots de espresso con leche texturizada, taza de 14oz"},
+            {"name": "Ice Latte", "price": 5200, "description": "Latte frío con espresso, leche fría y hielo"},
+            {"name": "Macchiato", "price": 3600, "description": "1-2 shots de espresso con espuma de leche, taza de 4oz"},
+            {"name": "BomBón", "price": 4500, "description": "Café con leche condensada, espresso, crema batida y canela"},
+            {"name": "CaféTella", "price": 5200, "description": "1-2 shots de espresso con Nutella y leche texturizada, taza de 12oz"},
+            {"name": "Chai Latte", "price": 3800, "description": "Leche texturizada con té chai aromático"},
+            {"name": "Chocolate Caliente Clásico", "price": 4800, "description": "Chocolate caliente cremoso en taza de 14oz con marshmallows"},
+            {"name": "Chocolate con Naranja Caliente", "price": 4800, "description": "Chocolate caliente con naranja, taza de 14oz con marshmallows"},
+            {"name": "Chocolate con Almendra Caliente", "price": 4800, "description": "Chocolate caliente con almendra, taza de 14oz con marshmallows"},
+            {"name": "Chocolate con Frambuesa Caliente", "price": 4800, "description": "Chocolate caliente con frambuesa, taza de 14oz con marshmallows"},
+            {"name": "Chocolate LatteDolce", "price": 5600, "description": "Chocolate caliente con dulce de leche, taza de 14oz con marshmallows"},
+            {"name": "Chocolate Ciocotella", "price": 6300, "description": "Chocolate caliente con Nutella, taza de 14oz con marshmallows"},
+            {"name": "Infusiones", "price": 3000, "description": "Infusiones de té en taza de 9oz"}
+          ]
+        },
+        {
+          "category": "Crepes Saladas",
+          "items": [
+            {"name": "Crepe con Queso", "price": 6900, "description": "Crepe salada rellena de queso Gouda o mozzarella derretido"},
+            {"name": "Crepe con Jamón y Queso", "price": 7900, "description": "Crepe salada con queso derretido y jamón (cerdo o pavo)"},
+            {"name": "Crepe con Jamón, Queso y Vegetales", "price": 8600, "description": "Crepe salada con queso, jamón, lechuga, tomate y cebolla"},
+            {"name": "Crepe con Champiñón y Queso", "price": 9800, "description": "Crepe salada con queso derretido y champiñones salteados en mantequilla y ajo"}
+          ]
+        },
+        {
+          "category": "Crepes Dulces",
+          "items": [
+            {"name": "Crepe Dulce Clásica", "price": 8500, "description": "Crepe dulce clásica con Nutella o caramelo a elección"},
+            {"name": "Crepe con Frutilla", "price": 10900, "description": "Crepe dulce con frutillas frescas y Nutella o caramelo"},
+            {"name": "Crepe con Banana", "price": 10500, "description": "Crepe dulce con plátano fresco y Nutella o caramelo"},
+            {"name": "Crepe con Banana y Frutilla", "price": 11500, "description": "Crepe dulce con plátano y frutillas, Nutella o caramelo a elección"},
+            {"name": "Crepe con Banana y Frutilla Gelato", "price": 14700, "description": "Crepe dulce con plátano, frutillas y bola de gelato artesanal"},
+            {"name": "Crepe Cookies Oreo Nutella", "price": 11900, "description": "Crepe dulce con galletas Oreo, helado Oreo y Nutella"}
+          ]
+        },
+        {
+          "category": "Waffles Salados",
+          "items": [
+            {"name": "Waffle con Queso", "price": 6900, "description": "Waffle salado relleno de queso Gouda o mozzarella derretido"},
+            {"name": "Waffle con Jamón y Queso", "price": 7900, "description": "Waffle salado con queso derretido y jamón (cerdo o pavo)"},
+            {"name": "Waffle con Jamón, Queso y Vegetales", "price": 8600, "description": "Waffle salado con queso, jamón, lechuga, tomate y cebolla"},
+            {"name": "Waffle ChampiQueso", "price": 9800, "description": "Waffle salado con queso derretido y champiñones salteados en mantequilla y ajo"}
+          ]
+        },
+        {
+          "category": "Waffles Dulces",
+          "items": [
+            {"name": "Waffle Dulce Clásico", "price": 8500, "description": "Waffle dulce clásico con Nutella o caramelo a elección"},
+            {"name": "Waffle con Frutilla", "price": 10900, "description": "Waffle dulce con frutillas frescas y Nutella o caramelo"},
+            {"name": "Waffle con Banana", "price": 10500, "description": "Waffle dulce con plátano fresco y Nutella o caramelo"},
+            {"name": "Waffle con Banana y Frutilla", "price": 11500, "description": "Waffle dulce con plátano y frutillas, Nutella o caramelo a elección"},
+            {"name": "Waffle con Banana y Frutilla Gelato", "price": 14700, "description": "Waffle dulce con plátano, frutillas y bola de gelato artesanal"},
+            {"name": "Waffle Cookie Oreo Nutella", "price": 11900, "description": "Waffle dulce con galletas Oreo, helado Oreo y Nutella"}
+          ]
+        },
+        {
+          "category": "Sándwiches",
+          "items": [
+            {"name": "Tostada Palta", "price": 6500, "description": "Pan tostado con palta triturada y aceite de oliva"},
+            {"name": "Croissant de Mantequilla con Queso", "price": 5950, "description": "Croissant hojaldrado con queso Gouda o mozzarella derretido"},
+            {"name": "Croissant de Mantequilla con Jamón y Queso", "price": 6500, "description": "Croissant hojaldrado con queso derretido y jamón"},
+            {"name": "Sándwich de Queso", "price": 6400, "description": "Pan de miga con queso Gouda o mozzarella derretido"},
+            {"name": "Sándwich de Queso y Vegetales", "price": 6850, "description": "Pan de miga con queso derretido, lechuga, tomate y cebolla"},
+            {"name": "Sándwich de Jamón y Queso", "price": 6950, "description": "Pan de miga con queso derretido y jamón"},
+            {"name": "Sándwich de Jamón, Queso y Vegetales", "price": 7350, "description": "Pan de miga con jamón, queso derretido y vegetales frescos"},
+            {"name": "Sándwich de Queso, Palta y Vegetales", "price": 8200, "description": "Pan de miga con queso, palta y vegetales frescos"},
+            {"name": "Sándwich de Jamón, Queso, Palta y Vegetales", "price": 9500, "description": "Pan de miga con jamón, queso, palta y vegetales frescos"},
+            {"name": "Sándwich de Queso, Tomate y Orégano", "price": 6950, "description": "Pan de miga con queso derretido, tomate y orégano"},
+            {"name": "Sándwich de Champiñones", "price": 8500, "description": "Pan de miga con champiñones salteados en ajo, mantequilla y aceite de oliva"},
+            {"name": "Sándwich de Queso y Champiñones", "price": 9200, "description": "Pan de miga con queso derretido y champiñones al ajo"},
+            {"name": "Sándwich de Queso, Champiñones y Palta", "price": 11850, "description": "Pan de miga con queso, champiñones salteados y palta"},
+            {"name": "Sándwich de Queso, Champiñón, Palta y Vegetales", "price": 12800, "description": "Pan de miga con queso, champiñones, palta y vegetales"},
+            {"name": "Sándwich de Jamón, Queso, Champiñones y Palta", "price": 12950, "description": "Pan de miga con jamón, queso, champiñones salteados y palta"},
+            {"name": "Sándwich de Jamón, Queso, Champiñón, Palta y Vegetales", "price": 14500, "description": "Pan de miga con jamón, queso, champiñones, palta y vegetales"},
+            {"name": "Sándwich de Queso, Jamón Serrano y Rúcula", "price": 14200, "description": "Pan de miga con queso, jamón serrano y rúcula"},
+            {"name": "Sándwich de Queso, Jamón Serrano, Rúcula y Palta", "price": 15800, "description": "Pan de miga con queso, jamón serrano, rúcula y palta"}
+          ]
+        },
+        {
+          "category": "Tortas",
+          "items": [
+            {"name": "Lúcuma Manjar Nuez", "price": 6000, "description": "Torta de lúcuma con capas de manjar y nuez"},
+            {"name": "Cuatro Leches", "price": 6000, "description": "Torta de cuatro leches con relleno de caramelo"},
+            {"name": "Zanahoria", "price": 6000, "description": "Torta de zanahoria con canela, nueces y frosting de queso crema"},
+            {"name": "Trufa Choco Manjar", "price": 6000, "description": "Torta trufa de chocolate con relleno de chocolate y manjar"},
+            {"name": "Red Velvet", "price": 6000, "description": "Torta red velvet con frosting cremoso de queso"},
+            {"name": "Nutella", "price": 6000, "description": "Torta de chocolate rellena y cubierta de Nutella"},
+            {"name": "Hojarasca Chilena", "price": 6000, "description": "Torta hojarasca tradicional chilena con manjar y merengue"},
+            {"name": "Hojarasca Isidora", "price": 6000, "description": "Hojarasca con chocolate, manjar y frambuesas, tope de merengue"},
+            {"name": "Hojarasca Amor", "price": 6000, "description": "Hojarasca con crema diplomática, mermelada de frambuesa y manjar"}
+          ]
+        },
+        {
+          "category": "Cheesecake",
+          "items": [
+            {"name": "CheeseCake New York Cookie Oreo", "price": 5500, "description": "Cheesecake clásico con topping de Oreo"},
+            {"name": "CheeseCake New York Frambuesas", "price": 5500, "description": "Cheesecake clásico con mermelada de frambuesas y berries frescos"},
+            {"name": "CheeseCake New York Nutella Pistacho", "price": 5500, "description": "Cheesecake clásico con Nutella y pistacho crocante"},
+            {"name": "CheeseCake New York Maracuyá", "price": 5500, "description": "Cheesecake clásico con mermelada de maracuyá"},
+            {"name": "CheeseCake New York Nutella Ferrero", "price": 5500, "description": "Cheesecake con Nutella y bombón Ferrero Rocher"},
+            {"name": "CheeseCake New York Frutos del Bosque", "price": 5500, "description": "Cheesecake con mermelada de frutos del bosque, frambuesas y arándanos"}
+          ]
+        },
+        {
+          "category": "Otros Pasteles",
+          "items": [
+            {"name": "Quesillo o Leche Asada", "price": 5000, "description": "Flan sedoso con caramelo"},
+            {"name": "Pie de Limón", "price": 5000, "description": "Pie de limón con base de galleta, crema de limón y merengue suizo"}
+          ]
+        },
+        {
+          "category": "Bollería",
+          "items": [
+            {"name": "Palmeritas Mini", "price": 1850, "description": "Seis mini palmeras crocantes y doradas"},
+            {"name": "Croissant de Chocolate", "price": 1850, "description": "Croissant relleno de chocolate derretido"},
+            {"name": "Trenza de Chocolate", "price": 1850, "description": "Trenza de hojaldre rellena de chocolate"},
+            {"name": "Tronquito de Chocolate", "price": 1650, "description": "Tronquito de masa relleno de chocolate"},
+            {"name": "Napolitana de Chocolate", "price": 1650, "description": "Hojaldre relleno de chocolate"},
+            {"name": "Croissant Bombón Midi", "price": 1650, "description": "Mini croissant con relleno intenso de chocolate"},
+            {"name": "Napolitana Paris", "price": 1650, "description": "Hojaldre estilo parisino con chocolate cremoso"},
+            {"name": "Croissant de Mantequilla", "price": 4200, "description": "Croissant de mantequilla, dorado y crocante"},
+            {"name": "Croissant con Manjar", "price": 5200, "description": "Croissant de mantequilla relleno de manjar"},
+            {"name": "Croissant con Nutella", "price": 5950, "description": "Croissant de mantequilla relleno de Nutella"},
+            {"name": "Muffin de Chocolate", "price": 3200, "description": "Muffin intenso de chocolate con relleno de chocolate derretido"},
+            {"name": "Muffin de Red Velvet", "price": 3200, "description": "Muffin red velvet con relleno suave derretido"},
+            {"name": "Muffin de Nocilla", "price": 3200, "description": "Muffin de Nutella con relleno cremoso"},
+            {"name": "Muffin de Pistacho", "price": 3200, "description": "Muffin de pistacho con topping crocante y relleno cremoso de pistacho"},
+            {"name": "Brownies", "price": 4850, "description": "Brownie americano de 90g con chocolate intenso"},
+            {"name": "Volcán de Chocolate", "price": 3450, "description": "Volcán de chocolate de 60g con centro de chocolate líquido"},
+            {"name": "Macarrones", "price": 3850, "description": "Tres macarons delicados y coloridos, crocantes por fuera y suaves por dentro"},
+            {"name": "Profiteroles de Chocolate", "price": 2850, "description": "Tres profiteroles de chocolate rellenos de crema pastelera"},
+            {"name": "Cookie Choco Chip", "price": 2750, "description": "Galleta con chips de chocolate belga, 19% contenido de chocolate"},
+            {"name": "Cookie Cranberry", "price": 2750, "description": "Galleta americana con arándanos secos y chocolate blanco"},
+            {"name": "Cookie Doble Choco", "price": 2750, "description": "Galleta americana con chips de chocolate blanco y negro"},
+            {"name": "Donuts de Pistacho Rellena", "price": 3500, "description": "Donut glaseada de pistacho con pistacho triturado y relleno de crema de pistacho"}
+          ]
+        },
+        {
+          "category": "Postres",
+          "items": [
+            {"name": "Frutillas con Crema", "price": 9850, "description": "Copa grande con frutillas frescas, crema batida y leche condensada"},
+            {"name": "Fondue de Nutella", "price": 16850, "description": "Fondue de Nutella tibia para 2-4 personas con frutillas, plátano, waffle y marshmallows"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sherpa Comida India",
+      "source_url": "https://toteat.app/r/cl/SHERPA/8229/checkin/menu",
+      "platform": "toteat.app",
+      "status": "failed",
+      "reason": "Toteat is a Vue.js SPA that loads menu data dynamically via JavaScript. The menu content is base64-encoded in GLOBALDATA and requires JS execution to render. Static fetch cannot extract menu items."
+    },
+    {
+      "name": "Siam Thai",
+      "source_url": "https://www.siamthai.cl/la-carta",
+      "platform": "siamthai.cl (Wix)",
+      "status": "failed",
+      "reason": "Wix-based SPA. Menu content is loaded dynamically via JavaScript after page render. Static HTML only contains framework initialization code."
+    },
+    {
+      "name": "Tío Tomate",
+      "source_url": "https://menu.tu-mesa.com/tio-tomate/7612/menu?idLinktree=2391&locale=es",
+      "platform": "tu-mesa.com",
+      "status": "failed",
+      "reason": "Page returned 404 error with empty menuItems array. The menu URL may have changed or the restaurant may no longer be on this platform."
+    },
+    {
+      "name": "Brussels Heart of Chocolate",
+      "source_url": "https://www.brusselsheartofchocolate.com/carta/",
+      "platform": "brusselsheartofchocolate.com",
+      "status": "complete",
+      "categories": [
+        {
+          "category": "Chocolates Calientes",
+          "items": [
+            {"name": "Chocolate Caliente Clásico", "price": 4900, "description": "Elige tu tipo de chocolate de leche, blanco o amargo"},
+            {"name": "Chocolate Caliente Italiano", "price": 5600, "description": "El chocolate caliente más espeso. Elige entre chocolate de leche, blanco o amargo"},
+            {"name": "Chocolate Caliente Americano", "price": 5600, "description": "Marshmallows flotan en tu chocolate caliente. Elige entre chocolate de leche, blanco o amargo"},
+            {"name": "Chocolate Caliente Mocha", "price": 6000, "description": "Chocolate caliente con café. Elige entre chocolate de leche, blanco o amargo"},
+            {"name": "Chocolate Caliente Irlandés", "price": 7000, "description": "Clásico chocolate caliente con un toque de crema irlandesa"},
+            {"name": "Chocolate Caliente Escocés", "price": 7000, "description": "Clásico chocolate caliente con un toque de brandy"},
+            {"name": "Chocolate Caliente Matcha Blanco", "price": 5900, "description": "Chocolate caliente blanco con matcha y leche texturizada"}
+          ]
+        },
+        {
+          "category": "Café, Té e Infusiones",
+          "items": [
+            {"name": "Espresso Simple", "price": 2000, "description": "Shot simple de espresso"},
+            {"name": "Espresso Doble", "price": 3600, "description": "Shot doble de espresso"},
+            {"name": "Americano Pequeño", "price": 3600, "description": "Doble shot de espresso con agua caliente"},
+            {"name": "Americano Mediano", "price": 4500, "description": "Doble shot de espresso con agua caliente"},
+            {"name": "Macchiato Simple", "price": 2500, "description": "Shot de espresso con un toque de espuma"},
+            {"name": "Macchiato Doble", "price": 3600, "description": "Shot doble de espresso con un toque de espuma"},
+            {"name": "Capuccino Pequeño", "price": 3600, "description": "Shot de espresso, cacao en polvo y leche texturizada"},
+            {"name": "Capuccino Mediano", "price": 5200, "description": "Shot de espresso, cacao en polvo y leche texturizada"},
+            {"name": "Latte Pequeño", "price": 3600, "description": "Shot de espresso con leche texturizada"},
+            {"name": "Latte Mediano", "price": 5200, "description": "Shot de espresso con leche texturizada"},
+            {"name": "Affogato", "price": 5000, "description": "Shot de espresso, bola de helado de vainilla y chocolate"},
+            {"name": "Matcha Latte Pequeño", "price": 3500, "description": "Infusión matcha con leche texturizada"},
+            {"name": "Matcha Latte Mediano", "price": 4900, "description": "Infusión matcha con leche texturizada"},
+            {"name": "Chai Latte Pequeño", "price": 3500, "description": "Té chai infusionado con leche, miel y canela"},
+            {"name": "Chai Latte Mediano", "price": 4900, "description": "Té chai infusionado con leche, miel y canela"},
+            {"name": "Té Chai", "price": 2200, "description": "Té negro, canela, anís, trozos de jengibre, pimienta, clavo de olor, raíz de achicoria y cardamomo"},
+            {"name": "Té Verde", "price": 2200, "description": ""},
+            {"name": "Té Berries", "price": 2200, "description": "Té negro con frutillas liofilizadas, trozos de frambuesa y grosellas rojas"},
+            {"name": "Té Brisa Tropical", "price": 2200, "description": "Té verde, trozos de papaya, pétalos de girasol y esencias naturales"},
+            {"name": "Té Ceylon", "price": 2200, "description": "Té negro"},
+            {"name": "Infusión Menta Chocolate", "price": 2200, "description": ""},
+            {"name": "Té Summer Peach", "price": 2200, "description": "Té negro, trozos de papaya, damasco y durazno, hojas de mora, pétalos de caléndula"},
+            {"name": "Té Earl Grey", "price": 2200, "description": ""}
+          ]
+        },
+        {
+          "category": "Shakes, Frappes y Jugos",
+          "items": [
+            {"name": "Shake Montana", "price": 7700, "description": "Clásico milkshake de chocolate con una bola de helado de vainilla"},
+            {"name": "Shake Oh Cookies", "price": 7700, "description": "Chocolate blanco y muchas galletas"},
+            {"name": "Shake Mocha", "price": 8200, "description": "Clásico milkshake de chocolate con un shot de espresso"},
+            {"name": "Shake Red Mocha", "price": 7700, "description": "Espresso, chocolate leche, frutillas y crema chantilly"},
+            {"name": "Shake Café Helado", "price": 8200, "description": "Espresso, chocolate blanco y crema chantilly"},
+            {"name": "Goldshake", "price": 7700, "description": "Mantequilla de maní, chocolate blanco y manjar"},
+            {"name": "Shake P&M", "price": 7700, "description": "Chocolate blanco con plátano y manjar"},
+            {"name": "Espresso Naranja", "price": 6500, "description": "Espresso doble y jugo de naranja natural"},
+            {"name": "Dirty Chai", "price": 6900, "description": "Espresso doble, infusión de té chai, canela, miel y leche texturizada"},
+            {"name": "Iced Matcha", "price": 6900, "description": "Infusión de matcha con leche texturizada"},
+            {"name": "Frappe Verde", "price": 6400, "description": "Limón, melón tuna y menta"},
+            {"name": "Frappe Tropical", "price": 6400, "description": "Frutilla, mango y maracuyá"},
+            {"name": "Frappe Mango Naranja", "price": 6400, "description": "Mango y naranja"},
+            {"name": "Frappe Mix Berries", "price": 6400, "description": "Frutillas, arándanos, moras y frambuesas"},
+            {"name": "Té Helado Berries", "price": 4800, "description": "Infusión de té negro con frutillas, frambuesa y grosellas rojas, servido con limón, manzana y menta fresca"},
+            {"name": "Té Helado Summer Peach", "price": 4800, "description": "Infusión de té negro con papayas, damasco y durazno"},
+            {"name": "Jugo de Naranja", "price": 5900, "description": "100% jugo natural"},
+            {"name": "Jugo de Frutilla", "price": 5900, "description": "100% jugo natural"},
+            {"name": "Jugo Naranja Plátano", "price": 5900, "description": "100% jugo natural"},
+            {"name": "Limonada Menta", "price": 3500, "description": "Endulzada con azúcar"},
+            {"name": "Agua Prisma", "price": 1200, "description": "Con y sin gas"}
+          ]
+        },
+        {
+          "category": "Brunch y Desayunos",
+          "items": [
+            {"name": "Granola Saludable", "price": 5900, "description": "Granola casera con yoghurt natural, plátano, frutilla y manzana verde, acompañada de syrup"},
+            {"name": "Tostada Mamma Mia!", "price": 8800, "description": "Pan brioche artesanal remojado en huevo y leche, sellado con mantequilla, servido con palta, tomate cherry, champiñones, huevos pochados, pesto y rúcula"},
+            {"name": "Benedictino Crunch 2.0", "price": 8800, "description": "Dos tostadas de pan brioche crujientes con palta fresca, huevos pochados, salsa holandesa y cilantro"},
+            {"name": "Shakshuka", "price": 8800, "description": "Salsa de tomate picante con pimientos, cebolla y especias, servida con huevos pochados, cilantro y tostadas"},
+            {"name": "Tostada Francesa Tiramisú", "price": 9500, "description": "Pan brioche con crema de tiramisú, mascarpone, espresso y amaretto"},
+            {"name": "Tostada Francesa Brussels", "price": 9500, "description": "Pan brioche con salsa de frutillas ácidas, frutillas frescas y crema chantilly"},
+            {"name": "Tostada Francesa Crème Brûlée", "price": 9500, "description": "Pan brioche con helado rebosado en chocolate y canela, cremoso de chocolate, helado de vainilla y palomitas caramelizadas"},
+            {"name": "Tostada Francesa Praliné", "price": 10500, "description": "Pan brioche con praliné de avellanas, plátano fresco, helado montana y avellanas caramelizadas"}
+          ]
+        },
+        {
+          "category": "Postres Brussels",
+          "items": [
+            {"name": "Waffle Brussels", "price": 10900, "description": "Masa crujiente cubierta con chocolate de leche derretido, frutillas y crema Chantilly"},
+            {"name": "Waffle Ármalo Tú", "price": 10900, "description": "Personalizable: elige salsa base, topping y helado de opciones múltiples"},
+            {"name": "Tasting Tostadas", "price": 18500, "description": "Degustación de 4 tostadas: Tiramisú, Brussels, Crème Brûlée y Praliné"},
+            {"name": "Pizza Nutella Clásica", "price": 9200, "description": "Masa napolitana fermentada 36 horas con nutella, mini marshmallows, frutillas, crumble de cacao y helado vainilla"},
+            {"name": "Pizza Cookies and Cream", "price": 9200, "description": "Salsa de chocolate blanco con crumble de chocolate amargo, mini marshmallows y helado vainilla"},
+            {"name": "Pizza Raffaello Plátano", "price": 9200, "description": "Chocolate blanco y coco caramelizado, plátano fresco con syrup de maple, merengue y helado montana"},
+            {"name": "Pizza Chocolate Dubai", "price": 12900, "description": "Chocolate blanco con pistacho y merengue, mini marshmallows, pistachos frescos y helado chocolate"},
+            {"name": "Pizza Vegana", "price": 9200, "description": "Chocolate amargo, frutillas, plátano, ramas de chocolate amargo y helado frutilla"},
+            {"name": "Tasting Plate", "price": 18500, "description": "Degustación de 5 postres: Waffle Brussels, My Valentine, Tarta Tropical, Tostada Crème Brûlée y Mini Torre Tiramisú"},
+            {"name": "Desordenado Dubai", "price": 15800, "description": "Brownie tibio sobre ganache, frutillas, helado chocolate y salsa Dubai con pistacho y merengue"},
+            {"name": "Volcán de Chocolate", "price": 8200, "description": "Pastel tibio de chocolate que explota al cortar. Servido con helado a elegir"},
+            {"name": "Cheesecake Oh Cookies", "price": 9500, "description": "Base de cacao crocante, ganache y cheesecake marmoleado con avellanas, terminado con ganache de chocolate blanco"},
+            {"name": "My Valentine", "price": 7500, "description": "Merengue crocante, ganache de frambuesa, salsa ácida, parfait de frambuesas y ganache de chocolate blanco"},
+            {"name": "Ferrero Dream", "price": 9900, "description": "Base crocante cono helado con pasta de avellanas, financier, cremoso, mousse chocolate leche, praliné y glaseado chocolate amargo"},
+            {"name": "Tarta Tropical", "price": 9500, "description": "Base almendras, financier coco, compota tropical, mousse coco y chocolate blanco, montada con yoghurt y gel mango-maracuyá"},
+            {"name": "Cheesecake Oh Cookies Sin Azúcar", "price": 9500, "description": "Versión sin azúcar con base cacao, ganache amargo y cheesecake marmoleado"}
+          ]
+        },
+        {
+          "category": "Fondue Brussels",
+          "items": [
+            {"name": "Fondue para 2", "price": 25300, "description": "Elige 2 tipos de 7 opciones de fondue incluyendo Nutella con almendras tostadas, chocolate blanco con coco caramelizado y chocolate amargo. Incluye bowls de frutillas, plátano, marshmallows y waffles"},
+            {"name": "Fondue para 1", "price": 15800, "description": "Elige 1 tipo de 7 opciones de fondue. Incluye bowl de frutillas y plátano"}
+          ]
+        },
+        {
+          "category": "Para Compartir",
+          "items": [
+            {"name": "Desordenado Dubai", "price": 15800, "description": "Brownie de chocolate amargo tibio sobre ganache, frutillas frescas, helado de chocolate, salsa Dubai con pistachos frescos"},
+            {"name": "Tasting Plate", "price": 18500, "description": "Degustación de 5 postres: Waffle Brussels, tostada francesa crème brûlée, mini sweet valentine, mini tarta tropical y mini torre de tiramisú"},
+            {"name": "Tasting Tostadas Francesas", "price": 18500, "description": "Cuatro versiones de tostadas francesas en tamaño mini (Brussels, Praliné, Tiramisú y Crème Brûlée)"},
+            {"name": "Fondue para 2", "price": 25300, "description": "Elige 2 fondues de 8 opciones. Incluye bowls de frutas y marshmallows con waffles"}
+          ]
+        },
+        {
+          "category": "Menú para Niños",
+          "items": [
+            {"name": "Inyección de Chocolate", "price": 5900, "description": "Jeringa rellena con chocolate de leche. Servida con gomitas"},
+            {"name": "Hola Helado", "price": 7500, "description": "Elige 2 sabores de helado: Vainilla, chocolate, frutilla o Montana. Servido con chocolate de leche, ramas de chocolate blanco y gomitas"},
+            {"name": "Piñata", "price": 9900, "description": "Rompe la piñata y descubre en su interior marshmallows, frutilla, gomitas y crumble de cacao"},
+            {"name": "Affogato Kids", "price": 5400, "description": "Affogato en versión chocolatosa: Helado de vainilla y ganache de chocolate de leche"},
+            {"name": "Waffle Kids DIY", "price": 8900, "description": "Diseña tu waffle. Incluye chocolate de leche, frutillas y mini marshmallows"},
+            {"name": "Shake Pesca Milagrosa", "price": 6700, "description": "Shake de chocolate blanco y frutillas. Pesca gomitas congeladas del fondo"}
+          ]
+        },
+        {
+          "category": "Mini Bites",
+          "items": [
+            {"name": "Muffin Banana", "price": 2200, "description": "Muffin relleno con trozos de plátano y chips de chocolate amargo. Con canela y azúcar perlada"},
+            {"name": "Galleta Praliné", "price": 2990, "description": "Galleta crocante por fuera y húmeda por dentro. Rellena de praliné de almendras y chocolate de leche, almendras picadas y chips de chocolate blanco"},
+            {"name": "Galleta Red Velvet", "price": 2990, "description": "Galleta crocante por fuera y húmeda por dentro. Rellena de inserto de cheesecake y chocolate blanco"}
+          ]
+        },
+        {
+          "category": "Bombones",
+          "items": [
+            {"name": "Selva Negra", "price": null, "description": "Gel de guinda, bizcocho chocolate, ganache chocolate blanco"},
+            {"name": "Galleta Caramelo Canela", "price": null, "description": "Salsa caramelo, ganache chocolate leche, streussel de canela"},
+            {"name": "Cookies and Cream", "price": null, "description": "Streussel cacao, ganache chocolate blanco y vainilla"},
+            {"name": "Mix Berries Vainilla", "price": null, "description": "Mermelada berries, ganache chocolate blanco y vainilla"},
+            {"name": "Arándanos", "price": null, "description": "Mermelada arándanos, ganache chocolate leche"},
+            {"name": "Cheesecake Mango Maracuyá", "price": null, "description": "Gel mango/maracuyá, sablée almendras"},
+            {"name": "Mandarina", "price": null, "description": "Ganache chocolate blanco y mandarina, gel de mandarina confitada"},
+            {"name": "Menta Limón", "price": null, "description": "Ganache chocolate blanco y menta, curd de limón"},
+            {"name": "Crème Brûlée", "price": null, "description": "Salsa caramelo, crème brûlée vainilla"},
+            {"name": "Crema Irlandesa Vegano", "price": null, "description": "Chocolate amargo vegano, crema irlandesa, crocante chocolate vegano y arroz inflado"},
+            {"name": "Trufa Snickers", "price": null, "description": "Trufa chocolate leche, salsa de toffee, baño chocolate amargo, maní picado y tostado"},
+            {"name": "Trufa Tiramisú", "price": null, "description": "Trufa queso, salsa de espresso, baño chocolate leche, cacao"},
+            {"name": "Trufa Piña Colada", "price": null, "description": "Piña caramelizada, baño chocolate blanco, coco tostado"},
+            {"name": "Trufa Praliné de Avellanas", "price": null, "description": "Praliné avellanas sin azúcar, chocolate vegano, avellanas tostadas y picadas"},
+            {"name": "Trufa 3 Leches", "price": null, "description": "Tres leches chocolate blanco, crema pastelera, baño chocolate blanco, merengue"},
+            {"name": "Pistacho Frambuesa", "price": null, "description": "Chocolate blanco pistacho, ganache frambuesa, baño crocante chocolate blanco y pistachos"},
+            {"name": "Lúcuma Manjar", "price": null, "description": "Lúcuma, ganache manjar, baño crocante chocolate blanco, merengue"},
+            {"name": "Gianduia", "price": null, "description": "Ganache chocolate leche, praliné avellanas chocolate leche, baño crocante chocolate leche"},
+            {"name": "Chocolate Naranja", "price": null, "description": "Ganache chocolate amargo vegano y naranjas, baño crocante chocolate amargo vegano"},
+            {"name": "Rafaello", "price": null, "description": "Chocolate blanco, coco, praliné almendras, baño crocante chocolate blanco, coco"},
+            {"name": "Alfajor Chocolate Amargo Vegano", "price": null, "description": "Sablée cacao vegana, ganache y baño crocante de chocolate amargo vegano"},
+            {"name": "Alfajor Caramelo Salado", "price": null, "description": "Sablée almendras, ganache caramelo salado, baño crocante chocolate blanco"},
+            {"name": "Alfajor Manjar", "price": null, "description": "Sablée almendras, manjar, baño crocante chocolate leche"},
+            {"name": "Alfajor Café", "price": null, "description": "Sablée almendras, ganache café, baño crocante chocolate gold"}
+          ],
+          "pricing_note": "Bombones se venden en cajas: 9 unidades $10.100, 16 unidades $15.900, 25 unidades $24.300"
+        }
+      ]
+    },
+    {
+      "name": "Sapiens",
+      "source_url": "https://sapiens.ola.click/products/?type=read&from=qrcode",
+      "platform": "ola.click",
+      "status": "failed",
+      "reason": "OlaClick is a Vue.js SPA that loads menu content dynamically. The static HTML only contains CSS styling and configuration scripts. Individual category slugs also returned errors."
+    },
+    {
+      "name": "Galpón Italia",
+      "source_url": "https://galponitalia.cl/carta/",
+      "platform": "galponitalia.cl",
+      "status": "failed",
+      "reason": "Server returned 403 Forbidden. The site blocks automated requests."
+    },
+    {
+      "name": "Fuente Chilena",
+      "source_url": "https://qr.recafy.com/es/fuentechilena-barrioitalia/",
+      "platform": "recafy.com",
+      "status": "partial",
+      "reason": "Prices are loaded dynamically via JavaScript and not present in static HTML. Only category structure and some descriptions were extracted.",
+      "categories": [
+        {
+          "category": "Para Empezar",
+          "items": [
+            {"name": "Empanadas fritas variadas", "price": null, "description": "Variedad de empanadas fritas y otras preparaciones para compartir"}
+          ]
+        },
+        {
+          "category": "Sándwiches",
+          "items": [
+            {"name": "Sándwich de Plateada", "price": null, "description": "Sándwich de plateada al horno estilo chileno; tierno y jugoso"},
+            {"name": "Sándwich de Fricandela", "price": null, "description": "Hecho con carne WAGYU, puré de cebolla asada y finas hierbas"},
+            {"name": "Sándwich de Churrasco", "price": null, "description": "Corte selecto de carne, tierno, jugoso y sellado a la plancha al momento"}
+          ]
+        },
+        {
+          "category": "Bebidas",
+          "items": [
+            {"name": "Nuestros Sours", "price": null, "description": "Sours preparados con el estilo Fuente Chilena"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Moray",
+      "source_url": "https://www.restomovil.com/mkt/carta/MTQ3_landing.html",
+      "platform": "restomovil.com",
+      "status": "failed",
+      "reason": "Restomovil uses iframe-based rendering. Menu content is loaded dynamically inside an iframe and not accessible from the static HTML."
+    }
+  ],
+  "summary": {
+    "total_restaurants": 12,
+    "complete": 3,
+    "partial": 1,
+    "failed": 8,
+    "complete_restaurants": ["Pasión Andina", "Heladería Italia", "Brussels Heart of Chocolate"],
+    "partial_restaurants": ["Fuente Chilena"],
+    "failed_restaurants": ["Sombrero Vuelteao", "El Gusto Peruano", "Sherpa Comida India", "Siam Thai", "Tío Tomate", "Sapiens", "Galpón Italia", "Moray"],
+    "failure_reasons": {
+      "iframe_rendering": ["Sombrero Vuelteao", "El Gusto Peruano", "Moray"],
+      "spa_dynamic_loading": ["Sherpa Comida India", "Siam Thai", "Sapiens", "Fuente Chilena"],
+      "http_error": ["Tío Tomate (404)", "Galpón Italia (403)"]
+    }
+  }
+}

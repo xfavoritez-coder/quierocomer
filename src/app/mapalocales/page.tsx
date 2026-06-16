@@ -18,6 +18,19 @@ export type RestauranteMapaData = {
   dishCount: number
 }
 
+export type ProspectoMapaData = {
+  id: string
+  name: string
+  address: string
+  lat: number
+  lng: number
+  mapsUrl: string
+  rating: number | null
+  reviews: number | null
+  cartaUrl: string | null
+  provider: string | null
+}
+
 async function getRestaurantesActivos(): Promise<RestauranteMapaData[]> {
   const restaurantes = await prisma.restaurant.findMany({
     where: {
@@ -58,8 +71,29 @@ async function getRestaurantesActivos(): Promise<RestauranteMapaData[]> {
     }))
 }
 
+async function getProspectos(): Promise<ProspectoMapaData[]> {
+  const rows = await prisma.mapaProspecto.findMany({
+    where: { lat: { not: null }, lng: { not: null }, importedSlug: null },
+    select: { id: true, name: true, address: true, lat: true, lng: true, mapsUrl: true, rating: true, reviews: true, cartaUrl: true, provider: true },
+  })
+  return rows
+    .filter(r => r.lat != null && r.lng != null)
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      address: r.address,
+      lat: r.lat as number,
+      lng: r.lng as number,
+      mapsUrl: r.mapsUrl,
+      rating: r.rating,
+      reviews: r.reviews,
+      cartaUrl: r.cartaUrl ?? null,
+      provider: r.provider ?? null,
+    }))
+}
+
 export default async function MapaLocalesPage() {
-  const restaurantes = await getRestaurantesActivos()
+  const [restaurantes, prospectos] = await Promise.all([getRestaurantesActivos(), getProspectos()])
 
   return (
     <div className="min-h-dvh bg-[#0e0e0e] text-white">
@@ -67,9 +101,10 @@ export default async function MapaLocalesPage() {
         <h1 className="text-xl font-semibold">Mapa de locales activos</h1>
         <p className="text-sm text-white/50 mt-1">
           {restaurantes.length} local{restaurantes.length !== 1 ? 'es' : ''} en el feed
+          {prospectos.length > 0 && ` · ${prospectos.length} prospectos`}
         </p>
       </div>
-      <MapaLocalesClient restaurantes={restaurantes} />
+      <MapaLocalesClient restaurantes={restaurantes} prospectos={prospectos} />
     </div>
   )
 }

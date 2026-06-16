@@ -20,6 +20,7 @@ export default function FeedDishDetail({
   onCategoryClick,
   hideRelated,
   userLocation,
+  isDark,
 }: {
   dish: FeedDish
   allDishes: FeedDish[]
@@ -31,6 +32,7 @@ export default function FeedDishDetail({
   onCategoryClick?: (category: string) => void
   hideRelated?: boolean
   userLocation?: { lat: number; lng: number } | null
+  isDark?: boolean
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentIndex = allDishes.findIndex(d => d.id === dish.id)
@@ -125,6 +127,7 @@ export default function FeedDishDetail({
               profile={profile}
               hideRelated={hideRelated}
               userLocation={userLocation}
+              isDark={isDark}
             />
           )
         })}
@@ -140,13 +143,14 @@ export default function FeedDishDetail({
 /* ── Individual dish slide ── */
 function DishSlide({
   dish, index, isActive, onClose, onSave, onDishTap, onCategoryClick,
-  allDishes, dishPool, profile, hideRelated, userLocation,
+  allDishes, dishPool, profile, hideRelated, userLocation, isDark,
 }: {
   dish: FeedDish; index: number; isActive: boolean;
   onClose: () => void; onSave: (d: FeedDish) => void; onDishTap: (d: FeedDish) => void;
   onCategoryClick?: (category: string) => void;
   allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile; hideRelated?: boolean;
   userLocation?: { lat: number; lng: number } | null;
+  isDark?: boolean;
 }) {
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
@@ -252,7 +256,7 @@ function DishSlide({
         flex: '0 0 100%', width: '100vw', minHeight: '100%',
         scrollSnapAlign: 'start', scrollSnapStop: 'always',
         overflowY: 'auto', overflowX: 'hidden', scrollbarWidth: 'none',
-        background: '#fff',
+        background: isDark ? '#0e0e0e' : '#fff',
       }}
     >
       {/* Photo — big hero (close button inside to avoid extra space) */}
@@ -290,7 +294,7 @@ function DishSlide({
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 3 }}>
           <h2 style={{
             fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 24, fontWeight: 700, color: '#111', margin: 0, lineHeight: 1.2, flex: 1,
+            fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0, lineHeight: 1.2, flex: 1,
           }}>
             {dish.nombre}
             {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 6, fontSize: 16 }}>🌱</span>}
@@ -299,7 +303,7 @@ function DishSlide({
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, marginTop: 2,
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
@@ -311,7 +315,7 @@ function DishSlide({
           onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
           style={{
             background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
-            fontSize: 15, color: 'rgba(0,0,0,0.38)', fontWeight: 500,
+            fontSize: 15, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 500,
             display: 'block', marginBottom: 10, textAlign: 'left',
           }}
         >
@@ -323,7 +327,7 @@ function DishSlide({
           {dish.enOferta && dish.precioDescuento != null ? (
             <>
               <span style={{ fontSize: 20, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
-              <span style={{ fontSize: 14, color: 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
             </>
           ) : (
             <span style={{ fontSize: 20, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
@@ -332,7 +336,7 @@ function DishSlide({
 
         {/* Description */}
         {dish.descripcion && (
-          <p style={{ fontSize: 17, color: 'rgba(0,0,0,0.7)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontSize: 17, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)', lineHeight: 1.6, margin: '0 0 16px' }}>
             {dish.descripcion}
           </p>
         )}
@@ -349,20 +353,20 @@ function DishSlide({
           style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '14px 16px', borderRadius: 14, textAlign: 'left',
-            background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.07)',
+            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
             textDecoration: 'none', marginBottom: 14, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
             <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
               style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
           ) : (
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,0.35)', fontSize: 16, fontWeight: 700 }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 16, fontWeight: 700 }}>
               {dish.restaurante.charAt(0)}
             </div>
           )}
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 16, fontWeight: 600, color: '#111', margin: 0 }}>{dish.restaurante}</p>
-            {dish.restauranteDireccion && <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.55)', margin: '2px 0 0' }}>
+            <p style={{ fontSize: 16, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
+            {dish.restauranteDireccion && <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0' }}>
               {(() => {
                 const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                 if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
@@ -370,25 +374,25 @@ function DishSlide({
               })()}
             </p>}
             {dist != null && (
-              <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 A {formatDistance(dist)}
               </p>
             )}
             {dish.googleRating != null && (
-              <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <span style={{ color: '#F4A623', fontSize: 12 }}>★</span>
-                <span style={{ fontWeight: 600, color: 'rgba(0,0,0,0.65)' }}>{dish.googleRating.toFixed(1)}</span>
+                <span style={{ fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)' }}>{dish.googleRating.toFixed(1)}</span>
                 {dish.googleRatingCount != null && (
-                  <span style={{ color: 'rgba(0,0,0,0.4)' }}>
+                  <span style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
                     ({dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(1)}k` : dish.googleRatingCount})
                   </span>
                 )}
-                <span style={{ color: 'rgba(0,0,0,0.3)', fontSize: 11 }}>en Google</span>
+                <span style={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', fontSize: 11 }}>en Google</span>
               </p>
             )}
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.25)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
             <path d="M9 18l6-6-6-6" />
           </svg>
         </a>
@@ -396,17 +400,17 @@ function DishSlide({
         {/* Más platos del local — siempre visible */}
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Más de {dish.restaurante}</p>
+            <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Más de {dish.restaurante}</p>
             <div style={{ position: 'relative', overflow: 'hidden', marginRight: -20 }}>
               <div ref={restScrollRef} onScroll={e => { const el = e.currentTarget; setRestScrollEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 8); setRestScrollStart(el.scrollLeft <= 0) }} style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingRight: 20 }}>
                 {restDishes.map(d => (
                   <div key={d.id} onClick={() => onDishTap(d)} style={{
                     flexShrink: 0, width: 148, cursor: 'pointer', borderRadius: 12, overflow: 'hidden',
-                    background: 'rgba(0,0,0,0.04)',
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                   }}>
                     <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 148, height: 104, objectFit: 'cover', display: 'block' }} />
                     <div style={{ padding: '5px 7px' }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
                       <p style={{ fontSize: 11, color: '#F4A623', margin: '2px 0 0', fontWeight: 700 }}>${d.precio.toLocaleString('es-CL')}</p>
                     </div>
                   </div>
@@ -415,13 +419,17 @@ function DishSlide({
               {!restScrollStart && (
                 <div style={{
                   position: 'absolute', top: 0, left: 0, bottom: 0, width: 28, pointerEvents: 'none',
-                  background: 'linear-gradient(to left, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.6) 100%)',
+                  background: isDark
+                    ? 'linear-gradient(to left, transparent 0%, rgba(14,14,14,0.6) 100%)'
+                    : 'linear-gradient(to left, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.6) 100%)',
                 }} />
               )}
               {!restScrollEnd && (
                 <div style={{
                   position: 'absolute', top: 0, right: 0, bottom: 0, width: 28, pointerEvents: 'none',
-                  background: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.6) 100%)',
+                  background: isDark
+                    ? 'linear-gradient(to right, transparent 0%, rgba(14,14,14,0.6) 100%)'
+                    : 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.6) 100%)',
                 }} />
               )}
             </div>
@@ -447,8 +455,8 @@ function DishSlide({
 
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (
-          <div style={{ paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.4)', margin: '0 0 12px' }}>También te podría gustar</p>
+          <div style={{ paddingTop: 16, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 12px' }}>También te podría gustar</p>
             <div style={{ display: 'flex', gap: 10 }}>
               {[0, 1].map(col => (
                 <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>

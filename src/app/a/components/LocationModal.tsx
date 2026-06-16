@@ -16,6 +16,7 @@ interface NominatimResult {
 interface LocationModalProps {
   onClose: () => void
   onConfirm: (loc: { lat: number; lng: number; label: string }) => void
+  isDark?: boolean
 }
 
 // ─── Map component (loaded dynamically, no SSR) ────────────────────────────────
@@ -27,7 +28,7 @@ const MapView = dynamic(
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function LocationModal({ onClose, onConfirm }: LocationModalProps) {
+export default function LocationModal({ onClose, onConfirm, isDark }: LocationModalProps) {
   const [step, setStep] = useState<'search' | 'map'>('search')
 
   // Search step
@@ -153,20 +154,20 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 91,
         minHeight: '70vh', maxHeight: '92vh',
-        background: '#fff',
+        background: isDark ? '#1a1a1a' : '#fff',
         borderRadius: '24px 24px 0 0',
         animation: 'slideUp 0.25s ease-out',
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden',
       }}>
         {/* Drag handle */}
-        <div style={{ width: 40, height: 5, background: 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '12px auto 0', flexShrink: 0 }} />
+        <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '12px auto 0', flexShrink: 0 }} />
 
         {/* X button — fijo arriba a la derecha */}
         <button onClick={onClose} style={{
           position: 'absolute', top: 14, right: 16,
           background: 'none', border: 'none', cursor: 'pointer',
-          color: 'rgba(0,0,0,0.35)', fontSize: 28, lineHeight: 1,
+          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', fontSize: 28, lineHeight: 1,
           padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>×</button>
 
@@ -174,7 +175,7 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
             {/* Header */}
             <div style={{ padding: '14px 16px 12px', flexShrink: 0 }}>
-              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#111' }}>¿Dónde estás?</h2>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111' }}>¿Dónde estás?</h2>
             </div>
 
             {/* Search input */}
@@ -182,7 +183,7 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
               <div style={{ position: 'relative' }}>
                 <svg
                   width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="rgba(0,0,0,0.3)" strokeWidth="2.5" strokeLinecap="round"
+                  stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
                   style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
                 >
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -196,15 +197,15 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
                   style={{
                     width: '100%', padding: '13px 14px 13px 42px',
                     borderRadius: 14, fontSize: 15,
-                    background: 'rgba(0,0,0,0.03)',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    color: '#111', outline: 'none', boxSizing: 'border-box',
+                    background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.03)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                    color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
                   }}
                 />
                 {searchLoading && (
                   <div style={{
                     position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                    width: 16, height: 16, border: '2px solid rgba(0,0,0,0.1)',
+                    width: 16, height: 16, border: `2px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
                     borderTopColor: '#F4A623', borderRadius: '50%',
                     animation: 'spin 0.7s linear infinite',
                   }} />
@@ -216,8 +217,8 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
             {searchResults.length > 0 && (
               <div style={{
                 margin: '8px 16px 0',
-                background: '#fff',
-                border: '1px solid rgba(0,0,0,0.08)',
+                background: isDark ? '#252525' : '#fff',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
                 borderRadius: 14,
                 maxHeight: 240,
                 overflowY: 'auto',
@@ -232,11 +233,11 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
                       width: '100%', padding: '12px 14px',
                       background: 'none', border: 'none', cursor: 'pointer',
                       textAlign: 'left',
-                      borderBottom: i < searchResults.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                      borderBottom: i < searchResults.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none',
                     }}
                   >
                     <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📍</span>
-                    <span style={{ fontSize: 13, color: '#222', lineHeight: 1.4 }}>
+                    <span style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.8)' : '#222', lineHeight: 1.4 }}>
                       {trimDisplayName(result.display_name)}
                     </span>
                   </button>
@@ -295,8 +296,8 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
                 onClick={() => setStep('search')}
                 style={{
                   width: 36, height: 36, borderRadius: 999,
-                  border: '1px solid rgba(0,0,0,0.1)', background: 'rgba(0,0,0,0.04)',
-                  color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
+                  color: isDark ? 'rgba(255,255,255,0.7)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', flexShrink: 0,
                 }}
               >
@@ -304,7 +305,7 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#111' }}>Confirma tu ubicación</h2>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: isDark ? '#fff' : '#111' }}>Confirma tu ubicación</h2>
             </div>
 
             {/* Map */}
@@ -313,7 +314,7 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
             </div>
 
             {/* Hint debajo del mapa */}
-            <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', margin: '10px 16px 0', lineHeight: 1.4, fontWeight: 500 }}>
+            <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.55)', margin: '10px 16px 0', lineHeight: 1.4, fontWeight: 500 }}>
               Arrastra el marcador para ajustar la ubicación exacta
             </p>
 
@@ -322,10 +323,10 @@ export default function LocationModal({ onClose, onConfirm }: LocationModalProps
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '12px 14px', borderRadius: 14,
-                background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.07)',
+                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
               }}>
                 <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>📍</span>
-                <p style={{ margin: 0, fontSize: 14, color: '#222', lineHeight: 1.5, fontWeight: 500 }}>
+                <p style={{ margin: 0, fontSize: 14, color: isDark ? 'rgba(255,255,255,0.8)' : '#222', lineHeight: 1.5, fontWeight: 500 }}>
                   {addressLabel || 'Ubicación seleccionada'}
                 </p>
               </div>

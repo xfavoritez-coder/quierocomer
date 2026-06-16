@@ -4,29 +4,13 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "crons": [
-    {
-      "path": "/api/cron/diario",
-      "schedule": "0 14 * * *"
-    },
-    {
-      "path": "/api/cron/experience",
-      "schedule": "*/15 * * * *"
-    },
-    {
+{
       "path": "/api/cron/cleanup?key=__SEED_SECRET__",
       "schedule": "0 4 * * *"
     },
     {
       "path": "/api/cron/toteat-sync",
       "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/badge-snapshot",
-      "schedule": "0 */2 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-email",
-      "schedule": "11 15 * * 1"
     },
     {
       "path": "/api/cron/nurturing",

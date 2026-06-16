@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import type { FeedDish } from '../types'
 import LocationModal from '../components/LocationModal'
 import { distanceKm } from '../lib/geo'
@@ -78,18 +78,18 @@ export default function NewHome({
   initialDishId?: string
 }) {
   const [view, setView] = useState<View>('feed')
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('qc_theme') === 'dark'
-    return false
-  })
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark)
-  }, [isDark])
+  const [isDark, setIsDark] = useState(false)
+
+  // useLayoutEffect corre antes del primer paint — sin flash
+  useLayoutEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'))
+  }, [])
 
   const toggleTheme = () => {
     setIsDark(prev => {
       const next = !prev
       localStorage.setItem('qc_theme', next ? 'dark' : 'light')
+      document.documentElement.classList.toggle('dark', next)
       return next
     })
   }
@@ -122,7 +122,7 @@ export default function NewHome({
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : detectMealSlot())
   const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular'>('recent')
-  const [filterMaxKm, setFilterMaxKm] = useState(20)
+  const [filterMaxKm, setFilterMaxKm] = useState(40)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(20)
@@ -368,8 +368,8 @@ export default function NewHome({
       if (inCommune.length > 0) filtered = inCommune
     }
     // Distance filter — uses slider value (filterMaxKm) or GPS auto
-    if (userLocation && !locationName) {
-      const maxDist = filterMaxKm < 20 ? filterMaxKm : 999
+    if (userLocation) {
+      const maxDist = filterMaxKm < 40 ? filterMaxKm : 999
       const noiseScale = Math.max(0.5, maxDist * 0.25) // ruido = 25% del radio, mín 0.5km
       const withDist = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
@@ -512,13 +512,13 @@ export default function NewHome({
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <a href="/" style={{ textDecoration: 'none', cursor: 'pointer' }}>
-          <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: '#111' }}>
+          <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: isDark ? '#fff' : '#111' }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
         </a>
         <button onClick={() => setMenuOpen(true)} style={{
           background: 'none', border: 'none', cursor: 'pointer', padding: 6,
-          color: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
@@ -528,15 +528,16 @@ export default function NewHome({
 
       {/* ─── Sticky: search + ubicación/filtros ─── */}
       <header style={{
+        display: view === 'perfil' ? 'none' : 'flex',
         position: 'sticky', top: 0, zIndex: 35,
         background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        padding: '8px 16px 8px', display: 'flex', flexDirection: 'column', gap: 7,
+        padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
       }}>
 
         {/* Row 1: Search bar full width */}
         <div style={{ position: 'relative', marginBottom: 6 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2.5" strokeLinecap="round"
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
@@ -558,7 +559,7 @@ export default function NewHome({
           {searchInput && (
             <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(0,0,0,0.3)', zIndex: 2,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 2,
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
@@ -572,8 +573,8 @@ export default function NewHome({
               <div onClick={() => setShowSuggestions(false)} style={{ position: 'fixed', inset: 0, zIndex: 36 }} />
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 37, marginTop: 4,
-                background: '#fff',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
+                background: isDark ? '#1e1e1e' : '#fff',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14,
                 boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
               }}>
                 {suggestions.map((s, i) => (
@@ -589,14 +590,14 @@ export default function NewHome({
                   }} style={{
                     display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                     padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                    textAlign: 'left', borderBottom: i < suggestions.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                    textAlign: 'left', borderBottom: i < suggestions.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none',
                   }}>
                     <span style={{ fontSize: 15, flexShrink: 0 }}>
                       {s.type === 'categoria' ? '🏷️' : s.type === 'ingrediente' ? '🧂' : s.type === 'local' ? '🏪' : '🍽'}
                     </span>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 14, color: '#111', margin: 0 }}>{s.label}</p>
-                      <p style={{ fontSize: 10, color: 'rgba(0,0,0,0.3)', margin: '1px 0 0' }}>
+                      <p style={{ fontSize: 14, color: isDark ? '#fff' : '#111', margin: 0 }}>{s.label}</p>
+                      <p style={{ fontSize: 10, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', margin: '1px 0 0' }}>
                         {s.type === 'categoria' ? 'Categoría'
                           : s.type === 'ingrediente' ? `Ingrediente · ${s.count} platos`
                           : s.type === 'local' ? 'Local'
@@ -615,11 +616,11 @@ export default function NewHome({
           {/* Ubicación */}
           <button onClick={() => setLocationModalOpen(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            background: (locationName || gpsLabel) ? 'rgba(244,166,35,0.1)' : 'rgba(0,0,0,0.05)',
-            border: `1px solid ${(locationName || gpsLabel) ? 'rgba(244,166,35,0.3)' : 'rgba(0,0,0,0.08)'}`,
+            background: (locationName || gpsLabel) ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+            border: `1px solid ${(locationName || gpsLabel) ? 'rgba(244,166,35,0.3)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
             borderRadius: 20, padding: '6px 12px', cursor: 'pointer',
-            color: (locationName || gpsLabel) ? '#c97d00' : 'rgba(0,0,0,0.5)',
-            fontSize: 12, fontWeight: 500,
+            color: (locationName || gpsLabel) ? '#c97d00' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+            fontSize: 13, fontWeight: 500,
             minWidth: 0, maxWidth: 'calc(100% - 100px)', overflow: 'hidden',
           }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
@@ -640,7 +641,7 @@ export default function NewHome({
             border: '1px solid rgba(244,166,35,0.3)',
             borderRadius: 20, padding: '6px 14px', cursor: 'pointer',
             color: '#c97d00',
-            fontSize: 12, fontWeight: 500,
+            fontSize: 13, fontWeight: 500,
           }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
@@ -661,51 +662,51 @@ export default function NewHome({
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
             maxHeight: '90vh', overflowY: 'auto',
             padding: '12px 16px', boxSizing: 'border-box',
-            background: '#fff',
+            background: isDark ? '#1a1a1a' : '#fff',
             borderRadius: '24px 24px 0 0',
             animation: 'slideUp 0.25s ease-out',
           }}>
             <button onClick={() => setFilterOpen(false)} style={{
               position: 'absolute', top: 28, right: 16,
-              background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)',
+              background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
               fontSize: 30, lineHeight: 1, padding: 0, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>×</button>
 
-            <div style={{ width: 40, height: 5, background: 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
+            <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
 
             <div style={{ marginBottom: 22 }}>
-              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#111' }}>Filtros</h2>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111' }}>Filtros</h2>
             </div>
 
             {/* Distancia */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 Distancia
               </h3>
-              <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '16px 14px', background: 'rgba(0,0,0,0.02)' }}>
-                <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: '#111' }}>
-                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
+              <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
+                <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: isDark ? '#fff' : '#111' }}>
+                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{filterMaxKm < 40 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
                 </p>
-                <div style={{ position: 'relative', height: 5, background: 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
-                  <div style={{ width: `${(filterMaxKm / 20) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
-                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 20) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
+                <div style={{ position: 'relative', height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
+                  <div style={{ width: `${(filterMaxKm / 40) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
+                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 40) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
                 </div>
-                <input type="range" min={1} max={20} value={filterMaxKm}
+                <input type="range" min={1} max={40} value={filterMaxKm}
                   onChange={e => setFilterMaxKm(Number(e.target.value))}
                   style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
-                  <span>1 km</span><span>5 km</span><span>10 km</span><span>20+ km</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
+                  <span>1 km</span><span>10 km</span><span>20 km</span><span>40+ km</span>
                 </div>
               </div>
             </div>
 
             {/* Dieta */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></svg>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></svg>
                 Dieta
               </h3>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -715,10 +716,10 @@ export default function NewHome({
                   { id: 'VEGETARIAN' as const, label: '🥬 Vegetariano' },
                 ].map(d => (
                   <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
-                    border: filterDiet === d.id ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
+                    border: filterDiet === d.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 14, padding: '10px 16px',
-                    background: filterDiet === d.id ? 'rgba(244,166,35,0.07)' : '#fff',
-                    color: filterDiet === d.id ? '#c97d00' : 'rgba(0,0,0,0.6)',
+                    background: filterDiet === d.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: filterDiet === d.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
                     fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
                   }}>
                     {d.label}
@@ -729,8 +730,8 @@ export default function NewHome({
 
             {/* Momento */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                 Momento
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -741,9 +742,9 @@ export default function NewHome({
                 ].map((m, i) => (
                   <button key={i} onClick={() => { setFilterMeal(m.meal); setFilterMealDisplay(m.display) }} style={{
                     minHeight: 68, borderRadius: 12,
-                    border: filterMealDisplay === m.display ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
-                    background: filterMealDisplay === m.display ? 'rgba(244,166,35,0.07)' : '#fff',
-                    color: filterMealDisplay === m.display ? '#c97d00' : 'rgba(0,0,0,0.55)',
+                    border: filterMealDisplay === m.display ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    background: filterMealDisplay === m.display ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: filterMealDisplay === m.display ? '#c97d00' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
                     fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6,
                     alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                   }}>
@@ -756,8 +757,8 @@ export default function NewHome({
 
             {/* Ordenar */}
             <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" /></svg>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)'} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" /></svg>
                 Ordenar por
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -768,10 +769,10 @@ export default function NewHome({
                   { id: 'price-desc' as const, label: 'Precio ↓' },
                 ].map(s => (
                   <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
-                    border: filterSort === s.id ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
+                    border: filterSort === s.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 14, padding: '10px 16px',
-                    background: filterSort === s.id ? 'rgba(244,166,35,0.07)' : '#fff',
-                    color: filterSort === s.id ? '#c97d00' : '#111',
+                    background: filterSort === s.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: filterSort === s.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
                     fontSize: 13, cursor: 'pointer',
                   }}>
                     {s.label}
@@ -786,7 +787,7 @@ export default function NewHome({
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 82,
             padding: '12px 18px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-            background: 'linear-gradient(to top, #fff 60%, transparent)',
+            background: isDark ? 'linear-gradient(to top, #1a1a1a 60%, transparent)' : 'linear-gradient(to top, #fff 60%, transparent)',
           }}>
             <button onClick={() => { setFilterOpen(false); setShuffleSeed(Math.random()); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
               width: '100%', height: 52, border: 'none', borderRadius: 16,
@@ -817,13 +818,13 @@ export default function NewHome({
               padding: '18px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
             }}>
-              <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: '#111' }}>
+              <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111' }}>
                 Quiero<span style={{ color: '#F4A623' }}>Comer</span>
               </span>
               <button onClick={() => setMenuOpen(false)} style={{
                 width: 34, height: 34, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.05)', border: 'none',
-                cursor: 'pointer', color: 'rgba(0,0,0,0.4)',
+                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', border: 'none',
+                cursor: 'pointer', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -836,7 +837,7 @@ export default function NewHome({
               <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
                 display: 'flex', alignItems: 'center', gap: 14,
                 padding: '14px 14px', borderRadius: 12,
-                color: '#111', fontSize: 16, fontWeight: 600,
+                color: isDark ? '#fff' : '#111', fontSize: 16, fontWeight: 600,
                 background: view === 'perfil' ? 'rgba(244,166,35,0.08)' : 'transparent',
                 border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
                 WebkitTapHighlightColor: 'transparent',
@@ -846,11 +847,11 @@ export default function NewHome({
                 </span>
                 Mi perfil
               </button>
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '4px 14px' }} />
+              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', margin: '4px 14px' }} />
               <a href="/qr" style={{
                 display: 'flex', alignItems: 'center', gap: 14,
                 padding: '14px 14px', borderRadius: 12,
-                color: '#111', textDecoration: 'none', fontSize: 16, fontWeight: 600,
+                color: isDark ? '#fff' : '#111', textDecoration: 'none', fontSize: 16, fontWeight: 600,
                 WebkitTapHighlightColor: 'transparent',
               }}>
                 <span style={{ color: '#F4A623', display: 'flex', flexShrink: 0 }}>
@@ -917,6 +918,7 @@ export default function NewHome({
             {/* LocationModal */}
             {locationModalOpen && (
               <LocationModal
+                isDark={isDark}
                 onClose={() => setLocationModalOpen(false)}
                 onConfirm={({ lat, lng, label }) => {
                   setUserLocation({ lat, lng })
@@ -973,7 +975,7 @@ export default function NewHome({
           {/* Results count strip */}
           {feedDishes.length > 0 && (
             <div style={{ padding: '6px 16px 4px' }}>
-              <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: 0 }}>
+              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
                 {searchQuery.trim()
                   ? `${feedDishes.length} resultado${feedDishes.length !== 1 ? 's' : ''} para "${searchQuery}"`
                   : `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} encontrados`}
@@ -1005,9 +1007,9 @@ export default function NewHome({
               )}
             </>
           ) : (
-            <div style={{ textAlign: 'center', padding: '80px 30px', color: 'rgba(0,0,0,0.35)' }}>
+            <div style={{ textAlign: 'center', padding: '80px 30px', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' }}>
               <p style={{ fontSize: 40, margin: '0 0 16px' }}>🍽</p>
-              <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px', color: 'rgba(0,0,0,0.4)' }}>
+              <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
                 No encontramos platos aquí
               </p>
               <p style={{ fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>
@@ -1038,6 +1040,7 @@ export default function NewHome({
             onDishTap={handleLikedDishTap}
             onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
             onViewAllViewed={() => { setView('all-liked'); window.scrollTo(0, 0) }}
+            isDark={isDark}
           />
         </>
       )}
@@ -1046,13 +1049,13 @@ export default function NewHome({
       {view === 'all-liked' && (
         <div style={{ padding: '8px 3px 100px' }}>
           <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
+            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             </button>
-            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#111', margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
               Me han gustado
             </h2>
-            <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>({likedDishes.length})</span>
+            <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)' }}>({likedDishes.length})</span>
           </div>
           {likedDishes.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
@@ -1073,7 +1076,7 @@ export default function NewHome({
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(0,0,0,0.3)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
               <p style={{ fontSize: 32, marginBottom: 8 }}>👍</p>
               <p style={{ fontSize: 14 }}>Aún no tienes platos que te gusten</p>
             </div>
@@ -1085,13 +1088,13 @@ export default function NewHome({
       {view === 'all-saved' && (
         <div style={{ padding: '8px 16px 100px' }}>
           <div style={{ padding: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
+            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             </button>
-            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#111', margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
               Guardados
             </h2>
-            <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>({savedDishes.length})</span>
+            <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)' }}>({savedDishes.length})</span>
           </div>
           <SavedList antojos={[]} saved={savedDishes} onDishTap={handleLikedDishTap} onRemove={handleRemoveSaved} />
         </div>
@@ -1111,6 +1114,7 @@ export default function NewHome({
           onDishTap={handleDishTap}
           onCategoryClick={(cat) => { setActiveCategory(cat); setSelectedDish(null); window.history.replaceState({}, '', '/') }}
           userLocation={userLocation}
+          isDark={isDark}
         />
       )}
 

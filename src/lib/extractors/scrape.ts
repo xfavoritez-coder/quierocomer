@@ -43,8 +43,13 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
   }
 
   if (preferJina) {
-    // For heavy SPAs (Vue/React), tell Jina to wait for content to render
-    const spaHeaders = domain.includes("ola.click") ? { "X-Wait-For-Selector": ".products", "X-Timeout": "30000" } : undefined;
+    // For heavy SPAs, tell Jina to wait for specific elements to render
+    let spaHeaders: Record<string, string> | undefined;
+    if (domain.includes("ola.click")) {
+      spaHeaders = { "X-Wait-For-Selector": ".products", "X-Timeout": "30000" };
+    } else if (domain.includes("fu.do")) {
+      spaHeaders = { "X-Wait-For-Selector": "app-product-card,app-menu,.product-card,.menu-product", "X-Timeout": "30000" };
+    }
     try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, spaHeaders ? 35000 : 12000, spaHeaders); } catch {}
     return await fetchWithTimeout(url, 8000);
   }

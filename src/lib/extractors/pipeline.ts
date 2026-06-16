@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import bcrypt from "bcryptjs";
 import { extractJusto } from "./justo";
+import { extractRappi } from "./rappi";
 import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
 import { extractMiCartaQR } from "./micartaqr";
@@ -231,10 +232,20 @@ function cleanTrackingParams(url: string): string {
 async function extractMenu(cartaUrl: string, providerName: string | null, extractionConfig?: any): Promise<ExtractionResult> {
   // Clean tracking params before any extraction
   cartaUrl = cleanTrackingParams(cartaUrl);
+  // Auto-detect provider from URL if not specified
+  if (!providerName) {
+    if (cartaUrl.includes('rappi.cl') || cartaUrl.includes('rappi.com')) providerName = 'Rappi'
+    else if (cartaUrl.includes('ubereats.com')) providerName = 'UberEats'
+    else if (cartaUrl.includes('getjusto.com') || cartaUrl.includes('/pedir')) providerName = 'Justo'
+    else if (cartaUrl.includes('fu.do')) providerName = 'Fudo'
+    else if (cartaUrl.includes('pedidosya.cl')) providerName = 'PedidosYa'
+  }
   // Route to the correct extractor
   switch (providerName) {
     case "Justo":
       return extractJusto(cartaUrl);
+    case "Rappi":
+      return extractRappi(cartaUrl);
     case "UberEats":
       return extractUberEats(cartaUrl);
     case "Queresto":
@@ -819,9 +830,8 @@ export async function importFromProspecto(params: {
     })
   }
 
-  const restaurant = existing?.isDemo
-    ? existing
-    : await prisma.restaurant.create({
+  const restaurant = existing
+    ?? await prisma.restaurant.create({
         data: {
           name: cleanedName,
           slug,
@@ -829,7 +839,6 @@ export async function importFromProspecto(params: {
           lat: params.lat ?? null,
           lng: params.lng ?? null,
           website: params.cartaUrl,
-          googleMapsUrl: params.mapsUrl || null,
           logoUrl: extraction.logoUrl ?? null,
           cartaTheme: "PREMIUM",
           cartaColorMode: "DARK",
@@ -848,7 +857,7 @@ export async function importFromProspecto(params: {
     try {
       const placeInfo = await findPlaceInfo(cleanedName, params.lat, params.lng)
       if (placeInfo) {
-        await prisma.restaurant.update({
+        await (prisma.restaurant.update as any)({
           where: { id: restaurant.id },
           data: {
             googlePlaceId: placeInfo.placeId,

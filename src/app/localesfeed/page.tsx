@@ -234,8 +234,10 @@ type ImportResult = {
 
 const EXTRACTABLE_PROVIDERS = new Set([
   'Justo', 'OlaClick', 'UberEats', 'Fudo', 'Mercat', 'Gourmedia',
-  'PedidosYa', 'Queresto', 'Web propia',
+  'Rappi', 'Queresto', 'Web propia',
 ])
+// PedidosYa bloquea scraping con 403 + CAPTCHA — no extractable
+const BLOCKED_PROVIDERS = new Set(['PedidosYa'])
 
 // Extrae la comuna de una dirección chilena tipo "Calle 123, Comuna, Región Metropolitana"
 function extractComuna(address: string): string {
@@ -274,6 +276,7 @@ function TabMapa() {
     const u = url.toLowerCase()
     const provider = u.includes('ubereats.com') ? 'UberEats'
       : u.includes('pedidosya.cl') ? 'PedidosYa'
+      : u.includes('rappi.cl') || u.includes('rappi.com') ? 'Rappi'
       : u.includes('getjusto.com') || u.includes('/pedir') ? 'Justo'
       : u.includes('fu.do') ? 'Fudo'
       : u.includes('ola.click') ? 'OlaClick'
@@ -397,7 +400,7 @@ function TabMapa() {
   }
 
   async function runProspecting() {
-    const toProcess = places.filter(p => selected.has(p.id) && (p.rating == null || p.rating > 4) && (p.reviews == null || p.reviews >= 10)).map(p => ({
+    const toProcess = places.filter(p => selected.has(p.id) && p.rating != null && p.rating > 4 && p.reviews != null && p.reviews >= 10).map(p => ({
       id: p.id,
       name: p.name,
       address: p.address,
@@ -545,6 +548,9 @@ function TabMapa() {
               setImportProgress({ current: msg.current, total, name: msg.name })
             } else if (msg.type === 'result') {
               setImportMap(m => ({ ...m, [msg.id]: { status: msg.status, slug: msg.slug, dishCount: msg.dishCount, error: msg.error } }))
+              if (msg.status === 'error') {
+                setImportProgress(p => p ? { ...p, name: `✗ ${msg.name ?? ''}: ${msg.error ?? 'error'}` } : p)
+              }
             } else if (msg.type === 'done') {
               setImportProgress(null)
             }
@@ -648,10 +654,19 @@ function TabMapa() {
             {prospecting ? 'Buscando...' : `Buscar cartas${selected.size > 0 ? ` (${selected.size})` : ''}`}
           </button>
           {(() => {
+            const hasBlocked = selected.size > 0 && [...selected].every(id => {
+              const pr = prospectMap[id]
+              return pr?.provider && BLOCKED_PROVIDERS.has(pr.provider)
+            })
             const importable = selected.size > 0 && !importing && [...selected].some(id => {
               const pr = prospectMap[id]
               return pr?.cartaUrl && (pr.provider == null || EXTRACTABLE_PROVIDERS.has(pr.provider))
             })
+            if (hasBlocked && !importable) return (
+              <div style={{ fontSize: 11, color: '#f87171', maxWidth: 200, lineHeight: 1.4 }}>
+                PedidosYa bloquea extracción automática. Usa otra URL del local (UberEats, Rappi, Justo) o sube la carta manualmente.
+              </div>
+            )
             return importable || importing ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <button
@@ -815,13 +830,13 @@ function TabMapa() {
                     <span style={{ fontSize: 11, color: '#444' }}>✗ Sin carta</span>
                   )}
                   <button onClick={() => { setEditingCartaId(p.id); setEditingCartaUrl(prospecto.cartaUrl ?? '') }}
-                    style={{ fontSize: 10, background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0 2px', flexShrink: 0 }}>✏</button>
+                    style={{ fontSize: 12, background: 'rgba(255,255,255,0.07)', border: '1px solid #333', color: '#aaa', cursor: 'pointer', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>✏</button>
                 </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 11, color: '#2a2a2a' }}>—</span>
+                  <span style={{ fontSize: 11, color: '#444' }}>—</span>
                   <button onClick={() => { setEditingCartaId(p.id); setEditingCartaUrl('') }}
-                    style={{ fontSize: 10, background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0 2px' }}>✏</button>
+                    style={{ fontSize: 12, background: 'rgba(255,255,255,0.07)', border: '1px solid #333', color: '#aaa', cursor: 'pointer', padding: '2px 6px', borderRadius: 4 }}>✏</button>
                 </div>
               )}
             </div>
@@ -842,7 +857,9 @@ function TabMapa() {
                   </div>
                 )
                 if (imp.status === 'error') return (
-                  <span style={{ fontSize: 10, color: '#ef4444' }} title={imp.error}>✗ Error</span>
+                  <span style={{ fontSize: 10, color: '#ef4444' }} title={imp.error}>
+                    ✗ {imp.error ?? 'Error'}
+                  </span>
                 )
               })()}
             </div>

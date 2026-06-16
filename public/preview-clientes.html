@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — /admin/clientes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, -apple-system, sans-serif; background: #0a0908; color: #f5ead8; min-height: 100vh; }
+
+  /* Layout */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: #0f0e0c; border-right: 1px solid #1a1a1a; padding: 20px 0; }
+  .sidebar-brand { display: flex; align-items: center; gap: 8px; padding: 0 18px 20px; font-family: Georgia, serif; font-size: 15px; color: #f5ead8; border-bottom: 1px solid #1a1a1a; margin-bottom: 12px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; font-size: 13px; color: #7d7366; cursor: pointer; border-left: 2px solid transparent; }
+  .sidebar-item:hover { color: #c9bba0; background: rgba(255,255,255,.02); }
+  .sidebar-item.active { color: #F4A623; border-left-color: #F4A623; background: rgba(244,166,35,.05); font-weight: 600; }
+  .main { margin-left: 220px; padding: 24px 28px; }
+
+  /* Stats cards */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: #111; border: 1px solid #1e1e1e; border-radius: 14px; padding: 16px 18px; }
+  .stat-label { font-size: 11px; color: #7d7366; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .stat-sub { font-size: 11px; color: #7d7366; margin-top: 4px; }
+  .stat-value.gold { color: #F4A623; }
+  .stat-value.green { color: #4ade80; }
+  .stat-value.red { color: #f87171; }
+  .stat-value.blue { color: #60a5fa; }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-btn { padding: 7px 14px; border-radius: 999px; border: 1px solid #262626; background: transparent; color: #c9bba0; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .filter-btn.active { background: #F4A623; color: #0a0908; border-color: #F4A623; font-weight: 700; }
+  .filter-btn .count { background: rgba(255,255,255,.15); padding: 1px 6px; border-radius: 99px; font-size: 10px; margin-left: 4px; }
+  .filter-btn.active .count { background: rgba(0,0,0,.2); }
+  .search-input { padding: 8px 14px; background: #161616; border: 1px solid #262626; border-radius: 10px; color: #f5ead8; font-size: 13px; outline: none; font-family: inherit; width: 220px; margin-left: auto; }
+  .search-input::placeholder { color: #555; }
+
+  /* Table */
+  .table-wrap { background: #111; border: 1px solid #1e1e1e; border-radius: 16px; overflow: hidden; }
+  .table-header { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr 0.8fr; padding: 12px 18px; border-bottom: 1px solid #1e1e1e; font-size: 11px; color: #7d7366; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sortable { cursor: pointer; display: inline-flex; align-items: center; gap: 5px; user-select: none; }
+  .sortable:hover { color: #c9bba0; }
+  .sortable.active { color: #F4A623; }
+  .sort-icon { font-size: 10px; opacity: 0.3; }
+  .sortable.active .sort-icon { opacity: 1; color: #F4A623; }
+  .table-row { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr 1fr 0.8fr; padding: 14px 18px; border-bottom: 1px solid #0f0f0f; align-items: center; cursor: pointer; transition: background .15s; }
+  .table-row:hover { background: rgba(244,166,35,.03); }
+  .table-row:last-child { border-bottom: none; }
+
+  /* Row elements */
+  .resto-info { display: flex; align-items: center; gap: 12px; }
+  .resto-logo { width: 36px; height: 36px; border-radius: 10px; background: #1a1a1a; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #F4A623; overflow: hidden; flex-shrink: 0; }
+  .resto-name { font-size: 14px; font-weight: 600; }
+  .resto-owner { font-size: 11px; color: #7d7366; margin-top: 1px; }
+
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+  .badge-trial { background: rgba(168,85,247,.15); color: #a855f7; }
+  .badge-active { background: rgba(74,222,128,.12); color: #4ade80; }
+  .badge-free { background: rgba(255,255,255,.06); color: #999; }
+  .badge-expired { background: rgba(248,113,113,.1); color: #f87171; }
+  .badge-demo { background: rgba(96,165,250,.1); color: #60a5fa; }
+  .badge-bonificado { background: rgba(74,222,128,.08); color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+
+  .badge-origin { padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+  .origin-subircarta { background: rgba(244,166,35,.1); color: #F4A623; }
+  .origin-planes { background: rgba(96,165,250,.1); color: #60a5fa; }
+  .origin-handoff { background: rgba(168,85,247,.1); color: #a855f7; }
+
+  .health-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .health-green { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,.4); }
+  .health-yellow { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,.4); }
+  .health-red { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,.3); }
+
+  .cell { font-size: 13px; color: #c9bba0; }
+  .cell-muted { font-size: 12px; color: #555; }
+  .cell-small { font-size: 11px; color: #7d7366; }
+
+  /* Expanded detail panel */
+  .detail-panel { background: #0d0d0b; border-bottom: 1px solid #1e1e1e; padding: 0 18px 20px; }
+  .detail-tabs { display: flex; gap: 0; border-bottom: 1px solid #1e1e1e; margin-bottom: 16px; }
+  .detail-tab { padding: 10px 16px; font-size: 12px; font-weight: 500; color: #7d7366; cursor: pointer; border-bottom: 2px solid transparent; }
+  .detail-tab.active { color: #F4A623; border-bottom-color: #F4A623; font-weight: 700; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 1px; background: #262626; }
+  .tl-item { position: relative; padding-bottom: 16px; }
+  .tl-dot { position: absolute; left: -20px; top: 3px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #262626; background: #0a0908; }
+  .tl-dot.gold { border-color: #F4A623; background: #F4A623; }
+  .tl-dot.green { border-color: #4ade80; background: #4ade80; }
+  .tl-dot.blue { border-color: #60a5fa; background: #60a5fa; }
+  .tl-dot.purple { border-color: #a855f7; background: #a855f7; }
+  .tl-time { font-size: 10px; color: #555; margin-bottom: 2px; }
+  .tl-text { font-size: 13px; color: #c9bba0; }
+  .tl-text strong { color: #f5ead8; }
+
+  /* Detail cards */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .detail-card { background: #161616; border: 1px solid #1e1e1e; border-radius: 12px; padding: 14px 16px; }
+  .detail-card-label { font-size: 10px; color: #7d7366; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-weight: 600; }
+  .detail-card-value { font-size: 18px; font-weight: 700; }
+
+  /* Quick actions */
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .action-btn { padding: 7px 14px; border-radius: 10px; border: 1px solid #262626; background: transparent; color: #c9bba0; font-size: 12px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; }
+  .action-btn:hover { border-color: #F4A623; color: #F4A623; }
+  .action-btn.primary { background: #F4A623; color: #0a0908; border-color: #F4A623; font-weight: 700; }
+
+  @media (max-width: 1100px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <img src="/landing/logo.png" alt="" style="height:16px"> QuieroComer
+  </div>
+  <div class="sidebar-item">📊 Dashboard</div>
+  <div class="sidebar-item active">👥 Clientes</div>
+  <div class="sidebar-item">📈 Funnel</div>
+  <div class="sidebar-item">💰 Costos</div>
+  <div class="sidebar-item">📧 Emails</div>
+  <div class="sidebar-item">💬 WhatsApp</div>
+  <div class="sidebar-item">⚙️ Config</div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+  <h1 style="font-family:Georgia,serif;font-size:1.4rem;font-weight:400;margin-bottom:20px;">Clientes</h1>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Clientes</div>
+      <div class="stat-value">47</div>
+      <div class="stat-sub">+3 esta semana</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">En Trial</div>
+      <div class="stat-value gold">12</div>
+      <div class="stat-sub">4 vencen esta semana</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pagando</div>
+      <div class="stat-value green">3</div>
+      <div class="stat-sub">$124.800/mes MRR</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dormidos</div>
+      <div class="stat-value red">15</div>
+      <div class="stat-sub">>7 dias sin entrar</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tasa Activacion</div>
+      <div class="stat-value blue">34%</div>
+      <div class="stat-sub">leads → activados</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active">Todos <span class="count">47</span></button>
+    <button class="filter-btn">Trial <span class="count">12</span></button>
+    <button class="filter-btn">Activo <span class="count">8</span></button>
+    <button class="filter-btn">Free <span class="count">22</span></button>
+    <button class="filter-btn">Trial Vencido <span class="count">3</span></button>
+    <button class="filter-btn">Bonificado <span class="count">2</span></button>
+    <button class="filter-btn">Demo <span class="count">2</span></button>
+    <span style="color:#333;margin:0 4px;">|</span>
+    <button class="filter-btn">Subir Carta</button>
+    <button class="filter-btn">Planes</button>
+    <button class="filter-btn">Handoff</button>
+    <input class="search-input" placeholder="Buscar nombre, email, slug...">
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-header" id="sort-header">
+      <div class="sortable" id="s0">Restaurante <span class="sort-icon" id="i0">▼</span></div>
+      <div class="sortable" id="s1">Estado <span class="sort-icon" id="i1">▼</span></div>
+      <div class="sortable" id="s2">Origen <span class="sort-icon" id="i2">▼</span></div>
+      <div class="sortable" id="s3">Plan <span class="sort-icon" id="i3">▼</span></div>
+      <div class="sortable active" id="s4">Ultima Actividad <span class="sort-icon" id="i4">▼</span></div>
+      <div class="sortable" id="s5">Salud <span class="sort-icon" id="i5">▼</span></div>
+    </div>
+    <script>
+    var sortDir = [null, null, null, null, 'desc', null];
+    function doSort(idx) {
+      for (var j = 0; j < 6; j++) {
+        document.getElementById('s'+j).classList.remove('active');
+        document.getElementById('s'+j).style.color = '';
+        document.getElementById('i'+j).style.opacity = '0.3';
+        document.getElementById('i'+j).style.color = '';
+        if (j !== idx) { sortDir[j] = null; document.getElementById('i'+j).textContent = '▼'; }
+      }
+      sortDir[idx] = sortDir[idx] === 'desc' ? 'asc' : 'desc';
+      document.getElementById('s'+idx).classList.add('active');
+      document.getElementById('s'+idx).style.color = '#F4A623';
+      document.getElementById('i'+idx).textContent = sortDir[idx] === 'asc' ? '▲' : '▼';
+      document.getElementById('i'+idx).style.opacity = '1';
+      document.getElementById('i'+idx).style.color = '#F4A623';
+    }
+    document.getElementById('s0').onclick = function() { doSort(0); };
+    document.getElementById('s1').onclick = function() { doSort(1); };
+    document.getElementById('s2').onclick = function() { doSort(2); };
+    document.getElementById('s3').onclick = function() { doSort(3); };
+    document.getElementById('s4').onclick = function() { doSort(4); };
+    document.getElementById('s5').onclick = function() { doSort(5); };
+    // Init: column 4 active
+    document.getElementById('s4').style.color = '#F4A623';
+    document.getElementById('i4').style.opacity = '1';
+    document.getElementById('i4').style.color = '#F4A623';
+    </script>
+
+    <!-- Row 1 — Trial, active -->
+    <div class="table-row" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+      <div class="resto-info">
+        <div class="resto-logo">DM</div>
+        <div>
+          <div class="resto-name">Don Matu</div>
+          <div class="resto-owner">Juan Maturana · juanmatura...@gmail.com</div>
+        </div>
+      </div>
+      <div><span class="badge badge-trial">TRIAL · 13d</span></div>
+      <div><span class="badge-origin origin-planes">Planes</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 2 horas</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+    <!-- Expanded detail for Don Matu -->
+    <div class="detail-panel" style="display:none;">
+      <div class="detail-tabs">
+        <div class="detail-tab active">Timeline</div>
+        <div class="detail-tab">Metricas</div>
+        <div class="detail-tab">Datos</div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-card-label">Platos</div>
+          <div class="detail-card-value">12</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">Sesiones (7d)</div>
+          <div class="detail-card-value">0</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">Carta Importada</div>
+          <div class="detail-card-value" style="color:#f87171;">No</div>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot gold"></div>
+          <div class="tl-time">Hoy · 14:58</div>
+          <div class="tl-text"><strong>Activo plan Free</strong> desde /planes · regalo 14 dias de Premium</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot blue"></div>
+          <div class="tl-time">Hoy · 14:58</div>
+          <div class="tl-text">Completo <strong>onboarding</strong> (6/6 pasos)</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot purple"></div>
+          <div class="tl-time">Hoy · 14:57</div>
+          <div class="tl-text">Registro desde <strong>/planes</strong> · Eligio plan Free</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">Hoy · 15:01</div>
+          <div class="tl-text">Visito panel: <strong>inicio</strong>, menus</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">Hoy · 15:03</div>
+          <div class="tl-text">Email bienvenida <strong>enviado</strong></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="action-btn">👁 Ver carta</button>
+        <button class="action-btn">🔑 Entrar como el</button>
+        <button class="action-btn">📧 Enviar email</button>
+        <button class="action-btn">💬 Enviar WA</button>
+        <button class="action-btn">📋 Cambiar plan</button>
+        <button class="action-btn" onclick="this.innerHTML = this.innerHTML.includes('Activar') ? '🎁 Bonificado ✓' : '🎁 Activar bonificacion'; this.style.borderColor = this.innerHTML.includes('✓') ? '#4ade80' : '#262626'; this.style.color = this.innerHTML.includes('✓') ? '#4ade80' : '#c9bba0';">🎁 Activar bonificacion</button>
+      </div>
+    </div>
+
+    <!-- Row 2 — Delivered, from subircarta -->
+    <div class="table-row" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+      <div class="resto-info">
+        <div class="resto-logo">GG</div>
+        <div>
+          <div class="resto-name">Goostok Grill</div>
+          <div class="resto-owner">Juan Pablo Lira · jplira@goostok.cl</div>
+        </div>
+      </div>
+      <div><span class="badge badge-trial">TRIAL · 11d</span></div>
+      <div><span class="badge-origin origin-subircarta">Subir Carta</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 3 dias</div>
+      <div><span class="health-dot health-yellow"></span><span class="cell-small">Inactivo</span></div>
+    </div>
+
+    <!-- Expanded detail for Goostok -->
+    <div class="detail-panel" style="display:none;">
+      <div class="detail-tabs">
+        <div class="detail-tab active">Timeline</div>
+        <div class="detail-tab">Metricas</div>
+        <div class="detail-tab">Datos</div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-card-label">Platos</div>
+          <div class="detail-card-value">29</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">Sesiones (7d)</div>
+          <div class="detail-card-value">14</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">Carta Importada</div>
+          <div class="detail-card-value" style="color:#4ade80;">Si</div>
+        </div>
+      </div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot green"></div>
+          <div class="tl-time">24 may · 16:55</div>
+          <div class="tl-text"><strong>Onboarding completo</strong> · todos los pasos</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot gold"></div>
+          <div class="tl-time">24 may · 16:51</div>
+          <div class="tl-text">Carta <strong>lista</strong> · 29 platos extraidos de lacarte.cl</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot blue"></div>
+          <div class="tl-time">24 may · 16:50</div>
+          <div class="tl-text">Completo datos: email, nombre, whatsapp</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot purple"></div>
+          <div class="tl-time">24 may · 16:49</div>
+          <div class="tl-text">Subio carta via <strong>link</strong>: lacarte.cl/menu/1555/goostok-grill</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">24 may · 16:56</div>
+          <div class="tl-text">Visito panel: inicio, menus, analytics</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">24 may · 16:52</div>
+          <div class="tl-text">Email carta lista <strong>enviado</strong> · abierto 24 may 17:10</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">24 may · 16:52</div>
+          <div class="tl-text">WhatsApp carta lista <strong>enviado</strong> · abierto 24 may 16:53</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action-btn">👁 Ver carta</button>
+        <button class="action-btn">🔑 Entrar como el</button>
+        <button class="action-btn">📧 Enviar email</button>
+        <button class="action-btn">💬 Enviar WA</button>
+        <button class="action-btn">📋 Cambiar plan</button>
+        <button class="action-btn" onclick="this.innerHTML = this.innerHTML.includes('Activar') ? '🎁 Bonificado ✓' : '🎁 Activar bonificacion'; this.style.borderColor = this.innerHTML.includes('✓') ? '#4ade80' : '#262626'; this.style.color = this.innerHTML.includes('✓') ? '#4ade80' : '#c9bba0';">🎁 Activar bonificacion</button>
+      </div>
+    </div>
+
+    <!-- Row 3 — Free, dormido -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo">ER</div>
+        <div>
+          <div class="resto-name">El Reloj</div>
+          <div class="resto-owner">Juan · algodeconcepto@gmail.com</div>
+        </div>
+      </div>
+      <div><span class="badge badge-trial">TRIAL · 10d</span></div>
+      <div><span class="badge-origin origin-subircarta">Subir Carta</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 1 dia</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+    <!-- Row 4 — Expired -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo">BH</div>
+        <div>
+          <div class="resto-name">Beer House</div>
+          <div class="resto-owner">Camilo · camilo@beerhouse.cl</div>
+        </div>
+      </div>
+      <div><span class="badge badge-free">FREE</span> <span style="font-size:10px;color:#f87171;">trial vencido</span></div>
+      <div><span class="badge-origin origin-subircarta">Subir Carta</span></div>
+      <div class="cell">Free</div>
+      <div class="cell">Hace 12 dias</div>
+      <div><span class="health-dot health-red"></span><span class="cell-small">Dormido</span></div>
+    </div>
+
+    <!-- Row 5 — Active paying -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo" style="background:#8b5cf6;color:white;font-size:11px;">NK</div>
+        <div>
+          <div class="resto-name">Nascosto</div>
+          <div class="resto-owner">Valentina · val@nascosto.cl</div>
+        </div>
+      </div>
+      <div><span class="badge badge-active">ACTIVO</span></div>
+      <div><span class="badge-origin origin-handoff">Handoff</span></div>
+      <div class="cell">Gold</div>
+      <div class="cell">Hace 5 horas</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+    <!-- Row 6 -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo">CL</div>
+        <div>
+          <div class="resto-name">Chicken Litu</div>
+          <div class="resto-owner">Matias · mrojassoto15@gmail.com</div>
+        </div>
+      </div>
+      <div><span class="badge badge-demo">FAILED</span></div>
+      <div><span class="badge-origin origin-subircarta">Subir Carta</span></div>
+      <div class="cell-muted">—</div>
+      <div class="cell-muted">Nunca</div>
+      <div><span class="health-dot health-red"></span><span class="cell-small">Sin activar</span></div>
+    </div>
+
+    <!-- Row 7 -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo">JB</div>
+        <div>
+          <div class="resto-name">Juan Burguez</div>
+          <div class="resto-owner">Nicolas · juanburguez2025@gmail.com</div>
+        </div>
+      </div>
+      <div><span class="badge badge-trial">TRIAL · 13d</span></div>
+      <div><span class="badge-origin origin-subircarta">Subir Carta</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell-muted">Nunca</div>
+      <div><span class="health-dot health-red"></span><span class="cell-small">Dormido</span></div>
+    </div>
+
+    <!-- Row 8 -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo">PQ</div>
+        <div>
+          <div class="resto-name">Pizzeria Q</div>
+          <div class="resto-owner">Test · test@test.com</div>
+        </div>
+      </div>
+      <div><span class="badge badge-trial">TRIAL · 13d</span></div>
+      <div><span class="badge-origin origin-planes">Planes</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 1 hora</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+    <!-- Row 9 — Bonificado -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo" style="background:#1a4a1a;color:#4ade80;font-size:11px;">HR</div>
+        <div>
+          <div class="resto-name">Hand Roll <span style="font-size:10px;color:#4ade80;font-weight:600;margin-left:4px;">🎁</span></div>
+          <div class="resto-owner">Andrea · andrea@handroll.cl</div>
+        </div>
+      </div>
+      <div><span class="badge badge-bonificado">BONIFICADO</span></div>
+      <div><span class="badge-origin origin-handoff">Handoff</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 1 dia</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+    <!-- Row 10 — Bonificado -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo" style="background:#1a2a4a;color:#60a5fa;font-size:11px;">AL</div>
+        <div>
+          <div class="resto-name">Alleria <span style="font-size:10px;color:#4ade80;font-weight:600;margin-left:4px;">🎁</span></div>
+          <div class="resto-owner">Felipe · felipe@alleria.cl</div>
+        </div>
+      </div>
+      <div><span class="badge badge-bonificado">BONIFICADO</span></div>
+      <div><span class="badge-origin origin-handoff">Handoff</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 3 horas</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+    <!-- Row 11 -->
+    <div class="table-row">
+      <div class="resto-info">
+        <div class="resto-logo">ET</div>
+        <div>
+          <div class="resto-name">El Tumbaito</div>
+          <div class="resto-owner">Juan Carlos Lopez · juanka_lopez67@yahoo.com</div>
+        </div>
+      </div>
+      <div><span class="badge badge-demo">DEMO</span></div>
+      <div><span class="badge-origin origin-subircarta">Subir Carta</span></div>
+      <div class="cell">Premium</div>
+      <div class="cell">Hace 4 horas</div>
+      <div><span class="health-dot health-green"></span><span class="cell-small">Activo</span></div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;padding:20px;color:#555;font-size:12px;">
+    Mostrando 9 de 47 clientes · Preview estatico — datos de ejemplo
+  </div>
+</div>
+
+</body>
+</html>

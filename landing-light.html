@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuieroComer · Tu carta puede vender mucho más</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --black: #0A0908;
+    --black-soft: #131110;
+    --black-warm: #1A1714;
+    --amber: #E8A33D;
+    --amber-bright: #F4B962;
+    --amber-deep: #B8801A;
+    --cream: #E8DDC8;
+    --cream-soft: #C9BBA0;
+    --gray-warm: #6B6358;
+    --gray-deep: #3A342D;
+    --gray-cold: #2A2A2A;
+
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Film grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.64 0 0 0 0 0.24 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1000;
+    mix-blend-mode: overlay;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: -0.01em;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 clamp(24px, 4vw, 64px);
+    position: relative;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 24px clamp(24px, 4vw, 64px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(10,9,8,0.85) 0%, rgba(10,9,8,0) 100%);
+    backdrop-filter: blur(6px);
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lamp-icon { width: 28px; height: 28px; color: var(--amber); }
+
+  nav .nav-cta {
+    padding: 10px 22px;
+    color: var(--cream);
+    font-size: 13px;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.3s ease;
+  }
+
+  nav .nav-cta:hover { color: var(--amber); }
+
+  /* HERO */
+  .hero {
+    height: 100vh;
+    min-height: 700px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 80px;
+  }
+
+  .hero-image {
+    position: absolute;
+    inset: 0;
+    background-image: url('[BASE64_IMAGE_1: jpeg, ~289KB]');
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+    animation: subtleZoom 30s ease-in-out infinite alternate;
+  }
+
+  @keyframes subtleZoom {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(10,9,8,0.4) 0%,
+      rgba(10,9,8,0.1) 30%,
+      rgba(10,9,8,0.4) 60%,
+      rgba(10,9,8,0.95) 100%);
+    z-index: 2;
+  }
+
+  .hero-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.6) 100%);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--amber);
+    font-weight: 500;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 1.2s ease forwards 0.4s;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 6.5vw, 88px);
+    line-height: 1.05;
+    max-width: 1000px;
+    margin: 0 auto 32px;
+    opacity: 0;
+    animation: fadeUp 1.4s ease forwards 0.7s;
+  }
+
+  .hero h1 .accent { font-style: italic; color: var(--amber); }
+
+  .hero-sub {
+    font-size: clamp(17px, 1.5vw, 22px);
+    line-height: 1.5;
+    max-width: 600px;
+    margin: 0 auto 48px;
+    color: var(--cream-soft);
+    font-family: var(--font-display);
+    font-style: italic;
+    opacity: 0;
+    animation: fadeUp 1.4s ease forwards 1s;
+  }
+
+  .hero-cta-wrap {
+    opacity: 0;
+    animation: fadeUp 1.4s ease forwards 1.3s;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 44px;
+    background: var(--amber);
+    color: var(--black);
+    border: none;
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .btn-primary:hover {
+    background: var(--amber-bright);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 60px -10px rgba(232, 163, 61, 0.5);
+  }
+
+  .btn-primary:hover::before { left: 100%; }
+  .btn-arrow { transition: transform 0.4s ease; }
+  .btn-primary:hover .btn-arrow { transform: translateX(6px); }
+
+  .hero-sub-cta {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--cream-soft);
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+
+  /* PROBLEM with full-width background image */
+  .problem-section {
+    padding: 180px 0;
+    background: var(--black);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .problem-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .problem-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .problem-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(10,9,8,0.85) 0%,
+      rgba(10,9,8,0.7) 50%,
+      rgba(10,9,8,0.95) 100%);
+  }
+
+  .problem-section .container {
+    position: relative;
+    z-index: 2;
+  }
+
+  .problem-section h2 {
+    font-size: clamp(36px, 5.5vw, 68px);
+    line-height: 1.15;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .problem-section .accent { color: var(--amber); font-style: italic; }
+
+  /* ===================== */
+  /* PLAN WITH MOCKUPS     */
+  /* ===================== */
+  .plan {
+    padding: 140px 0;
+    background: var(--black);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plan::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle, rgba(232, 163, 61, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .plan-header {
+    text-align: center;
+    margin-bottom: 100px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .plan-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .plan-eyebrow::before, .plan-eyebrow::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--amber);
+  }
+
+  .plan h2 {
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.15;
+  }
+
+  .plan h2 .accent { font-style: italic; color: var(--amber); }
+
+  .plan-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .plan-step {
+    text-align: center;
+  }
+
+  /* MOCKUP CONTAINER - ahora con imágenes reales */
+  .step-mockup {
+    height: 340px;
+    background: var(--black-soft);
+    border: 1px solid var(--gray-deep);
+    border-radius: 4px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 40px rgba(232, 163, 61, 0.05);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .plan-step:hover .step-mockup {
+    border-color: rgba(232, 163, 61, 0.4);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 60px rgba(232, 163, 61, 0.15);
+    transform: translateY(-4px);
+  }
+
+  .step-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .plan-step:hover .step-image {
+    transform: scale(1.05);
+  }
+
+  .step-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(10, 9, 8, 0.1) 0%,
+      rgba(10, 9, 8, 0.2) 60%,
+      rgba(10, 9, 8, 0.5) 100%);
+    pointer-events: none;
+  }
+
+
+  .step-num {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 48px;
+    color: var(--amber);
+    line-height: 1;
+    margin-bottom: 16px;
+    opacity: 0.7;
+  }
+
+  .step-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--cream);
+    margin-bottom: 12px;
+  }
+
+  .step-desc {
+    font-size: 14px;
+    color: var(--cream-soft);
+    max-width: 260px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* MID CTA */
+  .mid-cta {
+    padding: 100px 0;
+    background: var(--black-soft);
+    text-align: center;
+  }
+
+  .mid-cta p {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(22px, 2.4vw, 32px);
+    color: var(--cream);
+    margin-bottom: 32px;
+    line-height: 1.4;
+  }
+
+  /* ===================== */
+  /* STAKES WITH IMAGES    */
+  /* ===================== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* Stake images - now real images */
+
+
+
+
+
+
+  /* Slight cold filter for the failure side to push the contrast further */
+
+
+
+
+  /* Overlay for both stake cards */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* FAQ */
+  .faq {
+    padding: 100px 0;
+    background: var(--black-soft);
+  }
+
+  .faq-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .faq-header h2 { font-size: clamp(28px, 3.5vw, 42px); }
+
+  .faq-list {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid var(--gray-deep);
+    padding: 24px 0;
+    cursor: pointer;
+  }
+
+  .faq-q {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--cream);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .faq-plus {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--amber);
+    transition: transform 0.4s ease;
+    line-height: 1;
+  }
+
+  .faq-item.open .faq-plus { transform: rotate(45deg); }
+
+  .faq-a {
+    color: var(--cream-soft);
+    font-size: 15px;
+    line-height: 1.7;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.4s ease, opacity 0.4s ease;
+    opacity: 0;
+  }
+
+  .faq-item.open .faq-a {
+    max-height: 200px;
+    padding-top: 16px;
+    opacity: 1;
+  }
+
+  /* FINAL CTA */
+  .final-cta {
+    padding: 160px 0;
+    background: var(--black);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .final-cta::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle,
+      rgba(232, 163, 61, 0.15) 0%,
+      rgba(232, 163, 61, 0.04) 30%,
+      transparent 60%);
+    pointer-events: none;
+    animation: pulse 10s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  }
+
+  .final-cta-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .final-cta h2 {
+    font-size: clamp(40px, 6vw, 76px);
+    line-height: 1.1;
+    margin-bottom: 40px;
+    font-style: italic;
+  }
+
+  .final-cta h2 .accent { color: var(--amber); display: block; }
+
+  .final-cta .btn-primary {
+    padding: 26px 52px;
+    font-size: 18px;
+  }
+
+  .final-cta-fine {
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--gray-warm);
+    letter-spacing: 0.06em;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--black);
+    padding: 50px 0 30px;
+    border-top: 1px solid var(--gray-deep);
+  }
+
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 32px;
+    font-size: 13px;
+  }
+
+  .footer-links a {
+    color: var(--gray-warm);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .footer-links a:hover { color: var(--amber); }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 880px) {
+    .pains-grid, .plan-steps, .trust-strip-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .trust-strip-inner { gap: 16px; flex-direction: column; }
+
+    .pain-card {
+      border-right: none;
+      border-bottom: 1px solid var(--gray-deep);
+      padding: 40px 24px;
+    }
+
+    .pain-card:last-child { border-bottom: none; }
+
+  
+  
+
+    .hero { min-height: 600px; }
+    .hero h1 { font-size: clamp(32px, 8vw, 48px); }
+    .hero-image { background-position: 65% center; }
+  }
+
+
+  /* ===================== */
+  /* LOGOS BAND - 4 logos de restaurantes */
+  /* ===================== */
+  .logos-band {
+    background: var(--black-soft);
+    padding: 56px 0 64px;
+    border-top: 1px solid rgba(232, 163, 61, 0.1);
+    border-bottom: 1px solid rgba(232, 163, 61, 0.1);
+    position: relative;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .logos-band::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 150px;
+    background: radial-gradient(ellipse, rgba(232, 163, 61, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .logos-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--amber);
+    font-weight: 500;
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+
+  /* Horizontal infinite scroller */
+  .logos-scroller {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+  }
+
+  .logos-track {
+    display: flex;
+    gap: 16px;
+    width: max-content;
+    animation: logoScroll 35s linear infinite;
+  }
+
+  .logos-scroller:hover .logos-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes logoScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .logo-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 36px;
+    background: rgba(20, 18, 16, 0.5);
+    border: 1px solid var(--gray-deep);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+  }
+
+  .logo-chip:hover {
+    border-color: var(--amber);
+    background: rgba(232, 163, 61, 0.06);
+    transform: translateY(-2px);
+    box-shadow:
+      0 20px 40px -15px rgba(0,0,0,0.6),
+      0 0 30px rgba(232, 163, 61, 0.15);
+  }
+
+  .logo-chip .logo-wordmark {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(17px, 1.4vw, 22px);
+    color: var(--cream-soft);
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    transition: color 0.4s ease;
+    white-space: nowrap;
+  }
+
+  .logo-chip:hover .logo-wordmark {
+    color: var(--amber);
+  }
+
+  .logo-arrow {
+    font-size: 14px;
+    color: var(--amber);
+    opacity: 0.5;
+    transition: all 0.4s ease;
+  }
+
+  .logo-chip:hover .logo-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 880px) {
+    .logos-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .logos-band { padding: 40px 0 48px; }
+  }
+
+  @media (max-width: 480px) {
+    .logos-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+
+  /* ===================== */
+  /* PAINS NARRATIVE - 3 micro-escenas */
+  /* ===================== */
+  .pains-narrative {
+    padding: 140px 0;
+    background: var(--black-soft);
+    border-top: 1px solid rgba(232, 163, 61, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pains-narrative::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1000px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(232, 163, 61, 0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .pains-header {
+    text-align: center;
+    margin-bottom: 80px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .pains-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .pains-eyebrow::before, .pains-eyebrow::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--amber);
+  }
+
+  .pains-header h2 {
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.15;
+  }
+
+  .pains-header h2 .accent {
+    font-style: italic;
+    color: var(--amber);
+  }
+
+
+
+  /* Stage común para las 3 escenas - ahora con imágenes reales */
+  .scene-stage {
+    height: 340px;
+    background: var(--black);
+    border: 1px solid var(--gray-deep);
+    border-radius: 4px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 30px rgba(232, 163, 61, 0.04);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pain-scene:hover .scene-stage {
+    border-color: rgba(232, 163, 61, 0.4);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 60px rgba(232, 163, 61, 0.15);
+    transform: translateY(-4px);
+  }
+
+  .scene-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pain-scene:hover .scene-image {
+    transform: scale(1.05);
+  }
+
+  /* Overlay sutil para mantener legibilidad y consistencia con el resto del diseño */
+  .scene-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(10, 9, 8, 0.1) 0%,
+      rgba(10, 9, 8, 0.2) 60%,
+      rgba(10, 9, 8, 0.5) 100%);
+    pointer-events: none;
+  }
+
+
+  /* ============================================ */
+  /* TIPOGRAFÍA DE LAS PAINS                      */
+  /* ============================================ */
+  .pain-number {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 36px;
+    color: var(--amber);
+    line-height: 1;
+    margin-bottom: 12px;
+    opacity: 0.6;
+  }
+
+  .pain-text {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 1.9vw, 24px);
+    line-height: 1.3;
+    color: var(--cream);
+    margin-bottom: 12px;
+  }
+
+  .pain-subtext {
+    font-size: 13px;
+    color: var(--cream-soft);
+    line-height: 1.6;
+    max-width: 280px;
+    margin: 0 auto;
+    opacity: 0.75;
+  }
+
+  @media (max-width: 880px) {
+    .pains-scenes {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .pains-narrative {
+      padding: 100px 0;
+    }
+  }
+
+
+  /* ============================================ */
+  /* MOBILE OPTIMIZATIONS - FULL                  */
+  /* ============================================ */
+
+  /* Tablets y mobile grande */
+  @media (max-width: 880px) {
+    /* Nav */
+    nav {
+      padding: 16px 20px;
+    }
+    nav .logo { font-size: 20px; }
+    nav .nav-cta {
+      padding: 8px 16px;
+      font-size: 12px;
+      background: var(--amber);
+      color: var(--black);
+      border-radius: 2px;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 7.5vw, 44px);
+      line-height: 1.1;
+      padding: 0 16px;
+    }
+    .hero-sub {
+      font-size: 16px;
+      padding: 0 20px;
+      margin-bottom: 32px;
+    }
+    .hero-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      margin-bottom: 20px;
+    }
+    .btn-primary {
+      padding: 18px 28px;
+      font-size: 15px;
+      gap: 12px;
+      white-space: nowrap;
+      width: auto;
+    }
+    .hero-image {
+      background-position: center 30%;
+    }
+    .hero-sub-cta {
+      padding: 0 20px;
+      font-size: 12px;
+    }
+
+    /* Logos band - GRILLA 2x2 compacta */
+    .logos-band {
+      padding: 40px 0 48px;
+    }
+    .logos-eyebrow {
+      font-size: 10px;
+      margin-bottom: 24px;
+      padding: 0 20px;
+    }
+    .logos-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 0 16px;
+    }
+    .logo-card {
+      aspect-ratio: 5/3;
+    }
+    .logo-placeholder {
+      width: 80%;
+      height: 65%;
+    }
+    .logo-placeholder::after {
+      font-size: 11px;
+    }
+
+    /* Problem section */
+    .problem-section {
+      padding: 80px 0;
+    }
+    .problem-section h2 {
+      font-size: clamp(28px, 6vw, 36px);
+      line-height: 1.2;
+      padding: 0 20px;
+    }
+    .problem-section .sub {
+      font-size: 18px;
+      padding: 0 20px;
+    }
+
+    /* Pains narrative - 3 escenas en columna */
+    .pains-narrative {
+      padding: 80px 0;
+    }
+    .pains-header {
+      margin-bottom: 48px;
+      padding: 0 20px;
+    }
+    .pains-eyebrow {
+      font-size: 10px;
+      gap: 12px;
+    }
+    .pains-eyebrow::before, .pains-eyebrow::after {
+      width: 20px;
+    }
+    .pains-header h2 {
+      font-size: clamp(28px, 6vw, 36px);
+      line-height: 1.2;
+    }
+    .pains-scenes {
+      grid-template-columns: 1fr;
+      gap: 48px;
+      padding: 0 16px;
+    }
+    .scene-stage {
+      height: 240px;
+    }
+    .pain-number {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .pain-text {
+      font-size: 22px;
+      padding: 0 8px;
+    }
+    .pain-subtext {
+      font-size: 14px;
+      max-width: 90%;
+      padding: 0 8px;
+    }
+
+    /* Plan */
+    .plan {
+      padding: 80px 0;
+    }
+    .plan-header {
+      margin-bottom: 56px;
+      padding: 0 20px;
+    }
+    .plan-eyebrow {
+      font-size: 10px;
+      gap: 12px;
+    }
+    .plan-eyebrow::before, .plan-eyebrow::after {
+      width: 20px;
+    }
+    .plan h2 {
+      font-size: clamp(28px, 6vw, 36px);
+      line-height: 1.2;
+    }
+    .plan-steps {
+      grid-template-columns: 1fr;
+      gap: 48px;
+      padding: 0 16px;
+    }
+    .step-mockup {
+      height: 240px;
+    }
+    .step-num {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .step-title {
+      font-size: 22px;
+      padding: 0 8px;
+    }
+    .step-desc {
+      font-size: 14px;
+      max-width: 90%;
+      padding: 0 8px;
+    }
+
+    /* Mid CTA */
+    .mid-cta {
+      padding: 60px 0;
+    }
+    .mid-cta p {
+      font-size: 22px;
+      padding: 0 24px;
+      margin-bottom: 24px;
+    }
+
+    /* FAQ */
+    .faq {
+      padding: 64px 0;
+    }
+    .faq-header {
+      margin-bottom: 40px;
+      padding: 0 20px;
+    }
+    .faq-header h2 {
+      font-size: clamp(24px, 5.5vw, 32px);
+    }
+    .faq-list {
+      padding: 0 20px;
+    }
+    .faq-q {
+      font-size: 17px;
+      line-height: 1.3;
+      gap: 16px;
+    }
+    .faq-a {
+      font-size: 14px;
+    }
+
+    /* Final CTA */
+    .final-cta {
+      padding: 100px 0;
+    }
+    .final-cta h2 {
+      font-size: clamp(32px, 7vw, 48px);
+      line-height: 1.15;
+      padding: 0 20px;
+      margin-bottom: 32px;
+    }
+    .final-cta .btn-primary {
+      padding: 20px 32px;
+      font-size: 16px;
+    }
+    .final-cta-fine {
+      font-size: 12px;
+      padding: 0 20px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 32px 0 24px;
+    }
+    .footer-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+    }
+    .footer-links {
+      gap: 24px;
+      font-size: 12px;
+    }
+  }
+
+  /* Mobile pequeño */
+  @media (max-width: 480px) {
+    nav .logo { font-size: 18px; }
+    nav .lamp-icon { width: 22px; height: 22px; }
+
+    .hero h1 {
+      font-size: clamp(28px, 8vw, 36px);
+    }
+    .hero-sub {
+      font-size: 15px;
+    }
+
+    .btn-primary {
+      padding: 16px 22px;
+      font-size: 14px;
+      gap: 10px;
+    }
+
+    /* Logos: en mobile muy pequeño, mantener 2x2 pero más chico */
+    .logos-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .logo-card {
+      aspect-ratio: 5/3;
+    }
+    .logo-placeholder::after {
+      font-size: 10px;
+    }
+
+    .scene-stage,
+    .step-mockup {
+      height: 200px;
+    }
+
+    .pain-text,
+    .step-title {
+      font-size: 20px;
+    }
+
+  
+  
+  
+  }
+
+
+  /* ============================================ */
+  /* PAINS ALTERNATING LAYOUT                     */
+  /* ============================================ */
+  .pains-alt {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
+    position: relative;
+    z-index: 2;
+    padding: 0 24px;
+  }
+
+  .pain-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .pain-row-reverse {
+    grid-template-columns: 1fr 1.1fr;
+  }
+
+  .pain-row-reverse .pain-img-wrap {
+    order: 2;
+  }
+
+  .pain-row-reverse .pain-content {
+    order: 1;
+  }
+
+  .pain-img-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    aspect-ratio: 4/3;
+    border: 1px solid var(--gray-deep);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 30px rgba(232, 163, 61, 0.05);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pain-row:hover .pain-img-wrap {
+    border-color: rgba(232, 163, 61, 0.4);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 60px rgba(232, 163, 61, 0.15);
+    transform: translateY(-4px);
+  }
+
+  .pain-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pain-row:hover .pain-img {
+    transform: scale(1.05);
+  }
+
+  .pain-content {
+    padding: 0 16px;
+  }
+
+  .pain-number-alt {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 56px;
+    color: var(--amber);
+    line-height: 1;
+    margin-bottom: 24px;
+    opacity: 0.7;
+  }
+
+  .pain-headline {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.2vw, 42px);
+    line-height: 1.2;
+    color: var(--cream);
+    margin-bottom: 20px;
+  }
+
+  .pain-subtext-alt {
+    font-size: clamp(15px, 1.2vw, 17px);
+    color: var(--cream-soft);
+    line-height: 1.7;
+    max-width: 440px;
+  }
+
+
+  /* ============================================ */
+  /* PLAN ALTERNATING LAYOUT                      */
+  /* ============================================ */
+  .plan-alt {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
+    position: relative;
+    z-index: 2;
+    padding: 0 24px;
+  }
+
+  .step-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .step-row-reverse {
+    grid-template-columns: 1fr 1.1fr;
+  }
+
+  .step-row-reverse .step-img-wrap {
+    order: 2;
+  }
+
+  .step-row-reverse .step-content {
+    order: 1;
+  }
+
+  .step-img-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    aspect-ratio: 4/3;
+    border: 1px solid var(--gray-deep);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 30px rgba(232, 163, 61, 0.05);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .step-row:hover .step-img-wrap {
+    border-color: rgba(232, 163, 61, 0.4);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 60px rgba(232, 163, 61, 0.15);
+    transform: translateY(-4px);
+  }
+
+  .step-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .step-row:hover .step-img {
+    transform: scale(1.05);
+  }
+
+  .step-content {
+    padding: 0 16px;
+  }
+
+  .step-number-alt {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 56px;
+    color: var(--amber);
+    line-height: 1;
+    margin-bottom: 24px;
+    opacity: 0.7;
+  }
+
+  .step-headline {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.2vw, 42px);
+    line-height: 1.2;
+    color: var(--cream);
+    margin-bottom: 20px;
+  }
+
+  .step-subtext-alt {
+    font-size: clamp(15px, 1.2vw, 17px);
+    color: var(--cream-soft);
+    line-height: 1.7;
+    max-width: 440px;
+  }
+
+
+  /* FOOTER UPDATED */
+  .footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--gray-warm);
+    letter-spacing: 0.04em;
+  }
+
+  /* ============================================ */
+  /* PLANS MODAL                                  */
+  /* ============================================ */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 9, 8, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+    opacity: 1;
+    animation: modalFadeIn 0.4s ease forwards;
+  }
+
+  @keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal {
+    background: var(--black-soft);
+    border: 1px solid var(--gray-deep);
+    border-radius: 8px;
+    max-width: 1100px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 56px 48px;
+    position: relative;
+    box-shadow: 0 60px 120px rgba(0,0,0,0.8), 0 0 80px rgba(232, 163, 61, 0.08);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: none;
+    border: none;
+    color: var(--cream);
+    font-size: 32px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: var(--amber); }
+
+  .modal-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .modal-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 16px;
+  }
+
+  .modal-header h3 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.5vw, 42px);
+    color: var(--cream);
+    margin-bottom: 12px;
+  }
+
+  .modal-sub {
+    font-size: 14px;
+    color: var(--cream-soft);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .plan-card {
+    background: var(--black);
+    border: 1px solid var(--gray-deep);
+    border-radius: 4px;
+    padding: 36px 28px;
+    position: relative;
+    transition: all 0.4s ease;
+  }
+
+  .plan-card:hover {
+    border-color: rgba(232, 163, 61, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .plan-featured {
+    border-color: var(--amber);
+    background: linear-gradient(180deg, rgba(232, 163, 61, 0.04) 0%, var(--black) 100%);
+  }
+
+  .plan-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--amber);
+    color: var(--black);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 2px;
+  }
+
+  .plan-tag {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--amber);
+    margin-bottom: 16px;
+  }
+
+  .plan-price {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .plan-amount {
+    font-family: var(--font-display);
+    font-size: 38px;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .plan-period {
+    font-size: 13px;
+    color: var(--gray-warm);
+  }
+
+  .plan-desc {
+    font-size: 13px;
+    color: var(--cream-soft);
+    line-height: 1.5;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--gray-deep);
+    min-height: 60px;
+  }
+
+  .plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .plan-features li {
+    padding: 8px 0;
+    font-size: 13px;
+    color: var(--cream-soft);
+    position: relative;
+    padding-left: 20px;
+    line-height: 1.4;
+  }
+
+  .plan-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    color: var(--amber);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 880px) {
+    .modal {
+      padding: 40px 24px;
+    }
+    .modal-close {
+      top: 12px;
+      right: 16px;
+    }
+    .plans-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .plan-card { padding: 28px 24px; }
+    .plan-desc { min-height: auto; }
+  }
+
+
+  /* Mobile fix for alternating layouts */
+  @media (max-width: 880px) {
+    .pain-row,
+    .pain-row-reverse,
+    .step-row,
+    .step-row-reverse {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .pain-row-reverse .pain-img-wrap,
+    .step-row-reverse .step-img-wrap {
+      order: 1;
+    }
+
+    .pain-row-reverse .pain-content,
+    .step-row-reverse .step-content {
+      order: 2;
+    }
+
+    .pains-alt,
+    .plan-alt {
+      gap: 64px;
+      padding: 0 16px;
+    }
+
+    .pain-img-wrap,
+    .step-img-wrap {
+      aspect-ratio: 4/3;
+    }
+
+    .pain-content,
+    .step-content {
+      padding: 0 8px;
+    }
+
+    .pain-number-alt,
+    .step-number-alt {
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+
+    .pain-headline,
+    .step-headline {
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+
+    .pain-subtext-alt,
+    .step-subtext-alt {
+      font-size: 15px;
+    }
+
+    /* Logos: 2 columnas */
+    .logos-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .logo-wordmark {
+      font-size: 13px;
+    }
+
+    /* Problem section mobile */
+    .problem-section {
+      padding: 120px 0;
+    }
+    .problem-section h2 {
+      font-size: clamp(28px, 7vw, 40px);
+      padding: 0 20px;
+    }
+
+    /* Footer mobile */
+    .footer-content {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+
+  @media (max-width: 880px) {
+    .logo-chip {
+      padding: 16px 24px;
+      gap: 10px;
+    }
+    .logo-chip .logo-wordmark {
+      font-size: 15px;
+    }
+    .logo-arrow {
+      font-size: 12px;
+    }
+    .logos-track {
+      animation-duration: 30s;
+      gap: 12px;
+    }
+    .logos-eyebrow {
+      padding: 0 20px;
+      margin-bottom: 24px;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <svg class="lamp-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="13" cy="20" rx="9" ry="2.5" fill="currentColor"/>
+      <path d="M19 20.5C23 20.5 27 18 27 13.5C27 11 25.5 9 23.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M19 15.5L23 14L21 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    QuieroComer
+  </div>
+  <a href="#cta" class="nav-cta">Subir mi carta</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-image"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <div class="container">
+      <div class="hero-eyebrow">Para dueños de restaurantes</div>
+      <h1>
+        Tu carta puede vender mucho más.
+        <span class="accent">Yo te muestro cómo.</span>
+      </h1>
+      <div class="hero-cta-wrap">
+        <a href="#cta" class="btn-primary">
+          Subir mi carta · 60 segundos
+          <span class="btn-arrow">→</span>
+        </a>
+        <div class="hero-sub-cta">Una foto o el link QR de tu carta</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS BAND - scroll horizontal -->
+<section class="logos-band">
+  <div class="logos-eyebrow">Algunos que ya la tienen</div>
+  <div class="logos-scroller">
+    <div class="logos-track">
+      <!-- Set 1 -->
+      <a href="https://quierocomer.cl/qr/hand-roll" target="_blank" class="logo-chip">
+        <span class="logo-wordmark">Hand Roll</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/horusvegan" target="_blank" class="logo-chip">
+        <span class="logo-wordmark">Horus Vegan</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/juana-la-brava" target="_blank" class="logo-chip">
+        <span class="logo-wordmark">Juana la Brava</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/alleria-pizza" target="_blank" class="logo-chip">
+        <span class="logo-wordmark">Alleria Pizza</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/nascosto-pizzeria" target="_blank" class="logo-chip">
+        <span class="logo-wordmark">Nascosto Pizzeria</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <!-- Set 2 (duplicado para loop infinito) -->
+      <a href="https://quierocomer.cl/qr/hand-roll" target="_blank" class="logo-chip" aria-hidden="true">
+        <span class="logo-wordmark">Hand Roll</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/horusvegan" target="_blank" class="logo-chip" aria-hidden="true">
+        <span class="logo-wordmark">Horus Vegan</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/juana-la-brava" target="_blank" class="logo-chip" aria-hidden="true">
+        <span class="logo-wordmark">Juana la Brava</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/alleria-pizza" target="_blank" class="logo-chip" aria-hidden="true">
+        <span class="logo-wordmark">Alleria Pizza</span>
+        <span class="logo-arrow">→</span>
+      </a>
+      <a href="https://quierocomer.cl/qr/nascosto-pizzeria" target="_blank" class="logo-chip" aria-hidden="true">
+        <span class="logo-wordmark">Nascosto Pizzeria</span>
+        <span class="logo-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM with background image -->
+<section class="problem-section">
+  <div class="problem-bg">
+    <img src="[BASE64_IMAGE_2: jpeg, ~329KB]" alt="Tu mejor plato existe">
+    <div class="problem-bg-overlay"></div>
+  </div>
+  <div class="container">
+    <h2 class="reveal">
+      Tu mejor plato existe.<br>
+      <span class="accent">Pero casi nadie lo pide.</span>
+    </h2>
+  </div>
+</section>
+
+<!-- 3 PAINS - Micro-escenas narrativas -->
+<section class="pains-narrative">
+  <div class="container">
+    <div class="pains-header reveal">
+      <div class="pains-eyebrow">Le sucede a casi todos los dueños de restaurant</div>
+    </div>
+
+    <div class="pains-alt">
+
+      <!-- DOLOR 01: Garzón - foto IZQ, texto DER -->
+      <div class="pain-row reveal">
+        <div class="pain-img-wrap">
+          <img class="pain-img" src="[BASE64_IMAGE_3: jpeg, ~164KB]" alt="Tu garzón no es un vendedor">
+        </div>
+        <div class="pain-content">
+          <div class="pain-number-alt">01</div>
+          <h3 class="pain-headline">Tu garzón no es un vendedor.</h3>
+          <p class="pain-subtext-alt">Está apurado. Tiene seis mesas. Recomienda lo de siempre.</p>
+        </div>
+      </div>
+
+      <!-- DOLOR 02: Carta - foto DER, texto IZQ -->
+      <div class="pain-row pain-row-reverse reveal">
+        <div class="pain-img-wrap">
+          <img class="pain-img" src="[BASE64_IMAGE_4: jpeg, ~204KB]" alt="Tu cliente no ve tus mejores platos">
+        </div>
+        <div class="pain-content">
+          <div class="pain-number-alt">02</div>
+          <h3 class="pain-headline">Tu cliente no ve tus mejores platos.</h3>
+          <p class="pain-subtext-alt">Mira la carta tres minutos. Duda. Pide lo conocido. No vuelve.</p>
+        </div>
+      </div>
+
+      <!-- DOLOR 03: Boleta - foto IZQ, texto DER -->
+      <div class="pain-row reveal">
+        <div class="pain-img-wrap">
+          <img class="pain-img" src="[BASE64_IMAGE_5: jpeg, ~188KB]" alt="Tu ticket promedio no sube">
+        </div>
+        <div class="pain-content">
+          <div class="pain-number-alt">03</div>
+          <h3 class="pain-headline">Tu ticket promedio no sube.</h3>
+          <p class="pain-subtext-alt">Trabajas las mismas horas. Vendes lo mismo. Mes tras mes.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PLAN WITH MOCKUPS -->
+<section class="plan">
+  <div class="container">
+    <div class="plan-header reveal">
+      <div class="plan-eyebrow">Empezar es así de fácil</div>
+      <h2>
+        En tres pasos,<br>
+        <span class="accent">tu carta cambia.</span>
+      </h2>
+    </div>
+
+    <div class="plan-alt">
+
+      <!-- STEP 01: Escaneo - foto IZQ, texto DER -->
+      <div class="step-row reveal">
+        <div class="step-img-wrap">
+          <img class="step-img" src="[BASE64_IMAGE_6: jpeg, ~210KB]" alt="Muéstrame tu carta">
+        </div>
+        <div class="step-content">
+          <div class="step-number-alt">01</div>
+          <h3 class="step-headline">Muéstrame tu carta.</h3>
+          <p class="step-subtext-alt">Una foto. O el link de tu carta QR actual. Lo que tengas a mano.</p>
+        </div>
+      </div>
+
+      <!-- STEP 02: Genio lee - foto DER, texto IZQ -->
+      <div class="step-row step-row-reverse reveal">
+        <div class="step-img-wrap">
+          <img class="step-img" src="[BASE64_IMAGE_7: jpeg, ~329KB]" alt="La leo plato por plato">
+        </div>
+        <div class="step-content">
+          <div class="step-number-alt">02</div>
+          <h3 class="step-headline">La leo plato por plato.</h3>
+          <p class="step-subtext-alt">Veo qué destaca, qué se esconde, qué se podría vender mucho más. Y te lo muestro.</p>
+        </div>
+      </div>
+
+      <!-- STEP 03: Cliente con Carta Viva - foto IZQ, texto DER -->
+      <div class="step-row reveal">
+        <div class="step-img-wrap">
+          <img class="step-img" src="[BASE64_IMAGE_8: jpeg, ~171KB]" alt="Activamos tu Carta Viva">
+        </div>
+        <div class="step-content">
+          <div class="step-number-alt">03</div>
+          <h3 class="step-headline">Activamos tu Carta Viva.</h3>
+          <p class="step-subtext-alt">7 días gratis. Sin compromiso. Si te gusta, sigues. Si no, no pasa nada.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- MID CTA -->
+<section class="mid-cta">
+  <div class="container">
+    <p class="reveal">"Sube tu carta. Lo demás, lo hago yo."</p>
+    <a href="#cta" class="btn-primary reveal">
+      Subir mi carta · 60 segundos
+      <span class="btn-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- STAKES WITH IMAGES -->
+<section class="stakes">
+  <div class="container">
+    <div class="stakes-header reveal">
+      <h2>
+        Hay dos caminos.<br>
+        <span class="accent">Tú eliges.</span>
+      </h2>
+    </div>
+
+    <div class="stakes-grid">
+      <!-- SIN EL GENIO -->
+      <div class="stake-card failure reveal">
+        <div class="stake-image-cold">
+          <img class="stake-real-image" src="[BASE64_IMAGE_9: jpeg, ~199KB]" alt="Mesa vacía sin el Genio">
+        </div>
+        <div class="stake-overlay"></div>
+        <div class="stake-tag">Sin el Genio</div>
+        <div class="stake-content">
+          <div class="stake-title">Otra noche más igual.</div>
+          <ul class="stake-list">
+            <li><span class="stake-marker">—</span> Tu mejor plato sigue invisible.</li>
+            <li><span class="stake-marker">—</span> Tu garzón sigue improvisando.</li>
+            <li><span class="stake-marker">—</span> Tu ticket sigue estancado.</li>
+            <li><span class="stake-marker">—</span> Otra noche se va sin que sepas qué pasó.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CON EL GENIO -->
+      <div class="stake-card success reveal">
+        <div class="stake-image-warm">
+          <img class="stake-real-image" src="[BASE64_IMAGE_10: jpeg, ~382KB]" alt="Mesa con la pareja usando Carta Viva">
+        </div>
+        <div class="stake-overlay"></div>
+        <div class="stake-tag">Con el Genio</div>
+        <div class="stake-content">
+          <div class="stake-title">Tu restaurante despierta.</div>
+          <ul class="stake-list">
+            <li><span class="stake-marker">✦</span> Cada cliente ve lo mejor de tu cocina.</li>
+            <li><span class="stake-marker">✦</span> Tu mejor garzón está en cada mesa.</li>
+            <li><span class="stake-marker">✦</span> Tu ticket sube sin trabajar más horas.</li>
+            <li><span class="stake-marker">✦</span> Sabes qué pasó cada noche, y por qué.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FAQ - Por si tienes dudas -->
+<section class="faq">
+  <div class="container">
+    <div class="faq-header reveal">
+      <h2>Por si tienes dudas.</h2>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">
+          ¿Qué es esto exactamente?
+          <span class="faq-plus">+</span>
+        </div>
+        <div class="faq-a">QuieroComer es una carta digital con IA para tu restaurante. Tomamos tu carta actual y la transformamos en una experiencia que recomienda platos a cada cliente, destaca tus mejores, y te ayuda a vender más sin cambiar nada de tu cocina.</div>
+      </div>
+
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">
+          Ya tengo una carta QR. ¿Sirve igual?
+          <span class="faq-plus">+</span>
+        </div>
+        <div class="faq-a">Mejor todavía. Nos pasas el link de tu carta QR actual y en segundos te muestro una vista previa de cómo se vería con QuieroComer. Sin compromiso. Solo verla.</div>
+      </div>
+
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">
+          Mis cartas son físicas. No me gustan las QR.
+          <span class="faq-plus">+</span>
+        </div>
+        <div class="faq-a">Te entiendo. Pero hoy una carta digital te permite mostrar fotos profesionales de cada plato, recomendaciones personalizadas, traducciones automáticas y datos para tomar mejores decisiones. Sácale una foto a tu carta actual, súbela acá, y en 60 segundos te muestro cómo se vería. Si no te convence, no pasa nada. Y siempre puedes seguir teniendo cartas físicas en paralelo.</div>
+      </div>
+
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">
+          ¿Es realmente gratis?
+          <span class="faq-plus">+</span>
+        </div>
+        <div class="faq-a">Sí. Tienes 7 días para probarlo completo, sin pagar. Si te gusta, sigues con uno de nuestros planes. Si no, cancelas. Así de simple, sin letra chica.</div>
+      </div>
+
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">
+          ¿Cuáles son los valores?
+          <span class="faq-plus">+</span>
+        </div>
+        <div class="faq-a">Tenemos un plan Gratis para empezar, un plan Gold a $29.900/mes y un plan Premium a $39.900/mes. <a href="#" onclick="document.getElementById('plans-modal').classList.add('open'); return false;" style="color: var(--amber); text-decoration: underline; cursor: pointer;">Ver detalle de planes y características →</a></div>
+      </div>
+
+      <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+        <div class="faq-q">
+          ¿Puedo ver cómo se ve la carta de otros restaurantes?
+          <span class="faq-plus">+</span>
+        </div>
+        <div class="faq-a">Sí. Restaurantes como Hand Roll, Horus Vegan, Juana la Brava, Alleria Pizza y Nascosto Pizzeria ya están usando QuieroComer. Más arriba puedes ver el listado y entrar a cada carta en vivo desde su QR público.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="cta">
+  <div class="final-cta-content">
+    <h2>
+      Tu restaurante puede vender más.
+      <span class="accent">Empieza hoy.</span>
+    </h2>
+    <a href="#" class="btn-primary">
+      Subir mi carta · 60 segundos
+      <span class="btn-arrow">→</span>
+    </a>
+    <div class="final-cta-fine">Gratis · Sin compromiso</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-left">
+        <div class="logo">
+          <svg class="lamp-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="13" cy="20" rx="9" ry="2.5" fill="currentColor"/>
+            <path d="M19 20.5C23 20.5 27 18 27 13.5C27 11 25.5 9 23.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          QuieroComer
+        </div>
+        <div class="footer-copy">© 2026 QuieroComer® · Santiago, Chile</div>
+      </div>
+      <div class="footer-links">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="mailto:hola@quierocomer.cl">hola@quierocomer.cl</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- PLANS MODAL -->
+<div class="modal-overlay" id="plans-modal" onclick="if(event.target===this) this.classList.remove('open')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('plans-modal').classList.remove('open')">×</button>
+    <div class="modal-header">
+      <div class="modal-eyebrow">Nuestros planes</div>
+      <h3>Empieza gratis. Crece cuando quieras.</h3>
+      <p class="modal-sub">Implementación gratis. 7 días de prueba en planes pagos. Cancela cuando quieras.</p>
+    </div>
+
+    <div class="plans-grid">
+
+      <!-- Plan Gratis -->
+      <div class="plan-card">
+        <div class="plan-tag">Gratis</div>
+        <div class="plan-price"><span class="plan-amount">$0</span><span class="plan-period">para siempre</span></div>
+        <div class="plan-desc">Carta digital con QR para empezar a vender</div>
+        <ul class="plan-features">
+          <li>Carta QR digital</li>
+          <li>Vista lista</li>
+          <li>Panel autoadministrable</li>
+        </ul>
+      </div>
+
+      <!-- Plan Gold -->
+      <div class="plan-card plan-featured">
+        <div class="plan-badge">Recomendado</div>
+        <div class="plan-tag">Gold</div>
+        <div class="plan-price"><span class="plan-amount">$29.900</span><span class="plan-period">/mes neto</span></div>
+        <div class="plan-desc">Para destacar tus platos y entender a tus clientes</div>
+        <ul class="plan-features">
+          <li>Todo lo del plan Gratis</li>
+          <li>El Genio incluido 🧞</li>
+          <li>2 vistas de carta</li>
+          <li>Destaca platos estrella</li>
+          <li>Ofertas y promociones</li>
+          <li>Estadísticas básicas</li>
+          <li>Anuncios en la carta</li>
+          <li>Multilenguaje (ES · EN · PT)</li>
+        </ul>
+      </div>
+
+      <!-- Plan Premium -->
+      <div class="plan-card">
+        <div class="plan-tag">Premium</div>
+        <div class="plan-price"><span class="plan-amount">$39.900</span><span class="plan-period">/mes neto</span></div>
+        <div class="plan-desc">Para vender más sin levantar un dedo</div>
+        <ul class="plan-features">
+          <li>Todo del plan Gold</li>
+          <li>4 vistas de carta</li>
+          <li>Estadísticas avanzadas</li>
+          <li>Llamar al garzón</li>
+          <li>Productos sugeridos</li>
+          <li>Email de cumpleaños automático</li>
+          <li>Email marketing</li>
+          <li>Clientes ilimitados + CSV</li>
+          <li>Integración con Toteat</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

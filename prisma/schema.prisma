@@ -513,7 +513,7 @@ model Restaurant {
   needsTranslation   Boolean    @default(false)
   weeklyEmailEnabled    Boolean    @default(true)
   weeklyInsightsEnabled Boolean    @default(true)
-  genioFabEnabled       Boolean    @default(true)
+  genioFabEnabled       Boolean    @default(false)
   ownerBannerEnabled    Boolean    @default(false)
   multiMenuEnabled      Boolean    @default(false)
   ownerId     String?

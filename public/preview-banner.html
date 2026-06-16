@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview Banner Import</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, -apple-system, sans-serif; padding: 20px; background: #1a1a1a; }
+  .container { max-width: 800px; padding: 24px; border-radius: 16px; }
+  .mode-label { font-size: 0.85rem; font-weight: 600; text-align: center; margin-bottom: 16px; letter-spacing: 2px; text-transform: uppercase; }
+  h1 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .subtitle { font-size: 0.78rem; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+  .tab { padding: 8px 14px; border-radius: 999px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; }
+  .search-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .search-input { flex: 1; padding: 10px 14px; border: none; border-radius: 10px; font-size: 13px; outline: none; font-family: inherit; }
+  .btn-import { padding: 10px 14px; border: 1px solid; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-family: inherit; }
+  .btn-add { padding: 10px 18px; background: #F4A623; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .dish-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; margin-bottom: 8px; border: 1px solid; }
+  .dish-photo { width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0; }
+  .dish-name { font-size: 0.88rem; font-weight: 600; }
+  .dish-cat { font-size: 0.75rem; }
+  .dish-price { font-size: 0.85rem; font-weight: 700; color: #F4A623; margin-left: auto; }
+  .banner { display: flex; align-items: center; gap: 14px; padding: 16px 18px; margin-bottom: 14px; border-radius: 16px; position: relative; cursor: pointer; border: 1px solid #F4A623; }
+  .banner-icon { width: 44px; height: 44px; min-width: 44px; border-radius: 14px; background: rgba(244,166,35,.12); display: grid; place-items: center; }
+  .banner-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+  .banner-desc { font-size: 0.78rem; line-height: 1.4; }
+  .banner-cta { font-size: 0.82rem; font-weight: 700; color: #F4A623; white-space: nowrap; flex-shrink: 0; }
+  .banner-close { position: absolute; top: 8px; right: 10px; background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px; }
+
+  /* Dark */
+  .dark { background: #0a0908; color: #f5ead8; }
+  .dark .mode-label { color: #7d7366; }
+  .dark h1 svg { stroke: #7d7366; }
+  .dark .subtitle, .dark .dish-cat { color: #7d7366; }
+  .dark .tab { background: transparent; color: #c9bba0; }
+  .dark .tab.active { background: #262626; color: #f5ead8; font-weight: 600; }
+  .dark .search-input { background: rgba(255,255,255,.06); color: #f5ead8; }
+  .dark .btn-import { background: rgba(255,255,255,.06); color: #c9bba0; border-color: #262626; }
+  .dark .dish-card { background: #161616; border-color: #262626; }
+  .dark .dish-photo { background: #222; }
+  .dark .banner { background: #161616; box-shadow: 0 2px 16px rgba(244,166,35,.1); }
+  .dark .banner-title { color: #f5ead8; }
+  .dark .banner-desc { color: #7d7366; }
+  .dark .banner-close { color: #7d7366; }
+
+  /* Light */
+  .light { background: #FBF6EC; color: #1a1a1a; }
+  .light .mode-label { color: #8a7a64; }
+  .light h1 svg { stroke: #8a7a64; }
+  .light .subtitle, .light .dish-cat { color: #8a7a64; }
+  .light .tab { background: transparent; color: #8a7a64; }
+  .light .tab.active { background: #F0DFC0; color: #1a1a1a; font-weight: 600; }
+  .light .search-input { background: #f0e8d8; color: #1a1a1a; }
+  .light .btn-import { background: #f0e8d8; color: #8a7a64; border-color: #F0DFC0; }
+  .light .dish-card { background: #FFFBF3; border-color: #F0DFC0; }
+  .light .dish-photo { background: #f0e8d8; }
+  .light .banner { background: #FFFBF3; box-shadow: 0 2px 16px rgba(244,166,35,.12); }
+  .light .banner-title { color: #1a1a1a; }
+  .light .banner-desc { color: #8a7a64; }
+  .light .banner-close { color: #8a7a64; }
+</style>
+</head>
+<body>
+<div style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;">
+
+<!-- DARK MODE -->
+<div class="dark container">
+  <div class="mode-label">Dark Mode</div>
+  <h1>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3m0 0v7"/></svg>
+    Mi Carta
+  </h1>
+  <div class="subtitle">12 productos · 4 categorias</div>
+  <div class="tabs">
+    <button class="tab active">Productos</button>
+    <button class="tab">Categorias</button>
+    <button class="tab">Modificadores</button>
+  </div>
+  <div class="banner">
+    <button class="banner-close">&#10005;</button>
+    <div class="banner-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div class="banner-title">¿Ya tienes carta? Importala</div>
+      <div class="banner-desc">Sube un link, PDF o foto de tu carta actual y reemplazamos los platos automaticamente.</div>
+    </div>
+    <div class="banner-cta">Importar →</div>
+  </div>
+  <div class="search-row">
+    <input class="search-input" placeholder="Buscar plato...">
+    <button class="btn-import">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+      Importar
+    </button>
+    <button class="btn-add">+ Agregar</button>
+  </div>
+  <div class="dish-card"><div class="dish-photo"></div><div><div class="dish-name">Hamburguesa Clasica</div><div class="dish-cat">Burgers</div></div><div class="dish-price">$6.990</div></div>
+  <div class="dish-card"><div class="dish-photo"></div><div><div class="dish-name">Papas Fritas</div><div class="dish-cat">Acompañamientos</div></div><div class="dish-price">$2.500</div></div>
+  <div class="dish-card"><div class="dish-photo"></div><div><div class="dish-name">Limonada Natural</div><div class="dish-cat">Bebidas</div></div><div class="dish-price">$1.990</div></div>
+</div>
+
+<!-- LIGHT MODE -->
+<div class="light container">
+  <div class="mode-label">Light Mode</div>
+  <h1>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3m0 0v7"/></svg>
+    Mi Carta
+  </h1>
+  <div class="subtitle">12 productos · 4 categorias</div>
+  <div class="tabs">
+    <button class="tab active">Productos</button>
+    <button class="tab">Categorias</button>
+    <button class="tab">Modificadores</button>
+  </div>
+  <div class="banner">
+    <button class="banner-close">&#10005;</button>
+    <div class="banner-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div class="banner-title">¿Ya tienes carta? Importala</div>
+      <div class="banner-desc">Sube un link, PDF o foto de tu carta actual y reemplazamos los platos automaticamente.</div>
+    </div>
+    <div class="banner-cta">Importar →</div>
+  </div>
+  <div class="search-row">
+    <input class="search-input" placeholder="Buscar plato...">
+    <button class="btn-import">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+      Importar
+    </button>
+    <button class="btn-add">+ Agregar</button>
+  </div>
+  <div class="dish-card"><div class="dish-photo"></div><div><div class="dish-name">Hamburguesa Clasica</div><div class="dish-cat">Burgers</div></div><div class="dish-price">$6.990</div></div>
+  <div class="dish-card"><div class="dish-photo"></div><div><div class="dish-name">Papas Fritas</div><div class="dish-cat">Acompañamientos</div></div><div class="dish-price">$2.500</div></div>
+  <div class="dish-card"><div class="dish-photo"></div><div><div class="dish-name">Limonada Natural</div><div class="dish-cat">Bebidas</div></div><div class="dish-price">$1.990</div></div>
+</div>
+
+</div>
+</body>
+</html>

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { useState, Suspense, useCallback } from 'react'
 import 'leaflet/dist/leaflet.css'
-import type { RestauranteMapaData } from './page'
+import type { RestauranteMapaData, ProspectoMapaData } from './page'
 import type { PlaceResult } from '@/app/api/mapalocales/buscar-area/route'
 
 const MapaLeaflet = dynamic(() => import('./MapaLeaflet'), {
@@ -17,13 +17,14 @@ const MapaLeaflet = dynamic(() => import('./MapaLeaflet'), {
 
 interface Props {
   restaurantes: RestauranteMapaData[]
+  prospectos: ProspectoMapaData[]
 }
 
 type Stage = 'idle' | 'drawing' | 'ready' | 'searching' | 'done'
 
 const LOCALSTORAGE_KEY = 'qc_mapa_places'
 
-export default function MapaLocalesClient({ restaurantes }: Props) {
+export default function MapaLocalesClient({ restaurantes, prospectos }: Props) {
   const [stage, setStage] = useState<Stage>('idle')
   const [points, setPoints] = useState<[number, number][]>([])
   const [results, setResults] = useState<PlaceResult[]>([])
@@ -100,12 +101,16 @@ export default function MapaLocalesClient({ restaurantes }: Props) {
               setResults([...found])
             } else if (event.type === 'done') {
               setStage('done')
-              // Guardar en DB (upsert)
-              if (found.length > 0) {
+              // Guardar en DB solo los que cumplen criterios de calidad
+              const qualify = found.filter(p =>
+                p.rating != null && p.rating > 4 &&
+                p.reviews != null && p.reviews >= 10
+              )
+              if (qualify.length > 0) {
                 fetch('/api/mapalocales/prospectos', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ places: found }),
+                  body: JSON.stringify({ places: qualify }),
                 }).catch(() => {})
               }
             } else if (event.type === 'error') {
@@ -132,6 +137,7 @@ export default function MapaLocalesClient({ restaurantes }: Props) {
       }>
         <MapaLeaflet
           restaurantes={restaurantes}
+          prospectos={prospectos}
           drawMode={drawMode}
           onPointAdded={handlePointAdded}
           onPolygonDblClick={handleDblClick}
