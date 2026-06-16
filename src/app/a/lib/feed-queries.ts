@@ -25,7 +25,7 @@ export function resolveDishLeaf(
   }
   const fromDish = inferCategoryFromDishName(dishName)
   if (fromDish) return fromDish
-  return catNorm || catName
+  return ''  // no inventar leaf — si nada matchea, queda sin mapear
 }
 
 /** Trae platos para el feed: hasta 5 por restaurante usando una sola query SQL */

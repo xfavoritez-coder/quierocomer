@@ -1325,7 +1325,7 @@ function CartaModal({ slug, name, onClose }: {
         const dl: Record<string, string> = {}
         const dd: Record<string, string> = {}
         for (const cat of d.categories) {
-          m[cat.categoryName] = cat.leafResolved  // siempre pre-popular con el valor efectivo
+          m[cat.categoryName] = ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved : ''
           di[cat.categoryName] = ''
           for (const dish of cat.dishes) {
             dl[dish.id] = dish.leafOverride ?? ''
@@ -1542,7 +1542,7 @@ function CartaModal({ slug, name, onClose }: {
                                 borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
                               }}
                             >
-                              <option value="">— heredar ({cat.leafResolved}) —</option>
+                              <option value="">— heredar ({ALL_LEAF_OPTS.includes(cat.leafResolved) ? cat.leafResolved : 'sin mapear'}) —</option>
                               {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
