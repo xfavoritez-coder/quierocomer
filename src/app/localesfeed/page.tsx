@@ -1474,9 +1474,9 @@ function CartaModal({ slug, name, onClose }: {
                             return next
                           })
                         }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#555', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
+                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#777', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
                       >
-                        <option value="">— dieta —</option>
+                        <option value="">— dieta todos —</option>
                         <option value="OMNIVORE">omnívoro</option>
                         <option value="VEGETARIAN">vegetariano</option>
                         <option value="VEGAN">vegano</option>
@@ -1492,9 +1492,9 @@ function CartaModal({ slug, name, onClose }: {
                             return next
                           })
                         }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#555', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
+                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#777', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
                       >
-                        <option value="">— leaf —</option>
+                        <option value="">— cat. todos —</option>
                         {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
                     </div>
@@ -1530,8 +1530,8 @@ function CartaModal({ slug, name, onClose }: {
                               onChange={e => setDishDiets(m => ({ ...m, [dish.id]: e.target.value }))}
                               style={{
                                 fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${currentDiet !== dish.diet ? '#22c55e55' : '#1a1a1a'}`,
-                                color: currentDiet === 'VEGAN' ? '#22c55e' : currentDiet === 'VEGETARIAN' ? '#86efac' : '#555',
+                                border: `1px solid ${currentDiet !== dish.diet ? '#22c55e55' : '#2a2a2a'}`,
+                                color: currentDiet === 'VEGAN' ? '#22c55e' : currentDiet === 'VEGETARIAN' ? '#86efac' : '#888',
                                 borderRadius: 4, padding: '3px 4px', cursor: 'pointer',
                               }}
                             >
@@ -1539,18 +1539,18 @@ function CartaModal({ slug, name, onClose }: {
                               <option value="VEGETARIAN">vegetariano</option>
                               <option value="VEGAN">vegano</option>
                             </select>
-                            {/* Per-dish leaf override */}
+                            {/* Per-dish categoría override */}
                             <select
                               value={dishLeaf}
                               onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
                               style={{
                                 fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${hasManualOverride ? '#a78bfa55' : '#1e1e1e'}`,
-                                color: hasManualOverride ? '#c4b5fd' : '#3a3a3a',
+                                border: `1px solid ${hasManualOverride ? '#a78bfa55' : '#2a2a2a'}`,
+                                color: hasManualOverride ? '#c4b5fd' : '#888',
                                 borderRadius: 4, padding: '3px 4px', cursor: 'pointer',
                               }}
                             >
-                              <option value="">{dish.dishLeafResolved || '— leaf —'}</option>
+                              <option value="">{dish.dishLeafResolved || '— categoría —'}</option>
                               {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </div>
