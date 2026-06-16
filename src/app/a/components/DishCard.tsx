@@ -122,9 +122,9 @@ export default function DishCard({
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {dish.nombre}
-              {dish.dieta.tipo === 'VEGAN' && <span style={{ marginLeft: 3 }}>🌱</span>}
-              {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ marginLeft: 3 }}>🥬</span>}
             </h3>
+            {dish.dieta.tipo === 'VEGAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🌱</span>}
+            {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🥬</span>}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap' }}>
