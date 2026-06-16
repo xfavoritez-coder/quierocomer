@@ -1357,19 +1357,6 @@ export default function NewHome({
 
               <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
 
-              {/* ¿Tienes un local? */}
-              <a href="/qr" style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9,
-                color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.62)',
-                textDecoration: 'none', WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                ¿Tienes un local?
-              </a>
-
               {/* Contacto */}
               <a href="mailto:hola@quierocomer.cl" style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -1382,51 +1369,6 @@ export default function NewHome({
                 </svg>
                 Contacto
               </a>
-
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
-
-              {/* Apariencia — segmented control */}
-              <div style={{ padding: '6px 10px 4px' }}>
-                <p style={{ margin: '0 0 7px', fontSize: 11, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Apariencia</p>
-                <div style={{
-                  display: 'flex', borderRadius: 9,
-                  background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
-                  padding: 3, gap: 2,
-                }}>
-                  <button onClick={() => { if (isDark) toggleTheme() }} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    padding: '6px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                    background: !isDark ? (isDark ? 'rgba(255,255,255,0.12)' : '#fff') : 'transparent',
-                    boxShadow: !isDark ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                    color: !isDark ? '#b45309' : (isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.3)'),
-                    fontSize: 13, fontWeight: !isDark ? 600 : 400,
-                    transition: 'all 0.15s',
-                  }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="4.5"/>
-                      <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                      <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                    </svg>
-                    Claro
-                  </button>
-                  <button onClick={() => { if (!isDark) toggleTheme() }} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    padding: '6px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                    background: isDark ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
-                    color: isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.3)',
-                    fontSize: 13, fontWeight: isDark ? 600 : 400,
-                    transition: 'all 0.15s',
-                  }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                    </svg>
-                    Oscuro
-                  </button>
-                </div>
-              </div>
             </nav>
 
             {/* Footer */}
