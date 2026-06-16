@@ -117,7 +117,7 @@ export default function DishCard({
           }}>
             <h3 style={{
               fontFamily: 'var(--font-feed-display), serif',
-              fontSize: 14, fontWeight: 700, lineHeight: 1.25, color: '#fff',
+              fontSize: 15, fontWeight: 700, lineHeight: 1.25, color: '#fff',
               margin: 0, flexShrink: 1, minWidth: 0,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
@@ -128,7 +128,7 @@ export default function DishCard({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: 12, color: '#F4A623', fontWeight: 700, flexShrink: 0 }}>
+            <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 700, flexShrink: 0 }}>
               {dish.enOferta && dish.precioDescuento != null
                 ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
                 : `$${dish.precio.toLocaleString('es-CL')}`}
@@ -136,7 +136,7 @@ export default function DishCard({
             {userLocation && dish.restauranteLat && dish.restauranteLng && (
               <>
                 <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>·</span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
                   {formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))}
                 </span>
               </>
