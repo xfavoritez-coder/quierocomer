@@ -3,10 +3,8 @@
 import { useState } from 'react'
 
 export default function ContactView({
-  onBack,
   isDark,
 }: {
-  onBack?: () => void
   isDark?: boolean
 }) {
   const [nombre, setNombre] = useState('')
@@ -65,30 +63,10 @@ export default function ContactView({
   return (
     <div style={{ paddingBottom: 100 }}>
 
-      {/* ─── Sticky header ─── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 30,
-        background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        padding: '14px 16px 12px',
-        display: 'flex', alignItems: 'center', gap: 10,
-        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-      }}>
-        <button onClick={onBack} style={{
-          background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-          color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-          display: 'flex', alignItems: 'center',
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#111' }}>
+      <div style={{ padding: '20px 16px 0' }}>
+        <h1 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '0 0 20px' }}>
           Contacto
-        </span>
-      </div>
-
-      <div style={{ padding: '24px 16px 0' }}>
+        </h1>
 
         {sent ? (
           <div style={{

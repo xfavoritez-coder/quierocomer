@@ -817,7 +817,7 @@ export default function NewHome({
       <header
         ref={headerRef}
         style={{
-          display: isDesktop ? 'none' : (view === 'perfil' || view === 'contacto') ? 'none' : 'flex',
+          display: isDesktop ? 'none' : 'flex',
           background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
           backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
           padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
@@ -917,7 +917,7 @@ export default function NewHome({
         })()}{/* end Row 2 */}
 
         {/* Row 3: Quick-filter pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
+        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
           <button onClick={() => setQuickNearby(p => !p)} style={pillStyle(quickNearby, 'nearby')}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
@@ -949,7 +949,7 @@ export default function NewHome({
         </div>
 
         {/* Row 4: Ubicación (izq) + platos encontrados (der) */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button onClick={() => setLocationModalOpen(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -974,7 +974,7 @@ export default function NewHome({
       </header>
 
       {/* ─── Floating search bar — aparece al subir el scroll — mobile only ─── */}
-      {!isDesktop && view !== 'perfil' && (
+      {!isDesktop && view !== 'perfil' && view !== 'contacto' && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 36,
           padding: '10px 16px',
@@ -1340,6 +1340,24 @@ export default function NewHome({
             {/* Nav items */}
             <nav style={{ flex: 1, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
 
+              {/* Inicio */}
+              <button onClick={() => { setMenuOpen(false); setView('feed'); window.scrollTo(0, 0) }} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '9px 10px', borderRadius: 9,
+                color: view === 'feed' ? '#F4A623' : (isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)'),
+                fontSize: 15, fontWeight: view === 'feed' ? 600 : 400,
+                background: view === 'feed' ? (isDark ? 'rgba(244,166,35,0.1)' : 'rgba(244,166,35,0.07)') : 'transparent',
+                border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: view === 'feed' ? 1 : 0.5 }}>
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                Inicio
+              </button>
+
+              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
+
               {/* Mi perfil */}
               <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -1555,22 +1573,23 @@ export default function NewHome({
 
       {/* ─── Perfil View (unified: profile + liked + saved) ─── */}
       {view === 'perfil' && (
-        <>
+        <div style={{ paddingTop: isDesktop ? 0 : headerHeight }}>
           <ProfileView
             savedDishes={savedDishes}
             viewedDishes={viewedDishes}
             onDishTap={handleLikedDishTap}
             onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
             onViewAllViewed={() => { setView('all-liked'); window.scrollTo(0, 0) }}
-            onBack={() => { setView('feed'); window.scrollTo(0, 0) }}
             isDark={isDark}
           />
-        </>
+        </div>
       )}
 
       {/* ─── Contacto View ─── */}
       {view === 'contacto' && (
-        <ContactView onBack={() => { setView('feed'); window.scrollTo(0, 0) }} isDark={isDark} />
+        <div style={{ paddingTop: isDesktop ? 0 : headerHeight }}>
+          <ContactView isDark={isDark} />
+        </div>
       )}
 
       {/* ─── All Liked View ─── */}
