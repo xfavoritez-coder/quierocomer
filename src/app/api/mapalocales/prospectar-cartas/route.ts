@@ -240,31 +240,44 @@ async function ddgSearch(query: string, fragment: string, timeoutMs = 12000): Pr
   }
 }
 
+// Normaliza nombre para búsqueda: quita tildes y caracteres especiales
+function normSearch(name: string): string {
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 // Busca URL de UberEats / Justo / Rappi / PedidosYa via DuckDuckGo.
 // Prueba las 4 plataformas EN PARALELO — mucho más rápido.
 async function searchDeliveryUrl(name: string, address: string): Promise<Array<{ provider: string; url: string }>> {
   const commune = address.split(',').slice(-3)[0]?.trim() ?? ''
+  const n = normSearch(name)  // sin tildes ni caracteres especiales
 
   const platforms = [
     {
       provider: 'UberEats',
       fragment: 'ubereats.com/cl/store/',
-      queries: [`${name} site:ubereats.com`, `${name} ubereats`, `${name} ${commune} ubereats`],
+      queries: [
+        `${n} site:ubereats.com/cl`,
+        `${n} ubereats chile`,
+        `"${n}" ubereats`,
+        `${n} ${commune} ubereats`,
+        // Con nombre original por si tiene tildes relevantes
+        ...(n !== name ? [`${name} site:ubereats.com`, `${name} ubereats chile`] : []),
+      ],
     },
     {
       provider: 'Justo',
       fragment: 'getjusto.com',
-      queries: [`${name} site:getjusto.com`, `${name} justo pedidos online`, `${name} ${commune} getjusto`],
+      queries: [`${n} site:getjusto.com`, `${n} justo pedidos online`, `${n} ${commune} getjusto`],
     },
     {
       provider: 'Rappi',
       fragment: 'rappi.cl/restaurantes/',
-      queries: [`${name} site:rappi.cl`, `${name} rappi chile`, `${name} ${commune} rappi`],
+      queries: [`${n} site:rappi.cl`, `${n} rappi chile`, `${n} ${commune} rappi`],
     },
     {
       provider: 'PedidosYa',
       fragment: 'pedidosya.cl/restaurantes/',
-      queries: [`${name} site:pedidosya.cl`, `${name} pedidosya chile`, `${name} ${commune} pedidosya`],
+      queries: [`${n} site:pedidosya.cl`, `${n} pedidosya chile`, `${n} ${commune} pedidosya`],
     },
   ]
 
