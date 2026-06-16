@@ -1459,10 +1459,9 @@ function CartaModal({ slug, name, onClose }: {
                   {/* Dishes: batch-fill header + per-dish rows en grid */}
                   <div style={{ padding: '4px 24px 10px' }}>
                     {/* Batch fill header row — alineado con columnas de platos */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 88px 108px 140px', gap: 6, alignItems: 'center', paddingBottom: 4, marginBottom: 4, borderBottom: '1px solid #181818' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 110px 160px', gap: 8, alignItems: 'center', paddingBottom: 4, marginBottom: 4, borderBottom: '1px solid #181818' }}>
                       <div />
-                      <span style={{ fontSize: 11, color: '#2a2a2a' }}>rellenar sección ↓</span>
-                      <span style={{ fontSize: 11, color: '#2a2a2a', textAlign: 'center' }}>cat. auto</span>
+                      <span style={{ fontSize: 11, color: '#333' }}>rellenar sección ↓</span>
                       <select
                         value={batchDiets[cat.categoryName] ?? ''}
                         onChange={e => {
@@ -1474,7 +1473,7 @@ function CartaModal({ slug, name, onClose }: {
                             return next
                           })
                         }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#777', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
+                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
                       >
                         <option value="">— dieta todos —</option>
                         <option value="OMNIVORE">omnívoro</option>
@@ -1492,7 +1491,7 @@ function CartaModal({ slug, name, onClose }: {
                             return next
                           })
                         }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#777', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
+                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
                       >
                         <option value="">— cat. todos —</option>
                         {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -1506,7 +1505,7 @@ function CartaModal({ slug, name, onClose }: {
                       const hasManualOverride = !!dishLeaf
                       return (
                         <div key={dish.id} style={{ opacity: dish.isActive ? 1 : 0.4, marginBottom: 3 }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 88px 108px 140px', gap: 6, alignItems: 'center' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 110px 160px', gap: 8, alignItems: 'center' }}>
                             {dish.photo ? (
                               <img src={dish.photo} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover' }} />
                             ) : (
@@ -1514,15 +1513,6 @@ function CartaModal({ slug, name, onClose }: {
                             )}
                             <span style={{ fontSize: 13, color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {dish.name}
-                            </span>
-                            {/* Categoría auto (informativo) */}
-                            <span style={{
-                              fontSize: 10, padding: '2px 4px', borderRadius: 3, whiteSpace: 'nowrap', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis',
-                              background: cat.normOverride ? '#1e0f40' : '#111',
-                              color: cat.normOverride ? '#a78bfa' : '#2a2a2a',
-                              border: `1px solid ${cat.normOverride ? '#4c1d95' : '#181818'}`,
-                            }}>
-                              {cat.normOverride || dish.dishLeafResolved || '—'}
                             </span>
                             {/* Per-dish diet */}
                             <select
@@ -1532,7 +1522,7 @@ function CartaModal({ slug, name, onClose }: {
                                 fontSize: 12, background: '#0d0d0d',
                                 border: `1px solid ${currentDiet !== dish.diet ? '#22c55e55' : '#2a2a2a'}`,
                                 color: currentDiet === 'VEGAN' ? '#22c55e' : currentDiet === 'VEGETARIAN' ? '#86efac' : '#888',
-                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer',
+                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
                               }}
                             >
                               <option value="OMNIVORE">omnívoro</option>
@@ -1547,7 +1537,7 @@ function CartaModal({ slug, name, onClose }: {
                                 fontSize: 12, background: '#0d0d0d',
                                 border: `1px solid ${hasManualOverride ? '#a78bfa55' : '#2a2a2a'}`,
                                 color: hasManualOverride ? '#c4b5fd' : '#888',
-                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer',
+                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
                               }}
                             >
                               <option value="">{dish.dishLeafResolved || '— categoría —'}</option>
