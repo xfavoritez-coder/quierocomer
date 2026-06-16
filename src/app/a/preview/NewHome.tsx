@@ -306,17 +306,69 @@ export default function NewHome({
     [dishes]
   )
 
-  // Sugerencias — 100% cliente, instantáneas (sin red)
+  // Categorías y parents estáticos para sugerencias
+  const ALL_QC_TERMS = useMemo(() => {
+    const terms: string[] = []
+    // Parents (categorías madre)
+    const parents = ['Comida rápida','Pizza','Sushi','Japonesa','China','Thai','India','Asiática','Peruana','Mariscos','Parrilla','Pastas','Venezolana','Mexicana','Pollo','Empanadas','Saludable','Desayunos','Postres','Bebidas','Entradas']
+    // Leaves (subcategorías)
+    const leaves = ['Hamburguesas','Completos','Sándwiches','Papas fritas','Pizzas','Ramen','Gyoza','Ceviches','Pollo y alitas','Ensaladas','Bowls','Cafetería','Amasandería','Helados','Smoothies','Milkshakes']
+    return [...new Set([...parents, ...leaves])]
+  }, [])
+
+  // Sugerencias unificadas — 100% cliente, instantáneas (sin red)
   const searchSuggestions = useMemo(() => {
     const trimmed = searchInput.trim()
     if (trimmed.length < 2) return null
     const q = normStr(trimmed)
+
+    const results: { text: string; type: 'plato' | 'restaurante' | 'categoría' | 'ingrediente' }[] = []
+
+    // 1. Categorías QC (estáticas)
+    for (const cat of ALL_QC_TERMS) {
+      if (normStr(cat).includes(q)) {
+        results.push({ text: cat, type: 'categoría' })
+        if (results.filter(r => r.type === 'categoría').length >= 3) break
+      }
+    }
+
+    // 2. Buscar en platos
     const matches = dishSearchIndex.filter(d => d._search.includes(q))
-    const dishNames = [...new Set(matches.map(d => d.nombre))].slice(0, 5)
-    const restaurantNames = [...new Set(matches.map(d => d.restaurante))].slice(0, 3)
-    if (!dishNames.length && !restaurantNames.length) return null
-    return { dishNames, restaurantNames }
-  }, [searchInput, dishSearchIndex])
+
+    // Restaurantes que hacen match en nombre
+    const seenRestaurants = new Set<string>()
+    for (const d of matches) {
+      if (normStr(d.restaurante).includes(q) && !seenRestaurants.has(d.restaurante)) {
+        seenRestaurants.add(d.restaurante)
+        results.push({ text: d.restaurante, type: 'restaurante' })
+        if (seenRestaurants.size >= 3) break
+      }
+    }
+
+    // Ingredientes / sabores que hacen match
+    const seenIngredients = new Set<string>()
+    for (const d of matches) {
+      for (const sab of (d.sabores ?? [])) {
+        if (normStr(sab).includes(q) && !seenIngredients.has(sab)) {
+          seenIngredients.add(sab)
+          results.push({ text: sab, type: 'ingrediente' })
+          if (seenIngredients.size >= 3) break
+        }
+      }
+    }
+
+    // Nombres de platos que hacen match directo en el nombre
+    const seenDishes = new Set<string>()
+    for (const d of matches) {
+      if (normStr(d.nombre).includes(q) && !seenDishes.has(d.nombre)) {
+        seenDishes.add(d.nombre)
+        results.push({ text: d.nombre, type: 'plato' })
+        if (seenDishes.size >= 5) break
+      }
+    }
+
+    return results.length ? results : null
+  }, [searchInput, dishSearchIndex, ALL_QC_TERMS])
 
   const [showSuggestions, setShowSuggestions] = useState(false)
 
@@ -787,40 +839,25 @@ export default function NewHome({
               borderRadius: 16, overflow: 'hidden',
               boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
             }}>
-              {searchSuggestions.dishNames.length > 0 && (
-                <>
-                  <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>Platos</div>
-                  {searchSuggestions.dishNames.map(name => (
-                    <button key={name} onMouseDown={e => e.preventDefault()} onClick={() => { executeSearch(name); setShowSuggestions(false) }} style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                      color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
-                    }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.4 }}>
-                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                      </svg>
-                      {name}
-                    </button>
-                  ))}
-                </>
-              )}
-              {searchSuggestions.restaurantNames.length > 0 && (
-                <>
-                  <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', borderTop: searchSuggestions.dishNames.length > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` : 'none' }}>Restaurantes</div>
-                  {searchSuggestions.restaurantNames.map(name => (
-                    <button key={name} onMouseDown={e => e.preventDefault()} onClick={() => { executeSearch(name); setShowSuggestions(false) }} style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                      color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
-                    }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.4 }}>
-                        <path d="M3 11l19-9-9 19-2-8-8-2z"/>
-                      </svg>
-                      {name}
-                    </button>
-                  ))}
-                </>
-              )}
+              {searchSuggestions.map((s, i) => (
+                <button
+                  key={`${s.type}-${s.text}`}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => { executeSearch(s.text); setShowSuggestions(false) }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                    borderTop: i > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  <span style={{ flex: 1 }}>{s.text}</span>
+                  <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)', fontStyle: 'italic', flexShrink: 0 }}>({s.type})</span>
+                </button>
+              ))}
             </div>
             )
           })()}
