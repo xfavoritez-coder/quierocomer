@@ -301,20 +301,6 @@ function DishSlide({
           </button>
         </div>
 
-        {/* Category — debajo del nombre, clickable para filtrar */}
-        {isValidQcCategory(dish.categoriaNorm) ? (
-          <button
-            onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
-            style={{
-              fontSize: 13, fontWeight: 600, color: '#fff',
-              background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)',
-              border: 'none', borderRadius: 20, padding: '4px 12px',
-              cursor: 'pointer', display: 'inline-block', marginBottom: 10,
-            }}
-          >
-            {dish.categoriaNorm}
-          </button>
-        ) : null}
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
