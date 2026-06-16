@@ -1579,13 +1579,14 @@ export default function NewHome({
           onDishTap={handleLikedDishTap}
           onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
           onViewAllViewed={() => { setView('all-liked'); window.scrollTo(0, 0) }}
+          onBack={() => { setView('feed'); window.scrollTo(0, 0) }}
           isDark={isDark}
         />
       )}
 
       {/* ─── Contacto View ─── */}
       {view === 'contacto' && (
-        <ContactView isDark={isDark} />
+        <ContactView onBack={() => { setView('feed'); window.scrollTo(0, 0) }} isDark={isDark} />
       )}
 
       {/* ─── All Liked View ─── */}
