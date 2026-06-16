@@ -498,7 +498,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" });
 
         const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE";
-        const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat ? "VEGAN" : isVeggieCat ? "VEGETARIAN" : dishDietFromAI;
+        const dishNameText = `${dish.name} ${dish.description ?? ''}`;
+        const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText);
+        const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText);
+        const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI;
         const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null);
 
         const created = await prisma.dish.create({
@@ -923,7 +926,10 @@ export async function importFromProspecto(params: {
     catDishes.forEach((dish, j) => {
       const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" })
       const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"
-      const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat ? "VEGAN" : isVeggieCat ? "VEGETARIAN" : dishDietFromAI
+      const dishNameText = `${dish.name} ${dish.description ?? ''}`
+      const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText)
+      const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText)
+      const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI
       const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null)
       allDishData.push({
         restaurantId: restaurant.id,
