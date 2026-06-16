@@ -158,7 +158,7 @@ export default function ExploreGrid({
         ))}
       </div>
 
-      <div style={{ padding: '0 12px 8px', color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>
+      <div style={{ padding: '0 12px 8px', color: 'rgba(0,0,0,0.35)', fontSize: 11 }}>
         {sorted.length} platos
         {activeCategory && activeCategory !== 'ofertas' && ` en ${activeCategory}`}
         {activeCategory === 'ofertas' && ' en oferta'}
@@ -167,7 +167,7 @@ export default function ExploreGrid({
       {sorted.length > 0 ? (
         <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} userLocation={userLocation} />
       ) : (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(0,0,0,0.3)', fontSize: 13 }}>
           No hay platos en esta categoría
         </div>
       )}

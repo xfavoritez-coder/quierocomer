@@ -764,3 +764,148 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     throw error;
   }
 }
+
+/**
+ * importFromProspecto — import a prospected place directly into the feed.
+ * No Lead, no owner, no emails/WhatsApp. Creates Restaurant + Categories + Dishes.
+ */
+export async function importFromProspecto(params: {
+  prospectoId: string
+  name: string
+  address: string
+  lat: number | null
+  lng: number | null
+  mapsUrl: string
+  cartaUrl: string
+  providerName: string | null
+}): Promise<{ slug: string; dishCount: number }> {
+  // Get provider config from DB if known provider
+  const provider = params.providerName
+    ? await prisma.menuProvider.findFirst({
+        where: { name: params.providerName },
+        select: { extractionConfig: true },
+      })
+    : null
+
+  const extraction = await extractMenu(params.cartaUrl, params.providerName, provider?.extractionConfig)
+
+  if (extraction.dishes.length < 3) {
+    throw new Error(`Solo ${extraction.dishes.length} platos extraídos — mínimo 3`)
+  }
+
+  // Generate unique slug — strip trailing " - [place]" suffixes from Google Maps names
+  const cleanedName = params.name.trim().replace(/\s*[-–]\s*(vitacura|santiago|ñuñoa|providencia|las condes|miraflores|maipú|maipu|la florida|peñalolén|macul|san miguel|recoleta|independencia|pudahuel|quilicura|renca|lo barnechea|huechuraba|conchalí|conchali|quinta normal|cerro navia|lo prado|estación central|estacion central|pedro aguirre cerda|san joaquín|san ramon|san bernardo|puente alto|la pintana|el bosque|la cisterna|lo espejo|cerrillos|buín|buin|talagante|peñaflor|chile)\s*$/i, '')
+  let slug = slugify(cleanedName)
+  if (!slug) slug = `local-${Date.now().toString(36)}`
+
+  // Handle slug collision
+  const existing = await prisma.restaurant.findUnique({ where: { slug } })
+  if (existing) {
+    if (!existing.isDemo && !existing.menuImported) {
+      // Real restaurant with a real owner — don't overwrite, just link prospecto
+      await prisma.mapaProspecto.update({
+        where: { id: params.prospectoId },
+        data: { importedSlug: slug },
+      })
+      return { slug, dishCount: 0 }
+    }
+    // Demo or previously auto-imported — wipe and rebuild
+    await prisma.dish.deleteMany({ where: { restaurantId: existing.id } })
+    await prisma.category.deleteMany({ where: { restaurantId: existing.id } })
+    await prisma.restaurant.update({
+      where: { id: existing.id },
+      data: { name: cleanedName, logoUrl: extraction.logoUrl, website: params.cartaUrl, isActive: true, isDemo: false, menuImported: true },
+    })
+  }
+
+  const restaurant = existing?.isDemo
+    ? existing
+    : await prisma.restaurant.create({
+        data: {
+          name: cleanedName,
+          slug,
+          address: params.address || null,
+          lat: params.lat ?? null,
+          lng: params.lng ?? null,
+          website: params.cartaUrl,
+          logoUrl: extraction.logoUrl ?? null,
+          cartaTheme: "PREMIUM",
+          cartaColorMode: "DARK",
+          defaultView: "lista",
+          enabledLangs: ["es", "en", "pt"],
+          isActive: true,
+          isDemo: false,
+          menuImported: true,
+          plan: "PREMIUM",
+          qrActivatedAt: new Date(),
+        },
+      })
+
+  // Create categories + dishes — batch inserts to avoid timeout with large menus
+  const categoryMap = new Map<string, typeof extraction.dishes>()
+  for (const dish of extraction.dishes) {
+    const cat = dish.category || "General"
+    if (!categoryMap.has(cat)) categoryMap.set(cat, [])
+    categoryMap.get(cat)!.push(dish)
+  }
+
+  // 1. Create all categories in one transaction
+  const catEntries = [...categoryMap.entries()]
+  const createdCategories = await prisma.$transaction(
+    catEntries.map(([catName, _], position) =>
+      prisma.category.create({
+        data: {
+          restaurantId: restaurant.id,
+          name: catName,
+          position,
+          dishType: detectDishType(catName),
+          isActive: true,
+        },
+      })
+    )
+  )
+
+  // 2. Build all dish data and insert in batches of 50
+  const allDishData: any[] = []
+  catEntries.forEach(([catName, catDishes], catIdx) => {
+    const category = createdCategories[catIdx]
+    const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName)
+    catDishes.forEach((dish, j) => {
+      const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" })
+      allDishData.push({
+        restaurantId: restaurant.id,
+        categoryId: category.id,
+        name: dish.name.trim(),
+        description: dish.description || null,
+        price: dish.price,
+        photos: dish.imageUrl ? [dish.imageUrl] : [],
+        position: j,
+        dishDiet: isDrinkCat ? "OMNIVORE" : ((dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"),
+        isSpicy: (dish as any).isSpicy || detected.isSpicy,
+        tags: j === 0 && catIdx <= 1 ? ["RECOMMENDED"] : [],
+        containsNuts: isDrinkCat ? false : detected.containsNuts,
+        isGlutenFree: isDrinkCat ? false : detected.isGlutenFree,
+        isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,
+        isSoyFree: isDrinkCat ? false : detected.isSoyFree,
+        isActive: true,
+      })
+    })
+  })
+
+  const BATCH = 50
+  for (let i = 0; i < allDishData.length; i += BATCH) {
+    await prisma.$transaction(
+      allDishData.slice(i, i + BATCH).map(data => prisma.dish.create({ data }))
+    )
+  }
+
+  const dishCount = allDishData.length
+
+  // Update prospecto with generated slug
+  await prisma.mapaProspecto.update({
+    where: { id: params.prospectoId },
+    data: { importedSlug: slug },
+  })
+
+  return { slug, dishCount }
+}

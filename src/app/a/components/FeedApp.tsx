@@ -79,8 +79,8 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
     new Set(savedDishesFromDB?.filter(s => s.type === 'SAVED').map(s => s.dishId) ?? [])
   )
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchOpen, setSearchOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationStatus, setLocationStatus] = useState<'idle' | 'asking' | 'granted' | 'denied'>('idle')
   const [locationToast, setLocationToast] = useState<string | null>(null)
@@ -244,65 +244,102 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
+  const activeSecondaryCount =
+    (filters.priceMax != null ? 1 : 0) +
+    (filters.sort !== 'relevance' ? 1 : 0)
+
   return (
     <div className="feed-container">
       {/* Header */}
       <header className="feed-header">
-        {!searchOpen ? (
-          <>
-            <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button onClick={() => setSearchOpen(true)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                color: 'rgba(255,255,255,0.5)',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-              </button>
-              <button onClick={() => setMenuOpen(!menuOpen)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                color: 'rgba(255,255,255,0.5)',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              </button>
-            </div>
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-            <div style={{
-              flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-              background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '8px 12px',
+        {/* Row 1: Logo + menu */}
+        <div className="feed-header-top">
+          <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}><h1>QuieroComer</h1></a>
+          <button onClick={() => setMenuOpen(!menuOpen)} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+            color: 'rgba(0,0,0,0.4)',
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Row 2: Search bar siempre visible */}
+        <div className="feed-header-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Buscar plato, restaurante..."
+            className="feed-search-input"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'rgba(0,0,0,0.3)',
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12" />
               </svg>
-              <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Buscar plato, restaurante..." autoFocus
-                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 14 }} />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'rgba(255,255,255,0.3)',
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <button onClick={() => { setSearchOpen(false); setSearchQuery('') }} style={{
-              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 13, flexShrink: 0,
-            }}>
-              Cerrar
             </button>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Row 3: Ubicación (izq) + Filtros (der) */}
+        <div className="feed-header-subrow">
+          {/* Ubicación */}
+          <button
+            onClick={locationStatus !== 'granted' ? requestLocation : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: locationStatus === 'granted' ? 'rgba(34,197,94,0.08)' : 'rgba(0,0,0,0.05)',
+              border: `1px solid ${locationStatus === 'granted' ? 'rgba(34,197,94,0.2)' : 'rgba(0,0,0,0.08)'}`,
+              borderRadius: 20, padding: '6px 12px', cursor: locationStatus === 'granted' ? 'default' : 'pointer',
+              color: locationStatus === 'granted' ? '#16a34a' : 'rgba(0,0,0,0.5)',
+              fontSize: 12, fontWeight: 500,
+            }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {locationStatus === 'granted' ? 'Cerca de ti' : locationStatus === 'asking' ? '...' : 'Ubicación'}
+          </button>
+
+          {/* Filtros */}
+          <button
+            onClick={() => setShowFilters(p => !p)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: showFilters || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.12)' : 'rgba(0,0,0,0.05)',
+              border: `1px solid ${showFilters || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.3)' : 'rgba(0,0,0,0.08)'}`,
+              borderRadius: 20, padding: '6px 14px', cursor: 'pointer',
+              color: showFilters || activeSecondaryCount > 0 ? '#c97d00' : 'rgba(0,0,0,0.5)',
+              fontSize: 12, fontWeight: 500,
+            }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            Filtros
+            {activeSecondaryCount > 0 && (
+              <span style={{
+                background: '#F4A623', color: '#000',
+                fontSize: 9, fontWeight: 700, width: 14, height: 14,
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {activeSecondaryCount}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Hamburger menu — slide-in panel */}
@@ -310,18 +347,18 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
         <>
           <div onClick={() => setMenuOpen(false)} style={{
             position: 'fixed', inset: 0, zIndex: 55,
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+            background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
           }} />
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
             width: 260, maxWidth: '75vw',
-            background: '#141414', borderLeft: '1px solid rgba(255,255,255,0.06)',
+            background: '#fff', borderLeft: '1px solid rgba(0,0,0,0.07)',
             padding: '60px 20px 40px', display: 'flex', flexDirection: 'column', gap: 4,
             animation: 'slideRight 0.2s ease-out',
           }}>
             <button onClick={() => setMenuOpen(false)} style={{
               position: 'absolute', top: 16, right: 16,
-              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.35)', padding: 4,
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
@@ -336,15 +373,15 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
               item.href ? (
                 <a key={i} href={item.href} style={{
                   display: 'block', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
-                  color: '#fff', textDecoration: 'none',
-                  background: 'rgba(255,255,255,0.03)',
+                  color: '#111', textDecoration: 'none',
+                  background: 'rgba(0,0,0,0.03)',
                 }}>
                   {item.label}
                 </a>
               ) : (
                 <button key={i} onClick={item.action} style={{
                   display: 'block', width: '100%', padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500,
-                  color: '#fff', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  color: '#111', background: 'rgba(0,0,0,0.03)', border: 'none', cursor: 'pointer', textAlign: 'left',
                 }}>
                   {item.label}
                 </button>
@@ -356,20 +393,20 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
 
       {/* Filters */}
       {activeTab === 'feed' && (
-        <FeedFilters filters={filters} onChange={setFilters} noGreeting />
+        <FeedFilters filters={filters} onChange={setFilters} noGreeting showMore={showFilters} onToggleMore={() => setShowFilters(p => !p)} />
       )}
 
 
       {/* Content */}
       {isSearching && searchResults ? (
         <div>
-          <div style={{ padding: '4px 12px 8px', color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>
+          <div style={{ padding: '4px 12px 8px', color: 'rgba(0,0,0,0.35)', fontSize: 11 }}>
             {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} para "{searchQuery}"
           </div>
           {searchResults.length > 0 ? (
             <MasonryGrid dishes={searchResults.slice(0, 40)} onDishTap={handleDishTap} />
           ) : (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(0,0,0,0.3)' }}>
               <p style={{ fontSize: 32, marginBottom: 12 }}>🔍</p>
               <p style={{ fontSize: 14 }}>No encontramos platos con "{searchQuery}"</p>
             </div>
@@ -377,35 +414,6 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
         </div>
       ) : (
         <>
-          {activeTab === 'feed' && (
-            <>
-              {/* Location banner */}
-              {!userLocation && locationStatus !== 'denied' && (
-                <div style={{
-                  margin: '0 14px 12px', padding: '12px 16px', borderRadius: 12,
-                  background: 'rgba(244,166,35,0.06)', border: '1px solid rgba(244,166,35,0.12)',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <span style={{ fontSize: 20 }}>📍</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 13, color: '#fff', margin: 0, fontWeight: 500 }}>
-                      Platos cerca de ti
-                    </p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
-                      Activa tu ubicación para ver restaurantes cercanos
-                    </p>
-                  </div>
-                  <button onClick={requestLocation} style={{
-                    padding: '8px 14px', borderRadius: 10,
-                    background: '#F4A623', color: '#000', fontWeight: 600,
-                    fontSize: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
-                  }}>
-                    {locationStatus === 'asking' ? '...' : 'Activar'}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
           {activeTab === 'feed' && (
             <ExploreGrid dishes={filteredDishes} onDishTap={handleDishTap} userLocation={userLocation} savedKeywordScores={profile.keywordScores} savedCategoryScores={profile.categoryScores} />
           )}
@@ -439,10 +447,10 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
         <div style={{
           position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)',
           zIndex: 80, padding: '10px 20px', borderRadius: 12,
-          background: 'rgba(20,20,20,0.95)', backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          color: '#fff', fontSize: 13, fontWeight: 500,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(0,0,0,0.08)',
+          color: '#111', fontSize: 13, fontWeight: 500,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
           animation: 'fadeIn 0.3s ease-out',
         }}>
           {locationToast}

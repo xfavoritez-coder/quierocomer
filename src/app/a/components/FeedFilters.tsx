@@ -56,17 +56,22 @@ export default function FeedFilters({
   onChange,
   greetingOnly,
   noGreeting,
+  showMore: showMoreProp,
+  onToggleMore,
 }: {
   filters: Filters
   onChange: (f: Filters) => void
   greetingOnly?: boolean
   noGreeting?: boolean
+  showMore?: boolean
+  onToggleMore?: () => void
 }) {
-  const [showMore, setShowMore] = useState(false)
-
   const activeSecondaryCount =
     (filters.priceMax != null ? 1 : 0) +
     (filters.sort !== 'relevance' ? 1 : 0)
+
+  // Use external control if provided
+  const showMore = showMoreProp ?? false
 
   if (greetingOnly) {
     return (
@@ -81,63 +86,34 @@ export default function FeedFilters({
       {/* Greeting with meal selector — only if not noGreeting */}
       {!noGreeting && <MealGreeting meal={filters.meal} onChange={m => onChange({ ...filters, meal: m })} />}
 
-      {/* Row 2: Dish type (single select) + filter button */}
-      <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 6 }}>
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0 }}>
-          <div className="category-chips" style={{ paddingBottom: 0, paddingRight: 8 }}>
-            {DISH_TYPES.map(t => (
-              <button key={t.id ?? 'all'}
-                style={chipStyle(filters.dishType === t.id)}
-                onClick={() => onChange({ ...filters, dishType: t.id })}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div style={{
-            position: 'absolute', top: 0, right: 0, bottom: 0, width: 24,
-            background: 'linear-gradient(to right, transparent, #0e0e0e)',
-            pointerEvents: 'none',
-          }} />
+      {/* Dish type chips */}
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="category-chips" style={{ paddingBottom: 6 }}>
+          {DISH_TYPES.map(t => (
+            <button key={t.id ?? 'all'}
+              style={chipStyle(filters.dishType === t.id)}
+              onClick={() => onChange({ ...filters, dishType: t.id })}>
+              {t.label}
+            </button>
+          ))}
         </div>
-
-        <button
-          onClick={() => setShowMore(!showMore)}
-          style={{
-            padding: '10px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500,
-            whiteSpace: 'nowrap', cursor: 'pointer',
-            background: showMore || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.03)',
-            color: showMore || activeSecondaryCount > 0 ? '#F4A623' : 'rgba(255,255,255,0.35)',
-            border: `1px solid ${showMore || activeSecondaryCount > 0 ? 'rgba(244,166,35,0.25)' : 'rgba(255,255,255,0.08)'}`,
-            display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-            marginLeft: 4, marginRight: 12,
-          }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-            <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-            <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-          </svg>
-          {activeSecondaryCount > 0 && (
-            <span style={{
-              background: '#000', color: 'var(--feed-amber)',
-              fontSize: 9, fontWeight: 700, width: 14, height: 14,
-              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {activeSecondaryCount}
-            </span>
-          )}
-        </button>
+        <div style={{
+          position: 'absolute', top: 0, right: 0, bottom: 0, width: 24,
+          background: 'linear-gradient(to right, transparent, #f5f4f1)',
+          pointerEvents: 'none',
+        }} />
       </div>
 
-      {/* Secondary filters panel */}
+      {/* Secondary filters panel — controlled from header Filtros button */}
       {showMore && (
         <div style={{
           margin: '0 12px 8px', padding: 16, borderRadius: 14,
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+          background: '#fff', border: '1px solid rgba(0,0,0,0.07)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           animation: 'fadeIn 0.2s ease-out',
         }}>
           <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Precio máximo</p>
+            <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)', margin: '0 0 8px', fontWeight: 600 }}>Precio máximo</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {PRICES.map((p, i) => (
                 <button key={i} onClick={() => onChange({ ...filters, priceMax: p.max })}
@@ -148,7 +124,7 @@ export default function FeedFilters({
             </div>
           </div>
           <div>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', fontWeight: 600 }}>Ordenar por</p>
+            <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)', margin: '0 0 8px', fontWeight: 600 }}>Ordenar por</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {SORTS.map(s => (
                 <button key={s.id} onClick={() => onChange({ ...filters, sort: s.id })}
@@ -160,7 +136,7 @@ export default function FeedFilters({
           </div>
           {activeSecondaryCount > 0 && (
             <button onClick={() => onChange({ ...filters, priceMax: null, sort: 'relevance' })}
-              style={{ marginTop: 12, width: '100%', padding: 10, borderRadius: 10, background: 'none', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer' }}>
+              style={{ marginTop: 12, width: '100%', padding: 10, borderRadius: 10, background: 'none', border: '1px solid rgba(0,0,0,0.08)', color: 'rgba(0,0,0,0.4)', fontSize: 12, cursor: 'pointer' }}>
               Limpiar filtros
             </button>
           )}
@@ -190,16 +166,16 @@ function MealGreeting({ meal, onChange }: { meal: MealFilter; onChange: (m: Meal
 
   return (
     <div style={{ padding: '6px 14px 12px', position: 'relative' }}>
-      <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', margin: 0, fontWeight: 500 }}>
+      <p style={{ fontSize: 15, color: 'rgba(0,0,0,0.45)', margin: 0, fontWeight: 500 }}>
         {greeting},{' '}
         <button onClick={() => setOpen(!open)} style={{
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-          color: '#F4A623', fontWeight: 700, fontSize: 15,
-          borderBottom: '1px dashed rgba(244,166,35,0.4)',
+          color: '#c97d00', fontWeight: 700, fontSize: 15,
+          borderBottom: '1px dashed rgba(201,125,0,0.4)',
           display: 'inline-flex', alignItems: 'center', gap: 3,
         }}>
           {mealLabel[meal]}
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round"
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c97d00" strokeWidth="2.5" strokeLinecap="round"
             style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
@@ -212,9 +188,9 @@ function MealGreeting({ meal, onChange }: { meal: MealFilter; onChange: (m: Meal
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
           <div style={{
             position: 'absolute', top: '100%', left: 14, zIndex: 45,
-            background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12,
-            padding: 4, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            background: '#fff',
+            border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
+            padding: 4, marginTop: 4, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
           }}>
             {options.map(o => (
               <button key={o.id} onClick={() => { onChange(o.id); setOpen(false) }}
@@ -223,7 +199,7 @@ function MealGreeting({ meal, onChange }: { meal: MealFilter; onChange: (m: Meal
                   background: meal === o.id ? 'rgba(244,166,35,0.1)' : 'transparent',
                   border: 'none', cursor: 'pointer', textAlign: 'left',
                   fontSize: 14, fontWeight: meal === o.id ? 700 : 400,
-                  color: meal === o.id ? '#F4A623' : '#fff',
+                  color: meal === o.id ? '#c97d00' : '#111',
                   whiteSpace: 'nowrap',
                 }}>
                 {o.label}
@@ -239,18 +215,19 @@ function MealGreeting({ meal, onChange }: { meal: MealFilter; onChange: (m: Meal
 function chipStyle(active: boolean): React.CSSProperties {
   return {
     padding: '10px 18px', borderRadius: 22, fontSize: 13, fontWeight: 500,
-    whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
-    background: active ? '#F4A623' : 'rgba(255,255,255,0.06)',
-    color: active ? '#000' : 'rgba(255,255,255,0.55)',
+    whiteSpace: 'nowrap', border: active ? 'none' : '1px solid rgba(0,0,0,0.08)', cursor: 'pointer',
+    background: active ? '#F4A623' : '#fff',
+    color: active ? '#000' : 'rgba(0,0,0,0.55)',
     transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
   }
 }
 
 function chipStyleSmall(active: boolean): React.CSSProperties {
   return {
-    padding: '6px 12px', borderRadius: 20, fontSize: 12, border: 'none', cursor: 'pointer',
-    background: active ? '#F4A623' : 'rgba(255,255,255,0.06)',
-    color: active ? '#000' : 'rgba(255,255,255,0.55)',
+    padding: '6px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+    border: active ? 'none' : '1px solid rgba(0,0,0,0.08)',
+    background: active ? '#F4A623' : '#fff',
+    color: active ? '#000' : 'rgba(0,0,0,0.55)',
   }
 }
 

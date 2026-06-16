@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "pdf-lib"],
+  async redirects() {
+    return [
+      { source: '/localesfeed/mapa', destination: '/localesfeed?tab=mapa', permanent: false },
+    ]
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },

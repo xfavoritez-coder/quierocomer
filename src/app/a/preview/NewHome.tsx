@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { FeedDish } from '../types'
+import LocationModal from '../components/LocationModal'
 import { distanceKm } from '../lib/geo'
 import MasonryGrid from '../components/MasonryGrid'
 import FeedDishDetail from '../components/FeedDishDetail'
@@ -14,6 +15,12 @@ import {
   unsaveDish,
   updateTasteAction,
 } from '../lib/feed-actions'
+import { QC_CATEGORIES } from '../lib/categories'
+import { slugify } from '@/lib/slugify'
+
+function normStr(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
 
 // ─── Meal time detection ──────────────────────────────────────────
 type MealSlot = 'desayuno' | 'almuerzo' | 'cena'
@@ -59,6 +66,7 @@ export default function NewHome({
   vectorScoredIds = [],
   tasteData,
   userDiet,
+  initialDishId,
 }: {
   dishes: FeedDish[]
   categoryScores: Record<string, number>
@@ -67,8 +75,20 @@ export default function NewHome({
   vectorScoredIds?: string[]
   tasteData?: { antojoSessionDate: string | null; antojoDishIds: string[]; antojoRejectIds: string[]; tasteEmbeddingsCount: number; hasGustoVector: boolean }
   userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
+  initialDishId?: string
 }) {
   const [view, setView] = useState<View>('feed')
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('qc_theme') === 'dark'
+    return false
+  })
+  const toggleTheme = () => {
+    setIsDark(prev => {
+      const next = !prev
+      localStorage.setItem('qc_theme', next ? 'dark' : 'light')
+      return next
+    })
+  }
   const [activeDiet, setActiveDiet] = useState(userDiet)
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [hideRelated, setHideRelated] = useState(false)
@@ -76,6 +96,7 @@ export default function NewHome({
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationName, setLocationName] = useState<string | null>(null)
   const [locationOpen, setLocationOpen] = useState(false)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [activeMeal, setActiveMeal] = useState<MealSlot>(detectMealSlot)
   const [mealPickerOpen, setMealPickerOpen] = useState(false)
@@ -95,12 +116,15 @@ export default function NewHome({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
+  const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : detectMealSlot())
   const [filterSort, setFilterSort] = useState<'recent' | 'price-asc' | 'price-desc' | 'popular'>('recent')
   const [filterMaxKm, setFilterMaxKm] = useState(20)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
-  const [visibleCount, setVisibleCount] = useState(10)
+  const [visibleCount, setVisibleCount] = useState(20)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const [locationQuery, setLocationQuery] = useState('')
+  const [shuffleSeed, setShuffleSeed] = useState(() => Math.random())
 
   // Profile for DishModal — refreshable
   const [liveProfile, setLiveProfile] = useState<FeedProfile | null>(null)
@@ -147,17 +171,33 @@ export default function NewHome({
   // Geolocation — IP fallback + GPS upgrade
   const [gpsLabel, setGpsLabel] = useState<string | null>(null)
 
-  // Location: ask GPS directly on mount, fallback to IP
+  // Location: load saved first, then ask GPS if none saved
   useEffect(() => {
-    if (userLocation) return
+    // Restore saved location from localStorage
+    try {
+      const saved = localStorage.getItem('qc_location')
+      if (saved) {
+        const { lat, lng, label } = JSON.parse(saved)
+        setUserLocation({ lat, lng })
+        setGpsLabel(label)
+        setFilterMaxKm(5)
+        return // don't auto-request GPS if we have a saved location
+      }
+    } catch {}
+
+    const buildReverseLabel = (addr: Record<string, string>) => {
+      const parts: string[] = []
+      if (addr.road) parts.push(addr.road)
+      const zone = addr.suburb || addr.neighbourhood || addr.city_district || addr.city || addr.town || addr.village
+      if (zone && zone !== addr.road) parts.push(zone)
+      return parts.join(', ') || addr.city || 'Cerca de ti'
+    }
 
     const reverseGeocode = async (lat: number, lng: number) => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=16`)
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=16`, { headers: { 'Accept-Language': 'es' } })
         const data = await res.json()
-        const addr = data.address
-        // Show neighborhood/suburb or road name
-        return addr.suburb || addr.neighbourhood || addr.road || addr.city_district || addr.city || 'Cerca de ti'
+        return buildReverseLabel(data.address)
       } catch { return null }
     }
 
@@ -165,20 +205,19 @@ export default function NewHome({
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
       setUserLocation(loc)
       setLocationName(null)
-      // Reverse geocode for accurate label
-      const label = await reverseGeocode(loc.lat, loc.lng)
-      setGpsLabel(label || 'Cerca de ti')
+      setFilterMaxKm(5)
+      const label = await reverseGeocode(loc.lat, loc.lng) || 'Cerca de ti'
+      setGpsLabel(label)
+      try { localStorage.setItem('qc_location', JSON.stringify({ lat: loc.lat, lng: loc.lng, label })) } catch {}
     }
 
     const onGPSError = () => {
-      // Fallback to IP
       fetch('https://ipapi.co/json/')
         .then(r => r.json())
         .then(data => { if (data.city) setLocationName(data.city) })
         .catch(() => {})
     }
 
-    // Request GPS with high accuracy
     navigator.geolocation?.getCurrentPosition(onGPS, onGPSError, {
       enableHighAccuracy: true,
       timeout: 8000,
@@ -186,6 +225,14 @@ export default function NewHome({
     })
   }, [])
 
+
+  // Open initial dish from URL param on mount
+  useEffect(() => {
+    if (!initialDishId || !dishes.length) return
+    const dish = dishes.find(d => d.id === initialDishId)
+    if (dish) setSelectedDish(dish)
+    // URL is already correct (/p/<id>), no pushState needed
+  }, [initialDishId, dishes])
 
   // Cities and communes for location dropdown
   const CITY_NAMES = new Set(['Santiago', 'Santiago Centro', 'Valparaíso', 'La Serena', 'Victoria'])
@@ -223,50 +270,78 @@ export default function NewHome({
   }, [cities, communes, locationQuery])
 
   // Server-side search with debounce
-  const [suggestions, setSuggestions] = useState<{ label: string; type: 'categoria' | 'restaurante' | 'plato' }[]>([])
-  const [searchResults, setSearchResults] = useState<FeedDish[] | null>(null)
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Índice de búsqueda — pre-construido en cliente, una sola vez
+  const dishSearchIndex = useMemo(() =>
+    dishes.map(d => ({
+      ...d,
+      _search: [d.nombre, d.descripcion ?? '', d.restaurante, d.categoriaNorm, ...(d.sabores ?? [])]
+        .join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+    })),
+    [dishes]
+  )
 
-  useEffect(() => {
-    if (!searchInput.trim() || searchInput.length < 2) {
-      setSuggestions([])
-      setSearchResults(null)
-      return
+  // Sugerencias — 100% cliente, instantáneas (sin red)
+  const suggestions = useMemo(() => {
+    if (!searchInput.trim() || searchInput.length < 2) return []
+    const q = normStr(searchInput)
+
+    // 1. Categorías QC
+    const cats = [...QC_CATEGORIES]
+      .filter(c => normStr(c).includes(q))
+      .slice(0, 2)
+      .map(c => ({ label: c, type: 'categoria' as const, count: 0 }))
+
+    // 2. Ingrediente — si el término aparece en nombre/descripción de varios platos
+    const totalMatches = dishSearchIndex.filter(d => d._search.includes(q)).length
+    const nameMatches = dishSearchIndex.filter(d => normStr(d.nombre).includes(q)).length
+    // Es "ingrediente" cuando hay más platos que lo mencionan que platos cuyo nombre es exactamente ese término
+    const ingrediente: { label: string; type: 'ingrediente'; count: number }[] =
+      totalMatches > nameMatches + 2
+        ? [{ label: searchInput.trim(), type: 'ingrediente', count: totalMatches }]
+        : []
+
+    // 3. Locales
+    const seenRests = new Set<string>()
+    const rests: { label: string; type: 'local'; count: number }[] = []
+    for (const d of dishSearchIndex) {
+      if (rests.length >= 2) break
+      const key = d.restaurante.toLowerCase()
+      if (!seenRests.has(key) && normStr(d.restaurante).includes(q)) {
+        seenRests.add(key)
+        rests.push({ label: d.restaurante, type: 'local', count: 0 })
+      }
     }
-    // Debounce 300ms
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
-    searchTimerRef.current = setTimeout(() => {
-      fetch(`/api/feed/search?q=${encodeURIComponent(searchInput)}`)
-        .then(r => r.json())
-        .then(data => {
-          setSuggestions(data.suggestions || [])
-          if (data.dishes?.length > 0) {
-            setSearchResults(data.dishes)
-          }
-        })
-        .catch(() => {})
-    }, 300)
-    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current) }
-  }, [searchInput])
+
+    // 4. Nombres de plato (solo si no hay sugerencia de ingrediente que lo cubra)
+    const seenNames = new Set<string>()
+    const platos: { label: string; type: 'plato'; count: number }[] = []
+    for (const d of dishSearchIndex) {
+      if (platos.length >= 3) break
+      const key = d.nombre.toLowerCase()
+      if (!seenNames.has(key) && normStr(d.nombre).includes(q)) {
+        seenNames.add(key)
+        platos.push({ label: d.nombre, type: 'plato', count: 0 })
+      }
+    }
+
+    return [...cats, ...ingrediente, ...rests, ...platos]
+  }, [searchInput, dishSearchIndex])
+
+  // Resultados de búsqueda — también 100% cliente
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return null
+    const q = normStr(searchQuery)
+    return dishSearchIndex.filter(d => d._search.includes(q))
+  }, [searchQuery, dishSearchIndex])
 
   const executeSearch = useCallback((query: string) => {
     setSearchQuery(query)
     setSearchInput(query)
     setShowSuggestions(false)
-    // Update URL
     const url = new URL(window.location.href)
     if (query) url.searchParams.set('q', query)
     else url.searchParams.delete('q')
     window.history.replaceState({}, '', url.toString())
-    // Fetch results from server
-    if (query.trim()) {
-      fetch(`/api/feed/search?q=${encodeURIComponent(query)}`)
-        .then(r => r.json())
-        .then(data => { if (data.dishes) setSearchResults(data.dishes) })
-        .catch(() => {})
-    } else {
-      setSearchResults(null)
-    }
   }, [])
 
   // Feed dishes — use server search results if searching, otherwise local filter
@@ -291,14 +366,17 @@ export default function NewHome({
     // Distance filter — uses slider value (filterMaxKm) or GPS auto
     if (userLocation && !locationName) {
       const maxDist = filterMaxKm < 20 ? filterMaxKm : 999
+      const noiseScale = Math.max(0.5, maxDist * 0.25) // ruido = 25% del radio, mín 0.5km
       const withDist = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
-        .map(d => ({
-          dish: d,
-          dist: distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!)
-        }))
-        .sort((a, b) => a.dist - b.dist)
-      filtered = withDist.filter(x => x.dist <= maxDist).map(x => x.dish)
+        .map(d => {
+          const dist = distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!)
+          const noise = seededRandom(shuffleSeed, d.id) * noiseScale
+          return { dish: d, dist, sortKey: dist + noise }
+        })
+        .filter(x => x.dist <= maxDist)
+        .sort((a, b) => a.sortKey - b.sortKey)
+      filtered = withDist.map(x => x.dish)
     }
 
     // Category filter
@@ -360,31 +438,33 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm, searchResults])
+  }, [dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, filterDiet, filterMaxKm, searchResults, shuffleSeed])
 
-  // Infinite scroll — check every 500ms if near bottom
+  // Infinite scroll — IntersectionObserver sobre sentinel al final del feed
   useEffect(() => {
-    const check = () => {
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1000) {
-        setVisibleCount(prev => {
-          if (prev < feedDishes.length) return Math.min(prev + 10, feedDishes.length)
-          return prev
-        })
+    const el = sentinelRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
       }
-    }
-    const interval = setInterval(check, 500)
-    window.addEventListener('scroll', check, { passive: true })
-    return () => { clearInterval(interval); window.removeEventListener('scroll', check) }
+    }, { rootMargin: '400px' })
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [feedDishes.length])
 
-  // Reset visible count on any filter change
-  useEffect(() => { setVisibleCount(10) }, [activeCategory, filterMeal, filterSort, filterDiet, filterMaxKm, searchQuery, locationName])
+  // Scroll to top + reset visibleCount on filter change
+  useEffect(() => {
+    setVisibleCount(20)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeCategory, filterMeal, filterSort, filterDiet, filterMaxKm, searchQuery, locationName, userLocation])
 
   // Handlers
   const handleDishTap = useCallback((d: FeedDish) => {
     setSelectedDish(d)
     setHideRelated(false)
     trackInteraction(d.id, 'TAP', d.categoriaNorm, d.precioDescuento ?? d.precio).catch(() => {})
+    window.history.pushState({}, '', `/${d.restauranteSlug}/${slugify(d.nombre)}`)
   }, [])
 
   const handleLikedDishTap = useCallback((d: FeedDish) => {
@@ -420,39 +500,40 @@ export default function NewHome({
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh' }}>
+    <div className={isDark ? 'dark' : ''} style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
 
-      {/* ─── Header: logo + hamburger ─── */}
-      <header style={{
-        background: '#0e0e0e',
-        padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      {/* ─── Logo row — NO sticky, scrolls con el contenido ─── */}
+      <div style={{
+        padding: '10px 16px 0',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <a href="/" style={{ textDecoration: 'none', cursor: 'pointer' }}>
-          <span style={{
-            fontFamily: 'var(--font-feed-display), serif',
-            fontSize: 22, fontWeight: 700, color: '#fff',
-          }}>
+          <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: '#111' }}>
             Quiero<span style={{ color: '#F4A623' }}>Comer</span>
           </span>
         </a>
         <button onClick={() => setMenuOpen(true)} style={{
           background: 'none', border: 'none', cursor: 'pointer', padding: 6,
-          color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-      </header>
+      </div>
 
-      {/* ─── Search + Filter — sticky ─── */}
-      <div style={{
+      {/* ─── Sticky: search + ubicación/filtros ─── */}
+      <header style={{
         position: 'sticky', top: 0, zIndex: 35,
-        padding: '6px 16px 8px', display: 'flex', alignItems: 'center', gap: 8,
-        background: 'rgba(14,14,14,0.97)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
+        padding: '8px 16px 8px', display: 'flex', flexDirection: 'column', gap: 7,
       }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round"
+
+        {/* Row 1: Search bar full width */}
+        <div style={{ position: 'relative' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
@@ -460,20 +541,21 @@ export default function NewHome({
             ref={searchInputRef}
             className="feed-search-input"
             type="text" value={searchInput}
-            onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true); setSearchQuery(e.target.value) }}
+            onChange={e => { setSearchInput(e.target.value); setShowSuggestions(true) }}
             onFocus={() => setShowSuggestions(true)}
             onKeyDown={e => { if (e.key === 'Enter') { executeSearch(searchInput); searchInputRef.current?.blur() } }}
-            placeholder="Buscar plato o restaurante..."
+            placeholder="Buscar plato, restaurante o ingrediente..."
             style={{
-              width: '100%', padding: '10px 36px 10px 34px', borderRadius: 14, fontSize: 16,
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
-              color: '#fff', outline: 'none', boxSizing: 'border-box',
+              width: '100%', padding: '10px 36px 10px 34px', borderRadius: 999, fontSize: 15,
+              background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+              color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
           {searchInput && (
             <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(255,255,255,0.3)', zIndex: 2,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'rgba(0,0,0,0.3)', zIndex: 2,
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
@@ -487,23 +569,35 @@ export default function NewHome({
               <div onClick={() => setShowSuggestions(false)} style={{ position: 'fixed', inset: 0, zIndex: 36 }} />
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 37, marginTop: 4,
-                background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.5)', overflow: 'hidden',
+                background: '#fff',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
               }}>
                 {suggestions.map((s, i) => (
-                  <button key={i} onClick={() => executeSearch(s.label)} style={{
+                  <button key={i} onClick={() => {
+                    if (s.type === 'categoria') {
+                      setActiveCategory(s.label)
+                      setSearchInput('')
+                      setSearchQuery('')
+                      setShowSuggestions(false)
+                    } else {
+                      executeSearch(s.label)
+                    }
+                  }} style={{
                     display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                     padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                    textAlign: 'left', borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    textAlign: 'left', borderBottom: i < suggestions.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
                   }}>
-                    <span style={{ fontSize: 14, flexShrink: 0 }}>
-                      {s.type === 'categoria' ? '📂' : s.type === 'restaurante' ? '🏪' : '🍽'}
+                    <span style={{ fontSize: 15, flexShrink: 0 }}>
+                      {s.type === 'categoria' ? '🏷️' : s.type === 'ingrediente' ? '🧂' : s.type === 'local' ? '🏪' : '🍽'}
                     </span>
-                    <div>
-                      <p style={{ fontSize: 14, color: '#fff', margin: 0 }}>{s.label}</p>
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '1px 0 0' }}>
-                        {s.type === 'categoria' ? 'Categoría' : s.type === 'restaurante' ? 'Restaurante' : 'Plato'}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 14, color: '#111', margin: 0 }}>{s.label}</p>
+                      <p style={{ fontSize: 10, color: 'rgba(0,0,0,0.3)', margin: '1px 0 0' }}>
+                        {s.type === 'categoria' ? 'Categoría'
+                          : s.type === 'ingrediente' ? `Ingrediente · ${s.count} platos`
+                          : s.type === 'local' ? 'Local'
+                          : 'Plato'}
                       </p>
                     </div>
                   </button>
@@ -513,120 +607,92 @@ export default function NewHome({
           )}
         </div>
 
-        {/* Filter button */}
-        <button onClick={() => setFilterOpen(!filterOpen)} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '10px', borderRadius: 14, flexShrink: 0,
-          background: filterSort !== 'recent' || filterDiet !== 'all' || filterMeal !== 'all'
-            ? 'rgba(244,166,35,0.15)' : 'rgba(255,255,255,0.06)',
-          border: filterSort !== 'recent' || filterDiet !== 'all' || filterMeal !== 'all'
-            ? '1px solid rgba(244,166,35,0.3)' : '1px solid rgba(255,255,255,0.08)',
-          cursor: 'pointer', alignSelf: 'stretch',
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke={filterSort !== 'recent' || filterDiet !== 'all' || filterMeal !== 'all' ? '#F4A623' : 'rgba(255,255,255,0.4)'}
-            strokeWidth="2" strokeLinecap="round">
-            <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" />
-            <circle cx="6" cy="12" r="2" fill="currentColor" /><circle cx="14" cy="18" r="2" fill="currentColor" />
-          </svg>
-        </button>
-      </div>
+        {/* Row 3: Ubicación (izq) + Filtros (der) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* Ubicación */}
+          <button onClick={() => setLocationModalOpen(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: (locationName || gpsLabel) ? 'rgba(244,166,35,0.1)' : 'rgba(0,0,0,0.05)',
+            border: `1px solid ${(locationName || gpsLabel) ? 'rgba(244,166,35,0.3)' : 'rgba(0,0,0,0.08)'}`,
+            borderRadius: 20, padding: '6px 12px', cursor: 'pointer',
+            color: (locationName || gpsLabel) ? '#c97d00' : 'rgba(0,0,0,0.5)',
+            fontSize: 12, fontWeight: 500,
+            minWidth: 0, maxWidth: 'calc(100% - 100px)', overflow: 'hidden',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+            </svg>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {locationName || gpsLabel || 'Ubicación'}
+            </span>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{ flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          {/* Filtros */}
+          <button onClick={() => setFilterOpen(!filterOpen)} style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(244,166,35,0.1)',
+            border: '1px solid rgba(244,166,35,0.3)',
+            borderRadius: 20, padding: '6px 14px', cursor: 'pointer',
+            color: '#c97d00',
+            fontSize: 12, fontWeight: 500,
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            Filtros
+          </button>
+        </div>
+      </header>
 
       {/* ─── Filter sheet ─── */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)' }} />
+          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.3)' }} />
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
             maxHeight: '90vh', overflowY: 'auto',
             padding: '12px 16px', boxSizing: 'border-box',
-            background: 'radial-gradient(circle at top left, rgba(255,170,30,0.06), transparent 35%), #121212',
+            background: '#fff',
             borderRadius: '24px 24px 0 0',
             animation: 'slideUp 0.25s ease-out',
           }}>
-            {/* Drag handle */}
-            <div style={{ width: 40, height: 5, background: '#555', borderRadius: 999, margin: '0 auto 16px' }} />
+            <button onClick={() => setFilterOpen(false)} style={{
+              position: 'absolute', top: 28, right: 16,
+              background: 'none', border: 'none', color: 'rgba(0,0,0,0.35)',
+              fontSize: 30, lineHeight: 1, padding: 0, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>×</button>
 
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
-              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#f5f5f5' }}>Filtros</h2>
-              <button onClick={() => setFilterOpen(false)} style={{
-                width: 44, height: 44, borderRadius: 999,
-                border: '1px solid #333', background: '#191919', color: '#aaa',
-                fontSize: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              }}>×</button>
-            </div>
+            <div style={{ width: 40, height: 5, background: 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
 
-            {/* Distancia */}
             <div style={{ marginBottom: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#f6a51a', fontSize: 20 }}>📍</span>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Distancia</h3>
-              </div>
-              <div style={{ border: '1px solid #2c2c2c', borderRadius: 22, padding: '22px 18px', background: 'rgba(255,255,255,0.025)' }}>
-                <p style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>
-                  Hasta <strong style={{ color: '#f6a51a', marginLeft: 8 }}>{filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
-                </p>
-                <div style={{ position: 'relative', height: 6, background: '#3a3a3a', borderRadius: 999 }}>
-                  <div style={{ width: `${(filterMaxKm / 20) * 100}%`, height: '100%', background: '#f6a51a', borderRadius: 999 }} />
-                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 20) * 100}%`, top: '50%', width: 28, height: 28, background: '#f6a51a', borderRadius: 999, transform: 'translate(-50%, -50%)' }} />
-                </div>
-                <input type="range" min={1} max={20} value={filterMaxKm}
-                  onChange={e => setFilterMaxKm(Number(e.target.value))}
-                  style={{ width: '100%', height: 28, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -17, opacity: 0 }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8e8e8e', fontSize: 14, marginTop: 8 }}>
-                  <span>1 km</span><span>5 km</span><span>10 km</span><span>20 km</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Momento */}
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#f6a51a', fontSize: 20 }}>🕒</span>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Momento</h3>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                {[
-                  { id: 'desayuno' as const, label: 'Desayuno', emoji: '🌅' },
-                  { id: 'almuerzo_cena' as const, label: 'Almuerzo', emoji: '☀️' },
-                  { id: 'almuerzo_cena' as const, label: 'Cena', emoji: '🌙' },
-                  { id: 'all' as const, label: 'Todos', emoji: '▦' },
-                ].map((m, i) => (
-                  <button key={i} onClick={() => setFilterMeal(m.id)} style={{
-                    minHeight: 76, borderRadius: 16,
-                    border: filterMeal === m.id ? '1px solid #a66a13' : '1px solid #303030',
-                    background: filterMeal === m.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
-                    color: filterMeal === m.id ? '#f6a51a' : '#cfcfcf',
-                    fontSize: 15, display: 'flex', flexDirection: 'column', gap: 14,
-                    alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                  }}>
-                    <span style={{ fontSize: 28 }}>{m.emoji}</span>
-                    {m.label}
-                  </button>
-                ))}
-              </div>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#111' }}>Filtros</h2>
             </div>
 
             {/* Dieta */}
             <div style={{ marginBottom: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#62c945', fontSize: 20 }}>🌿</span>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Dieta</h3>
-              </div>
-              <div style={{ display: 'flex', gap: 10, overflowX: 'auto' }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M2 22 12 2l10 20" /><path d="M12 2c0 6-4 10-4 10s4 4 4 10" /></svg>
+                Dieta
+              </h3>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {[
-                  { id: 'all' as const, label: '🥩 Carnívoro' },
+                  { id: 'all' as const, label: '🍽 Como de todo' },
                   { id: 'VEGAN' as const, label: '🌱 Vegano' },
                   { id: 'VEGETARIAN' as const, label: '🥬 Vegetariano' },
                 ].map(d => (
                   <button key={d.id} onClick={() => setFilterDiet(d.id)} style={{
-                    border: filterDiet === d.id ? '1px solid #a66a13' : '1px solid #303030',
-                    borderRadius: 18, padding: '15px 20px',
-                    background: filterDiet === d.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
-                    color: filterDiet === d.id ? '#f6a51a' : '#cfcfcf',
-                    fontSize: 16, whiteSpace: 'nowrap', cursor: 'pointer',
+                    border: filterDiet === d.id ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: 14, padding: '10px 16px',
+                    background: filterDiet === d.id ? 'rgba(244,166,35,0.07)' : '#fff',
+                    color: filterDiet === d.id ? '#c97d00' : 'rgba(0,0,0,0.6)',
+                    fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
                   }}>
                     {d.label}
                   </button>
@@ -634,25 +700,76 @@ export default function NewHome({
               </div>
             </div>
 
+            {/* Distancia */}
+            <div style={{ marginBottom: 22 }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                Distancia
+              </h3>
+              <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '16px 14px', background: 'rgba(0,0,0,0.02)' }}>
+                <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: '#111' }}>
+                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{filterMaxKm < 20 ? `${filterMaxKm} km` : 'Sin límite'}</strong>
+                </p>
+                <div style={{ position: 'relative', height: 5, background: 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
+                  <div style={{ width: `${(filterMaxKm / 20) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
+                  <div style={{ position: 'absolute', left: `${(filterMaxKm / 20) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
+                </div>
+                <input type="range" min={1} max={20} value={filterMaxKm}
+                  onChange={e => setFilterMaxKm(Number(e.target.value))}
+                  style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
+                  <span>1 km</span><span>5 km</span><span>10 km</span><span>20+ km</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Momento */}
+            <div style={{ marginBottom: 22 }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                Momento
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                {[
+                  { display: 'desayuno' as const, meal: 'desayuno' as const, label: 'Desayuno', icon: <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /></svg> },
+                  { display: 'almuerzo' as const, meal: 'almuerzo_cena' as const, label: 'Almuerzo', icon: <svg width="20" height="20" fill="none" stroke="#f97316" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /></svg> },
+                  { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', icon: <svg width="20" height="20" fill="none" stroke="#6366f1" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
+                ].map((m, i) => (
+                  <button key={i} onClick={() => { setFilterMeal(m.meal); setFilterMealDisplay(m.display) }} style={{
+                    minHeight: 68, borderRadius: 12,
+                    border: filterMealDisplay === m.display ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
+                    background: filterMealDisplay === m.display ? 'rgba(244,166,35,0.07)' : '#fff',
+                    color: filterMealDisplay === m.display ? '#c97d00' : 'rgba(0,0,0,0.55)',
+                    fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6,
+                    alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                  }}>
+                    {m.icon}
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Ordenar */}
             <div style={{ marginBottom: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ color: '#f6a51a', fontSize: 20 }}>↕</span>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#f5f5f5' }}>Ordenar por</h3>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <svg width="16" height="16" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" /></svg>
+                Ordenar por
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {[
                   { id: 'recent' as const, label: 'Últimos agregados' },
                   { id: 'popular' as const, label: 'Más populares' },
-                  { id: 'price-asc' as const, label: 'Precio menor a mayor' },
-                  { id: 'price-desc' as const, label: 'Precio mayor a menor' },
+                  { id: 'price-asc' as const, label: 'Precio ↑' },
+                  { id: 'price-desc' as const, label: 'Precio ↓' },
                 ].map(s => (
                   <button key={s.id} onClick={() => setFilterSort(s.id)} style={{
-                    border: filterSort === s.id ? '1px solid #a66a13' : '1px solid #303030',
-                    borderRadius: 18, padding: '15px 20px',
-                    background: filterSort === s.id ? 'rgba(246,165,26,0.08)' : 'rgba(255,255,255,0.025)',
-                    color: filterSort === s.id ? '#f6a51a' : '#f5f5f5',
-                    fontSize: 16, cursor: 'pointer',
+                    border: filterSort === s.id ? '1.5px solid #F4A623' : '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: 14, padding: '10px 16px',
+                    background: filterSort === s.id ? 'rgba(244,166,35,0.07)' : '#fff',
+                    color: filterSort === s.id ? '#c97d00' : '#111',
+                    fontSize: 13, cursor: 'pointer',
                   }}>
                     {s.label}
                   </button>
@@ -660,19 +777,17 @@ export default function NewHome({
               </div>
             </div>
 
-            {/* Spacer for fixed button */}
             <div style={{ height: 80 }} />
           </div>
 
-          {/* Fixed apply button */}
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 82,
             padding: '12px 18px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-            background: 'linear-gradient(to top, #121212, rgba(18,18,18,0.95))',
+            background: 'linear-gradient(to top, #fff 60%, transparent)',
           }}>
-            <button onClick={() => setFilterOpen(false)} style={{
-              width: '100%', height: 56, border: 'none', borderRadius: 18,
-              background: '#f6a51a', color: '#111', fontSize: 17, fontWeight: 800, cursor: 'pointer',
+            <button onClick={() => { setFilterOpen(false); setShuffleSeed(Math.random()); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
+              width: '100%', height: 52, border: 'none', borderRadius: 16,
+              background: '#F4A623', color: '#000', fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}>
               Ver {feedDishes.length} platos
             </button>
@@ -685,31 +800,27 @@ export default function NewHome({
         <>
           <div onClick={() => setMenuOpen(false)} style={{
             position: 'fixed', inset: 0, zIndex: 55,
-            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           }} />
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
-            width: 300, maxWidth: '85vw',
-            background: '#111',
-            borderLeft: '1px solid rgba(255,255,255,0.06)',
+            width: 280, maxWidth: '85vw',
+            background: isDark ? '#141414' : '#fff',
+            borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
             animation: 'slideRight 0.25s ease-out',
             display: 'flex', flexDirection: 'column',
           }}>
-            {/* Header */}
             <div style={{
-              padding: '20px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              padding: '18px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
             }}>
-              <div style={{
-                fontFamily: 'var(--font-feed-display), Georgia, serif',
-                fontSize: 22, fontWeight: 700, letterSpacing: -0.5, color: '#fff',
-              }}>
+              <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: '#111' }}>
                 Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-              </div>
+              </span>
               <button onClick={() => setMenuOpen(false)} style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)', border: 'none',
-                cursor: 'pointer', color: 'rgba(255,255,255,0.5)',
+                width: 34, height: 34, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.05)', border: 'none',
+                cursor: 'pointer', color: 'rgba(0,0,0,0.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -718,67 +829,77 @@ export default function NewHome({
               </button>
             </div>
 
-            {/* Nav */}
-            <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <nav style={{ flex: 1, padding: '10px 10px', display: 'flex', flexDirection: 'column', gap: 2, background: isDark ? '#141414' : '#fff' }}>
               <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '14px 16px', borderRadius: 14,
-                color: '#fff', textDecoration: 'none',
-                fontSize: 17, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 14px', borderRadius: 12,
+                color: '#111', fontSize: 16, fontWeight: 600,
                 background: view === 'perfil' ? 'rgba(244,166,35,0.08)' : 'transparent',
                 border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
                 WebkitTapHighlightColor: 'transparent',
               }}>
                 <span style={{ color: '#855bd8', display: 'flex', flexShrink: 0 }}>
-                  <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>
                 </span>
                 Mi perfil
               </button>
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 16px' }} />
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', margin: '4px 14px' }} />
               <a href="/qr" style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '14px 16px', borderRadius: 14,
-                color: '#fff', textDecoration: 'none',
-                fontSize: 17, fontWeight: 600,
-                background: 'transparent', border: 'none',
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 14px', borderRadius: 12,
+                color: '#111', textDecoration: 'none', fontSize: 16, fontWeight: 600,
                 WebkitTapHighlightColor: 'transparent',
               }}>
                 <span style={{ color: '#F4A623', display: 'flex', flexShrink: 0 }}>
-                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
                   </svg>
                 </span>
                 ¿Tienes un local?
               </a>
               <a href="mailto:hola@quierocomer.cl" style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '14px 16px', borderRadius: 14,
-                color: '#fff', textDecoration: 'none',
-                fontSize: 17, fontWeight: 600,
-                background: 'transparent', border: 'none',
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 14px', borderRadius: 12,
+                color: isDark ? '#fff' : '#111', textDecoration: 'none', fontSize: 16, fontWeight: 600,
                 WebkitTapHighlightColor: 'transparent',
               }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)', display: 'flex', flexShrink: 0 }}>
-                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                <span style={{ color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', display: 'flex', flexShrink: 0 }}>
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
                   </svg>
                 </span>
                 Contacto
               </a>
-            </nav>
 
-            {/* Footer */}
-            <div style={{
-              padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
-              textAlign: 'center',
-            }}>
-              <span style={{
-                fontFamily: 'var(--font-feed-display), Georgia, serif',
-                fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.1)',
+              {/* Separador */}
+              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', margin: '8px 14px' }} />
+
+              {/* Toggle dark/light */}
+              <button onClick={toggleTheme} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 14px', borderRadius: 12,
+                color: isDark ? '#fff' : '#111', fontSize: 16, fontWeight: 600,
+                background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
+                WebkitTapHighlightColor: 'transparent',
               }}>
-                Quiero<span style={{ color: 'rgba(244,166,35,0.15)' }}>Comer</span>
-              </span>
-            </div>
+                <span style={{ color: isDark ? '#F4A623' : '#555', display: 'flex', flexShrink: 0 }}>
+                  {isDark ? (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                  )}
+                </span>
+                {isDark ? 'Modo claro' : 'Modo oscuro'}
+              </button>
+            </nav>
           </div>
         </>
       )}
@@ -790,117 +911,21 @@ export default function NewHome({
           {/* Location dropdown anchor */}
           <div style={{ position: 'relative', padding: '0 16px' }}>
 
-            {/* Location dropdown */}
-            {locationOpen && (
-              <>
-                <div onClick={() => setLocationOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
-                <div style={{
-                  position: 'absolute', top: '100%', right: 20, zIndex: 45,
-                  background: 'rgba(20,20,20,0.97)', backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14,
-                  padding: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                  maxHeight: 320, overflowY: 'auto', width: 240,
-                }}>
-                  <button onClick={() => {
-                    setLocationOpen(false)
-                    setLocationName(null)
-                    setGpsLabel('Buscando...')
-                    navigator.geolocation.getCurrentPosition(pos => {
-                      const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-                      setUserLocation(loc)
-                      // Derive city name from nearest restaurant
-                      const nearest = dishes
-                        .filter(d => d.restauranteLat && d.restauranteLng)
-                        .map(d => ({ d, dist: distanceKm(loc.lat, loc.lng, d.restauranteLat!, d.restauranteLng!) }))
-                        .sort((a, b) => a.dist - b.dist)[0]
-                      if (nearest?.d.restauranteDireccion) {
-                        const parts = nearest.d.restauranteDireccion.split(',').map(p => p.trim())
-                          .filter(p => p && p !== 'Chile' && p !== 'Región Metropolitana' && !p.match(/^\d/) && !p.match(/^Av\.?\s/i))
-                        const commune = parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]
-                        setGpsLabel(commune || 'Cerca de ti')
-                      } else {
-                        setGpsLabel('Cerca de ti')
-                      }
-                    }, () => { setGpsLabel('Sin acceso GPS') }, { enableHighAccuracy: false, timeout: 8000 })
-                  }} style={{
-                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                    padding: '10px 12px', borderRadius: 10, background: 'rgba(244,166,35,0.08)',
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
-                    fontSize: 13, fontWeight: 600, color: '#F4A623', marginBottom: 6,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
-                    </svg>
-                    Usar mi ubicación
-                  </button>
-
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '8px 10px', borderRadius: 8,
-                    background: 'rgba(255,255,255,0.04)', marginBottom: 6, marginTop: 6,
-                  }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeLinecap="round">
-                      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                    </svg>
-                    <input type="text" placeholder="Buscar comuna o ciudad..." value={locationQuery}
-                      onChange={e => setLocationQuery(e.target.value)}
-                      className="location-search-input"
-                      style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 13 }} />
-                  </div>
-
-                  {/* Cities */}
-                  {filteredCities.length > 0 && (
-                    <>
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '4px 12px 4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ciudades</p>
-                      {filteredCities.map(city => (
-                        <button key={city} onClick={() => {
-                          setLocationName(city)
-                          setLocationOpen(false); setLocationQuery('')
-                        }} style={{
-                          display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
-                          background: locationName === city ? 'rgba(244,166,35,0.1)' : 'transparent',
-                          border: 'none', cursor: 'pointer', textAlign: 'left',
-                          fontSize: 13, fontWeight: locationName === city ? 600 : 400,
-                          color: locationName === city ? '#F4A623' : 'rgba(255,255,255,0.7)',
-                        }}>
-                          {city}
-                        </button>
-                      ))}
-                    </>
-                  )}
-
-                  {/* Separator */}
-                  {filteredCities.length > 0 && filteredCommunes.length > 0 && (
-                    <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 12px' }} />
-                  )}
-
-                  {/* Communes */}
-                  {filteredCommunes.length > 0 && (
-                    <>
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '4px 12px 4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>Comunas</p>
-                      {filteredCommunes.map(commune => (
-                        <button key={commune} onClick={() => {
-                          setLocationName(commune)
-                          setLocationOpen(false); setLocationQuery('')
-                        }} style={{
-                          display: 'block', width: '100%', padding: '9px 12px', borderRadius: 8,
-                          background: locationName === commune ? 'rgba(244,166,35,0.1)' : 'transparent',
-                          border: 'none', cursor: 'pointer', textAlign: 'left',
-                          fontSize: 13, fontWeight: locationName === commune ? 600 : 400,
-                          color: locationName === commune ? '#F4A623' : 'rgba(255,255,255,0.7)',
-                        }}>
-                          {commune}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                  {filteredCities.length === 0 && filteredCommunes.length === 0 && (
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center', padding: 12, margin: 0 }}>
-                      Sin resultados
-                    </p>
-                  )}
-                </div>
-              </>
+            {/* LocationModal */}
+            {locationModalOpen && (
+              <LocationModal
+                onClose={() => setLocationModalOpen(false)}
+                onConfirm={({ lat, lng, label }) => {
+                  setUserLocation({ lat, lng })
+                  setGpsLabel(label)
+                  setLocationName(null)
+                  setFilterMaxKm(5)
+                  setShuffleSeed(Math.random())
+                  setLocationModalOpen(false)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  try { localStorage.setItem('qc_location', JSON.stringify({ lat, lng, label })) } catch {}
+                }}
+              />
             )}
 
             {/* Meal time picker dropdown */}
@@ -942,41 +967,18 @@ export default function NewHome({
             )}
           </div>
 
-          {/* Tagline + location */}
-          <div style={{
-            padding: '10px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            {searchQuery.trim() ? (
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-                {feedDishes.length} resultado{feedDishes.length !== 1 ? 's' : ''} para "{searchQuery}"
+          {/* Results count strip */}
+          {feedDishes.length > 0 && (
+            <div style={{ padding: '6px 16px 4px' }}>
+              <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.4)', margin: 0 }}>
+                {searchQuery.trim()
+                  ? `${feedDishes.length} resultado${feedDishes.length !== 1 ? 's' : ''} para "${searchQuery}"`
+                  : (userLocation || locationName)
+                    ? `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} cerca de ${gpsLabel || locationName}`
+                    : `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} disponibles`}
               </p>
-            ) : (
-              <p style={{
-                fontSize: 14, color: 'rgba(255,255,255,0.25)', margin: 0,
-                fontFamily: 'var(--font-feed-display), serif',
-              }}>
-                Descubre qué comer cerca
-              </p>
-            )}
-
-            <button onClick={() => setLocationOpen(!locationOpen)} style={{
-              display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-              background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={(locationName || userLocation) ? '#F4A623' : 'rgba(255,255,255,0.25)'} strokeWidth="2.5" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{
-                fontSize: 13, fontWeight: 500,
-                color: (locationName || gpsLabel) ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-              }}>
-                {locationName || gpsLabel || 'Ubicación'}
-              </span>
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" strokeLinecap="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-          </div>
+            </div>
+          )}
 
           {/* Feed masonry */}
           {feedDishes.length > 0 ? (
@@ -986,17 +988,14 @@ export default function NewHome({
                 onDishTap={handleDishTap}
                 userLocation={userLocation}
               />
-              {/* Loading skeleton when more dishes are available */}
-              {/* Skeleton for loading more */}
+              {/* Sentinel — IntersectionObserver lo detecta para cargar más */}
+              <div ref={sentinelRef} style={{ height: 1 }} />
               {visibleCount < feedDishes.length && (
                 <div style={{ display: 'flex', gap: 10, padding: '10px 12px 40px' }}>
                   {[0, 1].map(col => (
                     <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {[0, 1].map(i => (
-                        <div key={i} className="skeleton-shimmer" style={{
-                          aspectRatio: col === 0 ? '3/4' : '4/5',
-                          borderRadius: 14, background: 'rgba(255,255,255,0.04)',
-                        }} />
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className="skeleton-shimmer" style={{ aspectRatio: col === 0 ? '3/4' : '4/5', borderRadius: 14 }} />
                       ))}
                     </div>
                   ))}
@@ -1004,9 +1003,9 @@ export default function NewHome({
               )}
             </>
           ) : (
-            <div style={{ textAlign: 'center', padding: '80px 30px', color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ textAlign: 'center', padding: '80px 30px', color: 'rgba(0,0,0,0.35)' }}>
               <p style={{ fontSize: 40, margin: '0 0 16px' }}>🍽</p>
-              <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px', color: 'rgba(255,255,255,0.4)' }}>
+              <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px', color: 'rgba(0,0,0,0.4)' }}>
                 No encontramos platos aquí
               </p>
               <p style={{ fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>
@@ -1017,8 +1016,8 @@ export default function NewHome({
               {(locationName || gpsLabel) && (
                 <button onClick={() => { setLocationName(null); setUserLocation(null); setGpsLabel(null) }} style={{
                   padding: '10px 20px', borderRadius: 14, fontSize: 14, fontWeight: 600,
-                  background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.2)',
-                  color: '#F4A623', cursor: 'pointer',
+                  background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.25)',
+                  color: '#c97d00', cursor: 'pointer',
                 }}>
                   Ver todos los platos
                 </button>
@@ -1045,34 +1044,34 @@ export default function NewHome({
       {view === 'all-liked' && (
         <div style={{ padding: '8px 3px 100px' }}>
           <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }}>
+            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             </button>
-            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#fff', margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#111', margin: 0 }}>
               Me han gustado
             </h2>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>({likedDishes.length})</span>
+            <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>({likedDishes.length})</span>
           </div>
           {likedDishes.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
               {likedDishes.map(d => (
                 <div key={d.id} onClick={() => handleLikedDishTap(d)} style={{
                   position: 'relative', aspectRatio: '1', overflow: 'hidden',
-                  cursor: 'pointer', background: '#1a1a1a',
+                  cursor: 'pointer', background: '#f0f0f0',
                 }}>
                   {d.fotoUrl ? (
                     <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', fontSize: 10, padding: 4, textAlign: 'center' }}>{d.nombre}</div>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.3)', fontSize: 10, padding: 4, textAlign: 'center' }}>{d.nombre}</div>
                   )}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', padding: '20px 6px 6px' }}>
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', padding: '20px 6px 6px' }}>
                     <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.3)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(0,0,0,0.3)' }}>
               <p style={{ fontSize: 32, marginBottom: 8 }}>👍</p>
               <p style={{ fontSize: 14 }}>Aún no tienes platos que te gusten</p>
             </div>
@@ -1084,13 +1083,13 @@ export default function NewHome({
       {view === 'all-saved' && (
         <div style={{ padding: '8px 16px 100px' }}>
           <div style={{ padding: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }}>
+            <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             </button>
-            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#fff', margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: '#111', margin: 0 }}>
               Guardados
             </h2>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>({savedDishes.length})</span>
+            <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>({savedDishes.length})</span>
           </div>
           <SavedList antojos={[]} saved={savedDishes} onDishTap={handleLikedDishTap} onRemove={handleRemoveSaved} />
         </div>
@@ -1101,18 +1100,30 @@ export default function NewHome({
         <FeedDishDetail
           key={selectedDish.id}
           dish={selectedDish}
-          allDishes={feedDishes}
+          allDishes={feedDishes.some(d => d.id === selectedDish.id) ? feedDishes : [selectedDish, ...feedDishes]}
+          dishPool={dishes}
           profile={profile}
           hideRelated={hideRelated}
-          onClose={() => setSelectedDish(null)}
+          onClose={() => { setSelectedDish(null); window.history.replaceState({}, '', '/') }}
           onSave={handleDishSave}
           onDishTap={handleDishTap}
+          onCategoryClick={(cat) => { setActiveCategory(cat); setSelectedDish(null); window.history.replaceState({}, '', '/') }}
           userLocation={userLocation}
         />
       )}
 
     </div>
   )
+}
+
+// ─── Seeded random per (seed, id) — deterministic noise for shuffle ───────────
+function seededRandom(seed: number, id: string): number {
+  let h = seed * 2654435761
+  for (let i = 0; i < id.length; i++) {
+    h = Math.imul(h ^ id.charCodeAt(i), 0x9e3779b9)
+    h ^= h >>> 16
+  }
+  return (h >>> 0) / 0xffffffff
 }
 
 function CategoryCircle({ icon, label, active, onClick }: {

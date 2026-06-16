@@ -19,14 +19,7 @@ export default async function HomePage() {
   const fingerprint = cookieStore.get('qc_feed_user')?.value
 
   if (!fingerprint) {
-    const newFingerprint = crypto.randomUUID()
-    const cookieStoreWrite = await cookies()
-    cookieStoreWrite.set('qc_feed_user', newFingerprint, {
-      httpOnly: false, secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', maxAge: 365 * 24 * 60 * 60, path: '/',
-    })
-    await prisma.feedUser.create({ data: { fingerprint: newFingerprint, onboardingDone: true } })
-    redirect('/a')
+    redirect('/api/feed-init')
   }
 
   const [user, dishes] = await Promise.all([
@@ -38,8 +31,7 @@ export default async function HomePage() {
   ])
 
   if (!user) {
-    await prisma.feedUser.create({ data: { fingerprint: fingerprint!, onboardingDone: true } })
-    redirect('/a')
+    redirect('/api/feed-init')
   }
 
   prisma.feedUser.update({ where: { fingerprint }, data: { lastSeenAt: new Date() } }).catch(() => {})

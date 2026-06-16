@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0e0e0e',
+  themeColor: '#f5f4f1',
 }
 
 export const metadata: Metadata = {
@@ -34,10 +34,10 @@ export const metadata: Metadata = {
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`feed-root ${playfair.variable} ${dmSans.variable} min-h-dvh text-white antialiased`}
+      className={`feed-root ${playfair.variable} ${dmSans.variable} min-h-dvh antialiased`}
       style={{
-        background: '#0e0e0e',
-        color: '#ffffff',
+        background: '#f5f4f1',
+        color: '#111111',
         fontFamily: 'var(--font-feed-body), system-ui, -apple-system, sans-serif',
         WebkitTapHighlightColor: 'transparent',
       }}

@@ -2154,3 +2154,28 @@ model FeedDishStats {
   @@index([popularityScore])
   @@index([trendingScore])
 }
+
+model MapaProspecto {
+  id          String   @id                        // Google Places ID
+  name        String
+  address     String?
+  mapsUrl     String?
+  website     String?
+  rating      Float?
+  reviews     Int?
+  lat         Float?
+  lng         Float?
+
+  // Resultado de prospección (null = aún no buscado)
+  status      String?  // 'encontrado' | 'sin_fotos' | 'sin_plataforma'
+  provider    String?
+  cartaUrl    String?
+  fuenteMatch String?
+  importedSlug String?  // slug del restaurante creado al importar al feed
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}

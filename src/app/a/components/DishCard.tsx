@@ -19,6 +19,7 @@ export default function DishCard({
   const imgRef = useRef<HTMLImageElement>(null)
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
+  const [logoError, setLogoError] = useState(false)
 
   // Check if image already loaded (cached) before React attached onLoad
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function DishCard({
       style={{ position: 'relative', cursor: 'pointer' }}
     >
       {/* Photo */}
-      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: '#1a1a1a', borderRadius: 14 }}>
+      <div style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: 'rgba(0,0,0,0.08)', borderRadius: 14 }}>
         {/* Skeleton shimmer while image loads */}
         {!showFallback && !imgLoaded && (
           <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
@@ -79,8 +80,9 @@ export default function DishCard({
           padding: '7px 10px',
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)',
         }}>
-          {dish.restauranteLogo ? (
-            <img src={dish.restauranteLogo} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+          {dish.restauranteLogo && !logoError ? (
+            <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
+              style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
           ) : (
             <div style={{
               width: 22, height: 22, borderRadius: '50%', flexShrink: 0,

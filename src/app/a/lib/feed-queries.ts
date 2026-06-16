@@ -3,68 +3,64 @@ import { normalizeCategory, isExcludedCategory, inferMealTime, inferDishType } f
 import type { FeedDish } from '../types'
 import { unstable_cache } from 'next/cache'
 
-/** Trae todos los platos para el feed: con foto, activos, restaurantes reales */
-async function _getFeedDishes(limit = 200): Promise<FeedDish[]> {
-  // Limited for fast initial load — 200 most recent with photos
-  const dishes = await prisma.dish.findMany({
-    where: {
-      isActive: true,
-      deletedAt: null,
-      photos: { isEmpty: false },
-      price: { gt: 0 },
-      category: {
-        dishType: { not: 'drink' },
-      },
-      restaurant: {
-        isActive: true,
-        isDemo: false,
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      price: true,
-      discountPrice: true,
-      photos: true,
-      dishDiet: true,
-      isSpicy: true,
-      isGlutenFree: true,
-      isLactoseFree: true,
-      isSoyFree: true,
-      containsNuts: true,
-      flavorTags: true,
-      isHero: true,
-      tags: true,
-      category: {
-        select: {
-          name: true,
-          dishType: true,
-        },
-      },
-      restaurant: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          logoUrl: true,
-          address: true,
-          lat: true,
-          lng: true,
-        },
-      },
-      feedStats: {
-        select: {
-          avgRating: true,
-          ratingCount: true,
-          commentCount: true,
-          popularityScore: true,
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
+const DISH_SELECT = {
+  id: true,
+  name: true,
+  description: true,
+  price: true,
+  discountPrice: true,
+  photos: true,
+  dishDiet: true,
+  isSpicy: true,
+  isGlutenFree: true,
+  isLactoseFree: true,
+  isSoyFree: true,
+  containsNuts: true,
+  flavorTags: true,
+  isHero: true,
+  tags: true,
+  category: { select: { name: true, dishType: true } },
+  restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true } },
+  feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
+} as const
+
+const DISH_WHERE = {
+  isActive: true,
+  deletedAt: null,
+  photos: { isEmpty: false },
+  price: { gt: 0 },
+  category: { dishType: { not: 'drink' } },
+  restaurant: { isActive: true, isDemo: false },
+} as const
+
+/** Trae platos para el feed: hasta MAX_PER_RESTAURANT por local, cubriendo todos los restaurantes */
+async function _getFeedDishes(): Promise<FeedDish[]> {
+  const MAX_PER_RESTAURANT = 10
+
+  // 1. Get all eligible restaurant IDs
+  const restaurants = await prisma.restaurant.findMany({
+    where: { isActive: true, isDemo: false },
+    select: { id: true },
   })
+
+  // 2. Fetch up to MAX_PER_RESTAURANT dishes per restaurant in parallel batches
+  const BATCH = 20
+  type DishRow = Awaited<ReturnType<typeof prisma.dish.findMany<{ select: typeof DISH_SELECT }>>>[number]
+  const dishes: DishRow[] = []
+  for (let i = 0; i < restaurants.length; i += BATCH) {
+    const batch = restaurants.slice(i, i + BATCH)
+    const results = await Promise.all(
+      batch.map(r =>
+        prisma.dish.findMany({
+          where: { ...DISH_WHERE, restaurantId: r.id },
+          select: DISH_SELECT,
+          orderBy: [{ isHero: 'desc' }, { createdAt: 'desc' }],
+          take: MAX_PER_RESTAURANT,
+        })
+      )
+    )
+    dishes.push(...results.flat())
+  }
 
   const feedDishes: FeedDish[] = []
 

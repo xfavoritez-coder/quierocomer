@@ -222,7 +222,11 @@ export default function DishModal({
             {showLocalFicha && (
               <div style={{ padding: '0 0 12px', animation: 'fadeIn 0.2s ease-out' }}>
                 {dish.restauranteDireccion && (
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restauranteDireccion + ' ' + dish.restaurante)}`}
+                  <a href={
+                    dish.restauranteLat && dish.restauranteLng
+                      ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
+                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restauranteDireccion + ' ' + dish.restaurante)}`
+                  }
                     target="_blank" rel="noopener noreferrer"
                     style={{ display: 'block', padding: '10px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: 10 }}>
                     📍 Cómo llegar

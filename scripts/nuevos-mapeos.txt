@@ -1,0 +1,560 @@
+
+// ─── NUEVOS MAPEOS (generados automáticamente) ─────────────────────────
+
+  // Asiática
+  'ARROZ': 'Asiática',
+  'Aperitivo': 'Asiática',
+  'Arroces': 'Asiática',
+  'Bubble Tea - Bubble Milk Tea (Con Leche)': 'Asiática',
+  'Bubble Tea - Bubble Tea (Sin Leche)': 'Asiática',
+  'Bubble Tea - Extras Bubbles': 'Asiática',
+  'COLACIONES': 'Asiática',
+  'Colaciones': 'Asiática',
+  'ENTRADAS': 'Asiática',
+  'Entradas Calientes': 'Asiática',
+  'Entradas 前菜': 'Asiática',
+  'GYOSAS': 'Asiática',
+  'Gyozas': 'Asiática',
+  'Mini Don': 'Asiática',
+  'PIQUEOS CALIENTES': 'Asiática',
+  'Platos Japoneses': 'Asiática',
+  'Platos calientes': 'Asiática',
+  'RAMEN': 'Asiática',
+  'Ramen': 'Asiática',
+  'Ramen Especial': 'Asiática',
+  'Ramen Infantil': 'Asiática',
+  'Rice Ball': 'Asiática',
+  'Tonkotsu Ramen': 'Asiática',
+  'YAKISOBA': 'Asiática',
+  'Yakisoba Gaby's': 'Asiática',
+
+  // Cafetería
+  'Bebestibles y Cafeteria': 'Cafetería',
+  'Bebidas calientes': 'Cafetería',
+  'Bebidas frias': 'Cafetería',
+  'Especial Invierno': 'Cafetería',
+  'Especialidades Especiales': 'Cafetería',
+
+  // Ceviches
+  'Appetizer—Entradas': 'Ceviches',
+  'Causas y Entradas': 'Ceviches',
+  'Cebiches': 'Ceviches',
+  'Ceviches y pescados': 'Ceviches',
+  'Crudos & Ligeros': 'Ceviches',
+  'ENTRADA': 'Ceviches',
+  'Frescos': 'Ceviches',
+  'Leche de Tigre': 'Ceviches',
+  'Para Empezar': 'Ceviches',
+  'Para compartir / entradas': 'Ceviches',
+  'Para compartir o iniciar': 'Ceviches',
+  'Piqueo Frío': 'Ceviches',
+  'Platos Fríos': 'Ceviches',
+  'Tablas': 'Ceviches',
+
+  // Completos
+  'COMPLETOS': 'Completos',
+  'HOT DOG + papas fritas rústicas': 'Completos',
+  'Hot Dog Clásico': 'Completos',
+  'Hot Dogs': 'Completos',
+  'Platos CQ': 'Completos',
+  'Vienesas/As': 'Completos',
+
+  // Desayunos
+  'ALL INCLUSIVE // 9:00 a 12:30hrs': 'Desayunos',
+  'BREAKFAST · DESAYUNOS': 'Desayunos',
+  'BRUNCH': 'Desayunos',
+  'BRUNCH // 9:30 a 13:00 // 17:00 a 19:00hrs': 'Desayunos',
+  'HUEVOS TRUFADOS': 'Desayunos',
+  'TOSTADAS PUELO': 'Desayunos',
+  'Tardes Deliciosas (A partir de las 15:00 hrs.)': 'Desayunos',
+
+  // Empanadas
+  'B.6 PIQUEOS CALIENTES': 'Empanadas',
+  'Empanadas Y Pastelitos': 'Empanadas',
+  'Para Dos': 'Empanadas',
+  'Para comenzar': 'Empanadas',
+  'Picoteo': 'Empanadas',
+  'Piqueo Caliente': 'Empanadas',
+  'QUICK TO START': 'Empanadas',
+  'TABLAS Y PICOTEOS': 'Empanadas',
+
+  // Hamburguesas
+  'Acompañamientos hamburguesas burritos o quesadillas': 'Hamburguesas',
+  'BURGERS': 'Hamburguesas',
+  'Burger': 'Hamburguesas',
+  'Burger y Sandwich - Brisket': 'Hamburguesas',
+  'Burger y Sandwich - Burger': 'Hamburguesas',
+  'Burger y Sandwich - Linea Premium / Recomendados': 'Hamburguesas',
+  'Burger y Sandwich - Pulled Pork': 'Hamburguesas',
+  'Burgers CQ': 'Hamburguesas',
+  'HAMBURGUESAS': 'Hamburguesas',
+  'HAMBURGUESAS CASERAS CARNE/POLLO/VEGGIE': 'Hamburguesas',
+  'Hamburguesas (Incluye Papas Fritas)': 'Hamburguesas',
+  'Hamburguesas 100% Caseras': 'Hamburguesas',
+  'KIDS ZONE': 'Hamburguesas',
+  'KROSTY BURGER': 'Hamburguesas',
+  'Menú Infantil y Snacks': 'Hamburguesas',
+  'Poutine': 'Hamburguesas',
+  'SMASH BURGER': 'Hamburguesas',
+  'SMASHED BURGERS': 'Hamburguesas',
+  'Sandwich Hamburguesa': 'Hamburguesas',
+  'Smash Burger & Más': 'Hamburguesas',
+
+  // Mariscos
+  'Antipastos tradicionales': 'Mariscos',
+  'Appetizers Fríos': 'Mariscos',
+  'Chicharrones y Jaleas': 'Mariscos',
+  'ENTRADAS CALIENTES': 'Mariscos',
+  'Ebi Tempura O Panko': 'Mariscos',
+  'Los Clásicos': 'Mariscos',
+  'Menú Acampados 40 Piezas': 'Mariscos',
+  'PARA COMENZAR': 'Mariscos',
+  'Para Acampañar': 'Mariscos',
+  'Platos a la Carta': 'Mariscos',
+  'Tablas para Compartir': 'Mariscos',
+
+  // Mexicana
+  'BURRITOS': 'Mexicana',
+  'Burrito Guff': 'Mexicana',
+  'CACHAPAS': 'Mexicana',
+  'COMIDA RAPIDA VENEZOLANA': 'Mexicana',
+  'PATACONES': 'Mexicana',
+
+  // Parrilla
+  'Almuerzos': 'Parrilla',
+  'CHORRILLANAS Y PAPAS FRITAS': 'Parrilla',
+  'Carnes Premiun': 'Parrilla',
+  'Carnes a las Brasas': 'Parrilla',
+  'Cortes De Carnes': 'Parrilla',
+  'Cortes Premium': 'Parrilla',
+  'Costillas': 'Parrilla',
+  'Fuertes de la Casa': 'Parrilla',
+  'Grill': 'Parrilla',
+  'Interiores': 'Parrilla',
+  'MECHADAS + papas fritas rusticas': 'Parrilla',
+  'PARRILLAS': 'Parrilla',
+  'PLATOS A LA CARTA': 'Parrilla',
+  'Parrillas': 'Parrilla',
+  'Pichangas y Papas Fritas': 'Parrilla',
+  'Plateada': 'Parrilla',
+  'Platos Rápidos y Económicos': 'Parrilla',
+  'Pollo a la Brasa': 'Parrilla',
+  'Premium & Grill': 'Parrilla',
+
+  // Pastas
+  'Antipastos Italianos': 'Pastas',
+  'Arroces y Cremosos': 'Pastas',
+  'Carnes y Pescados': 'Pastas',
+  'Cocina Peruana': 'Pastas',
+  'Lasaña y Cannelloni': 'Pastas',
+  'Para Disfrutar': 'Pastas',
+  'Pastas Artesanales': 'Pastas',
+  'Pastas y Risottos': 'Pastas',
+  'Risotto': 'Pastas',
+
+  // Peruana
+  'Criollos de América': 'Peruana',
+  'ESPECIALIDADES PUELO': 'Peruana',
+  'Especialidades': 'Peruana',
+  'Nuestras Sopas': 'Peruana',
+  'Papas Fritas Con Acompañamiento': 'Peruana',
+  'Platos de Fondo': 'Peruana',
+  'Platos de Fondo — Salteados al Wok': 'Peruana',
+  'Típicos': 'Peruana',
+
+  // Pizzas
+  'A Tú Pinta': 'Pizzas',
+  'Brew Pizza': 'Pizzas',
+  'Calzone Individual': 'Pizzas',
+  'Crea tu propia Pizza': 'Pizzas',
+  'Destacados': 'Pizzas',
+  'Especiales del Chef': 'Pizzas',
+  'PIZZAS ARTESANAL': 'Pizzas',
+  'PIZZAS FAMILIARES': 'Pizzas',
+  'PIZZAS INDIVIDUALES': 'Pizzas',
+  'PIZZAS MEDIANA': 'Pizzas',
+  'Pizzas & Snack': 'Pizzas',
+  'Pizzas Clásicas': 'Pizzas',
+  'Pizzas De Autor': 'Pizzas',
+  'Pizzas Especiales': 'Pizzas',
+  'Pizzas Familiares': 'Pizzas',
+  'Pizzas Individuales': 'Pizzas',
+  'Pizzas Medianas': 'Pizzas',
+  'Pizzas de la Casa': 'Pizzas',
+  'Pizzetas': 'Pizzas',
+  'Portafolio': 'Pizzas',
+  'Sandwich (Masa de Pizza con ingredientes frios)': 'Pizzas',
+
+  // Pollo
+  'Bocados reconfortantes': 'Pollo',
+  'MENU DIARIO': 'Pollo',
+  'Menú Niños': 'Pollo',
+  'NIÑOS': 'Pollo',
+  'Niños': 'Pollo',
+  'PICOTEOS': 'Pollo',
+
+  // Postres
+  'Bombones Proteicos': 'Postres',
+  'Donuts Proteicas': 'Postres',
+  'Dulces': 'Postres',
+  'Dulces y postres': 'Postres',
+  'Gelateria': 'Postres',
+  'Helados': 'Postres',
+  'Otros': 'Postres',
+  'POSTRES Y HELADOS': 'Postres',
+  'Pack Protein Cheesecake.': 'Postres',
+  'Pack Protein Cookies.': 'Postres',
+  'Packs Bombones Proteicos': 'Postres',
+  'Packs Protein Brownie.': 'Postres',
+  'Packs Protein Cakes.': 'Postres',
+  'Packs Protein Cups.': 'Postres',
+  'Packs Protein Donuts.': 'Postres',
+  'Packs Protein Waffles.': 'Postres',
+  'Para Llevar o Encargar - Tartas para compartir en casa': 'Postres',
+  'Para Llevar o Encargar - Tortas para celebrar': 'Postres',
+  'Pasteleria': 'Postres',
+  'Pastelería': 'Postres',
+  'Postre': 'Postres',
+  'Postres - Waffles Mimi!': 'Postres',
+  'Protein Cookies': 'Postres',
+  'Protein Cups': 'Postres',
+  'TORTAS Y PASTELES': 'Postres',
+  'Tartas Proteicas': 'Postres',
+  'Tentaciones Dulces - Brownie': 'Postres',
+  'Tentaciones Dulces - Canelé': 'Postres',
+  'Tentaciones Dulces - Cupcakes': 'Postres',
+  'Tentaciones Dulces - Galletas': 'Postres',
+  'Tentaciones Dulces - Galletones': 'Postres',
+  'Tentaciones Dulces - Gluten Free': 'Postres',
+  'Tentaciones Dulces - Muffins': 'Postres',
+  'Tentaciones Dulces - Tartas': 'Postres',
+  'Tentaciones Dulces - Tortas': 'Postres',
+  'Una Cosita Dulce': 'Postres',
+
+  // Saludable
+  'Bebidas Proteicas': 'Saludable',
+  'Comida saludable': 'Saludable',
+  'Crea tu propia Ensalada': 'Saludable',
+  'ENSALADAS': 'Saludable',
+  'ENSALADAS Y BOWLS': 'Saludable',
+  'FRESH SALAD & WRAPS': 'Saludable',
+  'Ligero y Fresco': 'Saludable',
+  'Social Food': 'Saludable',
+  'Vegetarianos': 'Saludable',
+
+  // Sushi
+  'A.0 ROLLS PREMIUN': 'Sushi',
+  'A.2 CALIFORNIA ROLLS (ENVUELTOS EN MASAGO, SESAMO O CIBOULETTE)': 'Sushi',
+  'A.4 CHESSE ROLLS (ENVUELTOS EN QUESO CREMA)': 'Sushi',
+  'A.5 ROLLS FRITOS': 'Sushi',
+  'A.8 VEGGIE-VEGANS': 'Sushi',
+  'Abril y Mayo': 'Sushi',
+  'Appetizers': 'Sushi',
+  'Appetizers - Sashimi': 'Sushi',
+  'Avocado Rolls (cubiertos en palta)': 'Sushi',
+  'B.1 GOHAN': 'Sushi',
+  'B.3 HOSOMAKIS - NIGUIRIS': 'Sushi',
+  'B.5 SASHIMI (8 CORTES)': 'Sushi',
+  'B.7 HANROLLS': 'Sushi',
+  'BARCO PREMIUM': 'Sushi',
+  'CALIFORNIA': 'Sushi',
+  'CALIFORNIA ROLL': 'Sushi',
+  'CEVICHE ROLL': 'Sushi',
+  'CHEESE ROLL': 'Sushi',
+  'COLACION DE SUSHI': 'Sushi',
+  'California': 'Sushi',
+  'California Rolls (cubiertos en sesamo o ciboullete)': 'Sushi',
+  'Californias': 'Sushi',
+  'Cheese Rolls (cubiertos en queso crema)': 'Sushi',
+  'ENTRADAS FRIAS': 'Sushi',
+  'ESPECIAL ROLLS': 'Sushi',
+  'ESPECIALES': 'Sushi',
+  'ESPECIALES DE CASA': 'Sushi',
+  'Envuelto queso crema': 'Sushi',
+  'FURAY ROLLS': 'Sushi',
+  'GOHAN': 'Sushi',
+  'GOHANS': 'Sushi',
+  'Gohan Chirashi': 'Sushi',
+  'Gohans': 'Sushi',
+  'HAND ROLL (23 CMS)': 'Sushi',
+  'HAND ROLLS': 'Sushi',
+  'HANDROLLS': 'Sushi',
+  'HOSOMAKI': 'Sushi',
+  'HOSOMAKI (env. en alga nori)': 'Sushi',
+  'HOT ROLL': 'Sushi',
+  'Handroll': 'Sushi',
+  'Hosomaki': 'Sushi',
+  'Hosomaki Rolls': 'Sushi',
+  'Keto Rolls (Sin Arroz)': 'Sushi',
+  'NIGIRI 2 UND': 'Sushi',
+  'NUEVOS ROOLS NIKEII': 'Sushi',
+  'Nigiris': 'Sushi',
+  'Nikkei - Camarón': 'Sushi',
+  'Nikkei rolls': 'Sushi',
+  'PROMO ROYLE CLASICO': 'Sushi',
+  'PROMOCIONES MIXTAS': 'Sushi',
+  'PROMOCIONES VEGETARIANAS': 'Sushi',
+  'Para Compartir Sushi': 'Sushi',
+  'Poke bowls': 'Sushi',
+  'Promociones Cocina Mayo': 'Sushi',
+  'Promociones de Sushi': 'Sushi',
+  'ROLL DEL DIA A SOLO $6990': 'Sushi',
+  'ROLL PREMIUM': 'Sushi',
+  'ROLLS CALIENTES': 'Sushi',
+  'ROLLS CALIENTES (frito en panko)': 'Sushi',
+  'ROLLS CALIFORNIA (envueltos en sésamo o ciboullete)': 'Sushi',
+  'ROLLS DELUXE': 'Sushi',
+  'ROLLS ELITE': 'Sushi',
+  'ROLLS ENV EN PALTA': 'Sushi',
+  'ROLLS ENV EN QUESO': 'Sushi',
+  'ROLLS ENV EN SALMON': 'Sushi',
+  'ROLLS ENV EN SESAMO Y CIBOULET': 'Sushi',
+  'ROLLS ENVUELTO EN PALTA': 'Sushi',
+  'ROLLS ENVUELTOS EN QUESO': 'Sushi',
+  'ROLLS ENVUELTOS EN SALMON': 'Sushi',
+  'ROLLS FRIOS': 'Sushi',
+  'ROLLS FRITOS': 'Sushi',
+  'ROLLS NIKKEY': 'Sushi',
+  'ROLLS PREMIUM': 'Sushi',
+  'ROLLS PREMIUN': 'Sushi',
+  'ROLLS SIN ARROZ': 'Sushi',
+  'ROYLE LOVERS': 'Sushi',
+  'Raisu Rolls': 'Sushi',
+  'Rice Free Roll': 'Sushi',
+  'Roles Básicos': 'Sushi',
+  'Roles PREMIUM': 'Sushi',
+  'Roll Sin Arroz': 'Sushi',
+  'Roll Tradicional': 'Sushi',
+  'Rollos Calientes (Tempura Panko)': 'Sushi',
+  'Rollos California (Nori, Sésamo o Ciboullette)': 'Sushi',
+  'Rollos Sin Arroz': 'Sushi',
+  'Rollos en Palta': 'Sushi',
+  'Rollos en Philadelphia': 'Sushi',
+  'Rollos en Salmón': 'Sushi',
+  'Rolls - Avocado Rolls': 'Sushi',
+  'Rolls - California Rolls': 'Sushi',
+  'Rolls - Especial Rolls': 'Sushi',
+  'Rolls - Furay Rolls': 'Sushi',
+  'Rolls - Hosomaki': 'Sushi',
+  'Rolls - Sake Rolls': 'Sushi',
+  'Rolls CQ / Sushi Burger': 'Sushi',
+  'Rolls Calientes': 'Sushi',
+  'Rolls California (Ciboulete)': 'Sushi',
+  'Rolls California (Masago)': 'Sushi',
+  'Rolls California (Sesamo)': 'Sushi',
+  'Rolls Cubiertos En Palta': 'Sushi',
+  'Rolls Cubiertos En Queso': 'Sushi',
+  'Rolls Cubiertos En Salmón': 'Sushi',
+  'Rolls Envueltos En Masa Tempura': 'Sushi',
+  'Rolls Envueltos En Panko': 'Sushi',
+  'Rolls Mixtos': 'Sushi',
+  'Rolls Nikkei con Topping': 'Sushi',
+  'Rolls Nokona Premium': 'Sushi',
+  'Rolls Premium': 'Sushi',
+  'Rolls SIN ARROZ': 'Sushi',
+  'SIN ARROZ ROLLS': 'Sushi',
+  'SUSHI BURGER': 'Sushi',
+  'SUSHI BURGERS': 'Sushi',
+  'SUSHI NIKEEI': 'Sushi',
+  'SUSHI SIN ARROZ': 'Sushi',
+  'SUSHIBURGER': 'Sushi',
+  'SUSHIPLETOS': 'Sushi',
+  'Sake Rolls (cubiertos en salmón)': 'Sushi',
+  'Sin Arroz': 'Sushi',
+  'Sin Arroz Rolls': 'Sushi',
+  'Sugerencias de Alto Japón': 'Sushi',
+  'Sushi - Rolls a la carta': 'Sushi',
+  'Sushi - Rolls envueltos en palta': 'Sushi',
+  'Sushi - Rolls envueltos en panko': 'Sushi',
+  'Sushi - Rolls envueltos en salmón': 'Sushi',
+  'Sushi - Rolls sin arroz': 'Sushi',
+  'Sushi Burger': 'Sushi',
+  'Sushi Burgers': 'Sushi',
+  'Sushi sin Arroz': 'Sushi',
+  'Sushipleto': 'Sushi',
+  'TEMAKI': 'Sushi',
+  'Tablas Elección del Cliente': 'Sushi',
+  'Tablas Nikkei': 'Sushi',
+  'Tablas de Sushi': 'Sushi',
+  'Tataki': 'Sushi',
+  'Tempura Rolls (panko)': 'Sushi',
+  'Tempura Y Panko Rolls': 'Sushi',
+  'Tentaciones Dulces - Rollo de Canela': 'Sushi',
+  'Torta de sushi': 'Sushi',
+  'Tradicionales': 'Sushi',
+  'VIP ROLL': 'Sushi',
+  'Veggie Rolls': 'Sushi',
+
+  // Sándwiches
+  'CHURRASCO': 'Sándwiches',
+  'CLASSIC SANDWICH': 'Sándwiches',
+  'Chicken Sandwich': 'Sándwiches',
+  'Lomitos': 'Sándwiches',
+  'Los Infaltables': 'Sándwiches',
+  'Panadería': 'Sándwiches',
+  'SANDWICHS': 'Sándwiches',
+  'Sandwich Ave': 'Sándwiches',
+  'Sandwich Churrasco': 'Sándwiches',
+  'Sandwich Lomito': 'Sándwiches',
+  'Sandwich Mechada': 'Sándwiches',
+  'Sandwichs XL': 'Sándwiches',
+  'Sándwich Pollo': 'Sándwiches',
+
+// ─── EXCLUIR ────────────────────────────────────────────────────────────
+// Agregar a EXCLUDED_CATEGORIES o EXCLUDED_PATTERNS:
+  // '2 X De Martes a Sábado hasta las 22 hrs'
+  // 'A.1 PROMOCIONES'
+  // 'ACEVICHADOS (roll + salsa acevichada)'
+  // 'APERITIVO'
+  // 'Accesorios'
+  // 'Acompañamientos y Extras'
+  // 'Agregados'
+  // 'Agregados Calientes'
+  // 'Agregados Fríos'
+  // 'Almuerzos (Lun - jue de 13:00 a 14:30 hrs.)'
+  // 'Anti pasti'
+  // 'Antojitos'
+  // 'Aperitivos & Tragos'
+  // 'Aperitivos y Bajativos'
+  // 'BAJON DE LA SEMANA'
+  // 'BANDEJA PREMIUM'
+  // 'BEBESTIBLES'
+  // 'BEBIDAS'
+  // 'BEBIDAS FRIAS'
+  // 'Bajativos'
+  // 'Barra'
+  // 'Bebestible pero sanito !'
+  // 'Bebestibles'
+  // 'Bebidas'
+  // 'Bebidas - Aguas'
+  // 'Bebidas - Bebida'
+  // 'Bebidas Calientes'
+  // 'Bebidas Frias'
+  // 'Bebidas Frías'
+  // 'Bebidas Frías - Otras bebidas'
+  // 'Bebidas sin Alcohol'
+  // 'Bebidas y Jugos'
+  // 'Bebidas y Jugos sin alcohol'
+  // 'Bebidas y jugos'
+  // 'Botellas'
+  // 'CERVEZAS'
+  // 'CERVEZAS NACIONALES'
+  // 'CERVEZAS SIN ALCOHOL Y BAJAS  EN'
+  // 'CLASSIC'
+  // 'COCTELES'
+  // 'COCTELES DE AUTOR'
+  // 'Cerveza'
+  // 'Cerveza - Tirada Artesanal H52'
+  // 'Cervezas'
+  // 'Cervezas Checas & Otras'
+  // 'Cervezas y Bebidas'
+  // 'Cervezas y Schop'
+  // 'Cervezas — Schop (½ lt)'
+  // 'Cocteleria Clasica'
+  // 'Coctelería (con alcohol)'
+  // 'Coctelería Sin Alcohol y Cervezas'
+  // 'Coctelería clásica'
+  // 'Coctelería de Autor'
+  // 'Coctelería de autor'
+  // 'Cocteles'
+  // 'Cocteles Clásicos'
+  // 'Combos y Promociones'
+  // 'Cremas y Sopas'
+  // 'Cóctel'
+  // 'Cócteles'
+  // 'DESTILADOS'
+  // 'Descuentos'
+  // 'Destilados'
+  // 'Destilados — Pisco'
+  // 'ENVASE PARA LLEVAR'
+  // 'ESPECIAL PROMOS SOLO EN EFECTIVO'
+  // 'ESPUMANTE'
+  // 'EXTRAS'
+  // 'FRAPES'
+  // 'FRITURAS'
+  // 'Familia Mojitos'
+  // 'Gaby's Promociones'
+  // 'Gaseosa'
+  // 'Gaseosas Italianas'
+  // 'Gin'
+  // 'Happy Hour'
+  // 'Happy Hours'
+  // 'Ingredientes Extra Individual'
+  // 'Ingredientes Extras'
+  // 'JUGOS NATURALES'
+  // 'Jugos'
+  // 'Jugos Naturales'
+  // 'Jugos Naturales y aguas'
+  // 'Jugos Y Aguas'
+  // 'Jugos y Aguas'
+  // 'Jugos y bebidas'
+  // 'MICHELADAS O CHELADAS'
+  // 'MILKSHAKE´S'
+  // 'Menu Kids'
+  // 'Menú de Niños'
+  // 'Mocktail'
+  // 'Mocktails'
+  // 'Multiplayer'
+  // 'PAPAS FRITAS NATURALES'
+  // 'PARA MAMA'
+  // 'PERROS'
+  // 'PROMO DE LA SEMANA'
+  // 'PROMOCION'
+  // 'PROMOCIONES'
+  // 'PROMOCIONES FRITAS'
+  // 'PROMOS'
+  // 'PROMOS INDIVIDUALES'
+  // 'Papas Fritas Tradicionales'
+  // 'Papas Naturales'
+  // 'Para Beber'
+  // 'Para Regalo'
+  // 'Para Tomar'
+  // 'Pastas y Salsas'
+  // 'Piscos'
+  // 'Promociones - Hot'
+  // 'Promociones - Reina'
+  // 'Promociones Barra Mayo'
+  // 'Promociones CLASICAS'
+  // 'Promociones del día'
+  // 'Promoción Familiar'
+  // 'Promoción Individual'
+  // 'Promoción Para Dos'
+  // 'Promos'
+  // 'RECOMENDADO'
+  // 'SALSAS'
+  // 'SALSAS Y EXTRAS'
+  // 'SCHOP DE 500ML'
+  // 'SCHOP SEMANAL 500 CC ( variables )'
+  // 'SHOTS'
+  // 'SMOOTHIES'
+  // 'Salsa Mexicana Tropical'
+  // 'Schop'
+  // 'Schops'
+  // 'Sopas y Cremas'
+  // 'TABLAS INDIVIDUALES'
+  // 'Tapas'
+  // 'Tragos'
+  // 'Tragos Barra'
+  // 'Tragos Chilenos'
+  // 'Tragos y Cocteles'
+  // 'Tragos y Cócteles'
+  // 'Tragos y Licores'
+  // 'Upgrades'
+  // 'Vinos'
+  // 'Vinos - Cabernet Sauvignon'
+  // 'Vinos - Carmenere'
+  // 'Vinos - Ensamblajes Tintos & Otras Cepas'
+  // 'Vinos - Iconos'
+  // 'Vinos - Malbec'
+  // 'Vinos - Merlot'
+  // 'Vinos - Pinot Noir'
+  // 'Vinos - Syrah'
+  // 'Vinos 1/2'
+  // 'Vinos 3/4'
+  // 'Vinos Sin Alcohol'
+  // 'Vinos y Espumantes'
+  // 'Whisky & Bourbon — Jack Daniel's'
+  // 'bebidas'
+  // 'cervezas sin alcohol'
+  // 'ofertas'
+  // 'vinos'
