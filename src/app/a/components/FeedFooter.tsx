@@ -29,11 +29,12 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
 
       {/* Tagline */}
       <p style={{
-        fontSize: 12,
-        color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)',
+        fontSize: 16,
+        fontWeight: 600,
+        color: isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.35)',
         margin: 0,
         textAlign: 'center',
-        lineHeight: 1.5,
+        lineHeight: 1.4,
       }}>
         Descubre qué comer hoy
       </p>
