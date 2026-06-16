@@ -155,7 +155,7 @@ export default function ContactView({
                 height: 48,
                 borderRadius: 12,
                 background: loading ? (isDark ? 'rgba(244,166,35,0.6)' : 'rgba(244,166,35,0.5)') : '#F4A623',
-                color: '#000',
+                color: '#fff',
                 fontWeight: 700,
                 fontSize: 16,
                 border: 'none',
