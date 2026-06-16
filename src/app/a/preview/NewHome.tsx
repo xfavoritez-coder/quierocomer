@@ -1573,23 +1573,19 @@ export default function NewHome({
 
       {/* ─── Perfil View (unified: profile + liked + saved) ─── */}
       {view === 'perfil' && (
-        <div style={{ paddingTop: isDesktop ? 0 : headerHeight }}>
-          <ProfileView
-            savedDishes={savedDishes}
-            viewedDishes={viewedDishes}
-            onDishTap={handleLikedDishTap}
-            onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
-            onViewAllViewed={() => { setView('all-liked'); window.scrollTo(0, 0) }}
-            isDark={isDark}
-          />
-        </div>
+        <ProfileView
+          savedDishes={savedDishes}
+          viewedDishes={viewedDishes}
+          onDishTap={handleLikedDishTap}
+          onViewAllSaved={() => { setView('all-saved'); window.scrollTo(0, 0) }}
+          onViewAllViewed={() => { setView('all-liked'); window.scrollTo(0, 0) }}
+          isDark={isDark}
+        />
       )}
 
       {/* ─── Contacto View ─── */}
       {view === 'contacto' && (
-        <div style={{ paddingTop: isDesktop ? 0 : headerHeight }}>
-          <ContactView isDark={isDark} />
-        </div>
+        <ContactView isDark={isDark} />
       )}
 
       {/* ─── All Liked View ─── */}
