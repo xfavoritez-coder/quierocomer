@@ -295,6 +295,7 @@ function DesktopDishContent({
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const [showDietTooltip, setShowDietTooltip] = useState(false)
 
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
@@ -406,33 +407,37 @@ function DesktopDishContent({
         {/* Name */}
         <h2 style={{
           fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.2,
+          fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 10px', lineHeight: 1.25,
           paddingRight: 96,
         }}>
           {dish.nombre}
-        </h2>
-
-        {/* Diet tag */}
-        {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '4px 10px 4px 7px', borderRadius: 20, marginBottom: 10,
-            background: 'rgba(46,125,50,0.08)', border: '1px solid rgba(46,125,50,0.2)',
-          }}>
-            {dish.dieta.tipo === 'VEGAN' ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </svg>
-            )}
-            <span style={{ fontSize: 12, color: '#2E7D32', fontWeight: 600 }}>
-              {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
+          {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
+            <span
+              onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000) }}
+              style={{ marginLeft: 7, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', position: 'relative', cursor: 'pointer' }}
+            >
+              {dish.dieta.tipo === 'VEGAN' ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+              )}
+              {showDietTooltip && (
+                <span style={{
+                  position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                  background: '#1b5e20', color: '#fff', fontSize: 12, fontWeight: 600,
+                  padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', pointerEvents: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}>
+                  {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
+                </span>
+              )}
             </span>
-          </div>
-        )}
+          )}
+        </h2>
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -584,6 +589,7 @@ function DishSlide({
   const [saved, setSaved] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const [showDietTooltip, setShowDietTooltip] = useState(false)
 
   const [visibleRelated, setVisibleRelated] = useState(10)
   const slideRef = useRef<HTMLDivElement>(null)
@@ -745,33 +751,37 @@ function DishSlide({
         {/* Name */}
         <h2 style={{
           fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.2,
-          paddingRight: 90,
+          fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 10px', lineHeight: 1.25,
+          paddingRight: 120,
         }}>
           {dish.nombre}
-        </h2>
-
-        {/* Diet tag */}
-        {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '4px 10px 4px 7px', borderRadius: 20, marginBottom: 10,
-            background: 'rgba(46,125,50,0.08)', border: '1px solid rgba(46,125,50,0.2)',
-          }}>
-            {dish.dieta.tipo === 'VEGAN' ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </svg>
-            )}
-            <span style={{ fontSize: 12, color: '#2E7D32', fontWeight: 600 }}>
-              {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
+          {(dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN') && (
+            <span
+              onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000) }}
+              style={{ marginLeft: 7, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', position: 'relative', cursor: 'pointer' }}
+            >
+              {dish.dieta.tipo === 'VEGAN' ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+              )}
+              {showDietTooltip && (
+                <span style={{
+                  position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                  background: '#1b5e20', color: '#fff', fontSize: 12, fontWeight: 600,
+                  padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', pointerEvents: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}>
+                  {dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'}
+                </span>
+              )}
             </span>
-          </div>
-        )}
+          )}
+        </h2>
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
