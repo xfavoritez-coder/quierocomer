@@ -13,6 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://awbeyxfqtrdfhengabmw.supabase.co" />
         <link rel="preconnect" href="https://cdn.bistrify.app" />
         <link rel="dns-prefetch" href="https://cdn.mer-cat.com" />
+        {/* Bloquea el render hasta leer el tema guardado — evita flash al recargar */}
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('qc_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}` }} />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-GRX2MV6SDD" strategy="afterInteractive" />
         <Script id="gtag-init" strategy="afterInteractive">{`
           window.dataLayer = window.dataLayer || [];

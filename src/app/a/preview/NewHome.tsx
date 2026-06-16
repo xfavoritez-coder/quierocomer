@@ -82,6 +82,10 @@ export default function NewHome({
     if (typeof window !== 'undefined') return localStorage.getItem('qc_theme') === 'dark'
     return false
   })
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [isDark])
+
   const toggleTheme = () => {
     setIsDark(prev => {
       const next = !prev
@@ -500,7 +504,7 @@ export default function NewHome({
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
   return (
-    <div className={isDark ? 'dark' : ''} style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
 
       {/* ─── Logo row — NO sticky, scrolls con el contenido ─── */}
       <div style={{

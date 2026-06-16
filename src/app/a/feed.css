@@ -4,7 +4,7 @@ body:has(.feed-root) {
   background: #f5f4f1 !important;
   color: #111 !important;
 }
-body:has(.feed-root.dark) {
+html.dark body:has(.feed-root) {
   background: #0e0e0e !important;
   color: #fff !important;
 }
@@ -35,7 +35,8 @@ body:has(.feed-root.dark) {
 }
 
 /* ─── Dark mode override ─── */
-.feed-root.dark {
+html.dark .feed-root {
+  color-scheme: dark;
   --qc-bg: #0e0e0e;
   --qc-text: #ffffff;
   --feed-card: rgba(255, 255, 255, 0.06);
@@ -640,4 +641,28 @@ body:has(.feed-root.dark) {
 /* Search placeholder */
 .feed-search-input::placeholder {
   color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ─── Dark mode component overrides ──────────────────────────── */
+html.dark .feed-root .dish-card {
+  background: #1a1a1a;
+  border-color: rgba(255,255,255,0.07);
+  box-shadow: none;
+}
+html.dark .feed-root .feed-nav {
+  background: rgba(14,14,14,0.97);
+  border-top-color: rgba(255,255,255,0.07);
+}
+html.dark .feed-root .feed-nav-tab {
+  color: rgba(255,255,255,0.3);
+}
+html.dark .feed-root .feed-search-input {
+  background: rgba(255,255,255,0.07) !important;
+  color: #fff !important;
+}
+html.dark .feed-root .feed-search-input::placeholder {
+  color: rgba(255,255,255,0.25) !important;
+}
+html.dark .feed-root .location-search-input::placeholder {
+  color: rgba(255,255,255,0.25) !important;
 }
