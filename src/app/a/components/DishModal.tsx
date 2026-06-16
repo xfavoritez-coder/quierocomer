@@ -29,7 +29,6 @@ export default function DishModal({
 }) {
   const [imgError, setImgError] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [showLocalFicha, setShowLocalFicha] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
@@ -110,11 +109,13 @@ export default function DishModal({
     return () => el.removeEventListener('scroll', handleScroll)
   }, [visibleRelated, relatedDishes.length])
 
-  // Restaurant dishes
-  const restDishes = useMemo(() =>
-    allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl).slice(0, 8),
-    [dish, allDishes]
-  )
+  // Restaurant dishes — related first (same leaf), up to 5
+  const restDishes = useMemo(() => {
+    const candidates = allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
+    const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
+    const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
+    return [...sameLeaf, ...others].slice(0, 5)
+  }, [dish, allDishes])
 
   return (
     <>
@@ -153,6 +154,13 @@ export default function DishModal({
 
           {/* Content */}
           <div style={{ padding: '16px 20px 0' }}>
+            {/* Category label — above name */}
+            {dish.categoriaNorm && (
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
+                {dish.categoriaNorm}
+              </span>
+            )}
+
             {/* Name + save */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 4 }}>
               <h2 style={{
@@ -184,8 +192,6 @@ export default function DishModal({
               ) : (
                 <span style={{ fontSize: 18, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
               )}
-              <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{dish.categoriaNorm}</span>
             </div>
 
             {dish.descripcion && (
@@ -193,11 +199,11 @@ export default function DishModal({
             )}
 
             {/* Restaurant row */}
-            <button onClick={() => setShowLocalFicha(!showLocalFicha)} style={{
+            <div style={{
               display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-              padding: '14px 16px', borderRadius: 14, textAlign: 'left',
+              padding: '14px 16px', borderRadius: 14,
               background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-              cursor: 'pointer', marginBottom: 14,
+              marginBottom: 12,
             }}>
               {dish.restauranteLogo ? (
                 <img src={dish.restauranteLogo} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: 'rgba(255,255,255,0.1)' }} />
@@ -212,48 +218,69 @@ export default function DishModal({
                   <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: '3px 0 0' }}>{dish.restauranteDireccion}</p>
                 )}
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeLinecap="round"
-                style={{ transform: showLocalFicha ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', flexShrink: 0 }}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
+            </div>
 
-            {/* Local ficha */}
-            {showLocalFicha && (
-              <div style={{ padding: '0 0 12px', animation: 'fadeIn 0.2s ease-out' }}>
-                {dish.restauranteDireccion && (
-                  <a href={
-                    dish.restauranteLat && dish.restauranteLng
-                      ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
-                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restauranteDireccion + ' ' + dish.restaurante)}`
-                  }
-                    target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'block', padding: '10px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: 10 }}>
-                    📍 Cómo llegar
-                  </a>
-                )}
-                {restDishes.length > 0 && (
-                  <>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '0 0 8px' }}>Más de {dish.restaurante}</p>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-                      {restDishes.map(d => (
-                        <div key={d.id} onClick={() => onDishTap(d)} style={{
-                          flexShrink: 0, width: 110, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
-                          background: 'rgba(255,255,255,0.04)',
-                        }}>
-                          <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 110, height: 80, objectFit: 'cover', display: 'block' }} />
-                          <div style={{ padding: '6px 8px' }}>
-                            <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
-                            <p style={{ fontSize: 10, color: '#F4A623', margin: '2px 0 0', fontWeight: 600 }}>${d.precio.toLocaleString('es-CL')}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+            {/* Google Maps link */}
+            {dish.restauranteDireccion && (
+              <a href={
+                dish.restauranteLat && dish.restauranteLng
+                  ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
+                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restauranteDireccion + ' ' + dish.restaurante)}`
+              }
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: 'block', padding: '10px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: 16 }}>
+                📍 Cómo llegar
+              </a>
             )}
           </div>
+
+          {/* Más de [restaurante] — always visible, full bleed */}
+          {restDishes.length > 0 && (
+            <div style={{ paddingBottom: 8 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)', margin: '0 0 10px', paddingLeft: 20 }}>
+                Más de {dish.restaurante}
+              </p>
+              {/* Scroll strip with fixed "ver carta" button on right */}
+              <div style={{ position: 'relative' }}>
+                {/* gradient fade before "ver carta" */}
+                <div style={{
+                  position: 'absolute', right: 72, top: 0, bottom: 4,
+                  width: 36, background: 'linear-gradient(to right, transparent, #111)',
+                  zIndex: 2, pointerEvents: 'none',
+                }} />
+                {/* "ver carta" fixed button */}
+                <a
+                  href={`/${dish.restauranteSlug}`}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    position: 'absolute', right: 0, top: 0, bottom: 4, width: 72,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 4, background: '#111', zIndex: 3, textDecoration: 'none',
+                    borderLeft: '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#F4A623', textAlign: 'center', lineHeight: 1.2 }}>ver{'\n'}carta</span>
+                </a>
+                {/* scrollable photos */}
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingLeft: 20, paddingRight: 80, paddingBottom: 4, scrollbarWidth: 'none' }}>
+                  {restDishes.map(d => (
+                    <div key={d.id} onClick={() => onDishTap(d)} style={{
+                      flexShrink: 0, width: 110, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                      background: 'rgba(255,255,255,0.04)',
+                    }}>
+                      <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 110, height: 80, objectFit: 'cover', display: 'block' }} />
+                      <div style={{ padding: '6px 8px' }}>
+                        <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
+                        <p style={{ fontSize: 10, color: '#F4A623', margin: '2px 0 0', fontWeight: 600 }}>${d.precio.toLocaleString('es-CL')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Related dishes */}
           {!hideRelated && relatedDishes.length > 0 && (
