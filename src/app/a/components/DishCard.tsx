@@ -117,7 +117,7 @@ export default function DishCard({
           }}>
             <h3 style={{
               fontFamily: 'var(--font-feed-display), serif',
-              fontSize: 15, fontWeight: 700, lineHeight: 1.25, color: '#fff',
+              fontSize: 16, fontWeight: 700, lineHeight: 1.25, color: '#fff',
               margin: 0, flexShrink: 1, minWidth: 0,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
