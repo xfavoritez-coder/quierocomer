@@ -689,40 +689,42 @@ export default function NewHome({
 
       {/* ─── Main content ─── */}
       <div style={{
-        ...(isDesktop ? { paddingTop: 82, maxWidth: 1100, margin: '0 auto' } : { maxWidth: 480, margin: '0 auto' }),
+        ...(isDesktop ? { paddingTop: 82, maxWidth: 1100, margin: '0 auto' } : { maxWidth: 480, margin: '0' }),
       }}>
 
-      {/* ─── Logo row — mobile only ─── */}
-      {!isDesktop && <div style={{
-        padding: '10px 16px 0',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <a href="/" style={{ textDecoration: 'none', cursor: 'pointer' }}>
-          <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: isDark ? '#fff' : '#111' }}>
-            Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-          </span>
-        </a>
-        <button onClick={() => setMenuOpen(true)} style={{
-          background: 'none', border: 'none', cursor: 'pointer', padding: 6,
-          color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      {/* ─── Row 1: logo + hamburger — NO sticky, desaparece al scrollear — mobile only ─── */}
+      {!isDesktop && view !== 'perfil' && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 16px 0',
         }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-      </div>}
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.5px' }}>
+              Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+            </span>
+          </a>
+          <button onClick={() => setMenuOpen(true)} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+            color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        </div>
+      )}
 
-      {/* ─── Sticky: search + ubicación/filtros — mobile only ─── */}
+      {/* ─── Sticky: search / ubicación + filtros — mobile only ─── */}
       <header style={{
         display: isDesktop ? 'none' : view === 'perfil' ? 'none' : 'flex',
         position: 'sticky', top: 0, zIndex: 35,
         background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        padding: isDesktop ? '12px 24px 10px' : '8px 16px 8px', flexDirection: 'column', gap: 7,
+        padding: '8px 16px 8px', flexDirection: 'column', gap: 7,
       }}>
 
-        {/* Row 1: Search bar full width */}
-        <div style={{ position: 'relative', marginBottom: 6 }}>
+        {/* Row 2: Search bar full width */}
+        <div style={{ position: 'relative', marginBottom: 4, marginTop: 6 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -736,9 +738,10 @@ export default function NewHome({
             onKeyDown={e => { if (e.key === 'Enter') { executeSearch(searchInput); searchInputRef.current?.blur() } }}
             placeholder="Buscar plato, restaurante o ingrediente..."
             style={{
-              width: '100%', padding: '10px 36px 10px 34px', borderRadius: 999, fontSize: 15,
-              background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+              width: '100%', padding: '12px 38px 12px 36px', borderRadius: 999, fontSize: 16,
+              background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+              boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -795,49 +798,52 @@ export default function NewHome({
               </div>
             </>
           )}
-        </div>
+        </div>{/* end Row 2: search */}
 
         {/* Row 3: Ubicación (izq) + Filtros (der) */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* Ubicación */}
-          <button onClick={() => setLocationModalOpen(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: (locationName || gpsLabel) ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-            border: `1px solid ${(locationName || gpsLabel) ? 'rgba(244,166,35,0.3)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 20, padding: '6px 12px', cursor: 'pointer',
-            color: (locationName || gpsLabel) ? '#c97d00' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-            fontSize: 13, fontWeight: 500,
-            minWidth: 0, maxWidth: 'calc(100% - 100px)', overflow: 'hidden',
-          }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-            </svg>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {locationName || gpsLabel || 'Ubicación'}
-            </span>
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{ flexShrink: 0 }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+        {(() => {
+          const hasActiveFilters = filterSort !== 'nearby' || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory
+          return (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Ubicación — texto linkeable con chevron */}
+            <button onClick={() => setLocationModalOpen(true)} style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              color: (locationName || gpsLabel) ? '#c97d00' : isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+              fontSize: 16, fontWeight: 500,
+              minWidth: 0, maxWidth: 'calc(100% - 100px)', overflow: 'hidden',
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {locationName || gpsLabel || 'Agregar ubicación'}
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.6 }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
 
-          {/* Filtros */}
-          <button onClick={() => setFilterOpen(!filterOpen)} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(244,166,35,0.1)',
-            border: '1px solid rgba(244,166,35,0.3)',
-            borderRadius: 20, padding: '6px 14px', cursor: 'pointer',
-            color: '#c97d00',
-            fontSize: 13, fontWeight: 500,
-          }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-              <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
-            </svg>
-            Filtros
-          </button>
-        </div>
+            {/* Filtros — gris por defecto, amarillo si hay filtros activos */}
+            <button onClick={() => setFilterOpen(!filterOpen)} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: hasActiveFilters ? 'rgba(244,166,35,0.1)' : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+              border: `1px solid ${hasActiveFilters ? 'rgba(244,166,35,0.35)' : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+              borderRadius: 20, padding: '6px 14px', cursor: 'pointer',
+              color: hasActiveFilters ? '#c97d00' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+              fontSize: 15, fontWeight: 500,
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+              </svg>
+              Filtros
+            </button>
+          </div>
+          )
+        })()}
       </header>
 
       {/* ─── Filter sheet ─── */}
@@ -1161,7 +1167,7 @@ export default function NewHome({
 
           {/* Results count strip */}
           {feedDishes.length > 0 && (
-            <div style={{ padding: '6px 16px 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ padding: '2px 16px 2px', display: 'flex', alignItems: 'center', gap: 8 }}>
               {isDesktop && (
                 <button onClick={() => setLocationModalOpen(true)} style={{
                   display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
@@ -1175,11 +1181,11 @@ export default function NewHome({
                 </button>
               )}
               <div style={{ flex: 1 }} />
-              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
-                {searchQuery.trim()
-                  ? `${feedDishes.length} resultado${feedDishes.length !== 1 ? 's' : ''} para "${searchQuery}"`
-                  : `${feedDishes.length} plato${feedDishes.length !== 1 ? 's' : ''} encontrados`}
-              </p>
+              {searchQuery.trim() && (
+                <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
+                  {feedDishes.length} resultado{feedDishes.length !== 1 ? 's' : ''} para &ldquo;{searchQuery}&rdquo;
+                </p>
+              )}
               {isDesktop && (
                 <button onClick={() => setFilterOpen(true)} style={{
                   display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
@@ -1198,6 +1204,7 @@ export default function NewHome({
           {/* Feed masonry */}
           {feedDishes.length > 0 ? (
             <>
+              <div style={{ marginTop: -6 }} />
               <MasonryGrid
                 dishes={feedDishes.slice(0, visibleCount)}
                 onDishTap={handleDishTap}

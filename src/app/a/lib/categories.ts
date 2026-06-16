@@ -221,9 +221,9 @@ export const CATEGORY_MAP: Record<string, string> = {
   'TORTAS': 'Postres',
   'OTROS PASTELES': 'Postres',
   'DUBAI COLLECTION DESSERTS': 'Postres',
-  'Ice Cream': 'Postres',
-  'HELADOS ARTESANALES': 'Postres',
-  'HELADOS SIN AZÚCAR': 'Postres',
+  'Ice Cream': 'Helados',
+  'HELADOS ARTESANALES': 'Helados',
+  'HELADOS SIN AZÚCAR': 'Helados',
   'CREPES DULCES': 'Postres',
   'WAFFLES DULCES': 'Postres',
   'PROMO PASTELES': 'Postres',
@@ -710,9 +710,9 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Donuts Proteicas': 'Postres',
   'Dulces': 'Postres',
   'Dulces y postres': 'Postres',
-  'Gelateria': 'Postres',
-  'Helados': 'Postres',
-  'POSTRES Y HELADOS': 'Postres',
+  'Gelateria': 'Helados',
+  'Helados': 'Helados',
+  'POSTRES Y HELADOS': 'Helados',
   'Pack Protein Cheesecake.': 'Postres',
   'Pack Protein Cookies.': 'Postres',
   'Packs Bombones Proteicos': 'Postres',
@@ -772,7 +772,7 @@ export const CATEGORY_MAP: Record<string, string> = {
 export const QC_CATEGORIES = new Set([
   'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
   'Parrilla', 'Pollo', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
-  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres',
+  'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres', 'Helados',
   'Desayunos', 'Cafetería', 'Amasandería',
 ])
 
@@ -788,23 +788,174 @@ export const EXCLUDED_CATEGORIES = new Set([
 ])
 
 /** Normaliza una categoría de la BD. Si no está en el mapa, usa el nombre original. */
-// Reglas por patrón para variantes que no vale la pena listar una a una
-// (tamaños de pizza, formatos de sándwich, etc.)
+// Reglas por patrón — cubren familias enteras de nombres sin listarlos uno a uno.
+// Orden: más específicos primero. Si un nombre cae en varias reglas, gana la primera.
 const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
-  // Pizza + cualquier tamaño/variante: "Pizza XL", "Pizza Familiar", "Pizza Mediana"...
+
+  // ── Pizzas ──────────────────────────────────────────────────────────────────
+  // "Pizza XL / Familiar / Mediana / Personal / Artesanal"...
   { pattern: /^pizzas?\b/i, norm: 'Pizzas' },
-  // Hamburguesa singular o con apellido: "Hamburguesa Clásica", "Hamburguesa Gourmet"...
-  { pattern: /^hamburguesa\b/i, norm: 'Hamburguesas' },
-  // Sándwich singular o variantes: "Sandwich de Pollo", "Sándwich Caliente"...
-  { pattern: /^s[aá]ndwich\b/i, norm: 'Sándwiches' },
-  // Empanada singular: "Empanada de Pino", "Empanada Frita"...
-  { pattern: /^empanada\b/i, norm: 'Empanadas' },
-  // Breadsticks, palitos de ajo y similares → Entradas
-  { pattern: /^breadstick|palitos?\s+de\s+(ajo|pan|queso)/i, norm: 'Entradas' },
-  // "Entrada " + cualquier cosa: "Entrada Caliente", "Entrada Vegetariana"...
-  { pattern: /^entrada\b/i, norm: 'Entradas' },
-  // Completo singular: "Completo Italiano", "Completo Dinámico"...
-  { pattern: /^completo\b/i, norm: 'Completos' },
+  { pattern: /^calzone/i,   norm: 'Pizzas' },
+
+  // ── Hamburguesas ────────────────────────────────────────────────────────────
+  // "Hamburguesa Clásica / Gourmet / de la Casa"...
+  { pattern: /^hamburguesas?\b/i, norm: 'Hamburguesas' },
+  { pattern: /^burgers?\b/i,      norm: 'Hamburguesas' },
+
+  // ── Sándwiches ──────────────────────────────────────────────────────────────
+  // "Sandwich de Pollo / Caliente / Club"...
+  { pattern: /^s[aá]ndwich/i, norm: 'Sándwiches' },
+  { pattern: /^lomos?\b/i,          norm: 'Sándwiches' }, // "Lomo a lo Pobre" como categoría
+  { pattern: /^chacareros?\b/i,     norm: 'Sándwiches' },
+
+  // ── Completos ───────────────────────────────────────────────────────────────
+  // "Completo Italiano / Dinámico / Tomate Palta"...
+  { pattern: /^completos?\b/i,  norm: 'Completos' },
+  { pattern: /^vienesas?\b/i,   norm: 'Completos' },
+  { pattern: /^hot\s*dogs?\b/i, norm: 'Completos' },
+
+  // ── Empanadas ───────────────────────────────────────────────────────────────
+  // "Empanada Frita / al Horno / de Pino"...
+  { pattern: /^empanadas?\b/i, norm: 'Empanadas' },
+
+  // ── Parrilla ────────────────────────────────────────────────────────────────
+  // "Carnes", "Carnes a la Parrilla", "Cortes de Carne", "Asados", "Parrilladas"...
+  { pattern: /^carnes?\b/i,       norm: 'Parrilla' },
+  { pattern: /^cortes?\b/i,       norm: 'Parrilla' },
+  { pattern: /^asados?\b/i,       norm: 'Parrilla' },
+  { pattern: /^parrilladas?\b/i,  norm: 'Parrilla' },
+  { pattern: /a\s+la\s+parrilla/i, norm: 'Parrilla' },
+  { pattern: /^vacuno\b/i,        norm: 'Parrilla' },
+
+  // ── Pollo ───────────────────────────────────────────────────────────────────
+  // "Pollo Asado / al Disco / Broaster", "Pechugas", "Alitas"...
+  { pattern: /^pollo\b/i,     norm: 'Pollo' },
+  { pattern: /^pechugas?\b/i, norm: 'Pollo' },
+  { pattern: /^alitas?\b/i,   norm: 'Pollo' },
+  { pattern: /^nuggets?\b/i,  norm: 'Pollo' },
+
+  // ── Pastas ──────────────────────────────────────────────────────────────────
+  // "Pasta Fresca / Rellena / Casera", "Ñoquis", "Pastas y Salsas"...
+  { pattern: /^pastas?\b/i,  norm: 'Pastas' },
+  { pattern: /^[nñ]oquis?\b/i, norm: 'Pastas' },
+  { pattern: /^lasañ/i,      norm: 'Pastas' },
+  { pattern: /^fettucine\b|^tagliatelle\b|^linguine\b|^penne\b|^rigatoni\b/i, norm: 'Pastas' },
+
+  // ── Sushi ───────────────────────────────────────────────────────────────────
+  // "Roll", "Rolls", "Temaki", "Sashimi", "Niguiri"...
+  { pattern: /^rolls?\b/i,    norm: 'Sushi' },
+  { pattern: /^temakis?\b/i,  norm: 'Sushi' },
+  { pattern: /^sashimis?\b/i, norm: 'Sushi' },
+  { pattern: /^nigiris?\b|^niguiris?\b/i, norm: 'Sushi' },
+  { pattern: /^makis?\b/i,    norm: 'Sushi' },
+  { pattern: /^hosomakis?\b/i, norm: 'Sushi' },
+  { pattern: /^uramakis?\b/i, norm: 'Sushi' },
+
+  // ── Ceviches ────────────────────────────────────────────────────────────────
+  // "Ceviche", "Ceviches Clásicos", "Tiraditos"...
+  { pattern: /^ceviches?\b/i,  norm: 'Ceviches' },
+  { pattern: /^tiraditos?\b/i, norm: 'Ceviches' },
+
+  // ── Mariscos ────────────────────────────────────────────────────────────────
+  // "Pescados", "Del Mar", "Frutos del Mar", "Productos del Mar"...
+  { pattern: /^pescados?\b/i,           norm: 'Mariscos' },
+  { pattern: /^(frutos?|productos?)\s+del\s+mar/i, norm: 'Mariscos' },
+  { pattern: /^del\s+mar\b/i,           norm: 'Mariscos' },
+  { pattern: /^mariscos?\b/i,           norm: 'Mariscos' },
+
+  // ── Peruana ─────────────────────────────────────────────────────────────────
+  // "Platos Peruanos", "Cocina Peruana", "Comida Peruana"...
+  { pattern: /^(cocina|comida|platos?)\s+peruana?/i, norm: 'Peruana' },
+
+  // ── Mexicana ────────────────────────────────────────────────────────────────
+  // "Tacos", "Fajitas", "Quesadillas", "Nachos"...
+  { pattern: /^tacos?\b/i,        norm: 'Mexicana' },
+  { pattern: /^fajitas?\b/i,      norm: 'Mexicana' },
+  { pattern: /^quesadillas?\b/i,  norm: 'Mexicana' },
+  { pattern: /^nachos?\b/i,       norm: 'Mexicana' },
+
+  // ── China ───────────────────────────────────────────────────────────────────
+  // "Cocina China", "Comida China", "Platos Chinos"...
+  { pattern: /^(cocina|comida|platos?)\s+china?/i, norm: 'China' },
+
+  // ── Thai ────────────────────────────────────────────────────────────────────
+  { pattern: /^(cocina|comida|platos?)\s+thai/i, norm: 'Thai' },
+
+  // ── Platos de fondo ─────────────────────────────────────────────────────────
+  // Primero los que implican cocina específica (para no caer en el catch-all)
+  // "Plato de Fondo", "Platos Clásicos", "Platos Alemanes", "Platos del Chef"...
+  { pattern: /^platos?\s+de\s+fondo/i, norm: 'Platos de fondo' },
+  { pattern: /^platos?\s+(cl[aá]sicos?|principales?|del?\s+chef|de\s+la\s+casa|de\s+temporada|calientes?|fuertes?)/i, norm: 'Platos de fondo' },
+  { pattern: /^platos?\s+[a-záéíóúüñ]{4,}/i, norm: 'Platos de fondo' }, // catch-all: "Platos Alemanes"
+  { pattern: /^segundos?\s*(platos?)?\b/i, norm: 'Platos de fondo' }, // "Segundo", "Segundo Plato"
+  { pattern: /^fondos?\b/i, norm: 'Platos de fondo' }, // "Fondo", "Fondos"
+
+  // ── Entradas ────────────────────────────────────────────────────────────────
+  // "Entrada Caliente / Vegetariana", "Para Compartir", "Picadas", "Tapas"...
+  { pattern: /^entradas?\b/i,   norm: 'Entradas' },
+  { pattern: /^para\s+(compartir|picar|comenzar|abrir|partir)/i, norm: 'Entradas' },
+  { pattern: /^acompa[nñ]amientos?\b/i, norm: 'Entradas' },
+  { pattern: /^picadas?\b/i,    norm: 'Entradas' },
+  { pattern: /^tapas?\b/i,      norm: 'Entradas' },
+  { pattern: /^bocados?\b/i,    norm: 'Entradas' },
+  { pattern: /^starters?\b/i,   norm: 'Entradas' },
+  { pattern: /^aperitivos?\b/i, norm: 'Entradas' },
+  { pattern: /^piqueos?\b/i,    norm: 'Entradas' },
+  { pattern: /^snacks?\b/i,     norm: 'Entradas' },
+  { pattern: /^appetizers?\b/i, norm: 'Entradas' },
+  { pattern: /^breadsticks?|palitos?\s+de\s+(ajo|pan|queso)/i, norm: 'Entradas' },
+  { pattern: /^provoleta[s]?\b/i, norm: 'Entradas' }, // queso a la parrilla
+  { pattern: /^patitas?\b/i,    norm: 'Entradas' },   // "Patitas de Cerdo"
+
+  // ── Saludable ───────────────────────────────────────────────────────────────
+  // "Ensalada / Ensaladas / Ensalada del Chef / Ensaladas y otros"...
+  { pattern: /^ensaladas?\b/i,     norm: 'Saludable' },
+  { pattern: /^bowls?\b|power\s+bowl/i, norm: 'Saludable' },
+  { pattern: /^pok[eé]\b/i,        norm: 'Saludable' },
+  { pattern: /^wraps?\b/i,         norm: 'Saludable' },
+  { pattern: /^opciones?\s+saludables?/i, norm: 'Saludable' },
+  { pattern: /^vegano\b|^vegana\b/i,      norm: 'Saludable' },
+  { pattern: /^vegetariano\b|^vegetariana\b/i, norm: 'Saludable' },
+
+  // ── Desayunos ───────────────────────────────────────────────────────────────
+  // "Desayuno", "Desayunos y Brunch", "Once", "Onces", "Meriendas"...
+  { pattern: /^desayunos?\b/i,  norm: 'Desayunos' },
+  { pattern: /^brunch\b/i,      norm: 'Desayunos' },
+  { pattern: /^onces?\b/i,      norm: 'Desayunos' },
+  { pattern: /^meriendas?\b/i,  norm: 'Desayunos' },
+
+  // ── Cafetería ───────────────────────────────────────────────────────────────
+  // "Café", "Cafés", "Café y Té", "Infusiones", "Bebidas Calientes"...
+  { pattern: /^caf[eé]s?\b/i,       norm: 'Cafetería' },
+  { pattern: /^infusiones?\b/i,      norm: 'Cafetería' },
+  { pattern: /^t[eé]s?\b/i,          norm: 'Cafetería' },
+  { pattern: /^bebidas?\s+calientes?/i, norm: 'Cafetería' },
+
+  // ── Amasandería ─────────────────────────────────────────────────────────────
+  // "Pan", "Panes", "Medialunas", "Croissants", "Pastelería"...
+  { pattern: /^panes?\b/i,        norm: 'Amasandería' },
+  { pattern: /^medialunas?\b/i,   norm: 'Amasandería' },
+  { pattern: /^croissants?\b/i,   norm: 'Amasandería' },
+  { pattern: /^pasteler[íi]a\b/i, norm: 'Amasandería' },
+  { pattern: /^masas?\b/i,        norm: 'Amasandería' },
+
+  // ── Postres ─────────────────────────────────────────────────────────────────
+  // "Postre / Postres Caseros / Postres del Chef"...
+  { pattern: /^postres?\b/i,    norm: 'Postres' },
+  { pattern: /^helados?\b|^heladeri[ao]/i, norm: 'Helados' },
+  { pattern: /^gelato\b|^gelateria\b/i, norm: 'Helados' },
+  { pattern: /^acai\b|^açaí\b/i, norm: 'Helados' },
+  { pattern: /^sorbete\b/i,     norm: 'Helados' },
+  { pattern: /^frozen\b/i,      norm: 'Helados' },
+  { pattern: /^tortas?\b/i,     norm: 'Postres' },
+  { pattern: /^pasteles?\b/i,   norm: 'Postres' },
+  { pattern: /^dulces?\b/i,     norm: 'Postres' },
+  { pattern: /^repostería\b/i,  norm: 'Postres' },
+  { pattern: /^cheesecakes?\b/i, norm: 'Postres' },
+  { pattern: /^mousses?\b/i,    norm: 'Postres' },
+  { pattern: /^brownies?\b/i,   norm: 'Postres' },
+  { pattern: /^waffles?\b/i,    norm: 'Postres' },
+  { pattern: /^crepes?\b/i,     norm: 'Postres' },
 ]
 
 export function normalizeCategory(name: string): string {
@@ -964,5 +1115,6 @@ export function getDisplayCategories(): DisplayCategory[] {
     { icon: '🥪', label: 'Sándwiches', norm: 'Sándwiches' },
     { icon: '🥗', label: 'Saludable', norm: 'Saludable' },
     { icon: '🍰', label: 'Postres', norm: 'Postres' },
+    { icon: '🍦', label: 'Helados', norm: 'Helados' },
   ]
 }

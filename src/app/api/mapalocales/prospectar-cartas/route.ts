@@ -27,6 +27,7 @@ type ProspectoResult = {
   provider?: string
   cartaUrl?: string
   fuenteMatch?: 'locales-feed' | 'slug' | 'maps-website'
+  alternatives?: Array<{ provider: string; url: string }>
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -66,7 +67,8 @@ function detectProviderFromHtml(html: string): string {
   if (html.includes('rappi.cl') || html.includes('rappi.com'))                                                               return 'Rappi'
   if (html.includes('toteat'))                                                                                                return 'Toteat'
   if (html.includes('ola.click'))                                                                                             return 'OlaClick'
-  if (html.includes('gour.media'))                                                                                            return 'Gourmedia'
+  // Solo detectar Gourmedia si hay un link a un menú real (slug de restaurante, no assets/CSS)
+  if (/gour\.media\/[a-z0-9][a-z0-9-]{1,60}\/?["'\s<>&]/i.test(html))                                                      return 'Gourmedia'
   if (html.includes('fu.do/') || html.includes('menu.fu.do') || html.includes('app.fu.do'))                                 return 'Fudo'
   return 'Web propia'
 }
@@ -100,14 +102,15 @@ function matchInFeed(name: string): LocalesFeedEntry | null {
 // No hace falta hasPhotos — si la URL es válida, tiene fotos (lo exigen estas plataformas)
 const TRUSTED_PLATFORMS = new Set(['Fudo', 'Justo', 'OlaClick', 'Toteat', 'Gourmedia', 'UberEats', 'PedidosYa'])
 
-// URLs candidatas por plataforma usando slug
-// Orden de prioridad: primero las que probablemente tienen más fotos de calidad
+// Prioridad de proveedores (menor índice = mejor)
+const PROVIDER_PRIORITY = ['UberEats', 'Justo', 'Rappi', 'PedidosYa', 'Mercat', 'Gourmedia', 'OlaClick', 'Fudo', 'Toteat', 'Web propia']
+function providerRank(p: string) { const i = PROVIDER_PRIORITY.indexOf(p); return i === -1 ? 99 : i }
+
+// URLs candidatas por plataforma usando slug (Fudo EXCLUIDO: siempre retorna 200)
 function candidateUrls(slug: string): Array<{ provider: string; url: string }> {
   return [
-    // PedidosYa Chile usa slugs predecibles → va primero (delivery con fotos)
     { provider: 'PedidosYa', url: `https://www.pedidosya.cl/restaurantes/santiago/${slug}-menu` },
     { provider: 'PedidosYa', url: `https://www.pedidosya.cl/restaurantes/santiago/${slug}` },
-    // Resto de plataformas (Fudo EXCLUIDO: siempre retorna 200 aunque no exista el restaurante)
     { provider: 'Gourmedia', url: `https://gour.media/${slug}` },
     { provider: 'OlaClick',  url: `https://${slug}.ola.click` },
     { provider: 'Toteat',    url: `https://${slug}.toteat.app` },
@@ -229,55 +232,46 @@ async function ddgSearch(query: string, fragment: string, timeoutMs = 12000): Pr
   }
 }
 
-// Busca URL de UberEats / PedidosYa / Rappi via DuckDuckGo.
-// Prueba múltiples queries en cascada hasta encontrar la URL.
+// Busca URL de UberEats / Justo / Rappi / PedidosYa via DuckDuckGo.
+// Prueba las 4 plataformas EN PARALELO — mucho más rápido.
 async function searchDeliveryUrl(name: string, address: string): Promise<Array<{ provider: string; url: string }>> {
   const commune = address.split(',').slice(-3)[0]?.trim() ?? ''
-  const results: Array<{ provider: string; url: string }> = []
 
   const platforms = [
     {
       provider: 'UberEats',
       fragment: 'ubereats.com/cl/store/',
-      queries: [
-        `${name} ubereats`,
-        `${name} ${commune} ubereats`,
-        `${name} santiago ubereats`,
-      ],
+      queries: [`${name} site:ubereats.com`, `${name} ubereats`, `${name} ${commune} ubereats`],
+    },
+    {
+      provider: 'Justo',
+      fragment: 'getjusto.com',
+      queries: [`${name} site:getjusto.com`, `${name} justo pedidos online`, `${name} ${commune} getjusto`],
     },
     {
       provider: 'Rappi',
       fragment: 'rappi.cl/restaurantes/',
-      queries: [
-        `${name} rappi chile`,
-        `${name} ${commune} rappi`,
-        `${name} santiago rappi`,
-      ],
+      queries: [`${name} site:rappi.cl`, `${name} rappi chile`, `${name} ${commune} rappi`],
     },
     {
       provider: 'PedidosYa',
       fragment: 'pedidosya.cl/restaurantes/',
-      queries: [
-        `${name} pedidosya chile`,
-        `${name} ${commune} pedidosya`,
-        `${name} santiago pedidosya`,
-      ],
+      queries: [`${name} site:pedidosya.cl`, `${name} pedidosya chile`, `${name} ${commune} pedidosya`],
     },
   ]
 
-  for (const { provider, fragment, queries } of platforms) {
-    for (const query of queries) {
-      const url = await ddgSearch(query, fragment)
-      if (url) {
-        results.push({ provider, url })
-        break
+  // Correr todas las plataformas en paralelo — de 48s+ secuencial a ~8s paralelo
+  const settled = await Promise.all(
+    platforms.map(async ({ provider, fragment, queries }) => {
+      for (const query of queries) {
+        const url = await ddgSearch(query, fragment, 8000)
+        if (url) return { provider, url }
       }
-      // Pausa breve entre queries para no saturar DDG
-      await new Promise(r => setTimeout(r, 300))
-    }
-  }
+      return null
+    })
+  )
 
-  return results
+  return settled.filter((r): r is { provider: string; url: string } => r !== null)
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -329,13 +323,21 @@ export async function POST(req: NextRequest) {
       const place = places[i]
       send({ type: 'progress', current: i + 1, id: place.id, name: place.name })
 
-      // 0️⃣ Chequear website de Google Maps (plataforma conocida o web propia con carta embebida)
+      // Recolectamos TODAS las fuentes encontradas para luego elegir la mejor por prioridad
+      type Source = { provider: string; url: string; fuenteMatch: 'maps-website' | 'locales-feed' | 'slug' }
+      const allSources: Source[] = []
+      const seenProviders = new Set<string>()
+      function addSource(s: Source) {
+        if (!seenProviders.has(s.provider)) {
+          seenProviders.add(s.provider)
+          allSources.push(s)
+        }
+      }
+
+      // 0️⃣ Website de Google Maps (plataforma conocida o web propia con carta embebida)
       if (place.website) {
         const mapsProvider = detectProvider(place.website)
-        const label = mapsProvider ?? 'web del local'
-        send({ type: 'status', name: place.name, message: `Revisando ${label}...` })
-
-        // hasPhotosWithHtml devuelve { photos, html } para poder detectar el proveedor desde el contenido
+        send({ type: 'status', name: place.name, message: `Revisando ${mapsProvider ?? 'web del local'}...` })
         let html = ''
         const photos = await (async () => {
           try {
@@ -364,134 +366,102 @@ export async function POST(req: NextRequest) {
         })()
 
         const detectedProvider = mapsProvider ?? (html ? detectProviderFromHtml(html) : null)
-        // Para plataformas confiables (SPAs): si detectamos la plataforma en el HTML, asumir fotos aunque scraper falle
         const effectivePhotos = photos || (!!detectedProvider && TRUSTED_PLATFORMS.has(detectedProvider) && html.length > 500)
 
-        if (effectivePhotos) {
-          encontrados++
-          const provider = detectedProvider ?? 'Web propia'
-
-          // Si el proveedor detectado en el HTML es una plataforma externa, extraer su URL real
+        if (effectivePhotos && detectedProvider) {
           let cartaUrl = place.website!
-          if (provider === 'Justo') {
+          if (detectedProvider === 'Justo') {
             cartaUrl = extractJustoUrl(html, place.website!)
-          } else if (provider === 'UberEats') {
+          } else if (detectedProvider === 'UberEats') {
             const m = html.match(/https?:\/\/www\.ubereats\.com\/cl\/store\/[^"'\s<>&]{5,}/i)
             if (m) cartaUrl = m[0].split('?')[0]
-          } else if (provider === 'PedidosYa') {
+          } else if (detectedProvider === 'PedidosYa') {
             const m = html.match(/https?:\/\/www\.pedidosya\.cl\/restaurantes\/[^"'\s<>&]{5,}/i)
             if (m) cartaUrl = m[0].split('?')[0]
-          } else if (provider === 'Fudo') {
+          } else if (detectedProvider === 'Fudo') {
             const m = html.match(/https?:\/\/(?:menu|app)\.fu\.do\/[^"'\s<>&]{3,}/i)
             if (m) cartaUrl = m[0].split('?')[0]
-          } else if (provider === 'OlaClick') {
+          } else if (detectedProvider === 'OlaClick') {
             const m = html.match(/https?:\/\/[^"'\s<>&]+\.ola\.click[^"'\s<>&]*/i)
             if (m) cartaUrl = m[0].split('?')[0]
-          } else if (provider === 'Gourmedia') {
-            const m = html.match(/https?:\/\/gour\.media\/[^"'\s<>&]{3,}/i)
-            if (m) cartaUrl = m[0].split('?')[0]
+          } else if (detectedProvider === 'Gourmedia') {
+            // Solo URLs tipo gour.media/slug (un segmento, no assets como custom_styles/, fonts/, etc.)
+            const m = html.match(/https?:\/\/gour\.media\/([a-z0-9][a-z0-9-]{1,60})\/?(?:["'\s<>&]|$)/i)
+            if (m) cartaUrl = `https://gour.media/${m[1]}`
           }
-
-          const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl, fuenteMatch: 'maps-website' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
-          continue
-        } else {
-          send({ type: 'status', name: place.name, message: `${detectedProvider ?? label}: sin fotos detectadas, siguiendo...` })
+          addSource({ provider: detectedProvider, url: cartaUrl, fuenteMatch: 'maps-website' })
         }
       }
 
-      // 1️⃣ Buscar en UberEats / PedidosYa vía Bing
-      // UberEats y PedidosYa bloquean bots — si Bing encontró la URL, confiamos que tiene fotos (lo exigen)
-      send({ type: 'status', name: place.name, message: `Buscando en UberEats y PedidosYa...` })
+      // 1️⃣ Buscar en plataformas de delivery via DDG (UberEats, Justo, Rappi, PedidosYa) — en paralelo
+      send({ type: 'status', name: place.name, message: `Buscando en UberEats, Justo, Rappi, PedidosYa...` })
       const deliveryHits = await searchDeliveryUrl(place.name, place.address)
-      let deliveryFound = false
       for (const { provider, url } of deliveryHits) {
-        send({ type: 'status', name: place.name, message: `${provider}: verificando que existe...` })
-        const exists = await urlExists(url)
-        if (exists) {
-          encontrados++
-          deliveryFound = true
-          const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl: url, fuenteMatch: 'maps-website' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
-          break
-        } else {
-          send({ type: 'status', name: place.name, message: `${provider}: URL no válida, siguiendo...` })
+        if (!seenProviders.has(provider)) {
+          // DDG ya encontró la URL — confiamos en que existe, sin HEAD check extra
+          addSource({ provider, url, fuenteMatch: 'maps-website' })
         }
       }
-      if (deliveryFound) continue
 
       // 2️⃣ Cruzar con locales-feed.json
       const feedMatch = matchInFeed(place.name)
-      if (feedMatch) {
-        send({ type: 'status', name: place.name, message: `En locales-feed (${feedMatch.provider}) — verificando fotos...` })
-        const photos = await hasPhotos(feedMatch.website)
-        if (photos) {
-          encontrados++
-          const result: ProspectoResult = { ...place, status: 'encontrado', provider: feedMatch.provider, cartaUrl: feedMatch.website, fuenteMatch: 'locales-feed' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
+      if (feedMatch && !seenProviders.has(feedMatch.provider)) {
+        // Para plataformas de confianza, no hace falta verificar fotos — siempre tienen
+        const trusted = TRUSTED_PLATFORMS.has(feedMatch.provider)
+        if (trusted) {
+          addSource({ provider: feedMatch.provider, url: feedMatch.website, fuenteMatch: 'locales-feed' })
         } else {
-          sinFotos++
-          send({ type: 'status', name: place.name, message: `⚠ En locales-feed pero sin fotos detectadas` })
-          const result: ProspectoResult = { ...place, status: 'sin_fotos', provider: feedMatch.provider, cartaUrl: feedMatch.website, fuenteMatch: 'locales-feed' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
+          send({ type: 'status', name: place.name, message: `En locales-feed (${feedMatch.provider}) — verificando...` })
+          const photos = await hasPhotos(feedMatch.website)
+          if (photos) {
+            addSource({ provider: feedMatch.provider, url: feedMatch.website, fuenteMatch: 'locales-feed' })
+          }
         }
-        continue
       }
 
-      // 3️⃣ Probar slug en cada plataforma
+      // 3️⃣ Probar slug en plataformas restantes (en paralelo para mayor velocidad)
       const slug = slugify(place.name)
       send({ type: 'status', name: place.name, message: `Probando plataformas con slug "${slug}"...` })
-
-      let found = false
-      let bestSinFotos: { provider: string; url: string } | null = null
-
-      for (const { provider, url } of candidateUrls(slug)) {
-        const exists = await urlExists(url)
-        if (!exists) continue
-
-        // Plataformas de carta confiables (SPAs que no se pueden scraper): asumir fotos si existe la URL
-        if (TRUSTED_PLATFORMS.has(provider)) {
-          encontrados++
-          found = true
-          send({ type: 'status', name: place.name, message: `Encontrado en ${provider} ✓` })
-          const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl: url, fuenteMatch: 'slug' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
-          break
-        }
-
-        send({ type: 'status', name: place.name, message: `Encontrado en ${provider} — verificando fotos...` })
-        const photos = await hasPhotos(url)
-
-        if (photos) {
-          encontrados++
-          found = true
-          const result: ProspectoResult = { ...place, status: 'encontrado', provider, cartaUrl: url, fuenteMatch: 'slug' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
-          break
-        } else {
-          send({ type: 'status', name: place.name, message: `${provider}: URL existe pero sin fotos detectadas` })
-          if (!bestSinFotos) bestSinFotos = { provider, url }
-        }
+      const slugCandidates = candidateUrls(slug).filter(c => !seenProviders.has(c.provider))
+      // Deduplicar por proveedor (PedidosYa tiene dos URLs candidatas)
+      const seenSlugProviders = new Set<string>()
+      const uniqueSlugCandidates = slugCandidates.filter(c => {
+        if (seenSlugProviders.has(c.provider)) return false
+        seenSlugProviders.add(c.provider)
+        return true
+      })
+      const slugResults = await Promise.all(
+        uniqueSlugCandidates.map(async ({ provider, url }) => {
+          const exists = await urlExists(url)
+          return exists ? { provider, url } : null
+        })
+      )
+      for (const hit of slugResults) {
+        if (hit) addSource({ provider: hit.provider, url: hit.url, fuenteMatch: 'slug' })
       }
 
-      if (!found) {
-        if (bestSinFotos) {
-          sinFotos++
-          const result: ProspectoResult = { ...place, status: 'sin_fotos', provider: bestSinFotos.provider, cartaUrl: bestSinFotos.url, fuenteMatch: 'slug' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
-        } else {
-          sinPlataforma++
-          const result: ProspectoResult = { ...place, status: 'sin_plataforma' }
-          saveResult(result).catch(() => {})
-          send({ type: 'result', result })
+      // Elegir la mejor fuente según prioridad de proveedor
+      allSources.sort((a, b) => providerRank(a.provider) - providerRank(b.provider))
+
+      if (allSources.length > 0) {
+        const best = allSources[0]
+        const alternatives = allSources.slice(1).map(s => ({ provider: s.provider, url: s.url }))
+        encontrados++
+        const result: ProspectoResult = {
+          ...place,
+          status: 'encontrado',
+          provider: best.provider,
+          cartaUrl: best.url,
+          fuenteMatch: best.fuenteMatch,
+          ...(alternatives.length > 0 ? { alternatives } : {}),
         }
+        saveResult(result).catch(() => {})
+        send({ type: 'result', result })
+      } else {
+        sinPlataforma++
+        const result: ProspectoResult = { ...place, status: 'sin_plataforma' }
+        saveResult(result).catch(() => {})
+        send({ type: 'result', result })
       }
 
       if (i < places.length - 1) await new Promise(r => setTimeout(r, 200))

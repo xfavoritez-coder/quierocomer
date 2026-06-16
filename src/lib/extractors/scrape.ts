@@ -48,7 +48,17 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
     if (domain.includes("ola.click")) {
       spaHeaders = { "X-Wait-For-Selector": ".products", "X-Timeout": "30000" };
     } else if (domain.includes("fu.do")) {
-      spaHeaders = { "X-Wait-For-Selector": "app-product-card,app-menu,.product-card,.menu-product", "X-Timeout": "30000" };
+      // /qr-menu es una vista QR de Fudo — la misma carta pero con ruta distinta
+      // Intentar con la URL base (sin /qr-menu) da mejor renderizado
+      const baseUrl = url.replace(/\/qr-menu\/?$/, '')
+      const targetUrl = baseUrl !== url ? baseUrl : url
+      spaHeaders = { "X-Wait-For-Selector": "app-product-card,app-menu,.product-card,.menu-product,app-catalog-category", "X-Timeout": "30000" };
+      try { return await fetchWithTimeout(`https://r.jina.ai/${targetUrl}`, 35000, spaHeaders); } catch {}
+      // Fallback: intentar con la URL original si la base falló
+      if (targetUrl !== url) {
+        try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 35000, spaHeaders); } catch {}
+      }
+      return await fetchWithTimeout(targetUrl, 8000);
     }
     try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, spaHeaders ? 35000 : 12000, spaHeaders); } catch {}
     return await fetchWithTimeout(url, 8000);

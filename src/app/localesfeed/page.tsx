@@ -271,6 +271,22 @@ function TabMapa() {
   const [editingCartaId, setEditingCartaId] = useState<string | null>(null)
   const [editingCartaUrl, setEditingCartaUrl] = useState('')
 
+  // Manual provider override
+  const [editingProviderId, setEditingProviderId] = useState<string | null>(null)
+
+  async function saveProvider(placeId: string, provider: string) {
+    const prev = prospectMap[placeId]
+    if (!prev) return
+    const updated = { ...prev, provider }
+    await fetch('/api/mapalocales/prospectos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result: updated }),
+    }).catch(() => {})
+    setProspectMap(m => ({ ...m, [placeId]: updated }))
+    setEditingProviderId(null)
+  }
+
   // Modal de categorías sin mapear
   const [normModal, setNormModal] = useState<{ slug: string; placeId: string; categories: string[] } | null>(null)
 
@@ -289,6 +305,7 @@ function TabMapa() {
       : u.includes('ola.click') ? 'OlaClick'
       : u.includes('gour.media') ? 'Gourmedia'
       : u.includes('toteat.app') ? 'Toteat'
+      : u.includes('mer-cat.com') || u.includes('mercat') ? 'Mercat'
       : 'Web propia'
     const result: ProspectoResult = {
       id: placeId,
@@ -581,14 +598,17 @@ function TabMapa() {
     })
   }
 
+  const [hideImported, setHideImported] = useState(false)
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    return places.filter(p =>
-      !q ||
-      p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) ||
-      p.address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)
-    )
-  }, [places, search])
+    return places.filter(p => {
+      if (hideImported && importMap[p.id]?.status === 'ok') return false
+      return !q ||
+        p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q) ||
+        p.address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)
+    })
+  }, [places, search, hideImported, importMap])
 
   const allSelected = filtered.length > 0 && selected.size === filtered.length
 
@@ -639,6 +659,18 @@ function TabMapa() {
             placeholder="Buscar por nombre o dirección..."
             style={{ flex: 1, padding: '10px 16px', borderRadius: 12, fontSize: 14, background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
           />
+          <button
+            onClick={() => setHideImported(h => !h)}
+            style={{
+              fontSize: 12, background: hideImported ? 'rgba(74,222,128,0.1)' : '#1a1a1a',
+              border: `1px solid ${hideImported ? 'rgba(74,222,128,0.35)' : '#2a2a2a'}`,
+              color: hideImported ? '#4ade80' : '#666',
+              borderRadius: 8, padding: '10px 14px', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+            title="Ocultar los que ya tienen carta importada al feed"
+          >
+            {hideImported ? '✓ Ocultando importados' : 'Ocultar importados'}
+          </button>
           <button
             onClick={() => selected.size === filtered.length ? setSelected(new Set()) : setSelected(new Set(filtered.map(p => p.id)))}
             style={{ fontSize: 12, color: '#888', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -839,7 +871,25 @@ function TabMapa() {
                         style={{ fontSize: 12, fontWeight: 600, color: '#4ade80', textDecoration: 'none', display: 'block' }}>
                         ✓ Ver carta ↗
                       </a>
-                      <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
+                      {editingProviderId === p.id ? (
+                        <select
+                          autoFocus
+                          value={prospecto.provider ?? ''}
+                          onChange={e => saveProvider(p.id, e.target.value)}
+                          onBlur={() => setEditingProviderId(null)}
+                          style={{ fontSize: 10, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: '1px 4px' }}
+                        >
+                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Toteat','Web propia'].map(p => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          title="Click para cambiar proveedor"
+                          onClick={() => setEditingProviderId(p.id)}
+                          style={{ fontSize: 10, color: prospecto.provider === 'Web propia' ? '#f59e0b' : '#555', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                        >{prospecto.provider ?? '?'}</span>
+                      )}
                     </div>
                   ) : prospecto.status === 'sin_fotos' ? (
                     <div>
@@ -847,7 +897,25 @@ function TabMapa() {
                         style={{ fontSize: 11, color: '#d97706', textDecoration: 'none', display: 'block' }}>
                         ⚠ Sin fotos ↗
                       </a>
-                      <span style={{ fontSize: 10, color: '#555' }}>{prospecto.provider}</span>
+                      {editingProviderId === p.id ? (
+                        <select
+                          autoFocus
+                          value={prospecto.provider ?? ''}
+                          onChange={e => saveProvider(p.id, e.target.value)}
+                          onBlur={() => setEditingProviderId(null)}
+                          style={{ fontSize: 10, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: '1px 4px' }}
+                        >
+                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Toteat','Web propia'].map(pv => (
+                            <option key={pv} value={pv}>{pv}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          title="Click para cambiar proveedor"
+                          onClick={() => setEditingProviderId(p.id)}
+                          style={{ fontSize: 10, color: prospecto.provider === 'Web propia' ? '#f59e0b' : '#555', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                        >{prospecto.provider ?? '?'}</span>
+                      )}
                     </div>
                   ) : (
                     <button
