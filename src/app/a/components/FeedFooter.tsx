@@ -16,8 +16,8 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
         <img
           src="/genio-lamp.png"
           alt=""
-          width={32}
-          height={32}
+          width={31}
+          height={31}
           style={{ filter: 'grayscale(1)', opacity: isDark ? 0.55 : 0.45, objectFit: 'contain' }}
         />
         <span style={{
