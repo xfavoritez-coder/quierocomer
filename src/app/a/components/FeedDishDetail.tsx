@@ -380,11 +380,11 @@ function DishSlide({
         {/* Ver carta completa */}
         <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
           style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            width: '100%', padding: '11px 16px', borderRadius: 14, boxSizing: 'border-box',
             background: 'rgba(244,166,35,0.1)', border: '1px solid rgba(244,166,35,0.3)',
-            borderRadius: 20, padding: '6px 14px',
             color: '#c97d00', textDecoration: 'none',
-            fontSize: 12, fontWeight: 500, marginBottom: 14,
+            fontSize: 14, fontWeight: 600, marginBottom: 14,
           }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
