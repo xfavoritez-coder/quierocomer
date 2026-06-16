@@ -12,7 +12,7 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
       borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
     }}>
       {/* Lamp + Wordmark en fila */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <img
           src="/genio-lamp.png"
           alt=""
