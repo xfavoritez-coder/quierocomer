@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     where: { restaurantId: restaurant.id, deletedAt: null },
     select: {
       id: true, name: true, price: true, photos: true,
-      dishDiet: true, isActive: true, hiddenFromFeed: true, leafOverride: true,
+      dishDiet: true, isActive: true, hiddenFromFeed: true, leafOverride: true, flavorTags: true,
       category: { select: { id: true, name: true, normOverride: true } },
     },
     orderBy: { createdAt: 'asc' },
@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
       hiddenFromFeed: boolean
       diet: string
       leafOverride: string | null
+      flavorTags: string[]
     }[]
   }>()
 
@@ -78,6 +79,7 @@ export async function GET(req: NextRequest) {
       hiddenFromFeed: dish.hiddenFromFeed,
       diet: dish.dishDiet,
       leafOverride: dish.leafOverride ?? null,
+      flavorTags: Array.isArray(dish.flavorTags) ? (dish.flavorTags as string[]) : [],
     })
   }
 

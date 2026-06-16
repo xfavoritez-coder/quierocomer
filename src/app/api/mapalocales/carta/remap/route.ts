@@ -2,17 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
-  const { overrides } = await req.json() as {
-    overrides: { dishId: string; leafOverride: string | null }[]
+  const body = await req.json() as {
+    overrides?: { dishId: string; leafOverride: string | null }[]
+    dishDiets?: { dishId: string; diet: string }[]
   }
 
-  if (!overrides?.length) return NextResponse.json({ ok: true, updated: 0 })
+  const { overrides = [], dishDiets = [] } = body
 
   let updated = 0
+
   for (const { dishId, leafOverride } of overrides) {
     await prisma.dish.update({
       where: { id: dishId },
       data: { leafOverride: leafOverride || null },
+    })
+    updated++
+  }
+
+  for (const { dishId, diet } of dishDiets) {
+    await prisma.dish.update({
+      where: { id: dishId },
+      data: { dishDiet: diet as any },
     })
     updated++
   }

@@ -1277,3 +1277,48 @@ export function getDisplayCategories(): DisplayCategory[] {
     { icon: '🍦', label: 'Helados', norm: 'Helados' },
   ]
 }
+
+// ─── Auto-detección de flavorTags ────────────────────────────────────────────
+// Detecta preparaciones e ingredientes clave desde nombre, categoría y descripción.
+// Solo para uso interno (pipeline de importación / panel localesfeed).
+
+export function inferFlavorTags(name: string, categoryName: string, description: string | null): string[] {
+  const text = `${name} ${categoryName} ${description ?? ''}`.toLowerCase()
+  const tags: string[] = []
+
+  // Preparaciones
+  if (/\bpanko\b/.test(text))                               tags.push('panko')
+  if (/\btempura\b/.test(text))                             tags.push('tempura')
+  if (/\bfrit[ao]s?\b/.test(text))                          tags.push('frito')
+  if (/\bgrill(ado|ed)?\b/.test(text))                      tags.push('grillado')
+  if (/\bal\s+vapor\b/.test(text))                          tags.push('al vapor')
+  if (/\bhorneado\b/.test(text))                            tags.push('horneado')
+  if (/\bgratinado\b/.test(text))                           tags.push('gratinado')
+  if (/\bahumado\b/.test(text))                             tags.push('ahumado')
+  if (/\bcrudo\b/.test(text))                               tags.push('crudo')
+  if (/\bsalteado\b/.test(text))                            tags.push('salteado')
+  if (/\brebozado\b/.test(text))                            tags.push('rebozado')
+
+  // Ingredientes
+  if (/\bsalm[oó]n\b|salmon\b/.test(text))                 tags.push('salmón')
+  if (/\bpalta\b|avocado/.test(text))                       tags.push('palta')
+  if (/queso\s*crema|cream\s*cheese/.test(text))            tags.push('queso crema')
+  if (/jalap[eé]/.test(text))                               tags.push('jalapeño')
+  if (/\bcamar[oó]n|camarones/.test(text))                  tags.push('camarón')
+  if (/\bat[uú]n\b|tuna\b/.test(text))                      tags.push('atún')
+  if (/\bmango\b/.test(text))                               tags.push('mango')
+  if (/\btofu\b/.test(text))                                tags.push('tofu')
+  if (/\bpulpo\b/.test(text))                               tags.push('pulpo')
+  if (/champi[nñ][oó]n/.test(text))                         tags.push('champiñón')
+  if (/\bteriyaki\b/.test(text))                            tags.push('teriyaki')
+  if (/\bmiso\b/.test(text))                                tags.push('miso')
+  if (/\bcurry\b/.test(text))                               tags.push('curry')
+  if (/\btruf[ao]\b/.test(text))                            tags.push('trufa')
+  if (/\byuzu\b/.test(text))                                tags.push('yuzu')
+  if (/\bespinac/.test(text))                               tags.push('espinaca')
+  if (/\blangosta\b/.test(text))                            tags.push('langosta')
+  if (/\boctopu|pulpo\b/.test(text))                        tags.push('pulpo')
+
+  // Deduplicate (por si 'pulpo' entró dos veces)
+  return [...new Set(tags)]
+}

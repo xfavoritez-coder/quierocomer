@@ -1268,6 +1268,7 @@ type CartaDish = {
   hiddenFromFeed: boolean
   diet: string
   leafOverride: string | null
+  flavorTags: string[]
 }
 
 type CartaCategory = {
@@ -1309,6 +1310,7 @@ function CartaModal({ slug, name, onClose }: {
   const [mappings, setMappings] = useState<Record<string, string>>({})   // catName → leaf
   const [diets, setDiets] = useState<Record<string, string>>({})          // catName → diet
   const [dishLeafs, setDishLeafs] = useState<Record<string, string>>({})  // dishId → leaf override
+  const [dishDiets, setDishDiets] = useState<Record<string, string>>({})  // dishId → diet override
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showAll, setShowAll] = useState(false)
@@ -1321,16 +1323,19 @@ function CartaModal({ slug, name, onClose }: {
         const m: Record<string, string> = {}
         const di: Record<string, string> = {}
         const dl: Record<string, string> = {}
+        const dd: Record<string, string> = {}
         for (const cat of d.categories) {
           m[cat.categoryName] = cat.normOverride ?? ''
           di[cat.categoryName] = ''
           for (const dish of cat.dishes) {
             dl[dish.id] = dish.leafOverride ?? ''
+            dd[dish.id] = dish.diet
           }
         }
         setMappings(m)
         setDiets(di)
         setDishLeafs(dl)
+        setDishDiets(dd)
       })
       .catch(e => setError(e?.message ?? 'Error'))
       .finally(() => setLoading(false))
@@ -1340,12 +1345,16 @@ function CartaModal({ slug, name, onClose }: {
     if (!data) return
     const catToSave = Object.entries(mappings).filter(([, v]) => v)
     const dietToSave = Object.entries(diets).filter(([, v]) => v)
+    const allDishes = data.categories.flatMap(c => c.dishes)
     const dishesToSave = Object.entries(dishLeafs).filter(([dishId, leaf]) => {
-      // Only save if different from the dish's current leafOverride
-      const original = data.categories.flatMap(c => c.dishes).find(d => d.id === dishId)
+      const original = allDishes.find(d => d.id === dishId)
       return leaf !== (original?.leafOverride ?? '')
     })
-    if (!catToSave.length && !dietToSave.length && !dishesToSave.length) { onClose(); return }
+    const dishDietChanges = Object.entries(dishDiets).filter(([dishId, diet]) => {
+      const original = allDishes.find(d => d.id === dishId)
+      return diet !== (original?.diet ?? 'OMNIVORE')
+    })
+    if (!catToSave.length && !dietToSave.length && !dishesToSave.length && !dishDietChanges.length) { onClose(); return }
     setSaving(true)
     try {
       if (catToSave.length) {
@@ -1366,12 +1375,13 @@ function CartaModal({ slug, name, onClose }: {
           }),
         })
       }
-      if (dishesToSave.length) {
+      if (dishesToSave.length || dishDietChanges.length) {
         await fetch('/api/mapalocales/carta/remap', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             overrides: dishesToSave.map(([dishId, leafOverride]) => ({ dishId, leafOverride: leafOverride || null })),
+            dishDiets: dishDietChanges.map(([dishId, diet]) => ({ dishId, diet })),
           }),
         })
       }
@@ -1382,10 +1392,15 @@ function CartaModal({ slug, name, onClose }: {
     }
   }
 
+  const allDishesFlat = data?.categories.flatMap(c => c.dishes) ?? []
   const hasChanges = Object.values(mappings).some(v => v) || Object.values(diets).some(v => v)
     || Object.entries(dishLeafs).some(([dishId, leaf]) => {
-      const original = data?.categories.flatMap(c => c.dishes).find(d => d.id === dishId)
+      const original = allDishesFlat.find(d => d.id === dishId)
       return leaf !== (original?.leafOverride ?? '')
+    })
+    || Object.entries(dishDiets).some(([dishId, diet]) => {
+      const original = allDishesFlat.find(d => d.id === dishId)
+      return diet !== (original?.diet ?? 'OMNIVORE')
     })
 
   const displayCategories = showAll
@@ -1478,37 +1493,62 @@ function CartaModal({ slug, name, onClose }: {
                     </select>
                   </div>
 
-                  {/* Dishes — todos visibles con leaf override per-dish */}
-                  <div style={{ padding: '0 24px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {/* Dishes — todos visibles con leaf override y diet per-dish */}
+                  <div style={{ padding: '0 24px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {cat.dishes.map(dish => {
                       const dishLeaf = dishLeafs[dish.id] ?? ''
-                      const hasOverride = dishLeaf && dishLeaf !== (dish.leafOverride ?? '')
+                      const currentDiet = dishDiets[dish.id] ?? dish.diet
                       return (
-                        <div key={dish.id} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: dish.isActive ? 1 : 0.4 }}>
-                          {dish.photo ? (
-                            <img src={dish.photo} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover', flexShrink: 0 }} />
-                          ) : (
-                            <div style={{ width: 26, height: 26, borderRadius: 3, background: '#1a1a1a', flexShrink: 0 }} />
+                        <div key={dish.id} style={{ opacity: dish.isActive ? 1 : 0.4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {dish.photo ? (
+                              <img src={dish.photo} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 26, height: 26, borderRadius: 3, background: '#1a1a1a', flexShrink: 0 }} />
+                            )}
+                            <span style={{ fontSize: 12, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {dish.name}
+                            </span>
+                            {/* Per-dish diet */}
+                            <select
+                              value={currentDiet}
+                              onChange={e => setDishDiets(m => ({ ...m, [dish.id]: e.target.value }))}
+                              style={{
+                                fontSize: 10, background: '#0d0d0d',
+                                border: `1px solid ${currentDiet !== dish.diet ? '#22c55e55' : '#1a1a1a'}`,
+                                color: currentDiet === 'VEGAN' ? '#22c55e' : currentDiet === 'VEGETARIAN' ? '#86efac' : '#888',
+                                borderRadius: 4, padding: '2px 5px', cursor: 'pointer', maxWidth: 100,
+                              }}
+                            >
+                              <option value="OMNIVORE">omnívoro</option>
+                              <option value="VEGETARIAN">vegetariano</option>
+                              <option value="VEGAN">vegano</option>
+                            </select>
+                            {/* Per-dish leaf override */}
+                            <select
+                              value={dishLeaf}
+                              onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
+                              style={{
+                                fontSize: 11, background: '#0d0d0d',
+                                border: `1px solid ${dishLeaf ? '#a78bfa55' : '#1a1a1a'}`,
+                                color: dishLeaf ? '#c4b5fd' : '#999',
+                                borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
+                              }}
+                            >
+                              <option value="">— heredar —</option>
+                              {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          </div>
+                          {/* FlavorTags badges */}
+                          {dish.flavorTags.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, marginLeft: 34 }}>
+                              {dish.flavorTags.map(tag => (
+                                <span key={tag} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: '#1e1a2e', color: '#9d84f5', border: '1px solid #2d2450' }}>
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
                           )}
-                          <span style={{ fontSize: 12, color: '#888', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {dish.name}
-                          </span>
-                          {/* Per-dish leaf override */}
-                          <select
-                            value={dishLeaf}
-                            onChange={e => setDishLeafs(m => ({ ...m, [dish.id]: e.target.value }))}
-                            style={{
-                              fontSize: 11, background: '#0d0d0d',
-                              border: `1px solid ${dishLeaf ? '#a78bfa55' : '#1a1a1a'}`,
-                              color: dishLeaf ? '#c4b5fd' : '#999',
-                              borderRadius: 4, padding: '2px 6px', cursor: 'pointer', maxWidth: 130,
-                            }}
-                          >
-                            <option value="">— heredar —</option>
-                            {ALL_LEAF_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                          {dish.diet === 'VEGAN' && <span style={{ fontSize: 9, color: '#22c55e' }}>V</span>}
-                          {dish.diet === 'VEGETARIAN' && <span style={{ fontSize: 9, color: '#86efac' }}>veg</span>}
                         </div>
                       )
                     })}

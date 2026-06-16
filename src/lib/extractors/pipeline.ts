@@ -16,6 +16,7 @@ import { extractCanva } from "./canva";
 import { extractAvocaty } from "./avocaty";
 import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
+import { inferFlavorTags } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo } from "@/lib/google-places";
@@ -498,6 +499,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
         const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE";
         const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat ? "VEGAN" : isVeggieCat ? "VEGETARIAN" : dishDietFromAI;
+        const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null);
 
         const created = await prisma.dish.create({
           data: {
@@ -515,6 +517,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             isGlutenFree: isDrinkCat ? false : detected.isGlutenFree,
             isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,
             isSoyFree: isDrinkCat ? false : detected.isSoyFree,
+            flavorTags,
             isActive: true,
           },
         });
@@ -921,6 +924,7 @@ export async function importFromProspecto(params: {
       const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" })
       const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"
       const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat ? "VEGAN" : isVeggieCat ? "VEGETARIAN" : dishDietFromAI
+      const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null)
       allDishData.push({
         restaurantId: restaurant.id,
         categoryId: category.id,
@@ -936,6 +940,7 @@ export async function importFromProspecto(params: {
         isGlutenFree: isDrinkCat ? false : detected.isGlutenFree,
         isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,
         isSoyFree: isDrinkCat ? false : detected.isSoyFree,
+        flavorTags,
         isActive: true,
       })
     })
