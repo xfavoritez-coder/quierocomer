@@ -306,6 +306,18 @@ function DishSlide({
         </div>
 
 
+        {/* Categoría */}
+        <button
+          onClick={() => { onCategoryClick?.(dish.categoriaNorm); onClose() }}
+          style={{
+            background: 'none', border: 'none', padding: 0, cursor: onCategoryClick ? 'pointer' : 'default',
+            fontSize: 13, color: 'rgba(0,0,0,0.38)', fontWeight: 500,
+            display: 'block', marginBottom: 10, textAlign: 'left',
+          }}
+        >
+          {dish.categoriaNorm}
+        </button>
+
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           {dish.enOferta && dish.precioDescuento != null ? (
