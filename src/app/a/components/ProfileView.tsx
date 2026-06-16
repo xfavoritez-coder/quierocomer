@@ -126,8 +126,8 @@ export default function ProfileView({
           </div>
 
           {viewed.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-              {viewed.slice(0, 9).map((d, i) => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 3 }}>
+              {viewed.slice(0, 25).map((d, i) => (
                 <div key={d.id} onClick={() => onDishTap?.(d)} style={{
                   position: 'relative', aspectRatio: '1', overflow: 'hidden',
                   borderRadius: 10, cursor: 'pointer',
