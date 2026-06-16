@@ -1306,102 +1306,146 @@ export default function NewHome({
           }} />
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
-            width: 280, maxWidth: '85vw',
-            background: isDark ? '#141414' : '#fff',
-            borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
+            width: 300, maxWidth: '88vw',
+            background: isDark ? '#111' : '#fafafa',
+            borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'}`,
             animation: 'slideRight 0.25s ease-out',
             display: 'flex', flexDirection: 'column',
+            boxShadow: '-8px 0 40px rgba(0,0,0,0.18)',
           }}>
+            {/* Header */}
             <div style={{
-              padding: '18px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'}`,
+              padding: '20px 20px 16px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-              <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111' }}>
+              <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 20, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px' }}>
                 Quiero<span style={{ color: '#F4A623' }}>Comer</span>
               </span>
               <button onClick={() => setMenuOpen(false)} style={{
-                width: 34, height: 34, borderRadius: '50%',
-                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', border: 'none',
-                cursor: 'pointer', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                width: 36, height: 36, borderRadius: '50%',
+                background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', border: 'none',
+                cursor: 'pointer', color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
               }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <nav style={{ flex: 1, padding: '10px 10px', display: 'flex', flexDirection: 'column', gap: 2, background: isDark ? '#141414' : '#fff' }}>
+            {/* Nav items */}
+            <nav style={{ flex: 1, padding: '6px 12px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+
+              {/* Mi perfil */}
               <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 14px', borderRadius: 12,
-                color: isDark ? '#fff' : '#111', fontSize: 16, fontWeight: 600,
-                background: view === 'perfil' ? 'rgba(244,166,35,0.08)' : 'transparent',
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '13px 12px', borderRadius: 14,
+                color: isDark ? '#f0f0f0' : '#111', fontSize: 15, fontWeight: 500,
+                background: view === 'perfil' ? (isDark ? 'rgba(244,166,35,0.1)' : 'rgba(244,166,35,0.08)') : 'transparent',
                 border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
                 WebkitTapHighlightColor: 'transparent',
               }}>
-                <span style={{ color: '#855bd8', display: 'flex', flexShrink: 0 }}>
-                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c.7-4.2 3.8-7 8-7s7.3 2.8 8 7H4z" /></svg>
-                </span>
-                Mi perfil
-              </button>
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', margin: '4px 14px' }} />
-              <a href="/qr" style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 14px', borderRadius: 12,
-                color: isDark ? '#fff' : '#111', textDecoration: 'none', fontSize: 16, fontWeight: 600,
-                WebkitTapHighlightColor: 'transparent',
-              }}>
-                <span style={{ color: '#F4A623', display: 'flex', flexShrink: 0 }}>
-                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+                <span style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)',
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
                   </svg>
                 </span>
-                ¿Tienes un local?
-              </a>
-              <a href="mailto:hola@quierocomer.cl" style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 14px', borderRadius: 12,
-                color: isDark ? '#fff' : '#111', textDecoration: 'none', fontSize: 16, fontWeight: 600,
+                <span>Mi perfil</span>
+              </button>
+
+              {/* Separador */}
+              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '6px 4px' }} />
+
+              {/* ¿Tienes un local? */}
+              <a href="/qr" style={{
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '13px 12px', borderRadius: 14,
+                color: isDark ? '#f0f0f0' : '#111', textDecoration: 'none', fontSize: 15, fontWeight: 500,
                 WebkitTapHighlightColor: 'transparent',
               }}>
-                <span style={{ color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', display: 'flex', flexShrink: 0 }}>
-                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
+                <span style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(244,166,35,0.10)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#F4A623',
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <span>¿Tienes un local?</span>
+                  <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.38)', fontWeight: 400 }}>Súbete a QuieroComer</span>
+                </div>
+              </a>
+
+              {/* Contacto */}
+              <a href="mailto:hola@quierocomer.cl" style={{
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '13px 12px', borderRadius: 14,
+                color: isDark ? '#f0f0f0' : '#111', textDecoration: 'none', fontSize: 15, fontWeight: 500,
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <span style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                   </svg>
                 </span>
                 Contacto
               </a>
 
               {/* Separador */}
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', margin: '8px 14px' }} />
+              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '6px 4px' }} />
 
               {/* Toggle dark/light */}
               <button onClick={toggleTheme} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 14px', borderRadius: 12,
-                color: isDark ? '#fff' : '#111', fontSize: 16, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '13px 12px', borderRadius: 14,
+                color: isDark ? '#f0f0f0' : '#111', fontSize: 15, fontWeight: 500,
                 background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
                 WebkitTapHighlightColor: 'transparent',
               }}>
-                <span style={{ color: isDark ? '#F4A623' : '#555', display: 'flex', flexShrink: 0 }}>
+                <span style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+                }}>
                   {isDark ? (
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="5" />
-                      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="5"/>
+                      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
                     </svg>
                   ) : (
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                     </svg>
                   )}
                 </span>
                 {isDark ? 'Modo claro' : 'Modo oscuro'}
               </button>
             </nav>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 20px 28px' }}>
+              <p style={{ margin: 0, fontSize: 12, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.25)', textAlign: 'center' }}>
+                © 2025 QuieroComer · Santiago, Chile
+              </p>
+            </div>
           </div>
         </>
       )}
