@@ -298,12 +298,12 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Para los más pequeños': 'Combos',
 
   // ─── Acompañamientos & Extras ───────────────────────────────
-  'Acompañamientos': 'Acompañamientos',
-  'Papas Fritas': 'Acompañamientos',
-  'Guarniciones': 'Acompañamientos',
-  'Fritas': 'Acompañamientos',
-  'Salchipapa': 'Acompañamientos',
-  'POP CORN': 'Acompañamientos',
+  'Acompañamientos': 'Entradas',
+  'Papas Fritas': 'Entradas',
+  'Guarniciones': 'Entradas',
+  'Fritas': 'Entradas',
+  'Salchipapa': 'Entradas',
+  'POP CORN': 'Entradas',
   'AGREGA A TU SANDWICH': 'Extras',
   'Adicionales': 'Extras',
   'Extras': 'Extras',
@@ -771,9 +771,10 @@ export const CATEGORY_MAP: Record<string, string> = {
 /** Categorías canónicas válidas del feed de QC */
 export const QC_CATEGORIES = new Set([
   'Sushi', 'Pizzas', 'Hamburguesas', 'Sándwiches', 'Completos',
-  'Parrilla', 'Pollo', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
+  'Parrilla', 'Pollo y alitas', 'Pastas', 'Peruana', 'Ceviches', 'Mariscos',
   'Mexicana', 'Asiática', 'China', 'Thai', 'India', 'Empanadas', 'Saludable', 'Postres', 'Helados',
   'Desayunos', 'Cafetería', 'Amasandería',
+  'Entradas', 'Platos de fondo', 'Combos', 'Arepas & Venezolana',
 ])
 
 /** Devuelve true si el nombre es una categoría canónica válida de QC */
@@ -906,6 +907,11 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; norm: string }> = [
   { pattern: /^breadsticks?|palitos?\s+de\s+(ajo|pan|queso)/i, norm: 'Entradas' },
   { pattern: /^provoleta[s]?\b/i, norm: 'Entradas' }, // queso a la parrilla
   { pattern: /^patitas?\b/i,    norm: 'Entradas' },   // "Patitas de Cerdo"
+  { pattern: /papas?\s*(fritas?|chips?)/i, norm: 'Entradas' }, // "Papas Fritas", "Papa Chips"
+  { pattern: /^fritas?\b|^fried\b/i, norm: 'Entradas' },       // "Fritas", "Fried"
+  { pattern: /^guarniciones?\b/i,    norm: 'Entradas' },
+  { pattern: /^salchipapa/i,         norm: 'Entradas' },
+  { pattern: /^acompa[nñ]amientos?\b/i, norm: 'Entradas' },
 
   // ── Saludable ───────────────────────────────────────────────────────────────
   // "Ensalada / Ensaladas / Ensalada del Chef / Ensaladas y otros"...
@@ -965,6 +971,43 @@ export function normalizeCategory(name: string): string {
     if (pattern.test(n)) return norm
   }
   return name
+}
+
+/** Infiere el tipo principal del restaurante a partir de su nombre */
+function inferRestaurantType(restaurantName: string): string | null {
+  const r = restaurantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (/sushi|roll|makis?|temaki|nikkei|sakura|nippon|japonés|japon/i.test(r)) return 'Sushi'
+  if (/burger|hamburgues|smash|brisket/i.test(r)) return 'Hamburguesas'
+  if (/pizza|pizzeria|pizzas/i.test(r)) return 'Pizzas'
+  if (/sandwich|sandwic|sanguch|sanguche|churrasco|lomito/i.test(r)) return 'Sándwiches'
+  if (/completo|vienesa|hotdog|hot dog/i.test(r)) return 'Completos'
+  if (/taco|mexicano|mexicana|burritos?|taqueria/i.test(r)) return 'Mexicana'
+  if (/ceviche|cevicheria|mariscos?|pescados?|tiradito/i.test(r)) return 'Ceviches'
+  if (/peruana?|peruano|peru\b/i.test(r)) return 'Peruana'
+  if (/parrilla|grill|asado|asador|carnes?/i.test(r)) return 'Parrilla'
+  if (/pasta|italiana?|italiano|trattoria|osteria/i.test(r)) return 'Pastas'
+  if (/pollo|chicken|alitas?|broaster|wings/i.test(r)) return 'Pollo y alitas'
+  if (/empanada/i.test(r)) return 'Empanadas'
+  if (/ramen|thai|chino|chinese|wok|dim\s*sum/i.test(r)) return 'Asiática'
+  if (/cafe|cafeteria|cafetería|coffee/i.test(r)) return 'Cafetería'
+  if (/helado|heladeria|ice cream|gelato/i.test(r)) return 'Helados'
+  if (/postre|dulce|torta|pasteleria|pastelería/i.test(r)) return 'Postres'
+  if (/desayun|brunch|panaderia|panadería|amasanderia|amasandería/i.test(r)) return 'Desayunos'
+  return null
+}
+
+/**
+ * Normaliza una categoría usando el nombre del restaurante como contexto.
+ * Si la categoría no tiene mapeo conocido, infiere desde el tipo del restaurante.
+ */
+export function normalizeCategoryWithRestaurant(catName: string, restaurantName: string): string {
+  const norm = normalizeCategory(catName)
+  // Si ya tiene un mapeo válido, usar ese
+  if (QC_CATEGORIES.has(norm)) return norm
+  // Si es una categoría excluida (extras, salsas), no mapear
+  if (isExcludedCategory(catName)) return norm
+  // Fallback: inferir desde el tipo de restaurante
+  return inferRestaurantType(restaurantName) ?? norm
 }
 
 /** Palabras clave que indican una categoría que NO es un plato del feed */
