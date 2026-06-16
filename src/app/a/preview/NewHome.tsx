@@ -531,7 +531,7 @@ export default function NewHome({
       }}>
 
         {/* Row 1: Search bar full width */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', marginBottom: 6 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
