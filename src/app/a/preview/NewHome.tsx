@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import type { FeedDish } from '../types'
 import LocationModal from '../components/LocationModal'
 import { distanceKm } from '../lib/geo'
@@ -828,39 +829,43 @@ export default function NewHome({
               </svg>
             </button>
           )}
-          {/* Dropdown de sugerencias — fixed para escapar stacking context del header */}
-          {showSuggestions && searchSuggestions && searchInputRef.current && (() => {
-            const r = searchInputRef.current!.getBoundingClientRect()
-            return (
-            <div style={{
-              position: 'fixed', top: r.bottom + 6, left: r.left, width: r.width, zIndex: 9000,
-              background: isDark ? '#1a1a1a' : '#fff',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              borderRadius: 16, overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-            }}>
-              {searchSuggestions.map((s, i) => (
-                <button
-                  key={`${s.type}-${s.text}`}
-                  onMouseDown={e => e.preventDefault()}
-                  onClick={() => { executeSearch(s.text); setShowSuggestions(false) }}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
-                    borderTop: i > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                  </svg>
-                  <span style={{ flex: 1 }}>{s.text}</span>
-                  <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)', fontStyle: 'italic', flexShrink: 0 }}>({s.type})</span>
-                </button>
-              ))}
-            </div>
-            )
-          })()}
+          {/* Dropdown de sugerencias — se renderiza vía portal en body para escapar todo stacking context */}
+          {showSuggestions && searchSuggestions && typeof document !== 'undefined' && createPortal(
+            (() => {
+              const r = searchInputRef.current?.getBoundingClientRect()
+              if (!r) return null
+              return (
+                <div style={{
+                  position: 'fixed', top: r.bottom + 6, left: r.left, width: r.width, zIndex: 99999,
+                  background: isDark ? '#1a1a1a' : '#fff',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+                  borderRadius: 16, overflow: 'hidden',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                }}>
+                  {searchSuggestions.map((s, i) => (
+                    <button
+                      key={`${s.type}-${s.text}`}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => { executeSearch(s.text); setShowSuggestions(false) }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                        color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                        borderTop: i > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
+                      }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                      </svg>
+                      <span style={{ flex: 1 }}>{s.text}</span>
+                      <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)', fontStyle: 'italic', flexShrink: 0 }}>({s.type})</span>
+                    </button>
+                  ))}
+                </div>
+              )
+            })(),
+            document.body
+          )}
         </form>{/* end search input */}
         <button onClick={() => setMenuOpen(true)} style={{
           flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
