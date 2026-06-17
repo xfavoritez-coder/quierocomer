@@ -578,7 +578,7 @@ export default function NewHome({
         headerVisible.current = entry.isIntersecting
         if (entry.isIntersecting) setShowFloatingSearch(false)
       },
-      { threshold: 0.95 }
+      { threshold: 0.75 }
     )
     observer.observe(headerRef.current)
     return () => observer.disconnect()
