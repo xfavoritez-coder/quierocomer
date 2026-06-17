@@ -607,23 +607,21 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     try {
       const taxonomy = await classifyDishesBatched(taxonomyInputs);
       const entries = Object.entries(taxonomy);
-      for (let i = 0; i < entries.length; i += 20) {
-        await Promise.all(
-          entries.slice(i, i + 20).map(([dishId, dims]) =>
-            prisma.dish.update({
-              where: { id: dishId },
-              data: {
-                txDishType:   dims.dishType        ?? [],
-                txCuisine:    dims.cuisine         ?? [],
-                txMealSlot:   dims.mealSlot        ?? [],
-                txIngredient: dims.mainIngredient  ?? [],
-                txEstilo:     dims.estilo          ?? [],
-                ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
-              },
-            })
-          )
-        );
-      }
+      await prisma.$transaction(
+        entries.map(([dishId, dims]) =>
+          prisma.dish.update({
+            where: { id: dishId },
+            data: {
+              txDishType:   dims.dishType        ?? [],
+              txCuisine:    dims.cuisine         ?? [],
+              txMealSlot:   dims.mealSlot        ?? [],
+              txIngredient: dims.mainIngredient  ?? [],
+              txEstilo:     dims.estilo          ?? [],
+              ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
+            },
+          })
+        )
+      );
       console.log(`[Pipeline] Taxonomy classified ${entries.length}/${taxonomyInputs.length} dishes`);
     } catch (e) {
       console.error("[Pipeline] Taxonomy classification failed (non-fatal):", e);

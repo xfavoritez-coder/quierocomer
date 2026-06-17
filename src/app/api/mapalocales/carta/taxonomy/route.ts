@@ -39,25 +39,22 @@ export async function POST(req: NextRequest) {
 
     // Paralelo: batches de 30, hasta 4 simultáneos → ~25s para cualquier carta
     const taxonomy = await classifyDishesBatched(inputs, 30, 4)
-    // Updates a la BD en chunks de 20 para no saturar el pool de conexiones
-    const entries = Object.entries(taxonomy)
-    for (let i = 0; i < entries.length; i += 20) {
-      await Promise.all(
-        entries.slice(i, i + 20).map(([dishId, dims]) =>
-          prisma.dish.update({
-            where: { id: dishId },
-            data: {
-              txDishType:   dims.dishType        ?? [],
-              txCuisine:    dims.cuisine         ?? [],
-              txMealSlot:   dims.mealSlot        ?? [],
-              txIngredient: dims.mainIngredient  ?? [],
-              txEstilo:     dims.estilo          ?? [],
-              ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
-            },
-          })
-        )
+    // Una sola transacción = 1 conexión, N queries en bloque
+    await prisma.$transaction(
+      Object.entries(taxonomy).map(([dishId, dims]) =>
+        prisma.dish.update({
+          where: { id: dishId },
+          data: {
+            txDishType:   dims.dishType        ?? [],
+            txCuisine:    dims.cuisine         ?? [],
+            txMealSlot:   dims.mealSlot        ?? [],
+            txIngredient: dims.mainIngredient  ?? [],
+            txEstilo:     dims.estilo          ?? [],
+            ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
+          },
+        })
       )
-    }
+    )
     const classified = Object.keys(taxonomy).length
 
     return NextResponse.json({ classified, total: dishes.length })
