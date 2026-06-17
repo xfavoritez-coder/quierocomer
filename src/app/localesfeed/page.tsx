@@ -1434,9 +1434,19 @@ function CartaModal({ slug, name, onClose }: {
     setTaxEdits(prev => ({ ...prev, [dishId]: { ...prev[dishId], [field]: value } }))
   }
 
-  function getDishTax(dish: CartaDish): CartaDish & TaxEdit {
+  function getDishTax(dish: CartaDish): CartaDish & Required<TaxEdit> {
     const edits = taxEdits[dish.id] ?? {}
-    return { ...dish, ...edits }
+    return {
+      ...dish,
+      txDishType:   Array.isArray(dish.txDishType)   ? dish.txDishType   : [],
+      txCuisine:    Array.isArray(dish.txCuisine)    ? dish.txCuisine    : [],
+      txMealSlot:   Array.isArray(dish.txMealSlot)   ? dish.txMealSlot   : [],
+      txIngredient: Array.isArray(dish.txIngredient) ? dish.txIngredient : [],
+      txEstilo:     Array.isArray(dish.txEstilo)      ? dish.txEstilo     : [],
+      flavorTags:   Array.isArray(dish.flavorTags)   ? dish.flavorTags   : [],
+      diet:         dish.diet ?? 'OMNIVORE',
+      ...edits,
+    }
   }
 
   const hasChanges = Object.keys(taxEdits).length > 0
