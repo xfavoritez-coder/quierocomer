@@ -193,6 +193,7 @@ export default function DishModal({
                 ) : (
                   <span style={{ fontSize: 18, fontWeight: 700, color: '#F4A623' }}>${dish.precio.toLocaleString('es-CL')}</span>
                 )}
+                <span title="Los precios pueden variar según el local o el canal de pedido" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.18)', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.3)', cursor: 'default', flexShrink: 0, lineHeight: 1 }}>i</span>
               </div>
             )}
 

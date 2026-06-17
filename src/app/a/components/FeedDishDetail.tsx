@@ -428,6 +428,7 @@ function DesktopDishContent({
             ) : (
               <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
+            <span title="Los precios pueden variar según el local o el canal de pedido" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'default', flexShrink: 0, lineHeight: 1 }}>i</span>
           </div>
         )}
 
@@ -750,6 +751,7 @@ function DishSlide({
             ) : (
               <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
+            <span title="Los precios pueden variar según el local o el canal de pedido" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'default', flexShrink: 0, lineHeight: 1 }}>i</span>
           </div>
         )}
 
