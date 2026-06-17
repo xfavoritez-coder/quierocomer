@@ -845,10 +845,10 @@ export default function NewHome({
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
-              width: '100%', padding: '12px 38px 12px 36px', borderRadius: 999, fontSize: 17,
+              width: '100%', padding: '12px 38px 12px 36px', fontSize: 15,
+              borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -869,12 +869,16 @@ export default function NewHome({
               if (!r) return null
               return (
                 <div style={{
-                  position: 'fixed', top: r.bottom + 6, left: r.left, width: r.width, zIndex: 99999,
-                  background: isDark ? '#1a1a1a' : '#fff',
+                  position: 'fixed', top: r.bottom - 2, left: r.left, width: r.width, zIndex: 99999,
+                  background: isDark ? 'rgba(40,40,40,1)' : '#fff',
                   border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                  borderRadius: 16, overflow: 'hidden',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                  borderTop: 'none',
+                  borderRadius: '0 0 20px 20px', overflow: 'hidden',
+                  boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.12)',
+                  clipPath: 'inset(0 -30px -30px -30px)',
+                  fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                 }}>
+                  <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
                   {searchSuggestions.map((s, i) => (
                     <button
                       key={`${s.type}-${s.text}`}
@@ -884,6 +888,7 @@ export default function NewHome({
                         width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                         padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
                         color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                        fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                         borderTop: i > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
                       }}
                     >
