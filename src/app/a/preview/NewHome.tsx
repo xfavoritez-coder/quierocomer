@@ -1006,6 +1006,7 @@ export default function NewHome({
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Buscar en QuieroComer"
+              className="feed-floating-input"
               style={{
                 width: '100%', padding: '12px 38px 12px 36px',
                 borderRadius: 999, fontSize: 17,

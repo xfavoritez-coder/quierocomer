@@ -665,7 +665,8 @@ html.dark .feed-root .dish-card-img-wrap {
 .feed-root div[style*="overflow-x"] { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Search placeholder */
-.feed-search-input::placeholder {
+.feed-search-input::placeholder,
+.feed-floating-input::placeholder {
   color: rgba(0, 0, 0, 0.28) !important;
   -webkit-text-fill-color: rgba(0, 0, 0, 0.28) !important;
   opacity: 1 !important;
@@ -689,7 +690,8 @@ html.dark .feed-root .feed-search-input {
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
 }
-html.dark .feed-root .feed-search-input::placeholder {
+html.dark .feed-root .feed-search-input::placeholder,
+html.dark .feed-root .feed-floating-input::placeholder {
   color: rgba(255,255,255,0.18) !important;
   -webkit-text-fill-color: rgba(255,255,255,0.18) !important;
   opacity: 1 !important;
