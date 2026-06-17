@@ -21,7 +21,7 @@ const VALID_DISH_TYPES = [
   // Pollo
   "pollo asado","pollo frito","tenders","alitas","nuggets",
   // Pescados y mariscos
-  "ceviche","tiradito","salmón","reineta","camarones","mariscos",
+  "ceviche","tiradito",
   // Pastas y arroces
   "pasta","lasagna","risotto","arroz","fideos",
   // Pizza y masas
@@ -69,7 +69,7 @@ Reglas dishType:
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
 
 cuisine (array, solo si aplica claramente):
-chilena, peruana, nikkei, venezolana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, india, fusión
+chilena, peruana, nikkei, venezolana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, india, thai, griega, española, brasileña, fusión
 Reglas cuisine:
 - "chilena" SOLO para platos tradicionales chilenos (cazuela, empanada, sopaipilla, pastel de choclo, chorrillana, etc.). Una hamburguesa en Chile NO es chilena → []. Una pizza NO es italiana por defecto a menos que el nombre/descripción lo indique claramente.
 - "nikkei" para fusión japonesa-peruana (tiradito con toques japoneses, ceviche con soja, etc.)
@@ -80,8 +80,10 @@ desayuno, almuerzo, cena, snack
 Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 
 mainIngredient (array, los más importantes):
-carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, queso crema, pan, fruta, tofu, tomate, lechuga, nutella
-- Usa "queso crema" para cream cheese, philadelphia, queso untable (bagels, tostadas, postres). Usa "queso" para el resto: cheddar, mozzarella, gouda, queso fresco, queso amarillo.
+carne, pollo, cerdo, cordero, pescado, salmón, camarones, pulpo, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, queso crema, pan, fruta, tofu, tomate, lechuga, nutella, cebollín
+- "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (reineta, merluza, corvina sin especificar). "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
+- Usa "queso crema" cuando veas: queso crema, cream cheese, philadelphia, philly, queso untable, vegadelphia, queso crema vegano, queso crema de almendras, o similar. Usa "queso" para el resto: cheddar, mozzarella, gouda, queso fresco, queso amarillo.
+- Vegadelphia o queso crema vegano → ingrediente "queso crema" + diet VEGAN (si no hay otros ingredientes animales).
 
 flavor (array, solo los que aplican claramente):
 dulce, salado, picante, frito, grillado, asado

@@ -9,7 +9,7 @@ const VALID_DISH_TYPE = [
   "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
   "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab",
   "pollo asado","pollo frito","tenders","alitas","nuggets",
-  "ceviche","tiradito","salmón","reineta","camarones","mariscos",
+  "ceviche","tiradito",
   "pasta","lasagna","risotto","arroz","fideos",
   "pizza","calzone","quiche","empanada",
   "sopa","cazuela","ramen",
@@ -24,13 +24,13 @@ const VALID_DISH_TYPE = [
 
 const VALID_CUISINE = [
   "chilena","peruana","nikkei","venezolana","italiana","americana","mexicana","japonesa",
-  "china","árabe","mediterránea","francesa","asiática","coreana","india","fusión",
+  "china","árabe","mediterránea","francesa","asiática","coreana","india","thai","griega","española","brasileña","fusión",
 ];
 const VALID_MEAL_SLOT = ["desayuno","almuerzo","cena","snack"];
 const VALID_INGREDIENT = [
-  "carne","pollo","cerdo","cordero","pescado","mariscos","huevo",
+  "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos","huevo",
   "pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan","fruta","tofu",
-  "tomate","lechuga","nutella",
+  "tomate","lechuga","nutella","cebollín",
 ];
 const VALID_FLAVOR = ["dulce","salado","picante","frito","grillado","asado"];
 const VALID_ESTILO = ["comida rapida","saludable"];
@@ -67,8 +67,16 @@ type Restaurant = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function norm(s: string) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
 function toggleArr(arr: string[], val: string): string[] {
-  return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+  return arr.some((x) => norm(x) === norm(val)) ? arr.filter((x) => norm(x) !== norm(val)) : [...arr, val];
+}
+
+function arrIncludes(arr: string[], val: string): boolean {
+  return arr.some((x) => norm(x) === norm(val));
 }
 
 function Pill({ label, active, onClick, color }: { label: string; active: boolean; onClick: () => void; color?: "amber" | "green" }) {
@@ -80,7 +88,7 @@ function Pill({ label, active, onClick, color }: { label: string; active: boolea
     <button
       onClick={onClick}
       style={{
-        padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 500,
+        padding: "3px 10px", borderRadius: 999, fontSize: 13, fontWeight: 500,
         border: `1px solid ${c ? c.border : "#2a2a2a"}`,
         background: c ? c.bg : "transparent",
         color: c ? c.text : "#555",
@@ -237,7 +245,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Tipo">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_DISH_TYPE.map((v) => (
-                            <Pill key={v} label={v} active={dims.dishType.includes(v)} color="amber"
+                            <Pill key={v} label={v} active={arrIncludes(dims.dishType, v)} color="amber"
                               onClick={() => updateDim(dish.id, "dishType", toggleArr(dims.dishType, v))} />
                           ))}
                         </div>
@@ -247,7 +255,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Cocina">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_CUISINE.map((v) => (
-                            <Pill key={v} label={v} active={dims.cuisine.includes(v)}
+                            <Pill key={v} label={v} active={arrIncludes(dims.cuisine, v)}
                               onClick={() => updateDim(dish.id, "cuisine", toggleArr(dims.cuisine, v))} />
                           ))}
                         </div>
@@ -257,7 +265,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Momento">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_MEAL_SLOT.map((v) => (
-                            <Pill key={v} label={v} active={dims.mealSlot.includes(v)}
+                            <Pill key={v} label={v} active={arrIncludes(dims.mealSlot, v)}
                               onClick={() => updateDim(dish.id, "mealSlot", toggleArr(dims.mealSlot, v))} />
                           ))}
                         </div>
@@ -267,7 +275,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Ingrediente">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_INGREDIENT.map((v) => (
-                            <Pill key={v} label={v} active={dims.mainIngredient.includes(v)}
+                            <Pill key={v} label={v} active={arrIncludes(dims.mainIngredient, v)}
                               onClick={() => updateDim(dish.id, "mainIngredient", toggleArr(dims.mainIngredient, v))} />
                           ))}
                         </div>
@@ -277,7 +285,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Sabor">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_FLAVOR.map((v) => (
-                            <Pill key={v} label={v} active={dims.flavor.includes(v)}
+                            <Pill key={v} label={v} active={arrIncludes(dims.flavor, v)}
                               onClick={() => updateDim(dish.id, "flavor", toggleArr(dims.flavor, v))} />
                           ))}
                         </div>
@@ -287,7 +295,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Estilo">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_ESTILO.map((v) => (
-                            <Pill key={v} label={v} active={dims.estilo.includes(v)} color="green"
+                            <Pill key={v} label={v} active={arrIncludes(dims.estilo, v)} color="green"
                               onClick={() => updateDim(dish.id, "estilo", toggleArr(dims.estilo, v))} />
                           ))}
                         </div>
