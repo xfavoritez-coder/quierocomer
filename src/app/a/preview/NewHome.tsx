@@ -1005,10 +1005,10 @@ export default function NewHome({
             </button>
             {activeFilterCount > 0 && (
               <span style={{
-                position: 'absolute', top: 4, right: 6, pointerEvents: 'none',
+                position: 'absolute', top: 4, right: 8, pointerEvents: 'none',
                 background: '#F4A623', color: '#fff',
-                borderRadius: 999, fontSize: 9, fontWeight: 700,
-                minWidth: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 999, fontSize: 10, fontWeight: 700,
+                minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '0 3px', lineHeight: 1, zIndex: 1,
               }}>{activeFilterCount}</span>
             )}
