@@ -1360,6 +1360,7 @@ export default function NewHome({
             position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 82,
             padding: '12px 18px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
             background: isDark ? 'linear-gradient(to top, #1a1a1a 60%, transparent)' : 'linear-gradient(to top, #fff 60%, transparent)',
+            display: 'flex', flexDirection: 'column', gap: 8,
           }}>
             <button onClick={() => {
               setFilterSort(draftSort)
@@ -1378,6 +1379,30 @@ export default function NewHome({
               background: '#F4A623', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}>
               {isSearching ? 'Buscando...' : `Ver ${draftDishCount} ${draftDishCount === 1 ? 'plato' : 'platos'}`}
+            </button>
+            <button onClick={() => {
+              setFilterSort('default')
+              setFilterMaxKm(30)
+              userSetMaxKm.current = false
+              setFilterDiet('all')
+              setFilterMeal('all')
+              setFilterMealDisplay('all')
+              setFilterCategories(new Set())
+              setDraftSort('default')
+              setDraftMaxKm(30)
+              setDraftDiet('all')
+              setDraftMeal('all')
+              setDraftMealDisplay('all')
+              setDraftCategories(new Set())
+              setFilterOpen(false)
+              setShuffleSeed(Math.random())
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }} style={{
+              width: '100%', height: 40, border: 'none', borderRadius: 12,
+              background: 'none', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+              fontSize: 14, fontWeight: 500, cursor: 'pointer',
+            }}>
+              Limpiar filtros
             </button>
           </div>
           </div>{/* end scrollable content */}
