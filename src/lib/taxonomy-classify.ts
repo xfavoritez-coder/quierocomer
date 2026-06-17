@@ -121,11 +121,11 @@ comida rapida, saludable
 Deja [] si no encaja en ninguno. Sushi → []. Ensalada verde → [saludable]. Hamburguesa → [comida rapida].
 
 diet:
-OMNIVORE (tiene carne/ave/pescado/mariscos — aunque lleve queso o vegetales)
-VEGETARIAN (sin carne/pescado/mariscos visible en nombre o descripción)
-VEGAN → SOLO si el plato dice explícitamente "vegano" en su nombre o descripción, O si el restaurante es claramente vegano (ej: "Horus Vegan"). Sin esa señal explícita, nunca uses VEGAN — usa VEGETARIAN.
-Hamburguesa, pollo, completo, mariscos → OMNIVORE siempre.
-Pesto, pizza sin carne, ensalada sin proteína animal → VEGETARIAN (nunca VEGAN por defecto).
+OMNIVORE → SOLO si el plato contiene carne (vacuno, cerdo, cordero), ave (pollo, pavo), pescado o mariscos. Ejemplos: hamburguesa, pollo, completo, ceviche, salmón.
+VEGETARIAN → sin carne/ave/pescado/mariscos. Huevo, queso, leche, mantequilla, crema, miel NO hacen OMNIVORE — son ingredientes vegetarianos.
+Waffle, pancake, crepe, omelet, huevos, pasta con queso, pizza sin carne → VEGETARIAN aunque lleven huevo o lácteos.
+VEGAN → SOLO si el plato dice explícitamente "vegano" en su nombre o descripción. Sin esa señal, nunca VEGAN — usa VEGETARIAN.
+Pesto, pizza sin carne, ensalada sin proteína animal, waffles, postres con frutas/chocolate/nutella → VEGETARIAN.
 Ante cualquier duda → VEGETARIAN, nunca VEGAN.
 
 PLATOS A CLASIFICAR:
