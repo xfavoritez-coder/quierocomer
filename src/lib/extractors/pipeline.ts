@@ -44,6 +44,9 @@ function slugify(name: string): string {
 function inferDietFromIngredients(name: string, description: string | null | undefined): "VEGAN" | "VEGETARIAN" | "OMNIVORE" | null {
   const text = `${name} ${description ?? ""}`.toLowerCase();
 
+  // "veggie" en el nombre → siempre VEGETARIAN, sin importar descripción
+  if (/\bveggie\b/i.test(name)) return "VEGETARIAN";
+
   // Carne, ave, pescado, mariscos → OMNIVORE seguro
   // Incluye nombres de platos que implican carne por defecto (hamburguesa, asado, parrilla, etc.)
   // a menos que la descripción indique lo contrario (tofu, lentejas, veggie) — eso se filtra luego
