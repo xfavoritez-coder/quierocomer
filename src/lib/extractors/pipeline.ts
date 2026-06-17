@@ -18,7 +18,7 @@ import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
-import { type DishTaxonomyInput } from "@/lib/taxonomy-classify";
+import { classifyDishesBatched, type DishTaxonomyInput } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo } from "@/lib/google-places";
 
@@ -613,16 +613,33 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     clearTimeout(pipelineTimeout);
     console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
 
-    // Taxonomy classification — fire-and-forget en su propia función (maxDuration=120s)
-    // Se ejecuta DESPUÉS de READY para no bloquear al usuario
+    // Taxonomy classification — corre DESPUÉS de READY en el mismo pipeline
+    // El usuario ya ve el restaurante como importado; esto tarda ~25s más pero no bloquea nada
     if (taxonomyInputs.length > 0) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quierocomer.cl';
-      fetch(`${appUrl}/api/mapalocales/carta/taxonomy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: restaurant.slug }),
-      }).catch(e => console.error('[Pipeline] Taxonomy self-call failed:', e));
-      console.log(`[Pipeline] Taxonomy triggered for ${taxonomyInputs.length} dishes (async)`);
+      try {
+        const taxonomy = await classifyDishesBatched(taxonomyInputs, 30, 4);
+        const entries = Object.entries(taxonomy);
+        if (entries.length > 0) {
+          await prisma.$transaction(
+            entries.map(([dishId, dims]) =>
+              prisma.dish.update({
+                where: { id: dishId },
+                data: {
+                  txDishType:   dims.dishType       ?? [],
+                  txCuisine:    dims.cuisine        ?? [],
+                  txMealSlot:   dims.mealSlot       ?? [],
+                  txIngredient: dims.mainIngredient ?? [],
+                  txEstilo:     dims.estilo         ?? [],
+                  ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
+                },
+              })
+            )
+          );
+          console.log(`[Pipeline] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos clasificados`);
+        }
+      } catch (e) {
+        console.error("[Pipeline] Taxonomy failed (non-fatal):", e);
+      }
     }
 
     // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
