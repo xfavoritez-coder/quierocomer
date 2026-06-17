@@ -668,9 +668,9 @@ export default function NewHome({
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
       background: active
         ? (type === 'popular' ? (isDark ? 'rgba(211,47,47,0.15)' : 'rgba(211,47,47,0.1)') : type === 'green' ? (isDark ? 'rgba(46,125,50,0.18)' : 'rgba(46,125,50,0.12)') : (isDark ? 'rgba(244,166,35,0.18)' : 'rgba(244,166,35,0.15)'))
-        : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-      border: `1px solid ${active ? (type === 'popular' ? 'rgba(211,47,47,0.45)' : type === 'green' ? 'rgba(46,125,50,0.4)' : 'rgba(244,166,35,0.5)') : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)')}`,
-      color: active ? ac : (isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.38)'),
+        : (isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.06)'),
+      border: `1px solid ${active ? (type === 'popular' ? 'rgba(211,47,47,0.45)' : type === 'green' ? 'rgba(46,125,50,0.4)' : 'rgba(244,166,35,0.5)') : (isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.14)')}`,
+      color: active ? ac : (isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.55)'),
     }
   }
 
