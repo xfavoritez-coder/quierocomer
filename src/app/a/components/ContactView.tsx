@@ -68,7 +68,7 @@ export default function ContactView({
     <div style={{ paddingBottom: 100 }}>
 
       <div style={{ padding: '10px 16px 0' }}>
-        <button onClick={onBack} style={{
+        <button onClick={() => sent ? setSent(false) : onBack?.()} style={{
           background: 'none', border: 'none', cursor: 'pointer', padding: '4px 4px 4px 0', marginBottom: 8,
           color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
           display: 'flex', alignItems: 'center',
