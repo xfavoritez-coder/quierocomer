@@ -968,7 +968,7 @@ export default function NewHome({
             </svg>
           </button>
           <span style={{
-            fontSize: 13, fontWeight: 400,
+            fontSize: 14, fontWeight: 400,
             color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
             flexShrink: 0, paddingLeft: 8,
           }}>
