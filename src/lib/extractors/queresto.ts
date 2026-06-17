@@ -56,16 +56,15 @@ export async function extractQueresto(cartaUrl: string): Promise<ExtractionResul
     // Match w=128 thumbnail srcset entries — covers both /items/ and /images/ paths
     const imgMatches = [...html.matchAll(/https:\/\/cdn\.bistrify\.app\/cdn-cgi\/image\/w=128[^"'\s]*/gi)];
     // Extract the base image path and build an HD URL without thumbnail constraints
-    const imgUrls = [...new Map(
-      imgMatches.map((m) => {
-        const thumbUrl = m[0].split(' ')[0] // strip trailing " 2x" from srcset
-        // Pull the /images/... or /items/... path out of the CDN transform URL
-        const pathMatch = thumbUrl.match(/\/images\/(.+)$/)
-        if (!pathMatch) return null
-        // Request original without resize — bistrify serves raw original this way
-        return [`https://cdn.bistrify.app/images/${pathMatch[1]}`, true] as const
-      }).filter((x): x is [string, true] => x !== null)
-    ).keys()]
+    const seen = new Set<string>()
+    const imgUrls: string[] = []
+    for (const m of imgMatches) {
+      const thumbUrl = m[0].split(' ')[0] // strip trailing " 2x" from srcset
+      const pathMatch = thumbUrl.match(/\/images\/(.+)$/)
+      if (!pathMatch) continue
+      const url = `https://cdn.bistrify.app/images/${pathMatch[1]}`
+      if (!seen.has(url)) { seen.add(url); imgUrls.push(url) }
+    }
     // Match images to dishes by position (best effort)
     for (let i = 0; i < Math.min(dishes.length, imgUrls.length); i++) {
       dishes[i].imageUrl = imgUrls[i]
