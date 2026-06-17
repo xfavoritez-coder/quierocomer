@@ -2,41 +2,51 @@
 
 import { useState } from "react";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Taxonomy ──────────────────────────────────────────────────────────────────
+
+const VALID_DISH_TYPE = [
+  "combo",
+  "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
+  "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab",
+  "pollo asado","pollo frito","tenders","alitas","nuggets",
+  "ceviche","tiradito","salmón","reineta","camarones","mariscos",
+  "pasta","lasagna","risotto","arroz","fideos",
+  "pizza","calzone","quiche","empanada",
+  "sopa","cazuela","ramen",
+  "ensalada","bowl",
+  "sushi","curry","pad thai","gyoza",
+  "taco","burrito","quesadilla",
+  "sopaipilla","pastel de choclo",
+  "huevos","pancake","waffle","crepe","avena","omelet",
+  "papas fritas","nachos","aros de cebolla","croquetas","spring roll",
+  "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
+];
+
+const VALID_CUISINE = [
+  "chilena","peruana","italiana","americana","mexicana","japonesa",
+  "china","árabe","mediterránea","francesa","asiática","coreana","india","fusión",
+];
+const VALID_MEAL_SLOT = ["desayuno","almuerzo","cena","snack"];
+const VALID_INGREDIENT = [
+  "carne","pollo","cerdo","cordero","pescado","mariscos","huevo",
+  "pasta","arroz","papa","verduras","legumbres","queso","pan","fruta","tofu",
+];
+const VALID_FLAVOR = ["dulce","salado","picante","frito","grillado","asado"];
+const VALID_ESTILO = ["comida rapida","saludable"];
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type DishDimensions = {
-  dishType: string;
+  dishType: string[];
   cuisine: string[];
   mealSlot: string[];
   mainIngredient: string[];
   flavor: string[];
-  format: string;
+  estilo: string[];
   diet: "OMNIVORE" | "VEGETARIAN" | "VEGAN";
 };
 
-const VALID_CUISINE = [
-  "chilena", "peruana", "italiana", "americana", "mexicana", "japonesa",
-  "china", "árabe", "mediterránea", "francesa", "asiática", "coreana",
-  "tailandesa", "india", "internacional", "fusión",
-];
-const VALID_MEAL_SLOT = ["desayuno", "almuerzo", "cena", "snack"];
-const VALID_INGREDIENT = [
-  "carne", "pollo", "cerdo", "cordero", "pescado", "mariscos", "huevo",
-  "pasta", "arroz", "papa", "verduras", "legumbres", "queso", "pan", "fruta", "tofu",
-];
-const VALID_FLAVOR = [
-  "dulce", "salado", "picante", "ácido", "cremoso", "frito",
-  "ahumado", "fresco", "crujiente", "umami",
-];
-const VALID_FORMAT = ["comida_rapida", "saludable", "comfort", "gourmet", "antojo", "tradicional"];
-
-// ── Types from Prisma (minimal, for what we need) ─────────────────────────────
-
-type Category = {
-  id: string;
-  name: string;
-};
-
+type Category = { id: string; name: string };
 type Dish = {
   id: string;
   name: string;
@@ -46,7 +56,6 @@ type Dish = {
   isHero: boolean;
   category: Category;
 };
-
 type Restaurant = {
   id: string;
   name: string;
@@ -55,20 +64,25 @@ type Restaurant = {
   dishes: Dish[];
 };
 
-// ── Helper components ────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function toggleArr(arr: string[], val: string): string[] {
+  return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+}
+
+function Pill({ label, active, onClick, color }: { label: string; active: boolean; onClick: () => void; color?: "amber" | "green" }) {
+  const amber = { border: "#f59e0b", bg: "rgba(245,158,11,0.15)", text: "#fbbf24" };
+  const green = { border: "#22c55e", bg: "rgba(34,197,94,0.12)", text: "#86efac" };
+  const purple = { border: "#a78bfa", bg: "rgba(167,139,250,0.15)", text: "#c4b5fd" };
+  const c = active ? (color === "amber" ? amber : color === "green" ? green : purple) : null;
   return (
     <button
       onClick={onClick}
       style={{
-        padding: "2px 8px",
-        borderRadius: 999,
-        fontSize: 11,
-        fontWeight: 500,
-        border: `1px solid ${active ? "#a78bfa" : "#333"}`,
-        background: active ? "rgba(167,139,250,0.15)" : "transparent",
-        color: active ? "#c4b5fd" : "#666",
+        padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 500,
+        border: `1px solid ${c ? c.border : "#2a2a2a"}`,
+        background: c ? c.bg : "transparent",
+        color: c ? c.text : "#555",
         cursor: "pointer",
       }}
     >
@@ -77,24 +91,30 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function toggleArr(arr: string[], val: string): string[] {
-  return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+function DimRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+      <span style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: 0.5, minWidth: 72, paddingTop: 4, flexShrink: 0 }}>
+        {label}
+      </span>
+      <div style={{ flex: 1 }}>{children}</div>
+    </div>
+  );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
   const [classifications, setClassifications] = useState<Record<string, DishDimensions>>({});
   const [loading, setLoading] = useState(false);
-  const [editingDishType, setEditingDishType] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const classified = Object.keys(classifications).length;
   const total = restaurant.dishes.length;
 
   async function classify() {
     setLoading(true);
+    setError(null);
     try {
       const dishes = restaurant.dishes.map((d) => ({
         id: d.id,
@@ -108,270 +128,126 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
         body: JSON.stringify({ dishes }),
       });
       const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Error"); return; }
       setClassifications(data);
-    } catch (e) {
-      console.error("[TestPage classify]", e);
+    } catch (e: any) {
+      setError(e.message ?? "Error");
     } finally {
       setLoading(false);
     }
   }
 
   function updateDim(dishId: string, key: keyof DishDimensions, value: DishDimensions[keyof DishDimensions]) {
-    setClassifications((prev) => ({
-      ...prev,
-      [dishId]: { ...prev[dishId], [key]: value },
-    }));
+    setClassifications((prev) => ({ ...prev, [dishId]: { ...prev[dishId], [key]: value } }));
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: "#0d0d0d",
-        color: "#fff",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-        padding: "24px 20px 60px",
-      }}
-    >
+    <div style={{ minHeight: "100dvh", background: "#0d0d0d", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif", padding: "24px 20px 60px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 16,
-            marginBottom: 8,
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 8, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>
-              {restaurant.name}
-            </h1>
-            {restaurant.address && (
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "#666" }}>{restaurant.address}</p>
-            )}
-            <span
-              style={{
-                display: "inline-block",
-                marginTop: 6,
-                padding: "2px 8px",
-                background: "#1e1e1e",
-                border: "1px solid #2a2a2a",
-                borderRadius: 6,
-                fontSize: 11,
-                color: "#888",
-                fontFamily: "monospace",
-              }}
-            >
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>{restaurant.name}</h1>
+            {restaurant.address && <p style={{ margin: "4px 0 0", fontSize: 13, color: "#555" }}>{restaurant.address}</p>}
+            <span style={{ display: "inline-block", marginTop: 6, padding: "2px 8px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 11, color: "#666", fontFamily: "monospace" }}>
               {restaurant.slug}
             </span>
           </div>
-          <a
-            href={`/pruebanuevo?r=${Date.now()}`}
-            style={{
-              padding: "8px 16px",
-              background: "#1a1a1a",
-              border: "1px solid #333",
-              borderRadius: 8,
-              color: "#bbb",
-              fontSize: 13,
-              fontWeight: 500,
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <a href={`/pruebanuevo?r=${Date.now()}`} style={{ padding: "8px 16px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#888", fontSize: 13, fontWeight: 500, textDecoration: "none", whiteSpace: "nowrap" }}>
             Otro restaurante →
           </a>
         </div>
 
         {/* Controls */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginTop: 16,
-            marginBottom: 20,
-            flexWrap: "wrap",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0 24px", flexWrap: "wrap" }}>
           <button
             onClick={classify}
             disabled={loading}
             style={{
-              padding: "10px 20px",
-              background: loading ? "#1a1a1a" : "#7c3aed",
-              border: loading ? "1px solid #333" : "1px solid #7c3aed",
-              borderRadius: 8,
-              color: loading ? "#666" : "#fff",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
+              padding: "10px 20px", background: loading ? "#1a1a1a" : "#7c3aed",
+              border: `1px solid ${loading ? "#333" : "#7c3aed"}`, borderRadius: 8,
+              color: loading ? "#555" : "#fff", fontSize: 14, fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8,
             }}
           >
-            {loading && (
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 14,
-                  height: 14,
-                  border: "2px solid #555",
-                  borderTopColor: "#a78bfa",
-                  borderRadius: "50%",
-                  animation: "spin 0.8s linear infinite",
-                }}
-              />
-            )}
-            {loading ? "Clasificando…" : "Clasificar con AI"}
+            {loading && <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid #555", borderTopColor: "#a78bfa", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />}
+            {loading ? "Clasificando…" : classified > 0 ? "Re-clasificar" : "Clasificar con AI"}
           </button>
-
-          {classified > 0 && (
-            <span style={{ fontSize: 13, color: "#888" }}>
-              <span style={{ color: "#a78bfa", fontWeight: 700 }}>{classified}</span>/{total} clasificados
-            </span>
-          )}
+          {classified > 0 && <span style={{ fontSize: 13, color: "#555" }}><span style={{ color: "#a78bfa", fontWeight: 700 }}>{classified}</span>/{total} platos</span>}
+          {error && <span style={{ fontSize: 13, color: "#ef4444" }}>{error}</span>}
         </div>
 
-        {/* Dish grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: 16,
-          }}
-        >
+        {/* Leyenda dimensiones */}
+        {classified > 0 && (
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20, padding: "10px 14px", background: "#111", border: "1px solid #1e1e1e", borderRadius: 8 }}>
+            {[
+              { label: "Tipo", color: "#fbbf24" },
+              { label: "Cocina", color: "#c4b5fd" },
+              { label: "Momento", color: "#c4b5fd" },
+              { label: "Ingrediente", color: "#c4b5fd" },
+              { label: "Sabor", color: "#c4b5fd" },
+              { label: "Estilo", color: "#86efac" },
+              { label: "Dieta", color: "#888" },
+            ].map(({ label, color }) => (
+              <span key={label} style={{ fontSize: 11, color, fontWeight: 500 }}>{label}</span>
+            ))}
+            <span style={{ fontSize: 11, color: "#444", marginLeft: "auto" }}>Click en cualquier tag para editar</span>
+          </div>
+        )}
+
+        {/* Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
           {restaurant.dishes.map((dish) => {
             const dims = classifications[dish.id];
             const photo = dish.photos[0] ?? null;
 
             return (
-              <div
-                key={dish.id}
-                style={{
-                  background: "#1a1a1a",
-                  border: "1px solid #2a2a2a",
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
+              <div key={dish.id} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+
                 {/* Photo */}
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={photo}
-                    alt={dish.name}
-                    style={{
-                      width: "100%",
-                      aspectRatio: "4/3",
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                  />
+                  <img src={photo} alt={dish.name} style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
                 ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      aspectRatio: "4/3",
-                      background: "linear-gradient(135deg, #1e1e24, #2a2a30)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: 32, opacity: 0.3 }}>🍽</span>
+                  <div style={{ width: "100%", aspectRatio: "4/3", background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 28, opacity: 0.2 }}>🍽</span>
                   </div>
                 )}
 
                 {/* Content */}
-                <div style={{ padding: "12px 14px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff" }}>{dish.name}</p>
-                  <p style={{ margin: 0, fontSize: 11, color: "#888" }}>{dish.category.name}</p>
+                <div style={{ padding: "12px 14px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{dish.name}</p>
+                    {dish.price > 0 && <span style={{ fontSize: 12, color: "#555", flexShrink: 0 }}>${dish.price.toLocaleString("es-CL")}</span>}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 11, color: "#444" }}>{dish.category.name}</p>
                   {dish.description && (
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 12,
-                        color: "#666",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
+                    <p style={{ margin: "2px 0 0", fontSize: 12, color: "#555", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                       {dish.description}
                     </p>
                   )}
 
                   {/* Dimensions */}
-                  {dims && (
-                    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid #2a2a2a", paddingTop: 10 }}>
-                      {/* dishType */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: 0.5, minWidth: 90 }}>Tipo</span>
-                        {editingDishType === dish.id ? (
-                          <input
-                            autoFocus
-                            defaultValue={dims.dishType}
-                            onBlur={(e) => {
-                              updateDim(dish.id, "dishType", e.target.value.trim() || dims.dishType);
-                              setEditingDishType(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                updateDim(dish.id, "dishType", (e.target as HTMLInputElement).value.trim() || dims.dishType);
-                                setEditingDishType(null);
-                              }
-                              if (e.key === "Escape") setEditingDishType(null);
-                            }}
-                            style={{
-                              background: "#262626",
-                              border: "1px solid #f59e0b",
-                              borderRadius: 6,
-                              color: "#fbbf24",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              padding: "2px 8px",
-                              outline: "none",
-                              width: 140,
-                            }}
-                          />
-                        ) : (
-                          <button
-                            onClick={() => setEditingDishType(dish.id)}
-                            title="Click para editar"
-                            style={{
-                              padding: "2px 10px",
-                              borderRadius: 6,
-                              background: "rgba(251,191,36,0.12)",
-                              border: "1px solid rgba(251,191,36,0.3)",
-                              color: "#fbbf24",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                            }}
-                          >
-                            {dims.dishType}
-                          </button>
-                        )}
-                      </div>
+                  {dims ? (
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 7, borderTop: "1px solid #1e1e1e", paddingTop: 10 }}>
+
+                      {/* dishType — multi-select, amber */}
+                      <DimRow label="Tipo">
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                          {VALID_DISH_TYPE.map((v) => (
+                            <Pill key={v} label={v} active={dims.dishType.includes(v)} color="amber"
+                              onClick={() => updateDim(dish.id, "dishType", toggleArr(dims.dishType, v))} />
+                          ))}
+                        </div>
+                      </DimRow>
 
                       {/* cuisine */}
                       <DimRow label="Cocina">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_CUISINE.map((v) => (
-                            <Pill
-                              key={v}
-                              label={v}
-                              active={dims.cuisine.includes(v)}
-                              onClick={() => updateDim(dish.id, "cuisine", toggleArr(dims.cuisine, v))}
-                            />
+                            <Pill key={v} label={v} active={dims.cuisine.includes(v)}
+                              onClick={() => updateDim(dish.id, "cuisine", toggleArr(dims.cuisine, v))} />
                           ))}
                         </div>
                       </DimRow>
@@ -380,12 +256,8 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Momento">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_MEAL_SLOT.map((v) => (
-                            <Pill
-                              key={v}
-                              label={v}
-                              active={dims.mealSlot.includes(v)}
-                              onClick={() => updateDim(dish.id, "mealSlot", toggleArr(dims.mealSlot, v))}
-                            />
+                            <Pill key={v} label={v} active={dims.mealSlot.includes(v)}
+                              onClick={() => updateDim(dish.id, "mealSlot", toggleArr(dims.mealSlot, v))} />
                           ))}
                         </div>
                       </DimRow>
@@ -394,12 +266,8 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Ingrediente">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_INGREDIENT.map((v) => (
-                            <Pill
-                              key={v}
-                              label={v}
-                              active={dims.mainIngredient.includes(v)}
-                              onClick={() => updateDim(dish.id, "mainIngredient", toggleArr(dims.mainIngredient, v))}
-                            />
+                            <Pill key={v} label={v} active={dims.mainIngredient.includes(v)}
+                              onClick={() => updateDim(dish.id, "mainIngredient", toggleArr(dims.mainIngredient, v))} />
                           ))}
                         </div>
                       </DimRow>
@@ -408,36 +276,18 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                       <DimRow label="Sabor">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                           {VALID_FLAVOR.map((v) => (
-                            <Pill
-                              key={v}
-                              label={v}
-                              active={dims.flavor.includes(v)}
-                              onClick={() => updateDim(dish.id, "flavor", toggleArr(dims.flavor, v))}
-                            />
+                            <Pill key={v} label={v} active={dims.flavor.includes(v)}
+                              onClick={() => updateDim(dish.id, "flavor", toggleArr(dims.flavor, v))} />
                           ))}
                         </div>
                       </DimRow>
 
-                      {/* format — single select */}
-                      <DimRow label="Formato">
+                      {/* estilo — multi-select, green */}
+                      <DimRow label="Estilo">
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                          {VALID_FORMAT.map((v) => (
-                            <button
-                              key={v}
-                              onClick={() => updateDim(dish.id, "format", v)}
-                              style={{
-                                padding: "2px 8px",
-                                borderRadius: 999,
-                                fontSize: 11,
-                                fontWeight: 500,
-                                border: `1px solid ${dims.format === v ? "#6ee7b7" : "#333"}`,
-                                background: dims.format === v ? "rgba(110,231,183,0.12)" : "transparent",
-                                color: dims.format === v ? "#6ee7b7" : "#666",
-                                cursor: "pointer",
-                              }}
-                            >
-                              {v}
-                            </button>
+                          {VALID_ESTILO.map((v) => (
+                            <Pill key={v} label={v} active={dims.estilo.includes(v)} color="green"
+                              onClick={() => updateDim(dish.id, "estilo", toggleArr(dims.estilo, v))} />
                           ))}
                         </div>
                       </DimRow>
@@ -447,29 +297,20 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                         <div style={{ display: "flex", gap: 4 }}>
                           {(["OMNIVORE", "VEGETARIAN", "VEGAN"] as const).map((v) => {
                             const active = dims.diet === v;
-                            const colors: Record<string, { bg: string; border: string; text: string }> = {
-                              OMNIVORE: { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.4)", text: "#fca5a5" },
-                              VEGETARIAN: { bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.4)", text: "#86efac" },
-                              VEGAN: { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.4)", text: "#6ee7b7" },
+                            const colors = {
+                              OMNIVORE: { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.35)", text: "#fca5a5" },
+                              VEGETARIAN: { bg: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.35)", text: "#86efac" },
+                              VEGAN: { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.35)", text: "#6ee7b7" },
                             };
+                            const labels = { OMNIVORE: "Omnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano" };
                             const c = colors[v];
-                            const labels: Record<string, string> = {
-                              OMNIVORE: "Omnívoro",
-                              VEGETARIAN: "Veg.",
-                              VEGAN: "Vegano",
-                            };
                             return (
-                              <button
-                                key={v}
-                                onClick={() => updateDim(dish.id, "diet", v)}
+                              <button key={v} onClick={() => updateDim(dish.id, "diet", v)}
                                 style={{
-                                  padding: "3px 8px",
-                                  borderRadius: 6,
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                  border: `1px solid ${active ? c.border : "#2a2a2a"}`,
+                                  padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                                  border: `1px solid ${active ? c.border : "#1e1e1e"}`,
                                   background: active ? c.bg : "transparent",
-                                  color: active ? c.text : "#555",
+                                  color: active ? c.text : "#444",
                                   cursor: "pointer",
                                 }}
                               >
@@ -480,6 +321,8 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
                         </div>
                       </DimRow>
                     </div>
+                  ) : (
+                    <div style={{ marginTop: 8, height: 2, background: "#1a1a1a", borderRadius: 1 }} />
                   )}
                 </div>
               </div>
@@ -488,32 +331,7 @@ export default function TestPage({ restaurant }: { restaurant: Restaurant }) {
         </div>
       </div>
 
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function DimRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-      <span
-        style={{
-          fontSize: 10,
-          color: "#555",
-          textTransform: "uppercase",
-          letterSpacing: 0.5,
-          minWidth: 70,
-          paddingTop: 4,
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ flex: 1 }}>{children}</div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

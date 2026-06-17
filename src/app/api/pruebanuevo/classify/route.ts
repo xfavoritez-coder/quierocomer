@@ -11,6 +11,39 @@ type DishInput = {
   category: string;
 };
 
+const VALID_DISH_TYPES = [
+  // Especiales
+  "combo",
+  // Sándwiches y panes
+  "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
+  // Carnes
+  "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab",
+  // Pollo
+  "pollo asado","pollo frito","tenders","alitas","nuggets",
+  // Pescados y mariscos
+  "ceviche","tiradito","salmón","reineta","camarones","mariscos",
+  // Pastas y arroces
+  "pasta","lasagna","risotto","arroz","fideos",
+  // Pizza y masas
+  "pizza","calzone","quiche","empanada",
+  // Sopas
+  "sopa","cazuela","ramen",
+  // Ensaladas y bowls
+  "ensalada","bowl",
+  // Asiática
+  "sushi","curry","pad thai","gyoza",
+  // Mexicana
+  "taco","burrito","quesadilla",
+  // Chilena
+  "sopaipilla","pastel de choclo",
+  // Desayunos
+  "huevos","pancake","waffle","crepe","avena","omelet",
+  // Snacks y entradas
+  "papas fritas","nachos","aros de cebolla","croquetas","spring roll",
+  // Postres
+  "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
+];
+
 export async function POST(req: NextRequest) {
   try {
     if (!ANTHROPIC_API_KEY) {
@@ -24,24 +57,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No dishes provided" }, { status: 400 });
     }
 
-    const prompt = `Clasifica cada plato en las siguientes dimensiones. Responde SOLO con JSON válido, sin texto adicional.
+    const prompt = `Clasifica cada plato con estas dimensiones. Responde SOLO con JSON válido, sin texto adicional.
 
 OPCIONES VÁLIDAS:
-- dishType: tipo específico del plato (ej: hamburguesa, waffle, pasta, ceviche, pizza, tacos, empanada, sándwich, brownie, ensalada, sopa, arroz, pollo, filete, etc.)
-- cuisine: array de: [chilena, peruana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, tailandesa, india, internacional, fusión]
-- mealSlot: array de: [desayuno, almuerzo, cena, snack]
-- mainIngredient: array de: [carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, pan, fruta, tofu]
-- flavor: array de: [dulce, salado, picante, ácido, cremoso, frito, ahumado, fresco, crujiente, umami]
-- format: uno de: [comida_rapida, saludable, comfort, gourmet, antojo, tradicional]
-- diet: OMNIVORE (tiene carne/ave/pescado/mariscos), VEGETARIAN (sin carne, con lácteos/huevo), VEGAN (100% vegetal, sin ningún animal)
 
-PLATOS:
+dishType (array — puede ser más de uno, especialmente en combos):
+${VALID_DISH_TYPES.join(", ")}
+Reglas dishType:
+- Si es un combo/pack con varios productos → incluye "combo" MÁS los tipos que contiene (ej: ["combo","hamburguesa","papas fritas"])
+- Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
+- La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
+
+cuisine (array, solo si aplica claramente):
+chilena, peruana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, india, fusión
+Deja [] si no hay cocina clara (ej: un helado de vainilla no tiene cocina específica)
+
+mealSlot (array):
+desayuno, almuerzo, cena, snack
+Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
+
+mainIngredient (array, los más importantes):
+carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, pan, fruta, tofu
+
+flavor (array, solo los que aplican claramente):
+dulce, salado, picante, frito, grillado, asado
+Un helado → [dulce]. Papas fritas → [frito, salado]. Pollo a la parrilla → [grillado, salado].
+
+estilo (array, solo si aplica claramente):
+comida rapida, saludable
+Deja [] si no encaja en ninguno. Sushi → []. Ensalada verde → [saludable]. Hamburguesa → [comida rapida].
+
+diet:
+OMNIVORE (tiene carne/ave/pescado/mariscos — aunque lleve queso o vegetales)
+VEGETARIAN (sin carne/pescado, pero con lácteos o huevo)
+VEGAN (100% vegetal, sin ningún ingrediente animal)
+Hamburguesa, pollo, completo, mariscos → OMNIVORE siempre.
+
+PLATOS A CLASIFICAR:
 ${JSON.stringify(dishes, null, 2)}
 
-JSON respuesta (usa los IDs exactos de cada plato):
+JSON respuesta exacta (usa los IDs tal como están):
 {
-  "id1": { "dishType": "...", "cuisine": [...], "mealSlot": [...], "mainIngredient": [...], "flavor": [...], "format": "...", "diet": "OMNIVORE" },
-  ...
+  "id1": { "dishType": ["hamburguesa"], "cuisine": ["americana"], "mealSlot": ["almuerzo","cena"], "mainIngredient": ["carne","pan"], "flavor": ["salado"], "estilo": ["comida rapida"], "diet": "OMNIVORE" },
+  "id2": { ... }
 }`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -54,12 +112,7 @@ JSON respuesta (usa los IDs exactos de cada plato):
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 8000,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
+        messages: [{ role: "user", content: prompt }],
       }),
     });
 
@@ -72,10 +125,9 @@ JSON respuesta (usa los IDs exactos de cada plato):
     const data = await response.json();
     const text = data.content?.[0]?.text ?? "";
 
-    // Extract JSON from the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error("[classify] Could not extract JSON from response:", text);
+      console.error("[classify] No JSON in response:", text);
       return NextResponse.json({ error: "Invalid response from Claude" }, { status: 500 });
     }
 
