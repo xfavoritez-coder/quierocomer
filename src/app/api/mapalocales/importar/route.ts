@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
               mapsUrl: p.mapsUrl,
               cartaUrl: p.cartaUrl,
               providerName: p.provider,
+              onProgress: (type, data) => send({ type, id: p.id, ...data }),
             }),
             150_000,
             p.name,

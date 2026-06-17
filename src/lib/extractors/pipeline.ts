@@ -614,11 +614,27 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
 
     // Taxonomy classification — corre DESPUÉS de READY en el mismo pipeline
-    // El usuario ya ve el restaurante como importado; esto tarda ~25s más pero no bloquea nada
+    // El usuario ya ve el restaurante como importado; reporta progreso por batch
     if (taxonomyInputs.length > 0) {
       try {
-        const taxonomy = await classifyDishesBatched(taxonomyInputs, 30, 4);
-        const entries = Object.entries(taxonomy);
+        const BATCH = 30;
+        const batches: typeof taxonomyInputs[] = [];
+        for (let i = 0; i < taxonomyInputs.length; i += BATCH) batches.push(taxonomyInputs.slice(i, i + BATCH));
+        const CONCURRENCY = 4;
+        const allTaxonomy: Record<string, import("@/lib/taxonomy-classify").DishTaxonomy> = {};
+        let classified = 0;
+
+        params.onProgress?.('taxonomy_start', { total: taxonomyInputs.length });
+
+        for (let i = 0; i < batches.length; i += CONCURRENCY) {
+          const group = batches.slice(i, i + CONCURRENCY);
+          const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1)));
+          for (const r of results) Object.assign(allTaxonomy, r);
+          classified += group.reduce((s, b) => s + b.length, 0);
+          params.onProgress?.('taxonomy_progress', { current: Math.min(classified, taxonomyInputs.length), total: taxonomyInputs.length });
+        }
+
+        const entries = Object.entries(allTaxonomy);
         if (entries.length > 0) {
           await prisma.$transaction(
             entries.map(([dishId, dims]) =>
@@ -635,10 +651,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
               })
             )
           );
-          console.log(`[Pipeline] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos clasificados`);
         }
+        params.onProgress?.('taxonomy_done', { classified: entries.length, total: taxonomyInputs.length });
+        console.log(`[Pipeline] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos clasificados`);
       } catch (e) {
         console.error("[Pipeline] Taxonomy failed (non-fatal):", e);
+        params.onProgress?.('taxonomy_error', { error: (e as any)?.message ?? 'Error' });
       }
     }
 
@@ -906,6 +924,7 @@ export async function importFromProspecto(params: {
   mapsUrl: string
   cartaUrl: string
   providerName: string | null
+  onProgress?: (type: string, data: object) => void
 }): Promise<{ slug: string; dishCount: number }> {
   // Get provider config from DB if known provider
   const provider = params.providerName

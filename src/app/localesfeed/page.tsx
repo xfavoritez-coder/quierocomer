@@ -303,17 +303,20 @@ function TabMapa() {
   // Modal showcase
   const [showcaseModal, setShowcaseModal] = useState(false)
 
-  // Polling: detectar cuando la taxonomía background termina
+  // Polling: detectar cuando la taxonomía termina. Timeout de 3 min para no colgar el spinner.
   useEffect(() => {
     if (taxPendingSlugs.size === 0) return
+    let attempts = 0
+    const MAX_ATTEMPTS = 30 // 30 × 6s = 3 min
     const timer = setInterval(async () => {
+      attempts++
       const done: string[] = []
       await Promise.allSettled([...taxPendingSlugs].map(async (slug) => {
         try {
           const r = await fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
           const d = await r.json()
           const classified = d?.categories?.some((c: any) => c.dishes?.some((dish: any) => dish.txDishType?.length > 0))
-          if (classified) done.push(slug)
+          if (classified || attempts >= MAX_ATTEMPTS) done.push(slug)
         } catch {}
       }))
       if (done.length > 0) {
@@ -604,6 +607,14 @@ function TabMapa() {
               total = msg.total
             } else if (msg.type === 'progress') {
               setImportProgress({ current: msg.current, total, name: msg.name })
+            } else if (msg.type === 'taxonomy_start') {
+              setImportProgress(p => p ? { ...p, name: `✦ Clasificando ${msg.total} platos con AI...` } : p)
+            } else if (msg.type === 'taxonomy_progress') {
+              setImportProgress(p => p ? { ...p, name: `✦ Clasificando platos con AI: ${msg.current}/${msg.total}` } : p)
+            } else if (msg.type === 'taxonomy_done') {
+              setImportProgress(p => p ? { ...p, name: `✦ Taxonomía lista (${msg.classified} platos)` } : p)
+            } else if (msg.type === 'taxonomy_error') {
+              setImportProgress(p => p ? { ...p, name: `⚠ Taxonomía falló: ${msg.error}` } : p)
             } else if (msg.type === 'result') {
               setImportMap(m => ({ ...m, [msg.id]: { status: msg.status, slug: msg.slug, dishCount: msg.dishCount, error: msg.error, unmappedCategories: msg.unmappedCategories } }))
               if (msg.status === 'ok' && msg.slug) {
@@ -1004,10 +1015,14 @@ function TabMapa() {
                       </button>
                     </div>
                     {imp.slug && taxPendingSlugs.has(imp.slug) && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <button
+                        onClick={() => setCartaModal({ slug: imp.slug!, name: p.name })}
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                        title="Click para ver el progreso en el modal de carta"
+                      >
                         <span style={{ display: 'inline-block', width: 8, height: 8, border: '1.5px solid #444', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                        <span style={{ fontSize: 9, color: '#7c3aed' }}>clasificando taxonomía...</span>
-                      </div>
+                        <span style={{ fontSize: 9, color: '#7c3aed', textDecoration: 'underline dotted' }}>clasificando taxonomía...</span>
+                      </button>
                     )}
                     {imp.unmappedCategories && imp.unmappedCategories.length > 0 && (
                       <button
