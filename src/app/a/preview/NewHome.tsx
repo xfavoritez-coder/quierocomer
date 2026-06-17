@@ -988,24 +988,26 @@ export default function NewHome({
             </svg>
             Veggie
           </button>
-          <button onClick={openFilters} style={{ ...pillStyle(activeFilterCount > 0, 'default'), position: 'relative' }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-              <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-              <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
-            </svg>
-            Filtros
+          <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+            <button onClick={openFilters} style={pillStyle(activeFilterCount > 0, 'default')}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+              </svg>
+              Filtros
+            </button>
             {activeFilterCount > 0 && (
               <span style={{
-                position: 'absolute', top: -5, right: -5,
+                position: 'absolute', top: -5, right: -5, pointerEvents: 'none',
                 background: '#F4A623', color: '#fff',
                 borderRadius: 999, fontSize: 10, fontWeight: 700,
                 minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '0 3px', lineHeight: 1,
+                padding: '0 3px', lineHeight: 1, zIndex: 1,
               }}>{activeFilterCount}</span>
             )}
-          </button>
+          </div>
         </div>
 
         {/* Row 4: Ubicación (izq) + platos encontrados (der) */}
