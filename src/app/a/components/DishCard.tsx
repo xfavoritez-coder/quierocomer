@@ -30,14 +30,7 @@ export default function DishCard({
     }
   }, [])
 
-  // Timeout: if image doesn't load in 8s, show fallback
-  useEffect(() => {
-    if (imgLoaded || imgError || !dish.fotoUrl) return
-    const t = setTimeout(() => { if (!imgLoaded) setImgError(true) }, 8000)
-    return () => clearTimeout(t)
-  }, [dish.fotoUrl, imgLoaded, imgError])
-
-  const gradient = getCategoryGradient(dish.categoriaNorm)
+const gradient = getCategoryGradient(dish.categoriaNorm)
   const showFallback = !dish.fotoUrl || imgError
 
   let seed = 0
