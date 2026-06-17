@@ -528,7 +528,8 @@ export default function NewHome({
 
   // Preview count para el botón "Guardar cambios" — calcula platos con los draft filters
   const draftDishCount = useMemo(() => {
-    let filtered = dishes.filter(d => d.fotoUrl)
+    // Misma base que feedDishes: si hay búsqueda activa, partir de searchResults
+    let filtered = (searchResults && searchQuery.trim() ? searchResults : dishes).filter(d => d.fotoUrl)
     if (userLocation) {
       filtered = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
@@ -539,7 +540,7 @@ export default function NewHome({
     else if (draftDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
     if (draftCategories.size > 0) filtered = filtered.filter(d => draftCategories.has(d.categoriaNorm))
     return filtered.length
-  }, [dishes, userLocation, draftMaxKm, draftMeal, draftDiet, draftCategories])
+  }, [dishes, searchResults, searchQuery, userLocation, draftMaxKm, draftMeal, draftDiet, draftCategories])
 
   // Infinite scroll — IntersectionObserver sobre sentinel al final del feed
   useEffect(() => {
