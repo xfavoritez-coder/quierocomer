@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import bcrypt from "bcryptjs";
 import { extractJusto } from "./justo";
+import { extractGetagil } from "./getagil";
 import { extractRappi } from "./rappi";
 import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
@@ -296,8 +297,17 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
   }
   // Route to the correct extractor
   switch (providerName) {
-    case "Justo":
-      return extractJusto(cartaUrl);
+    case "Justo": {
+      const justoResult = await extractJusto(cartaUrl)
+      // Si no encontró platos y es dominio propio (no getjusto.com), intentar GetAgil
+      if (justoResult.dishes.length < 3 && !cartaUrl.includes('getjusto.com')) {
+        try {
+          const agilResult = await extractGetagil(cartaUrl)
+          if (agilResult.dishes.length >= 3) return agilResult
+        } catch {}
+      }
+      return justoResult
+    }
     case "Rappi":
       return extractRappi(cartaUrl);
     case "UberEats":
