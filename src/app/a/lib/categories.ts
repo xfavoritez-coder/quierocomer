@@ -1312,11 +1312,20 @@ export function detectCuisineTag(catName: string): string | null {
 // Solo detecta PREPARACIONES y TÉCNICAS de cocina (no ingredientes — esos van en Ingredient).
 // Se usa en el pipeline de importación para el futuro sistema de preferencias.
 
-export function inferFlavorTags(name: string, _categoryName: string, _description: string | null): string[] {
+export function inferFlavorTags(name: string, _categoryName: string, description: string | null): string[] {
   // Solo usamos el NOMBRE del plato para preparaciones — la descripción tiene complementos
   // (ej: "papas fritas" como acompañamiento no implica que el plato principal sea frito)
   const text = name.toLowerCase()
+  const fullText = (name + ' ' + (description ?? '')).toLowerCase()
   const tags: string[] = []
+
+  // ── Picante: detectado en nombre O descripción ───────────────────────────────
+  if (/spicy|salsa\s+spicy|\bají\b|\bpicante\b|\bchipotle\b|\bjalapeño\b|\bsriracha\b/.test(fullText))
+    tags.push('picante')
+
+  // ── Dulce: salsas dulces ─────────────────────────────────────────────────────
+  if (/salsa\s+(dulce|unagi|teriyaki)\b|unagi/.test(fullText))
+    tags.push('dulce')
 
   // ── Preparaciones ───────────────────────────────────────────────────────────
   if (/\bpanko\b/.test(text))                               tags.push('panko')

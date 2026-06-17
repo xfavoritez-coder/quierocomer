@@ -115,6 +115,8 @@ ${VALID_INGREDIENTS.join(", ")}
 flavor (array, solo los que aplican claramente):
 dulce, salado, picante, frito, grillado, asado
 Un helado → [dulce]. Papas fritas → [frito, salado]. Pollo a la parrilla → [grillado, salado].
+- Si el nombre o descripción menciona "spicy", "salsa spicy", "ají", "chipotle", "jalapeño" o "sriracha" → siempre incluir "picante".
+- Si el nombre o descripción menciona "salsa dulce", "salsa unagi", "unagi" o "salsa teriyaki" → siempre incluir "dulce".
 
 estilo (array, solo si aplica claramente):
 comida rapida, saludable
