@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     if (resendError) {
       console.error('[feed/contact] Resend error:', resendError)
-      return NextResponse.json({ error: 'Error al enviar el correo' }, { status: 500 })
+      return NextResponse.json({ error: `Resend: ${resendError.message || JSON.stringify(resendError)}` }, { status: 500 })
     }
 
     await prisma.supportMessage.create({
