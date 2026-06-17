@@ -439,7 +439,7 @@ export default function NewHome({
   const needsServerFetch = !!(
     searchQuery || activeCategory || filterDiet !== 'all' ||
     filterCategories.size > 0 || locationName ||
-    (filterMaxKm < 30 && userLocation)
+    (filterMaxKm < 30 && userLocation) || quickPopular
   )
 
   useEffect(() => {
@@ -463,7 +463,7 @@ export default function NewHome({
       })
     }, delay)
     return () => { if (searchFetchRef.current) clearTimeout(searchFetchRef.current) }
-  }, [searchQuery, activeCategory, filterDiet, filterCategories, filterMeal, filterMaxKm, locationName, userLocation, needsServerFetch, fetchServerDishes])
+  }, [searchQuery, activeCategory, filterDiet, filterCategories, filterMeal, filterMaxKm, locationName, userLocation, quickPopular, needsServerFetch, fetchServerDishes])
 
   // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {
