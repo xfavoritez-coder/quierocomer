@@ -62,8 +62,7 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
       setSearchLoading(true)
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput)}&format=json&addressdetails=1&limit=6&countrycodes=cl`,
-          { headers: { 'Accept-Language': 'es' } }
+          `/api/geo/search?q=${encodeURIComponent(searchInput)}`
         )
         const data: NominatimResult[] = await res.json()
         setSearchResults(data)
@@ -384,7 +383,10 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
 
 function buildLabel(addr: Record<string, string>): string {
   const parts: string[] = []
-  if (addr.road) parts.push(addr.road)
+  const road = addr.road
+    ? (addr.house_number ? `${addr.road} ${addr.house_number}` : addr.road)
+    : null
+  if (road) parts.push(road)
   const zone = addr.suburb || addr.neighbourhood || addr.city_district || addr.city || addr.town || addr.village
   if (zone && zone !== addr.road) parts.push(zone)
   return parts.join(', ')
