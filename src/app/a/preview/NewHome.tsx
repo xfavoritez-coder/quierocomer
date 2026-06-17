@@ -1131,26 +1131,22 @@ export default function NewHome({
             background: isDark ? '#1a1a1a' : '#fff',
             borderRadius: '24px 24px 0 0',
             animation: 'slideUp 0.25s ease-out',
+            overflow: 'hidden',
           }}>
-            {/* Header fijo — no scrollea */}
-            <div style={{
-              flexShrink: 0,
-              padding: '12px 16px 10px',
-              borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            }}>
-              <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 12px' }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
-                <button onClick={() => setFilterOpen(false)} style={{
-                  background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  fontSize: 30, lineHeight: 1, padding: 0, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32,
-                }}>×</button>
-              </div>
-            </div>
+            {/* X fija arriba a la derecha */}
+            <button onClick={() => setFilterOpen(false)} style={{
+              position: 'absolute', top: 14, right: 16, zIndex: 2,
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              border: 'none', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+              fontSize: 22, lineHeight: 1, cursor: 'pointer', borderRadius: '50%',
+              width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>×</button>
 
-            {/* Contenido scrolleable */}
-            <div style={{ overflowY: 'auto', flex: 1, padding: '16px 16px calc(16px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
+            {/* Contenido scrolleable — incluye título + filtros */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '20px 16px calc(16px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
+              {/* Drag handle + título dentro del scroll */}
+              <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
+              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
 
             {/* Distancia */}
             <div style={{ marginBottom: 22 }}>
