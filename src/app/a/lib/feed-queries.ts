@@ -173,6 +173,37 @@ export const getCachedDishCount = unstable_cache(
   { revalidate: 43200, tags: ['dish-count'] }, // 12 hours
 )
 
+/** Cached category count map — full DB, revalidates every 12 hours via cron */
+export const getCachedCategoryCountMap = unstable_cache(
+  async () => {
+    const rows = await prisma.$queryRaw<{ name: string; catName: string; leafOverride: string | null; primaryCategory: string | null; description: string | null; catNormOverride: string | null }[]>`
+      SELECT d.name, c.name AS "catName", d."leafOverride", r."primaryCategory", d.description,
+             c."normOverride" AS "catNormOverride"
+      FROM "Dish" d
+      JOIN "Category" c ON c.id = d."categoryId"
+      JOIN "Restaurant" r ON r.id = d."restaurantId"
+      WHERE d."isActive" = true
+        AND d."deletedAt" IS NULL
+        AND d."hiddenFromFeed" = false
+        AND array_length(d.photos, 1) > 0
+        AND d.price > 0
+        AND c."dishType" != 'drink'
+        AND r."isActive" = true
+        AND r."isDemo" = false
+    `
+    const map: Record<string, number> = {}
+    for (const row of rows) {
+      if (isExcludedCategory(row.catName)) continue
+      const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, row.description, row.catNormOverride)
+      const parent = getParentCategory(leaf)
+      if (parent) map[parent] = (map[parent] ?? 0) + 1
+    }
+    return map
+  },
+  ['category-count-map'],
+  { revalidate: 43200, tags: ['dish-count'] }, // 12 hours, same tag as dish-count cron
+)
+
 /** Fetch specific dishes by ID (for vector-scored dishes missing from the cache) */
 export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   if (ids.length === 0) return []

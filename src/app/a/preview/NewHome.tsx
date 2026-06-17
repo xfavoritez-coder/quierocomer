@@ -71,6 +71,7 @@ export default function NewHome({
   userDiet,
   initialDishId,
   totalDishCount,
+  categoryCountMap: categoryCountMapProp,
 }: {
   dishes: FeedDish[]
   categoryScores: Record<string, number>
@@ -81,6 +82,7 @@ export default function NewHome({
   userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
   initialDishId?: string
   totalDishCount?: number
+  categoryCountMap?: Record<string, number>
 }) {
   const [view, setView] = useState<View>('feed')
   const [isDark, setIsDark] = useState(false)
@@ -552,8 +554,10 @@ export default function NewHome({
     return final
   }, [serverDishes, dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
 
-  // Counts por parent category (sobre el pool completo con foto) para mostrar en el panel de filtros
+  // Counts por parent category — usa datos cacheados del servidor (BD completa) si están disponibles,
+  // si no calcula client-side sobre los platos iniciales como fallback
   const categoryCountMap = useMemo(() => {
+    if (categoryCountMapProp) return categoryCountMapProp
     const map: Record<string, number> = {}
     const base = dishes.filter(d => d.fotoUrl)
     for (const d of base) {
