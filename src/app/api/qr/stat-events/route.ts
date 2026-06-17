@@ -26,14 +26,19 @@ export async function POST(req: NextRequest) {
   // Use provided restaurantId or fall back to first restaurant in DB
   const restaurantId = body.restaurantId || await getLandingRestaurantId();
 
-  await prisma.statEvent.create({
-    data: {
-      eventType,
-      restaurantId,
-      sessionId: body.sessionId || "anonymous",
-      metadata: metadata || undefined,
-    },
-  });
+  try {
+    await prisma.statEvent.create({
+      data: {
+        eventType,
+        restaurantId,
+        sessionId: body.sessionId || "anonymous",
+        metadata: metadata || undefined,
+      },
+    });
+  } catch (e: any) {
+    // Unknown eventType or FK violation — log and ignore to avoid 500s
+    console.warn("[stat-events] skipped:", eventType, e?.message?.slice(0, 120));
+  }
 
   return NextResponse.json({ ok: true });
 }

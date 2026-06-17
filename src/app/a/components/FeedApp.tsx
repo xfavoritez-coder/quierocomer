@@ -269,7 +269,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
 
         {/* Row 2: Search bar siempre visible */}
         <div className="feed-header-search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'inherit', flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>

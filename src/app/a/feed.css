@@ -284,6 +284,18 @@ html.dark .feed-root {
 .feed-header-search input::placeholder {
   color: rgba(0, 0, 0, 0.3);
 }
+html.dark .feed-header-search {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.4);
+}
+html.dark .feed-header-search input {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+html.dark .feed-header-search input::placeholder {
+  color: rgba(255,255,255,0.35) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.35) !important;
+}
 .feed-header-subrow {
   display: flex;
   align-items: center;
@@ -673,9 +685,12 @@ html.dark .feed-root .feed-nav-tab {
 html.dark .feed-root .feed-search-input {
   background: rgba(255,255,255,0.07) !important;
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 html.dark .feed-root .feed-search-input::placeholder {
-  color: rgba(255,255,255,0.45) !important;
+  color: rgba(255,255,255,0.28) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.28) !important;
+  opacity: 1 !important;
 }
 html.dark .feed-root .location-search-input::placeholder {
   color: rgba(255,255,255,0.25) !important;

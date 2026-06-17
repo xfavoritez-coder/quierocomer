@@ -68,6 +68,24 @@ export default function FeedLoading() {
             display: flex;
           }
         }
+        html.dark .feed-skeleton-wrap {
+          background: #0e0e0e;
+        }
+        html.dark .feed-skeleton-search {
+          background: rgba(255,255,255,0.07);
+        }
+        html.dark .feed-skeleton-topbar {
+          background: rgba(14,14,14,0.95);
+          border-bottom-color: rgba(255,255,255,0.07);
+        }
+        html.dark .skeleton-shimmer {
+          background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%) !important;
+          background-size: 200% 100% !important;
+        }
+        html.dark .feed-skeleton-header div,
+        html.dark .feed-skeleton-topbar div {
+          background: rgba(255,255,255,0.08) !important;
+        }
       `}</style>
 
       {/* Desktop topbar skeleton */}
