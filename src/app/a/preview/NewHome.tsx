@@ -1005,7 +1005,7 @@ export default function NewHome({
             </button>
             {activeFilterCount > 0 && (
               <span style={{
-                position: 'absolute', top: 4, right: 8, pointerEvents: 'none',
+                position: 'absolute', top: -5, right: -5, pointerEvents: 'none',
                 background: '#F4A623', color: '#fff',
                 borderRadius: 999, fontSize: 10, fontWeight: 700,
                 minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
