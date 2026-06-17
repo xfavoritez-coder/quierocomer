@@ -128,13 +128,19 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
 // Tags allow targeted invalidation from the panel when the menu changes
 export function getRestaurantBySlug(slug: string, lang: Lang = "es") {
   return unstable_cache(
-    () => _getRestaurantBySlug(slug, lang),
+    async () => {
+      const result = await _getRestaurantBySlug(slug, lang)
+      // Throw instead of returning null — prevents caching "not found" results
+      // so inactive/reactivated restaurants aren't stuck in null cache
+      if (!result) throw new Error(`Restaurant not found: ${slug}`)
+      return result
+    },
     ["qr-restaurant", slug, lang],
     {
       tags: ["qr-restaurant", `qr-restaurant-${slug}`],
       revalidate: 120,
     }
-  )();
+  )().catch(() => null)
 }
 
 export type RestaurantData = NonNullable<
