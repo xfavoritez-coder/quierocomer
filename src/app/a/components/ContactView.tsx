@@ -44,6 +44,7 @@ export default function ContactView({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!nombre.trim()) { setError('Ingresa tu nombre.'); return }
     if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
     if (!mensaje.trim()) { setError('El mensaje no puede estar vacío.'); return }
     setLoading(true)
@@ -102,12 +103,13 @@ export default function ContactView({
 
             {/* Nombre */}
             <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Nombre <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, opacity: 0.7 }}>(opcional)</span></label>
+              <label style={labelStyle}>Nombre <span style={{ color: '#e53e3e' }}>*</span></label>
               <input
                 type="text"
                 value={nombre}
                 onChange={e => setNombre(e.target.value)}
                 placeholder="Tu nombre"
+                required
                 style={{ ...inputStyle, '--placeholder-color': placeholderColor } as React.CSSProperties}
                 autoComplete="name"
               />
@@ -115,7 +117,7 @@ export default function ContactView({
 
             {/* Email */}
             <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Email</label>
+              <label style={labelStyle}>Email <span style={{ color: '#e53e3e' }}>*</span></label>
               <input
                 type="email"
                 value={email}
@@ -129,7 +131,7 @@ export default function ContactView({
 
             {/* Mensaje */}
             <div style={{ marginBottom: 24 }}>
-              <label style={labelStyle}>Mensaje</label>
+              <label style={labelStyle}>Mensaje <span style={{ color: '#e53e3e' }}>*</span></label>
               <textarea
                 value={mensaje}
                 onChange={e => setMensaje(e.target.value)}
