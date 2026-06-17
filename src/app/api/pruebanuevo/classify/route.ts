@@ -69,15 +69,18 @@ Reglas dishType:
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
 
 cuisine (array, solo si aplica claramente):
-chilena, peruana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, india, fusión
-Deja [] si no hay cocina clara (ej: un helado de vainilla no tiene cocina específica)
+chilena, peruana, nikkei, venezolana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, india, fusión
+Reglas cuisine:
+- "chilena" SOLO para platos tradicionales chilenos (cazuela, empanada, sopaipilla, pastel de choclo, chorrillana, etc.). Una hamburguesa en Chile NO es chilena → []. Una pizza NO es italiana por defecto a menos que el nombre/descripción lo indique claramente.
+- "nikkei" para fusión japonesa-peruana (tiradito con toques japoneses, ceviche con soja, etc.)
+- Deja [] si no hay cocina clara (ej: un helado de vainilla no tiene cocina específica, una hamburguesa genérica tampoco)
 
 mealSlot (array):
 desayuno, almuerzo, cena, snack
 Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 
 mainIngredient (array, los más importantes):
-carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, pan, fruta, tofu
+carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, pan, fruta, tofu, tomate, lechuga
 
 flavor (array, solo los que aplican claramente):
 dulce, salado, picante, frito, grillado, asado

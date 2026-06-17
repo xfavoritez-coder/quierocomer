@@ -23,13 +23,14 @@ const VALID_DISH_TYPE = [
 ];
 
 const VALID_CUISINE = [
-  "chilena","peruana","italiana","americana","mexicana","japonesa",
+  "chilena","peruana","nikkei","venezolana","italiana","americana","mexicana","japonesa",
   "china","árabe","mediterránea","francesa","asiática","coreana","india","fusión",
 ];
 const VALID_MEAL_SLOT = ["desayuno","almuerzo","cena","snack"];
 const VALID_INGREDIENT = [
   "carne","pollo","cerdo","cordero","pescado","mariscos","huevo",
   "pasta","arroz","papa","verduras","legumbres","queso","pan","fruta","tofu",
+  "tomate","lechuga",
 ];
 const VALID_FLAVOR = ["dulce","salado","picante","frito","grillado","asado"];
 const VALID_ESTILO = ["comida rapida","saludable"];
