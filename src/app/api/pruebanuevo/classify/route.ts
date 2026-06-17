@@ -99,11 +99,11 @@ Deja [] si no encaja en ninguno. Sushi → []. Ensalada verde → [saludable]. H
 
 diet:
 OMNIVORE (tiene carne/ave/pescado/mariscos — aunque lleve queso o vegetales)
-VEGETARIAN (sin carne/pescado, pero con lácteos o huevo)
-VEGAN (100% vegetal, sin ningún ingrediente animal)
+VEGETARIAN (sin carne/pescado/mariscos visible en nombre o descripción)
+VEGAN → SOLO si el plato dice explícitamente "vegano" en su nombre o descripción, O si el restaurante es claramente vegano (ej: "Horus Vegan"). Sin esa señal explícita, nunca uses VEGAN — usa VEGETARIAN.
 Hamburguesa, pollo, completo, mariscos → OMNIVORE siempre.
-Pesto → VEGETARIAN por defecto (lleva queso parmesano aunque no se mencione). Solo VEGAN si dice explícitamente "pesto vegano".
-Cuando haya duda entre VEGETARIAN y VEGAN → preferir VEGETARIAN.
+Pesto, pizza sin carne, ensalada sin proteína animal → VEGETARIAN (nunca VEGAN por defecto).
+Ante cualquier duda → VEGETARIAN, nunca VEGAN.
 
 PLATOS A CLASIFICAR:
 ${JSON.stringify(dishes, null, 2)}
