@@ -166,9 +166,13 @@ export default function NewHome({
   const distanceBadgeRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (!showDistancePicker) return
-    const close = () => setShowDistancePicker(false)
-    document.addEventListener('mousedown', close, true)
-    return () => document.removeEventListener('mousedown', close, true)
+    const close = (e: MouseEvent) => {
+      // Badge button handles its own toggle — don't interfere
+      if (distanceBadgeRef.current?.contains(e.target as Node)) return
+      setShowDistancePicker(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
   }, [showDistancePicker])
   const [shuffleSeed, setShuffleSeed] = useState(() => Math.random())
 
@@ -748,10 +752,8 @@ export default function NewHome({
           display: 'flex', alignItems: 'center',
         }}><div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px' }}>
           {/* Logo */}
-          <a href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px' }}>
-              Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-            </span>
+          <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="QuieroComer" style={{ height: 32, width: 'auto' }} />
           </a>
 
           {/* Search bar — centro, ocupa todo el espacio */}
@@ -893,6 +895,9 @@ export default function NewHome({
           const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
           return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
+        <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <img src="/logo.png" alt="QuieroComer" style={{ height: 28, width: 'auto' }} />
+        </a>
         <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
@@ -1131,6 +1136,9 @@ export default function NewHome({
           boxShadow: showFloatingSearch ? '0 2px 16px rgba(0,0,0,0.10)' : 'none',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+            <img src="/logo.png" alt="QuieroComer" style={{ height: 28, width: 'auto' }} />
+          </a>
           <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
               stroke={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.28)'} strokeWidth="2.5" strokeLinecap="round"
