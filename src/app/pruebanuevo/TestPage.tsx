@@ -5,7 +5,7 @@ import { useState } from "react";
 // ── Taxonomy ──────────────────────────────────────────────────────────────────
 
 const VALID_DISH_TYPE = [
-  "combo",
+  "combo","extra",
   "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
   "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab",
   "pollo asado","pollo frito","tenders","alitas","nuggets",
@@ -14,11 +14,11 @@ const VALID_DISH_TYPE = [
   "pizza","calzone","quiche","empanada",
   "sopa","cazuela","ramen",
   "ensalada","bowl",
-  "sushi","curry","pad thai","gyoza",
+  "sushi","curry","pad thai","gyoza","wantan",
   "taco","burrito","quesadilla",
   "sopaipilla","pastel de choclo",
   "huevos","pancake","waffle","crepe","avena","omelet",
-  "papas fritas","nachos","aros de cebolla","croquetas","spring roll",
+  "papas fritas","nachos","aros de cebolla","croquetas","arrollado de primavera","spring roll",
   "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
 ];
 

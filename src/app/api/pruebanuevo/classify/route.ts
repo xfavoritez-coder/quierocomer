@@ -13,7 +13,7 @@ type DishInput = {
 
 const VALID_DISH_TYPES = [
   // Especiales
-  "combo",
+  "combo","extra",
   // Sándwiches y panes
   "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
   // Carnes
@@ -31,7 +31,7 @@ const VALID_DISH_TYPES = [
   // Ensaladas y bowls
   "ensalada","bowl",
   // Asiática
-  "sushi","curry","pad thai","gyoza",
+  "sushi","curry","pad thai","gyoza","wantan",
   // Mexicana
   "taco","burrito","quesadilla",
   // Chilena
@@ -39,7 +39,7 @@ const VALID_DISH_TYPES = [
   // Desayunos
   "huevos","pancake","waffle","crepe","avena","omelet",
   // Snacks y entradas
-  "papas fritas","nachos","aros de cebolla","croquetas","spring roll",
+  "papas fritas","nachos","aros de cebolla","croquetas","arrollado de primavera","spring roll",
   // Postres
   "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
 ];
@@ -65,6 +65,7 @@ dishType (array — puede ser más de uno, especialmente en combos):
 ${VALID_DISH_TYPES.join(", ")}
 Reglas dishType:
 - Si es un combo/pack con varios productos → incluye "combo" MÁS los tipos que contiene (ej: ["combo","hamburguesa","papas fritas"])
+- "extra" para salsas, condimentos, aderezos y porciones adicionales (salsa tamarindo, salsa soya, extra de carne, ají, jengibre, etc.). Estos NO son platos principales — usar solo ["extra"], sin otras dimensiones relevantes.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
 
@@ -82,6 +83,8 @@ Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 mainIngredient (array, los más importantes):
 carne, pollo, cerdo, cordero, pescado, salmón, camarones, pulpo, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, queso crema, pan, fruta, tofu, tomate, lechuga, nutella, cebollín
 - "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (reineta, merluza, corvina sin especificar). "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
+- wantan/wonton → NO usar "pan". Pon solo el relleno (cerdo, camarones, verduras, etc.).
+- arrollado de primavera / rollito primavera → frito, masa de trigo, estilo chino. NO usar "pan". "spring roll" reservar para el fresco vietnamita con papel de arroz.
 - Usa "queso crema" cuando veas: queso crema, cream cheese, philadelphia, philly, queso untable, vegadelphia, queso crema vegano, queso crema de almendras, o similar. Usa "queso" para el resto: cheddar, mozzarella, gouda, queso fresco, queso amarillo.
 - Vegadelphia o queso crema vegano → ingrediente "queso crema" + diet VEGAN (si no hay otros ingredientes animales).
 
