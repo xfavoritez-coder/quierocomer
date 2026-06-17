@@ -36,6 +36,8 @@ html.dark body:has(.feed-root) {
 
 /* ─── Dark mode override ─── */
 html.dark .feed-root {
+  background: #0e0e0e !important;
+  color: #fff !important;
   color-scheme: dark;
   --qc-bg: #0e0e0e;
   --qc-text: #ffffff;
@@ -688,8 +690,8 @@ html.dark .feed-root .feed-search-input {
   -webkit-text-fill-color: #fff !important;
 }
 html.dark .feed-root .feed-search-input::placeholder {
-  color: rgba(255,255,255,0.28) !important;
-  -webkit-text-fill-color: rgba(255,255,255,0.28) !important;
+  color: rgba(255,255,255,0.18) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.18) !important;
   opacity: 1 !important;
 }
 html.dark .feed-root .location-search-input::placeholder {
