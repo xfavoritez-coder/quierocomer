@@ -281,7 +281,7 @@ html.dark .feed-root {
   border: none;
   outline: none;
   color: #111;
-  font-size: 14px;
+  font-size: 17px;
 }
 .feed-header-search input::placeholder {
   color: rgba(0, 0, 0, 0.3);
