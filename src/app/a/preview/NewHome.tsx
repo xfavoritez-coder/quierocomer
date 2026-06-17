@@ -1293,7 +1293,7 @@ export default function NewHome({
                   { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', activeColor: '#6366f1', icon: (c: string) => <svg width="20" height="20" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
                 ].map((m, i) => {
                   const isActive = draftMealDisplay === m.display
-                  const iconColor = m.activeColor
+                  const iconColor = isActive ? m.activeColor : isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.25)'
                   return (
                   <button key={i} onClick={() => { setDraftMeal(m.meal); setDraftMealDisplay(m.display) }} style={{
                     minHeight: 68, borderRadius: 12,
