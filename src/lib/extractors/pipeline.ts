@@ -18,6 +18,7 @@ import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
+import { classifyDishesBatched, type DishTaxonomyInput } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo } from "@/lib/google-places";
 
@@ -524,6 +525,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Create categories and dishes
     const createdDishes: { id: string; name: string; description: string | null; externalPhoto: string | null; credit: { photographer: string; profileUrl: string; unsplashId: string } | null }[] = [];
+    const taxonomyInputs: DishTaxonomyInput[] = [];
     let catPosition = 0;
 
     for (const [catName, catDishes] of categoryMap) {
@@ -591,7 +593,37 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           externalPhoto: dish.imageUrl,
           credit: dish.photoCredit || null,
         });
+
+        taxonomyInputs.push({
+          id: created.id,
+          name: created.name,
+          description: created.description,
+          category: catName,
+        });
       }
+    }
+
+    // Taxonomy classification — batch all dishes in one call
+    try {
+      const taxonomy = await classifyDishesBatched(taxonomyInputs);
+      const updates = Object.entries(taxonomy).map(([dishId, dims]) =>
+        prisma.dish.update({
+          where: { id: dishId },
+          data: {
+            txDishType:   dims.dishType   ?? [],
+            txCuisine:    dims.cuisine    ?? [],
+            txMealSlot:   dims.mealSlot   ?? [],
+            txIngredient: dims.mainIngredient ?? [],
+            txEstilo:     dims.estilo     ?? [],
+            // flavor → flavorTags (complement existing inference)
+            ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
+          },
+        })
+      );
+      await Promise.all(updates);
+      console.log(`[Pipeline] Taxonomy classified ${updates.length}/${taxonomyInputs.length} dishes`);
+    } catch (e) {
+      console.error("[Pipeline] Taxonomy classification failed (non-fatal):", e);
     }
 
     // Mark lead as READY early — before slow operations (photos, translations)

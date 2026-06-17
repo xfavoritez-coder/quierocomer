@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     select: {
       id: true, name: true, description: true, price: true, photos: true,
       dishDiet: true, isActive: true, hiddenFromFeed: true, leafOverride: true, flavorTags: true,
+      txDishType: true, txCuisine: true, txMealSlot: true, txIngredient: true, txEstilo: true,
       category: { select: { id: true, name: true, normOverride: true } },
     },
     orderBy: { createdAt: 'asc' },
@@ -59,7 +60,12 @@ export async function GET(req: NextRequest) {
       diet: string
       leafOverride: string | null
       flavorTags: string[]
-      dishLeafResolved: string  // leaf efectivo del plato (nombre → descripción → cocina)
+      dishLeafResolved: string
+      txDishType: string[]
+      txCuisine: string[]
+      txMealSlot: string[]
+      txIngredient: string[]
+      txEstilo: string[]
     }[]
   }>()
 
@@ -97,6 +103,11 @@ export async function GET(req: NextRequest) {
       leafOverride: dish.leafOverride ?? null,
       flavorTags: Array.isArray(dish.flavorTags) ? (dish.flavorTags as string[]) : [],
       dishLeafResolved,
+      txDishType:   Array.isArray(dish.txDishType)   ? (dish.txDishType   as string[]) : [],
+      txCuisine:    Array.isArray(dish.txCuisine)    ? (dish.txCuisine    as string[]) : [],
+      txMealSlot:   Array.isArray(dish.txMealSlot)   ? (dish.txMealSlot   as string[]) : [],
+      txIngredient: Array.isArray(dish.txIngredient) ? (dish.txIngredient as string[]) : [],
+      txEstilo:     Array.isArray(dish.txEstilo)      ? (dish.txEstilo     as string[]) : [],
     })
   }
 

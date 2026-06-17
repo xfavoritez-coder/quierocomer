@@ -564,6 +564,11 @@ model Dish {
   isSpicy               Boolean                @default(false)
   deletedAt             DateTime?
   flavorTags            String[]
+  txDishType            String[]
+  txCuisine             String[]
+  txMealSlot            String[]
+  txIngredient          String[]
+  txEstilo              String[]
   isFeaturedAuto        Boolean                @default(false)
   isHighMargin          Boolean                @default(false)
   isPhotoReferential    Boolean                @default(false)

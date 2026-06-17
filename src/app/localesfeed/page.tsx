@@ -1268,6 +1268,24 @@ function AddManualModal({ onClose, onAdded }: {
 
 // ---- Modal revisión carta completa ----
 
+// ── Taxonomy constants (same as taxonomy-classify.ts) ─────────────────────
+const TX_DISH_TYPE = ["combo","extra","hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada","churrasco","milanesa","asado","costillas","pernil","anticucho","kebab","pollo asado","pollo frito","tenders","alitas","nuggets","ceviche","tiradito","pasta","lasagna","risotto","arroz","fideos","pizza","calzone","quiche","empanada","sopa","cazuela","ramen","ensalada","bowl","sushi","hand roll","curry","pad thai","gyoza","wantan","taco","burrito","quesadilla","arepa","salchipapa","sopaipilla","pastel de choclo","huevos","pancake","waffle","crepe","avena","omelet","papas fritas","nachos","aros de cebolla","croquetas","arrollado de primavera","spring roll","helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan","café","café con leche","té","jugo","batido","bebida","alcohol","mocktail"]
+const TX_CUISINE = ["chilena","peruana","nikkei","venezolana","italiana","americana","mexicana","japonesa","china","árabe","mediterránea","francesa","asiática","coreana","india","thai","griega","española","brasileña","fusión"]
+const TX_MEAL_SLOT = ["desayuno","almuerzo","cena","snack"]
+const TX_INGREDIENT = ["carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos","huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan","fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame","choclo","nutella","manjar","almendra","maní","nuez","plátano","frutilla"]
+const TX_FLAVOR = ["dulce","salado","picante","frito","grillado","asado"]
+const TX_ESTILO = ["comida rapida","saludable"]
+
+function normTx(s: string) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+}
+function txIncludes(arr: string[], val: string) {
+  return arr.some(x => normTx(x) === normTx(val))
+}
+function txToggle(arr: string[], val: string): string[] {
+  return txIncludes(arr, val) ? arr.filter(x => normTx(x) !== normTx(val)) : [...arr, val]
+}
+
 type CartaDish = {
   id: string
   name: string
@@ -1280,6 +1298,11 @@ type CartaDish = {
   leafOverride: string | null
   flavorTags: string[]
   dishLeafResolved: string
+  txDishType: string[]
+  txCuisine: string[]
+  txMealSlot: string[]
+  txIngredient: string[]
+  txEstilo: string[]
 }
 
 type CartaCategory = {
@@ -1299,34 +1322,36 @@ type CartaData = {
   unmappedCount: number
 }
 
-const PARENT_LEAVES_MAP: Record<string, string[]> = {
-  'Comida rápida': ['Hamburguesas', 'Completos', 'Sándwiches', 'Papas fritas'],
-  'Pizza':         ['Pizzas'],
-  'Sushi':         ['Sushi'],
-  'Japonesa':      ['Ramen', 'Gyoza', 'Japonesa'],
-  'China':         ['China'],
-  'Thai':          ['Thai'],
-  'India':         ['India'],
-  'Asiática':      ['Asiática'],
-  'Peruana':       ['Ceviches', 'Peruana'],
-  'Mariscos':      ['Mariscos'],
-  'Parrilla':      ['Parrilla'],
-  'Pastas':        ['Pastas'],
-  'Venezolana':    ['Venezolana'],
-  'Mexicana':      ['Mexicana'],
-  'Pollo':         ['Pollo y alitas'],
-  'Empanadas':     ['Empanadas'],
-  'Saludable':     ['Ensaladas', 'Bowls', 'Saludable'],
-  'Desayunos':     ['Desayunos', 'Cafetería', 'Amasandería'],
-  'Postres':       ['Postres', 'Helados'],
-  'Bebidas':       ['Smoothies', 'Milkshakes', 'Bebidas'],
-  'Entradas':      ['Entradas'],
+type TaxEdit = {
+  txDishType?: string[]
+  txCuisine?: string[]
+  txMealSlot?: string[]
+  txIngredient?: string[]
+  txEstilo?: string[]
+  flavorTags?: string[]
+  diet?: string
 }
-const LEAF_TO_PARENT_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(PARENT_LEAVES_MAP).flatMap(([p, ls]) => ls.map(l => [l, p]))
-)
-const ALL_PARENTS = Object.keys(PARENT_LEAVES_MAP)
-const ALL_LEAF_OPTS = Object.values(PARENT_LEAVES_MAP).flat()
+
+function TxPill({ label, active, onClick, color }: { label: string; active: boolean; onClick: () => void; color?: 'amber' | 'green' }) {
+  const amber = { border: '#f59e0b', bg: 'rgba(245,158,11,0.15)', text: '#fbbf24' }
+  const green = { border: '#22c55e', bg: 'rgba(34,197,94,0.12)', text: '#86efac' }
+  const purple = { border: '#a78bfa', bg: 'rgba(167,139,250,0.15)', text: '#c4b5fd' }
+  const c = active ? (color === 'amber' ? amber : color === 'green' ? green : purple) : null
+  return (
+    <button onClick={onClick} style={{ padding: '2px 7px', borderRadius: 999, fontSize: 11, fontWeight: 500, border: `1px solid ${c ? c.border : '#2a2a2a'}`, background: c ? c.bg : 'transparent', color: c ? c.text : '#444', cursor: 'pointer' }}>
+      {label}
+    </button>
+  )
+}
+
+function TxRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+      <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 0.5, minWidth: 64, paddingTop: 3, flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 3 }}>{children}</div>
+    </div>
+  )
+}
 
 function CartaModal({ slug, name, onClose }: {
   slug: string
@@ -1336,65 +1361,56 @@ function CartaModal({ slug, name, onClose }: {
   const [data, setData] = useState<CartaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [dishLeafs, setDishLeafs] = useState<Record<string, string>>({})    // dishId → leaf override
-  const [dishParents, setDishParents] = useState<Record<string, string>>({}) // dishId → parent (UI only)
-  const [dishDiets, setDishDiets] = useState<Record<string, string>>({})    // dishId → diet override
-  const [batchLeafs, setBatchLeafs] = useState<Record<string, string>>({})  // catName → batch fill leaf
-  const [batchParents, setBatchParents] = useState<Record<string, string>>({}) // catName → batch fill parent
-  const [batchDiets, setBatchDiets] = useState<Record<string, string>>({})  // catName → batch fill diet
+  const [classifying, setClassifying] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [showAll, setShowAll] = useState(false)
+  const [expandedDish, setExpandedDish] = useState<string | null>(null)
+  const [taxEdits, setTaxEdits] = useState<Record<string, TaxEdit>>({})
   const [hoverDish, setHoverDish] = useState<{ name: string; description: string | null; photo: string; x: number; y: number } | null>(null)
 
-  function initFromData(d: CartaData) {
-    const dl: Record<string, string> = {}
-    const dp: Record<string, string> = {}
-    const dd: Record<string, string> = {}
-    for (const cat of d.categories) {
-      for (const dish of cat.dishes) {
-        const leaf = dish.leafOverride ?? dish.dishLeafResolved ?? ''
-        dl[dish.id] = dish.leafOverride ?? ''
-        dp[dish.id] = leaf ? (LEAF_TO_PARENT_MAP[leaf] ?? '') : ''
-        dd[dish.id] = dish.diet
-      }
-    }
-    setDishLeafs(dl)
-    setDishParents(dp)
-    setDishDiets(dd)
-  }
-
-  useEffect(() => {
-    fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
+  function loadData() {
+    setLoading(true)
+    return fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
       .then(r => r.json())
-      .then((d: CartaData) => { setData(d); initFromData(d) })
+      .then((d: CartaData) => { setData(d); setTaxEdits({}) })
       .catch(e => setError(e?.message ?? 'Error'))
       .finally(() => setLoading(false))
-  }, [slug])
+  }
+
+  useEffect(() => { loadData() }, [slug])
+
+  async function classifyAll() {
+    setClassifying(true)
+    setSaveError(null)
+    try {
+      const res = await fetch('/api/mapalocales/carta/taxonomy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error ?? `Error ${res.status}`)
+      await loadData()
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (e: any) {
+      setSaveError(e.message ?? 'Error clasificando')
+    } finally {
+      setClassifying(false)
+    }
+  }
 
   async function save() {
-    if (!data) return
-    const allDishes = data.categories.flatMap(c => c.dishes)
-    const dishesToSave = Object.entries(dishLeafs).filter(([dishId, leaf]) => {
-      const original = allDishes.find(d => d.id === dishId)
-      return leaf !== (original?.leafOverride ?? '')
-    })
-    const dishDietChanges = Object.entries(dishDiets).filter(([dishId, diet]) => {
-      const original = allDishes.find(d => d.id === dishId)
-      return diet !== (original?.diet ?? 'OMNIVORE')
-    })
-    if (!dishesToSave.length && !dishDietChanges.length) { onClose(); return }
+    if (!Object.keys(taxEdits).length) return
     setSaving(true)
     setSaveError(null)
     try {
-      const res = await fetch('/api/mapalocales/carta/remap', {
-        method: 'POST',
+      const overrides = Object.entries(taxEdits).map(([dishId, changes]) => ({ dishId, ...changes }))
+      const res = await fetch('/api/mapalocales/carta/taxonomy', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          overrides: dishesToSave.map(([dishId, leafOverride]) => ({ dishId, leafOverride: leafOverride || null })),
-          dishDiets: dishDietChanges.map(([dishId, diet]) => ({ dishId, diet })),
-        }),
+        body: JSON.stringify({ overrides }),
       })
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}))
@@ -1408,30 +1424,22 @@ function CartaModal({ slug, name, onClose }: {
     } finally {
       setSaving(false)
     }
-    // Reload data in background — non-blocking para no dejar el botón pegado
     fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
       .then(r => r.json())
-      .then((refreshed: CartaData) => {
-        setData(refreshed)
-        initFromData(refreshed)
-        setBatchLeafs({})
-        setBatchDiets({})
-      })
-      .catch(() => {/* reload falló silenciosamente — cambios ya guardados */})
+      .then((refreshed: CartaData) => { setData(refreshed); setTaxEdits({}) })
+      .catch(() => {})
   }
 
-  const allDishesFlat = data?.categories.flatMap(c => c.dishes) ?? []
-  const hasChanges = Object.entries(dishLeafs).some(([dishId, leaf]) => {
-    const original = allDishesFlat.find(d => d.id === dishId)
-    return leaf !== (original?.leafOverride ?? '')
-  }) || Object.entries(dishDiets).some(([dishId, diet]) => {
-    const original = allDishesFlat.find(d => d.id === dishId)
-    return diet !== (original?.diet ?? 'OMNIVORE')
-  })
+  function updateTax(dishId: string, field: keyof TaxEdit, value: any) {
+    setTaxEdits(prev => ({ ...prev, [dishId]: { ...prev[dishId], [field]: value } }))
+  }
 
-  const displayCategories = showAll
-    ? (data?.categories ?? [])
-    : (data?.categories ?? []).filter(c => !c.isMapped)
+  function getDishTax(dish: CartaDish): CartaDish & TaxEdit {
+    const edits = taxEdits[dish.id] ?? {}
+    return { ...dish, ...edits }
+  }
+
+  const hasChanges = Object.keys(taxEdits).length > 0
 
   return (
     <>
@@ -1439,7 +1447,7 @@ function CartaModal({ slug, name, onClose }: {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 16px', overflowY: 'auto' }}
     >
-      <div style={{ background: '#111', border: '1px solid #222', borderRadius: 16, width: '100%', maxWidth: 800 }}>
+      <div style={{ background: '#111', border: '1px solid #222', borderRadius: 16, width: '100%', maxWidth: 860 }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #1a1a1a' }}>
           <div>
@@ -1447,222 +1455,141 @@ function CartaModal({ slug, name, onClose }: {
             {data && (
               <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>
                 {data.totalDishes} platos · {data.categories.length} secciones
-                {data.unmappedCount > 0 && (
-                  <span style={{ color: '#f59e0b', marginLeft: 8 }}>⚠ {data.unmappedCount} sin mapear</span>
-                )}
               </p>
             )}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 20, cursor: 'pointer', padding: 0 }}>×</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {data && (
+              <button
+                onClick={classifyAll}
+                disabled={classifying}
+                style={{ padding: '8px 16px', background: classifying ? '#1a1a1a' : '#7c3aed', border: `1px solid ${classifying ? '#333' : '#7c3aed'}`, borderRadius: 8, color: classifying ? '#555' : '#fff', fontSize: 13, fontWeight: 600, cursor: classifying ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                {classifying && <span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid #555', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />}
+                {classifying ? 'Clasificando...' : '✦ Clasificar con AI'}
+              </button>
+            )}
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 20, cursor: 'pointer', padding: 0 }}>×</button>
+          </div>
         </div>
 
-        {loading && (
-          <div style={{ padding: '60px 24px', textAlign: 'center', color: '#555', fontSize: 14 }}>Cargando carta...</div>
-        )}
-
-        {error && (
-          <div style={{ padding: '40px 24px', textAlign: 'center', color: '#ef4444', fontSize: 13 }}>{error}</div>
-        )}
+        {loading && <div style={{ padding: '60px 24px', textAlign: 'center', color: '#555', fontSize: 14 }}>Cargando carta...</div>}
+        {error && <div style={{ padding: '40px 24px', textAlign: 'center', color: '#ef4444', fontSize: 13 }}>{error}</div>}
 
         {data && !loading && (
           <>
-            {/* Toggle */}
-            <div style={{ display: 'flex', gap: 8, padding: '12px 24px', borderBottom: '1px solid #1a1a1a', alignItems: 'center' }}>
-              <button
-                onClick={() => setShowAll(false)}
-                style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: !showAll ? '#ff4c00' : '#222', color: !showAll ? '#fff' : '#666' }}>
-                Sin mapear ({data.unmappedCount})
-              </button>
-              <button
-                onClick={() => setShowAll(true)}
-                style={{ fontSize: 13, padding: '6px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showAll ? '#a78bfa' : '#222', color: showAll ? '#000' : '#666' }}>
-                Todas las secciones ({data.categories.length})
-              </button>
-            </div>
-
-            {/* Category list */}
-            <div style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-              {displayCategories.length === 0 && (
-                <div style={{ padding: '40px 24px', textAlign: 'center', color: '#555', fontSize: 13 }}>
-                  {showAll ? 'Sin secciones' : '✓ Todas las secciones están mapeadas'}
-                </div>
-              )}
-              {displayCategories.map(cat => (
+            <div style={{ maxHeight: '68vh', overflowY: 'auto' }}>
+              {data.categories.map(cat => (
                 <div key={cat.categoryName} style={{ borderBottom: '1px solid #1a1a1a' }}>
                   {/* Category header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 24px', background: cat.isMapped ? 'transparent' : 'rgba(245,158,11,0.04)', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: cat.isMapped ? '#aaa' : '#fff' }}>{cat.categoryName}</span>
-                    {cat.cuisineTag && (
-                      <span style={{ fontSize: 10, background: '#1a1040', color: '#a78bfa', border: '1px solid #3b1fa0', borderRadius: 3, padding: '1px 5px' }}>
-                        cocina: {cat.cuisineTag}
-                      </span>
-                    )}
-                    {!cat.isMapped && !cat.cuisineTag && <span style={{ fontSize: 11, color: '#f59e0b' }}>sin mapear</span>}
-                    {(cat.normOverride || (cat.isMapped && cat.leafResolved)) && (
-                      <span style={{ fontSize: 11, color: '#555' }}>→ {cat.normOverride || cat.leafResolved}</span>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 24px', background: '#0d0d0d' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#777' }}>{cat.categoryName}</span>
                     <span style={{ fontSize: 11, color: '#333' }}>{cat.dishes.length} platos</span>
                   </div>
 
-                  {/* Dishes: batch-fill header + per-dish rows en grid */}
-                  <div style={{ padding: '4px 24px 10px' }}>
-                    {/* Batch fill header row — alineado con columnas de platos */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 86px 110px 120px', gap: 6, alignItems: 'center', padding: '5px 8px', marginBottom: 6, borderRadius: 6, background: '#0a0f1a', border: '1px solid #1a2540' }}>
-                      <div />
-                      <span style={{ fontSize: 11, color: '#4a6080', fontStyle: 'italic' }}>↓ rellenar todos</span>
-                      <select
-                        value={batchDiets[cat.categoryName] ?? ''}
-                        onChange={e => {
-                          const v = e.target.value
-                          setBatchDiets(m => ({ ...m, [cat.categoryName]: v }))
-                          if (v) setDishDiets(prev => {
-                            const next = { ...prev }
-                            for (const d of cat.dishes) next[d.id] = v
-                            return next
-                          })
-                        }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
-                      >
-                        <option value="">— dieta —</option>
-                        <option value="OMNIVORE">omnívoro</option>
-                        <option value="VEGETARIAN">vegetariano</option>
-                        <option value="VEGAN">vegano</option>
-                      </select>
-                      <select
-                        value={batchParents[cat.categoryName] ?? ''}
-                        onChange={e => {
-                          const parent = e.target.value
-                          setBatchParents(m => ({ ...m, [cat.categoryName]: parent }))
-                          if (parent) {
-                            setDishParents(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = parent; return next })
-                            const leaves = PARENT_LEAVES_MAP[parent] ?? []
-                            const firstLeaf = leaves[0] ?? ''
-                            setBatchLeafs(m => ({ ...m, [cat.categoryName]: firstLeaf }))
-                            if (firstLeaf) {
-                              setDishLeafs(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = firstLeaf; return next })
-                            }
-                          }
-                        }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
-                      >
-                        <option value="">— categoría —</option>
-                        {ALL_PARENTS.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                      <select
-                        value={batchLeafs[cat.categoryName] ?? ''}
-                        onChange={e => {
-                          const v = e.target.value
-                          setBatchLeafs(m => ({ ...m, [cat.categoryName]: v }))
-                          if (v) {
-                            setDishLeafs(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = v; return next })
-                            const parent = LEAF_TO_PARENT_MAP[v] ?? ''
-                            if (parent) {
-                              setBatchParents(m => ({ ...m, [cat.categoryName]: parent }))
-                              setDishParents(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = parent; return next })
-                            }
-                          }
-                        }}
-                        style={{ fontSize: 11, background: '#0a0a0a', border: '1px solid #222', color: '#666', borderRadius: 4, padding: '3px 4px', cursor: 'pointer' }}
-                      >
-                        <option value="">— subcategoría —</option>
-                        {(batchParents[cat.categoryName] ? (PARENT_LEAVES_MAP[batchParents[cat.categoryName]] ?? ALL_LEAF_OPTS) : ALL_LEAF_OPTS).map(o => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-
-                    {/* Per-dish rows */}
+                  {/* Dish rows */}
+                  <div style={{ padding: '4px 24px 8px' }}>
                     {cat.dishes.map(dish => {
-                      const dishLeaf = dishLeafs[dish.id] ?? ''
-                      const dishParent = dishParents[dish.id] ?? ''
-                      const currentDiet = dishDiets[dish.id] ?? dish.diet
-                      const hasLeafOverride = !!dishLeaf
-                      const leafOptions = dishParent ? (PARENT_LEAVES_MAP[dishParent] ?? ALL_LEAF_OPTS) : ALL_LEAF_OPTS
+                      const tx = getDishTax(dish)
+                      const isExpanded = expandedDish === dish.id
+                      const isEdited = !!taxEdits[dish.id]
+                      const dietColor = tx.diet === 'VEGAN' ? '#22c55e' : tx.diet === 'VEGETARIAN' ? '#86efac' : '#666'
+                      const dietLabel = tx.diet === 'VEGAN' ? 'V' : tx.diet === 'VEGETARIAN' ? 'VG' : 'O'
+
                       return (
-                        <div key={dish.id} style={{ opacity: dish.isActive ? 1 : 0.4, marginBottom: 3 }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 86px 110px 120px', gap: 6, alignItems: 'center' }}>
+                        <div key={dish.id} style={{ marginBottom: 2 }}>
+                          {/* Compact row */}
+                          <div
+                            onClick={() => setExpandedDish(isExpanded ? null : dish.id)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 6px', borderRadius: 6, cursor: 'pointer', background: isExpanded ? '#161616' : 'transparent', opacity: dish.isActive ? 1 : 0.4 }}
+                          >
                             {dish.photo ? (
                               <img
                                 src={dish.photo} alt=""
-                                style={{ width: 26, height: 26, borderRadius: 3, objectFit: 'cover', cursor: 'zoom-in' }}
-                                onMouseEnter={e => {
-                                  const r = (e.target as HTMLElement).getBoundingClientRect()
-                                  setHoverDish({ name: dish.name, description: dish.description, photo: dish.photo!, x: r.right + 8, y: r.top })
-                                }}
+                                style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                                onMouseEnter={e => { const r = (e.target as HTMLElement).getBoundingClientRect(); setHoverDish({ name: dish.name, description: dish.description, photo: dish.photo!, x: r.right + 8, y: r.top }) }}
                                 onMouseLeave={() => setHoverDish(null)}
+                                onClick={e => e.stopPropagation()}
                               />
                             ) : (
-                              <div style={{ width: 26, height: 26, borderRadius: 3, background: '#1a1a1a' }} />
+                              <div style={{ width: 28, height: 28, borderRadius: 4, background: '#1a1a1a', flexShrink: 0 }} />
                             )}
-                            <span style={{ fontSize: 13, color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {dish.name}
-                            </span>
-                            {/* Per-dish diet */}
-                            <select
-                              value={currentDiet}
-                              onChange={e => setDishDiets(m => ({ ...m, [dish.id]: e.target.value }))}
-                              style={{
-                                fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${currentDiet !== dish.diet ? '#22c55e55' : '#2a2a2a'}`,
-                                color: currentDiet === 'VEGAN' ? '#22c55e' : currentDiet === 'VEGETARIAN' ? '#86efac' : '#888',
-                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
-                              }}
-                            >
-                              <option value="OMNIVORE">omnívoro</option>
-                              <option value="VEGETARIAN">vegetariano</option>
-                              <option value="VEGAN">vegano</option>
-                            </select>
-                            {/* Per-dish categoría madre */}
-                            <select
-                              value={dishParent}
-                              onChange={e => {
-                                const parent = e.target.value
-                                setDishParents(m => ({ ...m, [dish.id]: parent }))
-                                const leaves = parent ? (PARENT_LEAVES_MAP[parent] ?? []) : []
-                                const firstLeaf = leaves[0] ?? ''
-                                setDishLeafs(m => ({ ...m, [dish.id]: firstLeaf }))
-                              }}
-                              style={{
-                                fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${dishParent ? '#60a5fa44' : '#2a2a2a'}`,
-                                color: dishParent ? '#93c5fd' : '#888',
-                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
-                              }}
-                            >
-                              <option value="">{LEAF_TO_PARENT_MAP[dish.dishLeafResolved] || '— categoría —'}</option>
-                              {ALL_PARENTS.map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
-                            {/* Per-dish subcategoría (leaf) */}
-                            <select
-                              value={dishLeaf}
-                              onChange={e => {
-                                const v = e.target.value
-                                setDishLeafs(m => ({ ...m, [dish.id]: v }))
-                                if (v) setDishParents(m => ({ ...m, [dish.id]: LEAF_TO_PARENT_MAP[v] ?? '' }))
-                              }}
-                              style={{
-                                fontSize: 12, background: '#0d0d0d',
-                                border: `1px solid ${hasLeafOverride ? '#a78bfa55' : '#2a2a2a'}`,
-                                color: hasLeafOverride ? '#c4b5fd' : '#888',
-                                borderRadius: 4, padding: '3px 4px', cursor: 'pointer', width: '100%',
-                              }}
-                            >
-                              <option value="">{dish.dishLeafResolved || '— subcategoría —'}</option>
-                              {leafOptions.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
+                            <span style={{ fontSize: 13, color: isEdited ? '#c4b5fd' : '#aaa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.name}</span>
+                            {/* Compact taxonomy badges */}
+                            <div style={{ display: 'flex', gap: 3, flexShrink: 0, alignItems: 'center' }}>
+                              {(tx.txDishType ?? []).slice(0, 2).map(t => (
+                                <span key={t} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24' }}>{t}</span>
+                              ))}
+                              <span style={{ fontSize: 11, fontWeight: 700, color: dietColor, minWidth: 16, textAlign: 'center' }}>{dietLabel}</span>
+                            </div>
+                            <span style={{ fontSize: 12, color: '#333' }}>{isExpanded ? '▲' : '▼'}</span>
                           </div>
-                          {/* FlavorTags */}
-                          {dish.flavorTags.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 3, marginLeft: 32 }}>
-                              {dish.flavorTags.map(tag => {
-                                const isPrep = ['panko','tempura','frito','grillado','al vapor','horneado','gratinado','ahumado','crudo','salteado','rebozado','teriyaki','curry'].includes(tag)
-                                return (
-                                  <span key={tag} style={{
-                                    fontSize: 11, padding: '2px 6px', borderRadius: 3,
-                                    background: isPrep ? '#1e1208' : '#0d1a1e',
-                                    color: isPrep ? '#fb923c' : '#38bdf8',
-                                    border: `1px solid ${isPrep ? '#7c3010' : '#0e4a6a'}`,
-                                  }}>{tag}</span>
-                                )
-                              })}
+
+                          {/* Expanded taxonomy editor */}
+                          {isExpanded && (
+                            <div style={{ margin: '2px 0 8px 36px', padding: '12px 14px', background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                              <TxRow label="Tipo">
+                                {TX_DISH_TYPE.map(v => (
+                                  <TxPill key={v} label={v} active={txIncludes(tx.txDishType ?? [], v)} color="amber"
+                                    onClick={() => updateTax(dish.id, 'txDishType', txToggle(tx.txDishType ?? [], v))} />
+                                ))}
+                              </TxRow>
+
+                              <TxRow label="Cocina">
+                                {TX_CUISINE.map(v => (
+                                  <TxPill key={v} label={v} active={txIncludes(tx.txCuisine ?? [], v)}
+                                    onClick={() => updateTax(dish.id, 'txCuisine', txToggle(tx.txCuisine ?? [], v))} />
+                                ))}
+                              </TxRow>
+
+                              <TxRow label="Momento">
+                                {TX_MEAL_SLOT.map(v => (
+                                  <TxPill key={v} label={v} active={txIncludes(tx.txMealSlot ?? [], v)}
+                                    onClick={() => updateTax(dish.id, 'txMealSlot', txToggle(tx.txMealSlot ?? [], v))} />
+                                ))}
+                              </TxRow>
+
+                              <TxRow label="Ingrediente">
+                                {TX_INGREDIENT.map(v => (
+                                  <TxPill key={v} label={v} active={txIncludes(tx.txIngredient ?? [], v)}
+                                    onClick={() => updateTax(dish.id, 'txIngredient', txToggle(tx.txIngredient ?? [], v))} />
+                                ))}
+                              </TxRow>
+
+                              <TxRow label="Sabor">
+                                {TX_FLAVOR.map(v => (
+                                  <TxPill key={v} label={v} active={txIncludes(tx.flavorTags ?? [], v)}
+                                    onClick={() => updateTax(dish.id, 'flavorTags', txToggle(tx.flavorTags ?? [], v))} />
+                                ))}
+                              </TxRow>
+
+                              <TxRow label="Estilo">
+                                {TX_ESTILO.map(v => (
+                                  <TxPill key={v} label={v} active={txIncludes(tx.txEstilo ?? [], v)} color="green"
+                                    onClick={() => updateTax(dish.id, 'txEstilo', txToggle(tx.txEstilo ?? [], v))} />
+                                ))}
+                              </TxRow>
+
+                              <TxRow label="Dieta">
+                                {(['OMNIVORE', 'VEGETARIAN', 'VEGAN'] as const).map(v => {
+                                  const active = (tx.diet ?? dish.diet) === v
+                                  const colors = {
+                                    OMNIVORE: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.35)', text: '#fca5a5' },
+                                    VEGETARIAN: { bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.35)', text: '#86efac' },
+                                    VEGAN: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)', text: '#6ee7b7' },
+                                  }
+                                  const labels = { OMNIVORE: 'Omnívoro', VEGETARIAN: 'Vegetariano', VEGAN: 'Vegano' }
+                                  const c = colors[v]
+                                  return (
+                                    <button key={v} onClick={() => updateTax(dish.id, 'diet', v)}
+                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, border: `1px solid ${active ? c.border : '#1e1e1e'}`, background: active ? c.bg : 'transparent', color: active ? c.text : '#444', cursor: 'pointer' }}>
+                                      {labels[v]}
+                                    </button>
+                                  )
+                                })}
+                              </TxRow>
+
                             </div>
                           )}
                         </div>
@@ -1677,6 +1604,7 @@ function CartaModal({ slug, name, onClose }: {
             <div style={{ display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #1a1a1a', justifyContent: 'flex-end', alignItems: 'center' }}>
               {saved && <span style={{ fontSize: 14, color: '#22c55e' }}>✓ Guardado</span>}
               {saveError && <span style={{ fontSize: 13, color: '#ef4444' }}>Error: {saveError}</span>}
+              {hasChanges && <span style={{ fontSize: 12, color: '#555' }}>{Object.keys(taxEdits).length} plato(s) modificado(s)</span>}
               <button onClick={onClose} style={{ fontSize: 14, padding: '9px 20px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
                 Cerrar
               </button>
@@ -1693,33 +1621,15 @@ function CartaModal({ slug, name, onClose }: {
       </div>
     </div>
 
-    {/* Hover popup: foto grande + nombre + descripción */}
     {hoverDish && (
-      <div style={{
-        position: 'fixed',
-        left: hoverDish.x,
-        top: hoverDish.y,
-        zIndex: 9999,
-        background: '#1a1a1a',
-        border: '1px solid #333',
-        borderRadius: 10,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
-        padding: 12,
-        maxWidth: 260,
-        pointerEvents: 'none',
-      }}>
-        <img
-          src={hoverDish.photo}
-          alt=""
-          style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6, display: 'block', marginBottom: 8 }}
-        />
+      <div style={{ position: 'fixed', left: hoverDish.x, top: hoverDish.y, zIndex: 9999, background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', padding: 12, maxWidth: 260, pointerEvents: 'none' }}>
+        <img src={hoverDish.photo} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6, display: 'block', marginBottom: 8 }} />
         <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#e5e5e5', lineHeight: 1.3 }}>{hoverDish.name}</p>
-        {hoverDish.description && (
-          <p style={{ margin: 0, fontSize: 12, color: '#888', lineHeight: 1.4 }}>{hoverDish.description}</p>
-        )}
+        {hoverDish.description && <p style={{ margin: 0, fontSize: 12, color: '#888', lineHeight: 1.4 }}>{hoverDish.description}</p>}
       </div>
     )}
 
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   )
 }
