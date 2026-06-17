@@ -5,10 +5,10 @@ import NewHome from './a/preview/NewHome'
 import FeedLayout from './a/layout'
 
 export const metadata = {
-  title: 'quierocomer - descubre que comer cerca de ti',
+  title: 'QuieroComer - Descubre que comer cerca de ti',
   description: 'Explora platos reales de restaurantes cerca de ti. Encuentra tu próximo antojo.',
   openGraph: {
-    title: 'quierocomer - descubre que comer cerca de ti',
+    title: 'QuieroComer - Descubre que comer cerca de ti',
     description: 'Explora platos reales de restaurantes cerca de ti.',
   },
 }
