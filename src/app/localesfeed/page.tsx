@@ -40,7 +40,7 @@ const LOCALSTORAGE_KEY = 'qc_mapa_places'
 const PROSPECTOS_KEY = 'qc_mapa_prospectos'
 
 export default function LocalesFeedPage() {
-  const [tab, setTab] = useState<'lista' | 'mapa'>('lista')
+  const [tab, setTab] = useState<'lista' | 'mapa'>('mapa')
 
   // Read tab from URL on mount
   useEffect(() => {
@@ -59,8 +59,8 @@ export default function LocalesFeedPage() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid #222', marginTop: 16 }}>
-          <TabButton active={tab === 'lista'} onClick={() => setTab('lista')}>Lista proveedores</TabButton>
           <TabButton active={tab === 'mapa'} onClick={() => setTab('mapa')}>Prospección mapa</TabButton>
+          <TabButton active={tab === 'lista'} onClick={() => setTab('lista')}>Lista proveedores</TabButton>
         </div>
 
         {tab === 'lista' && <TabLista />}
@@ -296,6 +296,9 @@ function TabMapa() {
 
   // Modal agregar manual
   const [addModal, setAddModal] = useState(false)
+
+  // Modal showcase
+  const [showcaseModal, setShowcaseModal] = useState(false)
 
   async function saveCartaUrl(placeId: string, url: string) {
     if (!url.trim()) return
@@ -643,6 +646,9 @@ function TabMapa() {
           {filtered.length} local{filtered.length !== 1 ? 'es' : ''}{isFiltering ? ` de ${places.length}` : ''} · {selected.size} seleccionado{selected.size !== 1 ? 's' : ''}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setShowcaseModal(true)} style={{ fontSize: 12, color: '#34d399', background: 'none', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
+            + Agregar showcase
+          </button>
           <button onClick={() => setAddModal(true)} style={{ fontSize: 12, color: '#a78bfa', background: 'none', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
             + Agregar manual
           </button>
@@ -1031,6 +1037,9 @@ function TabMapa() {
           onClose={() => setCartaModal(null)}
         />
       )}
+
+      {/* Showcase modal */}
+      {showcaseModal && <ShowcaseModal onClose={() => setShowcaseModal(false)} />}
     </>
   )
 }
@@ -1700,7 +1709,341 @@ function CartaModal({ slug, name, onClose }: {
         )}
       </div>
     )}
+
     </>
+  )
+}
+
+// ---- Modal Showcase ----
+
+type ShowcaseDishDraft = {
+  name: string
+  description: string | null
+  photoUrl: string
+  photoIndex: number
+}
+
+type ShowcasePlaceInfo = {
+  name: string
+  address: string
+  lat: number
+  lng: number
+  mapsUrl: string
+  rating: number | null
+  reviews: number | null
+}
+
+function ShowcaseModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState(1)
+
+  // Step 1
+  const [mapsUrl, setMapsUrl] = useState('')
+  const [resolving, setResolving] = useState(false)
+  const [placeInfo, setPlaceInfo] = useState<ShowcasePlaceInfo | null>(null)
+  const [resolveError, setResolveError] = useState<string | null>(null)
+
+  // Step 2
+  const [files, setFiles] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  // Step 3
+  const [dishes, setDishes] = useState<ShowcaseDishDraft[]>([])
+  const [importing, setImporting] = useState(false)
+  const [importedSlug, setImportedSlug] = useState<string | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+
+  async function resolvePlace() {
+    if (!mapsUrl.trim()) return
+    setResolving(true)
+    setResolveError(null)
+    try {
+      const res = await fetch('/api/mapalocales/resolve-maps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mapsUrl: mapsUrl.trim() }),
+      })
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      const data = await res.json()
+      if (!data.name) throw new Error('No se pudo resolver el lugar')
+      setPlaceInfo({
+        name: data.name,
+        address: data.address ?? '',
+        lat: data.lat ?? 0,
+        lng: data.lng ?? 0,
+        mapsUrl: mapsUrl.trim(),
+        rating: data.rating ?? null,
+        reviews: data.reviews ?? null,
+      })
+    } catch (e: any) {
+      setResolveError(e.message ?? 'Error desconocido')
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? [])
+    setFiles(selected)
+    const urls = selected.map(f => URL.createObjectURL(f))
+    setPreviews(urls)
+  }
+
+  async function uploadAndRecognize() {
+    if (!files.length) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      // 1. Upload photos
+      const formData = new FormData()
+      files.forEach(f => formData.append('photos', f))
+      const upRes = await fetch('/api/showcase/upload-photos', { method: 'POST', body: formData })
+      if (!upRes.ok) throw new Error(`Upload failed: ${upRes.status}`)
+      const { urls } = await upRes.json()
+
+      // 2. Recognize with AI
+      const recRes = await fetch('/api/showcase/recognize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photos: urls }),
+      })
+      if (!recRes.ok) throw new Error(`Recognize failed: ${recRes.status}`)
+      const { dishes: recognized } = await recRes.json()
+
+      const drafts: ShowcaseDishDraft[] = recognized.map((d: any, i: number) => ({
+        name: d.name ?? 'Plato',
+        description: d.description ?? null,
+        photoUrl: urls[i] ?? '',
+        photoIndex: i,
+      }))
+      setDishes(drafts)
+      setStep(3)
+    } catch (e: any) {
+      setUploadError(e.message ?? 'Error al procesar fotos')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function doImport() {
+    if (!placeInfo || !dishes.length) return
+    setImporting(true)
+    setImportError(null)
+    try {
+      const res = await fetch('/api/showcase/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurant: {
+            name: placeInfo.name,
+            address: placeInfo.address,
+            lat: placeInfo.lat,
+            lng: placeInfo.lng,
+            googleMapsUrl: placeInfo.mapsUrl,
+            googleRating: placeInfo.rating,
+            googleRatingCount: placeInfo.reviews,
+          },
+          dishes: dishes.filter(d => d.name.trim()),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`)
+      const { slug } = data
+      setImportedSlug(slug)
+    } catch (e: any) {
+      setImportError(e.message ?? 'Error al importar')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 16, width: 580, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0' }}>
+          <div>
+            <p style={{ fontSize: 11, color: '#555', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+              Paso {step} de 3 — {step === 1 ? 'Lugar' : step === 2 ? 'Fotos' : 'Platos'}
+            </p>
+            <h3 style={{ margin: 0, fontSize: 18, color: '#fff', fontWeight: 700 }}>Agregar showcase</h3>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+        </div>
+
+        {/* Step indicator */}
+        <div style={{ display: 'flex', gap: 6, padding: '14px 24px 0' }}>
+          {[1, 2, 3].map(s => (
+            <div key={s} style={{ flex: 1, height: 3, borderRadius: 2, background: s <= step ? '#34d399' : '#2a2a2a', transition: 'background 0.3s' }} />
+          ))}
+        </div>
+
+        <div style={{ padding: '24px 24px 28px' }}>
+          {/* ── STEP 1: Google Maps URL ── */}
+          {step === 1 && (
+            <div>
+              <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
+                Pega la URL de Google Maps del restaurante para obtener su información.
+              </p>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 6, fontWeight: 600 }}>URL de Google Maps</label>
+              <input
+                type="text"
+                value={mapsUrl}
+                onChange={e => setMapsUrl(e.target.value)}
+                placeholder="https://maps.google.com/maps?..."
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 10, fontSize: 14, background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#fff', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+                onKeyDown={e => { if (e.key === 'Enter') resolvePlace() }}
+              />
+              <button
+                onClick={resolvePlace}
+                disabled={resolving || !mapsUrl.trim()}
+                style={{ fontSize: 14, fontWeight: 600, padding: '11px 22px', borderRadius: 8, background: resolving || !mapsUrl.trim() ? '#222' : '#34d399', color: resolving || !mapsUrl.trim() ? '#444' : '#000', border: 'none', cursor: resolving || !mapsUrl.trim() ? 'not-allowed' : 'pointer' }}
+              >
+                {resolving ? 'Resolviendo...' : 'Resolver'}
+              </button>
+
+              {resolveError && <p style={{ fontSize: 13, color: '#f87171', margin: '12px 0 0' }}>{resolveError}</p>}
+
+              {placeInfo && (
+                <div style={{ marginTop: 20, padding: 16, background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 12 }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: '#fff' }}>{placeInfo.name}</p>
+                  <p style={{ margin: '0 0 4px', fontSize: 13, color: '#888' }}>{placeInfo.address}</p>
+                  {placeInfo.rating != null && (
+                    <p style={{ margin: '0 0 0', fontSize: 13, color: '#F4A623' }}>
+                      ★ {placeInfo.rating.toFixed(1)}
+                      {placeInfo.reviews != null && <span style={{ color: '#555' }}> ({placeInfo.reviews} reviews)</span>}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => setStep(2)}
+                    style={{ marginTop: 14, fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 8, background: '#34d399', color: '#000', border: 'none', cursor: 'pointer' }}
+                  >
+                    Continuar con este lugar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── STEP 2: Upload photos ── */}
+          {step === 2 && (
+            <div>
+              <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
+                Sube fotos de los platos del restaurante. La IA reconocerá cada plato automáticamente.
+              </p>
+              <label
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 20px', border: '2px dashed #2a2a2a', borderRadius: 12, cursor: 'pointer', marginBottom: 16, background: '#1a1a1a', gap: 8 }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span style={{ fontSize: 14, color: '#666' }}>Seleccionar fotos de platos</span>
+                <span style={{ fontSize: 12, color: '#444' }}>JPG, PNG, WEBP — múltiples permitidas</span>
+                <input type="file" multiple accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              </label>
+
+              {previews.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, marginBottom: 16 }}>
+                  {previews.map((src, i) => (
+                    <div key={i} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '1' }}>
+                      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {uploadError && <p style={{ fontSize: 13, color: '#f87171', margin: '0 0 12px' }}>{uploadError}</p>}
+
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <button onClick={() => setStep(1)} style={{ fontSize: 14, padding: '10px 18px', borderRadius: 8, background: 'none', border: '1px solid #2a2a2a', color: '#666', cursor: 'pointer' }}>
+                  Volver
+                </button>
+                <button
+                  onClick={uploadAndRecognize}
+                  disabled={uploading || files.length === 0}
+                  style={{ fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 8, background: uploading || files.length === 0 ? '#222' : '#34d399', color: uploading || files.length === 0 ? '#444' : '#000', border: 'none', cursor: uploading || files.length === 0 ? 'not-allowed' : 'pointer' }}
+                >
+                  {uploading ? 'Procesando con IA...' : `Subir y reconocer (${files.length} foto${files.length !== 1 ? 's' : ''})`}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 3: Edit dishes and import ── */}
+          {step === 3 && (
+            <div>
+              {importedSlug ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#34d399', margin: '0 0 8px' }}>Showcase importado</p>
+                  <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
+                    Slug: <code style={{ background: '#1a1a1a', padding: '2px 8px', borderRadius: 4, color: '#fff' }}>{importedSlug}</code>
+                  </p>
+                  <button onClick={onClose} style={{ fontSize: 14, padding: '10px 22px', borderRadius: 8, background: '#34d399', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                    Cerrar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
+                    Revisa y edita los platos reconocidos. Puedes eliminar los que no correspondan.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+                    {dishes.map((d, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: 12, background: '#1a1a1a', borderRadius: 10, border: '1px solid #2a2a2a' }}>
+                        <img src={d.photoUrl} alt="" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <input
+                            value={d.name}
+                            onChange={e => setDishes(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 14, background: '#0d0d0d', border: '1px solid #333', color: '#fff', outline: 'none', boxSizing: 'border-box', marginBottom: 6, fontWeight: 600 }}
+                            placeholder="Nombre del plato"
+                          />
+                          <input
+                            value={d.description ?? ''}
+                            onChange={e => setDishes(prev => prev.map((x, j) => j === i ? { ...x, description: e.target.value || null } : x))}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#ccc', outline: 'none', boxSizing: 'border-box' }}
+                            placeholder="Descripción (opcional)"
+                          />
+                        </div>
+                        <button
+                          onClick={() => setDishes(prev => prev.filter((_, j) => j !== i))}
+                          style={{ flexShrink: 0, background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 4px' }}
+                          title="Eliminar plato"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {importError && <p style={{ fontSize: 13, color: '#f87171', margin: '0 0 12px' }}>{importError}</p>}
+
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={() => setStep(2)} style={{ fontSize: 14, padding: '10px 18px', borderRadius: 8, background: 'none', border: '1px solid #2a2a2a', color: '#666', cursor: 'pointer' }}>
+                      Volver
+                    </button>
+                    <button
+                      onClick={doImport}
+                      disabled={importing || dishes.length === 0}
+                      style={{ fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 8, background: importing || dishes.length === 0 ? '#222' : '#34d399', color: importing || dishes.length === 0 ? '#444' : '#000', border: 'none', cursor: importing || dishes.length === 0 ? 'not-allowed' : 'pointer', flex: 1 }}
+                    >
+                      {importing ? 'Importando...' : `Importar al feed (${dishes.length} plato${dishes.length !== 1 ? 's' : ''})`}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

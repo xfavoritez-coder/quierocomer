@@ -232,9 +232,11 @@ export default function SearchExplore({
                       {heroDish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 14 }}>🥬</span>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 14, color: '#F4A623', fontWeight: 700 }}>
-                        ${(heroDish.precioDescuento ?? heroDish.precio).toLocaleString('es-CL')}
-                      </span>
+                      {(heroDish.precioDescuento ?? heroDish.precio) != null && (
+                        <span style={{ fontSize: 14, color: '#F4A623', fontWeight: 700 }}>
+                          ${(heroDish.precioDescuento ?? heroDish.precio)!.toLocaleString('es-CL')}
+                        </span>
+                      )}
                       <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
                       <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
                         {heroDish.restaurante}
@@ -377,9 +379,11 @@ function SearchCard({ dish, userLocation, onTap, horizontal }: {
             {dish.dieta.tipo === 'VEGETARIAN' && <span style={{ fontSize: 13, flexShrink: 0 }}>🥬</span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-            <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 700 }}>
-              ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
-            </span>
+            {(dish.precioDescuento ?? dish.precio) != null && (
+              <span style={{ fontSize: 13, color: '#F4A623', fontWeight: 700 }}>
+                ${(dish.precioDescuento ?? dish.precio)!.toLocaleString('es-CL')}
+              </span>
+            )}
             <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
               📍 {userLocation && dish.restauranteLat && dish.restauranteLng

@@ -114,7 +114,8 @@ export function updateProfile(
   newProfile.seenDishIds.add(dish.id)
   if (isPositive) {
     newProfile.likedDishIds.add(dish.id)
-    newProfile.prices.push(dish.precioDescuento ?? dish.precio)
+    const priceVal = dish.precioDescuento ?? dish.precio
+    if (priceVal != null) newProfile.prices.push(priceVal)
   }
   if (isNegative) {
     newProfile.passedDishIds.add(dish.id)
@@ -183,7 +184,7 @@ export function affinity(dish: FeedDish, profile: FeedProfile): number {
     const p20 = sorted[Math.floor(sorted.length * 0.2)]
     const p80 = sorted[Math.floor(sorted.length * 0.8)]
     const price = dish.precioDescuento ?? dish.precio
-    if (price < p20 || price > p80) score -= 3
+    if (price != null && (price < p20 || price > p80)) score -= 3
   }
 
   // Deterministic noise for variety (stable within session, changes daily)

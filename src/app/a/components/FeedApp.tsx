@@ -277,6 +277,7 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && e.preventDefault()}
             placeholder="Buscar plato, restaurante..."
             className="feed-search-input"
           />

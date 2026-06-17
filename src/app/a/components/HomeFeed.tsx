@@ -192,9 +192,11 @@ export default function HomeFeed({
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     fontFamily: 'var(--font-feed-display), serif',
                   }}>{dish.nombre}</p>
-                  <p style={{ fontSize: 12, color: '#F4A623', margin: '3px 0 0', fontWeight: 600 }}>
-                    ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
-                  </p>
+                  {(dish.precioDescuento ?? dish.precio) != null && (
+                    <p style={{ fontSize: 12, color: '#F4A623', margin: '3px 0 0', fontWeight: 600 }}>
+                      ${(dish.precioDescuento ?? dish.precio)!.toLocaleString('es-CL')}
+                    </p>
+                  )}
                   <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {dish.restaurante}
                   </p>

@@ -513,9 +513,9 @@ export default function NewHome({
     } else if (quickPopular) {
       combined = [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
     } else if (filterSort === 'price-asc') {
-      combined = [...filtered].sort((a, b) => (a.precioDescuento ?? a.precio) - (b.precioDescuento ?? b.precio))
+      combined = [...filtered].sort((a, b) => ((a.precioDescuento ?? a.precio) ?? 0) - ((b.precioDescuento ?? b.precio) ?? 0))
     } else if (filterSort === 'price-desc') {
-      combined = [...filtered].sort((a, b) => (b.precioDescuento ?? b.precio) - (a.precioDescuento ?? a.precio))
+      combined = [...filtered].sort((a, b) => ((b.precioDescuento ?? b.precio) ?? 0) - ((a.precioDescuento ?? a.precio) ?? 0))
     } else if (filterSort === 'recent') {
       combined = [...filtered].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
     } else {

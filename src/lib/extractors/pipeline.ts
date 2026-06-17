@@ -30,6 +30,44 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Infiere el tipo de dieta analizando ingredientes mencionados en nombre + descripción.
+ * Solo se aplica cuando la IA devolvió OMNIVORE — no sobreescribe detecciones explícitas.
+ *
+ * Lógica:
+ *  - Detecta carne/pescado/mariscos → OMNIVORE (sin cambio)
+ *  - Detecta lácteos/huevo sin carne → VEGETARIAN
+ *  - Detecta ingredientes vegetales explícitos, sin productos animales → VEGAN
+ *  - Sin información suficiente → null (mantener OMNIVORE)
+ */
+function inferDietFromIngredients(name: string, description: string | null | undefined): "VEGAN" | "VEGETARIAN" | "OMNIVORE" | null {
+  const text = `${name} ${description ?? ""}`.toLowerCase();
+
+  // Carne, ave, pescado, mariscos → OMNIVORE seguro
+  // "truto"/"tuto" son alias locales de muslo/pierna de pollo
+  const hasMeat = /\b(carne|res|vacuno|cerdo|chancho|pollo|ave|pavo|cordero|conejo|pato|ternera|jam[oó]n|lomo\b|churrasco|costill|filete|bife|pepperoni|salchicha|chorizo|longaniza|mortadela|prosciutto|bacon|panceta|tocino|at[uú]n|salm[oó]n|merluza|reineta|corvina|camar[oó]n|camarones|mariscos|langostino|pulpo|calamar|anchoa|sardina|alitas|mechada|nuggets?|tutos?|trutos?)\b/i.test(text);
+  if (hasMeat) return "OMNIVORE";
+
+  // Lácteos o huevo (sin carne) → al menos VEGETARIAN
+  const hasDairyOrEgg = /\b(queso|mozzarella|leche|crema|mantequilla|manteca|huevo|huevos|yogur|yogurt|ricotta|parmesano|cheddar|gouda|brie|feta|provolone|gruy[eè]re|nata|butter|cream\b|milk|cheese\b|egg\b|eggs\b|mayonesa|mayonnaise|helado)\b/i.test(text);
+  if (hasDairyOrEgg) return "VEGETARIAN";
+
+  // Ingredientes 100% vegetales mencionados explícitamente + descripción con suficiente detalle
+  const hasPlantIngredients = /\b(tomate|salsa de tomate|cebolla|ajo|piment[oó]n|pimiento|berenjena|zapallo|calabaza|zanahoria|espinaca|lechuga|pepino|champi[nñ][oó]n|hongo|portobello|br[oó]coli|coliflor|papa|papas\s*fritas?|patata|yuca|palta|aguacate|aceituna|aceite de oliva|or[eé]gano|albahaca|cilantro|perejil|s[eé]samo|fruta|frutill|mango|pi[nñ]a|naranja|lim[oó]n|frambuesa|ar[aá]ndano|almendra|nuez|man[ií]|casta[nñ]|semilla|arroz\b|legumbre|lenteja|garbanzo|frijol|poroto|tofu|tempeh|soya|soja)\b/i.test(text);
+  if (hasPlantIngredients) return "VEGAN";
+
+  return null;
+}
+
+/** Detecta si un plato necesita un leafOverride más específico que su categoría.
+ *  Ej: "Helado Frambuesa" en cat "Postres" → leafOverride = 'Helados'
+ */
+function detectDishLeafOverride(dishName: string): string | null {
+  const n = dishName.toLowerCase();
+  if (/helado|ice\s*cream|gelato|sorbete|frozen\s*yogurt|heladería/i.test(n)) return "Helados";
+  return null;
+}
+
 function detectDishType(categoryName: string): string {
   const n = categoryName.toLowerCase();
   if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
@@ -504,8 +542,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const dishNameText = `${dish.name} ${dish.description ?? ''}`;
         const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText);
         const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText);
-        const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI;
+        const inferredDiet = dishDietFromAI === "OMNIVORE" ? inferDietFromIngredients(dish.name, dish.description) : null;
+        const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI : (inferredDiet ?? "OMNIVORE");
         const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null);
+        const leafOverride = detectDishLeafOverride(dish.name);
 
         const created = await prisma.dish.create({
           data: {
@@ -525,6 +565,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             isSoyFree: isDrinkCat ? false : detected.isSoyFree,
             flavorTags,
             isActive: true,
+            ...(leafOverride ? { leafOverride } : {}),
           },
         });
 
@@ -933,8 +974,10 @@ export async function importFromProspecto(params: {
       const dishNameText = `${dish.name} ${dish.description ?? ''}`
       const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText)
       const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText)
-      const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI
+      const inferredDiet = dishDietFromAI === "OMNIVORE" ? inferDietFromIngredients(dish.name, dish.description) : null
+      const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI : (inferredDiet ?? "OMNIVORE")
       const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null)
+      const leafOverride = detectDishLeafOverride(dish.name)
       allDishData.push({
         restaurantId: restaurant.id,
         categoryId: category.id,
@@ -952,6 +995,7 @@ export async function importFromProspecto(params: {
         isSoyFree: isDrinkCat ? false : detected.isSoyFree,
         flavorTags,
         isActive: true,
+        ...(leafOverride ? { leafOverride } : {}),
       })
     })
   })

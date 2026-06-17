@@ -114,9 +114,11 @@ export default function EurekaResult({
                     {dish.restaurante}
                     {dist != null && <span> · {formatDistance(dist)}</span>}
                   </p>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#F4A623', margin: '3px 0 0' }}>
-                    ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
-                  </p>
+                  {(dish.precioDescuento ?? dish.precio) != null && (
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#F4A623', margin: '3px 0 0' }}>
+                      ${(dish.precioDescuento ?? dish.precio)!.toLocaleString('es-CL')}
+                    </p>
+                  )}
                 </div>
                 <div style={{
                   padding: '8px 14px', borderRadius: 12,

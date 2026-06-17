@@ -254,16 +254,19 @@ export function applyFilters(dishes: FeedDish[], filters: Filters): FeedDish[] {
 
   // Price
   if (filters.priceMax != null) {
-    result = result.filter(d => (d.precioDescuento ?? d.precio) <= filters.priceMax!)
+    result = result.filter(d => {
+      const p = d.precioDescuento ?? d.precio
+      return p == null || p <= filters.priceMax!
+    })
   }
 
   // Sort
   if (filters.sort === 'rating') {
     result = [...result].sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0))
   } else if (filters.sort === 'price_asc') {
-    result = [...result].sort((a, b) => (a.precioDescuento ?? a.precio) - (b.precioDescuento ?? b.precio))
+    result = [...result].sort((a, b) => ((a.precioDescuento ?? a.precio) ?? 0) - ((b.precioDescuento ?? b.precio) ?? 0))
   } else if (filters.sort === 'price_desc') {
-    result = [...result].sort((a, b) => (b.precioDescuento ?? b.precio) - (a.precioDescuento ?? a.precio))
+    result = [...result].sort((a, b) => ((b.precioDescuento ?? b.precio) ?? 0) - ((a.precioDescuento ?? a.precio) ?? 0))
   }
 
   return result

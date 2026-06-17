@@ -418,16 +418,18 @@ function DesktopDishContent({
         </h2>
 
         {/* Price */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          {dish.enOferta && dish.precioDescuento != null ? (
-            <>
-              <span style={{ fontSize: 21, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
-              <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
-            </>
-          ) : (
-            <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
-          )}
-        </div>
+        {dish.precio > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            {dish.enOferta && dish.precioDescuento != null ? (
+              <>
+                <span style={{ fontSize: 21, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+                <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            )}
+          </div>
+        )}
 
         {/* Description */}
         {dish.descripcion && (
@@ -507,15 +509,17 @@ function DesktopDishContent({
               <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)', margin: 0 }}>
                 Más de {dish.restaurante}
               </p>
-              <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                ver carta
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
+              {!dish.isShowcase && (
+                <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  ver carta
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              )}
             </div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -736,16 +740,18 @@ function DishSlide({
         </h2>
 
         {/* Price */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          {dish.enOferta && dish.precioDescuento != null ? (
-            <>
-              <span style={{ fontSize: 19, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
-              <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
-            </>
-          ) : (
-            <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
-          )}
-        </div>
+        {dish.precio > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            {dish.enOferta && dish.precioDescuento != null ? (
+              <>
+                <span style={{ fontSize: 19, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+                <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            )}
+          </div>
+        )}
 
         {/* Description */}
         {dish.descripcion && (
@@ -825,15 +831,17 @@ function DishSlide({
               <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)', margin: 0 }}>
                 Más de {dish.restaurante}
               </p>
-              <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                ver carta
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
+              {!dish.isShowcase && (
+                <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  ver carta
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              )}
             </div>
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', gap: 6 }}>

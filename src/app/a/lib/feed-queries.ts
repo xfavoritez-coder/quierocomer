@@ -56,7 +56,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt",
       c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
-      r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory",
+      r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory", r."isShowcase",
       r."googleRating", r."googleRatingCount", r."googleMapsUrl",
       fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
     FROM (
@@ -70,14 +70,14 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
         AND d."deletedAt" IS NULL
         AND d."hiddenFromFeed" = false
         AND array_length(d.photos, 1) > 0
-        AND d.price > 0
+        AND (d.price > 0 OR r."isShowcase" = true)
         AND c."dishType" != 'drink'
         AND r."isActive" = true
         AND r."isDemo" = false
         AND r.lat IS NOT NULL
         AND r.lng IS NOT NULL
-        AND r."googleMapsUrl" IS NOT NULL
-        AND r."googleRating" IS NOT NULL
+        AND (r."googleMapsUrl" IS NOT NULL OR r."isShowcase" = true)
+        AND (r."googleRating" IS NOT NULL OR r."isShowcase" = true)
     ) ranked
     JOIN "Dish" d ON d.id = ranked.id
     JOIN "Category" c ON c.id = d."categoryId"
@@ -106,7 +106,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       id: d.id,
       nombre: d.name,
       descripcion: d.description,
-      precio: Number(d.price),
+      precio: Number((d as any).price ?? 0),
       precioDescuento: d.discountPrice != null ? Number(d.discountPrice) : null,
       fotoUrl: photos[0] ?? null,
       categoria: catName,
@@ -129,7 +129,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       restauranteDireccion: d.address,
       restauranteLat: d.lat != null ? Number(d.lat) : null,
       restauranteLng: d.lng != null ? Number(d.lng) : null,
-      enOferta: d.discountPrice != null && Number(d.discountPrice) < Number(d.price),
+      isShowcase: Boolean((d as any).isShowcase ?? false),
+      enOferta: d.discountPrice != null && d.price != null && Number(d.discountPrice) < Number(d.price),
       mealTime: inferMealTime(categoriaNorm),
       tags: Array.isArray(d.tags) ? d.tags : [],
       isHero: d.isHero,
@@ -152,7 +153,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
 export const getFeedDishes = unstable_cache(
   _getFeedDishes,
   ['feed-dishes'],
-  { revalidate: 300 }, // 5 minutes
+  { revalidate: 300, tags: ['feed-dishes'] }, // 5 minutes
 )
 
 /** Cached total dish count — revalidates every 12 hours via cron */
@@ -233,7 +234,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       const categoriaParent = getParentCategory(categoriaNorm)
       return {
         id: dish.id, nombre: dish.name, descripcion: dish.description,
-        precio: dish.price, precioDescuento: dish.discountPrice,
+        precio: dish.price ?? 0, precioDescuento: dish.discountPrice,
         fotoUrl: dish.photos[0] ?? null, categoria: dish.category.name,
         categoriaNorm, categoriaParent, categoriaTipo: inferDishType(categoriaNorm, dish.category.dishType),
         cuisineTag: dish.category.cuisineTag ?? null,
@@ -250,7 +251,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
         googleRating: dish.restaurant.googleRating ?? null,
         googleRatingCount: dish.restaurant.googleRatingCount ?? null,
         googleMapsUrl: dish.restaurant.googleMapsUrl ?? null,
-        enOferta: dish.discountPrice != null && dish.discountPrice < dish.price,
+        enOferta: dish.discountPrice != null && dish.price != null && dish.discountPrice < dish.price,
         mealTime: inferMealTime(categoriaNorm), tags: dish.tags, isHero: dish.isHero,
         avgRating: dish.feedStats?.avgRating ?? null,
         ratingCount: dish.feedStats?.ratingCount ?? 0,

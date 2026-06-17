@@ -88,9 +88,11 @@ function DishRow({ dish, onTap }: { dish: FeedDish; onTap: (d: FeedDish) => void
         }}>
           {dish.nombre}
         </p>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', margin: '2px 0' }}>
-          ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
-        </p>
+        {(dish.precioDescuento ?? dish.precio) != null && (
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', margin: '2px 0' }}>
+            ${(dish.precioDescuento ?? dish.precio)!.toLocaleString('es-CL')}
+          </p>
+        )}
         <p style={{
           fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: 0,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

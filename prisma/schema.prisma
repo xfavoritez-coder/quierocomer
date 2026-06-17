@@ -324,6 +324,7 @@ model Restaurant {
   cartaColorMode             CartaColorMode           @default(LIGHT)
   cartaAccentColor           String?
   isDemo                     Boolean                  @default(false)
+  isShowcase                 Boolean                  @default(false)
   needsTranslation           Boolean                  @default(false)
   weeklyEmailEnabled         Boolean                  @default(true)
   weeklyInsightsEnabled      Boolean                  @default(true)

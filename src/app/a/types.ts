@@ -3,6 +3,7 @@ export type FeedDish = {
   nombre: string
   descripcion: string | null
   precio: number
+  isShowcase?: boolean
   precioDescuento: number | null
   fotoUrl: string | null
   categoria: string        // Category.name original (del restaurante)

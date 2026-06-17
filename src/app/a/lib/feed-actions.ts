@@ -68,7 +68,7 @@ export async function trackInteraction(
   dishId: string,
   action: FeedAction,
   category: string,
-  price: number,
+  price: number | null,
   dwellMs?: number,
 ) {
   try {

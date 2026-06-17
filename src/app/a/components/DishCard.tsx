@@ -137,7 +137,7 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
             <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 600, flexShrink: 0 }}>
               {dish.enOferta && dish.precioDescuento != null
                 ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
-                : `$${dish.precio.toLocaleString('es-CL')}`}
+                : dish.precio != null ? `$${dish.precio.toLocaleString('es-CL')}` : ''}
             </span>
             {userLocation && dish.restauranteLat && dish.restauranteLng && (
               <>

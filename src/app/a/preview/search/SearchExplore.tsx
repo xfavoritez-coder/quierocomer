@@ -256,9 +256,11 @@ function Section({ title, subtitle, emoji, dishes, userLocation }: {
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>{dish.nombre}</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                    <span style={{ fontSize: 11, color: '#F4A623', fontWeight: 600 }}>
-                      ${(dish.precioDescuento ?? dish.precio).toLocaleString('es-CL')}
-                    </span>
+                    {(dish.precioDescuento ?? dish.precio) != null && (
+                      <span style={{ fontSize: 11, color: '#F4A623', fontWeight: 600 }}>
+                        ${(dish.precioDescuento ?? dish.precio)!.toLocaleString('es-CL')}
+                      </span>
+                    )}
                     {userLocation && dish.restauranteLat && dish.restauranteLng && (
                       <>
                         <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)' }}>·</span>
