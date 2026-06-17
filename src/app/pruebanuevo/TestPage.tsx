@@ -20,6 +20,7 @@ const VALID_DISH_TYPE = [
   "huevos","pancake","waffle","crepe","avena","omelet",
   "papas fritas","nachos","aros de cebolla","croquetas","arrollado de primavera","spring roll",
   "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
+  "café","café con leche","té","jugo","batido","bebida","alcohol","mocktail",
 ];
 
 const VALID_CUISINE = [

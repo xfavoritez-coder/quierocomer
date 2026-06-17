@@ -42,6 +42,8 @@ const VALID_DISH_TYPES = [
   "papas fritas","nachos","aros de cebolla","croquetas","arrollado de primavera","spring roll",
   // Postres
   "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
+  // Bebidas
+  "café","café con leche","té","jugo","batido","bebida","alcohol","mocktail",
 ];
 
 export async function POST(req: NextRequest) {
@@ -65,6 +67,7 @@ dishType (array — puede ser más de uno, especialmente en combos):
 ${VALID_DISH_TYPES.join(", ")}
 Reglas dishType:
 - Si es un combo/pack con varios productos → incluye "combo" MÁS los tipos que contiene (ej: ["combo","hamburguesa","papas fritas"])
+- Bebidas: "café" (espresso, americano, cortado, café negro), "café con leche" (latte, cappuccino, flat white, macchiato), "té" (cualquier té o infusión), "jugo" (jugos naturales o en caja), "batido" (smoothie, milkshake, malteada), "bebida" (sodas, agua, bebidas embotelladas), "alcohol" (cerveza, vino, pisco, coctel, destilados), "mocktail" (coctel sin alcohol).
 - "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
