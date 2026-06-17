@@ -544,7 +544,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       });
 
       const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName);
-      const isVeganCat = /\bvegan[ao]?\b|plant.based/i.test(catName);
+      const isVeganCat = /\bvegan(?:a|o|as|os)?\b|plant.based/i.test(catName);
       const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie\b|verde\b|sin carne|solo vegetal|plant/i.test(catName);
 
       for (let j = 0; j < catDishes.length; j++) {
@@ -553,7 +553,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
         const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE";
         const dishNameText = `${dish.name} ${dish.description ?? ''}`;
-        const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText);
+        const isVeganDish = /\bvegan(?:a|o|as|os)?\b|plant.based/i.test(dishNameText);
         const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText);
         // Siempre inferir desde ingredientes — puede corregir al AI si detecta carne/lácteos
         const inferredDiet = inferDietFromIngredients(dish.name, dish.description);
@@ -1039,13 +1039,13 @@ export async function importFromProspecto(params: {
   catEntries.forEach(([catName, catDishes], catIdx) => {
     const category = createdCategories[catIdx]
     const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName)
-    const isVeganCat = /\bvegan[ao]?\b|plant.based/i.test(catName)
+    const isVeganCat = /\bvegan(?:a|o|as|os)?\b|plant.based/i.test(catName)
     const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie\b|verde\b|sin carne|solo vegetal|plant/i.test(catName)
     catDishes.forEach((dish, j) => {
       const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" })
       const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"
       const dishNameText = `${dish.name} ${dish.description ?? ''}`
-      const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText)
+      const isVeganDish = /\bvegan(?:a|o|as|os)?\b|plant.based/i.test(dishNameText)
       const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText)
       // Siempre inferir desde ingredientes — puede corregir al AI si detecta carne/lácteos
       const inferredDiet = inferDietFromIngredients(dish.name, dish.description)

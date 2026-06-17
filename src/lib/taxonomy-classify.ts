@@ -122,7 +122,8 @@ Deja [] si no encaja en ninguno. Sushi → []. Ensalada verde → [saludable]. H
 
 diet:
 Si el nombre del plato contiene "veggie" → diet: VEGETARIAN siempre, sin excepción.
-Si la categoría del plato contiene "vegetariano", "veggie", "vegetales", "plant" o similar → asumir VEGETARIAN por defecto para todos los platos de esa categoría, a menos que el nombre/descripción diga explícitamente "vegano" (→ VEGAN).
+Si la categoría del plato contiene "vegano", "vegana", "veganos", "veganas" o similar → asumir VEGAN para todos los platos de esa categoría, a menos que el plato tenga ingredientes animales explícitos.
+Si la categoría contiene "vegetariano", "vegetarianos", "veggie", "vegetales", "plant" o similar → asumir VEGETARIAN por defecto, a menos que el nombre/descripción diga explícitamente "vegano" (→ VEGAN).
 OMNIVORE → SOLO si el plato contiene carne (vacuno, cerdo, cordero), ave (pollo, pavo), pescado o mariscos. Ejemplos: hamburguesa, pollo, completo, ceviche, salmón.
 VEGETARIAN → sin carne/ave/pescado/mariscos. Huevo, queso, leche, mantequilla, crema, miel NO hacen OMNIVORE — son ingredientes vegetarianos.
 Waffle, pancake, crepe, omelet, huevos, pasta con queso, pizza sin carne → VEGETARIAN aunque lleven huevo o lácteos.
