@@ -1144,6 +1144,14 @@ export default function NewHome({
                     activeColor: '#c97d00', activeBg: 'rgba(244,166,35,0.07)', activeBorder: '#F4A623',
                   },
                   {
+                    id: 'VEGETARIAN' as const, label: 'Veggie',
+                    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                    </svg>,
+                    activeColor: '#2E7D32', activeBg: 'rgba(46,125,50,0.08)', activeBorder: 'rgba(46,125,50,0.5)',
+                  },
+                  {
                     id: 'VEGAN' as const, label: 'Vegano',
                     icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22V11"/>
@@ -1151,14 +1159,6 @@ export default function NewHome({
                       <path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/>
                       <path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/>
                       <path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
-                    </svg>,
-                    activeColor: '#2E7D32', activeBg: 'rgba(46,125,50,0.08)', activeBorder: 'rgba(46,125,50,0.5)',
-                  },
-                  {
-                    id: 'VEGETARIAN' as const, label: 'Vegetariano',
-                    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
                     </svg>,
                     activeColor: '#2E7D32', activeBg: 'rgba(46,125,50,0.08)', activeBorder: 'rgba(46,125,50,0.5)',
                   },
