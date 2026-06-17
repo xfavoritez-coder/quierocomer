@@ -31,7 +31,7 @@ const VALID_DISH_TYPES = [
   // Ensaladas y bowls
   "ensalada","bowl",
   // Asiática
-  "sushi","curry","pad thai","gyoza","wantan",
+  "sushi","hand roll","curry","pad thai","gyoza","wantan",
   // Mexicana
   "taco","burrito","quesadilla","arepa","salchipapa",
   // Chilena

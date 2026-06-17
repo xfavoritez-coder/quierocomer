@@ -14,7 +14,7 @@ const VALID_DISH_TYPE = [
   "pizza","calzone","quiche","empanada",
   "sopa","cazuela","ramen",
   "ensalada","bowl",
-  "sushi","curry","pad thai","gyoza","wantan",
+  "sushi","hand roll","curry","pad thai","gyoza","wantan",
   "taco","burrito","quesadilla","arepa","salchipapa",
   "sopaipilla","pastel de choclo",
   "huevos","pancake","waffle","crepe","avena","omelet",
