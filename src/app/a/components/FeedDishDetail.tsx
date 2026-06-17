@@ -534,7 +534,7 @@ function DesktopDishContent({
             <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 10px' }}>También te podría gustar</p>
             <div style={{ display: 'flex', gap: 8 }}>
               {[0, 1].map(col => (
-                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {relatedDishes.filter((_, i) => i % 2 === col).map(d => (
                     <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
                   ))}
@@ -850,9 +850,9 @@ function DishSlide({
         {!hideRelated && relatedDishes.length > 0 && (
           <div style={{ paddingTop: 28, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
             <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 12px' }}>También te podría gustar</p>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               {[0, 1].map(col => (
-                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {relatedDishes.slice(0, visibleRelated).filter((_, i) => i % 2 === col).map(d => (
                     <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
                   ))}
