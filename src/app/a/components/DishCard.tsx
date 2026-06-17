@@ -134,11 +134,13 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 600, flexShrink: 0 }}>
-              {dish.enOferta && dish.precioDescuento != null
-                ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
-                : dish.precio != null ? `$${dish.precio.toLocaleString('es-CL')}` : ''}
-            </span>
+            {!dish.isShowcase && (
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 600, flexShrink: 0 }}>
+                {dish.enOferta && dish.precioDescuento != null
+                  ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
+                  : dish.precio > 0 ? `$${dish.precio.toLocaleString('es-CL')}` : ''}
+              </span>
+            )}
             {userLocation && dish.restauranteLat && dish.restauranteLng && (
               <>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
