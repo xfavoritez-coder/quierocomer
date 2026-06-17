@@ -1679,19 +1679,26 @@ export default function NewHome({
                 No tenemos platos aún
               </p>
               <button onClick={() => {
-                setSearchQuery('')
-                setSearchInput('')
-                setActiveCategory(null)
-                setFilterCategories(new Set())
-                setFilterDiet('all')
-                setServerDishes(null)
-                window.history.replaceState({}, '', '/')
+                const hasLocationFilter = userLocation !== null && filterMaxKm < 30
+                if (hasLocationFilter) {
+                  // Expand distance to show all dishes regardless of location
+                  setFilterMaxKm(30)
+                  setDraftMaxKm(30)
+                } else {
+                  setSearchQuery('')
+                  setSearchInput('')
+                  setActiveCategory(null)
+                  setFilterCategories(new Set())
+                  setFilterDiet('all')
+                  setServerDishes(null)
+                  window.history.replaceState({}, '', '/')
+                }
               }} style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
                 textDecoration: 'underline', textUnderlineOffset: 3, padding: 0,
               }}>
-                Ver todos los platos
+                {userLocation !== null && filterMaxKm < 30 ? 'Restablecer filtro' : 'Ver todos los platos'}
               </button>
             </div>
           )}
