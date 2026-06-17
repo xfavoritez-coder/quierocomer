@@ -545,7 +545,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
       const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName);
       const isVeganCat = /\bvegan[ao]?\b|plant.based/i.test(catName);
-      const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie|verde\b|sin carne/i.test(catName);
+      const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie\b|verde\b|sin carne|solo vegetal|plant/i.test(catName);
 
       for (let j = 0; j < catDishes.length; j++) {
         const dish = catDishes[j];
@@ -558,11 +558,11 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         // Siempre inferir desde ingredientes — puede corregir al AI si detecta carne/lácteos
         const inferredDiet = inferDietFromIngredients(dish.name, dish.description);
         const dishDiet = isDrinkCat ? "OMNIVORE"
-          : inferredDiet === "OMNIVORE" ? "OMNIVORE"  // carne detectada → siempre OMNIVORE
           : (isVeganCat || isVeganDish) ? "VEGAN"
-          : (isVeggieCat || isVeggieDish) ? "VEGETARIAN"
-          : inferredDiet === "VEGETARIAN" && dishDietFromAI === "VEGAN" ? "VEGETARIAN"  // lácteos detectados, AI dijo VEGAN → bajar a VEGETARIAN
-          : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI  // AI dijo VEGAN/VEGETARIAN y sin señal contraria
+          : (isVeggieCat || isVeggieDish) ? "VEGETARIAN"  // categoría veggie gana sobre ingredientes inferidos
+          : inferredDiet === "OMNIVORE" ? "OMNIVORE"
+          : inferredDiet === "VEGETARIAN" && dishDietFromAI === "VEGAN" ? "VEGETARIAN"
+          : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI
           : (inferredDiet ?? "OMNIVORE");
         const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null);
         const leafOverride = detectDishLeafOverride(dish.name);
@@ -1040,7 +1040,7 @@ export async function importFromProspecto(params: {
     const category = createdCategories[catIdx]
     const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName)
     const isVeganCat = /\bvegan[ao]?\b|plant.based/i.test(catName)
-    const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie|verde\b|sin carne/i.test(catName)
+    const isVeggieCat = !isVeganCat && /\bveget[ae]rian[ao]?\b|veggie\b|verde\b|sin carne|solo vegetal|plant/i.test(catName)
     catDishes.forEach((dish, j) => {
       const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" })
       const dishDietFromAI = (dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"
@@ -1050,10 +1050,10 @@ export async function importFromProspecto(params: {
       // Siempre inferir desde ingredientes — puede corregir al AI si detecta carne/lácteos
       const inferredDiet = inferDietFromIngredients(dish.name, dish.description)
       const dishDiet = isDrinkCat ? "OMNIVORE"
-        : inferredDiet === "OMNIVORE" ? "OMNIVORE"  // carne detectada → siempre OMNIVORE
         : (isVeganCat || isVeganDish) ? "VEGAN"
-        : (isVeggieCat || isVeggieDish) ? "VEGETARIAN"
-        : inferredDiet === "VEGETARIAN" && dishDietFromAI === "VEGAN" ? "VEGETARIAN"  // lácteos detectados, AI dijo VEGAN → bajar a VEGETARIAN
+        : (isVeggieCat || isVeggieDish) ? "VEGETARIAN"  // categoría veggie gana sobre ingredientes inferidos
+        : inferredDiet === "OMNIVORE" ? "OMNIVORE"
+        : inferredDiet === "VEGETARIAN" && dishDietFromAI === "VEGAN" ? "VEGETARIAN"
         : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI
         : (inferredDiet ?? "OMNIVORE")
       const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null)
