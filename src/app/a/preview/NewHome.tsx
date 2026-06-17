@@ -662,7 +662,7 @@ export default function NewHome({
   const pillStyle = (active: boolean, type: PillType = 'default') => {
     const ac = pillActiveColor(type)
     return {
-      flex: 1, padding: '7px 4px', borderRadius: 999 as const, fontSize: 13, fontWeight: 500,
+      flex: 1, padding: '9px 4px', borderRadius: 999 as const, fontSize: 14, fontWeight: 500,
       cursor: 'pointer' as const, whiteSpace: 'nowrap' as const,
       textAlign: 'center' as const, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
