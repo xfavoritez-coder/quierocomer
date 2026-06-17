@@ -1,0 +1,175 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
+import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
+import { isExcludedCategory, inferMealTime, inferDishType, getParentCategory } from '@/app/a/lib/categories'
+import type { FeedDish } from '@/app/a/types'
+
+function normStr(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const q = searchParams.get('q')?.trim() || ''
+    const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null
+    const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null
+    const maxKm = searchParams.get('maxKm') ? parseFloat(searchParams.get('maxKm')!) : 30
+    const diet = searchParams.get('diet') || 'all'
+    const meal = searchParams.get('meal') || 'all'
+    const categoriesParam = searchParams.get('categories')?.split(',').filter(Boolean) || []
+    const categoryPill = searchParams.get('categoryPill') || null
+    const locationName = searchParams.get('locationName') || null
+
+    // Build WHERE conditions dynamically
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`d."isActive" = true`,
+      Prisma.sql`d."deletedAt" IS NULL`,
+      Prisma.sql`d."hiddenFromFeed" = false`,
+      Prisma.sql`array_length(d.photos, 1) > 0`,
+      Prisma.sql`d.price > 0`,
+      Prisma.sql`c."dishType" != 'drink'`,
+      Prisma.sql`r."isActive" = true`,
+      Prisma.sql`r."isDemo" = false`,
+      Prisma.sql`r.lat IS NOT NULL`,
+      Prisma.sql`r.lng IS NOT NULL`,
+      Prisma.sql`r."googleMapsUrl" IS NOT NULL`,
+      Prisma.sql`r."googleRating" IS NOT NULL`,
+    ]
+
+    // Text search — accent-insensitive via both raw and normalized query
+    if (q) {
+      const qLike = `%${q}%`
+      const qNorm = normStr(q)
+      const qNormLike = `%${qNorm}%`
+      if (qNorm === q) {
+        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike})`)
+      } else {
+        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike} OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike})`)
+      }
+    }
+
+    // Diet filter
+    if (diet === 'VEGAN') {
+      conditions.push(Prisma.sql`d."dishDiet" = 'VEGAN'`)
+    } else if (diet === 'VEGETARIAN') {
+      conditions.push(Prisma.sql`d."dishDiet" IN ('VEGAN', 'VEGETARIAN')`)
+    }
+
+    // Location bounding box (server pre-filter — client refines with exact distance)
+    if (lat !== null && lng !== null && maxKm < 30) {
+      const latOffset = maxKm / 111.0
+      const lngOffset = maxKm / (111.0 * Math.cos(lat * Math.PI / 180))
+      const latMin = lat - latOffset
+      const latMax = lat + latOffset
+      const lngMin = lng - lngOffset
+      const lngMax = lng + lngOffset
+      conditions.push(Prisma.sql`r.lat BETWEEN ${latMin} AND ${latMax}`)
+      conditions.push(Prisma.sql`r.lng BETWEEN ${lngMin} AND ${lngMax}`)
+    }
+
+    // Location name filter (commune/city)
+    if (locationName) {
+      const locNorm = `%${normStr(locationName)}%`
+      conditions.push(Prisma.sql`lower(unaccent(r.address)) LIKE ${locNorm}`)
+    }
+
+    const whereClause = Prisma.join(conditions, ' AND ')
+
+    const rows = await prisma.$queryRaw<any[]>`
+      SELECT
+        d.id, d.name, d.description, d.price, d."discountPrice",
+        d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
+        d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt",
+        c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
+        r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
+        r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory",
+        r."googleRating", r."googleRatingCount", r."googleMapsUrl",
+        fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
+      FROM "Dish" d
+      JOIN "Category" c ON c.id = d."categoryId"
+      JOIN "Restaurant" r ON r.id = d."restaurantId"
+      LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
+      WHERE ${whereClause}
+      ORDER BY d."isHero" DESC, COALESCE(fs."popularityScore", 0) DESC, d."createdAt" DESC
+      LIMIT 600
+    `
+
+    // Map rows to FeedDish (same logic as _getFeedDishes)
+    let feedDishes: FeedDish[] = []
+    for (const d of rows) {
+      const catName = d.categoryName as string
+      if (isExcludedCategory(catName)) continue
+      const categoriaNorm = resolveDishLeaf(
+        d.name as string, catName, d.leafOverride ?? null,
+        d.primaryCategory ?? null, d.description ?? null, d.catNormOverride ?? null
+      )
+      const categoriaParent = getParentCategory(categoriaNorm)
+      const cuisineTag = (d.cuisineTag as string | null) ?? null
+      const photos = Array.isArray(d.photos) ? d.photos : []
+      feedDishes.push({
+        id: d.id,
+        nombre: d.name,
+        descripcion: d.description,
+        precio: Number(d.price),
+        precioDescuento: d.discountPrice != null ? Number(d.discountPrice) : null,
+        fotoUrl: photos[0] ?? null,
+        categoria: catName,
+        categoriaNorm,
+        categoriaParent,
+        categoriaTipo: inferDishType(categoriaNorm, d.dishType),
+        sabores: Array.isArray(d.flavorTags) ? d.flavorTags : [],
+        dieta: {
+          tipo: d.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',
+          sinGluten: d.isGlutenFree,
+          sinLactosa: d.isLactoseFree,
+          sinSoja: d.isSoyFree,
+          contieneFrutosSecos: d.containsNuts,
+          esPicante: d.isSpicy,
+        },
+        restauranteId: d.restaurantId,
+        restaurante: d.restaurantName,
+        restauranteSlug: d.restaurantSlug,
+        restauranteLogo: d.logoUrl,
+        restauranteDireccion: d.address,
+        restauranteLat: d.lat != null ? Number(d.lat) : null,
+        restauranteLng: d.lng != null ? Number(d.lng) : null,
+        enOferta: d.discountPrice != null && Number(d.discountPrice) < Number(d.price),
+        mealTime: inferMealTime(categoriaNorm),
+        tags: Array.isArray(d.tags) ? d.tags : [],
+        isHero: d.isHero,
+        googleRating: d.googleRating != null ? Number(d.googleRating) : null,
+        googleRatingCount: d.googleRatingCount != null ? Number(d.googleRatingCount) : null,
+        googleMapsUrl: d.googleMapsUrl ?? null,
+        avgRating: d.avgRating != null ? Number(d.avgRating) : null,
+        ratingCount: Number(d.ratingCount ?? 0),
+        commentCount: Number(d.commentCount ?? 0),
+        popularityScore: Number(d.popularityScore ?? 0),
+        cuisineTag,
+        createdAt: d.createdAt ? new Date(d.createdAt).toISOString() : null,
+      })
+    }
+
+    // JS-level filters (categoriaNorm-based, can't do in SQL)
+    const matchesCategory = (d: FeedDish, cat: string) =>
+      d.categoriaParent === cat || d.categoriaNorm === cat || d.cuisineTag === cat
+
+    if (categoryPill) {
+      feedDishes = feedDishes.filter(d => matchesCategory(d, categoryPill))
+    } else if (categoriesParam.length > 0) {
+      feedDishes = feedDishes.filter(d => categoriesParam.some(cat => matchesCategory(d, cat)))
+    }
+
+    if (meal !== 'all') {
+      feedDishes = feedDishes.filter(d => d.mealTime === meal)
+    }
+
+    return NextResponse.json(feedDishes, {
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  } catch (e) {
+    console.error('[/api/dishes/search]', e)
+    return NextResponse.json([], { status: 500 })
+  }
+}

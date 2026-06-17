@@ -46,7 +46,7 @@ export function resolveDishLeaf(
 
 /** Trae platos para el feed: hasta 5 por restaurante usando una sola query SQL */
 async function _getFeedDishes(): Promise<FeedDish[]> {
-  const MAX_PER = 8
+  const MAX_PER = 5
 
   // Una sola query con ROW_NUMBER() — eficiente con cualquier cantidad de restaurantes
   const rows = await prisma.$queryRaw<any[]>`
@@ -61,10 +61,11 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
     FROM (
       SELECT d.id,
-        ROW_NUMBER() OVER (PARTITION BY d."restaurantId" ORDER BY d."isHero" DESC, d."createdAt" DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY d."restaurantId" ORDER BY d."isHero" DESC, COALESCE(fs2."popularityScore", 0) DESC, d."createdAt" DESC) AS rn
       FROM "Dish" d
       JOIN "Category" c ON c.id = d."categoryId"
       JOIN "Restaurant" r ON r.id = d."restaurantId"
+      LEFT JOIN "FeedDishStats" fs2 ON fs2."dishId" = d.id
       WHERE d."isActive" = true
         AND d."deletedAt" IS NULL
         AND d."hiddenFromFeed" = false
@@ -147,6 +148,29 @@ export const getFeedDishes = unstable_cache(
   _getFeedDishes,
   ['feed-dishes'],
   { revalidate: 300 }, // 5 minutes
+)
+
+/** Cached total dish count — revalidates every 12 hours via cron */
+export const getCachedDishCount = unstable_cache(
+  async () => {
+    const count = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) AS count
+      FROM "Dish" d
+      JOIN "Category" c ON c.id = d."categoryId"
+      JOIN "Restaurant" r ON r.id = d."restaurantId"
+      WHERE d."isActive" = true
+        AND d."deletedAt" IS NULL
+        AND d."hiddenFromFeed" = false
+        AND array_length(d.photos, 1) > 0
+        AND d.price > 0
+        AND c."dishType" != 'drink'
+        AND r."isActive" = true
+        AND r."isDemo" = false
+    `
+    return Number(count[0].count)
+  },
+  ['dish-count'],
+  { revalidate: 43200, tags: ['dish-count'] }, // 12 hours
 )
 
 /** Fetch specific dishes by ID (for vector-scored dishes missing from the cache) */

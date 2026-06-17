@@ -70,6 +70,7 @@ export default function NewHome({
   tasteData,
   userDiet,
   initialDishId,
+  totalDishCount,
 }: {
   dishes: FeedDish[]
   categoryScores: Record<string, number>
@@ -79,6 +80,7 @@ export default function NewHome({
   tasteData?: { antojoSessionDate: string | null; antojoDishIds: string[]; antojoRejectIds: string[]; tasteEmbeddingsCount: number; hasGustoVector: boolean }
   userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
   initialDishId?: string
+  totalDishCount?: number
 }) {
   const [view, setView] = useState<View>('feed')
   const [isDark, setIsDark] = useState(false)
@@ -144,6 +146,10 @@ export default function NewHome({
   const [draftDiet, setDraftDiet] = useState(filterDiet)
   const [draftCategories, setDraftCategories] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
+  // Server-side search/filter results — null = browse mode (use initial dishes prop)
+  const [serverDishes, setServerDishes] = useState<FeedDish[] | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const searchFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [visibleCount, setVisibleCount] = useState(20)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
@@ -385,13 +391,6 @@ export default function NewHome({
 
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  // Resultados de búsqueda — también 100% cliente
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return null
-    const q = normStr(searchQuery)
-    return dishSearchIndex.filter(d => d._search.includes(q))
-  }, [searchQuery, dishSearchIndex])
-
   const executeSearch = useCallback((query: string) => {
     const trimmed = query.trim()
     setSearchQuery(trimmed)
@@ -402,25 +401,89 @@ export default function NewHome({
     }
   }, [])
 
+  // Server-side fetch — triggered by search, category pill, diet, location, distance filter
+  const fetchServerDishes = useCallback(async (params: {
+    q?: string; categoryPill?: string | null; diet?: string; meal?: string
+    maxKm?: number; categories?: string[]; locationName?: string | null
+    lat?: number | null; lng?: number | null
+  }) => {
+    setIsSearching(true)
+    try {
+      const url = new URLSearchParams()
+      if (params.q) url.set('q', params.q)
+      if (params.categoryPill) url.set('categoryPill', params.categoryPill)
+      if (params.diet && params.diet !== 'all') url.set('diet', params.diet)
+      if (params.meal && params.meal !== 'all') url.set('meal', params.meal)
+      if (params.maxKm && params.maxKm < 30) url.set('maxKm', String(params.maxKm))
+      if (params.categories?.length) url.set('categories', params.categories.join(','))
+      if (params.locationName) url.set('locationName', params.locationName)
+      if (params.lat != null) url.set('lat', String(params.lat))
+      if (params.lng != null) url.set('lng', String(params.lng))
+      const res = await fetch(`/api/dishes/search?${url}`)
+      if (!res.ok) throw new Error()
+      const data: FeedDish[] = await res.json()
+      setServerDishes(data)
+    } catch {
+      // keep current results on error
+    } finally {
+      setIsSearching(false)
+    }
+  }, [])
+
+  // Determine if any filter requires a server fetch
+  const needsServerFetch = !!(
+    searchQuery || activeCategory || filterDiet !== 'all' ||
+    filterCategories.size > 0 || locationName ||
+    (filterMaxKm < 30 && userLocation)
+  )
+
+  useEffect(() => {
+    if (!needsServerFetch) {
+      setServerDishes(null)
+      return
+    }
+    // Debounce for search typing; immediate for other filters
+    const delay = searchQuery && !activeCategory && filterDiet === 'all' && filterCategories.size === 0 ? 350 : 0
+    if (searchFetchRef.current) clearTimeout(searchFetchRef.current)
+    searchFetchRef.current = setTimeout(() => {
+      fetchServerDishes({
+        q: searchQuery,
+        categoryPill: activeCategory,
+        diet: filterDiet,
+        meal: filterMeal,
+        maxKm: filterMaxKm,
+        categories: [...filterCategories],
+        locationName,
+        lat: userLocation?.lat,
+        lng: userLocation?.lng,
+      })
+    }, delay)
+    return () => { if (searchFetchRef.current) clearTimeout(searchFetchRef.current) }
+  }, [searchQuery, activeCategory, filterDiet, filterCategories, filterMeal, filterMaxKm, locationName, userLocation, needsServerFetch, fetchServerDishes])
+
   // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {
-    // Base: resultados de búsqueda si hay query, si no todos los platos con foto
-    let filtered = (searchResults && searchQuery.trim() ? searchResults : dishes).filter(d => d.fotoUrl)
+    // Base: server results when filtered/searching, initial dishes when browsing
+    let filtered = (serverDishes ?? dishes).filter(d => d.fotoUrl)
 
-    // Location filter
-    if (locationName) {
-      const locNorm = locationName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      const inCommune = filtered.filter(d => {
-        if (!d.restauranteDireccion) return false
-        const addr = d.restauranteDireccion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        return addr.includes(locNorm)
-      })
-      if (inCommune.length > 0) filtered = inCommune
+    // Client-side category/diet/meal filters on initial dishes (when not in server-fetch mode)
+    if (!serverDishes) {
+      // Category filter
+      const matchesCategory = (d: (typeof filtered)[0], cat: string) =>
+        (d.categoriaParent ?? d.categoriaNorm) === cat || d.categoriaNorm === cat || d.cuisineTag === cat
+      if (activeCategory) filtered = filtered.filter(d => matchesCategory(d, activeCategory))
+      else if (filterCategories.size > 0) filtered = filtered.filter(d => [...filterCategories].some(cat => matchesCategory(d, cat)))
+      if (filterDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
+      else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
     }
-    // Distance filter — uses slider value (filterMaxKm) or GPS auto
+
+    // Meal filter — always client-side (instant, works on both browse and server results)
+    if (filterMeal !== 'all') filtered = filtered.filter(d => d.mealTime === filterMeal)
+
+    // Distance filter + sort — client-side with precise formula
     if (userLocation) {
       const maxDist = filterMaxKm
-      const noiseScale = Math.max(0.5, maxDist * 0.25) // ruido = 25% del radio, mín 0.5km
+      const noiseScale = Math.max(0.5, maxDist * 0.25)
       const withDist = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
         .map(d => {
@@ -433,33 +496,7 @@ export default function NewHome({
       filtered = withDist.map(x => x.dish)
     }
 
-    // Category filter — activeCategory (chips del header) o filterCategories (panel de filtros)
-    // Dos dimensiones: leaf/tipo del plato Y cocina de la sección.
-    // "Peruana" matchea platos con categoriaNorm="Peruana" O cuisineTag="Peruana".
-    // Eso permite que Pollo Salteado de Oceanika (cuisineTag=Peruana, leaf=Pollo y alitas)
-    // aparezca tanto al filtrar "Pollo" como al filtrar "Peruana".
-    const matchesCategory = (d: (typeof filtered)[0], cat: string) => {
-      const parent = d.categoriaParent ?? d.categoriaNorm
-      return parent === cat || d.categoriaNorm === cat || d.cuisineTag === cat
-    }
-    if (activeCategory) {
-      filtered = filtered.filter(d => matchesCategory(d, activeCategory))
-    } else if (filterCategories.size > 0) {
-      filtered = filtered.filter(d => [...filterCategories].some(cat => matchesCategory(d, cat)))
-    }
-
-
-
-    // Meal time filter (from filter dropdown)
-    if (filterMeal !== 'all') {
-      filtered = filtered.filter(d => d.mealTime === filterMeal)
-    }
-
-    // Diet filter
-    if (filterDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
-    else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
-
-    // Sort based on filter selection
+    // Sort
     let combined: FeedDish[]
     if (filterSort === 'price-asc') {
       combined = [...filtered].sort((a, b) => (a.precioDescuento ?? a.precio) - (b.precioDescuento ?? b.precio))
@@ -470,7 +507,6 @@ export default function NewHome({
     } else if (quickPopular) {
       combined = [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
     } else if (quickNearby && userLocation) {
-      // distance sort — already filtered by distance above, just ensure distance order
       combined = filtered
     } else {
       // Default: vector rank + category/keyword scoring
@@ -516,7 +552,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, locationName, userLocation, searchQuery, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, searchResults, shuffleSeed])
+  }, [serverDishes, dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
 
   // Counts por parent category (sobre el pool completo con foto) para mostrar en el panel de filtros
   const categoryCountMap = useMemo(() => {
@@ -529,10 +565,9 @@ export default function NewHome({
     return map
   }, [dishes])
 
-  // Preview count para el botón "Guardar cambios" — calcula platos con los draft filters
+  // Preview count para el botón "Guardar cambios" — aprox sobre resultado actual
   const draftDishCount = useMemo(() => {
-    // Misma base que feedDishes: si hay búsqueda activa, partir de searchResults
-    let filtered = (searchResults && searchQuery.trim() ? searchResults : dishes).filter(d => d.fotoUrl)
+    let filtered = (serverDishes ?? dishes).filter(d => d.fotoUrl)
     if (userLocation) {
       filtered = filtered
         .filter(d => d.restauranteLat && d.restauranteLng)
@@ -543,7 +578,7 @@ export default function NewHome({
     else if (draftDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
     if (draftCategories.size > 0) filtered = filtered.filter(d => draftCategories.has(d.categoriaNorm))
     return filtered.length
-  }, [dishes, searchResults, searchQuery, userLocation, draftMaxKm, draftMeal, draftDiet, draftCategories])
+  }, [dishes, serverDishes, userLocation, draftMaxKm, draftMeal, draftDiet, draftCategories])
 
   // Infinite scroll — IntersectionObserver sobre sentinel al final del feed
   useEffect(() => {
@@ -1316,7 +1351,7 @@ export default function NewHome({
               width: '100%', height: 52, border: 'none', borderRadius: 16,
               background: '#F4A623', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
             }}>
-              Ver {draftDishCount} {draftDishCount === 1 ? 'plato' : 'platos'}
+              {isSearching ? 'Buscando...' : `Ver ${draftDishCount} ${draftDishCount === 1 ? 'plato' : 'platos'}`}
             </button>
           </div>
           </div>{/* end scrollable content */}
@@ -1537,6 +1572,17 @@ export default function NewHome({
                   {locationName || gpsLabel || 'Ubicación'}
                 </button>
               )}
+              {/* Dish count — total from DB in browse mode, result count when filtering */}
+              <span style={{
+                fontSize: 12, color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.25)',
+                marginLeft: isDesktop ? 0 : 0,
+              }}>
+                {serverDishes
+                  ? `${feedDishes.length.toLocaleString('es-CL')} platos`
+                  : totalDishCount
+                    ? `+${totalDishCount.toLocaleString('es-CL')} platos`
+                    : null}
+              </span>
               <div style={{ flex: 1 }} />
               {isDesktop && (
                 <button onClick={() => setFilterOpen(true)} style={{
@@ -1557,12 +1603,14 @@ export default function NewHome({
           {feedDishes.length > 0 ? (
             <>
               <div style={{ marginTop: -6 }} />
+              <div style={{ opacity: isSearching ? 0.45 : 1, transition: 'opacity 0.2s' }}>
               <MasonryGrid
                 dishes={feedDishes.slice(0, visibleCount)}
                 onDishTap={handleDishTap}
                 onCategoryClick={cat => setActiveCategory(cat)}
                 userLocation={userLocation}
               />
+              </div>
               {/* Sentinel — IntersectionObserver lo detecta para cargar más */}
               <div ref={sentinelRef} style={{ height: 1 }} />
               {visibleCount < feedDishes.length && (
@@ -1589,6 +1637,7 @@ export default function NewHome({
                 setActiveCategory(null)
                 setFilterCategories(new Set())
                 setFilterDiet('all')
+                setServerDishes(null)
                 window.history.replaceState({}, '', '/')
               }} style={{
                 background: 'none', border: 'none', cursor: 'pointer',

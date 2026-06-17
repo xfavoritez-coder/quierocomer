@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { getFeedDishes } from './a/lib/feed-queries'
+import { getFeedDishes, getCachedDishCount } from './a/lib/feed-queries'
 import NewHome from './a/preview/NewHome'
 import FeedLayout from './a/layout'
 
@@ -22,10 +22,10 @@ export default async function HomePage() {
   if (newFingerprint) {
     // First-time user: create record lazily (non-blocking) and render immediately with empty scores
     prisma.feedUser.create({ data: { fingerprint: newFingerprint, onboardingDone: true } }).catch(() => {})
-    const dishes = await getFeedDishes()
+    const [dishes, totalDishCount] = await Promise.all([getFeedDishes(), getCachedDishCount()])
     return (
       <FeedLayout>
-        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} />
+        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} totalDishCount={totalDishCount} />
       </FeedLayout>
     )
   }
@@ -33,20 +33,21 @@ export default async function HomePage() {
   const fingerprint = cookieStore.get('qc_feed_user')?.value
   if (!fingerprint) {
     // Cookie missing (cleared manually or very old browser) — create one via API as fallback
-    const dishes = await getFeedDishes()
+    const [dishes, totalDishCount] = await Promise.all([getFeedDishes(), getCachedDishCount()])
     return (
       <FeedLayout>
-        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} />
+        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} totalDishCount={totalDishCount} />
       </FeedLayout>
     )
   }
 
-  const [user, dishes] = await Promise.all([
+  const [user, dishes, totalDishCount] = await Promise.all([
     prisma.feedUser.findUnique({
       where: { fingerprint },
       select: { id: true, categoryScores: true, keywordScores: true, totalInteractions: true },
     }),
     getFeedDishes(),
+    getCachedDishCount(),
   ])
 
   if (!user) {
@@ -63,6 +64,7 @@ export default async function HomePage() {
         categoryScores={(user?.categoryScores as Record<string, number>) ?? {}}
         keywordScores={(user?.keywordScores as Record<string, number>) ?? {}}
         totalInteractions={user?.totalInteractions ?? 0}
+        totalDishCount={totalDishCount}
       />
     </FeedLayout>
   )
