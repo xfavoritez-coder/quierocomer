@@ -68,6 +68,9 @@ ${VALID_DISH_TYPES.join(", ")}
 Reglas dishType:
 - Si es un combo/pack con varios productos → incluye "combo" MÁS los tipos que contiene (ej: ["combo","hamburguesa","papas fritas"])
 - Bebidas: "café" (espresso, americano, cortado, café negro), "café con leche" (latte, cappuccino, flat white, macchiato), "té" (cualquier té o infusión), "jugo" (jugos naturales o en caja), "batido" (smoothie, milkshake, malteada), "bebida" (sodas, agua, bebidas embotelladas), "alcohol" (cerveza, vino, pisco, coctel, destilados), "mocktail" (coctel sin alcohol).
+- Bebidas → cuisine siempre [].
+- Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
+- Bebidas → diet: café negro/té/jugo/bebida/alcohol/mocktail → VEGAN. café con leche/batido con leche/latte/cappuccino → VEGETARIAN.
 - "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
