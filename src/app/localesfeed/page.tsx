@@ -1344,6 +1344,7 @@ function CartaModal({ slug, name, onClose }: {
   const [batchDiets, setBatchDiets] = useState<Record<string, string>>({})  // catName → batch fill diet
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
   const [hoverDish, setHoverDish] = useState<{ name: string; description: string | null; photo: string; x: number; y: number } | null>(null)
 
@@ -1385,8 +1386,9 @@ function CartaModal({ slug, name, onClose }: {
     })
     if (!dishesToSave.length && !dishDietChanges.length) { onClose(); return }
     setSaving(true)
+    setSaveError(null)
     try {
-      await fetch('/api/mapalocales/carta/remap', {
+      const res = await fetch('/api/mapalocales/carta/remap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1394,17 +1396,28 @@ function CartaModal({ slug, name, onClose }: {
           dishDiets: dishDietChanges.map(([dishId, diet]) => ({ dishId, diet })),
         }),
       })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error((errData as any).error ?? `Error ${res.status}`)
+      }
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-      // Reload data so UI reflects saved state
-      const refreshed: CartaData = await fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`).then(r => r.json())
-      setData(refreshed)
-      initFromData(refreshed)
-      setBatchLeafs({})
-      setBatchDiets({})
+      setTimeout(() => setSaved(false), 2500)
+    } catch (e: any) {
+      setSaveError(e.message ?? 'Error guardando')
+      return
     } finally {
       setSaving(false)
     }
+    // Reload data in background — non-blocking para no dejar el botón pegado
+    fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
+      .then(r => r.json())
+      .then((refreshed: CartaData) => {
+        setData(refreshed)
+        initFromData(refreshed)
+        setBatchLeafs({})
+        setBatchDiets({})
+      })
+      .catch(() => {/* reload falló silenciosamente — cambios ya guardados */})
   }
 
   const allDishesFlat = data?.categories.flatMap(c => c.dishes) ?? []
@@ -1523,11 +1536,10 @@ function CartaModal({ slug, name, onClose }: {
                           if (parent) {
                             setDishParents(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = parent; return next })
                             const leaves = PARENT_LEAVES_MAP[parent] ?? []
-                            if (leaves.length === 1) {
-                              setBatchLeafs(m => ({ ...m, [cat.categoryName]: leaves[0] }))
-                              setDishLeafs(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = leaves[0]; return next })
-                            } else {
-                              setBatchLeafs(m => ({ ...m, [cat.categoryName]: '' }))
+                            const firstLeaf = leaves[0] ?? ''
+                            setBatchLeafs(m => ({ ...m, [cat.categoryName]: firstLeaf }))
+                            if (firstLeaf) {
+                              setDishLeafs(prev => { const next = { ...prev }; for (const d of cat.dishes) next[d.id] = firstLeaf; return next })
                             }
                           }
                         }}
@@ -1605,11 +1617,8 @@ function CartaModal({ slug, name, onClose }: {
                                 const parent = e.target.value
                                 setDishParents(m => ({ ...m, [dish.id]: parent }))
                                 const leaves = parent ? (PARENT_LEAVES_MAP[parent] ?? []) : []
-                                if (leaves.length === 1) {
-                                  setDishLeafs(m => ({ ...m, [dish.id]: leaves[0] }))
-                                } else {
-                                  setDishLeafs(m => ({ ...m, [dish.id]: '' }))
-                                }
+                                const firstLeaf = leaves[0] ?? ''
+                                setDishLeafs(m => ({ ...m, [dish.id]: firstLeaf }))
                               }}
                               style={{
                                 fontSize: 12, background: '#0d0d0d',
@@ -1667,6 +1676,7 @@ function CartaModal({ slug, name, onClose }: {
             {/* Footer */}
             <div style={{ display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #1a1a1a', justifyContent: 'flex-end', alignItems: 'center' }}>
               {saved && <span style={{ fontSize: 14, color: '#22c55e' }}>✓ Guardado</span>}
+              {saveError && <span style={{ fontSize: 13, color: '#ef4444' }}>Error: {saveError}</span>}
               <button onClick={onClose} style={{ fontSize: 14, padding: '9px 20px', borderRadius: 8, background: 'none', border: '1px solid #333', color: '#666', cursor: 'pointer' }}>
                 Cerrar
               </button>

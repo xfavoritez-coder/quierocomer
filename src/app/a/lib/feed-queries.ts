@@ -156,28 +156,6 @@ export const getFeedDishes = unstable_cache(
   { revalidate: 300, tags: ['feed-dishes'] }, // 5 minutes
 )
 
-/** Cached total dish count — revalidates every 12 hours via cron */
-export const getCachedDishCount = unstable_cache(
-  async () => {
-    const count = await prisma.$queryRaw<[{ count: bigint }]>`
-      SELECT COUNT(*) AS count
-      FROM "Dish" d
-      JOIN "Category" c ON c.id = d."categoryId"
-      JOIN "Restaurant" r ON r.id = d."restaurantId"
-      WHERE d."isActive" = true
-        AND d."deletedAt" IS NULL
-        AND d."hiddenFromFeed" = false
-        AND array_length(d.photos, 1) > 0
-        AND d.price > 0
-        AND c."dishType" != 'drink'
-        AND r."isActive" = true
-        AND r."isDemo" = false
-    `
-    return Number(count[0].count)
-  },
-  ['dish-count'],
-  { revalidate: 43200, tags: ['dish-count'] }, // 12 hours
-)
 
 /** Cached category count map — full DB, revalidates every 12 hours via cron */
 export const getCachedCategoryCountMap = unstable_cache(

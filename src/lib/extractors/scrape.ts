@@ -431,7 +431,7 @@ REGLAS IMPORTANTES:
 - Fotos: busca URLs de imágenes en [DISH PHOTOS FROM PAGE DATA] y asócialas al plato correspondiente por posición
 - Las URLs de fotos deben ser absolutas (https://gourmedia-content.b-cdn.net/...)
 - NO incluyas bebidas, tragos, vinos, cervezas ni bebestibles
-- diet: "VEGAN" si vegano, "VEGETARIAN" si vegetariano, "OMNIVORE" si no
+- diet: OMNIVORE por defecto. VEGETARIAN solo si el plato claramente no tiene carne/ave/pescado. VEGAN solo si no tiene ningún ingrediente animal. Hamburguesas, pollo, carnes, mariscos, sushi → OMNIVORE aunque tengan queso o vegetales.
 - SOLO JSON, sin texto adicional.`);
 
       const gourParsed = parseJSON(gourResult);
@@ -564,7 +564,7 @@ REGLAS IMPORTANTES:
 - Fotos: busca URLs de imágenes en [IMAGES FOUND ON PAGE] o [DISH PHOTOS FROM PAGE DATA] y asócialas al plato correspondiente por nombre o posición
 - Las URLs de fotos deben ser absolutas. Si son relativas, añade ${baseUrl} al inicio
 - NO dejes price en 0 si hay un precio visible en la página
-- diet: "VEGAN" si tiene marcas veganas (🌿/V/vegan), "VEGETARIAN" si vegetariano, "OMNIVORE" si no hay indicador
+- diet: OMNIVORE por defecto. VEGETARIAN solo si el plato claramente no tiene carne/ave/pescado/mariscos. VEGAN solo si no tiene ningún ingrediente animal. Hamburguesas, pollo, carnes, mariscos, sushi, hot dogs → OMNIVORE aunque tengan queso o vegetales.
 - isSpicy: true si tiene marcas de picante (🌶️/spicy/picante)
 - SOLO JSON, sin texto adicional.${pdfHint}`);
 

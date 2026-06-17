@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { getFeedDishes, getCachedDishCount, getCachedCategoryCountMap } from './a/lib/feed-queries'
+import { getFeedDishes, getCachedCategoryCountMap } from './a/lib/feed-queries'
 import NewHome from './a/preview/NewHome'
 import FeedLayout from './a/layout'
 
@@ -22,10 +22,10 @@ export default async function HomePage() {
   if (newFingerprint) {
     // First-time user: create record lazily (non-blocking) and render immediately with empty scores
     prisma.feedUser.create({ data: { fingerprint: newFingerprint, onboardingDone: true } }).catch(() => {})
-    const [dishes, totalDishCount, categoryCountMap] = await Promise.all([getFeedDishes(), getCachedDishCount(), getCachedCategoryCountMap()])
+    const [dishes, categoryCountMap] = await Promise.all([getFeedDishes(), getCachedCategoryCountMap()])
     return (
       <FeedLayout>
-        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} totalDishCount={totalDishCount} categoryCountMap={categoryCountMap} />
+        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} categoryCountMap={categoryCountMap} />
       </FeedLayout>
     )
   }
@@ -33,21 +33,20 @@ export default async function HomePage() {
   const fingerprint = cookieStore.get('qc_feed_user')?.value
   if (!fingerprint) {
     // Cookie missing (cleared manually or very old browser) — create one via API as fallback
-    const [dishes, totalDishCount, categoryCountMap] = await Promise.all([getFeedDishes(), getCachedDishCount(), getCachedCategoryCountMap()])
+    const [dishes, categoryCountMap] = await Promise.all([getFeedDishes(), getCachedCategoryCountMap()])
     return (
       <FeedLayout>
-        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} totalDishCount={totalDishCount} categoryCountMap={categoryCountMap} />
+        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} categoryCountMap={categoryCountMap} />
       </FeedLayout>
     )
   }
 
-  const [user, dishes, totalDishCount, categoryCountMap] = await Promise.all([
+  const [user, dishes, categoryCountMap] = await Promise.all([
     prisma.feedUser.findUnique({
       where: { fingerprint },
       select: { id: true, categoryScores: true, keywordScores: true, totalInteractions: true },
     }),
     getFeedDishes(),
-    getCachedDishCount(),
     getCachedCategoryCountMap(),
   ])
 
@@ -65,7 +64,6 @@ export default async function HomePage() {
         categoryScores={(user?.categoryScores as Record<string, number>) ?? {}}
         keywordScores={(user?.keywordScores as Record<string, number>) ?? {}}
         totalInteractions={user?.totalInteractions ?? 0}
-        totalDishCount={totalDishCount}
         categoryCountMap={categoryCountMap}
       />
     </FeedLayout>

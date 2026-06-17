@@ -70,7 +70,6 @@ export default function NewHome({
   tasteData,
   userDiet,
   initialDishId,
-  totalDishCount,
   categoryCountMap: categoryCountMapProp,
 }: {
   dishes: FeedDish[]
@@ -81,7 +80,6 @@ export default function NewHome({
   tasteData?: { antojoSessionDate: string | null; antojoDishIds: string[]; antojoRejectIds: string[]; tasteEmbeddingsCount: number; hasGustoVector: boolean }
   userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
   initialDishId?: string
-  totalDishCount?: number
   categoryCountMap?: Record<string, number>
 }) {
   const [view, setView] = useState<View>('feed')
@@ -164,6 +162,14 @@ export default function NewHome({
   const lastScrollY = useRef(0)
   const scrollTicking = useRef(false)
   const [locationQuery, setLocationQuery] = useState('')
+  const [showDistancePicker, setShowDistancePicker] = useState(false)
+  const distanceBadgeRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!showDistancePicker) return
+    const close = () => setShowDistancePicker(false)
+    document.addEventListener('mousedown', close, true)
+    return () => document.removeEventListener('mousedown', close, true)
+  }, [showDistancePicker])
   const [shuffleSeed, setShuffleSeed] = useState(() => Math.random())
 
   // Profile for DishModal — refreshable
@@ -768,7 +774,7 @@ export default function NewHome({
               }}
             />
             {searchInput && (
-              <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
+              <button type="button" onClick={() => { setSearchInput(''); executeSearch('') }} style={{
                 position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
                 background: 'none', border: 'none', cursor: 'pointer', padding: 2,
                 color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
@@ -910,7 +916,7 @@ export default function NewHome({
             }}
           />
           {searchInput && (
-            <button onClick={() => { setSearchInput(''); executeSearch(''); setShowSuggestions(false) }} style={{
+            <button type="button" onClick={() => { setSearchInput(''); executeSearch(''); setShowSuggestions(false) }} style={{
               position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
               background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
             }}>
@@ -1021,8 +1027,8 @@ export default function NewHome({
           </div>
         </div>
 
-        {/* Row 4: Ubicación (izq) + platos encontrados (der) */}
-        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Row 4: Ubicación + badge distancia en la misma línea */}
+        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
           <button onClick={() => setLocationModalOpen(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -1040,17 +1046,75 @@ export default function NewHome({
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
-          <span style={{
-            fontSize: 14, fontWeight: 400,
-            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
-            flexShrink: 0, paddingLeft: 8,
-          }}>
-            {(needsServerFetch || filterMeal !== 'all')
-              ? `${feedDishes.length.toLocaleString('es-CL')} platos`
-              : totalDishCount
-                ? `+${totalDishCount.toLocaleString('es-CL')} platos`
-                : `${feedDishes.length.toLocaleString('es-CL')} platos`}
-          </span>
+          {/* Badge distancia — pegado a la derecha de la dirección, siempre visible */}
+          {userLocation && (
+            <div style={{ flexShrink: 0 }}>
+              <button
+                ref={distanceBadgeRef}
+                type="button"
+                onClick={() => setShowDistancePicker(p => !p)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(224,146,0,0.10)',
+                  border: `1px solid ${isDark ? 'rgba(244,166,35,0.25)' : 'rgba(224,146,0,0.25)'}`,
+                  borderRadius: 999, padding: '3px 10px',
+                  color: '#e09200', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {filterMaxKm >= 30 ? 'Todo' : `${filterMaxKm} km`}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              {showDistancePicker && typeof document !== 'undefined' && createPortal(
+                (() => {
+                  const r = distanceBadgeRef.current?.getBoundingClientRect()
+                  if (!r) return null
+                  return (
+                    <div style={{
+                      position: 'fixed', top: r.bottom + 6, right: window.innerWidth - r.right, zIndex: 99999,
+                      background: isDark ? '#1a1a1a' : '#fff',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                      borderRadius: 12, overflow: 'hidden',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                      minWidth: 120,
+                      fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                    }}>
+                      <div style={{ padding: '8px 12px 4px', fontSize: 11, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                        Radio
+                      </div>
+                      {[1, 3, 5, 10, 20, 30].map(km => (
+                        <button
+                          key={km}
+                          type="button"
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => {
+                            setFilterMaxKm(km)
+                            setDraftMaxKm(km)
+                            userSetMaxKm.current = true
+                            setShowDistancePicker(false)
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            width: '100%', padding: '9px 14px',
+                            background: filterMaxKm === km || (km === 30 && filterMaxKm >= 30) ? (isDark ? 'rgba(244,166,35,0.12)' : 'rgba(244,166,35,0.1)') : 'none',
+                            border: 'none', cursor: 'pointer',
+                            color: filterMaxKm === km || (km === 30 && filterMaxKm >= 30) ? '#e09200' : isDark ? 'rgba(255,255,255,0.75)' : '#333',
+                            fontSize: 14, fontWeight: filterMaxKm === km ? 600 : 400,
+                            textAlign: 'left',
+                          }}
+                        >
+                          {km >= 30 ? 'Todo' : `${km} km`}
+                          {(filterMaxKm === km || (km === 30 && filterMaxKm >= 30)) && (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e09200" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })(),
+                document.body
+              )}
+            </div>
+          )}
         </div>
       </header>
 

@@ -44,12 +44,16 @@ function inferDietFromIngredients(name: string, description: string | null | und
   const text = `${name} ${description ?? ""}`.toLowerCase();
 
   // Carne, ave, pescado, mariscos → OMNIVORE seguro
+  // Incluye nombres de platos que implican carne por defecto (hamburguesa, asado, parrilla, etc.)
+  // a menos que la descripción indique lo contrario (tofu, lentejas, veggie) — eso se filtra luego
   // "truto"/"tuto" son alias locales de muslo/pierna de pollo
-  const hasMeat = /\b(carne|res|vacuno|cerdo|chancho|pollo|ave|pavo|cordero|conejo|pato|ternera|jam[oó]n|lomo\b|churrasco|costill|filete|bife|pepperoni|salchicha|chorizo|longaniza|mortadela|prosciutto|bacon|panceta|tocino|at[uú]n|salm[oó]n|merluza|reineta|corvina|camar[oó]n|camarones|mariscos|langostino|pulpo|calamar|anchoa|sardina|alitas|mechada|nuggets?|tutos?|trutos?)\b/i.test(text);
+  const hasMeat = /\b(carne|res|vacuno|cerdo|chancho|pollo|ave|pavo|cordero|conejo|pato|ternera|jam[oó]n|lomo\b|churrasco|costill|filete|bife|pepperoni|salchicha|chorizo|longaniza|mortadela|prosciutto|bacon|panceta|tocino|at[uú]n|salm[oó]n|merluza|reineta|corvina|camar[oó]n|camarones|mariscos|langostino|pulpo|calamar|anchoa|sardina|alitas|mechada|nuggets?|tutos?|trutos?|hamburguesa|burger|hot.?dog|shawarma|kebab|gyros?|asado\b|parrilla|pernil|milanesa|schnitzel|rib[bs]?\b|pulled.?pork|carnitas|al\s+pastor|chicharr[oó]n|anticucho|ceviche|tiradito|sushi|roll\b|ramen|pho\b|doner|meatball|albondiga|chicken|beef|pork|lamb|turkey|shrimp|seafood|fish\b|tuna\b|salmon\b|steak|wings?\b|ribs?\b)\b/i.test(text);
   if (hasMeat) return "OMNIVORE";
 
-  // Lácteos o huevo (sin carne) → al menos VEGETARIAN
-  const hasDairyOrEgg = /\b(queso|mozzarella|leche|crema|mantequilla|manteca|huevo|huevos|yogur|yogurt|ricotta|parmesano|cheddar|gouda|brie|feta|provolone|gruy[eè]re|nata|butter|cream\b|milk|cheese\b|egg\b|eggs\b|mayonesa|mayonnaise|helado)\b/i.test(text);
+  // Lácteos, huevo, miel u otros ingredientes de origen animal (sin carne) → al menos VEGETARIAN
+  // Incluye: manjar (dulce de leche), merengue (claras de huevo), gelatina (animal), miel (insecto),
+  // chantilly, natilla, flan, mousse, tiramisú, panna cotta, alfajor (suelen llevar manjar/crema)
+  const hasDairyOrEgg = /\b(queso|mozzarella|leche|crema\s+(?:agria|l[aá]ctea|de\s+leche)|crema\s+de\s+queso|queso\s+crema|mantequilla|manteca|huevo|huevos|yogur|yogurt|ricotta|parmesano|cheddar|gouda|brie|feta|provolone|gruy[eè]re|nata|butter|cream\s+cheese|milk|cheese\b|egg\b|eggs\b|mayonesa|mayonnaise|helado|manjar|merengue|gelatina|miel\b|chantilly|natilla|flan\b|mousse|tiramis[uú]|panna.?cotta|pannacotta|alfajor|suspiro|profiterol|mil.?hojas|cheesecake|cheescake)\b/i.test(text);
   if (hasDairyOrEgg) return "VEGETARIAN";
 
   // Ingredientes 100% vegetales mencionados explícitamente + descripción con suficiente detalle
@@ -194,6 +198,10 @@ Responde SOLO con JSON:
 Reglas:
 - Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
 - No inventes platos, solo extrae lo que ves.
+- diet: por defecto usa OMNIVORE si no sabes con certeza. Nunca adivines VEGAN o VEGETARIAN.
+- diet=OMNIVORE: cualquier plato con carne, pollo, pescado o mariscos. Hamburguesas, hot dogs, asados, pollo frito, parrilla, shawarma, sushi, ceviche, etc. → OMNIVORE aunque tengan queso o vegetales.
+- diet=VEGETARIAN: SOLO si el plato claramente NO tiene carne/ave/pescado/mariscos, pero sí puede tener lácteos o huevo (pizza vegetariana, pastas sin carne, ensaladas, etc.).
+- diet=VEGAN: SOLO si el plato NO tiene NINGÚN ingrediente animal (ni carne ni lácteos ni huevo ni miel). Si tienes duda → OMNIVORE.
 - SOLO JSON.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -542,8 +550,15 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const dishNameText = `${dish.name} ${dish.description ?? ''}`;
         const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText);
         const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText);
-        const inferredDiet = dishDietFromAI === "OMNIVORE" ? inferDietFromIngredients(dish.name, dish.description) : null;
-        const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI : (inferredDiet ?? "OMNIVORE");
+        // Siempre inferir desde ingredientes — puede corregir al AI si detecta carne/lácteos
+        const inferredDiet = inferDietFromIngredients(dish.name, dish.description);
+        const dishDiet = isDrinkCat ? "OMNIVORE"
+          : inferredDiet === "OMNIVORE" ? "OMNIVORE"  // carne detectada → siempre OMNIVORE
+          : (isVeganCat || isVeganDish) ? "VEGAN"
+          : (isVeggieCat || isVeggieDish) ? "VEGETARIAN"
+          : inferredDiet === "VEGETARIAN" && dishDietFromAI === "VEGAN" ? "VEGETARIAN"  // lácteos detectados, AI dijo VEGAN → bajar a VEGETARIAN
+          : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI  // AI dijo VEGAN/VEGETARIAN y sin señal contraria
+          : (inferredDiet ?? "OMNIVORE");
         const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null);
         const leafOverride = detectDishLeafOverride(dish.name);
 
@@ -974,8 +989,15 @@ export async function importFromProspecto(params: {
       const dishNameText = `${dish.name} ${dish.description ?? ''}`
       const isVeganDish = /\bvegan[ao]?\b|plant.based/i.test(dishNameText)
       const isVeggieDish = !isVeganDish && /\bveget[ae]rian[ao]?\b|vegetariano|veggie\b|sin carne/i.test(dishNameText)
-      const inferredDiet = dishDietFromAI === "OMNIVORE" ? inferDietFromIngredients(dish.name, dish.description) : null
-      const dishDiet = isDrinkCat ? "OMNIVORE" : isVeganCat || isVeganDish ? "VEGAN" : isVeggieCat || isVeggieDish ? "VEGETARIAN" : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI : (inferredDiet ?? "OMNIVORE")
+      // Siempre inferir desde ingredientes — puede corregir al AI si detecta carne/lácteos
+      const inferredDiet = inferDietFromIngredients(dish.name, dish.description)
+      const dishDiet = isDrinkCat ? "OMNIVORE"
+        : inferredDiet === "OMNIVORE" ? "OMNIVORE"  // carne detectada → siempre OMNIVORE
+        : (isVeganCat || isVeganDish) ? "VEGAN"
+        : (isVeggieCat || isVeggieDish) ? "VEGETARIAN"
+        : inferredDiet === "VEGETARIAN" && dishDietFromAI === "VEGAN" ? "VEGETARIAN"  // lácteos detectados, AI dijo VEGAN → bajar a VEGETARIAN
+        : dishDietFromAI !== "OMNIVORE" ? dishDietFromAI
+        : (inferredDiet ?? "OMNIVORE")
       const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null)
       const leafOverride = detectDishLeafOverride(dish.name)
       allDishData.push({

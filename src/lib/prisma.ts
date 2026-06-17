@@ -8,12 +8,16 @@ const globalForPrisma = globalThis as unknown as {
 function getDbUrl(): string {
   const base = process.env.DATABASE_URL || "";
   const url = new URL(base);
-  // 1 connection per serverless instance — PgBouncer multiplexes on the DB side
-  url.searchParams.set("connection_limit", "1");
-  // Fail fast if pool is exhausted instead of queuing indefinitely
-  url.searchParams.set("pool_timeout", "5");
-  // Required for PgBouncer transaction mode
-  url.searchParams.set("pgbouncer", "true");
+  if (process.env.NODE_ENV === "production") {
+    // 1 connection per serverless instance — PgBouncer multiplexes on the DB side
+    url.searchParams.set("connection_limit", "1");
+    url.searchParams.set("pool_timeout", "5");
+    url.searchParams.set("pgbouncer", "true");
+  } else {
+    // Dev: más conexiones para soportar hot-reload y requests paralelos
+    url.searchParams.set("connection_limit", "5");
+    url.searchParams.set("pool_timeout", "15");
+  }
   return url.toString();
 }
 

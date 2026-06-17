@@ -75,6 +75,7 @@ Reglas:
 - Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
 - No inventes platos, solo extrae lo que está en el texto.
 - Si hay secciones/títulos que parecen categorías, úsalas.
+- diet: OMNIVORE por defecto. VEGETARIAN solo si el plato claramente no tiene carne/ave/pescado/mariscos. VEGAN solo si no tiene ningún ingrediente animal. Hamburguesas, pollo, carnes, mariscos → OMNIVORE aunque tengan queso o vegetales.
 - SOLO JSON.
 
 TEXTO DEL DOCUMENTO:
@@ -131,6 +132,7 @@ Responde SOLO con JSON:
 {"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
 Reglas:
 - Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
+- diet: OMNIVORE por defecto. VEGETARIAN solo si el plato claramente no tiene carne/ave/pescado/mariscos. VEGAN solo si no tiene ningún ingrediente animal. Hamburguesas, pollo, carnes, mariscos → OMNIVORE aunque tengan queso o vegetales.
 - SOLO JSON.`;
 
 async function extractPdfWithVision(buffer: Buffer, apiKey: string): Promise<ExtractionResult> {
@@ -167,7 +169,7 @@ async function extractPdfWithVision(buffer: Buffer, apiKey: string): Promise<Ext
       : `Analiza estas páginas de carta/menú (páginas ${batchStart}-${batchEnd}).
 Extrae TODOS los platos y organízalos por categoría. SOLO JSON:
 {"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
-Reglas: Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0. SOLO JSON.`;
+Reglas: Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0. diet: OMNIVORE por defecto; VEGETARIAN/VEGAN solo si está explícito. Hamburguesas, carnes, mariscos → OMNIVORE. SOLO JSON.`;
 
     try {
       const content: any[] = batch.map(imgBuf => ({
@@ -322,7 +324,7 @@ async function extractLargePdfByPages(buffer: Buffer, apiKey: string): Promise<E
         : `Analiza esta página de carta/menú (página ${i + 1}).
 Extrae TODOS los platos y organízalos por categoría. SOLO JSON:
 {"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
-Reglas: Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0. SOLO JSON.`;
+Reglas: Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0. diet: OMNIVORE por defecto; VEGETARIAN/VEGAN solo si está explícito. Hamburguesas, carnes, mariscos → OMNIVORE. SOLO JSON.`;
 
       const parsed = await sendPdfPageToVision(singleBuffer, apiKey, prompt);
 

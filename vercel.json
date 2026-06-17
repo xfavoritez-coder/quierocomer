@@ -4,7 +4,7 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "crons": [
-{
+    {
       "path": "/api/cron/cleanup?key=__SEED_SECRET__",
       "schedule": "0 4 * * *"
     },
@@ -15,10 +15,6 @@
     {
       "path": "/api/cron/warm-feed",
       "schedule": "*/4 * * * *"
-    },
-    {
-      "path": "/api/cron/dish-count",
-      "schedule": "0 */12 * * *"
     }
   ]
 }
