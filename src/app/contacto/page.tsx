@@ -202,7 +202,7 @@ body{background:var(--black)!important;color:var(--cream)!important;font-family:
 .contacto-form{display:flex;flex-direction:column;gap:14px}
 .contacto-field{display:flex;flex-direction:column;gap:5px}
 .contacto-field label{font-size:12px;font-weight:600;color:var(--cream-soft);letter-spacing:.04em;text-transform:uppercase}
-.contacto-field input,.contacto-field textarea{width:100%;padding:13px 16px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:14px;color:var(--cream);font-family:var(--font-body);font-size:15px;outline:none;transition:.2s;resize:none}
+.contacto-field input,.contacto-field textarea{width:100%;padding:13px 16px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:14px;color:var(--cream);font-family:var(--font-body);font-size:16px;outline:none;transition:.2s;resize:none}
 .contacto-field input::placeholder,.contacto-field textarea::placeholder{color:rgba(100,90,75,.55)!important}
 .contacto-field input:focus,.contacto-field textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,163,61,.08)}
 .contacto-error{color:#e85d5d;font-size:13px;text-align:center}
