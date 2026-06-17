@@ -1662,7 +1662,7 @@ export default function NewHome({
           key={selectedDish.id}
           dish={selectedDish}
           allDishes={feedDishes.some(d => d.id === selectedDish.id) ? feedDishes : [selectedDish, ...feedDishes]}
-          dishPool={dishes}
+          dishPool={feedDishes}
           profile={profile}
           hideRelated={hideRelated}
           onClose={() => {
