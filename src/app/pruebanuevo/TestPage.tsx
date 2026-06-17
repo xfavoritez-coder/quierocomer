@@ -30,7 +30,7 @@ const VALID_MEAL_SLOT = ["desayuno","almuerzo","cena","snack"];
 const VALID_INGREDIENT = [
   "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos","huevo",
   "pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan","fruta","tofu",
-  "tomate","lechuga","palta","cebolla","cebollín","nutella",
+  "tomate","lechuga","palta","cebolla","cebollín","jamón","choclo","nutella",
 ];
 const VALID_FLAVOR = ["dulce","salado","picante","frito","grillado","asado"];
 const VALID_ESTILO = ["comida rapida","saludable"];
