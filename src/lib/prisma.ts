@@ -4,14 +4,16 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Build connection URL with conservative pool settings
+// Build connection URL for Supabase PgBouncer (transaction mode)
 function getDbUrl(): string {
   const base = process.env.DATABASE_URL || "";
   const url = new URL(base);
-  // Max 5 connections per serverless instance (Supabase limit: 200 total)
-  url.searchParams.set("connection_limit", "5");
-  // Release idle connections after 10s
-  url.searchParams.set("pool_timeout", "10");
+  // 1 connection per serverless instance — PgBouncer multiplexes on the DB side
+  url.searchParams.set("connection_limit", "1");
+  // Fail fast if pool is exhausted instead of queuing indefinitely
+  url.searchParams.set("pool_timeout", "5");
+  // Required for PgBouncer transaction mode
+  url.searchParams.set("pgbouncer", "true");
   return url.toString();
 }
 

@@ -7,6 +7,7 @@ import { getGuestId, getSessionId } from "@/lib/guestId";
 import { trackDetailOpen, trackDetailClose, getDbSessionId } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
 import { getCrossSellDishes } from "./utils/getCrossSellDishes";
+import { track } from "./utils/cartaAnalytics";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 
 interface PersonalizationEntry {
@@ -610,11 +611,7 @@ function DishSlide({
           if (typeof window !== "undefined" && !(window as any).__suggShown?.[dish.id]) {
             ((window as any).__suggShown = (window as any).__suggShown || {})[dish.id] = true;
             suggestions.forEach(s => {
-              fetch("/api/qr/stats", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ eventType: "SUGGESTION_SHOWN", dishId: s.dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId(), metadata: { fromDishId: dish.id } }),
-              }).catch(() => {});
+              track(restaurantId, "SUGGESTION_SHOWN", { dishId: s.dish.id, metadata: { fromDishId: dish.id } });
             });
           }
           return (
@@ -625,11 +622,7 @@ function DishSlide({
                   <div
                     key={s.dish.id}
                     onClick={() => {
-                      fetch("/api/qr/stats", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ eventType: "SUGGESTION_CLICK", dishId: s.dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId(), metadata: { fromDishId: dish.id, reason: s.reason } }),
-                      }).catch(() => {});
+                      track(restaurantId, "SUGGESTION_CLICK", { dishId: s.dish.id, metadata: { fromDishId: dish.id, reason: s.reason } });
                       onChangeDish(s.dish);
                     }}
                     style={{ display: "flex", gap: 14, padding: "16px 18px", background: "var(--carta-card-border)", borderRadius: 16, cursor: "pointer" }}

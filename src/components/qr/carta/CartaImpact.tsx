@@ -22,7 +22,7 @@ import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
-import { trackSearchPerformed } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, track } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -1014,15 +1014,7 @@ export default function CartaImpact({
         ([e]) => {
           if (e.isIntersecting && !recShownRef.current.has(dishId)) {
             recShownRef.current.add(dishId);
-            fetch("/api/qr/stats", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                eventType: "RECOMMENDATION_SHOWN", dishId, restaurantId: restaurant.id,
-                guestId: getGuestId(),
-                metadata: { score: entry.score, reason: entry.reason, wasAutomatic: true },
-              }),
-            }).catch(() => {});
+            track(restaurant.id, "RECOMMENDATION_SHOWN", { dishId, metadata: { score: entry.score, reason: entry.reason, wasAutomatic: true } });
           }
         },
         { threshold: 0.5 },
@@ -1127,15 +1119,7 @@ export default function CartaImpact({
   const handleDishClick = useCallback((dish: Dish) => {
     const entry = pMap?.get(dish.id);
     if (entry?.autoRecommended) {
-      fetch("/api/qr/stats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventType: "RECOMMENDATION_TAPPED", dishId: dish.id,
-          restaurantId: restaurant.id, guestId: getGuestId(),
-          metadata: { score: entry.score, wasAutomatic: true },
-        }),
-      }).catch(() => {});
+      track(restaurant.id, "RECOMMENDATION_TAPPED", { dishId: dish.id, metadata: { score: entry.score, wasAutomatic: true } });
     }
     setSelectedDish(dish);
   }, [pMap, restaurant.id]);

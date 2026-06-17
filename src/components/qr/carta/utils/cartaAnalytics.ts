@@ -44,7 +44,7 @@ function scheduleFlush() {
   eventFlushTimer = setTimeout(flushEvents, EVENT_FLUSH_INTERVAL);
 }
 
-function track(restaurantId: string, eventType: string, extra?: Record<string, unknown>) {
+export function track(restaurantId: string, eventType: string, extra?: Record<string, unknown>) {
   eventBatch.push({
     eventType,
     restaurantId,
