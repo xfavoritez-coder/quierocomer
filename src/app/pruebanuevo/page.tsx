@@ -45,7 +45,7 @@ export default async function PruebanuevoPage({
     where: { slug },
     include: {
       dishes: {
-        where: { isActive: true, deletedAt: null },
+        where: { isActive: true, deletedAt: null, photos: { isEmpty: false } },
         include: { category: true },
         orderBy: [{ isHero: "desc" }, { position: "asc" }],
         take: 40,
