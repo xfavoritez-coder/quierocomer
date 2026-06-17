@@ -182,7 +182,7 @@ export default function ContactView({
 
       </div>
 
-      <FeedFooter isDark={isDark} />
+      {!sent && <FeedFooter isDark={isDark} />}
     </div>
   )
 }
