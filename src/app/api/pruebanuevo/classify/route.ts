@@ -87,7 +87,7 @@ desayuno, almuerzo, cena, snack
 Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 
 mainIngredient (array, los más importantes):
-carne, pollo, cerdo, cordero, pescado, salmón, camarones, pulpo, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, queso crema, pan, fruta, tofu, tomate, lechuga, palta, cebolla, cebollín, jamón, salame, choclo, nutella
+carne, pollo, cerdo, cordero, pescado, salmón, camarones, pulpo, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, queso crema, pan, fruta, tofu, tomate, lechuga, palta, cebolla, cebollín, jamón, salame, choclo, nutella, almendra, maní, nuez
 - "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (reineta, merluza, corvina sin especificar). "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
 - "pan" SOLO para productos con pan real: sándwich, hamburguesa (el bun), tostada, bagel, croissant, marraqueta, hallulla, baguette. La masa de pizza, empanada, wantan, arrollado, pasta, crepe → NO es "pan".
 - wantan/wonton → NO usar "pan". Pon solo el relleno (cerdo, camarones, verduras, etc.).
