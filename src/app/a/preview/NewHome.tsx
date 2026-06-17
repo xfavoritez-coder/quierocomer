@@ -971,13 +971,13 @@ export default function NewHome({
 
         {/* Row 3: Quick-filter pills */}
         <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
-          <button onClick={() => setQuickNearby(p => !p)} style={pillStyle(quickNearby, 'nearby')}>
+          <button onClick={() => { setQuickNearby(p => !p); setQuickPopular(false) }} style={pillStyle(quickNearby, 'nearby')}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
             Cerca
           </button>
-          <button onClick={() => setQuickPopular(p => !p)} style={pillStyle(quickPopular, 'popular')}>
+          <button onClick={() => { setQuickPopular(p => !p); setQuickNearby(false) }} style={pillStyle(quickPopular, 'popular')}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
             </svg>
@@ -1106,13 +1106,13 @@ export default function NewHome({
           </div>
           {/* Pills de filtro en el floating header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <button onClick={() => setQuickNearby(p => !p)} style={pillStyle(quickNearby, 'nearby')}>
+            <button onClick={() => { setQuickNearby(p => !p); setQuickPopular(false) }} style={pillStyle(quickNearby, 'nearby')}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
               </svg>
               Cerca
             </button>
-            <button onClick={() => setQuickPopular(p => !p)} style={pillStyle(quickPopular, 'popular')}>
+            <button onClick={() => { setQuickPopular(p => !p); setQuickNearby(false) }} style={pillStyle(quickPopular, 'popular')}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
               </svg>
@@ -1311,7 +1311,7 @@ export default function NewHome({
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {/* Quick toggles — mismos que las pills del home */}
-                <button onClick={() => setQuickNearby(p => !p)} style={{
+                <button onClick={() => { setQuickNearby(p => !p); setQuickPopular(false) }} style={{
                   border: quickNearby ? '1.5px solid #c97d00' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                   borderRadius: 14, padding: '10px 16px',
                   background: quickNearby ? 'rgba(244,166,35,0.08)' : isDark ? '#2a2a2a' : '#fff',
@@ -1321,7 +1321,7 @@ export default function NewHome({
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   Cerca
                 </button>
-                <button onClick={() => setQuickPopular(p => !p)} style={{
+                <button onClick={() => { setQuickPopular(p => !p); setQuickNearby(false) }} style={{
                   border: quickPopular ? '1.5px solid #D32F2F' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                   borderRadius: 14, padding: '10px 16px',
                   background: quickPopular ? 'rgba(211,47,47,0.08)' : isDark ? '#2a2a2a' : '#fff',
