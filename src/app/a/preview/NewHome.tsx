@@ -1018,7 +1018,11 @@ export default function NewHome({
             color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
             flexShrink: 0, paddingLeft: 8,
           }}>
-            {feedDishes.length} platos
+            {serverDishes
+              ? `${feedDishes.length.toLocaleString('es-CL')} platos`
+              : totalDishCount
+                ? `+${totalDishCount.toLocaleString('es-CL')} platos`
+                : `${feedDishes.length.toLocaleString('es-CL')} platos`}
           </span>
         </div>
       </header>
@@ -1575,17 +1579,6 @@ export default function NewHome({
                   {locationName || gpsLabel || 'Ubicación'}
                 </button>
               )}
-              {/* Dish count — total from DB in browse mode, result count when filtering */}
-              <span style={{
-                fontSize: 12, color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.25)',
-                marginLeft: isDesktop ? 0 : 0,
-              }}>
-                {serverDishes
-                  ? `${feedDishes.length.toLocaleString('es-CL')} platos`
-                  : totalDishCount
-                    ? `+${totalDishCount.toLocaleString('es-CL')} platos`
-                    : null}
-              </span>
               <div style={{ flex: 1 }} />
               {isDesktop && (
                 <button onClick={() => setFilterOpen(true)} style={{
