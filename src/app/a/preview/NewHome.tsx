@@ -955,18 +955,22 @@ export default function NewHome({
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
             fontSize: 15, fontWeight: 400,
+            flex: 1, minWidth: 0, overflow: 'hidden',
           }}>
-            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round">
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" style={{ flexShrink: 0 }}>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
-            {locationName || gpsLabel || 'Selecciona tu dirección'}
-            <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {locationName || gpsLabel || 'Selecciona tu dirección'}
+            </span>
+            <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
           <span style={{
             fontSize: 13, fontWeight: 400,
             color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+            flexShrink: 0, paddingLeft: 8,
           }}>
             {feedDishes.length} platos encontrados
           </span>
