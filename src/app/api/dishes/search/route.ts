@@ -38,15 +38,29 @@ export async function GET(req: NextRequest) {
       Prisma.sql`r."googleRating" IS NOT NULL`,
     ]
 
-    // Text search — accent-insensitive via both raw and normalized query
+    // Text search — accent-insensitive + stemming básico (quita 's' final para plural→singular)
     if (q) {
       const qLike = `%${q}%`
       const qNorm = normStr(q)
       const qNormLike = `%${qNorm}%`
-      if (qNorm === q) {
-        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike})`)
-      } else {
+      // Si termina en 's', buscar también sin la 's' (hamburguesas → hamburguesa)
+      const qStem = q.endsWith('s') && q.length > 3 ? q.slice(0, -1) : null
+      const qStemNorm = qStem ? normStr(qStem) : null
+      const qStemLike = qStem ? `%${qStem}%` : null
+      const qStemNormLike = qStemNorm ? `%${qStemNorm}%` : null
+
+      if (qStemLike && qStemNormLike && qStemNorm !== qNorm) {
+        // Busca plural Y singular, con y sin acento
+        conditions.push(Prisma.sql`(
+          d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike}
+          OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike}
+          OR d.name ILIKE ${qStemLike} OR COALESCE(d.description, '') ILIKE ${qStemLike}
+          OR d.name ILIKE ${qStemNormLike} OR COALESCE(d.description, '') ILIKE ${qStemNormLike}
+        )`)
+      } else if (qNorm !== q) {
         conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike} OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike})`)
+      } else {
+        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike})`)
       }
     }
 
