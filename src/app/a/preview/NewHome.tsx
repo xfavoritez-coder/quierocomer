@@ -592,7 +592,7 @@ export default function NewHome({
       requestAnimationFrame(() => {
         const y = window.scrollY
         const headerH = headerRef.current?.offsetHeight ?? 160
-        if (headerVisible.current || y < headerH + 40) {
+        if (headerVisible.current) {
           setShowFloatingSearch(false)
         } else if (y < lastScrollY.current - 4) {
           setShowFloatingSearch(true)
@@ -963,7 +963,7 @@ export default function NewHome({
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {locationName || gpsLabel || 'Selecciona tu dirección'}
             </span>
-            <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
