@@ -103,7 +103,7 @@ mealSlot (array):
 desayuno, almuerzo, cena, snack
 Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 
-mainIngredient (array, los más importantes):
+mainIngredient (array): incluye TODOS los ingredientes de la lista que aparezcan explícitamente mencionados en el nombre o descripción del plato, aunque sean secundarios o guarnición (cebollín, tomate, lechuga, palta, etc.). No te limites solo a los "principales".
 ${VALID_INGREDIENTS.join(", ")}
 - "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (reineta, merluza, corvina sin especificar). "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
 - "pan" SOLO para productos con pan real: sándwich, hamburguesa (el bun), tostada, bagel, croissant, marraqueta, hallulla, baguette. La masa de pizza, empanada, wantan, arrollado, pasta, crepe → NO es "pan".
