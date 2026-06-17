@@ -403,7 +403,7 @@ export default function NewHome({
 
   // Server-side fetch — triggered by search, category pill, diet, location, distance filter
   const fetchServerDishes = useCallback(async (params: {
-    q?: string; categoryPill?: string | null; diet?: string; meal?: string
+    q?: string; categoryPill?: string | null; diet?: string
     maxKm?: number; categories?: string[]; locationName?: string | null
     lat?: number | null; lng?: number | null
   }) => {
@@ -413,7 +413,6 @@ export default function NewHome({
       if (params.q) url.set('q', params.q)
       if (params.categoryPill) url.set('categoryPill', params.categoryPill)
       if (params.diet && params.diet !== 'all') url.set('diet', params.diet)
-      if (params.meal && params.meal !== 'all') url.set('meal', params.meal)
       if (params.maxKm && params.maxKm < 30) url.set('maxKm', String(params.maxKm))
       if (params.categories?.length) url.set('categories', params.categories.join(','))
       if (params.locationName) url.set('locationName', params.locationName)
@@ -450,7 +449,6 @@ export default function NewHome({
         q: searchQuery,
         categoryPill: activeCategory,
         diet: filterDiet,
-        meal: filterMeal,
         maxKm: filterMaxKm,
         categories: [...filterCategories],
         locationName,
