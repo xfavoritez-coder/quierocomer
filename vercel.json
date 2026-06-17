@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/nurturing",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/warm-feed",
+      "schedule": "*/4 * * * *"
     }
   ]
 }

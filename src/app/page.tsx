@@ -1,5 +1,4 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { cookies, headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { getFeedDishes } from './a/lib/feed-queries'
 import NewHome from './a/preview/NewHome'
@@ -15,11 +14,31 @@ export const metadata = {
 }
 
 export default async function HomePage() {
-  const cookieStore = await cookies()
-  const fingerprint = cookieStore.get('qc_feed_user')?.value
+  const [cookieStore, headerStore] = await Promise.all([cookies(), headers()])
 
+  // Middleware sets x-feed-fingerprint on first visit and also sets the cookie on the response.
+  // This avoids the 2-redirect round trip (/ → /api/feed-init → /).
+  const newFingerprint = headerStore.get('x-feed-fingerprint')
+  if (newFingerprint) {
+    // First-time user: create record lazily (non-blocking) and render immediately with empty scores
+    prisma.feedUser.create({ data: { fingerprint: newFingerprint, onboardingDone: true } }).catch(() => {})
+    const dishes = await getFeedDishes()
+    return (
+      <FeedLayout>
+        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} />
+      </FeedLayout>
+    )
+  }
+
+  const fingerprint = cookieStore.get('qc_feed_user')?.value
   if (!fingerprint) {
-    redirect('/api/feed-init')
+    // Cookie missing (cleared manually or very old browser) — create one via API as fallback
+    const dishes = await getFeedDishes()
+    return (
+      <FeedLayout>
+        <NewHome dishes={dishes} categoryScores={{}} keywordScores={{}} totalInteractions={0} />
+      </FeedLayout>
+    )
   }
 
   const [user, dishes] = await Promise.all([
@@ -31,18 +50,19 @@ export default async function HomePage() {
   ])
 
   if (!user) {
-    redirect('/api/feed-init')
+    // DB record missing (purged) — recreate lazily and render with empty scores
+    prisma.feedUser.create({ data: { fingerprint, onboardingDone: true } }).catch(() => {})
+  } else {
+    prisma.feedUser.update({ where: { fingerprint }, data: { lastSeenAt: new Date() } }).catch(() => {})
   }
-
-  prisma.feedUser.update({ where: { fingerprint }, data: { lastSeenAt: new Date() } }).catch(() => {})
 
   return (
     <FeedLayout>
       <NewHome
         dishes={dishes}
-        categoryScores={(user.categoryScores as Record<string, number>) ?? {}}
-        keywordScores={(user.keywordScores as Record<string, number>) ?? {}}
-        totalInteractions={user.totalInteractions}
+        categoryScores={(user?.categoryScores as Record<string, number>) ?? {}}
+        keywordScores={(user?.keywordScores as Record<string, number>) ?? {}}
+        totalInteractions={user?.totalInteractions ?? 0}
       />
     </FeedLayout>
   )
