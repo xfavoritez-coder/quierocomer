@@ -294,11 +294,34 @@ function TabMapa() {
   // Modal de revisión de carta completa
   const [cartaModal, setCartaModal] = useState<{ slug: string; name: string } | null>(null)
 
+  // Slugs con taxonomía corriendo en background
+  const [taxPendingSlugs, setTaxPendingSlugs] = useState<Set<string>>(new Set())
+
   // Modal agregar manual
   const [addModal, setAddModal] = useState(false)
 
   // Modal showcase
   const [showcaseModal, setShowcaseModal] = useState(false)
+
+  // Polling: detectar cuando la taxonomía background termina
+  useEffect(() => {
+    if (taxPendingSlugs.size === 0) return
+    const timer = setInterval(async () => {
+      const done: string[] = []
+      await Promise.allSettled([...taxPendingSlugs].map(async (slug) => {
+        try {
+          const r = await fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
+          const d = await r.json()
+          const classified = d?.categories?.some((c: any) => c.dishes?.some((dish: any) => dish.txDishType?.length > 0))
+          if (classified) done.push(slug)
+        } catch {}
+      }))
+      if (done.length > 0) {
+        setTaxPendingSlugs(s => { const next = new Set(s); done.forEach(sl => next.delete(sl)); return next })
+      }
+    }, 6000)
+    return () => clearInterval(timer)
+  }, [taxPendingSlugs])
 
   async function saveCartaUrl(placeId: string, url: string) {
     if (!url.trim()) return
@@ -583,6 +606,9 @@ function TabMapa() {
               setImportProgress({ current: msg.current, total, name: msg.name })
             } else if (msg.type === 'result') {
               setImportMap(m => ({ ...m, [msg.id]: { status: msg.status, slug: msg.slug, dishCount: msg.dishCount, error: msg.error, unmappedCategories: msg.unmappedCategories } }))
+              if (msg.status === 'ok' && msg.slug) {
+                setTaxPendingSlugs(s => new Set([...s, msg.slug]))
+              }
               if (msg.status === 'error') {
                 setImportProgress(p => p ? { ...p, name: `✗ ${msg.name ?? ''}: ${msg.error ?? 'error'}` } : p)
               }
@@ -977,6 +1003,12 @@ function TabMapa() {
                         Ver carta
                       </button>
                     </div>
+                    {imp.slug && taxPendingSlugs.has(imp.slug) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                        <span style={{ display: 'inline-block', width: 8, height: 8, border: '1.5px solid #444', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                        <span style={{ fontSize: 9, color: '#7c3aed' }}>clasificando taxonomía...</span>
+                      </div>
+                    )}
                     {imp.unmappedCategories && imp.unmappedCategories.length > 0 && (
                       <button
                         onClick={() => setNormModal({ slug: imp.slug!, placeId: p.id, categories: imp.unmappedCategories! })}
@@ -1368,6 +1400,11 @@ function CartaModal({ slug, name, onClose }: {
   const [expandedDish, setExpandedDish] = useState<string | null>(null)
   const [taxEdits, setTaxEdits] = useState<Record<string, TaxEdit>>({})
   const [hoverDish, setHoverDish] = useState<{ name: string; description: string | null; photo: string; x: number; y: number } | null>(null)
+  const [taxRunning, setTaxRunning] = useState(false)
+
+  function hasTaxonomy(d: CartaData) {
+    return d.categories.some(c => c.dishes.some(dish => dish.txDishType.length > 0))
+  }
 
   function loadData() {
     setLoading(true)
@@ -1375,14 +1412,38 @@ function CartaModal({ slug, name, onClose }: {
       .then(r => r.json())
       .then((d: any) => {
         if (!d?.categories) throw new Error(d?.error ?? 'Respuesta inesperada del servidor')
-        setData(d as CartaData)
+        const carta = d as CartaData
+        setData(carta)
         setTaxEdits({})
+        // Si no tiene taxonomía aún, activar polling
+        if (!hasTaxonomy(carta)) setTaxRunning(true)
+        else setTaxRunning(false)
       })
       .catch(e => setError(e?.message ?? 'Error'))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { loadData() }, [slug])
+
+  // Polling cada 6s mientras la taxonomía background está corriendo
+  useEffect(() => {
+    if (!taxRunning) return
+    const timer = setInterval(() => {
+      fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
+        .then(r => r.json())
+        .then((d: any) => {
+          if (!d?.categories) return
+          const carta = d as CartaData
+          if (hasTaxonomy(carta)) {
+            setData(carta)
+            setTaxEdits({})
+            setTaxRunning(false)
+          }
+        })
+        .catch(() => {})
+    }, 6000)
+    return () => clearInterval(timer)
+  }, [taxRunning, slug])
 
   async function classifyAll() {
     setClassifying(true)
@@ -1469,6 +1530,12 @@ function CartaModal({ slug, name, onClose }: {
             {data && (
               <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555' }}>
                 {data.totalDishes} platos · {data.categories.length} secciones
+                {taxRunning && (
+                  <span style={{ marginLeft: 8, color: '#7c3aed', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ display: 'inline-block', width: 8, height: 8, border: '1.5px solid #444', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                    clasificando con AI...
+                  </span>
+                )}
               </p>
             )}
           </div>
