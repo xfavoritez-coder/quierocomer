@@ -6,7 +6,7 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
   const needTranslations = lang !== "es";
 
   const restaurant = await prisma.restaurant.findUnique({
-    where: { slug, isActive: true },
+    where: { slug },
     include: {
       categories: {
         where: { isActive: true },
