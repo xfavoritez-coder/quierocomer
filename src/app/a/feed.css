@@ -212,13 +212,14 @@ html.dark .feed-root {
 /* ─── Masonry Grid (manual flex columns, stable on load-more) ── */
 .feed-grid {
   display: flex;
-  gap: 16px;
-  padding: 10px 14px 100px;
+  gap: 8px;
+  padding: 10px 8px 100px;
 }
 .feed-grid-col {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   min-width: 0;
 }
 .feed-grid-item {
