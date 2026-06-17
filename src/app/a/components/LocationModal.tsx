@@ -82,10 +82,28 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
     setStep('map')
   }, [])
 
-  const handleResultClick = useCallback((result: NominatimResult) => {
-    const addr = result.address
-    const label = buildLabel(addr) || result.display_name.split(',').slice(0, 2).join(',').trim()
-    goToMap(parseFloat(result.lat), parseFloat(result.lon), label)
+  const handleResultClick = useCallback(async (result: NominatimResult) => {
+    // Si ya tiene coordenadas (Nominatim fallback), usarlas directamente
+    if (result.lat !== '0' && result.lon !== '0') {
+      const addr = result.address
+      const label = buildLabel(addr) || result.display_name.split(',').slice(0, 2).join(',').trim()
+      goToMap(parseFloat(result.lat), parseFloat(result.lon), label)
+      return
+    }
+    // Google Places: obtener coordenadas recién al hacer click
+    setSearchLoading(true)
+    try {
+      const res = await fetch(`/api/geo/place?place_id=${encodeURIComponent(String(result.place_id))}`)
+      const detail = await res.json()
+      if (detail) {
+        const label = buildLabel(detail.address) || detail.display_name.split(',').slice(0, 2).join(',').trim()
+        goToMap(parseFloat(detail.lat), parseFloat(detail.lon), label)
+      }
+    } catch {
+      // noop
+    } finally {
+      setSearchLoading(false)
+    }
   }, [goToMap])
 
   const handleGPS = useCallback(() => {
