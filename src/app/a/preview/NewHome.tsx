@@ -346,7 +346,7 @@ export default function NewHome({
     if (trimmed.length < 2) return null
     const q = normStr(trimmed)
 
-    const results: { text: string; type: 'plato' | 'restaurante' | 'categoría' | 'ingrediente' }[] = []
+    const results: { text: string; type: 'plato' | 'local' | 'categoría' | 'ingrediente' }[] = []
 
     // 1. Categorías QC (estáticas)
     for (const cat of ALL_QC_TERMS) {
@@ -364,7 +364,7 @@ export default function NewHome({
     for (const d of matches) {
       if (normStr(d.restaurante).includes(q) && !seenRestaurants.has(d.restaurante)) {
         seenRestaurants.add(d.restaurante)
-        results.push({ text: d.restaurante, type: 'restaurante' })
+        results.push({ text: d.restaurante, type: 'local' })
         if (seenRestaurants.size >= 3) break
       }
     }

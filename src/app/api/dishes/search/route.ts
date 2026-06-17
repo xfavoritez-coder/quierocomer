@@ -28,14 +28,14 @@ export async function GET(req: NextRequest) {
       Prisma.sql`d."deletedAt" IS NULL`,
       Prisma.sql`d."hiddenFromFeed" = false`,
       Prisma.sql`array_length(d.photos, 1) > 0`,
-      Prisma.sql`d.price > 0`,
+      Prisma.sql`(d.price > 0 OR r."isShowcase" = true)`,
       Prisma.sql`c."dishType" != 'drink'`,
       Prisma.sql`r."isActive" = true`,
       Prisma.sql`r."isDemo" = false`,
       Prisma.sql`r.lat IS NOT NULL`,
       Prisma.sql`r.lng IS NOT NULL`,
-      Prisma.sql`r."googleMapsUrl" IS NOT NULL`,
-      Prisma.sql`r."googleRating" IS NOT NULL`,
+      Prisma.sql`(r."googleMapsUrl" IS NOT NULL OR r."isShowcase" = true)`,
+      Prisma.sql`(r."googleRating" IS NOT NULL OR r."isShowcase" = true)`,
     ]
 
     // Text search — accent-insensitive + stemming básico (quita 's' final para plural→singular)
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
         d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt",
         c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
         r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
-        r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory",
+        r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory", r."isShowcase",
         r."googleRating", r."googleRatingCount", r."googleMapsUrl",
         fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
       FROM "Dish" d
@@ -161,6 +161,7 @@ export async function GET(req: NextRequest) {
         googleRating: d.googleRating != null ? Number(d.googleRating) : null,
         googleRatingCount: d.googleRatingCount != null ? Number(d.googleRatingCount) : null,
         googleMapsUrl: d.googleMapsUrl ?? null,
+        isShowcase: Boolean(d.isShowcase ?? false),
         avgRating: d.avgRating != null ? Number(d.avgRating) : null,
         ratingCount: Number(d.ratingCount ?? 0),
         commentCount: Number(d.commentCount ?? 0),
