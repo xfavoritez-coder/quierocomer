@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Invalidar cache del feed para que aparezca de inmediato
-  revalidateTag("feed-dishes");
+  revalidateTag("feed-dishes", { expire: 0 });
 
   return NextResponse.json({ slug, restaurantId: restaurant.id });
   } catch (e: any) {
