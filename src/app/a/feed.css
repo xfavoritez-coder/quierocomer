@@ -652,7 +652,9 @@ html.dark .feed-root .dish-card-img-wrap {
 
 /* Search placeholder */
 .feed-search-input::placeholder {
-  color: rgba(0, 0, 0, 0.5) !important;
+  color: rgba(0, 0, 0, 0.28) !important;
+  -webkit-text-fill-color: rgba(0, 0, 0, 0.28) !important;
+  opacity: 1 !important;
 }
 
 /* ─── Dark mode component overrides ──────────────────────────── */
