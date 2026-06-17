@@ -71,20 +71,36 @@ export async function GET(req: NextRequest) {
       conditions.push(Prisma.sql`d."dishDiet" IN ('VEGAN', 'VEGETARIAN')`)
     }
 
-    // Location bounding box (server pre-filter — client refines with exact distance)
-    if (lat !== null && lng !== null && maxKm < 30) {
+    // Location bounding box — se omite cuando el query hace match con nombre de restaurante,
+    // así buscar "Jireh" o "Long An" siempre muestra ese local sin importar la distancia.
+    const hasLocationFilter = lat !== null && lng !== null && maxKm < 30
+    const qLikeForName = q ? `%${q}%` : null
+    const qNormForName = q ? normStr(q) : null
+    const qNormLikeForName = qNormForName ? `%${qNormForName}%` : null
+
+    if (hasLocationFilter) {
       const latOffset = maxKm / 111.0
-      const lngOffset = maxKm / (111.0 * Math.cos(lat * Math.PI / 180))
-      const latMin = lat - latOffset
-      const latMax = lat + latOffset
-      const lngMin = lng - lngOffset
-      const lngMax = lng + lngOffset
-      conditions.push(Prisma.sql`r.lat BETWEEN ${latMin} AND ${latMax}`)
-      conditions.push(Prisma.sql`r.lng BETWEEN ${lngMin} AND ${lngMax}`)
+      const lngOffset = maxKm / (111.0 * Math.cos(lat! * Math.PI / 180))
+      const latMin = lat! - latOffset
+      const latMax = lat! + latOffset
+      const lngMin = lng! - lngOffset
+      const lngMax = lng! + lngOffset
+      // Si hay query y el restaurante hace match por nombre → ignorar bbox para ese restaurante
+      if (q && qLikeForName && qNormLikeForName) {
+        conditions.push(Prisma.sql`(
+          (r.lat BETWEEN ${latMin} AND ${latMax} AND r.lng BETWEEN ${lngMin} AND ${lngMax})
+          OR r.name ILIKE ${qLikeForName}
+          OR r.name ILIKE ${qNormLikeForName}
+        )`)
+      } else {
+        conditions.push(Prisma.sql`r.lat BETWEEN ${latMin} AND ${latMax}`)
+        conditions.push(Prisma.sql`r.lng BETWEEN ${lngMin} AND ${lngMax}`)
+      }
     }
 
-    // Location name filter (commune/city) — ILIKE sin unaccent para evitar error si la extensión no está
-    if (locationName) {
+    // Location name filter (commune/city)
+    if (locationName && !q) {
+      // Solo aplicar filtro de ciudad cuando NO hay query de texto
       const locLike = `%${locationName}%`
       conditions.push(Prisma.sql`r.address ILIKE ${locLike}`)
     }
@@ -116,8 +132,11 @@ export async function GET(req: NextRequest) {
     for (const d of rows) {
       const catName = d.categoryName as string
       if (isExcludedCategory(catName)) continue
-      // Dedup: skip same (restaurant, dish name) — handles imported duplicates
-      const dupKey = `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
+      // Dedup: showcase usa ID (cada plato es único aunque tenga mismo nombre);
+      // restaurantes normales deduplicamos por nombre para eliminar importaciones duplicadas
+      const dupKey = d.isShowcase
+        ? `${d.restaurantId}::id::${d.id}`
+        : `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
       if (seenKey.has(dupKey)) continue
       seenKey.add(dupKey)
       const categoriaNorm = resolveDishLeaf(
