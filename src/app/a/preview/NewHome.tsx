@@ -150,6 +150,7 @@ export default function NewHome({
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   // Track if user explicitly changed filterMaxKm from the modal (vs auto-set by GPS)
   const userSetMaxKm = useRef(false)
+  const silentFetch = useRef(true) // first auto-location fetch is silent (no loading overlay)
   // Server-side search/filter results — null = browse mode (use initial dishes prop)
   const [serverDishes, setServerDishes] = useState<FeedDish[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -413,7 +414,9 @@ export default function NewHome({
     maxKm?: number; categories?: string[]; locationName?: string | null
     lat?: number | null; lng?: number | null
   }) => {
-    setIsSearching(true)
+    const silent = silentFetch.current
+    silentFetch.current = false
+    if (!silent) setIsSearching(true)
     try {
       const url = new URLSearchParams()
       if (params.q) url.set('q', params.q)
@@ -429,9 +432,9 @@ export default function NewHome({
       const data: FeedDish[] = await res.json()
       setServerDishes(data)
     } catch {
-      setServerDishes(null) // en error, mostrar platos iniciales en vez de resultados stale
+      setServerDishes(null)
     } finally {
-      setIsSearching(false)
+      if (!silent) setIsSearching(false)
     }
   }, [])
 
