@@ -65,7 +65,7 @@ dishType (array — puede ser más de uno, especialmente en combos):
 ${VALID_DISH_TYPES.join(", ")}
 Reglas dishType:
 - Si es un combo/pack con varios productos → incluye "combo" MÁS los tipos que contiene (ej: ["combo","hamburguesa","papas fritas"])
-- "extra" para salsas, condimentos, aderezos y porciones adicionales (salsa tamarindo, salsa soya, extra de carne, ají, jengibre, etc.). Estos NO son platos principales — usar solo ["extra"], sin otras dimensiones relevantes.
+- "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
 
