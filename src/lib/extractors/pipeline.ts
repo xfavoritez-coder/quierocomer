@@ -18,7 +18,7 @@ import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
-import { classifyDishesBatched, type DishTaxonomyInput } from "@/lib/taxonomy-classify";
+import { type DishTaxonomyInput } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo } from "@/lib/google-places";
 
@@ -603,30 +603,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // Taxonomy classification — paralelo, chunks de 20 para no saturar BD
-    try {
-      const taxonomy = await classifyDishesBatched(taxonomyInputs);
-      const entries = Object.entries(taxonomy);
-      await prisma.$transaction(
-        entries.map(([dishId, dims]) =>
-          prisma.dish.update({
-            where: { id: dishId },
-            data: {
-              txDishType:   dims.dishType        ?? [],
-              txCuisine:    dims.cuisine         ?? [],
-              txMealSlot:   dims.mealSlot        ?? [],
-              txIngredient: dims.mainIngredient  ?? [],
-              txEstilo:     dims.estilo          ?? [],
-              ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
-            },
-          })
-        )
-      );
-      console.log(`[Pipeline] Taxonomy classified ${entries.length}/${taxonomyInputs.length} dishes`);
-    } catch (e) {
-      console.error("[Pipeline] Taxonomy classification failed (non-fatal):", e);
-    }
-
     // Mark lead as READY early — before slow operations (photos, translations)
     // so a timeout won't mark it FAILED after the restaurant already exists
     const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}`;
@@ -636,6 +612,18 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     });
     clearTimeout(pipelineTimeout);
     console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
+
+    // Taxonomy classification — fire-and-forget en su propia función (maxDuration=120s)
+    // Se ejecuta DESPUÉS de READY para no bloquear al usuario
+    if (taxonomyInputs.length > 0) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quierocomer.cl';
+      fetch(`${appUrl}/api/mapalocales/carta/taxonomy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: restaurant.slug }),
+      }).catch(e => console.error('[Pipeline] Taxonomy self-call failed:', e));
+      console.log(`[Pipeline] Taxonomy triggered for ${taxonomyInputs.length} dishes (async)`);
+    }
 
     // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
     const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);

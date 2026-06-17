@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { classifyDishes, type DishTaxonomyInput } from '@/lib/taxonomy-classify'
+import { classifyDishesBatched, type DishTaxonomyInput } from '@/lib/taxonomy-classify'
 
 export const maxDuration = 120
 
