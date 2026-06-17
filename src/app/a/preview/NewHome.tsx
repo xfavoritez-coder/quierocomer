@@ -972,7 +972,7 @@ export default function NewHome({
             color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
             flexShrink: 0, paddingLeft: 8,
           }}>
-            {feedDishes.length} platos encontrados
+            {feedDishes.length} platos
           </span>
         </div>
       </header>
