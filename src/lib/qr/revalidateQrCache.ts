@@ -5,6 +5,6 @@ import { revalidateTag } from "next/cache";
  * Call this after any mutation that affects the menu (dishes, categories, promotions).
  */
 export function revalidateQrCache(slug?: string) {
-  revalidateTag("qr-restaurant");
-  if (slug) revalidateTag(`qr-restaurant-${slug}`);
+  revalidateTag("qr-restaurant", "max");
+  if (slug) revalidateTag(`qr-restaurant-${slug}`, "max");
 }
