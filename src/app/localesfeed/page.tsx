@@ -250,7 +250,12 @@ function extractComuna(address: string): string {
 
 function TabMapa() {
   const [places, setPlaces] = useState<PlaceResult[]>([])
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('q') ?? ''
+    }
+    return ''
+  })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [lastAddedId, setLastAddedId] = useState<string | null>(null)
 
@@ -938,7 +943,7 @@ function TabMapa() {
                           onBlur={() => setEditingProviderId(null)}
                           style={{ fontSize: 10, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: '1px 4px' }}
                         >
-                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Toteat','Web propia'].map(p => (
+                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Queresto','Toteat','Web propia'].map(p => (
                             <option key={p} value={p}>{p}</option>
                           ))}
                         </select>
@@ -964,7 +969,7 @@ function TabMapa() {
                           onBlur={() => setEditingProviderId(null)}
                           style={{ fontSize: 10, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: '1px 4px' }}
                         >
-                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Toteat','Web propia'].map(pv => (
+                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Queresto','Toteat','Web propia'].map(pv => (
                             <option key={pv} value={pv}>{pv}</option>
                           ))}
                         </select>
