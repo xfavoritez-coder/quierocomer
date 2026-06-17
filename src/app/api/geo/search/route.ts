@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
 
-/** Server-side geocoding proxy using Google Geocoding API.
- *  Más preciso que Nominatim para direcciones en Chile.
+/** Server-side geocoding proxy.
+ *  Usa Google Places Autocomplete para sugerencias mientras el usuario escribe,
+ *  luego resuelve coordenadas con Geocoding por place_id en paralelo.
+ *  Fallback a Nominatim si no hay key de Google.
  *  GET /api/geo/search?q=<address>
  */
 export async function GET(req: NextRequest) {
@@ -11,34 +13,72 @@ export async function GET(req: NextRequest) {
   if (!q || q.length < 3) return NextResponse.json([])
 
   if (!GOOGLE_KEY) {
-    // Fallback a Nominatim si no hay key (no debería pasar en prod)
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6&countrycodes=cl`,
-        { headers: { 'Accept-Language': 'es', 'User-Agent': 'QuieroComer/1.0' } }
-      )
-      return NextResponse.json(await res.json())
-    } catch {
-      return NextResponse.json([])
-    }
+    return nominatimSearch(q)
   }
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q + ', Chile')}&region=cl&language=es&key=${GOOGLE_KEY}`
-    const res = await fetch(url, { next: { revalidate: 0 } })
-    const data = await res.json()
+    // 1. Places Autocomplete — optimizado para texto parcial
+    const acUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&language=es&components=country:cl&types=geocode&key=${GOOGLE_KEY}`
+    const acRes = await fetch(acUrl, { next: { revalidate: 0 } })
+    const acData = await acRes.json()
 
-    if (data.status !== 'OK' || !data.results?.length) return NextResponse.json([])
+    if (acData.status !== 'OK' || !acData.predictions?.length) {
+      return nominatimSearch(q)
+    }
 
-    const results = data.results.slice(0, 6).map((r: any) => ({
-      place_id: r.place_id,
-      display_name: r.formatted_address,
-      lat: String(r.geometry.location.lat),
-      lon: String(r.geometry.location.lng),
-      address: parseGoogleComponents(r.address_components),
-    }))
+    const predictions: { place_id: string; description: string }[] = acData.predictions.slice(0, 6)
 
-    return NextResponse.json(results)
+    // 2. Geocoding por place_id en paralelo para obtener coordenadas
+    const results = await Promise.all(
+      predictions.map(async (pred) => {
+        try {
+          const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?place_id=${pred.place_id}&language=es&key=${GOOGLE_KEY}`
+          const geoRes = await fetch(geoUrl, { next: { revalidate: 0 } })
+          const geoData = await geoRes.json()
+
+          if (geoData.status !== 'OK' || !geoData.results?.[0]) {
+            return {
+              place_id: pred.place_id,
+              display_name: pred.description,
+              lat: '0',
+              lon: '0',
+              address: {},
+            }
+          }
+
+          const r = geoData.results[0]
+          return {
+            place_id: pred.place_id,
+            display_name: pred.description,
+            lat: String(r.geometry.location.lat),
+            lon: String(r.geometry.location.lng),
+            address: parseGoogleComponents(r.address_components),
+          }
+        } catch {
+          return {
+            place_id: pred.place_id,
+            display_name: pred.description,
+            lat: '0',
+            lon: '0',
+            address: {},
+          }
+        }
+      })
+    )
+
+    return NextResponse.json(results.filter((r) => r.lat !== '0'))
+  } catch {
+    return nominatimSearch(q)
+  }
+}
+
+async function nominatimSearch(q: string) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6&countrycodes=cl`,
+      { headers: { 'Accept-Language': 'es', 'User-Agent': 'QuieroComer/1.0' } }
+    )
+    return NextResponse.json(await res.json())
   } catch {
     return NextResponse.json([])
   }

@@ -50,17 +50,17 @@ export async function GET(req: NextRequest) {
       const qStemNormLike = qStemNorm ? `%${qStemNorm}%` : null
 
       if (qStemLike && qStemNormLike && qStemNorm !== qNorm) {
-        // Busca plural Y singular, con y sin acento
+        // Busca plural Y singular, con y sin acento — también en nombre del restaurante
         conditions.push(Prisma.sql`(
-          d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike}
-          OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike}
+          d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike} OR r.name ILIKE ${qLike}
+          OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike} OR r.name ILIKE ${qNormLike}
           OR d.name ILIKE ${qStemLike} OR COALESCE(d.description, '') ILIKE ${qStemLike}
           OR d.name ILIKE ${qStemNormLike} OR COALESCE(d.description, '') ILIKE ${qStemNormLike}
         )`)
       } else if (qNorm !== q) {
-        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike} OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike})`)
+        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike} OR r.name ILIKE ${qLike} OR d.name ILIKE ${qNormLike} OR COALESCE(d.description, '') ILIKE ${qNormLike} OR r.name ILIKE ${qNormLike})`)
       } else {
-        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike})`)
+        conditions.push(Prisma.sql`(d.name ILIKE ${qLike} OR COALESCE(d.description, '') ILIKE ${qLike} OR r.name ILIKE ${qLike})`)
       }
     }
 
