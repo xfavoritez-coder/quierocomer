@@ -8,8 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Users ──────────────────────────────────────────────────────────────
-
 model Usuario {
   id                String    @id @default(cuid())
   nombre            String
@@ -30,17 +28,15 @@ model Usuario {
   updatedAt         DateTime  @updatedAt
 }
 
-// ─── Restaurants ────────────────────────────────────────────────────────
-
 model Local {
-  id          String   @id @default(cuid())
-  slug        String?  @unique
+  id          String     @id @default(cuid())
+  slug        String?    @unique
   nombre      String
-  email       String   @unique
+  email       String     @unique
   password    String
   telefono    String?
-  ciudad      String   @default("santiago")
-  categorias  String[] @default([])
+  ciudad      String     @default("santiago")
+  categorias  String[]   @default([])
   descripcion String?
   direccion   String?
   comuna      String?
@@ -51,35 +47,28 @@ model Local {
   horarios    Json?
   logoUrl     String?
   portadaUrl  String?
-  activo      Boolean  @default(true)
-  vistas      Int      @default(0)
-  linkPedido  String?  @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  menuItems MenuItem[]
+  activo      Boolean    @default(true)
+  vistas      Int        @default(0)
+  linkPedido  String?    @default("")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  menuItems   MenuItem[]
 
   @@index([activo])
   @@index([comuna])
 }
 
-// ─── Menu Items ─────────────────────────────────────────────────────────
-
 model MenuItem {
-  id          String   @id @default(cuid())
-  localId     String
-  categoria   String
-  nombre      String
-  descripcion String?
-  precio      Float
-  imagenUrl   String?
-  destacado   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
+  id             String          @id @default(cuid())
+  localId        String
+  categoria      String
+  nombre         String
+  descripcion    String?
+  precio         Float
+  imagenUrl      String?
+  destacado      Boolean         @default(false)
+  createdAt      DateTime        @default(now())
   ingredients    String[]
-  ingredientTags IngredientTag[]
-  dietType       DietType        @default(OMNIVORE)
-  mealTimes      String[]        @default([])
   hungerLevel    HungerLevel?
   isAvailable    Boolean         @default(true)
   availableFrom  String?
@@ -88,54 +77,37 @@ model MenuItem {
   totalSelected  Int             @default(0)
   totalLoved     Int             @default(0)
   avgRating      Float?
-
-  local        Local         @relation(fields: [localId], references: [id])
-  interactions Interaction[]
-  ratings      DishRating[]
+  dietType       DietType        @default(OMNIVORE)
+  mealTimes      String[]        @default([])
+  ratings        DishRating[]
+  ingredientTags IngredientTag[]
+  interactions   Interaction[]
+  local          Local           @relation(fields: [localId], references: [id])
 }
-
-enum HungerLevel {
-  LIGHT
-  MEDIUM
-  HEAVY
-}
-
-enum DietType {
-  VEGAN
-  VEGETARIAN
-  OMNIVORE
-}
-
-// ─── Ingredients ────────────────────────────────────────────────────────
 
 model Ingredient {
-  id                      String             @id @default(cuid())
-  name                    String             @unique
-  nameEn                  String?
-  namePt                  String?
-  aliases                 String[]
-  category                IngredientCategory
-  approved                Boolean            @default(true)
-  createdAt               DateTime           @default(now())
-  createdByRestaurantId   String?
-  createdByRestaurant     Restaurant?        @relation("CreatedIngredients", fields: [createdByRestaurantId], references: [id])
-  dishes                  IngredientTag[]
-  dishIngredients         DishIngredient[]
-  allergens               Allergen[]         // many-to-many: qué alérgenos tiene este ingrediente
+  id                    String             @id @default(cuid())
+  name                  String             @unique
+  category              IngredientCategory
+  createdAt             DateTime           @default(now())
+  aliases               String[]
+  nameEn                String?
+  namePt                String?
+  createdByRestaurantId String?
+  approved              Boolean            @default(true)
+  dishIngredients       DishIngredient[]
+  createdByRestaurant   Restaurant?        @relation("CreatedIngredients", fields: [createdByRestaurantId], references: [id])
+  dishes                IngredientTag[]
+  allergens             Allergen[]         @relation("AllergenToIngredient")
 }
 
 model Allergen {
   id          String       @id @default(cuid())
-  name        String       @unique  // "gluten", "lactosa", "cerdo", "alcohol", etc
-  type        AllergenType @default(ALLERGEN)
+  name        String       @unique
   position    Int          @default(0)
   createdAt   DateTime     @default(now())
-  ingredients Ingredient[] // many-to-many: ingredientes vinculados
-}
-
-enum AllergenType {
-  ALLERGEN     // alérgenos reales (gluten, lactosa, maní, etc)
-  RESTRICTION  // preferencias dietarias (cerdo, alcohol, etc)
+  type        AllergenType @default(ALLERGEN)
+  ingredients Ingredient[] @relation("AllergenToIngredient")
 }
 
 model IgnoredIngredient {
@@ -144,55 +116,36 @@ model IgnoredIngredient {
   createdAt DateTime @default(now())
 }
 
-enum IngredientCategory {
-  PROTEIN
-  VEGETABLE
-  FRUIT
-  DAIRY
-  CARB
-  SAUCE
-  SPICE
-  OTHER
-}
-
 model IngredientTag {
-  id           String @id @default(cuid())
+  id           String     @id @default(cuid())
   menuItemId   String
   ingredientId String
-
-  menuItem   MenuItem   @relation(fields: [menuItemId], references: [id])
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
 
   @@unique([menuItemId, ingredientId])
 }
 
-// ─── Interactions ───────────────────────────────────────────────────────
-
 model Interaction {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  userId     String?
-  sessionId  String
-  visitId    String?
-  menuItemId String
-
-  action      InteractionAction
-  ctxCompany  CompanyContext?
-  ctxHunger   HungerLevel?
-  ctxBudget   Int?
-  ctxOccasion OccasionContext?
-
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now())
+  userId           String?
+  sessionId        String
+  visitId          String?
+  menuItemId       String
+  action           InteractionAction
+  ctxCompany       CompanyContext?
+  ctxHunger        HungerLevel?
+  ctxBudget        Int?
+  ctxOccasion      OccasionContext?
   weatherTemp      Float?
   weatherCondition String?
   weatherHumidity  Int?
   userLat          Float?
   userLng          Float?
-
-  hour      Int?
-  dayOfWeek Int?
-
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  hour             Int?
+  dayOfWeek        Int?
+  menuItem         MenuItem          @relation(fields: [menuItemId], references: [id])
 
   @@index([userId])
   @@index([sessionId])
@@ -200,102 +153,40 @@ model Interaction {
   @@index([menuItemId])
 }
 
-enum InteractionAction {
-  VIEWED
-  SELECTED
-  IGNORED
-  LOVED
-  MEH
-  DISLIKED
-}
-
-enum CompanyContext {
-  SOLO
-  PAREJA
-  AMIGOS
-  FAMILIA
-}
-
-enum OccasionContext {
-  ALMUERZO_RAPIDO
-  CENA_TRANQUILA
-  ALGO_ESPECIAL
-  TRABAJAR_AQUI
-  CUMPLEANOS
-  CITA_ROMANTICA
-  JUNTA_AMIGOS
-  CON_NINOS
-  FAMILIAR
-}
-
-// ─── Ratings ────────────────────────────────────────────────────────────
-
 model DishRating {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now())
   userId     String?
   sessionId  String
   menuItemId String
-
-  score    RatingScore
-  stars    Int?
-  comment  String?
-  userName String?
-
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  score      RatingScore
+  comment    String?
+  stars      Int?
+  userName   String?
+  menuItem   MenuItem    @relation(fields: [menuItemId], references: [id])
 
   @@unique([userId, menuItemId])
   @@index([menuItemId])
 }
 
-enum RatingScore {
-  LOVED
-  MEH
-  DISLIKED
-}
-
-// ─── User Taste Profile ─────────────────────────────────────────────────
-
 model UserTasteProfile {
-  id        String   @id @default(cuid())
-  updatedAt DateTime @updatedAt
-
-  userId    String  @unique
-  sessionId String?
-
+  id                  String          @id @default(cuid())
+  updatedAt           DateTime        @updatedAt
+  userId              String          @unique
+  sessionId           String?
   favoriteIngredients String[]
   avoidIngredients    String[]
-
-  typicalHunger  HungerLevel?
-  typicalCompany CompanyContext?
-  typicalBudget  Int?
-
-  coldWeatherPrefs String[]
-  hotWeatherPrefs  String[]
-
-  onboardingDone      Boolean     @default(false)
+  typicalHunger       HungerLevel?
+  typicalCompany      CompanyContext?
+  typicalBudget       Int?
+  coldWeatherPrefs    String[]
+  hotWeatherPrefs     String[]
+  onboardingDone      Boolean         @default(false)
   dietaryRestrictions String[]
-  riskProfile         RiskProfile @default(BALANCED)
-
-  fitnessMode      FitnessMode?
-  fitnessUpdatedAt DateTime?
+  riskProfile         RiskProfile     @default(BALANCED)
+  fitnessMode         FitnessMode?
+  fitnessUpdatedAt    DateTime?
 }
-
-enum FitnessMode {
-  GAINING
-  CUTTING
-  MAINTAINING
-  NONE
-}
-
-enum RiskProfile {
-  SAFE
-  BALANCED
-  EXPLORER
-}
-
-// ─── Group Sessions ─────────────────────────────────────────────────────
 
 model GroupSession {
   id             String        @id @default(cuid())
@@ -326,11 +217,1577 @@ model GroupMember {
   recommendedDishId String?
   joinedAt          DateTime     @default(now())
   readyAt           DateTime?
-
-  group GroupSession @relation(fields: [groupId], references: [id])
+  group             GroupSession @relation(fields: [groupId], references: [id])
 
   @@unique([groupId, sessionId])
   @@index([groupId])
+}
+
+model RestaurantOwner {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  passwordHash       String
+  name               String
+  role               OwnerRole          @default(OWNER)
+  lastLoginAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  resetToken         String?
+  resetTokenExpiry   DateTime?
+  status             OwnerStatus        @default(ACTIVE)
+  mustChangePassword Boolean            @default(false)
+  whatsapp           String?
+  restaurants        Restaurant[]
+  uploadedTickets    RestaurantTicket[]
+
+  @@index([resetToken])
+}
+
+model TeamMember {
+  id                 String           @id @default(cuid())
+  restaurantId       String
+  email              String
+  name               String
+  role               TeamRole         @default(VIEWER)
+  status             TeamMemberStatus @default(PENDING)
+  weeklyEmailEnabled Boolean          @default(true)
+  passwordHash       String?
+  inviteToken        String?          @unique
+  inviteExpiresAt    DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  restaurant         Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, email])
+  @@index([email])
+  @@index([inviteToken])
+}
+
+model Restaurant {
+  id                         String                   @id @default(cuid())
+  slug                       String                   @unique
+  name                       String
+  description                String?
+  logoUrl                    String?
+  bannerUrl                  String?
+  phone                      String?
+  address                    String?
+  cartaTheme                 CartaTheme               @default(BASIC)
+  isActive                   Boolean                  @default(true)
+  ownerId                    String?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  defaultView                String?
+  waiterPanelActive          Boolean                  @default(false)
+  qrActivatedAt              DateTime?
+  instagram                  String?
+  scheduleJson               Json?
+  website                    String?
+  whatsapp                   String?
+  qrToken                    String?                  @unique
+  allPhotosReferential       Boolean                  @default(false)
+  dietType                   DishDietType             @default(OMNIVORE)
+  enabledLangs               String[]                 @default(["es", "en", "pt"])
+  plan                       RestaurantPlan           @default(FREE)
+  toteatApiToken             String?
+  toteatLastSyncAt           DateTime?
+  toteatLocalId              Int?
+  toteatRestaurantId         String?
+  toteatUserId               Int?
+  currentPeriodEnd           DateTime?
+  flowCustomerId             String?                  @unique
+  flowPlanId                 String?
+  flowSubscriptionId         String?                  @unique
+  lastPaymentAt              DateTime?
+  subscriptionStatus         SubscriptionStatus       @default(NONE)
+  trialEndsAt                DateTime?
+  flowRegisterToken          String?
+  pendingFlowPlanId          String?
+  billingAnchorDay           Int?
+  billingExempt              Boolean                  @default(false)
+  toteatImportDone           Boolean                  @default(false)
+  toteatLastVisibilitySyncAt DateTime?
+  toteatWebhookSecret        String?                  @unique
+  billingAddress             String?
+  billingCity                String?
+  billingCompanyName         String?
+  billingContactName         String?
+  billingEmail               String?
+  billingGiro                String?
+  billingPhone               String?
+  billingRut                 String?
+  birthdayPerk               String?
+  trialReminderSentAt        DateTime?
+  birthdayEmailEnabled       Boolean                  @default(false)
+  birthdayPerkConditions     String?
+  cartaColorMode             CartaColorMode           @default(LIGHT)
+  cartaAccentColor           String?
+  isDemo                     Boolean                  @default(false)
+  needsTranslation           Boolean                  @default(false)
+  weeklyEmailEnabled         Boolean                  @default(true)
+  weeklyInsightsEnabled      Boolean                  @default(true)
+  demoOnboardingDone         Boolean                  @default(false)
+  mpCustomerId               String?                  @unique
+  mpPlanId                   String?
+  mpSubscriptionId           String?                  @unique
+  pendingMpPlanId            String?
+  menuImported               Boolean                  @default(false)
+  showCategoryLobby          Boolean                  @default(false)
+  customPlanPriceNet         Int?
+  mpPayerEmail               String?
+  genioFabEnabled            Boolean                  @default(false)
+  ownerBannerEnabled         Boolean                  @default(false)
+  multiMenuEnabled           Boolean                  @default(false)
+  lat                        Float?
+  lng                        Float?
+  googleMapsUrl              String?
+  googlePlaceId              String?
+  googleRating               Float?
+  googleRatingCount          Int?
+  primaryCategory            String?
+  announcements              Announcement[]
+  automationRules            AutomationRule[]
+  badgeSnapshots             BadgeSnapshot[]
+  birthdays                  BirthdayCampaign[]
+  birthdayEmailLogs          BirthdayEmailLog[]
+  campaigns                  Campaign[]
+  categories                 Category[]
+  customers                  Customer[]
+  dishes                     Dish[]
+  dishFavorites              DishFavorite[]
+  dishSuggestions            DishSuggestion[]
+  experience                 Experience?
+  genioInsights              GenioInsight[]
+  happyHours                 HappyHour[]
+  createdIngredients         Ingredient[]             @relation("CreatedIngredients")
+  menuGroups                 MenuGroup[]
+  modifierTemplates          ModifierTemplate[]
+  promotionsMarketing        Promotion[]
+  qrUserInteractions         QRUserInteraction[]
+  owner                      RestaurantOwner?         @relation(fields: [ownerId], references: [id])
+  restaurantClients          RestaurantClient[]
+  promotions                 RestaurantPromotion[]
+  schedules                  RestaurantScheduleRule[]
+  tables                     RestaurantTable[]
+  tickets                    RestaurantTicket[]
+  reviews                    Review[]
+  segments                   Segment[]
+  sessions                   Session[]
+  statEvents                 StatEvent[]
+  teamMembers                TeamMember[]
+  toteatSales                ToteatSale[]
+  waiterCalls                WaiterCall[]
+  waiterSubscriptions        WaiterPushSubscription[]
+  whatsappMessages           WhatsAppMessage[]
+
+  @@index([ownerId])
+}
+
+model MenuGroup {
+  id           String     @id @default(cuid())
+  restaurantId String
+  name         String
+  slug         String
+  description  String?
+  imageUrl     String?
+  position     Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  categories   Category[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, slug])
+  @@index([restaurantId])
+}
+
+model ToteatSale {
+  id              String              @id @default(cuid())
+  restaurantId    String
+  toteatOrderId   BigInt              @unique
+  toteatTableId   String?
+  toteatTableName String?
+  numberClients   Int?
+  toteatWaiterId  BigInt?
+  waiterName      String?
+  dateOpen        DateTime
+  dateClosed      DateTime
+  total           Float
+  payed           Float
+  gratuity        Float               @default(0)
+  subtotal        Float
+  taxes           Float               @default(0)
+  fiscalType      String?
+  paymentMethod   String?
+  rawJson         Json
+  syncedAt        DateTime            @default(now())
+  restaurant      Restaurant          @relation(fields: [restaurantId], references: [id])
+  products        ToteatSaleProduct[]
+
+  @@index([restaurantId, dateClosed])
+  @@index([restaurantId, toteatTableId])
+}
+
+model ToteatSaleProduct {
+  id              String     @id @default(cuid())
+  saleId          String
+  toteatProductId String
+  productName     String
+  hierarchyId     String?
+  hierarchyName   String?
+  quantity        Float
+  netPrice        Float
+  payed           Float
+  taxes           Float      @default(0)
+  discounts       Float      @default(0)
+  sale            ToteatSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@index([toteatProductId])
+}
+
+model BadgeSnapshot {
+  id           String     @id @default(cuid())
+  restaurantId String
+  dishId       String
+  badgeType    String
+  score        Float?
+  position     Int?
+  capturedAt   DateTime   @default(now())
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId, badgeType, capturedAt])
+  @@index([dishId, capturedAt])
+}
+
+model AbExperiment {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  variants    AbVariant[]
+
+  @@index([slug])
+}
+
+model AbVariant {
+  id           String       @id @default(cuid())
+  experimentId String
+  slot         String
+  text         String
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  experiment   AbExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId, slot, isActive])
+}
+
+model Announcement {
+  id           String     @id @default(cuid())
+  restaurantId String
+  text         String
+  linkUrl      String?
+  daysOfWeek   Int[]
+  startDate    DateTime?
+  endDate      DateTime?
+  isActive     Boolean    @default(true)
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model Category {
+  id           String                @id @default(cuid())
+  restaurantId String
+  name         String
+  description  String?
+  position     Int
+  isActive     Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  dishType     String                @default("food")
+  menuGroupId  String?
+  normOverride String?
+  cuisineTag   String?
+  menuGroup    MenuGroup?            @relation(fields: [menuGroupId], references: [id])
+  restaurant   Restaurant            @relation(fields: [restaurantId], references: [id])
+  translations CategoryTranslation[]
+  dishes       Dish[]
+
+  @@index([restaurantId])
+  @@index([menuGroupId])
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  lang       String
+  name       String
+  isManual   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, lang])
+  @@index([categoryId])
+}
+
+model Dish {
+  id                    String                 @id @default(cuid())
+  restaurantId          String
+  categoryId            String
+  name                  String
+  description           String?
+  price                 Float
+  discountPrice         Float?
+  photos                String[]
+  tags                  DishTag[]
+  isHero                Boolean                @default(false)
+  isActive              Boolean                @default(true)
+  stockCountdown        Int?
+  ingredients           String?
+  allergens             String?
+  position              Int
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  dishDiet              DishDietType           @default(OMNIVORE)
+  isSpicy               Boolean                @default(false)
+  deletedAt             DateTime?
+  flavorTags            String[]
+  isFeaturedAuto        Boolean                @default(false)
+  isHighMargin          Boolean                @default(false)
+  isPhotoReferential    Boolean                @default(false)
+  isGlutenFree          Boolean                @default(false)
+  isLactoseFree         Boolean                @default(false)
+  isSoyFree             Boolean                @default(false)
+  toteatMappedAt        DateTime?
+  toteatMappedBy        String?
+  toteatProductId       String?
+  toteatSynced          Boolean                @default(false)
+  toteatNoDirectMapping Boolean                @default(false)
+  containsNuts          Boolean                @default(false)
+  photoCredits          Json?
+  embedding             Unsupported("vector")?
+  embeddingHash         String?
+  embeddingText         String?
+  imageEmbedding        Unsupported("vector")?
+  imageEmbeddingHash    String?
+  hiddenFromFeed        Boolean                @default(false)
+  leafOverride          String?
+  badgeSnapshots        BadgeSnapshot[]
+  category              Category               @relation(fields: [categoryId], references: [id])
+  restaurant            Restaurant             @relation(fields: [restaurantId], references: [id])
+  dishFavorites         DishFavorite[]
+  dishIngredients       DishIngredient[]
+  suggestedWith         DishSuggestion[]       @relation("SuggestionFrom")
+  suggestedBy           DishSuggestion[]       @relation("SuggestionTo")
+  translations          DishTranslation[]
+  feedComments          FeedComment[]
+  feedStats             FeedDishStats?
+  feedInteractions      FeedInteraction[]
+  feedRatings           FeedRating[]
+  feedSaved             FeedSaved[]
+  reviews               Review[]
+  modifierTemplates     ModifierTemplate[]     @relation("DishToModifierTemplate")
+
+  @@index([restaurantId, toteatProductId])
+  @@index([restaurantId])
+  @@index([categoryId])
+}
+
+model DishSuggestion {
+  id              String     @id @default(cuid())
+  dishId          String
+  suggestedDishId String
+  restaurantId    String
+  createdAt       DateTime   @default(now())
+  dish            Dish       @relation("SuggestionFrom", fields: [dishId], references: [id], onDelete: Cascade)
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  suggestedDish   Dish       @relation("SuggestionTo", fields: [suggestedDishId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, suggestedDishId])
+  @@index([dishId])
+  @@index([restaurantId])
+}
+
+model DishTranslation {
+  id          String   @id @default(cuid())
+  dishId      String
+  lang        String
+  description String?
+  isManual    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String?
+  dish        Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, lang])
+  @@index([dishId])
+}
+
+model ModifierTemplate {
+  id           String                  @id @default(cuid())
+  restaurantId String
+  name         String
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  scope        String                  @default("product")
+  restaurant   Restaurant              @relation(fields: [restaurantId], references: [id])
+  groups       ModifierTemplateGroup[]
+  dishes       Dish[]                  @relation("DishToModifierTemplate")
+  promotions   Promotion[]             @relation("ModifierTemplateToPromotion")
+
+  @@index([restaurantId])
+  @@index([restaurantId, scope])
+}
+
+model ModifierTemplateGroup {
+  id           String                     @id @default(cuid())
+  templateId   String
+  name         String
+  required     Boolean                    @default(false)
+  minSelect    Int                        @default(0)
+  maxSelect    Int                        @default(1)
+  position     Int                        @default(0)
+  translations ModifierGroupTranslation[]
+  template     ModifierTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  options      ModifierTemplateOption[]
+
+  @@index([templateId])
+}
+
+model ModifierTemplateOption {
+  id              String                      @id @default(cuid())
+  groupId         String
+  name            String
+  priceAdjustment Float                       @default(0)
+  isDefault       Boolean                     @default(false)
+  position        Int                         @default(0)
+  description     String?
+  imageUrl        String?
+  isHidden        Boolean                     @default(false)
+  toteatMappedAt  DateTime?
+  toteatMappedBy  String?
+  toteatProductId String?
+  translations    ModifierOptionTranslation[]
+  group           ModifierTemplateGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([toteatProductId])
+}
+
+model ModifierGroupTranslation {
+  id       String                @id @default(cuid())
+  groupId  String
+  lang     String
+  name     String
+  isManual Boolean               @default(false)
+  group    ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, lang])
+  @@index([groupId])
+}
+
+model ModifierOptionTranslation {
+  id          String                 @id @default(cuid())
+  optionId    String
+  lang        String
+  name        String
+  description String?
+  isManual    Boolean                @default(false)
+  option      ModifierTemplateOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, lang])
+  @@index([optionId])
+}
+
+model DishIngredient {
+  id           String     @id @default(cuid())
+  dishId       String
+  ingredientId String
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([dishId, ingredientId])
+  @@index([dishId])
+  @@index([ingredientId])
+}
+
+model RestaurantTable {
+  id           String       @id @default(cuid())
+  restaurantId String
+  name         String
+  tableNumber  Int
+  qrCode       String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
+  waiterCalls  WaiterCall[]
+
+  @@index([restaurantId])
+}
+
+model WaiterCall {
+  id           String           @id @default(cuid())
+  tableId      String?
+  restaurantId String
+  calledAt     DateTime
+  answeredAt   DateTime?
+  createdAt    DateTime         @default(now())
+  tableName    String?
+  dietType     String?
+  restrictions String?
+  guestId      String?
+  sessionId    String?
+  dislikes     String?
+  restaurant   Restaurant       @relation(fields: [restaurantId], references: [id])
+  table        RestaurantTable? @relation(fields: [tableId], references: [id])
+
+  @@index([restaurantId])
+  @@index([tableId])
+  @@index([sessionId])
+  @@index([calledAt])
+}
+
+model Customer {
+  id           String     @id @default(cuid())
+  restaurantId String
+  email        String?
+  name         String?
+  birthDate    DateTime?
+  preferences  Json?
+  cookieId     String?
+  isSubscribed Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  reviews      Review[]
+
+  @@index([restaurantId])
+}
+
+model Review {
+  id           String     @id @default(cuid())
+  restaurantId String
+  customerId   String
+  dishId       String
+  rating       Int
+  isVerified   Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  customer     Customer   @relation(fields: [customerId], references: [id])
+  dish         Dish       @relation(fields: [dishId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([dishId])
+}
+
+model StatEvent {
+  id              String        @id @default(cuid())
+  restaurantId    String
+  dishId          String?
+  categoryId      String?
+  tableId         String?
+  eventType       StatEventType
+  sessionId       String
+  weather         String?
+  timeOfDay       TimeOfDay?
+  createdAt       DateTime      @default(now())
+  guestId         String?
+  qrUserId        String?
+  promoId         String?
+  clickedResultId String?
+  genioSessionId  String?
+  metadata        Json?
+  query           String?
+  resultsCount    Int?
+  dbSessionId     String?
+  guest           GuestProfile? @relation(fields: [guestId], references: [id])
+  qrUser          QRUser?       @relation(fields: [qrUserId], references: [id])
+  restaurant      Restaurant    @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([guestId])
+  @@index([qrUserId])
+  @@index([sessionId])
+  @@index([dbSessionId])
+  @@index([genioSessionId])
+  @@index([eventType, createdAt])
+}
+
+model RestaurantPromotion {
+  id           String        @id @default(cuid())
+  restaurantId String
+  type         PromotionType
+  message      String?
+  dishId       String?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model BirthdayCampaign {
+  id               String     @id @default(cuid())
+  restaurantId     String
+  promoDescription String
+  emailSubject     String
+  emailBody        String
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model RestaurantScheduleRule {
+  id           String           @id @default(cuid())
+  restaurantId String
+  ruleType     ScheduleRuleType
+  condition    String
+  categoryId   String?
+  dishId       String?
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  restaurant   Restaurant       @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model HappyHour {
+  id            String                @id @default(cuid())
+  restaurantId  String
+  name          String
+  days          Int[]
+  startTime     String
+  endTime       String
+  discountType  HappyHourDiscountType
+  discountValue Float
+  categoryIds   String[]
+  dishIds       String[]
+  bannerText    String?
+  bannerColor   String                @default("#f59e0b")
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  restaurant    Restaurant            @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model AdminPushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model WaiterPushSubscription {
+  id           String     @id @default(cuid())
+  restaurantId String
+  endpoint     String     @unique
+  p256dh       String
+  auth         String
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model GuestProfile {
+  id                  String         @id
+  createdAt           DateTime       @default(now())
+  lastSeenAt          DateTime       @default(now())
+  visitCount          Int            @default(1)
+  totalSessions       Int            @default(0)
+  preferences         Json?
+  linkedQrUserId      String?
+  favoriteIngredients Json?
+  convertedToUserAt   DateTime?
+  deviceType          String?
+  dishFavorites       DishFavorite[]
+  linkedQrUser        QRUser?        @relation(fields: [linkedQrUserId], references: [id])
+  sessions            Session[]
+  statEvents          StatEvent[]
+
+  @@index([linkedQrUserId])
+}
+
+model Session {
+  id                 String             @id @default(cuid())
+  guestId            String
+  qrUserId           String?
+  restaurantId       String
+  startedAt          DateTime           @default(now())
+  endedAt            DateTime?
+  durationMs         Int?
+  viewUsed           String?
+  weather            String?
+  timeOfDay          TimeOfDay?
+  dishesViewed       Json?
+  categoriesViewed   Json?
+  pickedDishId       String?
+  isAbandoned        Boolean            @default(false)
+  closeReason        String?
+  deviceType         String?
+  viewHistory        Json?
+  ipAddress          String?
+  converted          Boolean            @default(false)
+  isReturningVisitor Boolean            @default(false)
+  searchesCount      Int                @default(0)
+  language           String?
+  referer            String?
+  userAgent          String?
+  isBot              Boolean            @default(false)
+  tableId            String?
+  externalReferer    String?
+  isQrScan           Boolean            @default(false)
+  cartaLang          String?
+  dishImpressions    DishImpression[]
+  tickets            RestaurantTicket[]
+  guest              GuestProfile       @relation(fields: [guestId], references: [id])
+  qrUser             QRUser?            @relation(fields: [qrUserId], references: [id])
+  restaurant         Restaurant         @relation(fields: [restaurantId], references: [id])
+
+  @@index([guestId])
+  @@index([qrUserId])
+  @@index([restaurantId])
+  @@index([startedAt])
+}
+
+model QRUser {
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String              @unique
+  birthDate          DateTime?
+  dietType           String?
+  restrictions       String[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  verifiedAt         DateTime?
+  lastEmailAt        DateTime?
+  unsubscribedAt     DateTime?
+  triggerHistory     Json?
+  dislikes           String[]
+  birthdayEmailLogs  BirthdayEmailLog[]
+  campaignRecipients CampaignRecipient[]
+  dishFavorites      DishFavorite[]
+  guestProfiles      GuestProfile[]
+  magicTokens        QRMagicToken[]
+  interactions       QRUserInteraction[]
+  restaurantClients  RestaurantClient[]
+  sessions           Session[]
+  statEvents         StatEvent[]
+}
+
+model BirthdayEmailLog {
+  id           String     @id @default(cuid())
+  restaurantId String
+  qrUserId     String
+  sentAt       DateTime   @default(now())
+  perkText     String
+  opened       Boolean    @default(false)
+  openedAt     DateTime?
+  visitedAt    DateTime?
+  qrUser       QRUser     @relation(fields: [qrUserId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId, sentAt])
+  @@index([qrUserId])
+}
+
+model RestaurantClient {
+  id             String     @id @default(cuid())
+  qrUserId       String
+  restaurantId   String
+  source         String     @default("unknown")
+  isActive       Boolean    @default(true)
+  registeredAt   DateTime   @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  qrUser         QRUser     @relation(fields: [qrUserId], references: [id])
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([qrUserId, restaurantId])
+  @@index([restaurantId, isActive])
+  @@index([qrUserId])
+}
+
+model QRMagicToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique @default(cuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      QRUser    @relation(fields: [userId], references: [id])
+
+  @@index([token])
+}
+
+model BannerVariant {
+  id          String   @id @default(cuid())
+  text        String
+  impressions Int      @default(0)
+  conversions Int      @default(0)
+  isWinner    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model QRUserInteraction {
+  id              String     @id @default(cuid())
+  userId          String?
+  restaurantId    String
+  type            String
+  bannerVariantId String?
+  sessionId       String?
+  createdAt       DateTime   @default(now())
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  user            QRUser?    @relation(fields: [userId], references: [id])
+
+  @@index([restaurantId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Referrer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String   @unique
+  code      String   @unique @default(cuid())
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model CronLog {
+  id         String   @id @default(cuid())
+  jobName    String
+  status     String
+  durationMs Int
+  details    Json?
+  error      String?
+  createdAt  DateTime @default(now())
+
+  @@index([jobName])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id        String    @id @default(uuid())
+  to        String
+  subject   String
+  purpose   String
+  status    String
+  errorMsg  String?
+  createdAt DateTime  @default(now())
+  dismissed Boolean   @default(false)
+  clickedAt DateTime?
+  openedAt  DateTime?
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+model PanelActivity {
+  id           String   @id @default(cuid())
+  restaurantId String
+  ownerId      String?
+  action       String
+  details      Json?
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([createdAt])
+}
+
+model SupportMessage {
+  id             String         @id @default(cuid())
+  source         String
+  name           String?
+  email          String
+  phone          String?
+  message        String
+  restaurantSlug String?
+  ownerId        String?
+  read           Boolean        @default(false)
+  repliedAt      DateTime?
+  replyText      String?
+  createdAt      DateTime       @default(now())
+  replyToken     String?        @unique
+  replies        SupportReply[]
+
+  @@index([createdAt])
+  @@index([read, createdAt])
+}
+
+model SupportReply {
+  id        String         @id @default(cuid())
+  messageId String
+  from      String
+  text      String
+  createdAt DateTime       @default(now())
+  message   SupportMessage @relation(fields: [messageId], references: [id])
+
+  @@index([messageId, createdAt])
+}
+
+model Segment {
+  id           String     @id @default(cuid())
+  restaurantId String
+  name         String
+  description  String?
+  rules        Json
+  isAuto       Boolean    @default(false)
+  cachedCount  Int?
+  cachedAt     DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  campaigns    Campaign[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model Campaign {
+  id           String              @id @default(cuid())
+  restaurantId String
+  segmentId    String?
+  name         String
+  status       CampaignStatus      @default(DRAFT)
+  subject      String?
+  bodyHtml     String?
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  stats        Json?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  restaurant   Restaurant          @relation(fields: [restaurantId], references: [id])
+  segment      Segment?            @relation(fields: [segmentId], references: [id])
+  recipients   CampaignRecipient[]
+
+  @@index([restaurantId])
+  @@index([status])
+}
+
+model CampaignRecipient {
+  id         String    @id @default(cuid())
+  campaignId String
+  qrUserId   String
+  status     String    @default("queued")
+  sentAt     DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  campaign   Campaign  @relation(fields: [campaignId], references: [id])
+  qrUser     QRUser    @relation(fields: [qrUserId], references: [id])
+
+  @@index([campaignId])
+  @@index([qrUserId])
+}
+
+model Promotion {
+  id                String             @id @default(cuid())
+  restaurantId      String
+  name              String
+  description       String?
+  dishIds           String[]
+  originalPrice     Float?
+  promoPrice        Float?
+  discountPct       Int?
+  validFrom         DateTime?
+  validUntil        DateTime?
+  status            PromotionStatus    @default(SUGGESTED)
+  generatedBy       String             @default("manual")
+  aiJustification   String?
+  metrics           Json?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  imageUrl          String?
+  promoType         String             @default("product")
+  thumbUrl          String?
+  daysOfWeek        Int[]              @default([])
+  position          Int                @default(0)
+  featured          Boolean            @default(false)
+  restaurant        Restaurant         @relation(fields: [restaurantId], references: [id])
+  modifierTemplates ModifierTemplate[] @relation("ModifierTemplateToPromotion")
+
+  @@index([restaurantId])
+  @@index([status])
+}
+
+model AutomationRule {
+  id            String     @id @default(cuid())
+  restaurantId  String
+  name          String
+  trigger       String
+  triggerConfig Json?
+  subject       String?
+  bodyHtml      String?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model GenioInsight {
+  id           String      @id @default(cuid())
+  restaurantId String?
+  type         String
+  title        String
+  body         String
+  priority     Int         @default(0)
+  data         Json?
+  status       String      @default("active")
+  generatedAt  DateTime    @default(now())
+  expiresAt    DateTime?
+  dismissedAt  DateTime?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([status])
+}
+
+model ExperienceTemplate {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  theme       String
+  category    String
+  description String
+  accentColor String             @default("#F4A623")
+  iconEmoji   String             @default("✨")
+  isPublished Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  instances   Experience[]
+  results     ExperienceResult[]
+}
+
+model ExperienceResult {
+  id            String                 @id @default(cuid())
+  templateId    String
+  name          String
+  description   String
+  imageUrl      String?
+  traits        String[]
+  matchCriteria Json?
+  position      Int                    @default(0)
+  createdAt     DateTime               @default(now())
+  gender        String                 @default("neutral")
+  template      ExperienceTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  submissions   ExperienceSubmission[]
+
+  @@index([templateId])
+}
+
+model Experience {
+  id           String                 @id @default(cuid())
+  restaurantId String                 @unique
+  templateId   String
+  isActive     Boolean                @default(true)
+  createdAt    DateTime               @default(now())
+  restaurant   Restaurant             @relation(fields: [restaurantId], references: [id])
+  template     ExperienceTemplate     @relation(fields: [templateId], references: [id])
+  submissions  ExperienceSubmission[]
+
+  @@index([templateId])
+}
+
+model ExperienceSubmission {
+  id               String            @id @default(cuid())
+  experienceId     String
+  guestId          String?
+  qrUserId         String?
+  userName         String
+  birthDate        DateTime
+  email            String
+  assignedResultId String?
+  personalizedMsg  String?
+  teaserMsg        String?
+  status           String            @default("pending")
+  sendAfter        DateTime
+  submittedAt      DateTime          @default(now())
+  resultSentAt     DateTime?
+  assignedResult   ExperienceResult? @relation(fields: [assignedResultId], references: [id])
+  experience       Experience        @relation(fields: [experienceId], references: [id])
+
+  @@index([experienceId])
+  @@index([status])
+  @@index([sendAfter])
+}
+
+model RestaurantTicket {
+  id               String           @id @default(uuid())
+  restaurantId     String
+  mesaId           String?
+  ticketTotal      Decimal
+  ticketCountItems Int?
+  paidAt           DateTime
+  matchedSessionId String?
+  matchConfidence  String?
+  uploadedById     String?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  matchedSession   Session?         @relation(fields: [matchedSessionId], references: [id])
+  restaurant       Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  uploadedBy       RestaurantOwner? @relation(fields: [uploadedById], references: [id])
+
+  @@index([restaurantId, paidAt])
+  @@index([matchedSessionId])
+}
+
+model DishImpression {
+  id           String   @id @default(uuid())
+  sessionId    String
+  dishId       String
+  restaurantId String
+  position     Int?
+  visibleMs    Int
+  createdAt    DateTime @default(now())
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([dishId, createdAt])
+  @@index([restaurantId, createdAt])
+}
+
+model DishFavorite {
+  id           String        @id @default(uuid())
+  guestId      String?
+  qrUserId     String?
+  dishId       String
+  restaurantId String
+  createdAt    DateTime      @default(now())
+  dish         Dish          @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  guest        GuestProfile? @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  qrUser       QRUser?       @relation(fields: [qrUserId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([guestId, dishId], name: "guest_dish_unique")
+  @@unique([qrUserId, dishId], name: "user_dish_unique")
+  @@index([dishId])
+  @@index([restaurantId])
+  @@index([restaurantId, createdAt])
+  @@index([qrUserId])
+  @@index([guestId])
+}
+
+model PlatformCampaign {
+  id            String                    @id @default(cuid())
+  subject       String
+  status        String                    @default("draft")
+  totalContacts Int                       @default(0)
+  totalSent     Int                       @default(0)
+  totalErrors   Int                       @default(0)
+  createdAt     DateTime                  @default(now())
+  sentAt        DateTime?
+  contacts      PlatformCampaignContact[]
+}
+
+model PlatformCampaignContact {
+  id             String           @id @default(cuid())
+  campaignId     String
+  email          String
+  openedAt       DateTime?
+  clickedAt      DateTime?
+  unsubscribedAt DateTime?
+  errorMsg       String?
+  sentAt         DateTime?
+  createdAt      DateTime         @default(now())
+  campaign       PlatformCampaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([campaignId, email])
+  @@index([email])
+  @@index([campaignId])
+}
+
+model MenuProvider {
+  id               String             @id @default(cuid())
+  name             String
+  domainPatterns   String[]
+  status           MenuProviderStatus
+  extractionConfig Json?
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  htmlSignatures   String[]
+  failCount        Int                @default(0)
+  lastFailAt       DateTime?
+  lastFailReason   String?
+  successCount     Int                @default(0)
+  leads            Lead[]
+}
+
+model Lead {
+  id                 String            @id @default(cuid())
+  localName          String
+  ownerName          String
+  email              String
+  whatsapp           String?
+  cartaType          CartaType
+  cartaUrl           String?
+  cartaFileUrl       String?
+  detectedProviderId String?
+  cartaStatus        CartaStatus       @default(PENDING)
+  activated          Boolean           @default(false)
+  convertedToOwnerId String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  completedAt        DateTime?
+  step2At            DateTime?
+  preview            Json?
+  generatedSlug      String?
+  previewAt          DateTime?
+  readyAt            DateTime?
+  events             Json[]            @default([])
+  errorLog           String?
+  activatedAt        DateTime?
+  deliveredAt        DateTime?
+  emailClickedAt     DateTime?
+  emailOpenedAt      DateTime?
+  onboardingDoneAt   DateTime?
+  panelVisitedAt     DateTime?
+  city               String?
+  ip                 String?
+  activarVisitedAt   DateTime?
+  emailBouncedAt     DateTime?
+  openedVia          String?
+  whatsappClickedAt  DateTime?
+  whatsappOpenedAt   DateTime?
+  whatsappSentAt     DateTime?
+  detectedProvider   MenuProvider?     @relation(fields: [detectedProviderId], references: [id])
+  whatsappMessages   WhatsAppMessage[]
+
+  @@index([email])
+  @@index([detectedProviderId])
+  @@index([cartaStatus])
+  @@index([generatedSlug])
+}
+
+model WhatsAppMessage {
+  id           String            @id @default(cuid())
+  phone        String
+  direction    WhatsAppDirection
+  body         String
+  leadId       String?
+  restaurantId String?
+  twilioSid    String?           @unique
+  status       String            @default("received")
+  profileName  String?
+  createdAt    DateTime          @default(now())
+  lead         Lead?             @relation(fields: [leadId], references: [id])
+  restaurant   Restaurant?       @relation(fields: [restaurantId], references: [id])
+
+  @@index([phone, createdAt])
+  @@index([leadId])
+  @@index([restaurantId])
+}
+
+model FunnelVisit {
+  id          String   @id @default(cuid())
+  page        String   @default("subircarta")
+  ip          String?
+  userAgent   String?
+  referrer    String?
+  createdAt   DateTime @default(now())
+  fbclid      String?
+  leadId      String?
+  sessionId   String?
+  utmCampaign String?
+  utmContent  String?
+  utmMedium   String?
+  utmSource   String?
+  utmTerm     String?
+
+  @@index([page, createdAt])
+  @@index([utmSource, createdAt])
+  @@index([sessionId])
+}
+
+model AdSession {
+  id             String   @id @default(cuid())
+  sessionId      String   @unique
+  utmSource      String
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  fbclid         String?
+  ip             String?
+  userAgent      String?
+  referrer       String?
+  landingPage    String?
+  device         String?
+  duration       Int      @default(0)
+  maxScroll      Int      @default(0)
+  pageViews      Int      @default(1)
+  interactions   Int      @default(0)
+  sectionsViewed String[] @default([])
+  leadId         String?
+  converted      Boolean  @default(false)
+  bounced        Boolean  @default(true)
+  exitPage       String?
+  events         Json[]   @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([utmSource, createdAt])
+  @@index([createdAt])
+}
+
+model ApiUsage {
+  id           String   @id @default(cuid())
+  service      String
+  action       String
+  model        String?
+  leadId       String?
+  inputTokens  Int?
+  outputTokens Int?
+  costUsd      Float
+  meta         Json?
+  createdAt    DateTime @default(now())
+
+  @@index([service, createdAt])
+  @@index([leadId, createdAt])
+  @@index([createdAt])
+}
+
+model FeedUser {
+  id                String                 @id @default(cuid())
+  fingerprint       String                 @unique
+  displayName       String?
+  avatarUrl         String?
+  isVegan           Boolean                @default(false)
+  isVegetarian      Boolean                @default(false)
+  isGlutenFree      Boolean                @default(false)
+  isLactoseFree     Boolean                @default(false)
+  categoryScores    Json                   @default("{}")
+  restaurantScores  Json                   @default("{}")
+  priceMin          Float?
+  priceMax          Float?
+  totalInteractions Int                    @default(0)
+  onboardingDone    Boolean                @default(false)
+  lastSeenAt        DateTime               @default(now())
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  keywordScores     Json                   @default("{}")
+  antojoDishIds     Json                   @default("[]")
+  antojoRejectIds   Json                   @default("[]")
+  antojoSessionDate String?
+  gustoVector       Unsupported("vector")?
+  tasteEmbeddings   Json                   @default("[]")
+  comments          FeedComment[]
+  interactions      FeedInteraction[]
+  ratings           FeedRating[]
+  savedDishes       FeedSaved[]
+
+  @@index([lastSeenAt])
+}
+
+model FeedInteraction {
+  id           String     @id @default(cuid())
+  feedUserId   String
+  dishId       String
+  action       FeedAction
+  dwellMs      Int?
+  category     String?
+  price        Float?
+  createdAt    DateTime   @default(now())
+  feedPosition Int?
+  sessionId    String?
+  source       String?
+  dish         Dish       @relation(fields: [dishId], references: [id])
+  feedUser     FeedUser   @relation(fields: [feedUserId], references: [id])
+
+  @@index([feedUserId, createdAt])
+  @@index([dishId])
+  @@index([action, createdAt])
+  @@index([sessionId])
+}
+
+model FeedSaved {
+  id         String       @id @default(cuid())
+  feedUserId String
+  dishId     String
+  type       FeedSaveType
+  createdAt  DateTime     @default(now())
+  dish       Dish         @relation(fields: [dishId], references: [id])
+  feedUser   FeedUser     @relation(fields: [feedUserId], references: [id])
+
+  @@unique([feedUserId, dishId])
+  @@index([feedUserId, type])
+}
+
+model FeedRating {
+  id         String   @id @default(cuid())
+  feedUserId String
+  dishId     String
+  stars      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  dish       Dish     @relation(fields: [dishId], references: [id])
+  feedUser   FeedUser @relation(fields: [feedUserId], references: [id])
+
+  @@unique([feedUserId, dishId])
+  @@index([dishId])
+}
+
+model FeedComment {
+  id         String   @id @default(cuid())
+  feedUserId String
+  dishId     String
+  text       String
+  createdAt  DateTime @default(now())
+  dish       Dish     @relation(fields: [dishId], references: [id])
+  feedUser   FeedUser @relation(fields: [feedUserId], references: [id])
+
+  @@index([dishId, createdAt])
+  @@index([feedUserId])
+}
+
+model FeedDishStats {
+  id              String   @id @default(cuid())
+  dishId          String   @unique
+  totalViews      Int      @default(0)
+  totalTaps       Int      @default(0)
+  totalLikes      Int      @default(0)
+  totalSaves      Int      @default(0)
+  totalAntojos    Int      @default(0)
+  totalPasses     Int      @default(0)
+  avgRating       Float?
+  ratingCount     Int      @default(0)
+  commentCount    Int      @default(0)
+  popularityScore Float    @default(0)
+  trendingScore   Float    @default(0)
+  updatedAt       DateTime @updatedAt
+  dish            Dish     @relation(fields: [dishId], references: [id])
+
+  @@index([popularityScore])
+  @@index([trendingScore])
+}
+
+model MapaProspecto {
+  id           String   @id
+  name         String
+  address      String?
+  mapsUrl      String?
+  website      String?
+  rating       Float?
+  reviews      Int?
+  lat          Float?
+  lng          Float?
+  status       String?
+  provider     String?
+  cartaUrl     String?
+  fuenteMatch  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  importedSlug String?
+  dismissed    Boolean  @default(false)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum HungerLevel {
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+enum DietType {
+  VEGAN
+  VEGETARIAN
+  OMNIVORE
+}
+
+enum AllergenType {
+  ALLERGEN
+  RESTRICTION
+}
+
+enum IngredientCategory {
+  PROTEIN
+  VEGETABLE
+  FRUIT
+  DAIRY
+  CARB
+  SAUCE
+  SPICE
+  OTHER
+}
+
+enum InteractionAction {
+  VIEWED
+  SELECTED
+  IGNORED
+  LOVED
+  MEH
+  DISLIKED
+}
+
+enum CompanyContext {
+  SOLO
+  PAREJA
+  AMIGOS
+  FAMILIA
+}
+
+enum OccasionContext {
+  ALMUERZO_RAPIDO
+  CENA_TRANQUILA
+  ALGO_ESPECIAL
+  TRABAJAR_AQUI
+  CUMPLEANOS
+  CITA_ROMANTICA
+  JUNTA_AMIGOS
+  CON_NINOS
+  FAMILIAR
+}
+
+enum RatingScore {
+  LOVED
+  MEH
+  DISLIKED
+}
+
+enum FitnessMode {
+  GAINING
+  CUTTING
+  MAINTAINING
+  NONE
+}
+
+enum RiskProfile {
+  SAFE
+  BALANCED
+  EXPLORER
 }
 
 enum GroupType {
@@ -354,45 +1811,20 @@ enum MemberStatus {
   RECALCULATING
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ─── Carta QR Viva (qr.quierocomer.cl) ────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════
-
-model RestaurantOwner {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String
-  name         String
-  whatsapp     String?     // formato +56 9 1234 5678
-  role         OwnerRole   @default(OWNER)
-  status       OwnerStatus @default(ACTIVE)
-  lastLoginAt  DateTime?
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  mustChangePassword Boolean @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  restaurants Restaurant[]
-  uploadedTickets RestaurantTicket[]
-
-  @@index([resetToken])
-}
-
 enum RestaurantPlan {
   FREE
-  SILVER
   GOLD
   PREMIUM
+  SILVER
 }
 
 enum SubscriptionStatus {
-  NONE       // nunca se inscribió a una suscripción
-  TRIALING   // en periodo de prueba (14 días)
-  ACTIVE     // pagando normal
-  PAST_DUE   // último cobro falló, en reintentos
-  CANCELED   // canceló la suscripción
-  UNPAID     // reintentos agotados, sin cobro
+  NONE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
 }
 
 enum OwnerRole {
@@ -406,28 +1838,6 @@ enum OwnerStatus {
   PENDING
 }
 
-model TeamMember {
-  id                 String           @id @default(cuid())
-  restaurantId       String
-  email              String
-  name               String
-  role               TeamRole         @default(VIEWER)
-  status             TeamMemberStatus @default(PENDING)
-  weeklyEmailEnabled Boolean          @default(true)
-  passwordHash       String?
-  inviteToken        String?          @unique
-  inviteExpiresAt    DateTime?
-  lastLoginAt        DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-
-  @@unique([restaurantId, email])
-  @@index([email])
-  @@index([inviteToken])
-}
-
 enum TeamRole {
   ADMIN
   VIEWER
@@ -437,278 +1847,6 @@ enum TeamMemberStatus {
   ACTIVE
   PENDING
   SUSPENDED
-}
-
-model Restaurant {
-  id          String     @id @default(cuid())
-  slug        String     @unique
-  name        String
-  description String?
-  logoUrl     String?
-  bannerUrl   String?
-  phone       String?
-  address     String?
-  lat         Float?
-  lng         Float?
-  googlePlaceId    String?    // ChIJxxxxxx
-  googleMapsUrl    String?    // https://maps.app.goo.gl/... o URL larga
-  googleRating     Float?     // 4.3
-  googleRatingCount Int?      // cantidad de reseñas
-  instagram   String?
-  website     String?
-  whatsapp    String?     // formato +56 9 1234 5678
-  scheduleJson Json?      // { "lun": "12:00-23:00", ..., "dom": "closed" }
-  allPhotosReferential Boolean    @default(false)
-  cartaTheme  CartaTheme @default(BASIC)
-  cartaColorMode CartaColorMode @default(LIGHT)
-  cartaAccentColor String?       // hex color override, default #F4A623 (amber)
-  defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
-  dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
-  primaryCategory    String?      // categoría principal del local (ej: "Pizzas", "Sushi") — usada como fallback para combos/especiales
-  enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
-  showCategoryLobby  Boolean    @default(false) // mostrar índice visual de categorías al abrir la carta
-  waiterPanelActive  Boolean    @default(false)
-  birthdayPerk       String?    // beneficio que el local le regala al cliente en su cumple (ej: "un postre" / "10% off"). Si esta vacio, el modal de cumple no muestra mensaje de regalo
-  birthdayEmailEnabled Boolean @default(false) // si esta activo, se envia email automatico el dia del cumple del cliente
-  birthdayPerkConditions String? // condiciones del regalo de cumpleaños (ej: "Válido solo el día del cumpleaños")
-  plan               RestaurantPlan @default(FREE)
-  qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
-
-  // Billing (Flow.cl)
-  flowCustomerId       String?            @unique
-  flowSubscriptionId   String?            @unique
-  flowPlanId           String?            // identificador del plan en Flow (varía por tier)
-  pendingFlowPlanId    String?            // plan al que se está inscribiendo (durante el flujo de tarjeta)
-  flowRegisterToken    String?            // token de /customer/register en curso
-
-  // Billing (MercadoPago)
-  mpCustomerId         String?            @unique  // MercadoPago customer ID
-  mpSubscriptionId     String?            @unique  // Active subscription/preapproval ID
-  mpPlanId             String?            // MercadoPago plan ID
-  pendingMpPlanId      String?            // Plan being activated
-  mpPayerEmail         String?            // Email de la cuenta de MercadoPago del pagador (si difiere del email de registro)
-
-  subscriptionStatus   SubscriptionStatus @default(NONE)
-  trialEndsAt          DateTime?
-  trialReminderSentAt  DateTime?  // marca cuando se envio el email de "te quedan 2 dias", para no mandar duplicados
-  currentPeriodEnd     DateTime?
-  lastPaymentAt        DateTime?
-  billingExempt        Boolean            @default(false)  // legacy clients que no pagan via Flow
-  customPlanPriceNet   Int?               // precio neto custom (CLP) — override del precio estandar del plan
-  billingAnchorDay     Int?               // dia del mes del ciclo de cobro (1-28); ancla cuando reactivan tras gap
-
-  // Datos de facturacion (Chile) — requeridos para emitir factura electronica
-  billingCompanyName   String?            // razon social
-  billingRut           String?            // RUT formato 76.123.456-7 o 76123456-7
-  billingGiro          String?            // giro / actividad economica
-  billingAddress       String?            // direccion comercial (puede diferir de address del local)
-  billingCity          String?            // comuna / ciudad
-  billingEmail         String?            // email contacto facturacion
-  billingContactName   String?            // nombre responsable contable
-  billingPhone         String?            // telefono contacto facturacion
-  qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
-  isActive           Boolean    @default(true)
-  isDemo             Boolean    @default(false)
-  demoOnboardingDone Boolean    @default(false)
-  menuImported       Boolean    @default(false)
-  needsTranslation   Boolean    @default(false)
-  weeklyEmailEnabled    Boolean    @default(true)
-  weeklyInsightsEnabled Boolean    @default(true)
-  genioFabEnabled       Boolean    @default(false)
-  ownerBannerEnabled    Boolean    @default(false)
-  multiMenuEnabled      Boolean    @default(false)
-  ownerId     String?
-
-  // Toteat POS integration (per-restaurant credentials)
-  toteatRestaurantId String?    // xir
-  toteatLocalId      Int?       // xil
-  toteatUserId       Int?       // xiu
-  toteatApiToken     String?    // xapitoken — stored plaintext for now, encrypt before onboarding 2nd client
-  toteatLastSyncAt   DateTime?
-  toteatImportDone   Boolean    @default(false)  // true cuando el dueño completo el wizard de importacion inicial
-  toteatLastVisibilitySyncAt DateTime?           // ultima vez que sincronizamos visibilidad (separado de ventas)
-  toteatWebhookSecret String?   @unique          // secret aleatorio por local — el dueño lo pega en webhook URL de Toteat
-
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  owner       RestaurantOwner? @relation(fields: [ownerId], references: [id])
-  sessions    Session[]
-  categories  Category[]
-  dishes      Dish[]
-  tables      RestaurantTable[]
-  waiterCalls WaiterCall[]
-  teamMembers TeamMember[]
-  customers   Customer[]
-  reviews     Review[]
-  statEvents  StatEvent[]
-  promotions  RestaurantPromotion[]
-  birthdays   BirthdayCampaign[]
-  schedules             RestaurantScheduleRule[]
-  waiterSubscriptions   WaiterPushSubscription[]
-  qrUserInteractions    QRUserInteraction[]
-  restaurantClients     RestaurantClient[]
-  birthdayEmailLogs     BirthdayEmailLog[]
-  segments              Segment[]
-  campaigns             Campaign[]
-  promotionsMarketing   Promotion[]
-  automationRules       AutomationRule[]
-  genioInsights         GenioInsight[]
-  modifierTemplates     ModifierTemplate[]
-  experience            Experience?
-  tickets               RestaurantTicket[]
-  dishFavorites         DishFavorite[]
-  happyHours            HappyHour[]
-  createdIngredients    Ingredient[]   @relation("CreatedIngredients")
-  toteatSales           ToteatSale[]
-  badgeSnapshots        BadgeSnapshot[]
-
-  announcements         Announcement[]
-  dishSuggestions        DishSuggestion[]
-  whatsappMessages      WhatsAppMessage[]
-  menuGroups            MenuGroup[]
-
-  @@index([ownerId])
-}
-
-// ─── Multi-Menu (un QR, múltiples cartas) ───────────────────────────────
-
-model MenuGroup {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String
-  slug         String
-  description  String?
-  imageUrl     String?
-  position     Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-  categories Category[]
-
-  @@unique([restaurantId, slug])
-  @@index([restaurantId])
-}
-
-// ─── Toteat POS integration ─────────────────────────────────────────────
-
-model ToteatSale {
-  id              String   @id @default(cuid())
-  restaurantId    String
-  toteatOrderId   BigInt   @unique  // sale.orderId from Toteat
-  toteatTableId   String?
-  toteatTableName String?
-  numberClients   Int?
-  toteatWaiterId  BigInt?
-  waiterName      String?
-  dateOpen        DateTime
-  dateClosed      DateTime
-  total           Float
-  payed           Float
-  gratuity        Float    @default(0)
-  subtotal        Float
-  taxes           Float    @default(0)
-  fiscalType      String?
-  paymentMethod   String?  // first paymentForms[0].method, simplified
-  rawJson         Json     // full raw sale for fields we haven't extracted
-  syncedAt        DateTime @default(now())
-
-  restaurant      Restaurant          @relation(fields: [restaurantId], references: [id])
-  products        ToteatSaleProduct[]
-
-  @@index([restaurantId, dateClosed])
-  @@index([restaurantId, toteatTableId])
-}
-
-model ToteatSaleProduct {
-  id              String  @id @default(cuid())
-  saleId          String
-  toteatProductId String  // e.g. "HV0010"
-  productName     String
-  hierarchyId     String?
-  hierarchyName   String? // category name in Toteat
-  quantity        Float
-  netPrice        Float
-  payed           Float
-  taxes           Float   @default(0)
-  discounts       Float   @default(0)
-
-  sale            ToteatSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
-
-  @@index([saleId])
-  @@index([toteatProductId])
-}
-
-// Periodic snapshot of which dishes had which badges, for retroactive analysis
-model BadgeSnapshot {
-  id           String   @id @default(cuid())
-  restaurantId String
-  dishId       String
-  badgeType    String   // "POPULAR" | "RECOMMENDED" | future
-  score        Float?   // for POPULAR: algorithm score
-  position     Int?     // for POPULAR: ranking position (1..N)
-  capturedAt   DateTime @default(now())
-
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
-
-  @@index([restaurantId, badgeType, capturedAt])
-  @@index([dishId, capturedAt])
-}
-
-// ─── A/B testing (factorial multi-armed bandit) ───────────────────
-// Each experiment has variants split by "slot" (e.g. title / subtitle /
-// cta). The serving endpoint samples one variant per slot using Thompson
-// Sampling — no fixed traffic split, the algorithm explores while
-// exploiting the best performers as data accumulates. Stats live in
-// StatEvent.metadata so we don't need a counters table.
-
-model AbExperiment {
-  id          String       @id @default(cuid())
-  slug        String       @unique          // e.g. "birthday-modal"
-  name        String                          // human label for the dashboard
-  description String?
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  variants    AbVariant[]
-
-  @@index([slug])
-}
-
-model AbVariant {
-  id           String       @id @default(cuid())
-  experimentId String
-  slot         String                         // "title" | "subtitle" | "cta" (free-form so future experiments can add slots)
-  text         String                         // the actual copy shown to the user
-  isActive     Boolean      @default(true)    // soft-disable without losing history
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  experiment   AbExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-
-  @@index([experimentId, slot, isActive])
-}
-
-model Announcement {
-  id           String    @id @default(cuid())
-  restaurantId String
-  text         String
-  linkUrl      String?
-  daysOfWeek   Int[]     // 0=sun, 1=mon, ..., 6=sat. Empty = every day
-  startDate    DateTime?
-  endDate      DateTime?
-  isActive     Boolean   @default(true)
-  position     Int       @default(0)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
 }
 
 enum CartaTheme {
@@ -721,251 +1859,10 @@ enum CartaColorMode {
   DARK
 }
 
-model Category {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String
-  description  String?
-  position     Int
-  isActive     Boolean  @default(true)
-  dishType     String   @default("food") // "food" | "drink" | "dessert"
-  normOverride String?  // override manual de categoría QC (ej: "Mexicana")
-  cuisineTag   String?  // cocina detectada del nombre de sección (ej: "Peruana", "China")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  menuGroupId  String?
-
-  restaurant   Restaurant            @relation(fields: [restaurantId], references: [id])
-  menuGroup    MenuGroup?            @relation(fields: [menuGroupId], references: [id])
-  dishes       Dish[]
-  translations CategoryTranslation[]
-
-  @@index([restaurantId])
-  @@index([menuGroupId])
-}
-
-model CategoryTranslation {
-  id         String   @id @default(cuid())
-  categoryId String
-  lang       String   // "en" | "pt"
-  name       String
-  isManual   Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@unique([categoryId, lang])
-  @@index([categoryId])
-}
-
-model Dish {
-  id             String       @id @default(cuid())
-  restaurantId   String
-  categoryId     String
-  name           String
-  description    String?
-  price          Float
-  discountPrice  Float?
-  photos         String[]
-  tags           DishTag[]
-  isHero         Boolean      @default(false)
-  isActive       Boolean      @default(true)
-  hiddenFromFeed Boolean      @default(false)  // ocultar del feed B2C sin desactivar de la carta
-  deletedAt      DateTime?    // soft delete — null = activo, fecha = eliminado
-  stockCountdown Int?
-  ingredients    String?      // legacy text field (kept for backwards compat)
-  allergens      String?      // legacy text field
-  dishDiet       DishDietType @default(OMNIVORE)
-  isSpicy        Boolean      @default(false)
-  isGlutenFree   Boolean      @default(false)
-  isLactoseFree  Boolean      @default(false)
-  isSoyFree      Boolean      @default(false)
-  containsNuts   Boolean      @default(false)  // contiene frutos secos (mani, almendras, nueces, etc)
-  isHighMargin   Boolean      @default(false)
-  isPhotoReferential Boolean  @default(false)
-  photoCredits       Json?    // [{ photographer: string, profileUrl: string, unsplashId: string }]
-  isFeaturedAuto Boolean      @default(false)
-  flavorTags     String[]     // "dulce","agridulce","umami","ácido","ahumado","picante"
-  position       Int
-
-  // Toteat POS link — set when this dish has been mapped to a Toteat product code
-  // (e.g. "HV0010"). Used to attribute Toteat sales back to QC dishes.
-  toteatProductId String?
-  toteatMappedAt  DateTime?  // when the mapping was set (manual or auto)
-  toteatMappedBy  String?    // "auto" | "manual" — for audit
-  toteatSynced    Boolean    @default(false)  // true si este plato vino de Toteat (creado en import o detectado automaticamente)
-  toteatNoDirectMapping Boolean @default(false)  // true si el plato es un "agrupador" (ej. Limonada Artesanal con varios sabores como modifiers): la atribucion de ventas pasa por los modifiers, no por el plato padre
-
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  restaurant          Restaurant            @relation(fields: [restaurantId], references: [id])
-  category            Category              @relation(fields: [categoryId], references: [id])
-  reviews             Review[]
-  dishIngredients     DishIngredient[]
-  dishFavorites       DishFavorite[]
-  modifierTemplates   ModifierTemplate[]     // many-to-many: plantillas de modificadores asignadas
-  translations        DishTranslation[]
-  suggestedWith       DishSuggestion[]       @relation("SuggestionFrom")
-  suggestedBy         DishSuggestion[]       @relation("SuggestionTo")
-  badgeSnapshots      BadgeSnapshot[]
-
-  // Feed B2C (/a) — embeddings
-  embedding           Unsupported("vector(1536)")?   // text embedding (OpenAI text-embedding-3-small)
-  imageEmbedding      Unsupported("vector(512)")?    // image embedding (CLIP ViT-B/32)
-  embeddingText       String?                         // source text used to generate text embedding
-  embeddingHash       String?                         // hash of embeddingText to detect changes
-  imageEmbeddingHash  String?                         // hash of photo URL to detect changes
-  leafOverride        String?                         // override manual de leaf category QC (ej: "Ramen", "Gyoza")
-
-  // Feed B2C (/a) — relations
-  feedInteractions    FeedInteraction[]
-  feedSaved           FeedSaved[]
-  feedRatings         FeedRating[]
-  feedComments        FeedComment[]
-  feedStats           FeedDishStats?
-
-  @@index([restaurantId, toteatProductId])
-
-  @@index([restaurantId])
-  @@index([categoryId])
-}
-
-model DishSuggestion {
-  id              String   @id @default(cuid())
-  dishId          String
-  suggestedDishId String
-  restaurantId    String
-  createdAt       DateTime @default(now())
-
-  dish            Dish       @relation("SuggestionFrom", fields: [dishId], references: [id], onDelete: Cascade)
-  suggestedDish   Dish       @relation("SuggestionTo", fields: [suggestedDishId], references: [id], onDelete: Cascade)
-  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-
-  @@unique([dishId, suggestedDishId])
-  @@index([dishId])
-  @@index([restaurantId])
-}
-
-model DishTranslation {
-  id          String   @id @default(cuid())
-  dishId      String
-  lang        String   // "en" | "pt"
-  name        String?
-  description String?
-  isManual    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
-
-  @@unique([dishId, lang])
-  @@index([dishId])
-}
-
-model ModifierTemplate {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String                        // "Envolturas", "Salsas", "Tamaño"
-  scope        String   @default("product")  // "product" | "promotion"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  restaurant Restaurant              @relation(fields: [restaurantId], references: [id])
-  groups     ModifierTemplateGroup[]
-  dishes     Dish[]                          // many-to-many: platos que usan esta plantilla
-  promotions Promotion[]                    // many-to-many: ofertas que usan esta plantilla
-
-  @@index([restaurantId])
-  @@index([restaurantId, scope])
-}
-
-model ModifierTemplateGroup {
-  id         String   @id @default(cuid())
-  templateId String
-  name       String                         // "Elige tu Roll", "Envoltura"
-  required   Boolean  @default(false)
-  minSelect  Int      @default(0)
-  maxSelect  Int      @default(1)
-  position   Int      @default(0)
-
-  template     ModifierTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  options      ModifierTemplateOption[]
-  translations ModifierGroupTranslation[]
-
-  @@index([templateId])
-}
-
-model ModifierTemplateOption {
-  id              String  @id @default(cuid())
-  groupId         String
-  name            String                      // "Salmón Roll", "Papel soya"
-  description     String?                     // descripción opcional que reemplaza la del plato
-  imageUrl        String?                     // foto opcional que reemplaza la del plato
-  priceAdjustment Float   @default(0)
-  isDefault       Boolean @default(false)
-  isHidden        Boolean @default(false)
-  position        Int     @default(0)
-  // Toteat mapping — when this modifier is sold under a distinct Toteat code
-  // (e.g. "Limonada Menta" = HV0301, "Limonada Jengibre" = HV0302), we map
-  // each option to its code so the parent dish's sales are correctly summed.
-  toteatProductId String?
-  toteatMappedAt  DateTime?
-  toteatMappedBy  String?  // "auto" | "manual"
-
-  group        ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  translations ModifierOptionTranslation[]
-
-  @@index([groupId])
-  @@index([toteatProductId])
-}
-
-model ModifierGroupTranslation {
-  id       String @id @default(cuid())
-  groupId  String
-  lang     String // "en", "pt", "it"
-  name     String
-  isManual Boolean @default(false)
-
-  group ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@unique([groupId, lang])
-  @@index([groupId])
-}
-
-model ModifierOptionTranslation {
-  id          String  @id @default(cuid())
-  optionId    String
-  lang        String  // "en", "pt", "it"
-  name        String
-  description String?
-  isManual    Boolean @default(false)
-
-  option ModifierTemplateOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-
-  @@unique([optionId, lang])
-  @@index([optionId])
-}
-
 enum DishDietType {
   VEGAN
   VEGETARIAN
   OMNIVORE
-}
-
-model DishIngredient {
-  id           String @id @default(cuid())
-  dishId       String
-  ingredientId String
-
-  dish       Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
-
-  @@unique([dishId, ingredientId])
-  @@index([dishId])
-  @@index([ingredientId])
 }
 
 enum DishTag {
@@ -975,127 +1872,31 @@ enum DishTag {
   PROMOTION
 }
 
-model RestaurantTable {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String
-  tableNumber  Int
-  qrCode       String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id])
-  waiterCalls WaiterCall[]
-
-  @@index([restaurantId])
-}
-
-model WaiterCall {
-  id           String    @id @default(cuid())
-  tableId      String?
-  tableName    String?
-  restaurantId String
-  sessionId    String?
-  guestId      String?
-  dietType     String?
-  restrictions String?
-  dislikes     String?
-  calledAt     DateTime
-  answeredAt   DateTime?
-  createdAt    DateTime  @default(now())
-
-  table      RestaurantTable? @relation(fields: [tableId], references: [id])
-  restaurant Restaurant      @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
-  @@index([tableId])
-  @@index([sessionId])
-  @@index([calledAt])
-}
-
-model Customer {
-  id           String    @id @default(cuid())
-  restaurantId String
-  email        String?
-  name         String?
-  birthDate    DateTime?
-  preferences  Json?
-  cookieId     String?
-  isSubscribed Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-  reviews    Review[]
-
-  @@index([restaurantId])
-}
-
-model Review {
-  id           String   @id @default(cuid())
-  restaurantId String
-  customerId   String
-  dishId       String
-  rating       Int
-  isVerified   Boolean  @default(true)
-  createdAt    DateTime @default(now())
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-  customer   Customer   @relation(fields: [customerId], references: [id])
-  dish       Dish       @relation(fields: [dishId], references: [id])
-
-  @@index([restaurantId])
-  @@index([dishId])
-}
-
-model StatEvent {
-  id           String        @id @default(cuid())
-  restaurantId String
-  dishId       String?
-  categoryId   String?
-  tableId      String?
-  promoId      String?
-  eventType    StatEventType
-  sessionId    String        // UUID de tab (legacy)
-  dbSessionId  String?       // Session.id real de la DB
-  guestId      String?
-  qrUserId     String?
-  weather         String?
-  timeOfDay       TimeOfDay?
-  query           String?        // para SEARCH_PERFORMED
-  resultsCount    Int?           // para SEARCH_PERFORMED y FILTER_APPLIED
-  clickedResultId String?        // para SEARCH_PERFORMED
-  genioSessionId  String?        // UUID compartido entre eventos de una misma interacción del Genio
-  metadata        Json?          // genérico: filterType, filterValue, triggered_by, etc.
-  createdAt       DateTime       @default(now())
-
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
-  guest        GuestProfile? @relation(fields: [guestId], references: [id])
-  qrUser       QRUser?       @relation(fields: [qrUserId], references: [id])
-
-  @@index([restaurantId])
-  @@index([guestId])
-  @@index([qrUserId])
-  @@index([sessionId])
-  @@index([dbSessionId])
-  @@index([genioSessionId])
-  @@index([eventType, createdAt])
-}
-
 enum StatEventType {
   DISH_VIEW
   DISH_SELECT
-  DISH_DWELL
   CATEGORY_VIEW
+  GENIO_START
+  GENIO_COMPLETE
+  GENIO_GROUP_START
+  WAITER_CALL
+  QR_SCAN
+  DISH_DWELL
   CATEGORY_DWELL
   SESSION_START
   SESSION_END
-  GENIO_START
-  GENIO_COMPLETE
   GENIO_DISH_ACCEPTED
   GENIO_DISH_REJECTED
-  GENIO_GROUP_START
+  CARTA_VIEW_SELECTED
+  PROMO_VIEWED
+  PROMO_CLICKED
+  PROMO_REDEEMED
+  PROMO_DISH_VIEWED
+  SEARCH_PERFORMED
+  FILTER_APPLIED
+  USER_REGISTERED
+  DISH_FAVORITED
+  DISH_UNFAVORITED
   GENIO_STEP_DIET
   GENIO_STEP_RESTRICTIONS
   GENIO_STEP_DISLIKES
@@ -1103,30 +1904,18 @@ enum StatEventType {
   GENIO_STEP_RESULTS
   GENIO_FEEDBACK_LIKE
   GENIO_FEEDBACK_DISLIKE
-  CARTA_VIEW_SELECTED
-  PROMO_VIEWED
-  PROMO_CLICKED
-  PROMO_REDEEMED
-  PROMO_DISH_VIEWED
-  WAITER_CALL
-  QR_SCAN
-  SEARCH_PERFORMED
-  FILTER_APPLIED
-  USER_REGISTERED
-  DISH_FAVORITED
-  DISH_UNFAVORITED
   RECOMMENDATION_SHOWN
   RECOMMENDATION_TAPPED
   BIRTHDAY_BANNER_CLICKED
   BIRTHDAY_SAVED
-  BIRTHDAY_MODAL_AUTO_SHOWN
-  BIRTHDAY_DISMISSED
   GENIO_PROFILE_SAVED
   HERO_CLICK
-  SUGGESTION_CLICK
-  SUGGESTION_SHOWN
+  BIRTHDAY_MODAL_AUTO_SHOWN
+  BIRTHDAY_DISMISSED
   LANDING_VIEWED
   LANDING_CTA_CLICK
+  SUGGESTION_CLICK
+  SUGGESTION_SHOWN
   LANDING_LEAD_CREATED
   SUBIRCARTA_VIEWED
   SUBIRCARTA_CARTA_UPLOADED
@@ -1142,58 +1931,10 @@ enum TimeOfDay {
   LATE
 }
 
-model RestaurantPromotion {
-  id           String        @id @default(cuid())
-  restaurantId String
-  type         PromotionType
-  message      String?
-  dishId       String?
-  startsAt     DateTime?
-  endsAt       DateTime?
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
-}
-
 enum PromotionType {
   BANNER
   COUNTDOWN
   HIGHLIGHT
-}
-
-model BirthdayCampaign {
-  id               String   @id @default(cuid())
-  restaurantId     String
-  promoDescription String
-  emailSubject     String
-  emailBody        String
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
-}
-
-model RestaurantScheduleRule {
-  id           String           @id @default(cuid())
-  restaurantId String
-  ruleType     ScheduleRuleType
-  condition    String
-  categoryId   String?
-  dishId       String?
-  isActive     Boolean          @default(true)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
 }
 
 enum ScheduleRuleType {
@@ -1201,359 +1942,9 @@ enum ScheduleRuleType {
   WEATHER
 }
 
-// ─── Happy Hour / Horarios especiales ────────────────────────────────
-
-model HappyHour {
-  id             String   @id @default(cuid())
-  restaurantId   String
-  name           String                    // "Hand Roll Hour"
-  days           Int[]                     // 0=dom, 1=lun, ... 6=sab
-  startTime      String                    // "16:00"
-  endTime        String                    // "19:00"
-  discountType   HappyHourDiscountType     // FIXED_PRICE or PERCENTAGE
-  discountValue  Float                     // 3990 (fixed) or 20 (percent)
-  categoryIds    String[]                  // categories affected
-  dishIds        String[]                  // specific dishes (if empty = all in categories)
-  bannerText     String?                   // "Todos los hand rolls a $3.990"
-  bannerColor    String   @default("#f59e0b") // gradient accent color
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
-}
-
 enum HappyHourDiscountType {
   FIXED_PRICE
   PERCENTAGE
-}
-
-model AdminPushSubscription {
-  id       String   @id @default(cuid())
-  endpoint String   @unique
-  p256dh   String
-  auth     String
-  isActive Boolean  @default(true)
-  createdAt DateTime @default(now())
-}
-
-model WaiterPushSubscription {
-  id           String     @id @default(cuid())
-  restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  endpoint     String     @unique
-  p256dh       String
-  auth         String
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@index([restaurantId])
-}
-
-// ─── Guest Profile (anonymous visitors) ──────────────────────────────
-
-model GuestProfile {
-  id              String    @id // = quierocomer_guest_id from localStorage
-  createdAt       DateTime  @default(now())
-  lastSeenAt      DateTime  @default(now())
-  visitCount      Int       @default(1)
-  totalSessions   Int       @default(0)
-  preferences          Json?     // { dietType, restrictions[], dislikes[], favoriteCategories[] }
-  favoriteIngredients  Json?     // { "salmón": 12, "palta": 8, ... } — acumulativo por score
-  linkedQrUserId       String?
-  linkedQrUser    QRUser?   @relation(fields: [linkedQrUserId], references: [id])
-  convertedToUserAt    DateTime?
-  deviceType           String?
-
-  statEvents      StatEvent[]
-  sessions        Session[]
-  dishFavorites   DishFavorite[]
-
-  @@index([linkedQrUserId])
-}
-
-// ─── Session ─────────────────────────────────────────────────────────
-
-model Session {
-  id             String    @id @default(cuid())
-  guestId        String
-  qrUserId       String?
-  restaurantId   String
-  startedAt      DateTime  @default(now())
-  endedAt        DateTime?
-  durationMs     Int?
-  viewUsed       String?   // última vista activa
-  viewHistory    Json?     // [{ view: 'premium', durationMs: 12000 }, ...]
-  deviceType     String?   // 'mobile' | 'tablet' | 'desktop'
-  ipAddress      String?
-  userAgent      String?
-  referer        String?
-  externalReferer String?
-  language       String?
-  cartaLang      String?   // "es" | "en" | "pt" — language the menu was displayed in
-  closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
-  weather        String?
-  timeOfDay      TimeOfDay?
-  dishesViewed   Json?     // [{ dishId, dwellMs }]
-  categoriesViewed Json?   // [{ categoryId, dwellMs }]
-  pickedDishId   String?
-  isBot          Boolean   @default(false)
-  isAbandoned    Boolean   @default(false)
-  searchesCount       Int     @default(0)
-  converted           Boolean @default(false)
-  isReturningVisitor  Boolean @default(false)
-  isQrScan            Boolean @default(false)
-  tableId             String?
-
-  guest          GuestProfile @relation(fields: [guestId], references: [id])
-  qrUser         QRUser?      @relation(fields: [qrUserId], references: [id])
-  restaurant     Restaurant   @relation(fields: [restaurantId], references: [id])
-  tickets        RestaurantTicket[]
-  dishImpressions DishImpression[]
-
-  @@index([guestId])
-  @@index([qrUserId])
-  @@index([restaurantId])
-  @@index([startedAt])
-}
-
-// ─── QR User Capture ──────────────────────────────────────────────────
-
-model QRUser {
-  id           String    @id @default(cuid())
-  name         String?
-  email        String    @unique
-  birthDate    DateTime?
-  dietType     String?
-  restrictions String[]
-  dislikes     String[]
-  verifiedAt   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  unsubscribedAt   DateTime?
-  lastEmailAt      DateTime?
-  triggerHistory   Json?     // { birthday: "2026-04-18", inactivity: "2026-04-10", ... }
-
-  magicTokens  QRMagicToken[]
-  interactions QRUserInteraction[]
-  guestProfiles GuestProfile[]
-  sessions     Session[]
-  statEvents   StatEvent[]
-  campaignRecipients CampaignRecipient[]
-  dishFavorites DishFavorite[]
-  birthdayEmailLogs BirthdayEmailLog[]
-  restaurantClients RestaurantClient[]
-}
-
-model BirthdayEmailLog {
-  id             String    @id @default(cuid())
-  restaurantId   String
-  qrUserId       String
-  sentAt         DateTime  @default(now())
-  perkText       String    // snapshot del regalo al momento de enviar
-  opened         Boolean   @default(false)
-  openedAt       DateTime?
-  visitedAt      DateTime? // si el cliente visito el local +-1 dia del cumple
-
-  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
-  qrUser         QRUser     @relation(fields: [qrUserId], references: [id])
-
-  @@index([restaurantId, sentAt])
-  @@index([qrUserId])
-}
-
-model RestaurantClient {
-  id             String    @id @default(cuid())
-  qrUserId       String
-  restaurantId   String
-  source         String    @default("unknown") // birthday_banner, post_genio, etc.
-  isActive       Boolean   @default(true)
-  registeredAt   DateTime  @default(now())
-  unsubscribedAt DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  qrUser     QRUser     @relation(fields: [qrUserId], references: [id])
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@unique([qrUserId, restaurantId])
-  @@index([restaurantId, isActive])
-  @@index([qrUserId])
-}
-
-model QRMagicToken {
-  id        String    @id @default(cuid())
-  userId    String
-  user      QRUser    @relation(fields: [userId], references: [id])
-  token     String    @unique @default(cuid())
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([token])
-}
-
-model BannerVariant {
-  id          String   @id @default(cuid())
-  text        String
-  impressions Int      @default(0)
-  conversions Int      @default(0)
-  isWinner    Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model QRUserInteraction {
-  id              String      @id @default(cuid())
-  userId          String?
-  user            QRUser?     @relation(fields: [userId], references: [id])
-  restaurantId    String
-  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id])
-  type            String
-  bannerVariantId String?
-  sessionId       String?
-  createdAt       DateTime    @default(now())
-
-  @@index([restaurantId])
-  @@index([userId])
-  @@index([createdAt])
-}
-
-model Referrer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String   @unique
-  code      String   @unique @default(cuid())
-  isActive  Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-// ─── Cron ─────────────────────────────────────────────────────────────
-
-model CronLog {
-  id          String   @id @default(cuid())
-  jobName     String
-  status      String   // 'success' | 'error'
-  durationMs  Int
-  details     Json?    // { sessionsAbandoned, guestsUpdated, etc }
-  error       String?
-  createdAt   DateTime @default(now())
-
-  @@index([jobName])
-  @@index([createdAt])
-}
-
-// ─── Email Log ───────────────────────────────────────────────────────
-
-model EmailLog {
-  id        String   @id @default(uuid())
-  to        String
-  subject   String
-  purpose   String   // password_reset, welcome, campaign, automation, experience
-  status    String   // sent, failed
-  errorMsg  String?
-  dismissed Boolean  @default(false)
-  openedAt  DateTime?
-  clickedAt DateTime?
-  createdAt DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([status, createdAt])
-}
-
-// ─── Panel Activity Log ───────────────────────────────────────────────
-
-model PanelActivity {
-  id           String   @id @default(cuid())
-  restaurantId String
-  ownerId      String?
-  action       String   // dish_edit, dish_create, dish_delete, photo_upload, category_edit, promo_create, settings_change, panel_login, panel_visit, etc.
-  details      Json?    // { dishName: "...", field: "price", from: 8990, to: 9990 }
-  createdAt    DateTime @default(now())
-
-  @@index([restaurantId, createdAt])
-  @@index([createdAt])
-}
-
-// ─── Support / Contact messages ───────────────────────────────────────
-
-model SupportMessage {
-  id          String   @id @default(cuid())
-  source      String   // "contacto" | "panel_soporte"
-  name        String?
-  email       String
-  phone       String?
-  message     String
-  restaurantSlug String?
-  ownerId     String?
-  read        Boolean  @default(false)
-  repliedAt   DateTime?
-  replyText   String?
-  replyToken  String?  @unique
-  createdAt   DateTime @default(now())
-  replies     SupportReply[]
-
-  @@index([createdAt])
-  @@index([read, createdAt])
-}
-
-model SupportReply {
-  id        String   @id @default(cuid())
-  messageId String
-  message   SupportMessage @relation(fields: [messageId], references: [id])
-  from      String   // "admin" | "customer"
-  text      String
-  createdAt DateTime @default(now())
-
-  @@index([messageId, createdAt])
-}
-
-// ─── Marketing ────────────────────────────────────────────────────────
-
-model Segment {
-  id            String   @id @default(cuid())
-  restaurantId  String
-  name          String
-  description   String?
-  rules         Json     // [{ field, operator, value }]
-  isAuto        Boolean  @default(false)
-  cachedCount   Int?
-  cachedAt      DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
-  campaigns     Campaign[]
-
-  @@index([restaurantId])
-}
-
-model Campaign {
-  id            String         @id @default(cuid())
-  restaurantId  String
-  segmentId     String?
-  name          String
-  status        CampaignStatus @default(DRAFT)
-  subject       String?
-  bodyHtml      String?
-  scheduledFor  DateTime?
-  sentAt        DateTime?
-  stats         Json?          // { sent, opened, clicked, bounced }
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  restaurant    Restaurant          @relation(fields: [restaurantId], references: [id])
-  segment       Segment?            @relation(fields: [segmentId], references: [id])
-  recipients    CampaignRecipient[]
-
-  @@index([restaurantId])
-  @@index([status])
 }
 
 enum CampaignStatus {
@@ -1564,268 +1955,12 @@ enum CampaignStatus {
   CANCELLED
 }
 
-model CampaignRecipient {
-  id          String    @id @default(cuid())
-  campaignId  String
-  qrUserId    String
-  status      String    @default("queued") // queued, sent, failed, bounced
-  sentAt      DateTime?
-  openedAt    DateTime?
-  clickedAt   DateTime?
-  createdAt   DateTime  @default(now())
-
-  campaign    Campaign @relation(fields: [campaignId], references: [id])
-  qrUser      QRUser   @relation(fields: [qrUserId], references: [id])
-
-  @@index([campaignId])
-  @@index([qrUserId])
-}
-
-model Promotion {
-  id              String          @id @default(cuid())
-  restaurantId    String
-  name            String
-  description     String?
-  promoType       String          @default("product") // "product" | "graphic"
-  imageUrl        String?         // for graphic type: custom design image (optimized)
-  thumbUrl        String?         // thumbnail 300px for carousel card
-  dishIds         String[]
-  originalPrice   Float?
-  promoPrice      Float?
-  discountPct     Int?
-  validFrom       DateTime?
-  validUntil      DateTime?
-  daysOfWeek      Int[]           @default([]) // 0=dom,1=lun,...6=sab. Vacío=todos los días
-  position        Int             @default(0)
-  featured        Boolean         @default(false)
-  status          PromotionStatus @default(SUGGESTED)
-  generatedBy     String          @default("manual") // ai, manual
-  aiJustification String?
-  metrics         Json?           // { views, clicks, redemptions }
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  restaurant        Restaurant          @relation(fields: [restaurantId], references: [id])
-  modifierTemplates ModifierTemplate[]  // modificadores propios de la oferta
-
-  @@index([restaurantId])
-  @@index([status])
-}
-
 enum PromotionStatus {
   SUGGESTED
   ACTIVE
   PAUSED
   DELETED
 }
-
-model AutomationRule {
-  id            String   @id @default(cuid())
-  restaurantId  String
-  name          String
-  trigger       String   // birthday, inactivity, welcome, milestone
-  triggerConfig Json?    // { daysInactive: 30, milestoneVisit: 5, etc }
-  subject       String?
-  bodyHtml      String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
-}
-
-model GenioInsight {
-  id            String   @id @default(cuid())
-  restaurantId  String?
-  type          String   // menu_gap, segment_opportunity, pricing, engagement, platform, comparison, opportunity
-  title         String
-  body          String
-  priority      Int      @default(0)
-  data          Json?
-  status        String   @default("active") // active, dismissed
-  generatedAt   DateTime @default(now())
-  expiresAt     DateTime?
-  dismissedAt   DateTime?
-
-  restaurant    Restaurant? @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId])
-  @@index([status])
-}
-
-// ─── Experiences (Gamification) ───────────────────────────────────────
-
-model ExperienceTemplate {
-  id          String   @id @default(cuid())
-  name        String   // "¿Qué dios egipcio eres?"
-  slug        String   @unique // egyptian-gods
-  theme       String   // egyptian-gods, samurai, italian-regions, pizza-personality, coffee-soul, cocktail-spirit
-  category    String   // sushi, cafeteria, bar, vegan, pizza, general
-  description String   // tagline
-  accentColor String   @default("#F4A623")
-  iconEmoji   String   @default("✨")
-  isPublished Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  results     ExperienceResult[]
-  instances   Experience[]
-}
-
-model ExperienceResult {
-  id           String   @id @default(cuid())
-  templateId   String
-  name         String   // "Ra", "Isis", etc
-  description  String   // base description
-  imageUrl     String?
-  traits       String[] // ["líder", "intenso", "fuerte"]
-  gender       String   @default("neutral") // "male", "female", "neutral"
-  matchCriteria Json?   // { dietTypes: [], ingredients: [], birthMonths: [], hungerLevel: "" }
-  position     Int      @default(0)
-  createdAt    DateTime @default(now())
-
-  template    ExperienceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  submissions ExperienceSubmission[]
-
-  @@index([templateId])
-}
-
-model Experience {
-  id           String   @id @default(cuid())
-  restaurantId String
-  templateId   String
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-
-  restaurant   Restaurant          @relation(fields: [restaurantId], references: [id])
-  template     ExperienceTemplate  @relation(fields: [templateId], references: [id])
-  submissions  ExperienceSubmission[]
-
-  @@unique([restaurantId]) // 1 experience per restaurant
-  @@index([templateId])
-}
-
-model ExperienceSubmission {
-  id              String    @id @default(cuid())
-  experienceId    String
-  guestId         String?
-  qrUserId        String?
-  userName        String
-  birthDate       DateTime
-  email           String
-  assignedResultId String?
-  personalizedMsg String?   // Claude-generated text
-  teaserMsg       String?   // short teaser shown immediately
-  status          String    @default("pending") // pending, processing, sent, failed
-  sendAfter       DateTime  // when to send email (now + 10 min)
-  submittedAt     DateTime  @default(now())
-  resultSentAt    DateTime?
-
-  experience      Experience        @relation(fields: [experienceId], references: [id])
-  assignedResult  ExperienceResult? @relation(fields: [assignedResultId], references: [id])
-
-  @@index([experienceId])
-  @@index([status])
-  @@index([sendAfter])
-}
-
-// ─── Analytics: Tickets (POS matching) ────────────────────────────────
-
-model RestaurantTicket {
-  id                String           @id @default(uuid())
-  restaurantId      String
-  restaurant        Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  mesaId            String?
-  ticketTotal       Decimal
-  ticketCountItems  Int?
-  paidAt            DateTime
-  matchedSessionId  String?
-  matchedSession    Session?         @relation(fields: [matchedSessionId], references: [id])
-  matchConfidence   String?          // 'exact' | 'probable' | 'approximate' | 'none'
-  uploadedById      String?
-  uploadedBy        RestaurantOwner? @relation(fields: [uploadedById], references: [id])
-  notes             String?
-  createdAt         DateTime         @default(now())
-
-  @@index([restaurantId, paidAt])
-  @@index([matchedSessionId])
-}
-
-// ─── Analytics: Dish Impressions (batch, lightweight) ─────────────────
-
-model DishImpression {
-  id           String   @id @default(uuid())
-  sessionId    String
-  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  dishId       String
-  restaurantId String
-  position     Int?
-  visibleMs    Int
-  createdAt    DateTime @default(now())
-
-  @@index([sessionId])
-  @@index([dishId, createdAt])
-  @@index([restaurantId, createdAt])
-}
-
-// ─── Dish Favorites ──────────────────────────────────────────────────
-
-model DishFavorite {
-  id           String        @id @default(uuid())
-  guestId      String?
-  guest        GuestProfile? @relation(fields: [guestId], references: [id], onDelete: Cascade)
-  qrUserId     String?
-  qrUser       QRUser?       @relation(fields: [qrUserId], references: [id], onDelete: Cascade)
-  dishId       String
-  dish         Dish          @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  restaurantId String
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  createdAt    DateTime      @default(now())
-
-  @@unique([guestId, dishId], name: "guest_dish_unique")
-  @@unique([qrUserId, dishId], name: "user_dish_unique")
-  @@index([dishId])
-  @@index([restaurantId])
-  @@index([restaurantId, createdAt])
-  @@index([qrUserId])
-  @@index([guestId])
-}
-
-// ─── Platform Campaigns (marketing masivo) ─────────────────────────────
-
-model PlatformCampaign {
-  id             String   @id @default(cuid())
-  subject        String
-  status         String   @default("draft") // draft, sending, sent
-  totalContacts  Int      @default(0)
-  totalSent      Int      @default(0)
-  totalErrors    Int      @default(0)
-  createdAt      DateTime @default(now())
-  sentAt         DateTime?
-  contacts       PlatformCampaignContact[]
-}
-
-model PlatformCampaignContact {
-  id            String    @id @default(cuid())
-  campaignId    String
-  email         String
-  openedAt      DateTime?
-  clickedAt     DateTime?
-  unsubscribedAt DateTime?
-  errorMsg      String?
-  sentAt        DateTime?
-  createdAt     DateTime  @default(now())
-
-  campaign      PlatformCampaign @relation(fields: [campaignId], references: [id])
-
-  @@unique([campaignId, email])
-  @@index([email])
-  @@index([campaignId])
-}
-
-// ─── Lead Funnel (/subircarta) ──────────────────────────────────────────
 
 enum MenuProviderStatus {
   SUPPORTED
@@ -1847,345 +1982,26 @@ enum CartaStatus {
   FAILED
 }
 
-model MenuProvider {
-  id               String             @id @default(cuid())
-  name             String
-  domainPatterns   String[]
-  htmlSignatures   String[]
-  status           MenuProviderStatus
-  extractionConfig Json?
-  notes            String?
-  successCount     Int                @default(0)
-  failCount        Int                @default(0)
-  lastFailReason   String?
-  lastFailAt       DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-
-  leads            Lead[]
-}
-
-model Lead {
-  id                 String        @id @default(cuid())
-  localName          String
-  ownerName          String
-  email              String
-  whatsapp           String?
-  cartaType          CartaType
-  cartaUrl           String?
-  cartaFileUrl       String?
-  detectedProviderId String?
-  cartaStatus        CartaStatus   @default(PENDING)
-  errorLog           String?
-  generatedSlug      String?
-  preview            Json?
-  activated          Boolean       @default(false)
-  convertedToOwnerId String?
-  step2At            DateTime?
-  completedAt        DateTime?
-  previewAt          DateTime?
-  readyAt            DateTime?
-  deliveredAt        DateTime?
-  emailOpenedAt      DateTime?
-  emailClickedAt     DateTime?
-  emailBouncedAt     DateTime?
-  whatsappSentAt     DateTime?
-  whatsappOpenedAt   DateTime?
-  whatsappClickedAt  DateTime?
-  openedVia          String?       // "email" | "whatsapp"
-  onboardingDoneAt   DateTime?
-  panelVisitedAt     DateTime?
-  activarVisitedAt   DateTime?
-  activatedAt        DateTime?
-  ip                 String?
-  city               String?
-  events             Json[]        @default([])
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-
-  detectedProvider   MenuProvider? @relation(fields: [detectedProviderId], references: [id])
-  whatsappMessages   WhatsAppMessage[]
-
-  @@index([email])
-  @@index([detectedProviderId])
-  @@index([cartaStatus])
-  @@index([generatedSlug])
-}
-
 enum WhatsAppDirection {
   INBOUND
   OUTBOUND
-}
-
-model WhatsAppMessage {
-  id           String            @id @default(cuid())
-  phone        String
-  direction    WhatsAppDirection
-  body         String
-  leadId       String?
-  restaurantId String?
-  twilioSid    String?           @unique
-  status       String            @default("received")
-  profileName  String?
-  createdAt    DateTime          @default(now())
-
-  lead       Lead?       @relation(fields: [leadId], references: [id])
-  restaurant Restaurant? @relation(fields: [restaurantId], references: [id])
-
-  @@index([phone, createdAt])
-  @@index([leadId])
-  @@index([restaurantId])
-}
-
-model FunnelVisit {
-  id          String   @id @default(cuid())
-  page        String   @default("subircarta")
-  ip          String?
-  userAgent   String?
-  referrer    String?
-  utmSource   String?
-  utmMedium   String?
-  utmCampaign String?
-  utmContent  String?
-  utmTerm     String?
-  fbclid      String?
-  sessionId   String?
-  leadId      String?
-  createdAt   DateTime @default(now())
-
-  @@index([page, createdAt])
-  @@index([utmSource, createdAt])
-  @@index([sessionId])
-}
-
-model AdSession {
-  id             String   @id @default(cuid())
-  sessionId      String   @unique
-  utmSource      String
-  utmMedium      String?
-  utmCampaign    String?
-  utmContent     String?
-  utmTerm        String?
-  fbclid         String?
-  ip             String?
-  userAgent      String?
-  referrer       String?
-  landingPage    String?
-  device         String?
-  // Engagement
-  duration       Int      @default(0)
-  maxScroll      Int      @default(0)
-  pageViews      Int      @default(1)
-  interactions   Int      @default(0)
-  sectionsViewed String[] @default([])
-  // Outcome
-  leadId         String?
-  converted      Boolean  @default(false)
-  bounced        Boolean  @default(true)
-  exitPage       String?
-  // Raw event log
-  events         Json[]   @default([])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([utmSource, createdAt])
-  @@index([createdAt])
-}
-
-// ─── API Usage / Cost Tracking ──────────────────────────────────────
-
-model ApiUsage {
-  id        String   @id @default(cuid())
-  service   String   // "claude" | "twilio" | "resend" | "supabase"
-  action    String   // "extract_menu" | "translate" | "pdf_vision" | "send_whatsapp" | "send_email" | "storage_upload"
-  model     String?  // "claude-sonnet-4-6" | "claude-haiku-4-5" etc.
-  leadId    String?  // nullable — not all calls are lead-related
-  inputTokens  Int?  // Claude API
-  outputTokens Int?  // Claude API
-  costUsd   Float    // calculated cost in USD
-  meta      Json?    // extra info: { pages: 15, emailTo: "...", twilioSid: "..." }
-  createdAt DateTime @default(now())
-
-  @@index([service, createdAt])
-  @@index([leadId, createdAt])
-  @@index([createdAt])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ─── Feed B2C (/a) — Descubrimiento de platos ────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════
-
-model FeedUser {
-  id                String   @id @default(cuid())
-  fingerprint       String   @unique              // cookie persistente UUID
-  displayName       String?
-  avatarUrl         String?
-
-  // Restricciones dietéticas (filtro duro)
-  isVegan           Boolean  @default(false)
-  isVegetarian      Boolean  @default(false)
-  isGlutenFree      Boolean  @default(false)
-  isLactoseFree     Boolean  @default(false)
-
-  // Perfil de gustos (aprendido del comportamiento)
-  categoryScores    Json     @default("{}")       // { "Sushi & Rolls": 45, "Pizzas": 23, ... }
-  restaurantScores  Json     @default("{}")       // { "cuid_rest": 12, ... }
-  keywordScores     Json     @default("{}")       // { "salmón": 18, "nikkei": 10, "palta": 8, ... }
-  priceMin          Float?                        // rango de precio aprendido (percentil 20)
-  priceMax          Float?                        // rango de precio aprendido (percentil 80)
-
-  // Gusto de fondo — últimos N embeddings de platos likeados (para clusters)
-  tasteEmbeddings   Json     @default("[]")      // [{dishId, embedding: number[], action, at}] max 50
-  gustoVector       Unsupported("vector(1536)")? // vector promedio de gusto (cached)
-
-  // Antojo de hoy — se resetea cada día
-  antojoSessionDate String?                      // "2026-06-13" — fecha del antojo actual
-  antojoDishIds     Json     @default("[]")      // dishIds likeados hoy
-  antojoRejectIds   Json     @default("[]")      // dishIds rechazados hoy
-
-  // Estado
-  totalInteractions Int      @default(0)
-  onboardingDone    Boolean  @default(false)
-  lastSeenAt        DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  interactions      FeedInteraction[]
-  savedDishes       FeedSaved[]
-  ratings           FeedRating[]
-  comments          FeedComment[]
-
-  @@index([lastSeenAt])
-}
-
-model FeedInteraction {
-  id            String     @id @default(cuid())
-  feedUserId    String
-  dishId        String
-  action        FeedAction
-  dwellMs       Int?                               // para VIEW: ms que el plato fue visible
-  category      String?                            // snapshot de categoría normalizada
-  price         Float?                             // snapshot del precio (para aprender rango)
-  source        String?                            // "FEED" | "DETAIL" | "SEARCH" | "HOME"
-  feedPosition  Int?                               // posición en el grid cuando se interactuó
-  sessionId     String?                            // session UUID (para agrupar acciones por visita)
-  createdAt     DateTime   @default(now())
-
-  feedUser      FeedUser   @relation(fields: [feedUserId], references: [id])
-  dish          Dish       @relation(fields: [dishId], references: [id])
-
-  @@index([feedUserId, createdAt])
-  @@index([dishId])
-  @@index([action, createdAt])
-  @@index([sessionId])
 }
 
 enum FeedAction {
   VIEW
   TAP
   LIKE
-  DISLIKE
   SAVE
   ANTOJO
   PASS
   SCROLL_BACK
+  DISLIKE
   FAVORITE
   UNFAVORITE
   UNDO
 }
 
-model FeedSaved {
-  id          String       @id @default(cuid())
-  feedUserId  String
-  dishId      String
-  type        FeedSaveType
-  createdAt   DateTime     @default(now())
-
-  feedUser    FeedUser     @relation(fields: [feedUserId], references: [id])
-  dish        Dish         @relation(fields: [dishId], references: [id])
-
-  @@unique([feedUserId, dishId])
-  @@index([feedUserId, type])
-}
-
 enum FeedSaveType {
   ANTOJO
   SAVED
-}
-
-model FeedRating {
-  id          String   @id @default(cuid())
-  feedUserId  String
-  dishId      String
-  stars       Int                                // 1-5
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  feedUser    FeedUser @relation(fields: [feedUserId], references: [id])
-  dish        Dish     @relation(fields: [dishId], references: [id])
-
-  @@unique([feedUserId, dishId])
-  @@index([dishId])
-}
-
-model FeedComment {
-  id          String   @id @default(cuid())
-  feedUserId  String
-  dishId      String
-  text        String
-  createdAt   DateTime @default(now())
-
-  feedUser    FeedUser @relation(fields: [feedUserId], references: [id])
-  dish        Dish     @relation(fields: [dishId], references: [id])
-
-  @@index([dishId, createdAt])
-  @@index([feedUserId])
-}
-
-model FeedDishStats {
-  id              String   @id @default(cuid())
-  dishId          String   @unique
-  totalViews      Int      @default(0)
-  totalTaps       Int      @default(0)
-  totalLikes      Int      @default(0)
-  totalSaves      Int      @default(0)
-  totalAntojos    Int      @default(0)
-  totalPasses     Int      @default(0)
-  avgRating       Float?
-  ratingCount     Int      @default(0)
-  commentCount    Int      @default(0)
-  popularityScore Float    @default(0)           // ponderado compuesto de todas las señales
-  trendingScore   Float    @default(0)           // actividad reciente, decae con el tiempo
-  updatedAt       DateTime @updatedAt
-
-  dish            Dish     @relation(fields: [dishId], references: [id])
-
-  @@index([popularityScore])
-  @@index([trendingScore])
-}
-
-model MapaProspecto {
-  id          String   @id                        // Google Places ID
-  name        String
-  address     String?
-  mapsUrl     String?
-  website     String?
-  rating      Float?
-  reviews     Int?
-  lat         Float?
-  lng         Float?
-
-  // Resultado de prospección (null = aún no buscado)
-  status      String?  // 'encontrado' | 'sin_fotos' | 'sin_plataforma'
-  provider    String?
-  cartaUrl    String?
-  fuenteMatch String?
-  importedSlug String?  // slug del restaurante creado al importar al feed
-  dismissed   Boolean  @default(false)  // true = descartado, no volver a mostrar ni guardar
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([status])
-  @@index([createdAt])
 }

@@ -208,7 +208,7 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
                   placeholder="Buscar dirección, comuna o ciudad..."
                   style={{
                     width: '100%', padding: '13px 14px 13px 42px',
-                    borderRadius: 14, fontSize: 15,
+                    borderRadius: 14, fontSize: 16,
                     background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.03)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                     color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
@@ -359,7 +359,7 @@ export default function LocationModal({ onClose, onConfirm, isDark }: LocationMo
                 onClick={handleConfirm}
                 style={{
                   width: '100%', height: 54, border: 'none', borderRadius: 16,
-                  background: '#F4A623', color: '#000', fontSize: 16, fontWeight: 700,
+                  background: '#F4A623', color: '#fff', fontSize: 16, fontWeight: 700,
                   cursor: 'pointer',
                 }}
               >
