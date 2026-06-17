@@ -68,7 +68,7 @@ export const VALID_INGREDIENTS = [
   "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos",
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
   "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame",
-  "choclo","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame",
+  "choclo","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún",
 ];
 
 export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asado"];
