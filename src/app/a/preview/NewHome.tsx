@@ -130,8 +130,8 @@ export default function NewHome({
   })
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filterOpen, setFilterOpen] = useState(false)
-  const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : 'almuerzo_cena')
-  const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>(detectMealSlot() === 'desayuno' ? 'desayuno' : detectMealSlot())
+  const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
+  const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
   const [filterSort, setFilterSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
   const [quickNearby, setQuickNearby] = useState(true)
   const [quickPopular, setQuickPopular] = useState(false)
@@ -475,9 +475,8 @@ export default function NewHome({
       else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
     }
 
-    // Meal filter — solo en browse mode; cuando hay búsqueda/filtros activos el usuario
-    // está buscando algo concreto y la hora del día no debe limitar los resultados
-    if (filterMeal !== 'all' && !serverDishes) filtered = filtered.filter(d => d.mealTime === filterMeal)
+    // Meal filter — solo se aplica si el usuario lo eligió explícitamente (default = 'all')
+    if (filterMeal !== 'all') filtered = filtered.filter(d => d.mealTime === filterMeal)
 
     // Distance filter + sort — client-side with precise formula
     if (userLocation) {
@@ -1220,8 +1219,9 @@ export default function NewHome({
               <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Momento
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                 {[
+                  { display: 'all' as const, meal: 'all' as const, label: 'Todo el día', icon: <svg width="20" height="20" fill="none" stroke="#F4A623" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
                   { display: 'desayuno' as const, meal: 'desayuno' as const, label: 'Desayuno', icon: <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /></svg> },
                   { display: 'almuerzo' as const, meal: 'almuerzo_cena' as const, label: 'Almuerzo', icon: <svg width="20" height="20" fill="none" stroke="#f97316" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /></svg> },
                   { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', icon: <svg width="20" height="20" fill="none" stroke="#6366f1" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
