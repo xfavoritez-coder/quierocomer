@@ -53,19 +53,35 @@ export async function extractQueresto(cartaUrl: string): Promise<ExtractionResul
 
   // If JSON-LD didn't have images, try to find them in the HTML
   if (dishes.length > 0 && dishes.every((d) => !d.imageUrl)) {
-    const imgMatches = [...html.matchAll(/src="(https:\/\/cdn\.bistrify\.app\/cdn-cgi\/image\/[^"]+)"/gi)];
-    const imgUrls = imgMatches.map((m) => m[1]).filter((u) => u.includes("/items/"));
+    // Match w=128 thumbnail srcset entries — covers both /items/ and /images/ paths
+    const imgMatches = [...html.matchAll(/https:\/\/cdn\.bistrify\.app\/cdn-cgi\/image\/w=128[^"'\s]*/gi)];
+    // Extract the base image path and build an HD URL without thumbnail constraints
+    const imgUrls = [...new Map(
+      imgMatches.map((m) => {
+        const thumbUrl = m[0].split(' ')[0] // strip trailing " 2x" from srcset
+        // Pull the /images/... or /items/... path out of the CDN transform URL
+        const pathMatch = thumbUrl.match(/\/images\/(.+)$/)
+        if (!pathMatch) return null
+        // Request original without resize — bistrify serves raw original this way
+        return [`https://cdn.bistrify.app/images/${pathMatch[1]}`, true] as const
+      }).filter((x): x is [string, true] => x !== null)
+    ).keys()]
     // Match images to dishes by position (best effort)
     for (let i = 0; i < Math.min(dishes.length, imgUrls.length); i++) {
-      // Upgrade to high quality: replace thumbnail params with HD
-      dishes[i].imageUrl = imgUrls[i].replace(/w=\d+,h=\d+/, "w=800,h=800");
+      dishes[i].imageUrl = imgUrls[i]
     }
   }
 
-  // Also upgrade any images from JSON-LD that have small dimensions
+  // Also upgrade any images from JSON-LD that have small CDN dimensions
   for (const d of dishes) {
     if (d.imageUrl && d.imageUrl.includes("cdn.bistrify.app/cdn-cgi/image/")) {
-      d.imageUrl = d.imageUrl.replace(/w=\d+,h=\d+/, "w=800,h=800");
+      // Strip the CDN transform to get the original image
+      const pathMatch = d.imageUrl.match(/\/images\/(.+)$/)
+      if (pathMatch) {
+        d.imageUrl = `https://cdn.bistrify.app/images/${pathMatch[1]}`
+      } else {
+        d.imageUrl = d.imageUrl.replace(/w=\d+,h=\d+[^/]*\//, "w=800,h=800,fit=cover/")
+      }
     }
   }
 

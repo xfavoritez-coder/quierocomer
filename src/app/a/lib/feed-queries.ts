@@ -89,10 +89,15 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
   const dishes = rows
 
   const feedDishes: FeedDish[] = []
+  const seenKey = new Set<string>()
 
   for (const d of dishes) {
     const catName = d.categoryName as string
     if (isExcludedCategory(catName)) continue
+    // Dedup: skip if same (restaurant, dish name) already added — handles imported duplicates
+    const dupKey = `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
+    if (seenKey.has(dupKey)) continue
+    seenKey.add(dupKey)
     const categoriaNorm = resolveDishLeaf(d.name as string, catName, d.leafOverride ?? null, d.primaryCategory ?? null, d.description ?? null, (d as any).catNormOverride ?? null)
     const categoriaParent = getParentCategory(categoriaNorm)
     const cuisineTag = (d.cuisineTag as string | null) ?? null

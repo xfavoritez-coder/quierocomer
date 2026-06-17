@@ -397,6 +397,8 @@ export default function NewHome({
     const trimmed = query.trim()
     setSearchQuery(trimmed)
     setSearchInput(trimmed)
+    // Clear category pill when searching so it doesn't conflict with the query
+    if (trimmed) setActiveCategory(null)
     if (typeof window !== 'undefined') {
       const url = trimmed ? `/?q=${encodeURIComponent(trimmed)}` : '/'
       window.history.replaceState(null, '', url)
@@ -688,6 +690,9 @@ export default function NewHome({
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
+  // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
+  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (filterMaxKm < 30 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
+
   // Pills helpers — usados tanto en Row 3 como en el floating header
   const openFilters = () => {
     setDraftSort(filterSort)
@@ -976,14 +981,14 @@ export default function NewHome({
             </svg>
             Popular
           </button>
-          <button onClick={() => setFilterDiet(filterDiet === 'VEGETARIAN' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet === 'VEGETARIAN', 'green')}>
+          <button onClick={() => setFilterDiet(filterDiet !== 'all' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet !== 'all', 'green')}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
               <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
             </svg>
             Veggie
           </button>
-          <button onClick={openFilters} style={pillStyle(false, 'default')}>
+          <button onClick={openFilters} style={{ ...pillStyle(activeFilterCount > 0, 'default'), position: 'relative' }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
               <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
@@ -991,6 +996,15 @@ export default function NewHome({
               <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
             </svg>
             Más filtros
+            {activeFilterCount > 0 && (
+              <span style={{
+                position: 'absolute', top: -5, right: -5,
+                background: '#F4A623', color: '#fff',
+                borderRadius: 999, fontSize: 10, fontWeight: 700,
+                minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '0 3px', lineHeight: 1,
+              }}>{activeFilterCount}</span>
+            )}
           </button>
         </div>
 
@@ -1018,7 +1032,7 @@ export default function NewHome({
             color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
             flexShrink: 0, paddingLeft: 8,
           }}>
-            {serverDishes
+            {(needsServerFetch || filterMeal !== 'all')
               ? `${feedDishes.length.toLocaleString('es-CL')} platos`
               : totalDishCount
                 ? `+${totalDishCount.toLocaleString('es-CL')} platos`
@@ -1100,7 +1114,7 @@ export default function NewHome({
               </svg>
               Popular
             </button>
-            <button onClick={() => setFilterDiet(filterDiet === 'VEGETARIAN' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet === 'VEGETARIAN', 'green')}>
+            <button onClick={() => setFilterDiet(filterDiet !== 'all' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet !== 'all', 'green')}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
