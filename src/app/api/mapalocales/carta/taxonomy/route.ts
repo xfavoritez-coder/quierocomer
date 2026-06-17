@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { classifyDishes, type DishTaxonomyInput } from '@/lib/taxonomy-classify'
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 /**
  * POST /api/mapalocales/carta/taxonomy
@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
       category: d.category.name,
     }))
 
-    // Batch in groups of 50
-    const BATCH = 50
+    // Batch in groups of 30 (menos tokens por llamada = más rápido y confiable)
+    const BATCH = 30
     let classified = 0
     for (let i = 0; i < inputs.length; i += BATCH) {
       const batch = inputs.slice(i, i + BATCH)

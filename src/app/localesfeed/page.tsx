@@ -1373,7 +1373,11 @@ function CartaModal({ slug, name, onClose }: {
     setLoading(true)
     return fetch(`/api/mapalocales/carta?slug=${encodeURIComponent(slug)}`)
       .then(r => r.json())
-      .then((d: CartaData) => { setData(d); setTaxEdits({}) })
+      .then((d: any) => {
+        if (!d?.categories) throw new Error(d?.error ?? 'Respuesta inesperada del servidor')
+        setData(d as CartaData)
+        setTaxEdits({})
+      })
       .catch(e => setError(e?.message ?? 'Error'))
       .finally(() => setLoading(false))
   }
@@ -1389,7 +1393,7 @@ function CartaModal({ slug, name, onClose }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug }),
       })
-      const result = await res.json()
+      const result = await res.json().catch(() => ({ error: `Error ${res.status} (timeout o respuesta inválida)` }))
       if (!res.ok) throw new Error(result.error ?? `Error ${res.status}`)
       await loadData()
       setSaved(true)
