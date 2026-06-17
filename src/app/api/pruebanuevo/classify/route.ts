@@ -80,7 +80,7 @@ desayuno, almuerzo, cena, snack
 Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 
 mainIngredient (array, los más importantes):
-carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, pan, fruta, tofu, tomate, lechuga
+carne, pollo, cerdo, cordero, pescado, mariscos, huevo, pasta, arroz, papa, verduras, legumbres, queso, pan, fruta, tofu, tomate, lechuga, nutella
 
 flavor (array, solo los que aplican claramente):
 dulce, salado, picante, frito, grillado, asado
