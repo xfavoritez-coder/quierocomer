@@ -35,12 +35,12 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
       <p style={{
         fontSize: 14,
         fontWeight: 600,
-        color: isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.35)',
+        color: isDark ? 'rgba(255,255,255,0.48)' : 'rgba(0,0,0,0.50)',
         margin: 0,
         textAlign: 'center',
         lineHeight: 1.4,
       }}>
-        Descubre qué comer hoy
+        descubre que comer cerca de ti
       </p>
 
       {/* Copyright */}
