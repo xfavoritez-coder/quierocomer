@@ -4,6 +4,7 @@ import { checkAdminAuth } from "@/lib/adminAuth";
 import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -136,6 +137,7 @@ export async function POST(req: NextRequest) {
     });
 
     logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
+    revalidateQrCache();
     return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult });
   } catch (e) {
     console.error("[Admin dishes POST]", e);

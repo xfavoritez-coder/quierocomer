@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { translateCategory } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 const ENTRY_KW = ["entrada", "compartir", "appetizer", "starter", "antipast", "aperitivo", "piqueo", "snack", "para picar", "tapas"];
 const DRINK_KW = ["bebida", "bebestible", "trago", "cerveza", "jugo", "vino", "cocktail", "cóctel", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "infusion", "agua", "drink"];
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
     // Translate category name to en/pt in background
     translateCategory(category.id).catch((e) => console.error("[translate cat]", e));
 
+    revalidateQrCache();
     return NextResponse.json(category);
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
@@ -117,6 +119,7 @@ export async function PUT(req: NextRequest) {
       translateCategory(id).catch((e) => console.error("[translate cat]", e));
     }
 
+    revalidateQrCache();
     return NextResponse.json(updated);
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
@@ -150,6 +153,7 @@ export async function DELETE(req: NextRequest) {
     await prisma.dish.deleteMany({ where: { categoryId: id, isActive: false } });
     await prisma.category.delete({ where: { id } });
     logActivity(existing.restaurantId, "category_delete", { categoryId: id, name: existing.name });
+    revalidateQrCache();
     return NextResponse.json({ success: true });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);

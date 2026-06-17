@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { headers } from "next/headers";
+import { unstable_cache } from "next/cache";
 import { getRestaurantBySlug } from "@/lib/qr/queries/getRestaurant";
 import {
   getTimeOfDay,
@@ -122,22 +123,33 @@ export default async function CartaPage({
   }
 
   // Fetch popular dishes, marketing promos, and announcements in parallel
-  const [topDishesResult, activePromos, rawAnnouncements] = await Promise.all([
-    getTopDishIds(restaurant.id).catch(() => ({ dishIds: new Set<string>(), source: "none" as const, totalSalesToday: 0 })),
-    prisma.promotion.findMany({
-    where: {
-      restaurantId: restaurant.id,
-      status: "ACTIVE",
-      OR: [{ validFrom: null }, { validFrom: { lte: new Date() } }],
-      AND: [{ OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] }],
-    },
-    orderBy: { createdAt: "desc" },
-  }),
-    prisma.announcement.findMany({
-      where: { restaurantId: restaurant.id, isActive: true },
+  // Promos + announcements cached 2 min — reduces DB hits under high concurrency
+  const getPromos = unstable_cache(
+    (rid: string) => prisma.promotion.findMany({
+      where: {
+        restaurantId: rid,
+        status: "ACTIVE",
+        OR: [{ validFrom: null }, { validFrom: { lte: new Date() } }],
+        AND: [{ OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] }],
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    ["qr-promos", restaurant.id],
+    { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 120 }
+  );
+  const getAnnouncements = unstable_cache(
+    (rid: string) => prisma.announcement.findMany({
+      where: { restaurantId: rid, isActive: true },
       orderBy: { position: "asc" },
       select: { id: true, text: true, linkUrl: true, daysOfWeek: true, startDate: true, endDate: true },
     }),
+    ["qr-announcements", restaurant.id],
+    { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 120 }
+  );
+  const [topDishesResult, activePromos, rawAnnouncements] = await Promise.all([
+    getTopDishIds(restaurant.id).catch(() => ({ dishIds: new Set<string>(), source: "none" as const, totalSalesToday: 0 })),
+    getPromos(restaurant.id),
+    getAnnouncements(restaurant.id),
   ]);
   // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();

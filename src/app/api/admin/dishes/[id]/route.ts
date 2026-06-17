@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -112,6 +113,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const changes = Object.keys(body).filter(k => k !== "restaurantId");
     logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes });
 
+    revalidateQrCache();
     return NextResponse.json(dish);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
@@ -135,6 +137,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     // Soft delete: mark as inactive + set deletedAt
     const deleted = await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() }, select: { name: true } });
     logActivity(existing.restaurantId, "dish_delete", { dishId: id, dishName: deleted.name });
+    revalidateQrCache();
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);

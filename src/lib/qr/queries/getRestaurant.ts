@@ -1,7 +1,8 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { Lang } from "@/lib/qr/i18n";
 
-export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
+async function _getRestaurantBySlug(slug: string, lang: Lang) {
   const needTranslations = lang !== "es";
 
   const restaurant = await prisma.restaurant.findUnique({
@@ -123,6 +124,19 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
   return { ...restaurant, ratingMap };
 }
 
+// Cache per slug+lang — 2 minutes TTL
+// Tags allow targeted invalidation from the panel when the menu changes
+export function getRestaurantBySlug(slug: string, lang: Lang = "es") {
+  return unstable_cache(
+    () => _getRestaurantBySlug(slug, lang),
+    ["qr-restaurant", slug, lang],
+    {
+      tags: ["qr-restaurant", `qr-restaurant-${slug}`],
+      revalidate: 120,
+    }
+  )();
+}
+
 export type RestaurantData = NonNullable<
-  Awaited<ReturnType<typeof getRestaurantBySlug>>
+  Awaited<ReturnType<typeof _getRestaurantBySlug>>
 >;
