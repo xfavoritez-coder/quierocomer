@@ -90,6 +90,12 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
               {dish.restaurante.charAt(0)}
             </div>
           )}
+          <span style={{
+            fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 500,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {dish.restaurante}
+          </span>
         </div>
 
         {/* Gradient overlay with info */}
