@@ -521,7 +521,7 @@ function DesktopDishContent({
               <div style={{ display: 'flex', gap: 6 }}>
                 {restDishes.map(d => (
                   <div key={d.id} onClick={() => onDishTap(d)} style={{
-                    flex: 1, minWidth: 0, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                    flex: '0 0 auto', width: 'calc(25% - 5px)', cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
                     background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
                   }}>
                     <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
@@ -839,7 +839,7 @@ function DishSlide({
               <div style={{ display: 'flex', gap: 6 }}>
                 {restDishes.map(d => (
                   <div key={d.id} onClick={() => onDishTap(d)} style={{
-                    flex: 1, minWidth: 0, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
+                    flex: '0 0 auto', width: 'calc(25% - 5px)', cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
                     background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
                   }}>
                     <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
