@@ -15,7 +15,7 @@ const VALID_DISH_TYPE = [
   "sopa","cazuela","ramen",
   "ensalada","bowl",
   "sushi","curry","pad thai","gyoza","wantan",
-  "taco","burrito","quesadilla",
+  "taco","burrito","quesadilla","arepa","salchipapa",
   "sopaipilla","pastel de choclo",
   "huevos","pancake","waffle","crepe","avena","omelet",
   "papas fritas","nachos","aros de cebolla","croquetas","arrollado de primavera","spring roll",

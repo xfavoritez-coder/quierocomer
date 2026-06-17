@@ -33,7 +33,7 @@ const VALID_DISH_TYPES = [
   // Asiática
   "sushi","curry","pad thai","gyoza","wantan",
   // Mexicana
-  "taco","burrito","quesadilla",
+  "taco","burrito","quesadilla","arepa","salchipapa",
   // Chilena
   "sopaipilla","pastel de choclo",
   // Desayunos
