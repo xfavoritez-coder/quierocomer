@@ -451,7 +451,9 @@ export default function NewHome({
       return
     }
     // Debounce for search typing; immediate for other filters
-    const delay = searchQuery && !activeCategory && filterDiet === 'all' && filterCategories.size === 0 ? 350 : 0
+    // searchQuery solo cambia al hacer Enter o click en sugerencia (no al tipear),
+    // así que no necesita debounce — se lanza inmediatamente
+    const delay = 0
     if (searchFetchRef.current) clearTimeout(searchFetchRef.current)
     searchFetchRef.current = setTimeout(() => {
       fetchServerDishes({
@@ -754,8 +756,9 @@ export default function NewHome({
             </svg>
             <input
               className="feed-search-input"
-              type="search" value={searchInput}
+              type="text" value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
+              autoComplete="off"
               placeholder="Buscar en QuieroComer"
               style={{
                 width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 17,
