@@ -1611,10 +1611,22 @@ function CartaModal({ slug, name, onClose }: {
                               <div style={{ width: 28, height: 28, borderRadius: 4, background: '#1a1a1a', flexShrink: 0 }} />
                             )}
                             <span style={{ fontSize: 13, color: isEdited ? '#c4b5fd' : '#aaa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.name}</span>
-                            {/* Compact taxonomy badges */}
-                            <div style={{ display: 'flex', gap: 3, flexShrink: 0, alignItems: 'center' }}>
-                              {(tx.txDishType ?? []).slice(0, 2).map(t => (
-                                <span key={t} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24' }}>{t}</span>
+                            {/* Compact taxonomy badges — todas las dimensiones */}
+                            <div style={{ display: 'flex', gap: 3, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap', maxWidth: 420 }}>
+                              {(tx.txDishType ?? []).map(t => (
+                                <span key={`dt-${t}`} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24' }}>{t}</span>
+                              ))}
+                              {(tx.txCuisine ?? []).map(t => (
+                                <span key={`cu-${t}`} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}>{t}</span>
+                              ))}
+                              {(tx.txMealSlot ?? []).map(t => (
+                                <span key={`ms-${t}`} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.3)', color: '#2dd4bf' }}>{t}</span>
+                              ))}
+                              {(tx.txIngredient ?? []).map(t => (
+                                <span key={`in-${t}`} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171' }}>{t}</span>
+                              ))}
+                              {(tx.txEstilo ?? []).map(t => (
+                                <span key={`es-${t}`} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#4ade80' }}>{t}</span>
                               ))}
                               <span style={{ fontSize: 11, fontWeight: 700, color: dietColor, minWidth: 16, textAlign: 'center' }}>{dietLabel}</span>
                             </div>
