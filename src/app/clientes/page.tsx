@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import ClientesClient from "./ClientesClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Clientes | QuieroComer",
   description: "Restaurantes reales que ya usan QuieroComer para vender más.",
