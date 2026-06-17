@@ -49,7 +49,7 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
       style={{ position: 'relative', cursor: 'pointer' }}
     >
       {/* Photo */}
-      <div className="dish-card-img-wrap" style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: 'rgba(0,0,0,0.08)', borderRadius: 14 }}>
+      <div className="dish-card-img-wrap" style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: 'rgba(0,0,0,0.08)', borderRadius: 8 }}>
         {/* Skeleton shimmer while image loads */}
         {!showFallback && !imgLoaded && (
           <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />

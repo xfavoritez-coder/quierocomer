@@ -212,8 +212,8 @@ html.dark .feed-root {
 /* ─── Masonry Grid (manual flex columns, stable on load-more) ── */
 .feed-grid {
   display: flex;
-  gap: 5px;
-  padding: 10px 8px 100px;
+  gap: 8px;
+  padding: 10px 10px 100px;
 }
 .feed-grid-col {
   flex: 1;
