@@ -54,7 +54,7 @@ export const VALID_DISH_TYPES = [
   // Postres
   "helado","torta","brownie","galleta","muffin","cheesecake","churros","donut","flan",
   // Bebidas
-  "café","café con leche","té","jugo","batido","bebida","alcohol","mocktail",
+  "café","latte","cappuccino","mocaccino","chocolate caliente","té","jugo","batido","bebida","alcohol","mocktail",
 ];
 
 export const VALID_CUISINES = [
@@ -68,7 +68,7 @@ export const VALID_INGREDIENTS = [
   "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos",
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
   "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame",
-  "choclo","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón",
+  "choclo","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
 ];
 
 export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asado"];
@@ -84,10 +84,10 @@ dishType (array — puede ser más de uno, especialmente en combos):
 ${VALID_DISH_TYPES.join(", ")}
 Reglas dishType:
 - Si es un combo/pack con varios productos → incluye "combo" MÁS los tipos que contiene (ej: ["combo","hamburguesa","papas fritas"])
-- Bebidas: "café" (espresso, americano, cortado, café negro), "café con leche" (latte, cappuccino, flat white, macchiato), "té" (cualquier té o infusión), "jugo" (jugos naturales o en caja), "batido" (smoothie, milkshake, malteada), "bebida" (sodas, agua, bebidas embotelladas), "alcohol" (cerveza, vino, pisco, coctel, destilados), "mocktail" (coctel sin alcohol).
+- Bebidas: "café" (espresso, americano, cortado, café negro, cold brew, pour over, chemex, café de filtro), "latte" (latte, flat white, latte de cualquier tipo — matcha latte, turmeric latte, etc.), "cappuccino" (cappuccino, macchiato, cortado con mucha leche), "mocaccino" (moca, mocha, mocaccino — café + chocolate), "chocolate caliente" (chocolate caliente, hot chocolate, cocoa), "té" (cualquier té, infusión, hierba, manzanilla, menta — usar también para "infusiones"), "jugo" (jugos naturales o en caja), "batido" (smoothie, milkshake, malteada), "bebida" (sodas, agua, bebidas embotelladas), "alcohol" (cerveza, vino, pisco, coctel, destilados), "mocktail" (coctel sin alcohol).
 - Bebidas → cuisine siempre [].
 - Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
-- Bebidas → diet: café negro/té/jugo/bebida/alcohol/mocktail → VEGAN. café con leche/batido con leche/latte/cappuccino → VEGETARIAN.
+- Bebidas → diet: café/té/jugo/bebida/alcohol/mocktail → VEGAN. latte/cappuccino/mocaccino/chocolate caliente/batido con leche → VEGETARIAN. Si dice explícitamente "leche de avena", "leche vegetal", "oat milk", "almendra" → VEGAN.
 - "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
