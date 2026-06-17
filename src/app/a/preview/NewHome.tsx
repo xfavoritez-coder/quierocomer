@@ -704,7 +704,7 @@ export default function NewHome({
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Buscar en QuieroComer"
               style={{
-                width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 15,
+                width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
@@ -845,7 +845,7 @@ export default function NewHome({
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
-              width: '100%', padding: '12px 38px 12px 36px', fontSize: 15,
+              width: '100%', padding: '12px 38px 12px 36px', fontSize: 17,
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
