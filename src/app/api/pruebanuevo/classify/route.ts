@@ -102,6 +102,8 @@ OMNIVORE (tiene carne/ave/pescado/mariscos — aunque lleve queso o vegetales)
 VEGETARIAN (sin carne/pescado, pero con lácteos o huevo)
 VEGAN (100% vegetal, sin ningún ingrediente animal)
 Hamburguesa, pollo, completo, mariscos → OMNIVORE siempre.
+Pesto → VEGETARIAN por defecto (lleva queso parmesano aunque no se mencione). Solo VEGAN si dice explícitamente "pesto vegano".
+Cuando haya duda entre VEGETARIAN y VEGAN → preferir VEGETARIAN.
 
 PLATOS A CLASIFICAR:
 ${JSON.stringify(dishes, null, 2)}
