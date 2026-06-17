@@ -77,10 +77,9 @@ html.dark .feed-root {
 /* ─── Cards ─────────────────────────────────────────────────── */
 .dish-card {
   background: var(--feed-chip-bg, #fff);
-  border: none;
-  border-radius: 6px;
+  border: 1px solid var(--feed-card-border);
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 18px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
@@ -661,7 +660,7 @@ html.dark .feed-root .dish-card-img-wrap {
 /* ─── Dark mode component overrides ──────────────────────────── */
 html.dark .feed-root .dish-card {
   background: #1a1a1a;
-  border: none;
+  border-color: rgba(255,255,255,0.07);
   box-shadow: none;
 }
 html.dark .feed-root .feed-nav {
