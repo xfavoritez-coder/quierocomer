@@ -603,25 +603,28 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // Taxonomy classification — batch all dishes in one call
+    // Taxonomy classification — paralelo, chunks de 20 para no saturar BD
     try {
       const taxonomy = await classifyDishesBatched(taxonomyInputs);
-      const updates = Object.entries(taxonomy).map(([dishId, dims]) =>
-        prisma.dish.update({
-          where: { id: dishId },
-          data: {
-            txDishType:   dims.dishType   ?? [],
-            txCuisine:    dims.cuisine    ?? [],
-            txMealSlot:   dims.mealSlot   ?? [],
-            txIngredient: dims.mainIngredient ?? [],
-            txEstilo:     dims.estilo     ?? [],
-            // flavor → flavorTags (complement existing inference)
-            ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
-          },
-        })
-      );
-      await Promise.all(updates);
-      console.log(`[Pipeline] Taxonomy classified ${updates.length}/${taxonomyInputs.length} dishes`);
+      const entries = Object.entries(taxonomy);
+      for (let i = 0; i < entries.length; i += 20) {
+        await Promise.all(
+          entries.slice(i, i + 20).map(([dishId, dims]) =>
+            prisma.dish.update({
+              where: { id: dishId },
+              data: {
+                txDishType:   dims.dishType        ?? [],
+                txCuisine:    dims.cuisine         ?? [],
+                txMealSlot:   dims.mealSlot        ?? [],
+                txIngredient: dims.mainIngredient  ?? [],
+                txEstilo:     dims.estilo          ?? [],
+                ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
+              },
+            })
+          )
+        );
+      }
+      console.log(`[Pipeline] Taxonomy classified ${entries.length}/${taxonomyInputs.length} dishes`);
     } catch (e) {
       console.error("[Pipeline] Taxonomy classification failed (non-fatal):", e);
     }

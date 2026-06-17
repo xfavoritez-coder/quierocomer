@@ -37,14 +37,13 @@ export async function POST(req: NextRequest) {
       category: d.category.name,
     }))
 
-    // Batch in groups of 30 (menos tokens por llamada = más rápido y confiable)
-    const BATCH = 30
-    let classified = 0
-    for (let i = 0; i < inputs.length; i += BATCH) {
-      const batch = inputs.slice(i, i + BATCH)
-      const taxonomy = await classifyDishes(batch)
+    // Paralelo: batches de 30, hasta 4 simultáneos → ~25s para cualquier carta
+    const taxonomy = await classifyDishesBatched(inputs, 30, 4)
+    // Updates a la BD en chunks de 20 para no saturar el pool de conexiones
+    const entries = Object.entries(taxonomy)
+    for (let i = 0; i < entries.length; i += 20) {
       await Promise.all(
-        Object.entries(taxonomy).map(([dishId, dims]) =>
+        entries.slice(i, i + 20).map(([dishId, dims]) =>
           prisma.dish.update({
             where: { id: dishId },
             data: {
@@ -58,8 +57,8 @@ export async function POST(req: NextRequest) {
           })
         )
       )
-      classified += Object.keys(taxonomy).length
     }
+    const classified = Object.keys(taxonomy).length
 
     return NextResponse.json({ classified, total: dishes.length })
   } catch (e: any) {

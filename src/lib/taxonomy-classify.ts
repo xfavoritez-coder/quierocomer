@@ -181,15 +181,30 @@ export async function classifyDishes(
 /**
  * Clasifica en batches de N platos para evitar superar el context window.
  */
+/**
+ * Clasifica en batches paralelos (hasta `concurrency` llamadas simultáneas).
+ * 120 platos / 30 por batch = 4 batches en paralelo → ~25s en total.
+ */
 export async function classifyDishesBatched(
   dishes: DishTaxonomyInput[],
-  batchSize = 50
+  batchSize = 30,
+  concurrency = 4
 ): Promise<Record<string, DishTaxonomy>> {
-  const result: Record<string, DishTaxonomy> = {};
+  if (dishes.length === 0) return {};
+
+  const batches: DishTaxonomyInput[][] = [];
   for (let i = 0; i < dishes.length; i += batchSize) {
-    const batch = dishes.slice(i, i + batchSize);
-    const batchResult = await classifyDishes(batch);
-    Object.assign(result, batchResult);
+    batches.push(dishes.slice(i, i + batchSize));
   }
+
+  const result: Record<string, DishTaxonomy> = {};
+
+  // Procesar en grupos de `concurrency` batches simultáneos
+  for (let i = 0; i < batches.length; i += concurrency) {
+    const group = batches.slice(i, i + concurrency);
+    const groupResults = await Promise.all(group.map(b => classifyDishes(b)));
+    for (const r of groupResults) Object.assign(result, r);
+  }
+
   return result;
 }
