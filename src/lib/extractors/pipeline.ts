@@ -241,6 +241,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
     else if (cartaUrl.includes('getjusto.com') || cartaUrl.includes('/pedir')) providerName = 'Justo'
     else if (cartaUrl.includes('fu.do')) providerName = 'Fudo'
     else if (cartaUrl.includes('pedidosya.cl')) providerName = 'PedidosYa'
+    else if (cartaUrl.includes('queresto.com')) providerName = 'Queresto'
+    else if (cartaUrl.includes('ola.click')) providerName = 'OlaClick'
   }
   // Route to the correct extractor
   switch (providerName) {
