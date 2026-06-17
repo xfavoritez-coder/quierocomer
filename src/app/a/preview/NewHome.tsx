@@ -1033,7 +1033,7 @@ export default function NewHome({
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
-            fontSize: 15, fontWeight: 400,
+            fontSize: 16, fontWeight: 400,
             flex: 1, minWidth: 0, overflow: 'hidden',
           }}>
             <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" style={{ flexShrink: 0 }}>
@@ -1077,7 +1077,8 @@ export default function NewHome({
                       boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                       minWidth: 120,
                       fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-                    }}>
+                    }}
+                    onMouseDown={e => e.stopPropagation()}>
                       <div style={{ padding: '8px 12px 4px', fontSize: 11, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
                         Radio
                       </div>
