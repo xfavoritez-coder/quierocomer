@@ -79,10 +79,10 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
         }}>
           {dish.restauranteLogo && !logoError ? (
             <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
-              style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
           ) : (
             <div style={{
-              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+              width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
               background: 'rgba(255,255,255,0.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: 700,
@@ -90,12 +90,6 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
               {dish.restaurante.charAt(0)}
             </div>
           )}
-          <span style={{
-            fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 500,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {dish.restaurante}
-          </span>
         </div>
 
         {/* Gradient overlay with info */}
