@@ -148,6 +148,8 @@ export default function NewHome({
   const [draftDiet, setDraftDiet] = useState(filterDiet)
   const [draftCategories, setDraftCategories] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
+  // Track if user explicitly changed filterMaxKm from the modal (vs auto-set by GPS)
+  const userSetMaxKm = useRef(false)
   // Server-side search/filter results — null = browse mode (use initial dishes prop)
   const [serverDishes, setServerDishes] = useState<FeedDish[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -498,18 +500,18 @@ export default function NewHome({
       filtered = withDist.map(x => x.dish)
     }
 
-    // Sort
+    // Sort — quickNearby y quickPopular (pills) tienen prioridad sobre filterSort del modal
     let combined: FeedDish[]
-    if (filterSort === 'price-asc') {
+    if (quickNearby && userLocation) {
+      combined = filtered // already sorted by distance in the block above
+    } else if (quickPopular) {
+      combined = [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
+    } else if (filterSort === 'price-asc') {
       combined = [...filtered].sort((a, b) => (a.precioDescuento ?? a.precio) - (b.precioDescuento ?? b.precio))
     } else if (filterSort === 'price-desc') {
       combined = [...filtered].sort((a, b) => (b.precioDescuento ?? b.precio) - (a.precioDescuento ?? a.precio))
     } else if (filterSort === 'recent') {
       combined = [...filtered].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-    } else if (quickPopular) {
-      combined = [...filtered].sort((a, b) => b.popularityScore - a.popularityScore)
-    } else if (quickNearby && userLocation) {
-      combined = filtered
     } else {
       // Default: vector rank + category/keyword scoring
       const vectorRank = vectorScoredIds.length > 0 && !activeCategory
@@ -691,7 +693,7 @@ export default function NewHome({
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
 
   // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
-  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (filterMaxKm < 30 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
+  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm < 30 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
 
   // Pills helpers — usados tanto en Row 3 como en el floating header
   const openFilters = () => {
@@ -989,7 +991,7 @@ export default function NewHome({
             Veggie
           </button>
           <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-            <button onClick={openFilters} style={pillStyle(activeFilterCount > 0, 'default')}>
+            <button onClick={openFilters} style={{ ...pillStyle(false, 'default'), width: '100%' }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
                 <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
@@ -1359,6 +1361,8 @@ export default function NewHome({
             <button onClick={() => {
               setFilterSort(draftSort)
               setFilterMaxKm(draftMaxKm)
+              if (draftMaxKm !== 30) userSetMaxKm.current = true
+              else userSetMaxKm.current = false
               setFilterDiet(draftDiet)
               setFilterMeal(draftMeal)
               setFilterMealDisplay(draftMealDisplay)
