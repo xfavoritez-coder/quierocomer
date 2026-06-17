@@ -69,10 +69,10 @@ export async function GET(req: NextRequest) {
       conditions.push(Prisma.sql`r.lng BETWEEN ${lngMin} AND ${lngMax}`)
     }
 
-    // Location name filter (commune/city)
+    // Location name filter (commune/city) — ILIKE sin unaccent para evitar error si la extensión no está
     if (locationName) {
-      const locNorm = `%${normStr(locationName)}%`
-      conditions.push(Prisma.sql`lower(unaccent(r.address)) LIKE ${locNorm}`)
+      const locLike = `%${locationName}%`
+      conditions.push(Prisma.sql`r.address ILIKE ${locLike}`)
     }
 
     const whereClause = Prisma.join(conditions, ' AND ')

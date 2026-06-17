@@ -425,7 +425,7 @@ export default function NewHome({
       const data: FeedDish[] = await res.json()
       setServerDishes(data)
     } catch {
-      // keep current results on error
+      setServerDishes(null) // en error, mostrar platos iniciales en vez de resultados stale
     } finally {
       setIsSearching(false)
     }
@@ -742,7 +742,7 @@ export default function NewHome({
             <input
               className="feed-search-input"
               type="search" value={searchInput}
-              onChange={e => { setSearchInput(e.target.value); setSearchQuery(e.target.value) }}
+              onChange={e => setSearchInput(e.target.value)}
               placeholder="Buscar en QuieroComer"
               style={{
                 width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 17,
@@ -880,7 +880,7 @@ export default function NewHome({
             ref={searchInputRef}
             className="feed-search-input"
             type="text" value={searchInput}
-            onChange={e => { setSearchInput(e.target.value); setSearchQuery(e.target.value) }}
+            onChange={e => setSearchInput(e.target.value)}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="Buscar en QuieroComer"
@@ -1049,7 +1049,7 @@ export default function NewHome({
             <input
               type="search"
               value={searchInput}
-              onChange={e => { setSearchInput(e.target.value); setSearchQuery(e.target.value) }}
+              onChange={e => setSearchInput(e.target.value)}
               placeholder="Buscar en QuieroComer"
               className="feed-floating-input"
               style={{
