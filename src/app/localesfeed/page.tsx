@@ -339,6 +339,7 @@ function TabMapa() {
       : u.includes('gour.media') ? 'Gourmedia'
       : u.includes('toteat.app') ? 'Toteat'
       : u.includes('mer-cat.com') || u.includes('mercat') ? 'Mercat'
+      : u.includes('queresto.com') ? 'Queresto'
       : 'Web propia'
     const result: ProspectoResult = {
       id: placeId,
