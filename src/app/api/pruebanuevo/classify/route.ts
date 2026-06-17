@@ -72,7 +72,7 @@ Reglas dishType:
 cuisine (array, solo si aplica claramente):
 chilena, peruana, nikkei, venezolana, italiana, americana, mexicana, japonesa, china, árabe, mediterránea, francesa, asiática, coreana, india, thai, griega, española, brasileña, fusión
 Reglas cuisine:
-- "chilena" SOLO para platos tradicionales chilenos (cazuela, empanada, sopaipilla, pastel de choclo, chorrillana, etc.). Una hamburguesa en Chile NO es chilena → []. Una pizza NO es italiana por defecto a menos que el nombre/descripción lo indique claramente.
+- "chilena" SOLO para platos tradicionales chilenos: cazuela, empanada, sopaipilla, pastel de choclo, chorrillana, charquicán, humitas, porotos granados, prietas, longaniza. Sándwiches comunes como ave mayo, lomito, barros luco → NO son "chilena", son simplemente sándwiches → cuisine: []. Una hamburguesa en Chile NO es chilena → [].
 - "nikkei" para fusión japonesa-peruana (tiradito con toques japoneses, ceviche con soja, etc.)
 - Deja [] si no hay cocina clara (ej: un helado de vainilla no tiene cocina específica, una hamburguesa genérica tampoco)
 
