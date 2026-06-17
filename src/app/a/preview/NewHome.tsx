@@ -475,8 +475,9 @@ export default function NewHome({
       else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
     }
 
-    // Meal filter — always client-side (instant, works on both browse and server results)
-    if (filterMeal !== 'all') filtered = filtered.filter(d => d.mealTime === filterMeal)
+    // Meal filter — solo en browse mode; cuando hay búsqueda/filtros activos el usuario
+    // está buscando algo concreto y la hora del día no debe limitar los resultados
+    if (filterMeal !== 'all' && !serverDishes) filtered = filtered.filter(d => d.mealTime === filterMeal)
 
     // Distance filter + sort — client-side with precise formula
     if (userLocation) {
