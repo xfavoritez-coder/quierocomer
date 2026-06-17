@@ -1576,14 +1576,16 @@ export default function NewHome({
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '80px 30px', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' }}>
-              <p style={{ fontSize: 40, margin: '0 0 16px' }}>🍽</p>
+              <p style={{ fontSize: 44, margin: '0 0 14px', lineHeight: 1 }}>😔</p>
               <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
-                No encontramos platos aquí
+                No tenemos platos aún
               </p>
-              <p style={{ fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>
-                {searchQuery ? `No hay resultados para "${searchQuery}"` :
-                 (locationName || gpsLabel) ? `Aún no tenemos platos en ${locationName || gpsLabel}. Prueba cambiando la ubicación.` :
-                 'Intenta cambiar los filtros o la ubicación.'}
+              <p style={{ fontSize: 14, margin: '0 0 20px', lineHeight: 1.6, maxWidth: 260, marginLeft: 'auto', marginRight: 'auto' }}>
+                {searchQuery
+                  ? <>No hay platos para <strong style={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)' }}>"{searchQuery}"</strong> con los filtros que pusiste</>
+                  : (locationName || gpsLabel)
+                    ? `Aún no tenemos platos en ${locationName || gpsLabel}. Prueba cambiando la ubicación.`
+                    : 'Intenta cambiar los filtros o la ubicación.'}
               </p>
             </div>
           )}
