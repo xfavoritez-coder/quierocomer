@@ -235,6 +235,23 @@ export async function getSavedDishIds(): Promise<string[]> {
   }
 }
 
+export async function getViewedDishIds(): Promise<string[]> {
+  try {
+    const userId = await getFeedUserId()
+    if (!userId) return []
+    const rows = await prisma.feedInteraction.findMany({
+      where: { feedUserId: userId, action: 'TAP' },
+      select: { dishId: true },
+      distinct: ['dishId'],
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
+    return rows.map(r => r.dishId)
+  } catch {
+    return []
+  }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────
 function getActionWeights(action: string): { category: number; restaurant: number } | null {
   const map: Record<string, { category: number; restaurant: number }> = {

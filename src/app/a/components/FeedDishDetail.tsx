@@ -21,6 +21,7 @@ export default function FeedDishDetail({
   hideRelated,
   userLocation,
   isDark,
+  savedDishIds,
 }: {
   dish: FeedDish
   allDishes: FeedDish[]
@@ -33,6 +34,7 @@ export default function FeedDishDetail({
   hideRelated?: boolean
   userLocation?: { lat: number; lng: number } | null
   isDark?: boolean
+  savedDishIds?: Set<string>
 }) {
   const [isDesktop, setIsDesktop] = useState(false)
   const [visible, setVisible] = useState(true)
@@ -193,6 +195,7 @@ export default function FeedDishDetail({
             hideRelated={hideRelated}
             userLocation={userLocation}
             isDark={isDark}
+            initialSaved={savedDishIds?.has(activeDish.id) ?? false}
           />
         </div>
 
@@ -271,6 +274,7 @@ export default function FeedDishDetail({
               hideRelated={hideRelated}
               userLocation={userLocation}
               isDark={isDark}
+              initialSaved={savedDishIds?.has(d.id) ?? false}
             />
           )
         })}
@@ -285,14 +289,14 @@ export default function FeedDishDetail({
 
 /* ── Desktop: dish content in a two-column card layout ── */
 function DesktopDishContent({
-  dish, allDishes, dishPool, profile, onClose, onSave, onDishTap, onCategoryClick, hideRelated, userLocation, isDark,
+  dish, allDishes, dishPool, profile, onClose, onSave, onDishTap, onCategoryClick, hideRelated, userLocation, isDark, initialSaved,
 }: {
   dish: FeedDish; allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile;
   onClose: () => void; onSave: (d: FeedDish) => void; onDishTap: (d: FeedDish) => void;
   onCategoryClick?: (category: string) => void; hideRelated?: boolean;
-  userLocation?: { lat: number; lng: number } | null; isDark?: boolean;
+  userLocation?: { lat: number; lng: number } | null; isDark?: boolean; initialSaved?: boolean;
 }) {
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState(initialSaved ?? false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showDietTooltip, setShowDietTooltip] = useState(false)
@@ -551,16 +555,16 @@ function DesktopDishContent({
 /* ── Mobile: individual dish slide ── */
 function DishSlide({
   dish, index, isActive, onClose, onSave, onDishTap, onCategoryClick,
-  allDishes, dishPool, profile, hideRelated, userLocation, isDark,
+  allDishes, dishPool, profile, hideRelated, userLocation, isDark, initialSaved,
 }: {
   dish: FeedDish; index: number; isActive: boolean;
   onClose: () => void; onSave: (d: FeedDish) => void; onDishTap: (d: FeedDish) => void;
   onCategoryClick?: (category: string) => void;
   allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile; hideRelated?: boolean;
   userLocation?: { lat: number; lng: number } | null;
-  isDark?: boolean;
+  isDark?: boolean; initialSaved?: boolean;
 }) {
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState(initialSaved ?? false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showDietTooltip, setShowDietTooltip] = useState(false)

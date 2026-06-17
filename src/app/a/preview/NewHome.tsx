@@ -174,11 +174,14 @@ export default function NewHome({
   const [viewedDishIds, setViewedDishIds] = useState<string[]>([])
   const [likedDishIds, setLikedDishIds] = useState<Set<string>>(new Set())
 
-  // Load saved dish IDs on mount so they survive page reload
+  // Load saved + viewed dish IDs on mount so they're ready before entering profile
   useEffect(() => {
     getSavedDishIds().then(ids => {
       if (ids.length > 0) setSavedDishIds(new Set(ids))
     }).catch(() => {})
+    import('../lib/feed-actions').then(({ getViewedDishIds }) =>
+      getViewedDishIds().then(ids => { if (ids.length > 0) setViewedDishIds(ids) })
+    ).catch(() => {})
   }, [])
 
   // Load profile data from server when entering perfil view
@@ -1691,6 +1694,7 @@ export default function NewHome({
           onCategoryClick={(cat) => { setActiveCategory(cat); setSelectedDish(null); window.history.replaceState({}, '', '/') }}
           userLocation={userLocation}
           isDark={isDark}
+          savedDishIds={savedDishIds}
         />
       )}
 

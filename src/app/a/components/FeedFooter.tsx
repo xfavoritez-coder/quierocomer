@@ -27,7 +27,7 @@ export default function FeedFooter({ isDark }: { isDark?: boolean }) {
           letterSpacing: '-0.3px',
           color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.4)',
         }}>
-          Quiero<span style={{ color: '#F4A623' }}>Comer</span>
+          Quiero<span style={{ color: '#F4B962' }}>Comer</span>
         </span>
       </div>
 
