@@ -411,7 +411,7 @@ function DesktopDishContent({
         {/* Name */}
         <h2 style={{
           fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 10px', lineHeight: 1.25,
+          fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.25,
           paddingRight: 96,
         }}>
           <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} />
@@ -421,11 +421,11 @@ function DesktopDishContent({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           {dish.enOferta && dish.precioDescuento != null ? (
             <>
-              <span style={{ fontSize: 22, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 21, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
               <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
             </>
           ) : (
-            <span style={{ fontSize: 21, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
           )}
         </div>
 
@@ -729,7 +729,7 @@ function DishSlide({
         {/* Name */}
         <h2 style={{
           fontFamily: 'var(--font-feed-display), serif',
-          fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 10px', lineHeight: 1.25,
+          fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.25,
           paddingRight: 120,
         }}>
           <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} />
@@ -739,11 +739,11 @@ function DishSlide({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           {dish.enOferta && dish.precioDescuento != null ? (
             <>
-              <span style={{ fontSize: 20, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 19, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
               <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
             </>
           ) : (
-            <span style={{ fontSize: 19, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+            <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
           )}
         </div>
 
