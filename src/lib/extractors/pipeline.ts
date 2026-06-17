@@ -18,7 +18,7 @@ import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
-import { classifyDishesBatched, type DishTaxonomyInput } from "@/lib/taxonomy-classify";
+import { classifyDishesBatched, type DishTaxonomyInput, type DishTaxonomy } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo } from "@/lib/google-places";
 
@@ -624,14 +624,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const allTaxonomy: Record<string, import("@/lib/taxonomy-classify").DishTaxonomy> = {};
         let classified = 0;
 
-        params.onProgress?.('taxonomy_start', { total: taxonomyInputs.length });
+        console.log(`[Pipeline] Taxonomy: clasificando ${taxonomyInputs.length} platos...`);
 
         for (let i = 0; i < batches.length; i += CONCURRENCY) {
           const group = batches.slice(i, i + CONCURRENCY);
           const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1)));
           for (const r of results) Object.assign(allTaxonomy, r);
           classified += group.reduce((s, b) => s + b.length, 0);
-          params.onProgress?.('taxonomy_progress', { current: Math.min(classified, taxonomyInputs.length), total: taxonomyInputs.length });
         }
 
         const entries = Object.entries(allTaxonomy);
@@ -652,11 +651,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             )
           );
         }
-        params.onProgress?.('taxonomy_done', { classified: entries.length, total: taxonomyInputs.length });
         console.log(`[Pipeline] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos clasificados`);
       } catch (e) {
         console.error("[Pipeline] Taxonomy failed (non-fatal):", e);
-        params.onProgress?.('taxonomy_error', { error: (e as any)?.message ?? 'Error' });
       }
     }
 
@@ -1035,6 +1032,7 @@ export async function importFromProspecto(params: {
 
   // 2. Build all dish data and insert in batches of 50
   const allDishData: any[] = []
+  const taxInputsTemplate: { name: string; description: string | null; category: string }[] = []
   catEntries.forEach(([catName, catDishes], catIdx) => {
     const category = createdCategories[catIdx]
     const isDrinkCat = category.dishType === "drink" || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(catName)
@@ -1057,6 +1055,7 @@ export async function importFromProspecto(params: {
         : (inferredDiet ?? "OMNIVORE")
       const flavorTags = isDrinkCat ? [] : inferFlavorTags(dish.name, catName, dish.description ?? null)
       const leafOverride = detectDishLeafOverride(dish.name)
+      taxInputsTemplate.push({ name: dish.name.trim(), description: dish.description || null, category: catName })
       allDishData.push({
         restaurantId: restaurant.id,
         categoryId: category.id,
@@ -1080,10 +1079,12 @@ export async function importFromProspecto(params: {
   })
 
   const BATCH = 50
+  const allCreatedDishes: { id: string }[] = []
   for (let i = 0; i < allDishData.length; i += BATCH) {
-    await prisma.$transaction(
-      allDishData.slice(i, i + BATCH).map(data => prisma.dish.create({ data }))
+    const created = await prisma.$transaction(
+      allDishData.slice(i, i + BATCH).map(data => prisma.dish.create({ data, select: { id: true } }))
     )
+    allCreatedDishes.push(...created)
   }
 
   const dishCount = allDishData.length
@@ -1093,6 +1094,58 @@ export async function importFromProspecto(params: {
     where: { id: params.prospectoId },
     data: { importedSlug: slug },
   })
+
+  // Taxonomy classification con progress streaming
+  if (allCreatedDishes.length > 0) {
+    try {
+      const taxonomyInputs: DishTaxonomyInput[] = allCreatedDishes.map((d, i) => ({
+        id: d.id,
+        name: taxInputsTemplate[i]?.name ?? '',
+        description: taxInputsTemplate[i]?.description ?? null,
+        category: taxInputsTemplate[i]?.category ?? '',
+      }))
+      const TAX_BATCH = 30
+      const batches: DishTaxonomyInput[][] = []
+      for (let i = 0; i < taxonomyInputs.length; i += TAX_BATCH) batches.push(taxonomyInputs.slice(i, i + TAX_BATCH))
+      const CONCURRENCY = 4
+      const allTaxonomy: Record<string, DishTaxonomy> = {}
+      let classified = 0
+
+      params.onProgress?.('taxonomy_start', { total: taxonomyInputs.length })
+
+      for (let i = 0; i < batches.length; i += CONCURRENCY) {
+        const group = batches.slice(i, i + CONCURRENCY)
+        const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1)))
+        for (const r of results) Object.assign(allTaxonomy, r)
+        classified += group.reduce((s, b) => s + b.length, 0)
+        params.onProgress?.('taxonomy_progress', { current: Math.min(classified, taxonomyInputs.length), total: taxonomyInputs.length })
+      }
+
+      const entries = Object.entries(allTaxonomy)
+      if (entries.length > 0) {
+        await prisma.$transaction(
+          entries.map(([dishId, dims]) =>
+            prisma.dish.update({
+              where: { id: dishId },
+              data: {
+                txDishType:   dims.dishType       ?? [],
+                txCuisine:    dims.cuisine        ?? [],
+                txMealSlot:   dims.mealSlot       ?? [],
+                txIngredient: dims.mainIngredient ?? [],
+                txEstilo:     dims.estilo         ?? [],
+                ...(dims.flavor?.length ? { flavorTags: dims.flavor } : {}),
+              },
+            })
+          )
+        )
+      }
+      params.onProgress?.('taxonomy_done', { classified: entries.length, total: taxonomyInputs.length })
+      console.log(`[importFromProspecto] Taxonomy: ${entries.length}/${taxonomyInputs.length} platos`)
+    } catch (e) {
+      console.error('[importFromProspecto] Taxonomy failed (non-fatal):', e)
+      params.onProgress?.('taxonomy_error', { error: (e as any)?.message ?? 'Error' })
+    }
+  }
 
   return { slug, dishCount }
 }
