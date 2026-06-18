@@ -406,6 +406,7 @@ export default function NewHome({
 
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
+  const searchTouched = useRef(false)
 
   const executeSearch = useCallback((query: string) => {
     const trimmed = query.trim()
@@ -901,16 +902,16 @@ export default function NewHome({
             className="feed-search-input"
             type="text" value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            onFocus={() => { setShowSuggestions(true); setSearchFocused(true) }}
+            onFocus={() => { setShowSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
             onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
-              width: '100%', padding: '12px 38px 12px 16px', fontSize: 17,
+              width: '100%', padding: '12px 20px', fontSize: 17, textAlign: 'center' as const,
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              boxShadow: searchFocused ? 'none' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)'),
+              boxShadow: (!searchFocused && searchTouched.current) ? (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)') : 'none',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -1138,7 +1139,7 @@ export default function NewHome({
               type="search"
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
+              onFocus={() => { setSearchFocused(true); searchTouched.current = true }}
               onBlur={() => setSearchFocused(false)}
               placeholder="Buscar en QuieroComer"
               className="feed-floating-input"
@@ -1147,7 +1148,7 @@ export default function NewHome({
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                boxShadow: searchFocused ? 'none' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)'),
+                boxShadow: (!searchFocused && searchTouched.current) ? (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)') : 'none',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
