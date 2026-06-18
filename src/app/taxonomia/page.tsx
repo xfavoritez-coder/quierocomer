@@ -1,5 +1,5 @@
 import { PARENT_TO_LEAVES } from '@/app/a/lib/categories'
-import { VALID_DISH_TYPES, VALID_CUISINES, VALID_MEAL_SLOTS, VALID_FLAVORS } from '@/lib/taxonomy-classify'
+import { VALID_DISH_TYPES, VALID_CUISINES, VALID_MEAL_SLOTS, VALID_FLAVORS, VALID_INGREDIENTS, VALID_ESTILOS } from '@/lib/taxonomy-classify'
 
 const DISH_TYPE_GROUPS: { label: string; values: string[] }[] = [
   { label: 'Especiales',          values: ['combo', 'extra'] },
@@ -108,11 +108,23 @@ export default function TaxonomiaPage() {
         ))}
       </Section>
 
+      {/* MAIN INGREDIENT */}
+      <Section title="mainIngredient">
+        <p style={{ fontSize: 13, color: '#888', marginBottom: 16 }}>
+          Ingredientes reconocidos por el clasificador. Total: <strong>{VALID_INGREDIENTS.length}</strong> valores.
+        </p>
+        <div>
+          {VALID_INGREDIENTS.map(v => <Chip key={v} label={v} />)}
+        </div>
+      </Section>
+
       {/* AUXILIARES */}
       <Section title="Otros campos AI">
         <GroupBlock label="cuisine" values={VALID_CUISINES} />
         <GroupBlock label="mealSlot" values={VALID_MEAL_SLOTS} />
         <GroupBlock label="flavor" values={VALID_FLAVORS} />
+        <GroupBlock label="estilo" values={VALID_ESTILOS} />
+        <GroupBlock label="diet" values={['OMNIVORE', 'VEGETARIAN', 'VEGAN']} />
       </Section>
     </div>
   )
