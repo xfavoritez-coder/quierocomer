@@ -248,6 +248,7 @@ async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionR
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
+    signal: AbortSignal.timeout(60000),
     headers: {
       "x-api-key": ANTHROPIC_API_KEY,
       "anthropic-version": "2023-06-01",
@@ -318,36 +319,60 @@ export async function extractToteat(cartaUrl: string): Promise<ExtractionResult>
   const parsed = parseToteatUrl(cartaUrl);
   if (!parsed) throw new Error(`URL de Toteat no válida: ${cartaUrl}`);
 
-  const { country, slug, branchId } = parsed;
+  const { slug, branchId } = parsed;
   console.log(`[Toteat] Extracting: slug=${slug} branchId=${branchId}`);
 
-  // Step 1: Try public API endpoints
-  const apiDishes = await tryToteatPublicApi(branchId, slug);
-  if (apiDishes && apiDishes.length >= 3) {
-    console.log(`[Toteat] API extraction: ${apiDishes.length} dishes`);
-    return {
-      restaurantName: slug.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\d+$/, "").trim(),
-      dishes: apiDishes,
-      logoUrl: null,
-      bannerUrl: null,
-    };
-  }
+  // Correr API probes y Jina+Claude en paralelo — lo que llegue primero gana
+  const restaurantName = slug.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\d+$/, "").trim();
 
-  // Step 2: Extract Firebase config from HTML → Firestore REST API
-  const firebaseConfig = await extractFirebaseConfig(cartaUrl);
-  if (firebaseConfig) {
-    console.log(`[Toteat] Firebase config found: projectId=${firebaseConfig.projectId}`);
-    const firestoreDishes = await tryFirestoreApi(branchId, firebaseConfig);
-    if (firestoreDishes && firestoreDishes.length >= 3) {
-      return {
-        restaurantName: slug.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\d+$/, "").trim(),
-        dishes: firestoreDishes,
-        logoUrl: null,
-        bannerUrl: null,
-      };
+  const apiPromise = (async (): Promise<ExtractionResult | null> => {
+    const apiDishes = await tryToteatPublicApi(branchId, slug);
+    if (apiDishes && apiDishes.length >= 3) {
+      console.log(`[Toteat] API extraction: ${apiDishes.length} dishes`);
+      return { restaurantName, dishes: apiDishes, logoUrl: null, bannerUrl: null };
     }
-  }
+    const firebaseConfig = await extractFirebaseConfig(cartaUrl);
+    if (firebaseConfig) {
+      console.log(`[Toteat] Firebase config found: projectId=${firebaseConfig.projectId}`);
+      const firestoreDishes = await tryFirestoreApi(branchId, firebaseConfig);
+      if (firestoreDishes && firestoreDishes.length >= 3) {
+        return { restaurantName, dishes: firestoreDishes, logoUrl: null, bannerUrl: null };
+      }
+    }
+    return null;
+  })();
 
-  // Step 3: Fallback — Jina rendering + Claude
-  return tryJinaWithClaude(cartaUrl, slug);
+  const jinaPromise = tryJinaWithClaude(cartaUrl, slug);
+
+  // Usar el primero que devuelva ≥3 platos
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let apiDone = false;
+    let jinaDone = false;
+
+    apiPromise.then(result => {
+      apiDone = true;
+      if (result && !settled) {
+        settled = true;
+        resolve(result);
+      } else if (jinaDone && !settled) {
+        // Jina ya terminó sin éxito tampoco
+        reject(new Error("Toteat: no se pudieron extraer platos"));
+      }
+    }).catch(() => {
+      apiDone = true;
+      if (jinaDone && !settled) reject(new Error("Toteat: no se pudieron extraer platos"));
+    });
+
+    jinaPromise.then(result => {
+      jinaDone = true;
+      if (!settled) {
+        settled = true;
+        resolve(result);
+      }
+    }).catch(err => {
+      jinaDone = true;
+      if (apiDone && !settled) reject(err);
+    });
+  });
 }
