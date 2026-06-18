@@ -65,9 +65,11 @@ function buildPopupHtml(r: RestauranteMapaData, fotos: string[] | null): string 
         </div>
       </div>
       ${fotosHtml}
-      <div style="display:flex;gap:6px;margin-top:12px">
-        <a href="/qr/${r.slug}" target="_blank" style="flex:1;text-align:center;background:#ff4c00;color:#fff;font-size:12px;font-weight:600;padding:8px 0;border-radius:10px;text-decoration:none;">Ver carta →</a>
-        <a href="https://quierocomer.cl/localesfeed?q=${encodeURIComponent(r.name)}" target="_blank" style="flex:1;text-align:center;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.5);color:#a78bfa;font-size:12px;font-weight:600;padding:8px 0;border-radius:10px;text-decoration:none;">Feed ↗</a>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
+        <a href="https://www.google.com/search?q=${encodeURIComponent(r.name)}" target="_blank" style="display:block;text-align:center;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:12px;font-weight:500;padding:8px 0;border-radius:10px;text-decoration:none;">🔍 Buscar en Google →</a>
+        <a href="https://quierocomer.cl/localesfeed?q=${encodeURIComponent(r.name)}" target="_blank" style="display:block;text-align:center;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.5);color:#a78bfa;font-size:12px;font-weight:600;padding:8px 0;border-radius:10px;text-decoration:none;">📋 Abrir en Feed Locales ↗</a>
+        <a href="/qr/${r.slug}" target="_blank" style="display:block;text-align:center;background:#ff4c00;color:#fff;font-size:12px;font-weight:600;padding:8px 0;border-radius:10px;text-decoration:none;">🍽 Ver carta →</a>
+        <a href="${r.mapsUrl}" target="_blank" style="display:block;text-align:center;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:12px;font-weight:500;padding:8px 0;border-radius:10px;text-decoration:none;">📍 Google Maps →</a>
       </div>
     </div>
   `
@@ -201,9 +203,9 @@ export default function MapaLeaflet({ restaurantes, prospectos, drawMode, onPoin
           ${p.address ? `<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">${p.address}</div>` : ''}
           ${p.rating != null ? `<div style="font-size:12px;color:#f4a623;margin-bottom:8px">⭐ ${p.rating}${p.reviews != null ? ` · ${p.reviews} reseñas` : ''}</div>` : ''}
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
-            ${p.cartaUrl ? `<a href="${p.cartaUrl}" target="_blank" style="display:block;text-align:center;background:#ff4c00;color:#fff;font-size:11px;font-weight:600;padding:7px 0;border-radius:8px;text-decoration:none;">🍽 Ver carta${p.provider ? ` (${p.provider})` : ''} →</a>` : ''}
-            <a href="https://quierocomer.cl/localesfeed?q=${encodeURIComponent(p.name)}" target="_blank" style="display:block;text-align:center;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.4);color:#a78bfa;font-size:11px;font-weight:600;padding:7px 0;border-radius:8px;text-decoration:none;">📋 Abrir en Locales Feed ↗</a>
             <a href="${googleSearchUrl}" target="_blank" style="display:block;text-align:center;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:11px;font-weight:500;padding:7px 0;border-radius:8px;text-decoration:none;">🔍 Buscar en Google →</a>
+            <a href="https://quierocomer.cl/localesfeed?q=${encodeURIComponent(p.name)}" target="_blank" style="display:block;text-align:center;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.4);color:#a78bfa;font-size:11px;font-weight:600;padding:7px 0;border-radius:8px;text-decoration:none;">📋 Abrir en Locales Feed ↗</a>
+            ${p.cartaUrl ? `<a href="${p.cartaUrl}" target="_blank" style="display:block;text-align:center;background:#ff4c00;color:#fff;font-size:11px;font-weight:600;padding:7px 0;border-radius:8px;text-decoration:none;">🍽 Ver carta${p.provider ? ` (${p.provider})` : ''} →</a>` : ''}
             <a href="${p.mapsUrl}" target="_blank" style="display:block;text-align:center;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);font-size:11px;font-weight:500;padding:7px 0;border-radius:8px;text-decoration:none;">📍 Google Maps →</a>
           </div>
         </div>

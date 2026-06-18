@@ -235,7 +235,7 @@ type ImportResult = {
 
 const EXTRACTABLE_PROVIDERS = new Set([
   'Justo', 'OlaClick', 'UberEats', 'Fudo', 'Mercat', 'Gourmedia',
-  'Rappi', 'Queresto', 'Web propia',
+  'Rappi', 'Queresto', 'Toteat', 'Web propia',
 ])
 // PedidosYa bloquea scraping con 403 + CAPTCHA — no extractable
 const BLOCKED_PROVIDERS = new Set(['PedidosYa'])
