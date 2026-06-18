@@ -511,14 +511,9 @@ function DesktopDishContent({
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
-                <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  ver carta
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
+                <a href={`/?q=${encodeURIComponent(dish.restaurante)}`}
+                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? '#a0aec0' : '#718096', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                  ver todo
                 </a>
               )}
             </div>
@@ -834,14 +829,9 @@ function DishSlide({
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
-                <a href={`/c/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 15, fontWeight: 700, color: '#F4A623', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  ver carta
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
+                <a href={`/?q=${encodeURIComponent(dish.restaurante)}`}
+                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? '#a0aec0' : '#718096', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                  ver todo
                 </a>
               )}
             </div>
