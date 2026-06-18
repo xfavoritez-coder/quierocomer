@@ -160,7 +160,7 @@ async function extractFirebaseConfig(url: string): Promise<{ apiKey: string; pro
     }
 
     // Alternative: JSON config blob
-    const jsonM = html.match(/"apiKey"\s*:\s*"([^"]+)".*?"projectId"\s*:\s*"([^"]+)"/s);
+    const jsonM = html.match(/"apiKey"\s*:\s*"([^"]+)"[\s\S]{0,200}?"projectId"\s*:\s*"([^"]+)"/);
     if (jsonM) return { apiKey: jsonM[1], projectId: jsonM[2] };
 
     return null;

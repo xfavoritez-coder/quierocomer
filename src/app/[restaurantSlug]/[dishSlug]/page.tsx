@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { unstable_cache } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -9,18 +10,22 @@ import FeedLayout from '@/app/a/layout'
 
 type Props = { params: Promise<{ restaurantSlug: string; dishSlug: string }> }
 
-async function findDish(restaurantSlug: string, dishSlug: string) {
-  // Single query using restaurant relation filter — avoids 2 sequential round-trips
-  const dishes = await prisma.dish.findMany({
-    where: { restaurant: { slug: restaurantSlug }, isActive: true, deletedAt: null },
-    select: { id: true, name: true, description: true, price: true, photos: true, restaurant: { select: { name: true } } },
-  })
-  return dishes.find(d => slugify(d.name) === dishSlug) ?? null
-}
+// Cached 5 min — evita double-query entre generateMetadata y el page component
+const findDishCached = unstable_cache(
+  async (restaurantSlug: string, dishSlug: string) => {
+    const dishes = await prisma.dish.findMany({
+      where: { restaurant: { slug: restaurantSlug }, isActive: true, deletedAt: null },
+      select: { id: true, name: true, description: true, price: true, photos: true, restaurant: { select: { name: true } } },
+    })
+    return dishes.find(d => slugify(d.name) === dishSlug) ?? null
+  },
+  ['dish-slug'],
+  { revalidate: 300 }
+)
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { restaurantSlug, dishSlug } = await params
-  const dish = await findDish(restaurantSlug, dishSlug)
+  const dish = await findDishCached(restaurantSlug, dishSlug)
 
   if (!dish) return { title: 'Plato no encontrado — QuieroComer' }
 
@@ -46,17 +51,20 @@ export default async function DishSlugPage({ params }: Props) {
 
   if (!fingerprint) redirect(`/api/feed-init?next=${next}`)
 
-  const [user, dishes, dish] = await Promise.all([
+  // Queries rápidas primero — evitan competir con getFeedDishes por la conexión
+  const [user, dish] = await Promise.all([
     prisma.feedUser.findUnique({
       where: { fingerprint },
       select: { id: true, categoryScores: true, keywordScores: true, totalInteractions: true },
     }),
-    getFeedDishes(),
-    findDish(restaurantSlug, dishSlug),
+    findDishCached(restaurantSlug, dishSlug),
   ])
 
   if (!user) redirect(`/api/feed-init?next=${next}`)
   if (!dish) redirect('/')
+
+  // getFeedDishes tiene su propio unstable_cache — corre solo después de liberar la conexión anterior
+  const dishes = await getFeedDishes()
 
   return (
     <FeedLayout>
