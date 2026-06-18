@@ -432,7 +432,7 @@ function DesktopDishContent({
             <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
               <span onClick={() => { setShowPriceTooltip(true); setTimeout(() => setShowPriceTooltip(false), 4000) }} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
               {showPriceTooltip && (
-                <span onClick={() => setShowPriceTooltip(false)} style={{ position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)', background: isDark ? '#2a2a2a' : '#fff', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 10, padding: '8px 12px', fontSize: 13, color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 10 }}>
+                <span onClick={() => setShowPriceTooltip(false)} style={{ position: 'absolute', bottom: 22, left: 0, background: isDark ? '#2a2a2a' : '#fff', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 10, padding: '8px 12px', fontSize: 13, color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 10 }}>
                   Los precios pueden variar, consulta directamente al local
                 </span>
               )}
@@ -746,7 +746,7 @@ function DishSlide({
             <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
               <span onClick={() => { setShowPriceTooltip(true); setTimeout(() => setShowPriceTooltip(false), 4000) }} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
               {showPriceTooltip && (
-                <span onClick={() => setShowPriceTooltip(false)} style={{ position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)', background: isDark ? '#2a2a2a' : '#fff', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 10, padding: '8px 12px', fontSize: 13, color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 10 }}>
+                <span onClick={() => setShowPriceTooltip(false)} style={{ position: 'absolute', bottom: 22, left: 0, background: isDark ? '#2a2a2a' : '#fff', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`, borderRadius: 10, padding: '8px 12px', fontSize: 13, color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 10 }}>
                   Los precios pueden variar, consulta directamente al local
                 </span>
               )}
