@@ -612,15 +612,19 @@ export default function NewHome({
     modalDishIdRef.current = null
   }
 
-  // Feed with swipe narrowing applied: filter out swiped, re-sort visible by freq after ≥2 right swipes
+  // Feed with swipe narrowing: filter swiped dishes, re-sort by accumulated preference signals.
+  // typeConfidence crece de 0 → 1 en los primeros 5 swipes: con pocos datos los t: (tipo exacto)
+  // pesan poco y el feed explora la familia; al acumular swipes converge en el tipo específico.
   const activeFeedDishes = useMemo(() => {
     if (swipedIds.size === 0) return feedDishes
     const filtered = feedDishes.filter(d => !swipedIds.has(d.id))
     const likeTotal = Object.values(swipeLikeFreq).reduce((s, v) => s + v, 0)
     if (likeTotal < 2) return filtered
+    // 0.2 → 1.0 en 5 swipes: exploración → convergencia progresiva
+    const typeConfidence = Math.min(swipedIds.size / 5, 1)
     return [...filtered].sort((a, b) => {
-      const sa = _swipeScore(a, swipeLikeFreq, swipeDislikeFreq)
-      const sb = _swipeScore(b, swipeLikeFreq, swipeDislikeFreq)
+      const sa = _swipeScore(a, swipeLikeFreq, swipeDislikeFreq, typeConfidence)
+      const sb = _swipeScore(b, swipeLikeFreq, swipeDislikeFreq, typeConfidence)
       return sb - sa
     })
   }, [feedDishes, swipedIds, swipeLikeFreq, swipeDislikeFreq])
@@ -1304,29 +1308,6 @@ export default function NewHome({
               <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
               <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
 
-            {/* Distancia */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Distancia
-              </h3>
-              <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
-                <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: isDark ? '#fff' : '#111' }}>
-                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{draftMaxKm} km</strong>
-                </p>
-                <div style={{ position: 'relative', height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
-                  <div style={{ width: `${(draftMaxKm / 30) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
-                  <div style={{ position: 'absolute', left: `${(draftMaxKm / 30) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
-                </div>
-                <input type="range" min={1} max={30} value={draftMaxKm}
-                  onChange={e => setDraftMaxKm(Number(e.target.value))}
-                  style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
-                  <span>1 km</span><span>10 km</span><span>20 km</span><span>30 km</span>
-                </div>
-              </div>
-            </div>
-
             {/* Dieta */}
             <div style={{ marginBottom: 22 }}>
               <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -1374,6 +1355,73 @@ export default function NewHome({
               </div>
             </div>
 
+            {/* Distancia */}
+            <div style={{ marginBottom: 22 }}>
+              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Distancia
+              </h3>
+              <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
+                <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: isDark ? '#fff' : '#111' }}>
+                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{draftMaxKm} km</strong>
+                </p>
+                <div style={{ position: 'relative', height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
+                  <div style={{ width: `${(draftMaxKm / 30) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
+                  <div style={{ position: 'absolute', left: `${(draftMaxKm / 30) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
+                </div>
+                <input type="range" min={1} max={30} value={draftMaxKm}
+                  onChange={e => setDraftMaxKm(Number(e.target.value))}
+                  style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
+                  <span>1 km</span><span>10 km</span><span>20 km</span><span>30 km</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Ordenar */}
+            <div style={{ marginBottom: 22 }}>
+              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Ordenar por
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <button onClick={() => setQuickNearby(p => !p)} style={{
+                  border: quickNearby ? '1.5px solid #c97d00' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 14, padding: '10px 16px',
+                  background: quickNearby ? 'rgba(244,166,35,0.08)' : isDark ? '#2a2a2a' : '#fff',
+                  color: quickNearby ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
+                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Cerca
+                </button>
+                <button onClick={() => setQuickPopular(p => !p)} style={{
+                  border: quickPopular ? '1.5px solid #D32F2F' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 14, padding: '10px 16px',
+                  background: quickPopular ? 'rgba(211,47,47,0.08)' : isDark ? '#2a2a2a' : '#fff',
+                  color: quickPopular ? '#D32F2F' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
+                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                  Popular
+                </button>
+                {[
+                  { id: 'recent' as const, label: 'Últimos agregados' },
+                  { id: 'price-asc' as const, label: 'Precio ↑' },
+                  { id: 'price-desc' as const, label: 'Precio ↓' },
+                ].map(s => (
+                  <button key={s.id} onClick={() => setDraftSort(draftSort === s.id ? 'default' : s.id)} style={{
+                    border: draftSort === s.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    borderRadius: 14, padding: '10px 16px',
+                    background: draftSort === s.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
+                    color: draftSort === s.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
+                    fontSize: 13, cursor: 'pointer',
+                  }}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Momento */}
             <div style={{ marginBottom: 22 }}>
               <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -1402,52 +1450,6 @@ export default function NewHome({
                   </button>
                   )
                 })}
-              </div>
-            </div>
-
-            {/* Ordenar */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Ordenar por
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {/* Quick toggles — mismos que las pills del home */}
-                <button onClick={() => setQuickNearby(p => !p)} style={{
-                  border: quickNearby ? '1.5px solid #c97d00' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                  borderRadius: 14, padding: '10px 16px',
-                  background: quickNearby ? 'rgba(244,166,35,0.08)' : isDark ? '#2a2a2a' : '#fff',
-                  color: quickNearby ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  Cerca
-                </button>
-                <button onClick={() => setQuickPopular(p => !p)} style={{
-                  border: quickPopular ? '1.5px solid #D32F2F' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                  borderRadius: 14, padding: '10px 16px',
-                  background: quickPopular ? 'rgba(211,47,47,0.08)' : isDark ? '#2a2a2a' : '#fff',
-                  color: quickPopular ? '#D32F2F' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                  Popular
-                </button>
-                {/* Sort options */}
-                {[
-                  { id: 'recent' as const, label: 'Últimos agregados' },
-                  { id: 'price-asc' as const, label: 'Precio ↑' },
-                  { id: 'price-desc' as const, label: 'Precio ↓' },
-                ].map(s => (
-                  <button key={s.id} onClick={() => setDraftSort(draftSort === s.id ? 'default' : s.id)} style={{
-                    border: draftSort === s.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                    borderRadius: 14, padding: '10px 16px',
-                    background: draftSort === s.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                    color: draftSort === s.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                    fontSize: 13, cursor: 'pointer',
-                  }}>
-                    {s.label}
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -2007,11 +2009,20 @@ function _swipeDims(dish: FeedDish): string[] {
   ].filter(Boolean)
 }
 
-function _swipeScore(dish: FeedDish, likeFreq: Record<string, number>, dislikeFreq: Record<string, number>): number {
+// typeConfidence: 0→1 según cuántos swipes acumulados (ver activeFeedDishes).
+// Los dims t: (tipo exacto) se escalan por este factor — exploración al inicio, convergencia al final.
+// Los dims tp:/k:/s:/i:/d:/h: siempre pesan 1x para mantener diversidad.
+function _swipeScore(
+  dish: FeedDish,
+  likeFreq: Record<string, number>,
+  dislikeFreq: Record<string, number>,
+  typeConfidence: number,
+): number {
   let score = 0
   for (const dim of _swipeDims(dish)) {
-    // Net: each dislike cancels 2 likes, so switching from like→dislike quickly tanks the score
-    score += (likeFreq[dim] ?? 0) - (dislikeFreq[dim] ?? 0) * 2
+    const net = (likeFreq[dim] ?? 0) - (dislikeFreq[dim] ?? 0) * 2
+    // Tipos exactos (t:) se atenúan cuando hay pocos swipes — exploración progresiva
+    score += dim.startsWith('t:') ? net * typeConfidence : net
   }
   return score
 }
