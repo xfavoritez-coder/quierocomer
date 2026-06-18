@@ -39,13 +39,10 @@ export async function POST(req: NextRequest) {
 
     // Paralelo: batches de 30, hasta 2 simultáneos (4 causa 529 en cartas grandes)
     const taxonomy = await classifyDishesBatched(inputs, 30, 2, restaurant.name)
-    // Filtrar solo IDs que existen en la BD (Claude a veces devuelve IDs malformados)
-    const validIds = new Set(dishes.map(d => d.id))
-    const validEntries = Object.entries(taxonomy).filter(([id]) => validIds.has(id))
-    // Una sola transacción = 1 conexión, N queries en bloque
+    // updateMany nunca lanza error si el ID no existe (más robusto que update)
     await prisma.$transaction(
-      validEntries.map(([dishId, dims]) =>
-        prisma.dish.update({
+      Object.entries(taxonomy).map(([dishId, dims]) =>
+        prisma.dish.updateMany({
           where: { id: dishId },
           data: {
             txDishType:   dims.dishType        ?? [],
@@ -59,7 +56,7 @@ export async function POST(req: NextRequest) {
         })
       )
     )
-    const classified = validEntries.length
+    const classified = Object.keys(taxonomy).length
 
     return NextResponse.json({ classified, total: dishes.length })
   } catch (e: any) {
