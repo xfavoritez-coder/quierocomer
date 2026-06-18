@@ -22,6 +22,7 @@ export default function DishCard({
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const [isDark] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'))
 
   // Check if image already loaded (cached) before React attached onLoad
   useEffect(() => {
@@ -50,9 +51,16 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
     >
       {/* Photo */}
       <div className="dish-card-img-wrap" style={{ position: 'relative', aspectRatio, overflow: 'hidden', background: 'rgba(0,0,0,0.08)', borderRadius: 14 }}>
-        {/* Skeleton shimmer while image loads */}
+        {/* Skeleton shimmer while image loads — cubre toda la card incluyendo texto */}
         {!showFallback && !imgLoaded && (
-          <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 20, borderRadius: 14,
+            background: isDark
+              ? 'linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%)'
+              : 'linear-gradient(90deg, #e0e0e0 25%, #ececec 50%, #e0e0e0 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s ease-in-out infinite',
+          }} />
         )}
         {!showFallback ? (
           <img ref={imgRef} src={dish.fotoUrl!} alt={dish.nombre}

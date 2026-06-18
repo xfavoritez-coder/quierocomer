@@ -9,12 +9,14 @@ import MasonryGrid from './MasonryGrid'
 export default function ExploreGrid({
   dishes,
   onDishTap,
+  onSwipe,
   userLocation,
   savedKeywordScores,
   savedCategoryScores,
 }: {
   dishes: FeedDish[]
   onDishTap: (dish: FeedDish) => void
+  onSwipe?: (dish: FeedDish, dir: 'left' | 'right') => void
   userLocation?: { lat: number; lng: number } | null
   savedKeywordScores?: Record<string, number>
   savedCategoryScores?: Record<string, number>
@@ -165,7 +167,7 @@ export default function ExploreGrid({
       </div>
 
       {sorted.length > 0 ? (
-        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} userLocation={userLocation} />
+        <MasonryGrid dishes={sorted.slice(0, visibleCount)} onDishTap={onDishTap} onSwipe={onSwipe} userLocation={userLocation} />
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(0,0,0,0.3)', fontSize: 13 }}>
           No hay platos en esta categoría
