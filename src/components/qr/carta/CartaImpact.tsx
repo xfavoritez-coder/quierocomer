@@ -1223,7 +1223,7 @@ export default function CartaImpact({
       <div ref={impactHeaderRef} style={{ position: "relative", zIndex: 40 }}>
         {/* Banner al tope absoluto */}
         {hasBannerActive && !showFixedCatNav && (
-          <div style={{ marginBottom: 4 }}>
+          <div style={{ marginTop: 6, marginBottom: 4 }}>
             {announcements && announcements.length > 0
               ? <AnnouncementBanner announcements={announcements} />
               : <HappyHourBanner happyHours={happyHours || []} />}
