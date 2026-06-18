@@ -110,6 +110,11 @@ function upgradePhotoUrl(url: string): string {
     /https:\/\/cdn\.bistrify\.app\/cdn-cgi\/image\/[^/]+\/images\//,
     "https://cdn.bistrify.app/images/"
   );
+  // Google Places/Maps photos: append =w1200 to get full resolution
+  // lh3.googleusercontent.com/... (no size suffix → small thumbnail)
+  if (/lh3\.googleusercontent\.com\//.test(upgraded) && !/=[wh]\d+/.test(upgraded)) {
+    upgraded = upgraded.replace(/(\?.*)?$/, '=w1200');
+  }
   return upgraded;
 }
 

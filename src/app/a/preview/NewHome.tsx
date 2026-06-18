@@ -214,6 +214,27 @@ export default function NewHome({
     ).catch(() => {})
   }, [])
 
+  // Load personalized scores on mount (no longer done in SSR to keep page cacheable/fast)
+  useEffect(() => {
+    import('../lib/feed-actions').then(({ getProfileData }) =>
+      getProfileData().then(data => {
+        if (!data) return
+        // Only apply if user has actual preferences (avoid unnecessary re-render for new users)
+        const hasCat = Object.keys(data.categoryScores ?? {}).length > 0
+        const hasKw = Object.keys(data.keywordScores ?? {}).length > 0
+        if (!hasCat && !hasKw && !data.totalInteractions) return
+        setLiveProfile(prev => {
+          if (prev) return prev // already set (e.g. from perfil view)
+          const p = createEmptyProfile()
+          p.categoryScores = data.categoryScores
+          p.keywordScores = data.keywordScores
+          p.totalInteractions = data.totalInteractions
+          return p
+        })
+      })
+    ).catch(() => {})
+  }, [])
+
   // Load profile data from server when entering perfil view
   useEffect(() => {
     if (view !== 'perfil') return
@@ -1996,8 +2017,8 @@ function _swipeDims(dish: FeedDish): string[] {
 function _swipeScore(dish: FeedDish, likeFreq: Record<string, number>, dislikeFreq: Record<string, number>): number {
   let score = 0
   for (const dim of _swipeDims(dish)) {
-    score += (likeFreq[dim] ?? 0) * 2
-    score -= (dislikeFreq[dim] ?? 0)
+    // Net: each dislike cancels 2 likes, so switching from like→dislike quickly tanks the score
+    score += (likeFreq[dim] ?? 0) - (dislikeFreq[dim] ?? 0) * 2
   }
   return score
 }

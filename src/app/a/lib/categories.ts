@@ -1063,7 +1063,9 @@ export function inferCategoryFromDishName(dishName: string): string | null {
   if (/gyoza|dumpling|edamame/.test(n)) return 'Gyoza'
   if (/yakimeshi|yakisoba|yakiudon|teriyaki|katsu\b|tonkatsu|udon\b|tempura|karaage|donburi/.test(n)) return 'Japonesa'
   // Cocinas específicas
-  if (/pad\s*thai|curry\s*thai|tom\s*yum/.test(n)) return 'Thai'
+  if (/spring\s*roll|rollos?\s*de\s+primavera/.test(n)) return 'Asiática'
+  if (/satay|sate\b/.test(n)) return 'Asiática'
+  if (/pad\s*thai|curry\s*thai|tom\s*yum|tom\s*kha|massaman/.test(n)) return 'Thai'
   if (/arepa|cachapa|tequeno|pabell[oó]n/.test(n)) return 'Venezolana'
   if (/taco|burrito|quesadilla|fajita|nacho/.test(n)) return 'Mexicana'
   // Mariscos / Peruana

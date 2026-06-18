@@ -24,7 +24,7 @@ function useColumnCount() {
   return cols
 }
 
-const SWIPE_THRESHOLD = 70
+const SWIPE_THRESHOLD = 55
 
 function SwipeableItem({
   dish,
