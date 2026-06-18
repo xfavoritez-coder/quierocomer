@@ -48,18 +48,11 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
     if (domain.includes("ola.click")) {
       spaHeaders = { "X-Wait-For-Selector": ".products", "X-Timeout": "30000" };
     } else if (domain.includes("fu.do")) {
-      // menu.fu.do es Angular SPA con API autenticada — Jina necesita X-No-Cache (incluido por defecto
-      // en fetchWithTimeout) pero NO X-Wait-For-Selector (los selectores no existen en esta versión
-      // y hacen que Jina espere el timeout completo devolviendo la versión cacheada vacía)
-      const baseUrl = url.replace(/\/qr-menu\/?$/, '')
-      const targetUrl = baseUrl !== url ? baseUrl : url
+      // menu.fu.do es Angular SPA — usar la URL completa tal cual (incluyendo /qr-menu si la tiene)
+      // X-No-Cache fuerza Jina a renderizar en vivo en lugar de devolver snapshot cacheado vacío
       spaHeaders = { "X-Timeout": "25000" };
-      try { return await fetchWithTimeout(`https://r.jina.ai/${targetUrl}`, 30000, spaHeaders); } catch {}
-      // Fallback: intentar con la URL original si la base falló
-      if (targetUrl !== url) {
-        try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 30000, spaHeaders); } catch {}
-      }
-      return await fetchWithTimeout(targetUrl, 8000);
+      try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 30000, spaHeaders); } catch {}
+      return await fetchWithTimeout(url, 8000);
     }
     try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, spaHeaders ? 35000 : 12000, spaHeaders); } catch {}
     return await fetchWithTimeout(url, 8000);
