@@ -111,22 +111,8 @@ export const CATEGORY_MAP: Record<string, string> = {
   '100% Vegano': 'Saludable',
   'Aperitivos 100% Veganos': 'Saludable',
 
-  // ─── Entradas ───────────────────────────────────────────────
-  'Entradas': 'Entradas',
-  'Entrada': 'Entradas',
-  'Entradas Frías': 'Entradas',
-  'Entradas para compartir': 'Entradas',
-  'Para Comenzar': 'Entradas',
-  'Aperitivos': 'Entradas',
-  'Para Compartir': 'Entradas',
-  'Para compartir': 'Entradas',
-  'PARA COMPARTIR': 'Entradas',
-  'Pa Partir': 'Entradas',
-  'Tablas Para Compartir': 'Entradas',
-  'Picoteos': 'Entradas',
-  'Piqueos': 'Entradas',
-  'Antipasti': 'Entradas',
-  'Gyosas y más': 'Entradas',
+  // ─── Entradas (eliminado como leaf — heredan identidad del restaurante) ───
+  'Gyosas y más': 'Asiática',
 
   // ─── Platos de fondo ───────────────────────────────────────
   'Platos Principales': 'Platos de fondo',
@@ -301,12 +287,9 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Para los más pequeños': 'Combos',
 
   // ─── Acompañamientos & Extras ───────────────────────────────
-  'Acompañamientos': 'Entradas',
-  'Papas Fritas': 'Entradas',
-  'Guarniciones': 'Entradas',
-  'Fritas': 'Entradas',
-  'Salchipapa': 'Entradas',
-  'POP CORN': 'Entradas',
+  'Papas Fritas': 'Papas fritas',
+  'Fritas': 'Papas fritas',
+  'Salchipapa': 'Papas fritas',
   'AGREGA A TU SANDWICH': 'Extras',
   'Adicionales': 'Extras',
   'Extras': 'Extras',
@@ -335,14 +318,6 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Típicos': 'Platos de fondo',
   'Sopas y Cremas': 'Platos de fondo',
 
-  // Entradas (variantes)
-  'Entradas Calientes': 'Entradas',
-  'ENTRADAS CALIENTES': 'Entradas',
-  'ENTRADAS': 'Entradas',
-  'PARA COMENZAR': 'Entradas',
-  'Antipastos Italianos': 'Entradas',
-  'Anti pasti': 'Entradas',
-  'Snack': 'Entradas',
 
   // Empanadas
   'Empanadas Clásicas': 'Empanadas',
@@ -566,8 +541,6 @@ export const CATEGORY_MAP: Record<string, string> = {
   'Bebidas calientes': 'Cafetería',
 
   // Ceviches
-  'Pa\' Comenzar': 'Entradas',
-  'Pa\' Compartir': 'Entradas',
   'Appetizer—Entradas': 'Ceviches',
   'Causas y Entradas': 'Ceviches',
   'Cebiches': 'Ceviches',
@@ -796,12 +769,11 @@ export const PARENT_TO_LEAVES: Record<string, string[]> = {
   'Desayunos':     ['Desayunos', 'Cafetería', 'Amasandería'],
   'Postres':       ['Postres', 'Helados'],
   'Bebidas':       ['Smoothies', 'Milkshakes', 'Bebidas'],
-  'Entradas':      ['Entradas'],
 }
 
 /** Leaves que aparecen bajo múltiples parents (para filtro del feed) */
 export const DUAL_PARENT_LEAVES: Record<string, string[]> = {
-  'Gyoza': ['Japonesa', 'Entradas'],
+  'Gyoza': ['Japonesa', 'Asiática'],
 }
 
 /** Lookup leaf → parent primario */
@@ -1195,17 +1167,16 @@ export function getSuggestedMealTime(): { mealTime: MealTime; label: string } {
 /** Mapa de adyacencia — para recomendaciones de descubrimiento */
 export const ADJACENT_CATEGORIES: Record<string, string[]> = {
   'Sushi': ['Ceviches', 'Thai', 'China'],
-  'Ceviches': ['Sushi', 'Peruana', 'Entradas'],
+  'Ceviches': ['Sushi', 'Peruana', 'Mariscos'],
   'Hamburguesas': ['Sándwiches', 'Combos', 'Completos', 'Pollo y alitas'],
   'Sándwiches': ['Hamburguesas', 'Completos'],
   'Completos': ['Hamburguesas', 'Sándwiches'],
   'Pizzas': ['Combos', 'Hamburguesas', 'Pastas'],
-  'Parrilla': ['Entradas', 'Empanadas', 'Platos de fondo'],
+  'Parrilla': ['Empanadas', 'Platos de fondo', 'Mariscos'],
   'Platos de fondo': ['Parrilla', 'Pastas', 'Peruana'],
-  'Entradas': ['Ceviches', 'Saludable'],
-  'Saludable': ['Entradas', 'Peruana'],
-  'Empanadas': ['Parrilla', 'Entradas'],
-  'Mexicana': ['Entradas', 'Parrilla', 'Venezolana'],
+  'Saludable': ['Ensaladas', 'Peruana', 'Bowls'],
+  'Empanadas': ['Parrilla', 'Completos'],
+  'Mexicana': ['Parrilla', 'Venezolana', 'Sándwiches'],
   'Venezolana': ['Mexicana', 'Sándwiches'],
   'Thai': ['China', 'India', 'Sushi'],
   'China': ['Thai', 'India', 'Sushi'],
@@ -1228,7 +1199,6 @@ export const CATEGORY_GRADIENTS: Record<string, string> = {
   'Completos':           'linear-gradient(135deg, #5c3d2e, #e6a157)',
   'Sándwiches':          'linear-gradient(135deg, #5c3d2e, #e6a157)',
   'Saludable':           'linear-gradient(135deg, #1b4332, #52b788)',
-  'Entradas':            'linear-gradient(135deg, #3a0ca3, #f72585)',
   'Postres':             'linear-gradient(135deg, #7b2869, #f4a9c0)',
   'Parrilla':            'linear-gradient(135deg, #2d0000, #c1121f)',
   'Platos de fondo':     'linear-gradient(135deg, #2d0000, #a4161a)',
@@ -1309,6 +1279,34 @@ export function detectCuisineTag(catName: string): string | null {
     if (pattern.test(catName)) return cuisine
   }
   return null
+}
+
+/**
+ * Infiere la primaryCategory de un restaurante desde sus categorías.
+ * Prioriza cuisineTags sobre inferencia por nombre de categoría.
+ * Retorna el QC leaf más representativo, o null si no puede inferir.
+ */
+export function inferPrimaryCategory(
+  categories: { name: string; cuisineTag?: string | null; dishType: string; dishCount?: number }[]
+): string | null {
+  // Ignorar categorías de bebidas y postres — no definen la cocina del local
+  const foodCats = categories.filter(c => c.dishType !== 'drink' && c.dishType !== 'dessert')
+  if (foodCats.length === 0) return null
+
+  // Cada categoría de comida vota por su leaf:
+  // cuisineTag (explícito) > detectCuisineTag (por nombre) > normalizeCategory (como fallback)
+  // Se excluyen "Entradas" y "Sin categoría" — no son identidad del restaurante
+  const EXCLUDED = new Set(['Entradas', 'Sin categoría'])
+  const votes: Record<string, number> = {}
+  for (const cat of foodCats) {
+    const tag = cat.cuisineTag ?? detectCuisineTag(cat.name) ?? normalizeCategory(cat.name)
+    if (!tag || !QC_LEAVES.has(tag) || EXCLUDED.has(tag)) continue
+    const weight = cat.dishCount ?? 1
+    votes[tag] = (votes[tag] ?? 0) + weight
+  }
+
+  const winner = Object.entries(votes).sort((a, b) => b[1] - a[1])[0]
+  return winner?.[0] ?? null
 }
 
 // ─── Auto-detección de flavorTags ────────────────────────────────────────────

@@ -367,7 +367,7 @@ export default function NewHome({
   const ALL_QC_TERMS = useMemo(() => {
     const terms: string[] = []
     // Parents (categorías madre)
-    const parents = ['Comida rápida','Pizza','Sushi','Japonesa','China','Thai','India','Asiática','Peruana','Mariscos','Parrilla','Pastas','Venezolana','Mexicana','Pollo','Empanadas','Saludable','Desayunos','Postres','Bebidas','Entradas']
+    const parents = ['Comida rápida','Pizza','Sushi','Japonesa','China','Thai','India','Asiática','Peruana','Mariscos','Parrilla','Pastas','Venezolana','Mexicana','Pollo','Empanadas','Saludable','Desayunos','Postres','Bebidas']
     // Leaves (subcategorías)
     const leaves = ['Hamburguesas','Completos','Sándwiches','Papas fritas','Pizzas','Ramen','Gyoza','Ceviches','Pollo y alitas','Ensaladas','Bowls','Cafetería','Amasandería','Helados','Smoothies','Milkshakes']
     return [...new Set([...parents, ...leaves])]

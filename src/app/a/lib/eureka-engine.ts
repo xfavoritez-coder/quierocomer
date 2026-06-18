@@ -28,7 +28,7 @@ export type EurekaState = {
 
 // Categories too generic to be a craving
 const GENERIC_CATEGORIES = new Set([
-  'Entradas', 'Platos de fondo', 'Combos', 'Acompañamientos', 'Extras',
+  'Platos de fondo', 'Combos', 'Acompañamientos', 'Extras',
   'Desayunos', 'Asiática',
 ])
 

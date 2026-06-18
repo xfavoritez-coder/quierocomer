@@ -60,7 +60,7 @@ export default function HomeFeed({
     // 2. Based on top categories from profile (exclude generic ones)
     const GENERIC = new Set([
       'Platos de fondo', 'Desayunos', 'Cafetería', 'Postres', 'Combos',
-      'Acompañamientos', 'Extras', 'Entradas',
+      'Acompañamientos', 'Extras',
     ])
     const topCats = Object.entries(profile.categoryScores)
       .filter(([cat, s]) => s >= 10 && !GENERIC.has(cat))

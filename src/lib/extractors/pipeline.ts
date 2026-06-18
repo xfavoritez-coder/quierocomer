@@ -19,7 +19,7 @@ import { extractAvocaty } from "./avocaty";
 import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { extractInfluyeApp, isInfluyeApp } from "./influyeapp";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
-import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
+import { inferFlavorTags, detectCuisineTag, inferPrimaryCategory } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
 import { classifyDishesBatched, type DishTaxonomyInput, type DishTaxonomy } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
@@ -794,6 +794,21 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     } catch (recErr) {
       console.error("[Pipeline] RECOMMENDED reassignment failed:", recErr);
+    }
+
+    // Set primaryCategory from category cuisineTags
+    try {
+      const cats = await prisma.category.findMany({
+        where: { restaurantId: restaurant.id, isActive: true },
+        select: { name: true, cuisineTag: true, dishType: true },
+      })
+      const primary = inferPrimaryCategory(cats)
+      if (primary) {
+        await prisma.restaurant.update({ where: { id: restaurant.id }, data: { primaryCategory: primary } })
+        console.log(`[Pipeline] primaryCategory: ${primary}`)
+      }
+    } catch (e) {
+      console.error('[Pipeline] primaryCategory detection failed:', e)
     }
 
     // Always flag for backfill — we only translate ~30% here, full translation on activation
