@@ -50,7 +50,7 @@ export const VALID_DISH_TYPES = [
   // China-chilena
   "chapsui",
   // Chilena
-  "sopaipilla","pastel de choclo","chorrillana","lomo a lo pobre",
+  "sopaipilla","pastel de choclo","pastel de jaiba","chorrillana","lomo a lo pobre",
   // Desayunos
   "huevos","pancake","waffle","crepe","avena","omelet",
   // Snacks y entradas
@@ -109,6 +109,7 @@ Reglas dishType:
 - "hand roll": cono de alga nori relleno de arroz y ingredientes, se come con la mano. Incluye: hand roll de X, temaki.
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
 - "spring roll": rollitos vietnamitas (frescos O fritos) en papel de arroz de arroz. Incluye: Nem (chả giò), gỏi cuốn, rollitos vietnamitas, spring rolls con rice paper. "arrollado de primavera" / "rollito primavera": exclusivamente rollitos estilo chino con masa de trigo frita.
+- "pastel de jaiba": plato chileno tradicional horneado, preparado con carne de jaiba (cangrejo local) mezclada con sofrito, crema, pan y queso, servido en su caparazón o en cazuela. Incluye: "pastel de jaiba", "pastel de jaiva" (grafía alternativa), "pastel de jaiva y camarón", "pastel de jaiba con camarones". cuisine siempre ["chilena"]. mainIngredient incluir "jaiba" + otros. mealSlot ["almuerzo","cena"]. NUNCA clasificar como "mariscos" genérico.
 - "chupe": sopa espesa y cremosa chilena, base de leche o crema, con mariscos (jaiba, camarones, mariscos, calamar), papa, choclo. MUY DISTINTO de "cazuela" (caldo liviano con verduras enteras y un trozo de carne/pollo). Chupe de jaiba, chupe de mariscos, chupe de centolla → siempre "chupe". Si lleva crema/leche y mariscos → "chupe".
 - "chapsui": plato salteado en wok estilo chino-chileno con salsa. Incluye: chapsui de X, chop suey, X a la china, X mongoliano/mongoliana, X chitén, diente de X (cuando el contexto es restaurante chino), cualquier salteado chino con salsa. cuisine siempre ["china"]. NO confundir con "pollo frito" — chapsui es salteado en wok, no frito/apanado.
 - "pollo frito" SOLO para pollo realmente frito/apanado/empanado: broaster, chicharrón de pollo, nuggets, tenders, pollo crocante. Un "pollo a la china" o "pollo mongoliano" NO es pollo frito → es chapsui.

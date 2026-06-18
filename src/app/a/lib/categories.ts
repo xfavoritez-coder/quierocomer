@@ -785,7 +785,7 @@ export const PARENT_TO_LEAVES: Record<string, string[]> = {
   'India':         ['India'],
   'Asiática':      ['Asiática'],
   'Peruana':       ['Ceviches', 'Peruana'],
-  'Mariscos':      ['Mariscos'],
+  'Mariscos':      ['Mariscos', 'Pastel de jaiba'],
   'Parrilla':      ['Parrilla'],
   'Pastas':        ['Pastas'],
   'Venezolana':    ['Venezolana'],
@@ -1068,7 +1068,8 @@ export function inferCategoryFromDishName(dishName: string): string | null {
   if (/taco|burrito|quesadilla|fajita|nacho/.test(n)) return 'Mexicana'
   // Mariscos / Peruana
   if (/ceviche|tiradito/.test(n)) return 'Ceviches'
-  if (/marisco|jaiba|camaron|langostino|pulpo|calamar|mejillon|\bpescado\b|merluza|reineta|congrio|corvina|trucha\b/.test(n)) return 'Mariscos'
+  if (/pastel\s+(?:de\s+)?jaiv?a/.test(n)) return 'Pastel de jaiba'
+  if (/marisco|jaiba|jaiva|camaron|langostino|pulpo|calamar|mejillon|\bpescado\b|merluza|reineta|congrio|corvina|trucha\b/.test(n)) return 'Mariscos'
   // Proteínas
   if (/empanada/.test(n)) return 'Empanadas'
   if (/pasta|tallar[ií]n|fettuccin|spaghett|linguini|rigatoni|penne|carbonara|bolognesa/.test(n)) return 'Pastas'
