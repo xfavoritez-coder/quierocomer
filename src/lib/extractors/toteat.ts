@@ -251,12 +251,96 @@ function parseFirestoreDocuments(docs: any[]): ExtractedDish[] {
 }
 
 /**
- * Fallback: Jina rendering → Claude para parsear el menú renderizado.
- * Jina ejecuta JavaScript, lo que debería mostrar el menú completo.
+ * Parsea el markdown de Jina directamente sin Claude.
+ * El formato Toteat en Jina es: [categoría ALL CAPS] → [nombre] → [descripción] → [$precio] → [imagen]
+ * Este parser es instantáneo vs los 46s de Claude Haiku con este contenido.
+ */
+function parseToteatJinaMarkdown(text: string, slug: string): ExtractionResult {
+  const PRICE_RE = /^\$[\d.]+$/;
+  const mdStart = text.indexOf("Markdown Content:");
+  const content = mdStart !== -1 ? text.slice(mdStart + 17) : text;
+
+  // Dividir por párrafos (bloques separados por líneas vacías)
+  const paragraphs = content
+    .split(/\n\s*\n/)
+    .map((p: string) => p.trim())
+    .filter(Boolean);
+
+  const dishes: ExtractedDish[] = [];
+  let currentCategory = "General";
+  let pending: string[] = [];
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = paragraphs[i];
+
+    // Precio → cierra el plato actual
+    if (PRICE_RE.test(p)) {
+      const price = parseInt(p.replace(/[$.,]/g, ""), 10) || 0;
+      let imageUrl: string | null = null;
+      if (paragraphs[i + 1]?.startsWith("![")) {
+        const m = paragraphs[i + 1].match(/\(([^)]+)\)/);
+        if (m) imageUrl = m[1];
+      }
+      if (pending.length > 0) {
+        // Deduplicar nombre repetido (quirk de Toteat)
+        const deduped = pending.filter((l, idx) => l !== pending[idx - 1]);
+        const name = deduped[0];
+        const description = deduped.slice(1).join(" ");
+        if (name?.length > 1) {
+          dishes.push({ name, description, price, imageUrl, category: currentCategory });
+        }
+      }
+      pending = [];
+      continue;
+    }
+
+    // Imagen sola → reset pending (pertenecía al plato anterior)
+    if (p.startsWith("![")) { pending = []; continue; }
+
+    // ¿Es una posible categoría?
+    const isAllCaps = p === p.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(p) && !PRICE_RE.test(p);
+    if (isAllCaps && pending.length === 0) {
+      const next = paragraphs[i + 1];
+      const nextIsPrice = next && PRICE_RE.test(next);
+      const nextIsAllCaps = next && next === next.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(next);
+
+      if (nextIsAllCaps && !nextIsPrice) {
+        // Dos ALL CAPS seguidos → el primero es categoría
+        currentCategory = p;
+      } else if (nextIsPrice) {
+        // Precio directo → plato sin descripción
+        pending.push(p);
+      } else {
+        // Hay texto antes del precio → si es corto (≤30 chars, ≤3 palabras) → categoría
+        const wordCount = p.split(/\s+/).length;
+        if (p.length <= 30 && wordCount <= 3) {
+          currentCategory = p;
+        } else {
+          pending.push(p);
+        }
+      }
+    } else {
+      pending.push(p);
+    }
+  }
+
+  const restaurantName = slug.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\d+$/, "").trim();
+
+  // Extraer nombre del restaurante del título de Jina si está disponible
+  const titleMatch = text.match(/Title:\s*([^\n]+)/);
+  const extractedName = titleMatch
+    ? titleMatch[1].replace(/\s*en\s+Toteat.*$/i, "").trim()
+    : restaurantName;
+
+  return { restaurantName: extractedName, dishes, logoUrl: null, bannerUrl: null };
+}
+
+/**
+ * Jina rendering → parseo directo del markdown (sin Claude).
+ * Claude se usa solo si el parser directo no encuentra platos (< 3).
  */
 async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionResult> {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
 
   console.log("[Toteat] Trying Jina rendering for:", url);
   const jinaRes = await fetch(`https://r.jina.ai/${url}`, {
@@ -272,6 +356,17 @@ async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionR
   console.log("[Toteat] Jina content length:", content.length);
 
   if (content.length < 200) throw new Error("Jina returned empty content for Toteat");
+
+  // Intentar parser directo primero (sin Claude, ~0s extra)
+  const directResult = parseToteatJinaMarkdown(content, slug);
+  if (directResult.dishes.length >= 3) {
+    console.log(`[Toteat] Direct parser: ${directResult.dishes.length} dishes`);
+    return directResult;
+  }
+
+  // Fallback a Claude si el parser directo falla
+  if (!ANTHROPIC_API_KEY) throw new Error("Parser directo falló y ANTHROPIC_API_KEY no configurado");
+  console.log("[Toteat] Fallback to Claude (direct parser got < 3 dishes)");
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
