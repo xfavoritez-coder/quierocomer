@@ -160,7 +160,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
       }
     };
     check();
-    const interval = setInterval(check, 30000); // update every 30s
+    const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
   }, [happyHours]);
 
@@ -174,61 +174,55 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
   const c = active.bannerColor;
 
   return (
-    <div className="font-[family-name:var(--font-dm)]" style={{ padding: "12px 12px 0", position: "relative", zIndex: 15 }}>
-      <style>{`
-        @keyframes hhAtmo {
-          0%, 100% { opacity: 0.22; transform: scale(1); }
-          50%       { opacity: 0.42; transform: scale(1.04); }
-        }
-        @keyframes hhBorder {
-          0%, 100% { box-shadow: 0 0 6px ${c}, 0 0 18px ${c}, inset 0 0 22px rgba(0,0,0,0.65); }
-          50%       { box-shadow: 0 0 12px ${c}, 0 0 32px ${c}, inset 0 0 22px rgba(0,0,0,0.65); }
-        }
-        @keyframes hhPulse { 0%,100% { opacity: 0.7 } 50% { opacity: 1 } }
-      `}</style>
-
-      <div style={{ position: "relative" }}>
-        {/* Atmospheric glow */}
+    <div style={{ padding: "12px 12px 0", position: "relative", zIndex: 15 }}>
+      <div
+        className="font-[family-name:var(--font-dm)]"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 14px",
+          border: `1px solid ${c}a5`,
+          borderRadius: 18,
+          background: `
+            radial-gradient(circle at left, ${c}2e, transparent 40%),
+            linear-gradient(135deg, #15100b, #080808)
+          `,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+        }}
+      >
+        {/* Icon */}
         <div style={{
-          position: "absolute", inset: 2,
-          background: c,
-          borderRadius: 22,
-          filter: "blur(22px)",
-          animation: "hhAtmo 3s ease-in-out infinite",
-          pointerEvents: "none", zIndex: 0,
-        }} />
-
-        {/* Card */}
-        <div style={{
-          position: "relative", zIndex: 1,
-          background: "linear-gradient(145deg, rgba(10,8,16,0.97) 0%, rgba(18,12,24,0.95) 100%)",
-          border: `1.5px solid ${c}`,
-          borderRadius: 20,
-          animation: "hhBorder 3s ease-in-out infinite",
-          padding: "18px 20px",
-          textAlign: "center",
+          width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
+          background: `${c}24`,
+          display: "grid", placeItems: "center",
+          color: c,
+          fontSize: "1.2rem",
         }}>
-          <p style={{
-            margin: 0, fontSize: "0.95rem", fontWeight: 700,
-            color: "#fff", lineHeight: 1.45, letterSpacing: "0.01em",
-            textShadow: `0 0 12px rgba(255,255,255,0.45), 0 0 28px ${c}`,
+          ⏰
+        </div>
+
+        {/* Copy */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <strong style={{
+            display: "block",
+            fontSize: "0.92rem",
+            fontWeight: 750,
+            color: "#fff",
+            lineHeight: 1.3,
           }}>
             {bannerText}
-          </p>
+          </strong>
           {countdown && (
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              marginTop: 12, padding: "5px 13px", borderRadius: 20,
-              background: `${c}20`, border: `1px solid ${c}60`,
-              boxShadow: `0 0 8px ${c}40`,
+            <span style={{
+              display: "block",
+              marginTop: 4,
+              fontSize: "0.75rem",
+              color: "rgba(255,255,255,0.68)",
             }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "hhPulse 2s ease-in-out infinite" }}>
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-              </svg>
-              <span style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: c, textShadow: `0 0 8px ${c}` }}>
-                Termina en {countdown}
-              </span>
-            </div>
+              Termina en{" "}
+              <b style={{ color: c, fontWeight: 800 }}>{countdown}</b>
+            </span>
           )}
         </div>
       </div>
