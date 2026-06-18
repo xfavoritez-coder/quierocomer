@@ -452,7 +452,7 @@ function DesktopDishContent({
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '12px 14px', borderRadius: 12, textAlign: 'left',
             background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
-            textDecoration: 'none', marginBottom: 22, boxSizing: 'border-box',
+            textDecoration: 'none', marginBottom: 32, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
             <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
@@ -775,7 +775,7 @@ function DishSlide({
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '14px 16px', borderRadius: 14, textAlign: 'left',
             background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
-            textDecoration: 'none', marginBottom: 22, boxSizing: 'border-box',
+            textDecoration: 'none', marginBottom: 32, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
             <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
