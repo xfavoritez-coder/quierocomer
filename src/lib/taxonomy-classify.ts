@@ -28,7 +28,7 @@ export const VALID_DISH_TYPES = [
   // Sándwiches y panes
   "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
   // Carnes
-  "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab",
+  "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab","satay",
   // Pollo
   "pollo asado","pollo frito","tenders","alitas","nuggets",
   // Pescados y mariscos
@@ -68,7 +68,7 @@ export const VALID_INGREDIENTS = [
   "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos",
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
   "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame",
-  "choclo","champiñon","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
+  "choclo","champiñon","piña","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
 ];
 
 export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asado"];
@@ -89,6 +89,8 @@ Reglas dishType:
 - Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
 - Bebidas → diet: café/té/jugo/bebida/alcohol/mocktail → VEGAN. latte/cappuccino/mocaccino/chocolate caliente/batido con leche → VEGETARIAN. Si dice explícitamente "leche de avena", "leche vegetal", "oat milk", "almendra" → VEGAN.
 - "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
+- "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
+- "spring roll": rollitos vietnamitas (frescos O fritos) en papel de arroz de arroz. Incluye: Nem (chả giò), gỏi cuốn, rollitos vietnamitas, spring rolls con rice paper. "arrollado de primavera" / "rollito primavera": exclusivamente rollitos estilo chino con masa de trigo frita.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
 
@@ -108,7 +110,9 @@ ${VALID_INGREDIENTS.join(", ")}
 - "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (reineta, merluza, corvina sin especificar). "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
 - "pan" SOLO para productos con pan real: sándwich, hamburguesa (el bun), tostada, bagel, croissant, marraqueta, hallulla, baguette. La masa de pizza, empanada, wantan, arrollado, pasta, crepe → NO es "pan".
 - wantan/wonton → NO usar "pan". Pon solo el relleno (cerdo, camarones, verduras, etc.).
-- arrollado de primavera / rollito primavera → frito, masa de trigo, estilo chino. NO usar "pan". "spring roll" reservar para el fresco vietnamita con papel de arroz.
+- arrollado de primavera / rollito primavera → frito, masa de trigo, estilo chino. NO usar "pan".
+- spring roll / nem / chả giò / gỏi cuốn → siempre papel de arroz, estilo vietnamita (frito o fresco). Usar ingrediente principal del relleno, NO "pan".
+- "piña" cuando el plato mencione piña, ananá, pineapple explícitamente. No usar "fruta" si se menciona piña específicamente.
 - Usa "queso crema" cuando veas: queso crema, cream cheese, philadelphia, philly, queso untable, vegadelphia, queso crema vegano, queso crema de almendras, o similar. Usa "queso" para el resto: cheddar, mozzarella, gouda, queso fresco, queso amarillo.
 - Vegadelphia o queso crema vegano → ingrediente "queso crema" + diet VEGAN (si no hay otros ingredientes animales).
 
