@@ -43,6 +43,8 @@ export const VALID_DISH_TYPES = [
   "ensalada","bowl",
   // Asiática
   "sushi","hand roll","sushiburger","kimbap","bao","curry","pad thai","gyoza","dumpling","mandu","wantan",
+  // Peruana
+  "causa","lomo saltado","ají de gallina","arroz con leche",
   // Mexicana/Venezolana
   "taco","burrito","quesadilla","arepa","salchipapa",
   // China-chilena
@@ -114,6 +116,10 @@ Reglas dishType:
 - "churrasco": EXCLUSIVAMENTE el sándwich de carne delgada en pan (churrasco italiano, churrasco alemán, churrasco con palta, etc.). NUNCA para un corte de carne a la parrilla servido como plato de fondo. Un "lomo liso", "punta de ganso", "asado de tira", "pechuga a la parrilla" servidos como plato → dishType ["asado"] o ["pollo asado"], NO "churrasco". Churrasco = sándwich con carne + pan + aderezos.
 - "mechada": sándwich chileno con carne de vacuno mechada (braseada/deshebrada) en pan. Incluye: mechada italiana, mechada completa, mechada dinámica, mechada brasilera, mechada luco, mechada chacarero, sándwich de mechada. La mechada es el método de preparación (carne braseada/deshebrada), NO el ingrediente. cuisine ["chilena"]. mainIngredient ["carne","pan"].
 - "as": sándwich chileno con carne de vacuno muy delgada en pan (distinto del churrasco — el as lleva carne más fina/pequeña). Incluye: as italiano, as completo, as dinámico, as brasilero, as palta mayo, as tomate mayo, as luco, as italiano queso. cuisine ["chilena"]. mainIngredient ["carne","pan"].
+- "causa": plato peruano de papa amarilla aliñada rellena con pollo, atún, mariscos u otro. Incluye: causa limeña, causa de pollo, causa de atún, causa rellena. cuisine siempre ["peruana"]. mainIngredient incluir "papa" + el relleno.
+- "lomo saltado": salteado peruano de tiras de carne con cebolla, tomate y papas fritas. cuisine ["peruana"]. mainIngredient ["carne","papa","tomate","cebolla"].
+- "ají de gallina": guiso peruano cremoso de pollo desmenuzado con salsa de ají amarillo. cuisine ["peruana"]. mainIngredient ["pollo"].
+- "arroz con leche": postre de arroz cocido en leche con azúcar y canela. cuisine [] o ["peruana"]. diet VEGETARIAN.
 - "chorrillana": plato chileno de papas fritas cubiertas con carne de vacuno en tiras, cebolla caramelizada y huevos fritos. Siempre ["chorrillana"], cuisine ["chilena"].
 - "lomo a lo pobre": bistec/lomo con papas fritas, huevo frito y cebolla caramelizada. Siempre ["lomo a lo pobre"], cuisine ["chilena"]. mainIngredient incluir: carne, papa, huevo, cebolla.
 - "bowl": SOLO para bowls modernos tipo poke/buddha bowl/grain bowl, con base de arroz/quinoa/granos + toppings curados encima. NUNCA para platos de fondo tradicionales: lomo a lo pobre, lomo a la pastelera, lomo saltado, pescado frito, canasto marino, fuente de mariscos, chupe, cazuela, arroz con pollo estilo casero. Si el plato es claramente una preparación tradicional servida en plato, NO es bowl.

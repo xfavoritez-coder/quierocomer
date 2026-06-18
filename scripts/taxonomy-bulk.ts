@@ -21,7 +21,7 @@ function saveProgress(done: Set<string>) {
 
 async function classifyRestaurant(id: string, name: string): Promise<{ ok: boolean; count: number; error?: string }> {
   const dishes = await prisma.dish.findMany({
-    where: { restaurantId: id, deletedAt: null, isActive: true },
+    where: { restaurantId: id, deletedAt: null, isActive: true, photos: { isEmpty: false } },
     select: { id: true, name: true, description: true, category: { select: { name: true } } },
   })
   if (dishes.length === 0) return { ok: true, count: 0 }
