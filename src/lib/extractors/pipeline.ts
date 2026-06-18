@@ -17,6 +17,7 @@ import { extractHeyzine } from "./heyzine";
 import { extractCanva } from "./canva";
 import { extractAvocaty } from "./avocaty";
 import { extractWooCommerce, isWooCommerce } from "./woocommerce";
+import { extractInfluyeApp, isInfluyeApp } from "./influyeapp";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { inferFlavorTags, detectCuisineTag } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
@@ -328,6 +329,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractAvocaty(cartaUrl);
     case "WooCommerce":
       return extractWooCommerce(cartaUrl);
+    case "InfluyeApp":
+      return extractInfluyeApp(cartaUrl);
     case "OlaClick":
       return extractOlaClick(cartaUrl);
     case "Toteat":
@@ -342,10 +345,12 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
     case "Mercat":
     case "Gourmedia":
     default:
-      // Try WooCommerce auto-detection for Web propia URLs
+      // Try auto-detection for Web propia URLs
       if (!providerName || providerName === 'Web propia') {
         const woo = await isWooCommerce(cartaUrl).catch(() => false)
         if (woo) return extractWooCommerce(cartaUrl)
+        const influye = await isInfluyeApp(cartaUrl).catch(() => false)
+        if (influye) return extractInfluyeApp(cartaUrl)
       }
       // Generic scraper: Jina AI + Claude. Works with any provider.
       return extractWithScraper(cartaUrl, providerName, extractionConfig);
