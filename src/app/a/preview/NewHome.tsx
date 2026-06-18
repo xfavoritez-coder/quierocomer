@@ -2011,6 +2011,7 @@ function _swipeDims(dish: FeedDish): string[] {
     dish.dieta.tipo,
     dish.mealTime,
     ...dish.sabores,
+    ...(dish.txDishType ?? []),
   ].filter(Boolean)
 }
 

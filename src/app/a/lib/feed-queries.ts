@@ -23,6 +23,16 @@ export function resolveDishLeaf(
   // Asignación manual de la sección (normOverride en Category) — tiene prioridad sobre inferencia automática
   if (catNormOverride && QC_LEAVES.has(catNormOverride)) return catNormOverride
   const catNorm = normalizeCategory(catName)
+  // "Entradas" es genérica: muchos restaurantes agrupan ahí gyozas, spring rolls, tapas, etc.
+  // Intentar inferir desde el nombre del plato antes de aceptar "Entradas" como leaf.
+  if (catNorm === 'Entradas') {
+    const fromName = inferCategoryFromDishName(dishName)
+    if (fromName) return fromName
+    if (dishDescription) {
+      const fromDesc = inferCategoryFromDishName(dishDescription)
+      if (fromDesc) return fromDesc
+    }
+  }
   // Si la categoría normaliza a una cocina pura (ej: "Peruana", "China"),
   // preferimos inferir el tipo de plato desde el nombre/descripción primero.
   if (QC_LEAVES.has(catNorm) && !CUISINE_TAGS.has(catNorm)) return catNorm
