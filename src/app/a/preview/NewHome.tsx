@@ -465,7 +465,8 @@ export default function NewHome({
         q: searchQuery,
         categoryPill: activeCategory,
         diet: filterDiet,
-        maxKm: filterMaxKm,
+        // Si hay búsqueda activa, ignorar filtro de distancia — el usuario busca algo específico
+        maxKm: searchQuery ? undefined : filterMaxKm,
         categories: [...filterCategories],
         locationName,
         lat: userLocation?.lat,
@@ -495,7 +496,8 @@ export default function NewHome({
     if (filterMeal !== 'all') filtered = filtered.filter(d => d.mealTime === filterMeal)
 
     // Distance filter + sort — client-side with precise formula
-    if (userLocation) {
+    // Si hay búsqueda activa, ignorar distancia — el usuario busca algo específico
+    if (userLocation && !searchQuery) {
       const maxDist = filterMaxKm
       const noiseScale = Math.max(0.5, maxDist * 0.25)
       const withDist = filtered
@@ -1012,7 +1014,7 @@ export default function NewHome({
               <span style={{
                 position: 'absolute', top: 1, right: -3, pointerEvents: 'none',
                 background: '#F4A623', color: '#fff',
-                borderRadius: 999, fontSize: 10, fontWeight: 700,
+                borderRadius: 999, fontSize: 11, fontWeight: 700,
                 minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '0 3px', lineHeight: 1, zIndex: 1,
               }}>{activeFilterCount}</span>
