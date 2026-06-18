@@ -1907,18 +1907,28 @@ export default function NewHome({
         const PREFIX_LABEL: Record<string, string> = {
           t: 'Tipo', tp: 'Familia', c: 'Categoría', k: 'Cocina', s: 'Sabor', i: 'Ingrediente', d: 'Dieta', h: 'Horario',
         }
+        // typeConfidence: mismo cálculo que en _swipeScore — t: dims se atenúan al inicio
+        const dbgTypeConf = Math.min(swipedIds.size / 5, 1)
         const allKeys = new Set([...Object.keys(swipeLikeFreq), ...Object.keys(swipeDislikeFreq)])
-        // Group net scores by prefix
-        const groups: Record<string, Array<{ label: string; score: number; likes: number; dislikes: number }>> = {}
+        // Group effective scores by prefix (t: escalado por typeConfidence, resto siempre 1x)
+        const groups: Record<string, Array<{ label: string; score: number; raw: number }>> = {}
         for (const key of allKeys) {
           const [prefix, ...rest] = key.split(':')
           const label = rest.join(':')
           const likes = swipeLikeFreq[key] ?? 0
           const dislikes = swipeDislikeFreq[key] ?? 0
-          const score = likes - dislikes * 2
+          const raw = likes - dislikes * 2
+          const score = prefix === 't' ? raw * dbgTypeConf : raw
           const groupName = PREFIX_LABEL[prefix] ?? prefix
           if (!groups[groupName]) groups[groupName] = []
-          groups[groupName].push({ label, score, likes, dislikes })
+          // Merge dims with same label (el tipo primario aparece varias veces en dims)
+          const existing = groups[groupName].find(e => e.label === label)
+          if (existing) {
+            existing.score += score
+            existing.raw += raw
+          } else {
+            groups[groupName].push({ label, score, raw })
+          }
         }
         const groupOrder = ['Tipo', 'Familia', 'Cocina', 'Ingrediente', 'Sabor', 'Dieta', 'Horario']
         const sortedGroups = groupOrder.filter(g => groups[g])
@@ -1934,7 +1944,7 @@ export default function NewHome({
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', cursor: 'pointer', userSelect: 'none' }}
             >
               <p style={{ margin: 0, fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
-                🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos
+                🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos · tipo×{dbgTypeConf.toFixed(1)}
               </p>
               <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
                 {debugMinimized ? '▲' : '▼'}
@@ -1949,28 +1959,28 @@ export default function NewHome({
                       <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 10, letterSpacing: '0.05em' }}>
                         {groupName.toUpperCase()}
                       </p>
-                      {entries.map(({ label, score, likes, dislikes }) => (
-                        <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2 }}>
-                          <span style={{
-                            color: score > 0 ? '#F4A623' : score < 0 ? '#ef4444' : 'rgba(255,255,255,0.3)',
-                            minWidth: 24, textAlign: 'right', fontWeight: 700,
-                          }}>
-                            {score > 0 ? `+${score}` : score}
-                          </span>
-                          <span style={{ color: score > 0 ? 'rgba(255,255,255,0.85)' : score < 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)' }}>
-                            {label}
-                          </span>
-                          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>
-                            {likes > 0 ? `✓${likes}` : ''}{dislikes > 0 ? ` ✕${dislikes}` : ''}
-                          </span>
-                          <div style={{
-                            height: 3, borderRadius: 2, flexShrink: 0,
-                            background: score > 0 ? '#F4A623' : '#ef4444',
-                            width: score !== 0 ? Math.abs(score) / maxAbs * 48 : 0,
-                            opacity: 0.6,
-                          }} />
-                        </div>
-                      ))}
+                      {entries.map(({ label, score }) => {
+                        const display = Math.round(score * 10) / 10
+                        return (
+                          <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2 }}>
+                            <span style={{
+                              color: score > 0 ? '#F4A623' : score < 0 ? '#ef4444' : 'rgba(255,255,255,0.3)',
+                              minWidth: 32, textAlign: 'right', fontWeight: 700,
+                            }}>
+                              {display > 0 ? `+${display}` : display}
+                            </span>
+                            <span style={{ color: score > 0 ? 'rgba(255,255,255,0.85)' : score < 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)' }}>
+                              {label}
+                            </span>
+                            <div style={{
+                              height: 3, borderRadius: 2, flexShrink: 0,
+                              background: score > 0 ? '#F4A623' : '#ef4444',
+                              width: score !== 0 ? Math.abs(score) / maxAbs * 48 : 0,
+                              opacity: 0.6,
+                            }} />
+                          </div>
+                        )
+                      })}
                     </div>
                   )
                 })}
