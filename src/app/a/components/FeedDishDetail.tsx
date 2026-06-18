@@ -351,10 +351,13 @@ function DesktopDishContent({
       return (b.relevance * 5 - distB * 0.3) - (a.relevance * 5 - distA * 0.3)
     })
     const perLocal = new Map<string, number>()
+    const seenIds = new Set<string>()
     const result: FeedDish[] = []
     for (const x of sorted) {
+      if (seenIds.has(x.dish.id)) continue
       const count = perLocal.get(x.dish.restauranteId) ?? 0
       if (count >= 2) continue
+      seenIds.add(x.dish.id)
       perLocal.set(x.dish.restauranteId, count + 1)
       result.push(x.dish)
       if (result.length >= 12) break
@@ -545,14 +548,16 @@ function DesktopDishContent({
         {!hideRelated && relatedDishes.length > 0 && (
           <div style={{ paddingTop: 28, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 10px' }}>También te podría gustar</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[0, 1].map(col => (
-                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {relatedDishes.filter((_, i) => i % 2 === col).map(d => (
-                    <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
-                  ))}
-                </div>
-              ))}
+            <div style={{ margin: '0 -24px', padding: '0 10px' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[0, 1].map(col => (
+                  <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {relatedDishes.filter((_, i) => i % 2 === col).map(d => (
+                      <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -633,10 +638,13 @@ function DishSlide({
     })
 
     const perLocal = new Map<string, number>()
+    const seenIds = new Set<string>()
     const result: FeedDish[] = []
     for (const x of sorted) {
+      if (seenIds.has(x.dish.id)) continue
       const count = perLocal.get(x.dish.restauranteId) ?? 0
       if (count >= 2) continue
+      seenIds.add(x.dish.id)
       perLocal.set(x.dish.restauranteId, count + 1)
       result.push(x.dish)
       if (result.length >= 20) break
@@ -867,24 +875,26 @@ function DishSlide({
         {!hideRelated && relatedDishes.length > 0 && (
           <div style={{ paddingTop: 28, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
             <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 12px' }}>También te podría gustar</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[0, 1].map(col => (
-                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {relatedDishes.slice(0, visibleRelated).filter((_, i) => i % 2 === col).map(d => (
-                    <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
-                  ))}
-                </div>
-              ))}
-            </div>
-            {visibleRelated < relatedDishes.length && (
-              <div style={{ display: 'flex', gap: 10, paddingTop: 10 }}>
+            <div style={{ margin: '0 -20px', padding: '0 10px' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 {[0, 1].map(col => (
-                  <div key={col} style={{ flex: 1 }}>
-                    <div className="skeleton-shimmer" style={{ aspectRatio: '3/4', borderRadius: 14 }} />
+                  <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {relatedDishes.slice(0, visibleRelated).filter((_, i) => i % 2 === col).map(d => (
+                      <DishCard key={d.id} dish={d} onTap={onDishTap} userLocation={userLocation} />
+                    ))}
                   </div>
                 ))}
               </div>
-            )}
+              {visibleRelated < relatedDishes.length && (
+                <div style={{ display: 'flex', gap: 10, paddingTop: 10 }}>
+                  {[0, 1].map(col => (
+                    <div key={col} style={{ flex: 1 }}>
+                      <div className="skeleton-shimmer" style={{ aspectRatio: '3/4', borderRadius: 14 }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
