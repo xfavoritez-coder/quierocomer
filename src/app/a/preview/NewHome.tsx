@@ -911,7 +911,7 @@ export default function NewHome({
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+              boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -972,7 +972,7 @@ export default function NewHome({
           flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
           width: 49, height: 49, borderRadius: '50%',
           background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-          boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+          boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
           color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -1058,7 +1058,7 @@ export default function NewHome({
                   background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(224,146,0,0.10)',
                   border: `1px solid ${isDark ? 'rgba(244,166,35,0.25)' : 'rgba(224,146,0,0.25)'}`,
                   borderRadius: 999, padding: '3px 10px',
-                  color: '#e09200', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  color: '#e09200', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 {filterMaxKm >= 30 ? 'Todo' : `${filterMaxKm} km`}
@@ -1148,7 +1148,7 @@ export default function NewHome({
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+                boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -1168,7 +1168,7 @@ export default function NewHome({
             flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
             width: 49, height: 49, borderRadius: '50%',
             background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-            boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+            boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
             color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
