@@ -829,10 +829,8 @@ export default function CartaImpact({
   const menuAnchorRef = useRef<HTMLDivElement>(null);
   const fixedChipsRef = useRef<HTMLDivElement>(null);
   const fixedActiveChipRef = useRef<HTMLButtonElement>(null);
-  const impactHeaderRef = useRef<HTMLElement>(null);
+  const impactHeaderRef = useRef<HTMLDivElement>(null);
   const [impactHeaderH, setImpactHeaderH] = useState(65);
-  const impactBannerRef = useRef<HTMLDivElement>(null);
-  const [impactBannerH, setImpactBannerH] = useState(0);
   const [fixedChipsScrolled, setFixedChipsScrolled] = useState(false);
 
   // Auto-scroll fixed nav to active chip
@@ -873,15 +871,6 @@ export default function CartaImpact({
     return () => obs.disconnect();
   }, []);
 
-  // Measure banner height
-  useEffect(() => {
-    const el = impactBannerRef.current;
-    if (!el) { setImpactBannerH(0); return; }
-    const obs = new ResizeObserver(() => setImpactBannerH(el.offsetHeight));
-    obs.observe(el);
-    setImpactBannerH(el.offsetHeight);
-    return () => obs.disconnect();
-  }, [hasBannerActive]);
 
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
@@ -1230,27 +1219,28 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Banner — fixed en top:0, encima del nav (zIndex 50) */}
-      {hasBannerActive && !showFixedCatNav && (
-        <div ref={impactBannerRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
-          {announcements && announcements.length > 0
-            ? <AnnouncementBanner announcements={announcements} />
-            : <HappyHourBanner happyHours={happyHours || []} />}
-        </div>
-      )}
+      {/* Spacer = altura total del wrapper fijo */}
+      <div style={{ height: impactHeaderH }} />
 
-      {/* Spacer = banner + header */}
-      <div style={{ height: impactBannerH + impactHeaderH }} />
-
-      {/* Fixed top nav */}
-      <header ref={impactHeaderRef} style={{
+      {/* Wrapper fixed: banner arriba + nav abajo, medidos juntos */}
+      <div ref={impactHeaderRef} style={{
         position: (restaurant as any).isDemo ? "relative" : "fixed",
-        top: (restaurant as any).isDemo ? undefined : impactBannerH,
+        top: 0,
         left: (restaurant as any).isDemo ? undefined : 0,
         right: (restaurant as any).isDemo ? undefined : 0,
         zIndex: 40,
-        transform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
-        WebkitTransform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
+      }}>
+        {/* Banner al tope absoluto */}
+        {hasBannerActive && !showFixedCatNav && (
+          <div style={{ marginBottom: 8 }}>
+            {announcements && announcements.length > 0
+              ? <AnnouncementBanner announcements={announcements} />
+              : <HappyHourBanner happyHours={happyHours || []} />}
+          </div>
+        )}
+
+      {/* Nav: logo + botones */}
+      <header style={{
         padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
         marginBottom: (restaurant as any).isDemo ? -56 : undefined,
         background: (restaurant as any).isDemo
@@ -1367,6 +1357,7 @@ export default function CartaImpact({
         </div>
       )}
       </header>
+      </div>{/* end fixed wrapper */}
 
       {/* Search overlay */}
       {searchOpen && (
