@@ -76,8 +76,12 @@ export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asa
 
 export const VALID_ESTILOS = ["comida rapida","saludable"];
 
-function buildPrompt(dishes: DishTaxonomyInput[]): string {
-  return `Clasifica cada plato con estas dimensiones. Responde SOLO con JSON válido, sin texto adicional.
+function buildPrompt(dishes: DishTaxonomyInput[], restaurantName?: string): string {
+  const veganRestaurant = restaurantName && /vegan/i.test(restaurantName);
+  const veganNote = veganRestaurant
+    ? `\nCONTEXTO IMPORTANTE: Este restaurante se llama "${restaurantName}" y es un local VEGANO. Por defecto, TODOS sus platos son VEGAN, a menos que el nombre o descripción mencione explícitamente ingredientes animales (carne, pollo, pescado, mariscos, huevo, leche, queso, miel). Si hay duda → VEGAN.\n`
+    : "";
+  return `Clasifica cada plato con estas dimensiones. Responde SOLO con JSON válido, sin texto adicional.${veganNote}
 
 OPCIONES VÁLIDAS:
 
@@ -90,7 +94,7 @@ Reglas dishType:
 - Bebidas → cuisine siempre [].
 - Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
 - Bebidas → diet: café/té/jugo/bebida/alcohol/mocktail → VEGAN. latte/cappuccino/mocaccino/chocolate caliente/batido con leche → VEGETARIAN. Si dice explícitamente "leche de avena", "leche vegetal", "oat milk", "almendra" → VEGAN.
-- "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
+- "extra" SOLO para salsas líquidas, condimentos y porciones adicionales que van pegadas a otro plato — NO son comida independiente. Criterios estrictos: el nombre empieza con "salsa", "extra de", "adicional", "porción de", "dip de", o es un condimento puro solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, guacamole, etc.). Si el plato es comida real que se come solo — aunque lleve ajo, queso, pan, o sea pequeño — NO es "extra". Ejemplos que NO son extra: palitos de ajo, pan de ajo, focaccia, tostadas de ajo, camembert al horno, tabla de quesos, palitos de pan, papas al horno. Ante la duda → deja dishType: [].
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
 - "spring roll": rollitos vietnamitas (frescos O fritos) en papel de arroz de arroz. Incluye: Nem (chả giò), gỏi cuốn, rollitos vietnamitas, spring rolls con rice paper. "arrollado de primavera" / "rollito primavera": exclusivamente rollitos estilo chino con masa de trigo frita.
 - "chupe": sopa espesa y cremosa chilena, base de leche o crema, con mariscos (jaiba, camarones, mariscos, calamar), papa, choclo. MUY DISTINTO de "cazuela" (caldo liviano con verduras enteras y un trozo de carne/pollo). Chupe de jaiba, chupe de mariscos, chupe de centolla → siempre "chupe". Si lleva crema/leche y mariscos → "chupe".
@@ -151,6 +155,7 @@ Ante cualquier duda → VEGETARIAN, nunca VEGAN.
 
 PLATOS A CLASIFICAR:
 ${JSON.stringify(dishes, null, 2)}
+${veganRestaurant ? `\nRECORDATORIO: Restaurante vegano → diet VEGAN por defecto salvo ingredientes animales explícitos.` : ""}
 
 JSON respuesta exacta (usa los IDs tal como están):
 {
@@ -164,13 +169,14 @@ JSON respuesta exacta (usa los IDs tal como están):
  * Lanza error si falla la llamada a la API.
  */
 export async function classifyDishes(
-  dishes: DishTaxonomyInput[]
+  dishes: DishTaxonomyInput[],
+  restaurantName?: string
 ): Promise<Record<string, DishTaxonomy>> {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
   if (dishes.length === 0) return {};
 
-  const prompt = buildPrompt(dishes);
+  const prompt = buildPrompt(dishes, restaurantName);
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -197,7 +203,16 @@ export async function classifyDishes(
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error(`No JSON in Claude response: ${text.slice(0, 200)}`);
 
-  return JSON.parse(jsonMatch[0]) as Record<string, DishTaxonomy>;
+  const result = JSON.parse(jsonMatch[0]) as Record<string, DishTaxonomy>;
+
+  // Post-proceso: restaurante vegano → VEGETARIAN → VEGAN (OMNIVORE se respeta si Claude detectó carne real)
+  if (restaurantName && /vegan/i.test(restaurantName)) {
+    for (const tax of Object.values(result)) {
+      if (tax.diet === "VEGETARIAN") tax.diet = "VEGAN";
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -210,7 +225,8 @@ export async function classifyDishes(
 export async function classifyDishesBatched(
   dishes: DishTaxonomyInput[],
   batchSize = 30,
-  concurrency = 4
+  concurrency = 4,
+  restaurantName?: string
 ): Promise<Record<string, DishTaxonomy>> {
   if (dishes.length === 0) return {};
 
@@ -224,7 +240,7 @@ export async function classifyDishesBatched(
   // Procesar en grupos de `concurrency` batches simultáneos
   for (let i = 0; i < batches.length; i += concurrency) {
     const group = batches.slice(i, i + concurrency);
-    const groupResults = await Promise.all(group.map(b => classifyDishes(b)));
+    const groupResults = await Promise.all(group.map(b => classifyDishes(b, restaurantName)));
     for (const r of groupResults) Object.assign(result, r);
   }
 

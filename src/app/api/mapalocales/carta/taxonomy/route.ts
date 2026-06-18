@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { slug },
-      select: { id: true },
+      select: { id: true, name: true },
     })
     if (!restaurant) return NextResponse.json({ error: 'Restaurante no encontrado' }, { status: 404 })
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }))
 
     // Paralelo: batches de 30, hasta 4 simultáneos → ~25s para cualquier carta
-    const taxonomy = await classifyDishesBatched(inputs, 30, 4)
+    const taxonomy = await classifyDishesBatched(inputs, 30, 4, restaurant.name)
     // Una sola transacción = 1 conexión, N queries en bloque
     await prisma.$transaction(
       Object.entries(taxonomy).map(([dishId, dims]) =>

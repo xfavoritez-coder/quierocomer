@@ -645,7 +645,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
         for (let i = 0; i < batches.length; i += CONCURRENCY) {
           const group = batches.slice(i, i + CONCURRENCY);
-          const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1)));
+          const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1, cleanedName)));
           for (const r of results) Object.assign(allTaxonomy, r);
           classified += group.reduce((s, b) => s + b.length, 0);
         }
@@ -1132,7 +1132,7 @@ export async function importFromProspecto(params: {
 
       for (let i = 0; i < batches.length; i += CONCURRENCY) {
         const group = batches.slice(i, i + CONCURRENCY)
-        const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1)))
+        const results = await Promise.all(group.map(b => classifyDishesBatched(b, b.length, 1, params.name)))
         for (const r of results) Object.assign(allTaxonomy, r)
         classified += group.reduce((s, b) => s + b.length, 0)
         params.onProgress?.('taxonomy_progress', { current: Math.min(classified, taxonomyInputs.length), total: taxonomyInputs.length })
