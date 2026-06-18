@@ -172,15 +172,6 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
 
   const c = active.bannerColor;
 
-  // Hex color → rgba for gradient
-  const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
-  };
-  const cRgba20 = hexToRgba(c, 0.20);
-
   return (
     <div style={{ padding: "calc(8px + env(safe-area-inset-top)) 12px 0", position: "relative", zIndex: 15 }}>
       <div
@@ -188,7 +179,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
         style={{
           borderRadius: 16,
           border: `1px solid ${c}88`,
-          background: `linear-gradient(135deg, ${cRgba20} 0%, #080808 60%)`,
+          background: "#080808",
           padding: "13px 16px",
           textAlign: "center",
         }}
