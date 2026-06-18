@@ -44,29 +44,27 @@ async function tryToteatPublicApi(branchId: string, slug: string): Promise<Extra
     `/checkin/${branchId}/menu`,
   ];
 
-  for (const base of BASES) {
-    for (const path of PATHS) {
-      try {
-        const url = base + path;
-        const res = await fetch(url, {
-          headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0" },
-          signal: AbortSignal.timeout(6000),
-        });
-        if (!res.ok) continue;
-        const contentType = res.headers.get("content-type") || "";
-        if (!contentType.includes("json")) continue;
-        const data = await res.json();
+  // Probe all endpoints in parallel — 18 sequential calls × 6s = 108s → now ~4s total
+  const tryOne = async (url: string): Promise<ExtractedDish[] | null> => {
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (!res.ok) return null;
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("json")) return null;
+      const data = await res.json();
+      const dishes = parseApiResponse(data);
+      return dishes.length >= 3 ? dishes : null;
+    } catch { return null; }
+  };
 
-        // Try to parse various response shapes
-        const dishes = parseApiResponse(data);
-        if (dishes.length >= 3) {
-          console.log(`[Toteat] Public API success: ${url} → ${dishes.length} dishes`);
-          return dishes;
-        }
-      } catch {}
-    }
-  }
-  return null;
+  const urls = BASES.flatMap(base => PATHS.map(path => base + path));
+  const results = await Promise.all(urls.map(tryOne));
+  const found = results.find(r => r !== null) ?? null;
+  if (found) console.log(`[Toteat] Public API success: ${found.length} dishes`);
+  return found;
 }
 
 /** Parse diferentes estructuras de respuesta de la API Toteat */
@@ -144,7 +142,7 @@ async function extractFirebaseConfig(url: string): Promise<{ apiKey: string; pro
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -185,24 +183,24 @@ async function tryFirestoreApi(branchId: string, firebaseConfig: { apiKey: strin
     `/branches/${branchId}?fields=menu,products`,
   ];
 
-  for (const path of PATHS) {
+  const tryPath = async (path: string): Promise<ExtractedDish[] | null> => {
     try {
       const url = `${BASE}${path}?key=${apiKey}&pageSize=200`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return null;
       const data = await res.json();
-
-      // Firestore responde con { documents: [ { fields: { name: { stringValue: "..." }, ... } } ] }
       if (data.documents?.length > 0) {
         const dishes = parseFirestoreDocuments(data.documents);
-        if (dishes.length >= 3) {
-          console.log(`[Toteat] Firestore success: ${path} → ${dishes.length} dishes`);
-          return dishes;
-        }
+        return dishes.length >= 3 ? dishes : null;
       }
-    } catch {}
-  }
-  return null;
+      return null;
+    } catch { return null; }
+  };
+
+  const results = await Promise.all(PATHS.map(tryPath));
+  const found = results.find(r => r !== null) ?? null;
+  if (found) console.log(`[Toteat] Firestore success: ${found.length} dishes`);
+  return found;
 }
 
 /** Convierte documentos de Firestore al formato ExtractedDish */
@@ -238,9 +236,9 @@ async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionR
     headers: {
       Accept: "text/plain",
       "X-No-Cache": "true",
-      "X-Timeout": "45000",
+      "X-Timeout": "35000",
     },
-    signal: AbortSignal.timeout(50000),
+    signal: AbortSignal.timeout(38000),
   });
   if (!jinaRes.ok) throw new Error(`Jina failed: ${jinaRes.status}`);
   const content = await jinaRes.text();
