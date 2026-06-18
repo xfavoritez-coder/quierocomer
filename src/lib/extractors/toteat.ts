@@ -257,7 +257,7 @@ async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionR
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 8000,
+      max_tokens: 16000,
       messages: [{
         role: "user",
         content: `Extrae el menú completo de este restaurante Toteat.
@@ -268,7 +268,7 @@ ${content.slice(0, 30000)}
 Responde con JSON:
 {"restaurantName":"...","logo":"URL o null","categories":[{"name":"...","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null"}]}]}
 
-REGLAS: Precios como enteros sin puntos ($8.990→8990). SOLO JSON.`,
+REGLAS: Precios como enteros sin puntos ($8.990→8990). SOLO JSON. Es crítico que el JSON esté completo y bien cerrado.`,
       }],
     }),
   });
@@ -279,7 +279,20 @@ REGLAS: Precios como enteros sin puntos ($8.990→8990). SOLO JSON.`,
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("No JSON in Claude response");
-  const parsed = JSON.parse(jsonMatch[0]);
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    // JSON truncado — intentar recuperar categorías parciales
+    const partial = jsonMatch[0].replace(/,?\s*\{[^{}]*$/, '').replace(/,?\s*\[[^\[\]]*$/, '');
+    const fixed = partial + (partial.includes('"categories"') ? ']}]}' : '}}');
+    try {
+      parsed = JSON.parse(fixed);
+    } catch {
+      throw new Error(`JSON inválido en respuesta de Claude: ${(jsonMatch[0]).slice(0, 200)}`);
+    }
+  }
 
   const dishes: ExtractedDish[] = [];
   for (const cat of (parsed.categories || [])) {
