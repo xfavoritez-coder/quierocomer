@@ -6,8 +6,12 @@ export const metadata = {
   title: 'QuieroComer - Descubre que comer cerca de ti',
   description: 'Explora platos reales de restaurantes cerca de ti. Encuentra tu próximo antojo.',
   openGraph: {
-    title: 'QuieroComer - Descubre que comer cerca de ti',
-    description: 'Explora platos reales de restaurantes cerca de ti.',
+    title: 'QuieroComer',
+    description: 'Descubre qué comer cerca de ti. Platos reales de restaurantes cercanos.',
+    url: 'https://quierocomer.cl',
+    siteName: 'QuieroComer',
+    images: [{ url: 'https://quierocomer.cl/og-square.jpg', width: 300, height: 300 }],
+    type: 'website',
   },
 }
 
