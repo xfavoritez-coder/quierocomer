@@ -766,6 +766,7 @@ export default function CartaImpact({
 
   // Happy hour banner
   const hasActiveHH = !!getActiveHappyHour(happyHours || []);
+  const hasBannerActive = hasActiveHH || !!(announcements && announcements.length > 0);
 
   // Language select — multilang is Gold+ only
   const planKey = effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus);
@@ -1229,11 +1230,13 @@ export default function CartaImpact({
         WebkitTransform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
         padding: (announcements?.length || hasActiveHH) ? "0 0 0" : "calc(10px + env(safe-area-inset-top)) 16px 0",
         marginBottom: (restaurant as any).isDemo ? -56 : undefined,
-        background: (restaurant as any).isDemo
-          ? "var(--impact-header-solid, rgba(3,3,3,0.92))"
-          : showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, var(--impact-header-grad-start, rgba(0,0,0,0.8)), var(--impact-header-grad-mid, rgba(0,0,0,0.4)), transparent)",
-        backdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
-        WebkitBackdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
+        background: (hasBannerActive && !showFixedCatNav && !(restaurant as any).isDemo)
+          ? "transparent"
+          : (restaurant as any).isDemo
+            ? "var(--impact-header-solid, rgba(3,3,3,0.92))"
+            : showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, var(--impact-header-grad-start, rgba(0,0,0,0.8)), var(--impact-header-grad-mid, rgba(0,0,0,0.4)), transparent)",
+        backdropFilter: (hasBannerActive && !showFixedCatNav && !(restaurant as any).isDemo) ? undefined : (restaurant as any).isDemo ? undefined : "blur(16px)",
+        WebkitBackdropFilter: (hasBannerActive && !showFixedCatNav && !(restaurant as any).isDemo) ? undefined : (restaurant as any).isDemo ? undefined : "blur(16px)",
         pointerEvents: "auto",
         transition: "background 0.3s ease",
       }}>
@@ -1244,7 +1247,15 @@ export default function CartaImpact({
         <HappyHourBanner happyHours={happyHours || []} />
       ) : null)}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: (announcements?.length || hasActiveHH) ? "8px 16px 10px" : "0 0 10px" }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: hasBannerActive ? "8px 16px 10px" : "0 0 10px",
+        ...(hasBannerActive && !showFixedCatNav && !(restaurant as any).isDemo ? {
+          background: "linear-gradient(to bottom, var(--impact-header-grad-start, rgba(0,0,0,0.8)), var(--impact-header-grad-mid, rgba(0,0,0,0.4)), transparent)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        } : {}),
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {(restaurant as any).logoUrl ? (
             <img
