@@ -25,8 +25,10 @@ export const VALID_DISH_TYPES = [
   "combo","extra",
   // Sándwiches y panes
   "hamburguesa","completo","sándwich","wrap","croissant","bagel","tostada",
+  // Sándwiches chilenos
+  "churrasco","mechada","as",
   // Carnes
-  "churrasco","milanesa","asado","costillas","pernil","anticucho","kebab","satay",
+  "milanesa","asado","costillas","pernil","anticucho","kebab","satay",
   // Pollo
   "pollo asado","pollo frito","tenders","alitas","nuggets",
   // Pescados y mariscos
@@ -40,7 +42,7 @@ export const VALID_DISH_TYPES = [
   // Ensaladas y bowls
   "ensalada","bowl",
   // Asiática
-  "sushi","hand roll","sushiburger","curry","pad thai","gyoza","wantan",
+  "sushi","hand roll","sushiburger","bao","curry","pad thai","gyoza","wantan",
   // Mexicana/Venezolana
   "taco","burrito","quesadilla","arepa","salchipapa",
   // China-chilena
@@ -66,8 +68,9 @@ export const VALID_MEAL_SLOTS = ["desayuno","almuerzo","cena","snack"];
 
 export const VALID_INGREDIENTS = [
   "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos",
+  "vienesa","jamón","salame","longaniza",
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
-  "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame",
+  "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín",
   "choclo","champiñon","piña","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
   "crema","espinaca","albahaca","calamar","reineta","jaiba","durazno","naranja","lúcuma","frambuesa",
 ];
@@ -95,6 +98,7 @@ Reglas dishType:
 - Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
 - Bebidas → diet: café/té/jugo/bebida/alcohol/mocktail → VEGAN. latte/cappuccino/mocaccino/chocolate caliente/batido con leche → VEGETARIAN. Si dice explícitamente "leche de avena", "leche vegetal", "oat milk", "almendra" → VEGAN.
 - "extra" SOLO para salsas líquidas, condimentos y porciones adicionales que van pegadas a otro plato — NO son comida independiente. Criterios estrictos: el nombre empieza con "salsa", "extra de", "adicional", "porción de", "dip de", o es un condimento puro solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, guacamole, etc.). Si el plato es comida real que se come solo — aunque lleve ajo, queso, pan, o sea pequeño — NO es "extra". Ejemplos que NO son extra: palitos de ajo, pan de ajo, focaccia, tostadas de ajo, camembert al horno, tabla de quesos, palitos de pan, papas al horno. Ante la duda → deja dishType: [].
+- "bao": pan al vapor chino relleno (baozi, bao bun, steamed bun, gua bao). Incluye: bao de cerdo, bao de pollo, bao de salmón, bao vegano, etc. cuisine siempre ["china"] o ["asiática"]. mainIngredient incluir el relleno + "pan".
 - "sushiburger": preparación japonesa donde el arroz de sushi prensado reemplaza el pan, con relleno de pescado/mariscos/carne entre dos "tapas" de arroz. Incluye: sushi burger, sushiburger de salmón, de atún, etc. cuisine siempre ["japonesa"] o ["nikkei"].
 - "hand roll": cono de alga nori relleno de arroz y ingredientes, se come con la mano. Incluye: hand roll de X, temaki.
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
@@ -104,6 +108,8 @@ Reglas dishType:
 - "pollo frito" SOLO para pollo realmente frito/apanado/empanado: broaster, chicharrón de pollo, nuggets, tenders, pollo crocante. Un "pollo a la china" o "pollo mongoliano" NO es pollo frito → es chapsui.
 - "completo": hot dog chileno en pan con salchicha/vienesa. Incluye: completo X, vienesa X (vienesa napolitana, vienesa champiluco, vienesa italiana, etc.), italiano, completo alemán, completo dinámico. NUNCA sándwich — aunque lleve pan, la salchicha lo hace completo. cuisine siempre ["chilena"].
 - "churrasco": EXCLUSIVAMENTE el sándwich de carne delgada en pan (churrasco italiano, churrasco alemán, churrasco con palta, etc.). NUNCA para un corte de carne a la parrilla servido como plato de fondo. Un "lomo liso", "punta de ganso", "asado de tira", "pechuga a la parrilla" servidos como plato → dishType ["asado"] o ["pollo asado"], NO "churrasco". Churrasco = sándwich con carne + pan + aderezos.
+- "mechada": sándwich chileno con carne de vacuno mechada (braseada/deshebrada) en pan. Incluye: mechada italiana, mechada completa, mechada dinámica, mechada brasilera, mechada luco, mechada chacarero, sándwich de mechada. La mechada es el método de preparación (carne braseada/deshebrada), NO el ingrediente. cuisine ["chilena"]. mainIngredient ["carne","pan"].
+- "as": sándwich chileno con carne de vacuno muy delgada en pan (distinto del churrasco — el as lleva carne más fina/pequeña). Incluye: as italiano, as completo, as dinámico, as brasilero, as palta mayo, as tomate mayo, as luco, as italiano queso. cuisine ["chilena"]. mainIngredient ["carne","pan"].
 - "chorrillana": plato chileno de papas fritas cubiertas con carne de vacuno en tiras, cebolla caramelizada y huevos fritos. Siempre ["chorrillana"], cuisine ["chilena"].
 - "lomo a lo pobre": bistec/lomo con papas fritas, huevo frito y cebolla caramelizada. Siempre ["lomo a lo pobre"], cuisine ["chilena"]. mainIngredient incluir: carne, papa, huevo, cebolla.
 - "bowl": SOLO para bowls modernos tipo poke/buddha bowl/grain bowl, con base de arroz/quinoa/granos + toppings curados encima. NUNCA para platos de fondo tradicionales: lomo a lo pobre, lomo a la pastelera, lomo saltado, pescado frito, canasto marino, fuente de mariscos, chupe, cazuela, arroz con pollo estilo casero. Si el plato es claramente una preparación tradicional servida en plato, NO es bowl.
@@ -148,6 +154,7 @@ Si el nombre del plato contiene "veggie" → diet: VEGETARIAN siempre, sin excep
 Si la categoría del plato contiene "vegano", "vegana", "veganos", "veganas" o similar → asumir VEGAN para todos los platos de esa categoría, a menos que el plato tenga ingredientes animales explícitos.
 Si la categoría contiene "vegetariano", "vegetarianos", "veggie", "vegetales", "plant" o similar → asumir VEGETARIAN por defecto, a menos que el nombre/descripción diga explícitamente "vegano" (→ VEGAN).
 OMNIVORE → SOLO si el plato contiene carne (vacuno, cerdo, cordero), ave (pollo, pavo), pescado o mariscos. Ejemplos: hamburguesa, pollo, completo, ceviche, salmón.
+Palabras chilenas que son siempre OMNIVORE: vienesa (salchicha de cerdo/ave), longaniza, prieta, churrasco, mechada, as (sándwich de carne), vacuno, lomo, costilla, pernil, plateada, osobuco, pollo, cerdo, pescado, mariscos, ceviche, chupe, cazuela con carne/pollo. "2X Vienesas" o "Promo vienesas" → OMNIVORE aunque el nombre no diga "carne".
 Términos japoneses que son OMNIVORE: kani (cangrejo), kanikama (palito de cangrejo), ebi (camarón), maguro (atún), hamachi (pez limón), hotate (vieira), unagi (anguila), tako (pulpo), tobiko/masago/ikura (huevas de pescado), gyoza (suele tener cerdo/camarones), tonkatsu (cerdo), yakitori (pollo), katsu (cerdo), gyudon (carne), karaage (pollo), negitoro, spicy tuna, tekka.
 VEGETARIAN → sin carne/ave/pescado/mariscos. Huevo, queso, leche, mantequilla, crema, miel NO hacen OMNIVORE — son ingredientes vegetarianos.
 Waffle, pancake, crepe, omelet, huevos, pasta con queso, pizza sin carne → VEGETARIAN aunque lleven huevo o lácteos.
