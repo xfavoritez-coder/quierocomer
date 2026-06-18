@@ -911,7 +911,7 @@ export default function NewHome({
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              boxShadow: (!searchFocused && searchTouched.current) ? (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)') : 'none',
+              boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -1148,7 +1148,7 @@ export default function NewHome({
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                boxShadow: (!searchFocused && searchTouched.current) ? (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)') : 'none',
+                boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
