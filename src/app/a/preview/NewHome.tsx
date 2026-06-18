@@ -907,7 +907,7 @@ export default function NewHome({
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
-              width: '100%', padding: '12px 20px 12px 16px', fontSize: 17,
+              width: '100%', padding: '12px 20px 12px 8px', fontSize: 17,
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
