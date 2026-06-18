@@ -122,10 +122,10 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           {onSearchClick && (
             <button
               onClick={onSearchClick}
-              style={{ width: 46, height: 46, borderRadius: "50%", background: "var(--carta-search-bg)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
+              style={{ width: 42, height: 42, borderRadius: "50%", background: "var(--carta-search-bg)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
               aria-label="Buscar"
             >
-              <Search size={20} color="var(--carta-text2)" />
+              <Search size={18} color="var(--carta-text2)" />
             </button>
           )}
           <LangSelector enabledLangs={enabledLangs} />
