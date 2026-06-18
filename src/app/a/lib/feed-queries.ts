@@ -3,6 +3,11 @@ import { normalizeCategory, inferCategoryFromDishName, isExcludedCategory, infer
 import type { FeedDish } from '../types'
 import { unstable_cache } from 'next/cache'
 
+// Categorías que solo son válidas inferidas desde el nombre del plato, NO desde la descripción.
+// "Papas fritas" y "Ensaladas" suelen aparecer en descripciones como acompañamiento,
+// no como el plato principal → ignorarlas cuando inferimos desde description.
+const SIDE_ONLY_FROM_NAME = new Set(['Papas fritas', 'Ensaladas'])
+
 /**
  * Resuelve la leaf category de un plato con prioridad:
  * 1. leafOverride manual (set desde panel de revisión)
@@ -30,7 +35,7 @@ export function resolveDishLeaf(
     if (fromName) return fromName
     if (dishDescription) {
       const fromDesc = inferCategoryFromDishName(dishDescription)
-      if (fromDesc) return fromDesc
+      if (fromDesc && !SIDE_ONLY_FROM_NAME.has(fromDesc)) return fromDesc
     }
   }
   // Si la categoría normaliza a una cocina pura (ej: "Peruana", "China"),
@@ -44,7 +49,7 @@ export function resolveDishLeaf(
   if (fromName) return fromName
   if (dishDescription) {
     const fromDesc = inferCategoryFromDishName(dishDescription)
-    if (fromDesc) return fromDesc
+    if (fromDesc && !SIDE_ONLY_FROM_NAME.has(fromDesc)) return fromDesc
   }
   // Si la categoría es una cocina, úsala como leaf de último recurso
   if (QC_LEAVES.has(catNorm)) return catNorm

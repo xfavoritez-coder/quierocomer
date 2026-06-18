@@ -470,7 +470,8 @@ function DesktopDishContent({
           style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '12px 14px', borderRadius: 12, textAlign: 'left',
-            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)'}`,
             textDecoration: 'none', marginBottom: 32, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
@@ -791,7 +792,8 @@ function DishSlide({
           style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%',
             padding: '14px 16px', borderRadius: 14, textAlign: 'left',
-            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)'}`,
             textDecoration: 'none', marginBottom: 32, boxSizing: 'border-box',
           }}>
           {dish.restauranteLogo && !logoError ? (
