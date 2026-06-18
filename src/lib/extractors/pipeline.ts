@@ -82,7 +82,7 @@ function detectDishLeafOverride(dishName: string): string | null {
 function detectDishType(categoryName: string): string {
   const n = categoryName.toLowerCase();
   if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
-  if (/bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|té/i.test(n)) return "drink";
+  if (/bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|té|limonad|gaseosa|soda/i.test(n)) return "drink";
   if (/postre|dessert|dulce|helado|torta|pastel/i.test(n)) return "dessert";
   return "food";
 }
@@ -110,10 +110,12 @@ function upgradePhotoUrl(url: string): string {
     /https:\/\/cdn\.bistrify\.app\/cdn-cgi\/image\/[^/]+\/images\//,
     "https://cdn.bistrify.app/images/"
   );
-  // Google Places/Maps photos: append =w1200 to get full resolution
-  // lh3.googleusercontent.com/... (no size suffix → small thumbnail)
-  if (/lh3\.googleusercontent\.com\//.test(upgraded) && !/=[wh]\d+/.test(upgraded)) {
-    upgraded = upgraded.replace(/(\?.*)?$/, '=w1200');
+  // Google lh3 images: upgrade size suffix to 1200px
+  // Jina renders Toteat with =s160 (160px thumbnail) — replace with =s1200
+  if (/lh3\.googleusercontent\.com\//.test(upgraded)) {
+    upgraded = upgraded.replace(/=s\d+$/, '=s1200')
+    // No size suffix at all → append =s1200
+    if (!/=s\d+$/.test(upgraded)) upgraded = upgraded.replace(/(\?.*)?$/, '=s1200')
   }
   return upgraded;
 }
