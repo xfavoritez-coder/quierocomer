@@ -43,6 +43,8 @@ export const VALID_DISH_TYPES = [
   "sushi","hand roll","curry","pad thai","gyoza","wantan",
   // Mexicana/Venezolana
   "taco","burrito","quesadilla","arepa","salchipapa",
+  // China-chilena
+  "chapsui",
   // Chilena
   "sopaipilla","pastel de choclo","chorrillana","lomo a lo pobre",
   // Desayunos
@@ -91,6 +93,8 @@ Reglas dishType:
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
 - "spring roll": rollitos vietnamitas (frescos O fritos) en papel de arroz de arroz. Incluye: Nem (chả giò), gỏi cuốn, rollitos vietnamitas, spring rolls con rice paper. "arrollado de primavera" / "rollito primavera": exclusivamente rollitos estilo chino con masa de trigo frita.
 - "chupe": sopa espesa y cremosa chilena, base de leche o crema, con mariscos (jaiba, camarones, mariscos, calamar), papa, choclo. MUY DISTINTO de "cazuela" (caldo liviano con verduras enteras y un trozo de carne/pollo). Chupe de jaiba, chupe de mariscos, chupe de centolla → siempre "chupe". Si lleva crema/leche y mariscos → "chupe".
+- "chapsui": plato salteado en wok estilo chino-chileno con salsa. Incluye: chapsui de X, chop suey, X a la china, X mongoliano/mongoliana, X chitén, diente de X (cuando el contexto es restaurante chino), cualquier salteado chino con salsa. cuisine siempre ["china"]. NO confundir con "pollo frito" — chapsui es salteado en wok, no frito/apanado.
+- "pollo frito" SOLO para pollo realmente frito/apanado/empanado: broaster, chicharrón de pollo, nuggets, tenders, pollo crocante. Un "pollo a la china" o "pollo mongoliano" NO es pollo frito → es chapsui.
 - "chorrillana": plato chileno de papas fritas cubiertas con carne de vacuno en tiras, cebolla caramelizada y huevos fritos. Siempre ["chorrillana"], cuisine ["chilena"].
 - "lomo a lo pobre": bistec/lomo con papas fritas, huevo frito y cebolla caramelizada. Siempre ["lomo a lo pobre"], cuisine ["chilena"]. mainIngredient incluir: carne, papa, huevo, cebolla.
 - "bowl": SOLO para bowls modernos tipo poke/buddha bowl/grain bowl, con base de arroz/quinoa/granos + toppings curados encima. NUNCA para platos de fondo tradicionales: lomo a lo pobre, lomo a la pastelera, lomo saltado, pescado frito, canasto marino, fuente de mariscos, chupe, cazuela, arroz con pollo estilo casero. Si el plato es claramente una preparación tradicional servida en plato, NO es bowl.
