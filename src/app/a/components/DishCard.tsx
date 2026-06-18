@@ -131,6 +131,12 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
               </svg>
             )}
+            {dish.dieta.esPicante && (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF5722" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M12 3 C13 1 15 2 15 4"/>
+                <path d="M12 4 C10 5 8 8 8 12 C8 16 10 19 12 20 C14 19 16 16 16 12 C16 8 14 5 12 4 Z"/>
+              </svg>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap' }}>

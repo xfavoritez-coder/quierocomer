@@ -895,13 +895,14 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
   setShowDietTooltip: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   const hasDiet = dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN'
-  if (!hasDiet) return <>{dish.nombre}</>
+  const hasSpicy = dish.dieta.esPicante
+  if (!hasDiet && !hasSpicy) return <>{dish.nombre}</>
 
   const words = dish.nombre.trim().split(' ')
   const head = words.slice(0, -1).join(' ')
   const tail = words[words.length - 1]
 
-  const icon = dish.dieta.tipo === 'VEGAN' ? (
+  const dietIcon = hasDiet ? (dish.dieta.tipo === 'VEGAN' ? (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle' }}>
       <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
     </svg>
@@ -909,28 +910,44 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle' }}>
       <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
     </svg>
-  )
+  )) : null
 
-  const label = dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'
+  const spicyIcon = hasSpicy ? (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5722" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle' }}>
+      <path d="M12 3 C13 1 15 2 15 4"/>
+      <path d="M12 4 C10 5 8 8 8 12 C8 16 10 19 12 20 C14 19 16 16 16 12 C16 8 14 5 12 4 Z"/>
+    </svg>
+  ) : null
+
+  const dietLabel = dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'
 
   return (
     <>
       {head && <>{head} </>}
       <span style={{ whiteSpace: 'nowrap' }}>
         {tail}
-        <span
-          onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000) }}
-          style={{ marginLeft: 6, position: 'relative', cursor: 'pointer', display: 'inline-block', verticalAlign: 'text-top' }}
-        >
-          {icon}
-          {showDietTooltip && (
-            <span style={{
-              position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
-              background: '#1b5e20', color: '#fff', fontSize: 12, fontWeight: 600,
-              padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', pointerEvents: 'none',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-            }}>
-              {label}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 6, verticalAlign: 'text-top' }}>
+          {hasDiet && (
+            <span
+              onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000) }}
+              style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex' }}
+            >
+              {dietIcon}
+              {showDietTooltip && (
+                <span style={{
+                  position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                  background: '#1b5e20', color: '#fff', fontSize: 12, fontWeight: 600,
+                  padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', pointerEvents: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}>
+                  {dietLabel}
+                </span>
+              )}
+            </span>
+          )}
+          {hasSpicy && (
+            <span title="Picante" style={{ display: 'inline-flex' }}>
+              {spicyIcon}
             </span>
           )}
         </span>
