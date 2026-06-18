@@ -34,6 +34,7 @@ const PROVIDER_COLORS: Record<string, string> = {
   Queresto: '#a78bfa',
   Gourmedia: '#f472b6',
   Toteat: '#fb923c',
+  InfluyeApp: '#34d399',
 }
 
 const LOCALSTORAGE_KEY = 'qc_mapa_places'
@@ -235,7 +236,7 @@ type ImportResult = {
 
 const EXTRACTABLE_PROVIDERS = new Set([
   'Justo', 'OlaClick', 'UberEats', 'Fudo', 'Mercat', 'Gourmedia',
-  'Rappi', 'Queresto', 'Toteat', 'Web propia',
+  'Rappi', 'Queresto', 'Toteat', 'InfluyeApp', 'Web propia',
 ])
 // PedidosYa bloquea scraping con 403 + CAPTCHA — no extractable
 const BLOCKED_PROVIDERS = new Set(['PedidosYa'])
@@ -345,6 +346,7 @@ function TabMapa() {
       : u.includes('toteat.app') ? 'Toteat'
       : u.includes('mer-cat.com') || u.includes('mercat') ? 'Mercat'
       : u.includes('queresto.com') ? 'Queresto'
+      : u.includes('influye.app') || u.includes('influyeapp') ? 'InfluyeApp'
       : 'Web propia'
     const result: ProspectoResult = {
       id: placeId,
@@ -943,7 +945,7 @@ function TabMapa() {
                           onBlur={() => setEditingProviderId(null)}
                           style={{ fontSize: 10, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: '1px 4px' }}
                         >
-                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Queresto','Toteat','Web propia'].map(p => (
+                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Queresto','Toteat','InfluyeApp','Web propia'].map(p => (
                             <option key={p} value={p}>{p}</option>
                           ))}
                         </select>
@@ -969,7 +971,7 @@ function TabMapa() {
                           onBlur={() => setEditingProviderId(null)}
                           style={{ fontSize: 10, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4, padding: '1px 4px' }}
                         >
-                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Queresto','Toteat','Web propia'].map(pv => (
+                          {['UberEats','Justo','Rappi','PedidosYa','Mercat','Gourmedia','OlaClick','Fudo','Queresto','Toteat','InfluyeApp','Web propia'].map(pv => (
                             <option key={pv} value={pv}>{pv}</option>
                           ))}
                         </select>
