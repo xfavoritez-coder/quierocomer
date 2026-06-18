@@ -70,14 +70,14 @@ export default function ViewSelectorCompact({ restaurantId, plan, defaultView }:
         onClick={handleToggle}
         aria-label="Cambiar vista"
         style={{
-          width: 38, height: 38, borderRadius: "50%",
+          width: 42, height: 42, borderRadius: "50%",
           background: "var(--carta-search-bg)",
           display: "flex", alignItems: "center", justifyContent: "center",
           border: "none", cursor: "pointer", position: "relative", zIndex: 10,
           color: "var(--carta-text2, rgba(255,255,255,0.7))",
         }}
       >
-        <ActiveIcon size={15} strokeWidth={1.75} />
+        <ActiveIcon size={18} strokeWidth={1.75} />
       </button>
 
       {open && (

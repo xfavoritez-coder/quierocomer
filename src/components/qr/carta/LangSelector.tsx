@@ -53,13 +53,13 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
         ref={btnRef}
         onClick={handleToggle}
         style={{
-          width: 32, height: 32, borderRadius: "50%",
+          width: 42, height: 42, borderRadius: "50%",
           background: "var(--carta-search-bg)",
           display: "flex", alignItems: "center", justifyContent: "center",
           border: "none", cursor: "pointer", fontSize: "0.95rem", position: "relative", zIndex: 10,
         }}
       >
-        <FlagSvg code={lang} size={20} />
+        <FlagSvg code={lang} size={23} />
       </button>
 
       {open && (
