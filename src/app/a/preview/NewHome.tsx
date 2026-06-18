@@ -137,14 +137,12 @@ export default function NewHome({
   const [quickPopular, setQuickPopular] = useState(false)
   const [filterMaxKm, setFilterMaxKm] = useState(5)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
-  const [filterCategories, setFilterCategories] = useState<Set<string>>(new Set())
   // Draft state — se usan dentro del panel, solo se aplican al hacer "Guardar cambios"
   const [draftMeal, setDraftMeal] = useState(filterMeal)
   const [draftMealDisplay, setDraftMealDisplay] = useState(filterMealDisplay)
   const [draftSort, setDraftSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
   const [draftMaxKm, setDraftMaxKm] = useState(filterMaxKm)
   const [draftDiet, setDraftDiet] = useState(filterDiet)
-  const [draftCategories, setDraftCategories] = useState<Set<string>>(new Set())
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   // Track if user explicitly changed filterMaxKm from the modal (vs auto-set by GPS)
   const userSetMaxKm = useRef(false)
@@ -183,7 +181,9 @@ export default function NewHome({
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [showDistancePicker])
-  const [shuffleSeed, setShuffleSeed] = useState(() => Math.random())
+  // Stable seed on server (avoids hydration mismatch), randomized after mount
+  const [shuffleSeed, setShuffleSeed] = useState(1)
+  useEffect(() => { setShuffleSeed(Math.random()) }, [])
 
   // Profile for DishModal — refreshable
   const [liveProfile, setLiveProfile] = useState<FeedProfile | null>(null)
@@ -475,7 +475,7 @@ export default function NewHome({
   // Determine if any filter requires a server fetch
   const needsServerFetch = !!(
     searchQuery || activeCategory || filterDiet !== 'all' ||
-    filterCategories.size > 0 || locationName ||
+    locationName ||
     (filterMaxKm < 30 && userLocation) || quickPopular
   )
 
@@ -496,14 +496,13 @@ export default function NewHome({
         diet: filterDiet,
         // Si hay búsqueda activa, ignorar filtro de distancia — el usuario busca algo específico
         maxKm: searchQuery ? undefined : filterMaxKm,
-        categories: [...filterCategories],
         locationName,
         lat: userLocation?.lat,
         lng: userLocation?.lng,
       })
     }, delay)
     return () => { if (searchFetchRef.current) clearTimeout(searchFetchRef.current) }
-  }, [searchQuery, activeCategory, filterDiet, filterCategories, filterMeal, filterMaxKm, locationName, userLocation, quickPopular, needsServerFetch, fetchServerDishes])
+  }, [searchQuery, activeCategory, filterDiet, filterMeal, filterMaxKm, locationName, userLocation, quickPopular, needsServerFetch, fetchServerDishes])
 
   // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {
@@ -516,7 +515,6 @@ export default function NewHome({
       const matchesCategory = (d: (typeof filtered)[0], cat: string) =>
         (d.categoriaParent ?? d.categoriaNorm) === cat || d.categoriaNorm === cat || d.cuisineTag === cat
       if (activeCategory) filtered = filtered.filter(d => matchesCategory(d, activeCategory))
-      else if (filterCategories.size > 0) filtered = filtered.filter(d => [...filterCategories].some(cat => matchesCategory(d, cat)))
       if (filterDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
       else if (filterDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
     }
@@ -600,7 +598,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [serverDishes, dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
+  }, [serverDishes, dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
 
   // ─── Modal allDishes snapshot — frozen when dish opens, immune to GPS reordering ──
   if (selectedDish) {
@@ -651,9 +649,8 @@ export default function NewHome({
     if (draftMeal !== 'all') filtered = filtered.filter(d => d.mealTime === draftMeal)
     if (draftDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
     else if (draftDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
-    if (draftCategories.size > 0) filtered = filtered.filter(d => draftCategories.has(d.categoriaNorm))
     return filtered.length
-  }, [dishes, serverDishes, userLocation, draftMaxKm, draftMeal, draftDiet, draftCategories])
+  }, [dishes, serverDishes, userLocation, draftMaxKm, draftMeal, draftDiet])
 
   // Infinite scroll — IntersectionObserver sobre sentinel al final del feed
   useEffect(() => {
@@ -782,7 +779,7 @@ export default function NewHome({
 
 
   // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
-  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm !== 5 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
+  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm !== 5 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0)
 
   // Pills helpers — usados tanto en Row 3 como en el floating header
   const openFilters = () => {
@@ -791,7 +788,6 @@ export default function NewHome({
     setDraftDiet(filterDiet)
     setDraftMeal(filterMeal)
     setDraftMealDisplay(filterMealDisplay)
-    setDraftCategories(new Set(filterCategories))
     setFilterOpen(true)
   }
   type PillType = 'nearby' | 'popular' | 'green' | 'default'
@@ -838,7 +834,7 @@ export default function NewHome({
               style={{
                 width: '100%', padding: '9px 34px 9px 16px', borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                border: isDark ? '1px solid rgba(255,255,255,0.1)' : '2px solid rgba(0,0,0,0.07)',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -959,7 +955,7 @@ export default function NewHome({
 
         {/* Row 2: Search bar */}
         {(() => {
-          const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 5 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
+          const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 5 || filterDiet !== 'all' || !!activeCategory
           return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
         <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
@@ -979,8 +975,8 @@ export default function NewHome({
               width: '100%', padding: '12px 20px 12px 24px', fontSize: 17,
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
+              border: isDark ? '1px solid rgba(255,255,255,0.10)' : '2px solid rgba(0,0,0,0.07)',
+              boxShadow: 'none',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -1216,8 +1212,8 @@ export default function NewHome({
                 width: '100%', padding: '12px 38px 12px 24px',
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
+                border: isDark ? '1px solid rgba(255,255,255,0.10)' : '2px solid rgba(0,0,0,0.07)',
+                boxShadow: 'none',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -1378,47 +1374,6 @@ export default function NewHome({
               </div>
             </div>
 
-            {/* Categorías */}
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Categorías
-                </h3>
-                {draftCategories.size > 0 && (
-                  <button onClick={() => setDraftCategories(new Set())} style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    Limpiar
-                  </button>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {QC_PARENTS
-                  .filter(cat => (categoryCountMap[cat] ?? 0) > 0)
-                  .sort((a, b) => (categoryCountMap[b] ?? 0) - (categoryCountMap[a] ?? 0))
-                  .map(cat => {
-                    const active = draftCategories.has(cat)
-                    const count = categoryCountMap[cat] ?? 0
-                    return (
-                      <button key={cat} onClick={() => {
-                        const next = new Set(draftCategories)
-                        if (active) next.delete(cat)
-                        else next.add(cat)
-                        setDraftCategories(next)
-                      }} style={{
-                        border: active ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                        borderRadius: 14, padding: '8px 14px',
-                        background: active ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                        color: active ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                        fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                      }}>
-                        {cat}
-                        <span style={{ fontSize: 11, color: active ? '#c97d00' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)' }}>({count})</span>
-                      </button>
-                    )
-                  })
-                }
-              </div>
-            </div>
-
             {/* Momento */}
             <div style={{ marginBottom: 22 }}>
               <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -1513,7 +1468,6 @@ export default function NewHome({
               setFilterDiet(draftDiet)
               setFilterMeal(draftMeal)
               setFilterMealDisplay(draftMealDisplay)
-              setFilterCategories(new Set(draftCategories))
               setFilterOpen(false)
               setShuffleSeed(Math.random())
               window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1530,13 +1484,11 @@ export default function NewHome({
               setFilterDiet('all')
               setFilterMeal('all')
               setFilterMealDisplay('all')
-              setFilterCategories(new Set())
               setDraftSort('default')
               setDraftMaxKm(30)
               setDraftDiet('all')
               setDraftMeal('all')
               setDraftMealDisplay('all')
-              setDraftCategories(new Set())
               setFilterOpen(false)
               setShuffleSeed(Math.random())
               window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1834,7 +1786,6 @@ export default function NewHome({
                   setSearchQuery('')
                   setSearchInput('')
                   setActiveCategory(null)
-                  setFilterCategories(new Set())
                   setFilterDiet('all')
                   setServerDishes(null)
                   window.history.replaceState({}, '', '/')
@@ -2033,19 +1984,21 @@ export default function NewHome({
 
 // ─── Swipe narrowing helpers (module-level — no hooks) ────────────────────────
 // Prefixes: t=tipo, c=categoría, k=cocina, s=sabor, i=ingrediente, d=dieta, h=horario
+// categoriaNorm solo se incluye cuando no hay txDishType — evita que la categoría
+// "infle" platos genéricos de la misma sección tras un swipe específico (ej: tiradito → ceviches)
 function _swipeDims(dish: FeedDish): string[] {
   const types = dish.txDishType ?? []
   const ingredients = dish.txIngredient ?? []
   const primaryType = types.length > 0 ? getPrimaryDishType(types, '') : ''
   return [
-    `c:${dish.categoriaNorm}`,
+    types.length === 0 ? `c:${dish.categoriaNorm}` : '', // fallback si no hay tipo
     dish.cuisineTag ? `k:${dish.cuisineTag}` : '',
     `d:${dish.dieta.tipo}`,
     `h:${dish.mealTime}`,
     ...dish.sabores.map(s => `s:${s}`),
-    ...types.map(t => `t:${t}`),          // todos los tipos: 1x
-    primaryType ? `t:${primaryType}` : '', // tipo principal extra #1: 2x total
-    primaryType ? `t:${primaryType}` : '', // tipo principal extra #2: 3x total
+    ...types.map(t => `t:${t}`),           // todos los tipos: 1x
+    primaryType ? `t:${primaryType}` : '',  // tipo principal extra #1: 2x total
+    primaryType ? `t:${primaryType}` : '',  // tipo principal extra #2: 3x total
     ...ingredients.map(i => `i:${i}`),
   ].filter(Boolean)
 }
