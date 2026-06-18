@@ -1301,12 +1301,6 @@ export default function CartaImpact({
         <ImpactMenuSwitcher menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} accent={(restaurant as any).cartaAccentColor || "var(--carta-accent, #F4A623)"} />
       )}
 
-      {/* Announcement / Happy Hour banner — inside fixed header so it's always at the top */}
-      {!showFixedCatNav && (announcements && announcements.length > 0 ? (
-        <AnnouncementBanner announcements={announcements} />
-      ) : hasActiveHH ? (
-        <HappyHourBanner happyHours={happyHours || []} />
-      ) : null)}
 
       {/* Fixed category nav — appears when menu section reaches header */}
       {showFixedCatNav && (
@@ -1397,6 +1391,13 @@ export default function CartaImpact({
           enabledLangs={enabledLangs}
         />
       </div>
+
+      {/* Announcement / Happy Hour banner — below hero, above content (like lista/galeria) */}
+      {announcements && announcements.length > 0 ? (
+        <AnnouncementBanner announcements={announcements} />
+      ) : hasActiveHH ? (
+        <HappyHourBanner happyHours={happyHours || []} />
+      ) : null}
 
       {/* Mood / "Que se te antoja?" */}
       <MoodSection
