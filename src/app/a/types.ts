@@ -13,6 +13,7 @@ export type FeedDish = {
   categoriaTipo: string    // "food" | "drink" | "dessert"
   sabores: string[]        // Dish.flavorTags
   txDishType?: string[]    // AI taxonomy dish type (ej: "empanada", "pizza", "completo")
+  txIngredient?: string[]  // AI taxonomy main ingredient (ej: "pollo", "cerdo", "salmon")
   dieta: {
     tipo: 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE'
     sinGluten: boolean

@@ -1950,109 +1950,103 @@ export default function NewHome({
       </div>{/* end main content */}
 
       {/* ─── Swipe debug panel ─── */}
-      {swipedIds.size > 0 && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9998,
-          background: 'rgba(0,0,0,0.92)', borderTop: '1px solid rgba(255,255,255,0.1)',
-          fontFamily: 'monospace', fontSize: 11, color: '#fff',
-        }}>
-          {/* Header — always visible, click to toggle */}
-          <div
-            onClick={() => setDebugMinimized(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', cursor: 'pointer', userSelect: 'none' }}
-          >
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
-              🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos
-            </p>
-            <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
-              {debugMinimized ? '▲' : '▼'}
-            </span>
-          </div>
-          {/* Body — hidden when minimized */}
-          {!debugMinimized && (
-            <div style={{ maxHeight: 180, overflowY: 'auto', padding: '0 14px 14px' }}>
-              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                {Object.keys(swipeLikeFreq).length > 0 && (
-                  <div>
-                    <p style={{ margin: '0 0 4px', color: '#F4A623', fontWeight: 700 }}>LIKES ✓</p>
-                    {Object.entries(swipeLikeFreq)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([dim, n]) => (
-                        <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
-                          <span style={{ color: n >= 2 ? '#F4A623' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
-                          <div style={{ height: 4, borderRadius: 2, background: '#F4A623', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
-                        </div>
-                      ))}
-                  </div>
-                )}
-                {Object.keys(swipeDislikeFreq).length > 0 && (
-                  <div>
-                    <p style={{ margin: '0 0 4px', color: '#ef4444', fontWeight: 700 }}>DISLIKES ✕</p>
-                    {Object.entries(swipeDislikeFreq)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([dim, n]) => (
-                        <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
-                          <span style={{ color: n >= 2 ? '#ef4444' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
-                          <div style={{ height: 4, borderRadius: 2, background: '#ef4444', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
-                        </div>
-                      ))}
-                  </div>
-                )}
-                {(Object.keys(swipeLikeFreq).length > 0 || Object.keys(swipeDislikeFreq).length > 0) && (() => {
-                  const allDims = new Set([...Object.keys(swipeLikeFreq), ...Object.keys(swipeDislikeFreq)])
-                  const net = Array.from(allDims)
-                    .map(dim => ({ dim, score: (swipeLikeFreq[dim] ?? 0) - (swipeDislikeFreq[dim] ?? 0) * 2 }))
-                    .filter(x => x.score !== 0)
-                    .sort((a, b) => b.score - a.score)
-                  if (net.length === 0) return null
-                  const maxAbs = Math.max(...net.map(x => Math.abs(x.score)))
+      {swipedIds.size > 0 && (() => {
+        const PREFIX_LABEL: Record<string, string> = {
+          t: 'Tipo', c: 'Categoría', k: 'Cocina', s: 'Sabor', i: 'Ingrediente', d: 'Dieta', h: 'Horario',
+        }
+        const allKeys = new Set([...Object.keys(swipeLikeFreq), ...Object.keys(swipeDislikeFreq)])
+        // Group net scores by prefix
+        const groups: Record<string, Array<{ label: string; score: number; likes: number; dislikes: number }>> = {}
+        for (const key of allKeys) {
+          const [prefix, ...rest] = key.split(':')
+          const label = rest.join(':')
+          const likes = swipeLikeFreq[key] ?? 0
+          const dislikes = swipeDislikeFreq[key] ?? 0
+          const score = likes - dislikes * 2
+          const groupName = PREFIX_LABEL[prefix] ?? prefix
+          if (!groups[groupName]) groups[groupName] = []
+          groups[groupName].push({ label, score, likes, dislikes })
+        }
+        const groupOrder = ['Tipo', 'Categoría', 'Cocina', 'Ingrediente', 'Sabor', 'Dieta', 'Horario']
+        const sortedGroups = groupOrder.filter(g => groups[g])
+        const maxAbs = Math.max(1, ...Object.values(groups).flat().map(x => Math.abs(x.score)))
+        return (
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9998,
+            background: 'rgba(0,0,0,0.92)', borderTop: '1px solid rgba(255,255,255,0.1)',
+            fontFamily: 'monospace', fontSize: 11, color: '#fff',
+          }}>
+            <div
+              onClick={() => setDebugMinimized(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
+                🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos
+              </p>
+              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
+                {debugMinimized ? '▲' : '▼'}
+              </span>
+            </div>
+            {!debugMinimized && (
+              <div style={{ maxHeight: 220, overflowY: 'auto', padding: '0 14px 14px', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                {sortedGroups.map(groupName => {
+                  const entries = [...groups[groupName]].sort((a, b) => b.score - a.score)
                   return (
-                    <div>
-                      <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>NETO →</p>
-                      {net.map(({ dim, score }) => (
-                        <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ color: score > 0 ? '#F4A623' : '#ef4444', minWidth: 22, textAlign: 'right', fontWeight: 700 }}>
+                    <div key={groupName} style={{ minWidth: 120 }}>
+                      <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 10, letterSpacing: '0.05em' }}>
+                        {groupName.toUpperCase()}
+                      </p>
+                      {entries.map(({ label, score, likes, dislikes }) => (
+                        <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2 }}>
+                          <span style={{
+                            color: score > 0 ? '#F4A623' : score < 0 ? '#ef4444' : 'rgba(255,255,255,0.3)',
+                            minWidth: 24, textAlign: 'right', fontWeight: 700,
+                          }}>
                             {score > 0 ? `+${score}` : score}
                           </span>
-                          <span style={{ color: score > 0 ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.5)' }}>{dim}</span>
+                          <span style={{ color: score > 0 ? 'rgba(255,255,255,0.85)' : score < 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)' }}>
+                            {label}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>
+                            {likes > 0 ? `✓${likes}` : ''}{dislikes > 0 ? ` ✕${dislikes}` : ''}
+                          </span>
                           <div style={{
-                            height: 4, borderRadius: 2,
+                            height: 3, borderRadius: 2, flexShrink: 0,
                             background: score > 0 ? '#F4A623' : '#ef4444',
-                            width: Math.abs(score) / maxAbs * 60,
-                            opacity: 0.7,
+                            width: score !== 0 ? Math.abs(score) / maxAbs * 48 : 0,
+                            opacity: 0.6,
                           }} />
                         </div>
                       ))}
                     </div>
                   )
-                })()}
+                })}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )
+      })()}
 
     </div>
   )
 }
 
 // ─── Swipe narrowing helpers (module-level — no hooks) ────────────────────────
+// Prefixes: t=tipo, c=categoría, k=cocina, s=sabor, i=ingrediente, d=dieta, h=horario
 function _swipeDims(dish: FeedDish): string[] {
   const types = dish.txDishType ?? []
-  // Tipo primario 3x: en ...types (1x) + 2 extras
-  // Categoría principal 1x: solo categoriaNorm (sin categoriaParent)
+  const ingredients = dish.txIngredient ?? []
   const primaryType = types.length > 0 ? getPrimaryDishType(types, '') : ''
   return [
-    dish.categoriaNorm,
-    dish.cuisineTag ?? '',
-    dish.dieta.tipo,
-    dish.mealTime,
-    ...dish.sabores,
-    ...types,        // todos los tipos: 1x
-    primaryType,     // tipo principal extra #1: 2x total
-    primaryType,     // tipo principal extra #2: 3x total
+    `c:${dish.categoriaNorm}`,
+    dish.cuisineTag ? `k:${dish.cuisineTag}` : '',
+    `d:${dish.dieta.tipo}`,
+    `h:${dish.mealTime}`,
+    ...dish.sabores.map(s => `s:${s}`),
+    ...types.map(t => `t:${t}`),          // todos los tipos: 1x
+    primaryType ? `t:${primaryType}` : '', // tipo principal extra #1: 2x total
+    primaryType ? `t:${primaryType}` : '', // tipo principal extra #2: 3x total
+    ...ingredients.map(i => `i:${i}`),
   ].filter(Boolean)
 }
 
