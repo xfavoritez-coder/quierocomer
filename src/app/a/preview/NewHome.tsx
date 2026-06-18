@@ -405,6 +405,7 @@ export default function NewHome({
   }, [searchInput, dishSearchIndex, ALL_QC_TERMS])
 
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
 
   const executeSearch = useCallback((query: string) => {
     const trimmed = query.trim()
@@ -900,8 +901,8 @@ export default function NewHome({
             className="feed-search-input"
             type="text" value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onFocus={() => { setShowSuggestions(true); setSearchFocused(true) }}
+            onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
@@ -909,6 +910,7 @@ export default function NewHome({
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+              boxShadow: searchFocused ? 'none' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)'),
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -1136,6 +1138,8 @@ export default function NewHome({
               type="search"
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               placeholder="Buscar en QuieroComer"
               className="feed-floating-input"
               style={{
@@ -1143,7 +1147,7 @@ export default function NewHome({
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                boxShadow: 'none',
+                boxShadow: searchFocused ? 'none' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.10)'),
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
