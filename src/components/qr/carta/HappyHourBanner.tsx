@@ -75,7 +75,6 @@ export function applyHappyHourPrices(dishes: any[], hh: any): any[] {
       newPrice = Math.round(d.price * (1 - hh.discountValue / 100));
     }
 
-    // Only apply if it's actually a discount
     if (newPrice >= d.price) return d;
 
     return {
@@ -173,58 +172,46 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
 
   const c = active.bannerColor;
 
+  // Hex color → rgba for gradient
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
+  const cRgba20 = hexToRgba(c, 0.20);
+
   return (
-    <div style={{ padding: "12px 12px 0", position: "relative", zIndex: 15 }}>
+    <div style={{ padding: "10px 12px 0", position: "relative", zIndex: 15 }}>
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "12px 14px",
-          border: `1px solid ${c}a5`,
-          borderRadius: 18,
-          background: `
-            radial-gradient(circle at left, ${c}2e, transparent 40%),
-            linear-gradient(135deg, #15100b, #080808)
-          `,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+          borderRadius: 16,
+          border: `1px solid ${c}88`,
+          background: `linear-gradient(135deg, ${cRgba20} 0%, #080808 60%)`,
+          padding: "13px 16px",
+          textAlign: "center",
         }}
       >
-        {/* Icon */}
-        <div style={{
-          width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
-          background: `${c}24`,
-          display: "grid", placeItems: "center",
-          color: c,
-          fontSize: "1.2rem",
+        <strong style={{
+          display: "block",
+          fontSize: "0.88rem",
+          fontWeight: 700,
+          color: "#fff",
+          lineHeight: 1.4,
         }}>
-          ⏰
-        </div>
-
-        {/* Copy */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{
-            display: "block",
-            fontSize: "0.92rem",
-            fontWeight: 750,
-            color: "#fff",
-            lineHeight: 1.3,
+          {bannerText}
+        </strong>
+        {countdown && (
+          <span style={{
+            display: "inline-block",
+            marginTop: 6,
+            fontSize: "0.72rem",
+            color: "rgba(255,255,255,0.6)",
           }}>
-            {bannerText}
-          </strong>
-          {countdown && (
-            <span style={{
-              display: "block",
-              marginTop: 4,
-              fontSize: "0.75rem",
-              color: "rgba(255,255,255,0.68)",
-            }}>
-              Termina en{" "}
-              <b style={{ color: c, fontWeight: 800 }}>{countdown}</b>
-            </span>
-          )}
-        </div>
+            Termina en <b style={{ color: c, fontWeight: 800 }}>{countdown}</b>
+          </span>
+        )}
       </div>
     </div>
   );

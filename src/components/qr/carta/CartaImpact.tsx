@@ -828,6 +828,8 @@ export default function CartaImpact({
   const menuAnchorRef = useRef<HTMLDivElement>(null);
   const fixedChipsRef = useRef<HTMLDivElement>(null);
   const fixedActiveChipRef = useRef<HTMLButtonElement>(null);
+  const impactHeaderRef = useRef<HTMLElement>(null);
+  const [impactHeaderH, setImpactHeaderH] = useState(65);
   const [fixedChipsScrolled, setFixedChipsScrolled] = useState(false);
 
   // Auto-scroll fixed nav to active chip
@@ -858,6 +860,16 @@ export default function CartaImpact({
     window.addEventListener("scroll", check, { passive: true });
     return () => window.removeEventListener("scroll", check);
   }, []);
+  // Measure real header height (includes safe-area-inset-top on iPhone)
+  useEffect(() => {
+    const el = impactHeaderRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(() => setImpactHeaderH(el.offsetHeight));
+    obs.observe(el);
+    setImpactHeaderH(el.offsetHeight);
+    return () => obs.disconnect();
+  }, []);
+
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   useEffect(() => {
@@ -1207,7 +1219,7 @@ export default function CartaImpact({
 
       {/* Happy Hour banner */}
       {/* Fixed top nav */}
-      <header style={{
+      <header ref={impactHeaderRef} style={{
         position: (restaurant as any).isDemo ? "relative" : "fixed",
         top: (restaurant as any).isDemo ? undefined : 0,
         left: (restaurant as any).isDemo ? undefined : 0,
@@ -1289,6 +1301,13 @@ export default function CartaImpact({
         <ImpactMenuSwitcher menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} accent={(restaurant as any).cartaAccentColor || "var(--carta-accent, #F4A623)"} />
       )}
 
+      {/* Announcement / Happy Hour banner — inside fixed header so it's always at the top */}
+      {!showFixedCatNav && (announcements && announcements.length > 0 ? (
+        <AnnouncementBanner announcements={announcements} />
+      ) : hasActiveHH ? (
+        <HappyHourBanner happyHours={happyHours || []} />
+      ) : null)}
+
       {/* Fixed category nav — appears when menu section reaches header */}
       {showFixedCatNav && (
         <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4 }}>
@@ -1362,19 +1381,8 @@ export default function CartaImpact({
         </div>
       )}
 
-      {/* Announcement banner takes priority over happy hour */}
-      {announcements && announcements.length > 0 ? (
-        <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 12 }}>
-          <AnnouncementBanner announcements={announcements} />
-        </div>
-      ) : hasActiveHH ? (
-        <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 12 }}>
-          <HappyHourBanner happyHours={happyHours || []} />
-        </div>
-      ) : null}
-
       {/* Hero */}
-      <div style={{ position: "relative", zIndex: 1, marginTop: (hasActiveHH || (announcements && announcements.length > 0)) ? 0 : 65 }}>
+      <div style={{ position: "relative", zIndex: 1, marginTop: impactHeaderH }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
           restaurant={restaurant}
