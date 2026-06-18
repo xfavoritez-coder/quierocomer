@@ -1219,17 +1219,8 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Spacer = altura total del wrapper fijo */}
-      <div style={{ height: impactHeaderH }} />
-
-      {/* Wrapper fixed: banner arriba + nav abajo, medidos juntos */}
-      <div ref={impactHeaderRef} style={{
-        position: (restaurant as any).isDemo ? "relative" : "fixed",
-        top: 0,
-        left: (restaurant as any).isDemo ? undefined : 0,
-        right: (restaurant as any).isDemo ? undefined : 0,
-        zIndex: 40,
-      }}>
+      {/* Wrapper: banner + nav en flujo normal (no fixed) */}
+      <div ref={impactHeaderRef} style={{ position: "relative", zIndex: 40 }}>
         {/* Banner al tope absoluto */}
         {hasBannerActive && !showFixedCatNav && (
           <div style={{ marginBottom: 8 }}>
@@ -1242,14 +1233,7 @@ export default function CartaImpact({
       {/* Nav: logo + botones */}
       <header style={{
         padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
-        marginBottom: (restaurant as any).isDemo ? -56 : undefined,
-        background: (restaurant as any).isDemo
-          ? "var(--impact-header-solid, rgba(3,3,3,0.92))"
-          : showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, var(--impact-header-grad-start, rgba(0,0,0,0.8)), var(--impact-header-grad-mid, rgba(0,0,0,0.4)), transparent)",
-        backdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
-        WebkitBackdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
         pointerEvents: "auto",
-        transition: "background 0.3s ease",
       }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
