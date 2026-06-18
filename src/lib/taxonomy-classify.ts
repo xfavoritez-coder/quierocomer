@@ -167,8 +167,8 @@ JSON respuesta exacta (usa los IDs tal como están):
 }
 
 /**
- * Clasifica un batch de platos con Claude.
- * Lanza error si falla la llamada a la API.
+ * Clasifica un batch de platos con Claude. Reintenta hasta 3 veces con backoff
+ * exponencial en errores 429/529 (rate limit / overloaded).
  */
 export async function classifyDishes(
   dishes: DishTaxonomyInput[],
@@ -179,42 +179,57 @@ export async function classifyDishes(
   if (dishes.length === 0) return {};
 
   const prompt = buildPrompt(dishes, restaurantName);
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      messages: [{ role: "user", content: prompt }],
-    }),
+  const body = JSON.stringify({
+    model: "claude-sonnet-4-6",
+    max_tokens: 8000,
+    messages: [{ role: "user", content: prompt }],
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Anthropic API error: ${err}`);
-  }
-
-  const data = await response.json();
-  const text: string = data.content?.[0]?.text ?? "";
-
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error(`No JSON in Claude response: ${text.slice(0, 200)}`);
-
-  const result = JSON.parse(jsonMatch[0]) as Record<string, DishTaxonomy>;
-
-  // Post-proceso: restaurante vegano → VEGETARIAN → VEGAN (OMNIVORE se respeta si Claude detectó carne real)
-  if (restaurantName && /vegan/i.test(restaurantName)) {
-    for (const tax of Object.values(result)) {
-      if (tax.diet === "VEGETARIAN") tax.diet = "VEGAN";
+  let lastErr = "";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      const wait = Math.min(8000 * 2 ** (attempt - 1), 40000); // 8s, 16s, 32s
+      console.log(`[taxonomy] retry ${attempt} after ${wait}ms`);
+      await new Promise(r => setTimeout(r, wait));
     }
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      lastErr = await response.text();
+      // 429 Rate limit / 529 Overloaded → retry
+      if (status === 429 || status === 529) continue;
+      throw new Error(`Anthropic API error ${status}: ${lastErr}`);
+    }
+
+    const data = await response.json();
+    const text: string = data.content?.[0]?.text ?? "";
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error(`No JSON in Claude response: ${text.slice(0, 200)}`);
+
+    const result = JSON.parse(jsonMatch[0]) as Record<string, DishTaxonomy>;
+
+    // Post-proceso: restaurante vegano → VEGETARIAN → VEGAN (OMNIVORE se respeta si Claude detectó carne real)
+    if (restaurantName && /vegan/i.test(restaurantName)) {
+      for (const tax of Object.values(result)) {
+        if (tax.diet === "VEGETARIAN") tax.diet = "VEGAN";
+      }
+    }
+
+    return result;
   }
 
-  return result;
+  throw new Error(`Anthropic API error tras 4 intentos: ${lastErr}`);
 }
 
 /**

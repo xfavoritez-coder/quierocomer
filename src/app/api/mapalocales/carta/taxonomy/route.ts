@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
       category: d.category.name,
     }))
 
-    // Paralelo: batches de 30, hasta 4 simultáneos → ~25s para cualquier carta
-    const taxonomy = await classifyDishesBatched(inputs, 30, 4, restaurant.name)
+    // Paralelo: batches de 30, hasta 2 simultáneos (4 causa 529 en cartas grandes)
+    const taxonomy = await classifyDishesBatched(inputs, 30, 2, restaurant.name)
     // Una sola transacción = 1 conexión, N queries en bloque
     await prisma.$transaction(
       Object.entries(taxonomy).map(([dishId, dims]) =>
