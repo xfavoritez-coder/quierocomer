@@ -182,7 +182,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
   const cRgba20 = hexToRgba(c, 0.20);
 
   return (
-    <div style={{ padding: "10px 12px 0", position: "relative", zIndex: 15 }}>
+    <div style={{ padding: "calc(8px + env(safe-area-inset-top)) 12px 0", position: "relative", zIndex: 15 }}>
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{

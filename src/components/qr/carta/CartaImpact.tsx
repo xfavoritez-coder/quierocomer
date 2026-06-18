@@ -1227,7 +1227,7 @@ export default function CartaImpact({
         zIndex: 40,
         transform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
         WebkitTransform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
-        padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
+        padding: (announcements?.length || hasActiveHH) ? "0 0 0" : "calc(10px + env(safe-area-inset-top)) 16px 0",
         marginBottom: (restaurant as any).isDemo ? -56 : undefined,
         background: (restaurant as any).isDemo
           ? "var(--impact-header-solid, rgba(3,3,3,0.92))"
@@ -1237,7 +1237,14 @@ export default function CartaImpact({
         pointerEvents: "auto",
         transition: "background 0.3s ease",
       }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
+      {/* Banner — absolute top of the page, above logo/name */}
+      {!showFixedCatNav && (announcements && announcements.length > 0 ? (
+        <AnnouncementBanner announcements={announcements} />
+      ) : hasActiveHH ? (
+        <HappyHourBanner happyHours={happyHours || []} />
+      ) : null)}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: (announcements?.length || hasActiveHH) ? "8px 16px 10px" : "0 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {(restaurant as any).logoUrl ? (
             <img
@@ -1391,13 +1398,6 @@ export default function CartaImpact({
           enabledLangs={enabledLangs}
         />
       </div>
-
-      {/* Announcement / Happy Hour banner — below hero, above content (like lista/galeria) */}
-      {announcements && announcements.length > 0 ? (
-        <AnnouncementBanner announcements={announcements} />
-      ) : hasActiveHH ? (
-        <HappyHourBanner happyHours={happyHours || []} />
-      ) : null}
 
       {/* Mood / "Que se te antoja?" */}
       <MoodSection

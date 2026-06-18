@@ -44,7 +44,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
   );
 
   return (
-    <div style={{ padding: "10px 12px 0", position: "relative", zIndex: 15 }}>
+    <div style={{ padding: "calc(8px + env(safe-area-inset-top)) 12px 0", position: "relative", zIndex: 15 }}>
       <div
         style={{
           position: "relative",
