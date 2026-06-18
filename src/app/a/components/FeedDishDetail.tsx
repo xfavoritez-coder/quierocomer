@@ -903,7 +903,7 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
         {tail}
         <span
           onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000) }}
-          style={{ marginLeft: 6, position: 'relative', cursor: 'pointer', display: 'inline-block', verticalAlign: 'middle' }}
+          style={{ marginLeft: 6, position: 'relative', cursor: 'pointer', display: 'inline-block', verticalAlign: 'text-top' }}
         >
           {icon}
           {showDietTooltip && (
