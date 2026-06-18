@@ -1139,7 +1139,7 @@ export default function NewHome({
               placeholder="Buscar en QuieroComer"
               className="feed-floating-input"
               style={{
-                width: '100%', padding: '12px 38px 12px 16px',
+                width: '100%', padding: '12px 38px 12px 24px',
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
