@@ -134,32 +134,59 @@ function extractImageUrl(item: any): string | null {
   return null;
 }
 
+/** Extrae Firebase config de un bloque de texto JS/HTML */
+function parseFirebaseConfigFromText(text: string): { apiKey: string; projectId: string; databaseURL?: string } | null {
+  const m = text.match(/apiKey\s*:\s*["'`]([^"'`]+)["'`][\s\S]{0,300}?projectId\s*:\s*["'`]([^"'`]+)["'`]/)
+         || text.match(/projectId\s*:\s*["'`]([^"'`]+)["'`][\s\S]{0,300}?apiKey\s*:\s*["'`]([^"'`]+)["'`]/);
+  if (m) {
+    const isApiKeyFirst = text.indexOf("apiKey") < text.indexOf("projectId");
+    const apiKey    = isApiKeyFirst ? m[1] : m[2];
+    const projectId = isApiKeyFirst ? m[2] : m[1];
+    const dbMatch = text.match(/databaseURL\s*:\s*["'`](https?:\/\/[^"'`]+)["'`]/);
+    return { apiKey, projectId, databaseURL: dbMatch?.[1] };
+  }
+  const jsonM = text.match(/"apiKey"\s*:\s*"([^"]+)"[\s\S]{0,300}?"projectId"\s*:\s*"([^"]+)"/);
+  if (jsonM) return { apiKey: jsonM[1], projectId: jsonM[2] };
+  return null;
+}
+
 /**
- * Extrae Firebase config del HTML del bundle JS de Toteat.
- * Firebase siempre inyecta su config públicamente (es necesario para el cliente).
+ * Extrae Firebase config del HTML y, si no está ahí, de los JS bundles enlazados.
+ * Toteat es una SPA Vue donde el config está en /js/app.*.js, no en el HTML.
  */
 async function extractFirebaseConfig(url: string): Promise<{ apiKey: string; projectId: string; databaseURL?: string } | null> {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
     const html = await res.text();
 
-    // Firebase config pattern: { apiKey: "...", authDomain: "...", projectId: "..." }
-    const m = html.match(/apiKey\s*:\s*["']([^"']+)["'][\s\S]{0,200}?projectId\s*:\s*["']([^"']+)["']/)
-           || html.match(/projectId\s*:\s*["']([^"']+)["'][\s\S]{0,200}?apiKey\s*:\s*["']([^"']+)["']/);
-    if (m) {
-      const isFirstApiKey = /apiKey/.test(html.slice(0, html.indexOf(m[1])));
-      const apiKey = isFirstApiKey ? m[1] : m[2];
-      const projectId = isFirstApiKey ? m[2] : m[1];
-      return { apiKey, projectId };
-    }
+    // 1. Buscar en el HTML directamente
+    const fromHtml = parseFirebaseConfigFromText(html);
+    if (fromHtml) return fromHtml;
 
-    // Alternative: JSON config blob
-    const jsonM = html.match(/"apiKey"\s*:\s*"([^"]+)"[\s\S]{0,200}?"projectId"\s*:\s*"([^"]+)"/);
-    if (jsonM) return { apiKey: jsonM[1], projectId: jsonM[2] };
+    // 2. Buscar en JS bundles enlazados (Toteat guarda el config en /js/app.*.js)
+    const scriptPaths = [...html.matchAll(/src=["']?(\/[^"'\s>]*\.js[^"'\s>]*)["']?/g)]
+      .map(m => m[1])
+      .filter(p => !p.includes("sw.js") && !p.includes("workbox"));
+
+    const base = new URL(url).origin;
+    const bundleUrls = scriptPaths.map(p => base + p);
+
+    for (const bundleUrl of bundleUrls) {
+      try {
+        const jRes = await fetch(bundleUrl, { signal: AbortSignal.timeout(8000) });
+        if (!jRes.ok) continue;
+        const js = await jRes.text();
+        const found = parseFirebaseConfigFromText(js);
+        if (found) {
+          console.log(`[Toteat] Firebase config found in bundle: ${bundleUrl.split("/").pop()}`);
+          return found;
+        }
+      } catch { continue; }
+    }
 
     return null;
   } catch { return null; }
@@ -236,9 +263,9 @@ async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionR
     headers: {
       Accept: "text/plain",
       "X-No-Cache": "true",
-      "X-Timeout": "35000",
+      "X-Timeout": "45000",
     },
-    signal: AbortSignal.timeout(38000),
+    signal: AbortSignal.timeout(55000),
   });
   if (!jinaRes.ok) throw new Error(`Jina failed: ${jinaRes.status}`);
   const content = await jinaRes.text();
@@ -248,7 +275,7 @@ async function tryJinaWithClaude(url: string, slug: string): Promise<ExtractionR
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(90000),
     headers: {
       "x-api-key": ANTHROPIC_API_KEY,
       "anthropic-version": "2023-06-01",
