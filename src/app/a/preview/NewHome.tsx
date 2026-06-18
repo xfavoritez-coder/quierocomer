@@ -911,7 +911,7 @@ export default function NewHome({
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-              boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
+              boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
               color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -972,7 +972,7 @@ export default function NewHome({
           flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
           width: 49, height: 49, borderRadius: '50%',
           background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-          boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
+          boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
           color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -1148,7 +1148,7 @@ export default function NewHome({
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
-                boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
+                boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -1168,7 +1168,7 @@ export default function NewHome({
             flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
             width: 49, height: 49, borderRadius: '50%',
             background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-            boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.10)',
+            boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
             color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
