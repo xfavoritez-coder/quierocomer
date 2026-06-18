@@ -18,7 +18,7 @@ import {
   updateTasteAction,
   getSavedDishIds,
 } from '../lib/feed-actions'
-import { QC_PARENTS } from '../lib/categories'
+import { QC_PARENTS, getPrimaryDishType } from '../lib/categories'
 import { slugify } from '@/lib/slugify'
 
 function normStr(s: string) {
@@ -2032,6 +2032,10 @@ export default function NewHome({
 
 // ─── Swipe narrowing helpers (module-level — no hooks) ────────────────────────
 function _swipeDims(dish: FeedDish): string[] {
+  const types = dish.txDishType ?? []
+  // El tipo primario (forma del plato) pesa 2x: si haces like a una empanada
+  // querés ver más empanadas, no solo más mariscos.
+  const primaryType = types.length > 0 ? getPrimaryDishType(types, '') : ''
   return [
     dish.categoriaNorm,
     dish.categoriaParent ?? '',
@@ -2039,7 +2043,8 @@ function _swipeDims(dish: FeedDish): string[] {
     dish.dieta.tipo,
     dish.mealTime,
     ...dish.sabores,
-    ...(dish.txDishType ?? []),
+    ...types,        // todos los tipos: 1x
+    primaryType,     // tipo principal extra: 2x total
   ].filter(Boolean)
 }
 

@@ -2,41 +2,11 @@
 
 import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 
-// Tipos de plato ordenados por prioridad: el que describe la FORMA del plato gana.
-// Cuando hay múltiples txDishType, mostramos el de mayor prioridad como principal.
-const DISH_TYPE_PRIORITY: string[] = [
-  'sushi','pizza','hamburguesa','empanada','pasta','taco','ramen','gyoza',
-  'sándwich','completo','arepa','causa','ceviche','tiradito','chorrillana',
-  'pastel de jaiba','pastel de choclo','lomo a lo pobre','lomo saltado','ají de gallina',
-  'sopaipilla','chupe','cazuela','sopa','bowl','ensalada','waffle','pancake','crepe','omelet',
-  'torta','helado','brownie','cheesecake','churros','muffin','galleta','donut','flan',
-  'churrasco','mechada','as','wrap','bagel','croissant','tostada',
-  'bao','dumpling','mandu','wantan','kimbap','hand roll','sushiburger',
-  'arroz con leche','burrito','quesadilla','nachos','spring roll','arrollado de primavera',
-  'lasagna','risotto','fideos','arroz','calzone','quiche',
-  'chapsui','pad thai','curry','satay','anticucho','kebab',
-  'pollo asado','pollo frito','tenders','alitas','nuggets',
-  'asado','costillas','pernil','milanesa','salchipapa',
-  'café','latte','cappuccino','mocaccino','chocolate caliente','té','jugo','batido','bebida','alcohol','mocktail',
-  'papas fritas','aros de cebolla','croquetas',
-  'combo','extra',
-]
-
-function getPrimaryDishType(types: string[], fallback: string): string {
-  if (!types || types.length === 0) return fallback
-  const sorted = [...types].sort((a, b) => {
-    const ia = DISH_TYPE_PRIORITY.indexOf(a)
-    const ib = DISH_TYPE_PRIORITY.indexOf(b)
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
-  })
-  return sorted[0]
-}
-
 function getSecondaryDishTypes(types: string[], primary: string): string[] {
   return types.filter(t => t !== primary && t !== 'extra' && t !== 'combo')
 }
 import type { FeedDish } from '../types'
-import { getCategoryGradient, isValidQcCategory } from '../lib/categories'
+import { getCategoryGradient, isValidQcCategory, DISH_TYPE_PRIORITY, getPrimaryDishType } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
 import type { FeedProfile } from '../lib/scoring'
 import { getSimilarDishIds } from '../lib/feed-actions'

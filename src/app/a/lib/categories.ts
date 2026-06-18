@@ -1354,3 +1354,37 @@ export function inferFlavorTags(name: string, _categoryName: string, description
 
   return tags
 }
+
+/**
+ * Orden de prioridad de tipos de plato para UI y scoring.
+ * El tipo que describe la FORMA del plato (hamburguesa, empanada, pizza…)
+ * tiene mayor prioridad que ingredientes o contextos (combo, papas fritas…).
+ */
+export const DISH_TYPE_PRIORITY: string[] = [
+  'sushi','pizza','hamburguesa','empanada','pasta','taco','ramen','gyoza',
+  'sándwich','completo','arepa','causa','ceviche','tiradito','chorrillana',
+  'pastel de jaiba','pastel de choclo','lomo a lo pobre','lomo saltado','ají de gallina',
+  'sopaipilla','chupe','cazuela','sopa','bowl','ensalada','waffle','pancake','crepe','omelet',
+  'torta','helado','brownie','cheesecake','churros','muffin','galleta','donut','flan',
+  'churrasco','mechada','as','wrap','bagel','croissant','tostada',
+  'bao','dumpling','mandu','wantan','kimbap','hand roll','sushiburger',
+  'arroz con leche','burrito','quesadilla','nachos','spring roll','arrollado de primavera',
+  'lasagna','risotto','fideos','arroz','calzone','quiche',
+  'chapsui','pad thai','curry','satay','anticucho','kebab',
+  'pollo asado','pollo frito','tenders','alitas','nuggets',
+  'asado','costillas','pernil','milanesa','salchipapa',
+  'café','latte','cappuccino','mocaccino','chocolate caliente','té','jugo','batido','bebida','alcohol','mocktail',
+  'papas fritas','aros de cebolla','croquetas',
+  'combo','extra',
+]
+
+/** Devuelve el tipo de plato de mayor prioridad (la "forma" del plato). */
+export function getPrimaryDishType(types: string[], fallback: string): string {
+  if (!types || types.length === 0) return fallback
+  const sorted = [...types].sort((a, b) => {
+    const ia = DISH_TYPE_PRIORITY.indexOf(a)
+    const ib = DISH_TYPE_PRIORITY.indexOf(b)
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+  })
+  return sorted[0]
+}
