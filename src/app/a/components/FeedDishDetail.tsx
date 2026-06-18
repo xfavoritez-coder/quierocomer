@@ -1,6 +1,40 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
+
+// Tipos de plato ordenados por prioridad: el que describe la FORMA del plato gana.
+// Cuando hay múltiples txDishType, mostramos el de mayor prioridad como principal.
+const DISH_TYPE_PRIORITY: string[] = [
+  'sushi','pizza','hamburguesa','empanada','pasta','taco','ramen','gyoza',
+  'sándwich','completo','arepa','causa','ceviche','tiradito','chorrillana',
+  'pastel de jaiba','pastel de choclo','lomo a lo pobre','lomo saltado','ají de gallina',
+  'sopaipilla','chupe','cazuela','sopa','bowl','ensalada','waffle','pancake','crepe','omelet',
+  'torta','helado','brownie','cheesecake','churros','muffin','galleta','donut','flan',
+  'churrasco','mechada','as','wrap','bagel','croissant','tostada',
+  'bao','dumpling','mandu','wantan','kimbap','hand roll','sushiburger',
+  'arroz con leche','burrito','quesadilla','nachos','spring roll','arrollado de primavera',
+  'lasagna','risotto','fideos','arroz','calzone','quiche',
+  'chapsui','pad thai','curry','satay','anticucho','kebab',
+  'pollo asado','pollo frito','tenders','alitas','nuggets',
+  'asado','costillas','pernil','milanesa','salchipapa',
+  'café','latte','cappuccino','mocaccino','chocolate caliente','té','jugo','batido','bebida','alcohol','mocktail',
+  'papas fritas','aros de cebolla','croquetas',
+  'combo','extra',
+]
+
+function getPrimaryDishType(types: string[], fallback: string): string {
+  if (!types || types.length === 0) return fallback
+  const sorted = [...types].sort((a, b) => {
+    const ia = DISH_TYPE_PRIORITY.indexOf(a)
+    const ib = DISH_TYPE_PRIORITY.indexOf(b)
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+  })
+  return sorted[0]
+}
+
+function getSecondaryDishTypes(types: string[], primary: string): string[] {
+  return types.filter(t => t !== primary && t !== 'extra' && t !== 'combo')
+}
 import type { FeedDish } from '../types'
 import { getCategoryGradient, isValidQcCategory } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
@@ -398,14 +432,25 @@ function DesktopDishContent({
         {/* Categoría + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
           <button
-            onClick={() => { window.location.href = `/?q=${encodeURIComponent(dish.txDishType?.[0] ?? dish.categoriaNorm)}` }}
+            onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
             style={{
               background: 'none', border: 'none', padding: 0, cursor: 'pointer',
               fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
               textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
             }}
           >
-            {dish.txDishType?.[0] ?? dish.categoriaNorm}
+            {(() => {
+              const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
+              const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
+              return (
+                <>
+                  {primary}
+                  {secondary.map(t => (
+                    <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
+                  ))}
+                </>
+              )
+            })()}
           </button>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
@@ -427,7 +472,7 @@ function DesktopDishContent({
         <h2 style={{
           fontFamily: 'var(--font-feed-display), serif',
           fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.25,
-          paddingRight: 96,
+          paddingRight: 135,
         }}>
           <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} />
         </h2>
@@ -725,14 +770,25 @@ function DishSlide({
         {/* Categoría + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
           <button
-            onClick={() => { window.location.href = `/?q=${encodeURIComponent(dish.txDishType?.[0] ?? dish.categoriaNorm)}` }}
+            onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
             style={{
               background: 'none', border: 'none', padding: 0, cursor: 'pointer',
               fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
               textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
             }}
           >
-            {dish.txDishType?.[0] ?? dish.categoriaNorm}
+            {(() => {
+              const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
+              const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
+              return (
+                <>
+                  {primary}
+                  {secondary.map(t => (
+                    <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
+                  ))}
+                </>
+              )
+            })()}
           </button>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
@@ -921,7 +977,7 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
       <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
     </svg>
   ) : (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle' }}>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '2px' }}>
       <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
     </svg>
   )) : null
