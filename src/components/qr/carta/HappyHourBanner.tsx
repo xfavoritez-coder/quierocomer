@@ -171,44 +171,66 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
       ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
       : `${active.name} — ${active.discountValue}% de descuento`);
 
-  const accent = `var(--carta-accent, ${active.bannerColor})`;
   const c = active.bannerColor;
 
   return (
-    <div className="font-[family-name:var(--font-dm)]" style={{ padding: "14px 14px 2px", position: "relative", zIndex: 15 }}>
+    <div className="font-[family-name:var(--font-dm)]" style={{ padding: "12px 12px 0", position: "relative", zIndex: 15 }}>
       <style>{`
-        @keyframes hhGlow {
-          0%, 100% { box-shadow: 0 0 10px ${c}, 0 0 24px ${c}55, inset 0 0 12px ${c}18; }
-          50%       { box-shadow: 0 0 16px ${c}, 0 0 36px ${c}70, inset 0 0 18px ${c}28; }
+        @keyframes hhAtmo {
+          0%, 100% { opacity: 0.22; transform: scale(1); }
+          50%       { opacity: 0.42; transform: scale(1.04); }
+        }
+        @keyframes hhBorder {
+          0%, 100% { box-shadow: 0 0 6px ${c}, 0 0 18px ${c}, inset 0 0 22px rgba(0,0,0,0.65); }
+          50%       { box-shadow: 0 0 12px ${c}, 0 0 32px ${c}, inset 0 0 22px rgba(0,0,0,0.65); }
         }
         @keyframes hhPulse { 0%,100% { opacity: 0.7 } 50% { opacity: 1 } }
       `}</style>
-      <div
-        style={{
-          background: "rgba(0,0,0,0.45)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          border: `2px solid ${accent}`,
+
+      <div style={{ position: "relative" }}>
+        {/* Atmospheric glow */}
+        <div style={{
+          position: "absolute", inset: 2,
+          background: c,
           borderRadius: 22,
-          animation: "hhGlow 3.5s ease-in-out infinite",
-          padding: "16px 20px",
+          filter: "blur(22px)",
+          animation: "hhAtmo 3s ease-in-out infinite",
+          pointerEvents: "none", zIndex: 0,
+        }} />
+
+        {/* Card */}
+        <div style={{
+          position: "relative", zIndex: 1,
+          background: "linear-gradient(145deg, rgba(10,8,16,0.97) 0%, rgba(18,12,24,0.95) 100%)",
+          border: `1.5px solid ${c}`,
+          borderRadius: 20,
+          animation: "hhBorder 3s ease-in-out infinite",
+          padding: "18px 20px",
           textAlign: "center",
-        }}
-      >
-        <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: 600, lineHeight: 1.45, color: "rgba(255,255,255,0.95)", letterSpacing: "0.01em" }}>
-          {bannerText}
-        </p>
-        {countdown && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 10, padding: "4px 12px", borderRadius: 20, background: `${c}22`, border: `1px solid ${c}55` }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "hhPulse 2s ease-in-out infinite" }}>
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.04em", color: c }}>
-              Termina en {countdown}
-            </span>
-          </div>
-        )}
+        }}>
+          <p style={{
+            margin: 0, fontSize: "0.95rem", fontWeight: 700,
+            color: "#fff", lineHeight: 1.45, letterSpacing: "0.01em",
+            textShadow: `0 0 12px rgba(255,255,255,0.45), 0 0 28px ${c}`,
+          }}>
+            {bannerText}
+          </p>
+          {countdown && (
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              marginTop: 12, padding: "5px 13px", borderRadius: 20,
+              background: `${c}20`, border: `1px solid ${c}60`,
+              boxShadow: `0 0 8px ${c}40`,
+            }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "hhPulse 2s ease-in-out infinite" }}>
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em", color: c, textShadow: `0 0 8px ${c}` }}>
+                Termina en {countdown}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
