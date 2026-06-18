@@ -10,6 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <head>
+        <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="preconnect" href="https://awbeyxfqtrdfhengabmw.supabase.co" />
         <link rel="preconnect" href="https://cdn.bistrify.app" />
         <link rel="dns-prefetch" href="https://cdn.mer-cat.com" />
