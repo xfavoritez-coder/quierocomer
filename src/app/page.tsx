@@ -4,13 +4,13 @@ import FeedLayout from './a/layout'
 
 export const metadata = {
   title: 'QuieroComer - Descubre que comer cerca de ti',
-  description: 'Explora platos reales de restaurantes cerca de ti. Encuentra tu próximo antojo.',
+  description: 'Descubre qué comer cerca de ti.',
   openGraph: {
     title: 'QuieroComer',
-    description: 'Descubre qué comer cerca de ti. Platos reales de restaurantes cercanos.',
+    description: 'Descubre qué comer cerca de ti.',
     url: 'https://quierocomer.cl',
     siteName: 'QuieroComer',
-    images: [{ url: 'https://quierocomer.cl/og-square.jpg', width: 300, height: 300 }],
+    images: [{ url: 'https://quierocomer.cl/logo.png', width: 512, height: 512 }],
     type: 'website',
   },
 }
