@@ -150,8 +150,8 @@ async function extractFirebaseConfig(url: string): Promise<{ apiKey: string; pro
     const html = await res.text();
 
     // Firebase config pattern: { apiKey: "...", authDomain: "...", projectId: "..." }
-    const m = html.match(/apiKey\s*:\s*["']([^"']+)["'][^}]*projectId\s*:\s*["']([^"']+)["']/s)
-           || html.match(/projectId\s*:\s*["']([^"']+)["'][^}]*apiKey\s*:\s*["']([^"']+)["']/s);
+    const m = html.match(/apiKey\s*:\s*["']([^"']+)["'][\s\S]{0,200}?projectId\s*:\s*["']([^"']+)["']/)
+           || html.match(/projectId\s*:\s*["']([^"']+)["'][\s\S]{0,200}?apiKey\s*:\s*["']([^"']+)["']/);
     if (m) {
       const isFirstApiKey = /apiKey/.test(html.slice(0, html.indexOf(m[1])));
       const apiKey = isFirstApiKey ? m[1] : m[2];
