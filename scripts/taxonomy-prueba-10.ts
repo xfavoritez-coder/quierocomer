@@ -38,9 +38,11 @@ async function classifyRestaurant(slug: string) {
   }))
 
   const taxonomy = await classifyDishesBatched(inputs, 30, 2, restaurant.name)
+  const validIds = new Set(dishes.map(d => d.id))
+  const validEntries = Object.entries(taxonomy).filter(([id]) => validIds.has(id))
 
   await prisma.$transaction(
-    Object.entries(taxonomy).map(([dishId, dims]) =>
+    validEntries.map(([dishId, dims]) =>
       prisma.dish.update({
         where: { id: dishId },
         data: {
