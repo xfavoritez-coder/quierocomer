@@ -155,6 +155,7 @@ export default function NewHome({
 
   // ─── Swipe narrowing ──────────────────────────────────────────────────────
   const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set())
+  const [debugMinimized, setDebugMinimized] = useState(false)
   const [swipeLikeFreq, setSwipeLikeFreq] = useState<Record<string, number>>({})
   const [swipeDislikeFreq, setSwipeDislikeFreq] = useState<Record<string, number>>({})
 
@@ -1925,42 +1926,54 @@ export default function NewHome({
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9998,
           background: 'rgba(0,0,0,0.92)', borderTop: '1px solid rgba(255,255,255,0.1)',
           fontFamily: 'monospace', fontSize: 11, color: '#fff',
-          maxHeight: 220, overflowY: 'auto',
-          padding: '10px 14px 14px',
         }}>
-          <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
-            🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos
-          </p>
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            {Object.keys(swipeLikeFreq).length > 0 && (
-              <div>
-                <p style={{ margin: '0 0 4px', color: '#F4A623', fontWeight: 700 }}>LIKES ✓</p>
-                {Object.entries(swipeLikeFreq)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([dim, n]) => (
-                    <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
-                      <span style={{ color: n >= 2 ? '#F4A623' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
-                      <div style={{ height: 4, borderRadius: 2, background: '#F4A623', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
-                    </div>
-                  ))}
-              </div>
-            )}
-            {Object.keys(swipeDislikeFreq).length > 0 && (
-              <div>
-                <p style={{ margin: '0 0 4px', color: '#ef4444', fontWeight: 700 }}>DISLIKES ✕</p>
-                {Object.entries(swipeDislikeFreq)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([dim, n]) => (
-                    <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
-                      <span style={{ color: n >= 2 ? '#ef4444' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
-                      <div style={{ height: 4, borderRadius: 2, background: '#ef4444', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
-                    </div>
-                  ))}
-              </div>
-            )}
+          {/* Header — always visible, click to toggle */}
+          <div
+            onClick={() => setDebugMinimized(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', cursor: 'pointer', userSelect: 'none' }}
+          >
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
+              🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos
+            </p>
+            <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
+              {debugMinimized ? '▲' : '▼'}
+            </span>
           </div>
+          {/* Body — hidden when minimized */}
+          {!debugMinimized && (
+            <div style={{ maxHeight: 180, overflowY: 'auto', padding: '0 14px 14px' }}>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                {Object.keys(swipeLikeFreq).length > 0 && (
+                  <div>
+                    <p style={{ margin: '0 0 4px', color: '#F4A623', fontWeight: 700 }}>LIKES ✓</p>
+                    {Object.entries(swipeLikeFreq)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([dim, n]) => (
+                        <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
+                          <span style={{ color: n >= 2 ? '#F4A623' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
+                          <div style={{ height: 4, borderRadius: 2, background: '#F4A623', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
+                        </div>
+                      ))}
+                  </div>
+                )}
+                {Object.keys(swipeDislikeFreq).length > 0 && (
+                  <div>
+                    <p style={{ margin: '0 0 4px', color: '#ef4444', fontWeight: 700 }}>DISLIKES ✕</p>
+                    {Object.entries(swipeDislikeFreq)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([dim, n]) => (
+                        <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
+                          <span style={{ color: n >= 2 ? '#ef4444' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
+                          <div style={{ height: 4, borderRadius: 2, background: '#ef4444', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

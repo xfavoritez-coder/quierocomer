@@ -502,7 +502,7 @@ function DesktopDishContent({
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="1.8" strokeLinecap="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#F4A623', letterSpacing: '0.02em' }}>Maps</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', letterSpacing: '0.02em' }}>Maps</span>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} strokeWidth="2.2" strokeLinecap="round">
               <path d="M9 18l6-6-6-6" />
@@ -518,9 +518,9 @@ function DesktopDishContent({
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
-                <a href={`/?q=${encodeURIComponent(dish.restaurante)}`}
+                <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
-                  Ver todo
+                  Ver carta
                 </a>
               )}
             </div>
@@ -822,7 +822,7 @@ function DishSlide({
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="1.8" strokeLinecap="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#F4A623', letterSpacing: '0.02em' }}>Maps</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', letterSpacing: '0.02em' }}>Maps</span>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} strokeWidth="2.2" strokeLinecap="round">
               <path d="M9 18l6-6-6-6" />
@@ -838,9 +838,9 @@ function DishSlide({
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
-                <a href={`/?q=${encodeURIComponent(dish.restaurante)}`}
+                <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
-                  Ver todo
+                  Ver carta
                 </a>
               )}
             </div>
