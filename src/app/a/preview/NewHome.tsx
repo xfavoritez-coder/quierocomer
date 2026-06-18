@@ -271,14 +271,7 @@ export default function NewHome({
       try { localStorage.setItem('qc_location', JSON.stringify({ lat: loc.lat, lng: loc.lng, label })) } catch {}
     }
 
-    const onGPSError = () => {
-      fetch('https://ipapi.co/json/')
-        .then(r => r.json())
-        .then(data => { if (data.city) setLocationName(data.city) })
-        .catch(() => {})
-    }
-
-    navigator.geolocation?.getCurrentPosition(onGPS, onGPSError, {
+    navigator.geolocation?.getCurrentPosition(onGPS, () => {}, {
       enableHighAccuracy: true,
       timeout: 8000,
       maximumAge: 60000,
