@@ -105,6 +105,11 @@ function upgradePhotoUrl(url: string): string {
     // Cloudinary transforms
     .replace(/\/c_\w+,w_\d+,h_\d+/, "/c_fill,w_1200,h_1200")
     .replace(/\/t_\w+\//, "/t_original/");
+  // Bistrify/Queresto CDN: strip the cdn-cgi/image transform entirely
+  upgraded = upgraded.replace(
+    /https:\/\/cdn\.bistrify\.app\/cdn-cgi\/image\/[^/]+\/images\//,
+    "https://cdn.bistrify.app/images/"
+  );
   return upgraded;
 }
 

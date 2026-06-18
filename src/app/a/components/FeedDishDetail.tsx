@@ -325,11 +325,21 @@ function DesktopDishContent({
       embeddingSimilarIds.forEach((id, i) => embRank.set(id, 1 - i / embeddingSimilarIds.length))
     }
     const thisKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
+    const thisTxTypes = new Set(dish.txDishType ?? [])
     const scored = candidates.map(d => {
       let relevance = embRank.get(d.id) ? (embRank.get(d.id)! * 10) : 0
-      if (d.categoriaNorm === dish.categoriaNorm) relevance += 3
+      // Taxonomy: same dish type es la señal más fuerte (Pinterest-style: "más de esto")
+      const sharedTypes = (d.txDishType ?? []).filter(t => thisTxTypes.has(t))
+      relevance += sharedTypes.length * 8
+      // Misma cocina
+      if (dish.cuisineTag && d.cuisineTag === dish.cuisineTag) relevance += 5
+      // Misma leaf category
+      if (d.categoriaNorm === dish.categoriaNorm) relevance += 4
+      // Mismo parent
+      if (dish.categoriaParent && d.categoriaParent === dish.categoriaParent) relevance += 2
+      // Keywords
       const dKws = extractKeywords(d.nombre, d.descripcion)
-      for (const kw of dKws) { if (thisKws.has(kw)) relevance += 4 }
+      for (const kw of dKws) { if (thisKws.has(kw)) relevance += 2 }
       const dist = userLocation && d.restauranteLat && d.restauranteLng
         ? distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) : null
       return { dish: d, relevance, dist }
@@ -593,11 +603,16 @@ function DishSlide({
       embeddingSimilarIds.forEach((id, i) => embRank.set(id, 1 - i / embeddingSimilarIds.length))
     }
     const thisKws = new Set(extractKeywords(dish.nombre, dish.descripcion))
+    const thisTxTypes = new Set(dish.txDishType ?? [])
     const scored = candidates.map(d => {
       let relevance = embRank.get(d.id) ? (embRank.get(d.id)! * 10) : 0
-      if (d.categoriaNorm === dish.categoriaNorm) relevance += 3
+      const sharedTypes = (d.txDishType ?? []).filter(t => thisTxTypes.has(t))
+      relevance += sharedTypes.length * 8
+      if (dish.cuisineTag && d.cuisineTag === dish.cuisineTag) relevance += 5
+      if (d.categoriaNorm === dish.categoriaNorm) relevance += 4
+      if (dish.categoriaParent && d.categoriaParent === dish.categoriaParent) relevance += 2
       const dKws = extractKeywords(d.nombre, d.descripcion)
-      for (const kw of dKws) { if (thisKws.has(kw)) relevance += 4 }
+      for (const kw of dKws) { if (thisKws.has(kw)) relevance += 2 }
       const dist = userLocation && d.restauranteLat && d.restauranteLng
         ? distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng)
         : null
