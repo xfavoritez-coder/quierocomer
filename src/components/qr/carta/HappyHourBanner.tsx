@@ -118,8 +118,8 @@ export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
         background: "rgba(0,0,0,0.55)",
         backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         borderRadius: 16,
-        border: `1px solid ${active.bannerColor}55`,
-        boxShadow: `0 4px 20px rgba(0,0,0,0.3), inset 0 0 20px ${active.bannerColor}15`,
+        border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 33%, transparent)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 0 20px color-mix(in srgb, var(--carta-accent, #F4A623) 9%, transparent)",
         color: "white",
         maxWidth: "88vw",
       }}
@@ -131,7 +131,7 @@ export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 4,
           padding: "2px 9px", borderRadius: 10,
-          background: `${active.bannerColor}cc`,
+          background: "color-mix(in srgb, var(--carta-accent, #F4A623) 80%, transparent)",
           fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.03em",
         }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -170,15 +170,13 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
       ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
       : `${active.name} — ${active.discountValue}% de descuento`);
 
-  const c = active.bannerColor;
-
   return (
     <div style={{ padding: "calc(8px + env(safe-area-inset-top)) 12px 0", position: "relative", zIndex: 15 }}>
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{
           borderRadius: 16,
-          border: `1px solid ${c}88`,
+          border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 53%, transparent)",
           background: "rgba(8,8,8,0.28)",
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
@@ -202,7 +200,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
             fontSize: "0.72rem",
             color: "rgba(255,255,255,0.6)",
           }}>
-            Termina en <b style={{ color: c, fontWeight: 800 }}>{countdown}</b>
+            Termina en <b style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 800 }}>{countdown}</b>
           </span>
         )}
       </div>
