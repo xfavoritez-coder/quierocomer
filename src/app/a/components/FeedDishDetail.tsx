@@ -438,7 +438,7 @@ function DesktopDishContent({
                 <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
               </>
             ) : (
-              <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
             <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
               <span onClick={() => setShowPriceTooltip(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
@@ -518,9 +518,10 @@ function DesktopDishContent({
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
-                <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
+                <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 15, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   Ver carta
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               )}
             </div>
@@ -758,7 +759,7 @@ function DishSlide({
                 <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
               </>
             ) : (
-              <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
             <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
               <span onClick={() => setShowPriceTooltip(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
@@ -838,9 +839,10 @@ function DishSlide({
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
-                <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
+                <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 15, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   Ver carta
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               )}
             </div>
