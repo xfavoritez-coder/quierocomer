@@ -7,6 +7,6 @@ export async function GET(request: Request) {
   if (key !== process.env.SEED_SECRET && process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   }
-  revalidateTag('feed-dishes')
+  revalidateTag('feed-dishes', { expire: 0 })
   return NextResponse.json({ ok: true, revalidated: 'feed-dishes', at: new Date().toISOString() })
 }

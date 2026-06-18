@@ -1378,6 +1378,49 @@ export const DISH_TYPE_PRIORITY: string[] = [
   'combo','extra',
 ]
 
+/**
+ * Mapa de tipo de plato → familia amplia.
+ * Usado en swipe scoring: el tipo primario acumula 3x, la familia 1x.
+ * Así un swipe de "torta" amplía el feed hacia postres, pero dos swipes de
+ * "torta" ya hacen que torta domine sobre el resto de la familia.
+ */
+export const DISH_TYPE_TO_PARENT: Record<string, string> = {
+  // Postres
+  torta: 'postre', helado: 'postre', brownie: 'postre', cheesecake: 'postre',
+  churros: 'postre', muffin: 'postre', galleta: 'postre', donut: 'postre',
+  flan: 'postre', 'arroz con leche': 'postre',
+  // Desayuno
+  waffle: 'desayuno', pancake: 'desayuno', crepe: 'desayuno', omelet: 'desayuno',
+  tostada: 'desayuno', croissant: 'desayuno', bagel: 'desayuno',
+  // Japonés
+  sushi: 'japonés', ramen: 'japonés', gyoza: 'japonés', bao: 'japonés',
+  dumpling: 'japonés', mandu: 'japonés', wantan: 'japonés',
+  kimbap: 'japonés', 'hand roll': 'japonés', sushiburger: 'japonés',
+  // Peruano
+  ceviche: 'peruano', tiradito: 'peruano', causa: 'peruano',
+  'lomo saltado': 'peruano', 'ají de gallina': 'peruano',
+  'lomo a lo pobre': 'peruano', anticucho: 'peruano', chupe: 'peruano',
+  // Chileno
+  completo: 'chileno', chorrillana: 'chileno', sopaipilla: 'chileno',
+  'pastel de jaiba': 'chileno', 'pastel de choclo': 'chileno', cazuela: 'chileno',
+  // Sándwich
+  sándwich: 'sándwich', churrasco: 'sándwich', mechada: 'sándwich',
+  as: 'sándwich', wrap: 'sándwich',
+  // Pasta / italiana
+  pasta: 'pasta', lasagna: 'pasta', risotto: 'pasta', calzone: 'pasta',
+  // Pollo
+  'pollo asado': 'pollo', 'pollo frito': 'pollo', tenders: 'pollo',
+  alitas: 'pollo', nuggets: 'pollo',
+  // Parrilla / carne
+  asado: 'parrilla', costillas: 'parrilla', pernil: 'parrilla', milanesa: 'parrilla',
+  // Saludable
+  bowl: 'saludable', ensalada: 'saludable',
+  // Mexicano
+  taco: 'mexicano', nachos: 'mexicano', quesadilla: 'mexicano', burrito: 'mexicano',
+  // Sopa
+  sopa: 'sopa',
+}
+
 /** Devuelve el tipo de plato de mayor prioridad (la "forma" del plato). */
 export function getPrimaryDishType(types: string[], fallback: string): string {
   if (!types || types.length === 0) return fallback

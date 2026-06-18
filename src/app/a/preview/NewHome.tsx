@@ -18,7 +18,7 @@ import {
   updateTasteAction,
   getSavedDishIds,
 } from '../lib/feed-actions'
-import { QC_PARENTS, getPrimaryDishType } from '../lib/categories'
+import { QC_PARENTS, getPrimaryDishType, DISH_TYPE_TO_PARENT } from '../lib/categories'
 import { slugify } from '@/lib/slugify'
 
 function normStr(s: string) {
@@ -1903,7 +1903,7 @@ export default function NewHome({
       {/* ─── Swipe debug panel ─── */}
       {swipedIds.size > 0 && (() => {
         const PREFIX_LABEL: Record<string, string> = {
-          t: 'Tipo', c: 'Categoría', k: 'Cocina', s: 'Sabor', i: 'Ingrediente', d: 'Dieta', h: 'Horario',
+          t: 'Tipo', tp: 'Familia', c: 'Categoría', k: 'Cocina', s: 'Sabor', i: 'Ingrediente', d: 'Dieta', h: 'Horario',
         }
         const allKeys = new Set([...Object.keys(swipeLikeFreq), ...Object.keys(swipeDislikeFreq)])
         // Group net scores by prefix
@@ -1918,7 +1918,7 @@ export default function NewHome({
           if (!groups[groupName]) groups[groupName] = []
           groups[groupName].push({ label, score, likes, dislikes })
         }
-        const groupOrder = ['Tipo', 'Categoría', 'Cocina', 'Ingrediente', 'Sabor', 'Dieta', 'Horario']
+        const groupOrder = ['Tipo', 'Familia', 'Cocina', 'Ingrediente', 'Sabor', 'Dieta', 'Horario']
         const sortedGroups = groupOrder.filter(g => groups[g])
         const maxAbs = Math.max(1, ...Object.values(groups).flat().map(x => Math.abs(x.score)))
         return (
@@ -1983,13 +1983,16 @@ export default function NewHome({
 }
 
 // ─── Swipe narrowing helpers (module-level — no hooks) ────────────────────────
-// Prefixes: t=tipo, c=categoría, k=cocina, s=sabor, i=ingrediente, d=dieta, h=horario
+// Prefixes: t=tipo, tp=familia-tipo, c=categoría, k=cocina, s=sabor, i=ingrediente, d=dieta, h=horario
 // categoriaNorm solo se incluye cuando no hay txDishType — evita que la categoría
 // "infle" platos genéricos de la misma sección tras un swipe específico (ej: tiradito → ceviches)
+// tp (type-parent) da 1x a la familia del tipo primario: primer swipe de torta amplía hacia postres,
+// pero al segundo swipe de torta, torta (6x) ya domina sobre postre (2x)
 function _swipeDims(dish: FeedDish): string[] {
   const types = dish.txDishType ?? []
   const ingredients = dish.txIngredient ?? []
   const primaryType = types.length > 0 ? getPrimaryDishType(types, '') : ''
+  const primaryParent = primaryType ? (DISH_TYPE_TO_PARENT[primaryType] ?? '') : ''
   return [
     types.length === 0 ? `c:${dish.categoriaNorm}` : '', // fallback si no hay tipo
     dish.cuisineTag ? `k:${dish.cuisineTag}` : '',
@@ -1999,6 +2002,7 @@ function _swipeDims(dish: FeedDish): string[] {
     ...types.map(t => `t:${t}`),           // todos los tipos: 1x
     primaryType ? `t:${primaryType}` : '',  // tipo principal extra #1: 2x total
     primaryType ? `t:${primaryType}` : '',  // tipo principal extra #2: 3x total
+    primaryParent ? `tp:${primaryParent}` : '', // familia del tipo: 1x
     ...ingredients.map(i => `i:${i}`),
   ].filter(Boolean)
 }
