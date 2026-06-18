@@ -171,48 +171,42 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
       ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
       : `${active.name} — ${active.discountValue}% de descuento`);
 
+  const accentColor = `var(--carta-accent, ${active.bannerColor})`;
+
   return (
-    <div
-      className="font-[family-name:var(--font-dm)]"
-      style={{
-        background: `var(--carta-accent, ${active.bannerColor})`,
-        color: "white",
-        padding: "11px 20px 12px",
-        textAlign: "center",
-        position: "relative",
-        zIndex: 15,
-        overflow: "hidden",
-      }}
-    >
-      {/* Animated shimmer sweep */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-        background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.15) 50%, transparent 65%)",
-        backgroundSize: "250% 100%",
-        animation: "hhShimmer 4s ease-in-out infinite",
-      }} />
-      {/* Subtle glow spots */}
-      <div style={{ position: "absolute", top: -10, left: "15%", width: 60, height: 60, borderRadius: "50%", background: "rgba(255,255,255,0.08)", filter: "blur(14px)", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", bottom: -8, right: "20%", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.06)", filter: "blur(10px)", pointerEvents: "none" }} />
-      <style>{`@keyframes hhShimmer { 0%,100% { background-position: 250% 0 } 50% { background-position: -250% 0 } } @keyframes hhPulse { 0%,100% { opacity: 0.7 } 50% { opacity: 1 } }`}</style>
-
-      {/* Main text */}
-      <p style={{ position: "relative", margin: 0, fontSize: "0.88rem", fontWeight: 800, lineHeight: 1.3, letterSpacing: "0.01em", textShadow: "0 1px 3px rgba(0,0,0,0.15)" }}>
-        {bannerText}
-      </p>
-
-      {/* Countdown pill */}
-      {countdown && (
-        <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "hhPulse 2s ease-in-out infinite" }}>
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.04em" }}>
-            Termina en {countdown}
-          </span>
-        </div>
-      )}
+    <div className="font-[family-name:var(--font-dm)]" style={{ padding: "12px 12px 0", position: "relative", zIndex: 15 }}>
+      <style>{`
+        @keyframes hhNeonPulse {
+          0%, 100% { box-shadow: 0 0 6px var(--carta-accent, ${active.bannerColor}), 0 0 18px var(--carta-accent, ${active.bannerColor}); opacity: 0.85; }
+          50%       { box-shadow: 0 0 12px var(--carta-accent, ${active.bannerColor}), 0 0 28px var(--carta-accent, ${active.bannerColor}); opacity: 1; }
+        }
+        @keyframes hhPulse { 0%,100% { opacity: 0.7 } 50% { opacity: 1 } }
+      `}</style>
+      <div
+        style={{
+          background: "rgba(10,10,12,0.92)",
+          border: `1.5px solid ${accentColor}`,
+          borderRadius: 16,
+          animation: "hhNeonPulse 3s ease-in-out infinite",
+          padding: "14px 20px",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 700, lineHeight: 1.3, color: "rgba(255,255,255,0.92)" }}>
+          {bannerText}
+        </p>
+        {countdown && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8, padding: "3px 10px", borderRadius: 20, background: `${active.bannerColor}33`, border: `1px solid ${active.bannerColor}66` }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={active.bannerColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "hhPulse 2s ease-in-out infinite" }}>
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.04em", color: active.bannerColor }}>
+              Termina en {countdown}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

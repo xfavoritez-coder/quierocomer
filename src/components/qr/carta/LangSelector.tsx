@@ -59,7 +59,7 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
           border: "none", cursor: "pointer", fontSize: "0.95rem", position: "relative", zIndex: 10,
         }}
       >
-        <FlagSvg code={lang} size={26} />
+        <FlagSvg code={lang} size={25} />
       </button>
 
       {open && (
