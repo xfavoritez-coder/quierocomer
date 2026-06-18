@@ -11,7 +11,7 @@ function getDbUrl(): string {
   if (process.env.NODE_ENV === "production") {
     // 1 connection per serverless instance — PgBouncer multiplexes on the DB side
     url.searchParams.set("connection_limit", "1");
-    url.searchParams.set("pool_timeout", "5");
+    url.searchParams.set("pool_timeout", "10");
     url.searchParams.set("pgbouncer", "true");
   } else {
     // Dev: más conexiones para soportar hot-reload y requests paralelos
