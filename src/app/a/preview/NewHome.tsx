@@ -758,10 +758,6 @@ export default function NewHome({
 
           {/* Search bar — centro, ocupa todo el espacio */}
           <form style={{ flex: 1, position: 'relative', maxWidth: 480, margin: '0 auto' }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); (document.activeElement as HTMLElement)?.blur() }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
             <input
               className="feed-search-input"
               type="text" value={searchInput}
@@ -769,7 +765,7 @@ export default function NewHome({
               autoComplete="off"
               placeholder="Buscar en QuieroComer"
               style={{
-                width: '100%', padding: '9px 34px 9px 34px', borderRadius: 999, fontSize: 17,
+                width: '100%', padding: '9px 34px 9px 16px', borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
@@ -899,10 +895,6 @@ export default function NewHome({
           <img src="/logo.png" alt="QuieroComer" style={{ height: 56, width: 'auto' }} />
         </a>
         <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)'} strokeWidth="2.5" strokeLinecap="round"
-            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }}>
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
           <input
             ref={searchInputRef}
             className="feed-search-input"
@@ -913,7 +905,7 @@ export default function NewHome({
             placeholder="Buscar en QuieroComer"
             autoComplete="off"
             style={{
-              width: '100%', padding: '12px 38px 12px 36px', fontSize: 17,
+              width: '100%', padding: '12px 38px 12px 16px', fontSize: 17,
               borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
               background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
@@ -1140,12 +1132,6 @@ export default function NewHome({
             <img src="/logo.png" alt="QuieroComer" style={{ height: 56, width: 'auto' }} />
           </a>
           <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-              stroke={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.28)'} strokeWidth="2.5" strokeLinecap="round"
-              style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-            >
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-            </svg>
             <input
               type="search"
               value={searchInput}
@@ -1153,7 +1139,7 @@ export default function NewHome({
               placeholder="Buscar en QuieroComer"
               className="feed-floating-input"
               style={{
-                width: '100%', padding: '12px 38px 12px 36px',
+                width: '100%', padding: '12px 38px 12px 16px',
                 borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
