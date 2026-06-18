@@ -353,11 +353,12 @@ function DesktopDishContent({
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
   const restDishes = useMemo(() => {
-    const candidates = allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
+    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const candidates = pool.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
     const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
     const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
     return [...sameLeaf, ...others].slice(0, 4)
-  }, [dish, allDishes])
+  }, [dish, allDishes, dishPool])
 
   return (
     <>
@@ -470,9 +471,9 @@ function DesktopDishContent({
               {dish.restaurante.charAt(0)}
             </div>
           )}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
             <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
-            {dish.restauranteDireccion && <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0' }}>
+            {dish.restauranteDireccion && <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {(() => {
                 const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                 if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
@@ -627,11 +628,12 @@ function DishSlide({
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
   const restDishes = useMemo(() => {
-    const candidates = allDishes.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
+    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const candidates = pool.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
     const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
     const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
     return [...sameLeaf, ...others].slice(0, 4)
-  }, [dish, allDishes])
+  }, [dish, allDishes, dishPool])
 
   // Infinite scroll for related dishes inside slide
   useEffect(() => {
@@ -784,9 +786,9 @@ function DishSlide({
               {dish.restaurante.charAt(0)}
             </div>
           )}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
             <p style={{ fontSize: 16, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
-            {dish.restauranteDireccion && <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0' }}>
+            {dish.restauranteDireccion && <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {(() => {
                 const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                 if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]

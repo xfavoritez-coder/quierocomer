@@ -8,7 +8,7 @@ export const maxDuration = 300
 // Providers we can extract from (all others skip)
 const EXTRACTABLE = new Set([
   'Justo', 'OlaClick', 'UberEats', 'Fudo', 'Mercat', 'Gourmedia',
-  'Rappi', 'Queresto', 'Web propia',
+  'Rappi', 'Queresto', 'Web propia', 'Toteat',
   // PedidosYa: bloqueado con 403 + CAPTCHA, no se puede extraer automáticamente
 ])
 

@@ -3,8 +3,6 @@
  * Usado por: /api/pruebanuevo/classify, pipeline de importación, /api/mapalocales/carta/taxonomy
  */
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
 export type DishTaxonomyInput = {
   id: string;
   name: string;
@@ -38,7 +36,7 @@ export const VALID_DISH_TYPES = [
   // Pizza y masas
   "pizza","calzone","quiche","empanada",
   // Sopas
-  "sopa","cazuela","ramen",
+  "sopa","cazuela","chupe","ramen",
   // Ensaladas y bowls
   "ensalada","bowl",
   // Asiática
@@ -46,7 +44,7 @@ export const VALID_DISH_TYPES = [
   // Mexicana/Venezolana
   "taco","burrito","quesadilla","arepa","salchipapa",
   // Chilena
-  "sopaipilla","pastel de choclo",
+  "sopaipilla","pastel de choclo","chorrillana","lomo a lo pobre",
   // Desayunos
   "huevos","pancake","waffle","crepe","avena","omelet",
   // Snacks y entradas
@@ -69,6 +67,7 @@ export const VALID_INGREDIENTS = [
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
   "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame",
   "choclo","champiñon","piña","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
+  "crema","espinaca","albahaca","calamar","reineta","jaiba",
 ];
 
 export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asado"];
@@ -91,13 +90,17 @@ Reglas dishType:
 - "extra" para salsas, condimentos, aderezos y porciones adicionales. Si el nombre empieza con "salsa", "extra de", "adicional", "porción de", o es un condimento solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, etc.) → siempre ["extra"]. Estos NO son platos principales.
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
 - "spring roll": rollitos vietnamitas (frescos O fritos) en papel de arroz de arroz. Incluye: Nem (chả giò), gỏi cuốn, rollitos vietnamitas, spring rolls con rice paper. "arrollado de primavera" / "rollito primavera": exclusivamente rollitos estilo chino con masa de trigo frita.
+- "chupe": sopa espesa y cremosa chilena, base de leche o crema, con mariscos (jaiba, camarones, mariscos, calamar), papa, choclo. MUY DISTINTO de "cazuela" (caldo liviano con verduras enteras y un trozo de carne/pollo). Chupe de jaiba, chupe de mariscos, chupe de centolla → siempre "chupe". Si lleva crema/leche y mariscos → "chupe".
+- "chorrillana": plato chileno de papas fritas cubiertas con carne de vacuno en tiras, cebolla caramelizada y huevos fritos. Siempre ["chorrillana"], cuisine ["chilena"].
+- "lomo a lo pobre": bistec/lomo con papas fritas, huevo frito y cebolla caramelizada. Siempre ["lomo a lo pobre"], cuisine ["chilena"]. mainIngredient incluir: carne, papa, huevo, cebolla.
+- "bowl": SOLO para bowls modernos tipo poke/buddha bowl/grain bowl, con base de arroz/quinoa/granos + toppings curados encima. NUNCA para platos de fondo tradicionales: lomo a lo pobre, lomo a la pastelera, lomo saltado, pescado frito, canasto marino, fuente de mariscos, chupe, cazuela, arroz con pollo estilo casero. Si el plato es claramente una preparación tradicional servida en plato, NO es bowl.
 - Elige SOLO de la lista de arriba. Si ninguno aplica, deja []
 - La mayoría de platos tendrá 1 solo tipo. Los combos tendrán 2-3.
 
 cuisine (array, solo si aplica claramente):
 ${VALID_CUISINES.join(", ")}
 Reglas cuisine:
-- "chilena" SOLO para platos tradicionales chilenos: cazuela, empanada, sopaipilla, pastel de choclo, chorrillana, charquicán, humitas, porotos granados, prietas, longaniza, completo. Sándwiches comunes como ave mayo, lomito, barros luco → NO son "chilena" → cuisine: []. Una hamburguesa en Chile NO es chilena → [].
+- "chilena" SOLO para platos tradicionales chilenos: cazuela, chupe, empanada, sopaipilla, pastel de choclo, chorrillana, lomo a lo pobre, lomo a la pastelera, charquicán, humitas, porotos granados, prietas, longaniza, completo, canasto marino, fuente de mariscos. Sándwiches comunes como ave mayo, lomito, barros luco → NO son "chilena" → cuisine: []. Una hamburguesa en Chile NO es chilena → [].
 - "nikkei" para fusión japonesa-peruana (tiradito con toques japoneses, ceviche con soja, etc.)
 - Deja [] si no hay cocina clara (ej: un helado de vainilla no tiene cocina específica, una hamburguesa genérica tampoco)
 
@@ -107,7 +110,8 @@ Un waffle puede ser [desayuno, snack]. Una hamburguesa es [almuerzo, cena].
 
 mainIngredient (array): incluye TODOS los ingredientes de la lista que aparezcan explícitamente mencionados en el nombre o descripción del plato, aunque sean secundarios o guarnición (cebollín, tomate, lechuga, palta, etc.). No te limites solo a los "principales".
 ${VALID_INGREDIENTS.join(", ")}
-- "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (reineta, merluza, corvina sin especificar). "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
+- "salmón" cuando el plato tiene salmón como protagonista o ingrediente clave. "pescado" para otros pescados genéricos (merluza, corvina sin especificar). "reineta" → usar ingrediente "reineta" directamente. "calamar" → usar ingrediente "calamar". "jaiba" → usar ingrediente "jaiba". "mariscos" para mejillones, ostras, almejas, centolla, mix de mariscos.
+- "papas fritas" en el nombre o descripción → incluir "papa" en mainIngredient + "frito" en flavor. También aplica para "papas", "patatas fritas", "fritas" en contexto de guarnición.
 - "pan" SOLO para productos con pan real: sándwich, hamburguesa (el bun), tostada, bagel, croissant, marraqueta, hallulla, baguette. La masa de pizza, empanada, wantan, arrollado, pasta, crepe → NO es "pan".
 - wantan/wonton → NO usar "pan". Pon solo el relleno (cerdo, camarones, verduras, etc.).
 - arrollado de primavera / rollito primavera → frito, masa de trigo, estilo chino. NO usar "pan".
@@ -155,6 +159,7 @@ JSON respuesta exacta (usa los IDs tal como están):
 export async function classifyDishes(
   dishes: DishTaxonomyInput[]
 ): Promise<Record<string, DishTaxonomy>> {
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
   if (dishes.length === 0) return {};
 
