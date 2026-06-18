@@ -118,8 +118,8 @@ export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
         background: "rgba(0,0,0,0.55)",
         backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         borderRadius: 16,
-        border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 33%, transparent)",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 0 20px color-mix(in srgb, var(--carta-accent, #F4A623) 9%, transparent)",
+        border: `1px solid ${active.bannerColor}55`,
+        boxShadow: `0 4px 20px rgba(0,0,0,0.3), inset 0 0 20px ${active.bannerColor}15`,
         color: "white",
         maxWidth: "88vw",
       }}
@@ -131,7 +131,7 @@ export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 4,
           padding: "2px 9px", borderRadius: 10,
-          background: "color-mix(in srgb, var(--carta-accent, #F4A623) 80%, transparent)",
+          background: `${active.bannerColor}cc`,
           fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.03em",
         }}>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -176,7 +176,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
         className="font-[family-name:var(--font-dm)]"
         style={{
           borderRadius: 16,
-          border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 53%, transparent)",
+          border: `1px solid ${active.bannerColor}88`,
           background: "rgba(8,8,8,0.28)",
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
