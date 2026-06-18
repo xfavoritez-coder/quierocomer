@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import type { FeedDish } from '../types'
 import {
   createEmptyProfile,
@@ -51,6 +52,8 @@ type TasteData = {
   hasGustoVector: boolean
 }
 
+const PULL_THRESHOLD = 65
+
 export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, savedDishes: savedDishesFromDB }: {
   dishes: FeedDish[]
   userDiet: UserDiet
@@ -58,8 +61,13 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
   tasteData?: TasteData
   savedDishes?: { dishId: string; type: string }[]
 }) {
+  const router = useRouter()
+  const [, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<Tab>('feed')
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
+  const [pullY, setPullY] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const touchStartY = useRef(0)
   const [profile, setProfile] = useState<FeedProfile>(() => {
     const base = createEmptyProfile()
     if (savedProfile) {
@@ -232,6 +240,26 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
     unsaveDish(dishId).catch(() => {})
   }, [])
 
+  const handlePullStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+  }, [])
+
+  const handlePullMove = useCallback((e: React.TouchEvent) => {
+    if (window.scrollY > 5 || isRefreshing) return
+    const delta = e.touches[0].clientY - touchStartY.current
+    if (delta > 0) setPullY(Math.min(delta * 0.5, PULL_THRESHOLD))
+  }, [isRefreshing])
+
+  const handlePullEnd = useCallback(() => {
+    if (pullY >= PULL_THRESHOLD) {
+      setIsRefreshing(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      startTransition(() => router.refresh())
+      setTimeout(() => setIsRefreshing(false), 1200)
+    }
+    setPullY(0)
+  }, [pullY, router, startTransition])
+
   const handleResetProfile = useCallback(() => {
     setProfile(createEmptyProfile())
     resetProfile().catch(() => {})
@@ -249,7 +277,33 @@ export default function FeedApp({ dishes, userDiet, savedProfile, tasteData, sav
     (filters.sort !== 'relevance' ? 1 : 0)
 
   return (
-    <div className="feed-container">
+    <div
+      className="feed-container"
+      onTouchStart={handlePullStart}
+      onTouchMove={handlePullMove}
+      onTouchEnd={handlePullEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      {(pullY > 0 || isRefreshing) && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          height: isRefreshing ? 44 : pullY * 0.67,
+          transition: isRefreshing ? 'none' : undefined,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%',
+            border: '2.5px solid rgba(244,166,35,0.2)',
+            borderTopColor: '#F4A623',
+            opacity: isRefreshing ? 1 : pullY / PULL_THRESHOLD,
+            animation: isRefreshing ? 'spin 0.7s linear infinite' : undefined,
+            transform: isRefreshing ? undefined : `rotate(${pullY * 3.6}deg)`,
+          }} />
+        </div>
+      )}
+
       {/* Header */}
       <header className="feed-header">
         {/* Row 1: Logo + menu */}

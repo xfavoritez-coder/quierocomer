@@ -320,6 +320,10 @@ textarea::placeholder {
   border-radius: 2px;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Skeleton shimmer for loading images */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
