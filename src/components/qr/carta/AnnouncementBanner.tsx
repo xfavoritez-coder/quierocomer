@@ -50,7 +50,9 @@ export default function AnnouncementBanner({ announcements }: Props) {
           position: "relative",
           borderRadius: 16,
           border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)",
-          background: "#080808",
+          background: "rgba(8,8,8,0.72)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
           overflow: "hidden",
         }}
       >
