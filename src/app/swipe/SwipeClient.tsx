@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 
 type SwipeDish = {
@@ -12,17 +12,53 @@ type SwipeDish = {
   dishDiet: string | null;
   txDishType: string[];
   txCuisine: string[];
+  txMealSlot: string[];
   txIngredient: string[];
   flavorTags: string[];
   txEstilo: string[];
   restaurant: { name: string; slug: string; logoUrl: string | null; googleRating: number | null };
 };
 
+type FreqMap = Record<string, number>;
+
 const SWIPE_THRESHOLD = 100;
 const ACCENT = "#F4A623";
+const FETCH_WHEN_BELOW = 12;
 
 function formatPrice(p: number) {
   return "$" + p.toLocaleString("es-CL");
+}
+
+/** Extract all taxonomy dimensions from a dish as flat strings */
+function getDims(dish: SwipeDish): string[] {
+  return [
+    ...dish.txDishType,
+    ...dish.txCuisine,
+    ...dish.txIngredient,
+    ...dish.flavorTags,
+    ...dish.txEstilo,
+    ...(dish.dishDiet ? [dish.dishDiet] : []),
+  ];
+}
+
+/**
+ * Score a dish given accumulated like/dislike frequencies.
+ * Likes push the dish up; dislikes push it down.
+ * Dishes with no overlap with any swipe are scored 0 (neutral, random order preserved).
+ */
+function scoreDish(dish: SwipeDish, likeFreq: FreqMap, dislikeFreq: FreqMap): number {
+  let score = 0;
+  for (const dim of getDims(dish)) {
+    score += (likeFreq[dim] ?? 0) * 2;
+    score -= (dislikeFreq[dim] ?? 0);
+  }
+  return score;
+}
+
+/** Re-sort pool: higher score first, ties keep original order */
+function sortPool(pool: SwipeDish[], likeFreq: FreqMap, dislikeFreq: FreqMap): SwipeDish[] {
+  if (Object.keys(likeFreq).length === 0 && Object.keys(dislikeFreq).length === 0) return pool;
+  return [...pool].sort((a, b) => scoreDish(b, likeFreq, dislikeFreq) - scoreDish(a, likeFreq, dislikeFreq));
 }
 
 function DietBadge({ diet }: { diet: string | null }) {
@@ -236,21 +272,36 @@ function SwipeCard({
 }
 
 export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDish[] }) {
-  const [stack, setStack] = useState<SwipeDish[]>(initialDishes);
+  // Full dish pool (all fetched, unswiped)
+  const [pool, setPool] = useState<SwipeDish[]>(initialDishes);
   const [seen, setSeen] = useState<string[]>([]);
   const [history, setHistory] = useState<{ dish: SwipeDish; dir: "left" | "right" }[]>([]);
+  const [likeFreq, setLikeFreq] = useState<FreqMap>({});
+  const [dislikeFreq, setDislikeFreq] = useState<FreqMap>({});
   const [loading, setLoading] = useState(false);
   const [finished, setFinished] = useState(false);
 
+  // Avoid double-fetch with a ref
+  const fetchingRef = useRef(false);
+
   async function fetchMore(seenIds: string[]) {
-    if (loading) return;
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setLoading(true);
     try {
       const res = await fetch(`/api/feed/swipe?seen=${seenIds.join(",")}`);
       const data: SwipeDish[] = await res.json();
-      if (data.length === 0) { setFinished(true); return; }
-      setStack(prev => [...prev, ...data]);
+      if (data.length === 0) {
+        setFinished(true);
+        return;
+      }
+      // Merge new dishes and re-sort with current frequencies
+      setPool(prev => {
+        const merged = [...prev, ...data];
+        return sortPool(merged, likeFreq, dislikeFreq);
+      });
     } finally {
+      fetchingRef.current = false;
       setLoading(false);
     }
   }
@@ -259,14 +310,39 @@ export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDis
     const newSeen = [...seen, dish.id];
     setSeen(newSeen);
     setHistory(prev => [...prev, { dish, dir }]);
-    setStack(prev => prev.filter(d => d.id !== dish.id));
-    if (stack.length <= 5) fetchMore(newSeen);
-  }, [seen, stack.length]);
+
+    // Update frequency maps
+    const dims = getDims(dish);
+    let newLikeFreq = likeFreq;
+    let newDislikeFreq = dislikeFreq;
+
+    if (dir === "right") {
+      newLikeFreq = { ...likeFreq };
+      for (const dim of dims) newLikeFreq[dim] = (newLikeFreq[dim] ?? 0) + 1;
+      setLikeFreq(newLikeFreq);
+    } else {
+      newDislikeFreq = { ...dislikeFreq };
+      for (const dim of dims) newDislikeFreq[dim] = (newDislikeFreq[dim] ?? 0) + 1;
+      setDislikeFreq(newDislikeFreq);
+    }
+
+    // Remove swiped dish and re-sort remaining pool with updated frequencies
+    setPool(prev => {
+      const remaining = prev.filter(d => d.id !== dish.id);
+      return sortPool(remaining, newLikeFreq, newDislikeFreq);
+    });
+
+    // Fetch more when pool is running low
+    if (pool.length - 1 < FETCH_WHEN_BELOW) {
+      fetchMore(newSeen);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seen, pool.length, likeFreq, dislikeFreq]);
 
   const likes = history.filter(h => h.dir === "right");
   const dislikes = history.filter(h => h.dir === "left");
 
-  if (finished && stack.length === 0) {
+  if (finished && pool.length === 0) {
     return (
       <div style={{
         minHeight: "100dvh", background: "#030303",
@@ -308,7 +384,7 @@ export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDis
     );
   }
 
-  const visibleStack = stack.slice(0, 3);
+  const visibleStack = pool.slice(0, 3);
 
   return (
     <div style={{
@@ -354,9 +430,9 @@ export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDis
       </div>
 
       {/* Card stack */}
-      <div style={{ flex: 1, position: "relative", padding: "0 16px 8px" }}>
+      <div style={{ flex: 1, minHeight: 0, position: "relative", padding: "0 16px 8px" }}>
         <div style={{ position: "relative", height: "100%" }}>
-          {stack.length === 0 && !loading ? (
+          {pool.length === 0 && !loading ? (
             <div style={{
               height: "100%", display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 12, color: "rgba(255,255,255,0.4)",
@@ -388,7 +464,7 @@ export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDis
         display: "flex", justifyContent: "center", gap: 28,
       }}>
         <button
-          onClick={() => stack[0] && handleSwipe(stack[0], "left")}
+          onClick={() => pool[0] && handleSwipe(pool[0], "left")}
           style={{
             width: 62, height: 62, borderRadius: "50%",
             background: "rgba(239,68,68,0.1)", border: "2px solid rgba(239,68,68,0.35)",
@@ -402,7 +478,7 @@ export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDis
           ✕
         </button>
         <button
-          onClick={() => stack[0] && handleSwipe(stack[0], "right")}
+          onClick={() => pool[0] && handleSwipe(pool[0], "right")}
           style={{
             width: 62, height: 62, borderRadius: "50%",
             background: `rgba(244,166,35,0.1)`, border: `2px solid rgba(244,166,35,0.35)`,
@@ -418,7 +494,7 @@ export default function SwipeClient({ initialDishes }: { initialDishes: SwipeDis
       </div>
 
       {/* Hint swipe */}
-      {history.length === 0 && stack.length > 0 && (
+      {history.length === 0 && pool.length > 0 && (
         <div style={{
           position: "absolute", bottom: 100, left: 0, right: 0,
           display: "flex", justifyContent: "center", pointerEvents: "none",

@@ -53,7 +53,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     SELECT
       d.id, d.name, d.description, d.price, d."discountPrice",
       d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
-      d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt",
+      d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt", d."txDishType",
       c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
       r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory", r."isShowcase",
@@ -114,6 +114,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       categoriaParent,
       categoriaTipo: inferDishType(categoriaNorm, d.dishType),
       sabores: Array.isArray(d.flavorTags) ? d.flavorTags : [],
+      txDishType: Array.isArray(d.txDishType) ? d.txDishType : [],
       dieta: {
         tipo: d.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',
         sinGluten: d.isGlutenFree,
@@ -198,7 +199,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       id: true, name: true, description: true, price: true, discountPrice: true,
       photos: true, dishDiet: true, isSpicy: true, isGlutenFree: true,
       isLactoseFree: true, isSoyFree: true, containsNuts: true, flavorTags: true,
-      isHero: true, tags: true, leafOverride: true,
+      isHero: true, tags: true, leafOverride: true, txDishType: true,
       category: { select: { name: true, dishType: true, cuisineTag: true, normOverride: true } },
       restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, primaryCategory: true } },
       feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
@@ -217,6 +218,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
         categoriaNorm, categoriaParent, categoriaTipo: inferDishType(categoriaNorm, dish.category.dishType),
         cuisineTag: dish.category.cuisineTag ?? null,
         sabores: dish.flavorTags,
+        txDishType: dish.txDishType ?? [],
         dieta: {
           tipo: dish.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',
           sinGluten: dish.isGlutenFree, sinLactosa: dish.isLactoseFree,

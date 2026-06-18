@@ -12,6 +12,7 @@ export type FeedDish = {
   cuisineTag: string | null // Cocina de la sección (ej: "Peruana", "China") — segunda dimensión
   categoriaTipo: string    // "food" | "drink" | "dessert"
   sabores: string[]        // Dish.flavorTags
+  txDishType?: string[]    // AI taxonomy dish type (ej: "empanada", "pizza", "completo")
   dieta: {
     tipo: 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE'
     sinGluten: boolean

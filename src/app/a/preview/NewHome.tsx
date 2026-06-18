@@ -152,6 +152,14 @@ export default function NewHome({
   // Server-side search/filter results — null = browse mode (use initial dishes prop)
   const [serverDishes, setServerDishes] = useState<FeedDish[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
+
+  // ─── Swipe narrowing ──────────────────────────────────────────────────────
+  const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set())
+  const [swipeLikeFreq, setSwipeLikeFreq] = useState<Record<string, number>>({})
+  const [swipeDislikeFreq, setSwipeDislikeFreq] = useState<Record<string, number>>({})
+
+  const modalDishIdRef = useRef<string | null>(null)
+  const modalAllDishesRef = useRef<FeedDish[]>([])
   const searchFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [visibleCount, setVisibleCount] = useState(20)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -573,6 +581,31 @@ export default function NewHome({
     return final
   }, [serverDishes, dishes, activeCategory, filterCategories, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
 
+  // ─── Modal allDishes snapshot — frozen when dish opens, immune to GPS reordering ──
+  if (selectedDish) {
+    if (selectedDish.id !== modalDishIdRef.current) {
+      modalDishIdRef.current = selectedDish.id
+      modalAllDishesRef.current = feedDishes.some(d => d.id === selectedDish.id)
+        ? feedDishes
+        : [selectedDish, ...feedDishes]
+    }
+  } else {
+    modalDishIdRef.current = null
+  }
+
+  // Feed with swipe narrowing applied: filter out swiped, re-sort visible by freq after ≥2 right swipes
+  const activeFeedDishes = useMemo(() => {
+    if (swipedIds.size === 0) return feedDishes
+    const filtered = feedDishes.filter(d => !swipedIds.has(d.id))
+    const likeTotal = Object.values(swipeLikeFreq).reduce((s, v) => s + v, 0)
+    if (likeTotal < 2) return filtered
+    return [...filtered].sort((a, b) => {
+      const sa = _swipeScore(a, swipeLikeFreq, swipeDislikeFreq)
+      const sb = _swipeScore(b, swipeLikeFreq, swipeDislikeFreq)
+      return sb - sa
+    })
+  }, [feedDishes, swipedIds, swipeLikeFreq, swipeDislikeFreq])
+
   // Counts por parent category — usa datos cacheados del servidor (BD completa) si están disponibles,
   // si no calcula client-side sobre los platos iniciales como fallback
   const categoryCountMap = useMemo(() => {
@@ -607,7 +640,7 @@ export default function NewHome({
     if (!el) return
     const obs = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting) {
-        setVisibleCount(prev => Math.min(prev + 20, feedDishes.length))
+        setVisibleCount(prev => Math.min(prev + 20, activeFeedDishes.length))
       }
     }, { rootMargin: '400px' })
     obs.observe(el)
@@ -706,6 +739,26 @@ export default function NewHome({
   )
 
   const selectedReason = selectedDish ? getRecommendationReason(selectedDish, profile) : null
+
+  // ─── Swipe handlers ───────────────────────────────────────────────────────
+  const handleDishSwipe = useCallback((dish: FeedDish, dir: 'left' | 'right') => {
+    const dims = _swipeDims(dish)
+    setSwipedIds(prev => new Set([...prev, dish.id]))
+    if (dir === 'right') {
+      setSwipeLikeFreq(prev => {
+        const next = { ...prev }
+        for (const d of dims) next[d] = (next[d] ?? 0) + 1
+        return next
+      })
+    } else {
+      setSwipeDislikeFreq(prev => {
+        const next = { ...prev }
+        for (const d of dims) next[d] = (next[d] ?? 0) + 1
+        return next
+      })
+    }
+  }, [])
+
 
   // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
   const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm < 30 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
@@ -1714,15 +1767,16 @@ export default function NewHome({
               <div style={{ marginTop: -6 }} />
               <div style={{ opacity: isSearching ? 0.45 : 1, transition: 'opacity 0.2s' }}>
               <MasonryGrid
-                dishes={feedDishes.slice(0, visibleCount)}
+                dishes={activeFeedDishes.slice(0, visibleCount)}
                 onDishTap={handleDishTap}
                 onCategoryClick={cat => setActiveCategory(cat)}
                 userLocation={userLocation}
+                onSwipe={handleDishSwipe}
               />
               </div>
               {/* Sentinel — IntersectionObserver lo detecta para cargar más */}
               <div ref={sentinelRef} style={{ height: 1 }} />
-              {visibleCount < feedDishes.length && (
+              {visibleCount < activeFeedDishes.length && (
                 <div style={{ display: 'flex', gap: 10, padding: '10px 12px 40px' }}>
                   {(isDesktop ? [0, 1, 2, 3] : [0, 1]).map(col => (
                     <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1845,7 +1899,7 @@ export default function NewHome({
         <FeedDishDetail
           key={selectedDish.id}
           dish={selectedDish}
-          allDishes={feedDishes.some(d => d.id === selectedDish.id) ? feedDishes : [selectedDish, ...feedDishes]}
+          allDishes={modalAllDishesRef.current.length > 0 ? modalAllDishesRef.current : [selectedDish]}
           dishPool={dishes}
           profile={profile}
           hideRelated={hideRelated}
@@ -1864,8 +1918,75 @@ export default function NewHome({
       )}
 
       </div>{/* end main content */}
+
+      {/* ─── Swipe debug panel ─── */}
+      {swipedIds.size > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9998,
+          background: 'rgba(0,0,0,0.92)', borderTop: '1px solid rgba(255,255,255,0.1)',
+          fontFamily: 'monospace', fontSize: 11, color: '#fff',
+          maxHeight: 220, overflowY: 'auto',
+          padding: '10px 14px 14px',
+        }}>
+          <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
+            🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos
+          </p>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            {Object.keys(swipeLikeFreq).length > 0 && (
+              <div>
+                <p style={{ margin: '0 0 4px', color: '#F4A623', fontWeight: 700 }}>LIKES ✓</p>
+                {Object.entries(swipeLikeFreq)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([dim, n]) => (
+                    <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
+                      <span style={{ color: n >= 2 ? '#F4A623' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
+                      <div style={{ height: 4, borderRadius: 2, background: '#F4A623', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
+                    </div>
+                  ))}
+              </div>
+            )}
+            {Object.keys(swipeDislikeFreq).length > 0 && (
+              <div>
+                <p style={{ margin: '0 0 4px', color: '#ef4444', fontWeight: 700 }}>DISLIKES ✕</p>
+                {Object.entries(swipeDislikeFreq)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([dim, n]) => (
+                    <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: 14, textAlign: 'right' }}>{n}×</span>
+                      <span style={{ color: n >= 2 ? '#ef4444' : 'rgba(255,255,255,0.7)' }}>{dim}</span>
+                      <div style={{ height: 4, borderRadius: 2, background: '#ef4444', width: n * 12, maxWidth: 80, opacity: 0.7 }} />
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   )
+}
+
+// ─── Swipe narrowing helpers (module-level — no hooks) ────────────────────────
+function _swipeDims(dish: FeedDish): string[] {
+  return [
+    dish.categoriaNorm,
+    dish.categoriaParent ?? '',
+    dish.cuisineTag ?? '',
+    dish.dieta.tipo,
+    dish.mealTime,
+    ...dish.sabores,
+  ].filter(Boolean)
+}
+
+function _swipeScore(dish: FeedDish, likeFreq: Record<string, number>, dislikeFreq: Record<string, number>): number {
+  let score = 0
+  for (const dim of _swipeDims(dish)) {
+    score += (likeFreq[dim] ?? 0) * 2
+    score -= (dislikeFreq[dim] ?? 0)
+  }
+  return score
 }
 
 // ─── Seeded random per (seed, id) — deterministic noise for shuffle ───────────

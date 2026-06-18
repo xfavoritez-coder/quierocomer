@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
-import { getFeedDishes } from '@/app/a/lib/feed-queries'
+import { getFeedDishes, getDishesById } from '@/app/a/lib/feed-queries'
 import NewHome from '@/app/a/preview/NewHome'
 import FeedLayout from '@/app/a/layout'
 
@@ -64,12 +64,17 @@ export default async function DishSlugPage({ params }: Props) {
   if (!dish) redirect('/')
 
   // getFeedDishes tiene su propio unstable_cache — corre solo después de liberar la conexión anterior
-  const dishes = await getFeedDishes()
+  const feedDishes = await getFeedDishes()
+
+  // Si el plato no está en el feed (MAX_PER=5 por restaurante), lo traemos explícitamente
+  const dishesWithInitial = feedDishes.some(d => d.id === dish.id)
+    ? feedDishes
+    : [...(await getDishesById([dish.id])), ...feedDishes]
 
   return (
     <FeedLayout>
       <NewHome
-        dishes={dishes}
+        dishes={dishesWithInitial}
         categoryScores={(user.categoryScores as Record<string, number>) ?? {}}
         keywordScores={(user.keywordScores as Record<string, number>) ?? {}}
         totalInteractions={user.totalInteractions}
