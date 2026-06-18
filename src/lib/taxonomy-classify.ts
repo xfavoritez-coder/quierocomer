@@ -42,7 +42,7 @@ export const VALID_DISH_TYPES = [
   // Ensaladas y bowls
   "ensalada","bowl",
   // Asiática
-  "sushi","hand roll","sushiburger","bao","curry","pad thai","gyoza","wantan",
+  "sushi","hand roll","sushiburger","kimbap","bao","curry","pad thai","gyoza","dumpling","mandu","wantan",
   // Mexicana/Venezolana
   "taco","burrito","quesadilla","arepa","salchipapa",
   // China-chilena
@@ -68,11 +68,12 @@ export const VALID_MEAL_SLOTS = ["desayuno","almuerzo","cena","snack"];
 
 export const VALID_INGREDIENTS = [
   "carne","pollo","cerdo","cordero","pescado","salmón","camarones","pulpo","mariscos",
-  "vienesa","jamón","salame","longaniza",
+  "vienesa","jamón","salame","longaniza","tocino",
+  "congrio","reineta","calamar","jaiba","ostión","mejillones","machas","centolla",
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
-  "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín",
+  "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","pepino","pimiento","rúcula","zapallo","betarraga","zanahoria","aceitunas",
   "choclo","champiñon","piña","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
-  "crema","espinaca","albahaca","calamar","reineta","jaiba","durazno","naranja","lúcuma","frambuesa",
+  "crema","mantequilla","espinaca","albahaca","jengibre","durazno","naranja","lúcuma","frambuesa",
 ];
 
 export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asado"];
@@ -98,7 +99,10 @@ Reglas dishType:
 - Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
 - Bebidas → diet: café/té/jugo/bebida/alcohol/mocktail → VEGAN. latte/cappuccino/mocaccino/chocolate caliente/batido con leche → VEGETARIAN. Si dice explícitamente "leche de avena", "leche vegetal", "oat milk", "almendra" → VEGAN.
 - "extra" SOLO para salsas líquidas, condimentos y porciones adicionales que van pegadas a otro plato — NO son comida independiente. Criterios estrictos: el nombre empieza con "salsa", "extra de", "adicional", "porción de", "dip de", o es un condimento puro solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, guacamole, etc.). Si el plato es comida real que se come solo — aunque lleve ajo, queso, pan, o sea pequeño — NO es "extra". Ejemplos que NO son extra: palitos de ajo, pan de ajo, focaccia, tostadas de ajo, camembert al horno, tabla de quesos, palitos de pan, papas al horno. Ante la duda → deja dishType: [].
+- "kimbap": rollo coreano de arroz y relleno envuelto en alga nori, cortado en rodajas (similar al maki pero coreano). Incluye: kimbap de X, rollitos de algas nori coreanos, gimbap. cuisine siempre ["coreana"]. NUNCA clasificar kimbap como "sushi".
 - "bao": pan al vapor chino relleno (baozi, bao bun, steamed bun, gua bao). Incluye: bao de cerdo, bao de pollo, bao de salmón, bao vegano, etc. cuisine siempre ["china"] o ["asiática"]. mainIngredient incluir el relleno + "pan".
+- "dumpling": masa rellena genérica de tradición asiática (incluye cualquier variante que no sea específicamente gyoza/wantan/mandu). Incluye: dumplings de X, potstickers, jiaozi. cuisine ["china"] o ["asiática"].
+- "mandu": dumpling coreano (empanadita coreana, mandu de X, wang mandu). Incluye: empanaditas coreanas de cualquier relleno. cuisine siempre ["coreana"]. NUNCA clasificar mandu como "empanada" (que es latinoamericana).
 - "sushiburger": preparación japonesa donde el arroz de sushi prensado reemplaza el pan, con relleno de pescado/mariscos/carne entre dos "tapas" de arroz. Incluye: sushi burger, sushiburger de salmón, de atún, etc. cuisine siempre ["japonesa"] o ["nikkei"].
 - "hand roll": cono de alga nori relleno de arroz y ingredientes, se come con la mano. Incluye: hand roll de X, temaki.
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
