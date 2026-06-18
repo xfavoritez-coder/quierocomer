@@ -300,6 +300,7 @@ function DesktopDishContent({
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showDietTooltip, setShowDietTooltip] = useState(false)
+  const [showPriceTooltip, setShowPriceTooltip] = useState(false)
 
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
@@ -428,7 +429,14 @@ function DesktopDishContent({
             ) : (
               <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
-            <span title="Los precios pueden variar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'default', flexShrink: 0, lineHeight: 1 }}>i</span>
+            <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+              <span onClick={() => setShowPriceTooltip(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
+              {showPriceTooltip && (
+                <span onClick={() => setShowPriceTooltip(false)} style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: isDark ? '#333' : '#fff', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`, borderRadius: 8, padding: '6px 10px', fontSize: 11, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 10 }}>
+                  Los precios pueden variar
+                </span>
+              )}
+            </span>
           </div>
         )}
 
@@ -477,18 +485,6 @@ function DesktopDishContent({
                 A {formatDistance(dist)}
               </p>
             )}
-            {dish.googleRating != null && (
-              <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <span style={{ color: '#F4A623', fontSize: 11 }}>★</span>
-                <span style={{ fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)' }}>{dish.googleRating.toFixed(1)}</span>
-                {dish.googleRatingCount != null && (
-                  <span style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
-                    ({dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(1)}k` : dish.googleRatingCount})
-                  </span>
-                )}
-                <span style={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', fontSize: 10 }}>en Google</span>
-              </p>
-            )}
           </div>
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -512,7 +508,7 @@ function DesktopDishContent({
               </p>
               {!dish.isShowcase && (
                 <a href={`/?q=${encodeURIComponent(dish.restaurante)}`}
-                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
                   Ver todo
                 </a>
               )}
@@ -568,6 +564,7 @@ function DishSlide({
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showDietTooltip, setShowDietTooltip] = useState(false)
+  const [showPriceTooltip, setShowPriceTooltip] = useState(false)
 
   const [visibleRelated, setVisibleRelated] = useState(10)
   const slideRef = useRef<HTMLDivElement>(null)
@@ -746,7 +743,14 @@ function DishSlide({
             ) : (
               <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
-            <span title="Los precios pueden variar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'default', flexShrink: 0, lineHeight: 1 }}>i</span>
+            <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+              <span onClick={() => setShowPriceTooltip(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
+              {showPriceTooltip && (
+                <span onClick={() => setShowPriceTooltip(false)} style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: isDark ? '#333' : '#fff', border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`, borderRadius: 8, padding: '6px 10px', fontSize: 11, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 10 }}>
+                  Los precios pueden variar
+                </span>
+              )}
+            </span>
           </div>
         )}
 
@@ -830,7 +834,7 @@ function DishSlide({
               </p>
               {!dish.isShowcase && (
                 <a href={`/?q=${encodeURIComponent(dish.restaurante)}`}
-                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                  style={{ fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
                   Ver todo
                 </a>
               )}
