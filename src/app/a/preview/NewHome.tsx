@@ -135,7 +135,7 @@ export default function NewHome({
   const [filterSort, setFilterSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
   const [quickNearby, setQuickNearby] = useState(true)
   const [quickPopular, setQuickPopular] = useState(false)
-  const [filterMaxKm, setFilterMaxKm] = useState(30)
+  const [filterMaxKm, setFilterMaxKm] = useState(5)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
   const [filterCategories, setFilterCategories] = useState<Set<string>>(new Set())
   // Draft state — se usan dentro del panel, solo se aplican al hacer "Guardar cambios"
@@ -782,7 +782,7 @@ export default function NewHome({
 
 
   // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
-  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm < 30 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
+  const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm !== 5 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0) + filterCategories.size
 
   // Pills helpers — usados tanto en Row 3 como en el floating header
   const openFilters = () => {
@@ -959,7 +959,7 @@ export default function NewHome({
 
         {/* Row 2: Search bar */}
         {(() => {
-          const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 30 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
+          const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 5 || filterDiet !== 'all' || !!activeCategory || filterCategories.size > 0
           return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
         <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
@@ -1130,7 +1130,7 @@ export default function NewHome({
                   color: '#e09200', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {filterMaxKm >= 30 ? '20 km' : `${filterMaxKm} km`}
+                {`${filterMaxKm} km`}
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
               </button>
               {showDistancePicker && typeof document !== 'undefined' && createPortal(
@@ -1525,7 +1525,7 @@ export default function NewHome({
             </button>
             <button onClick={() => {
               setFilterSort('default')
-              setFilterMaxKm(30)
+              setFilterMaxKm(5)
               userSetMaxKm.current = false
               setFilterDiet('all')
               setFilterMeal('all')
@@ -1825,7 +1825,7 @@ export default function NewHome({
                 No tenemos platos aún
               </p>
               <button onClick={() => {
-                const hasLocationFilter = userLocation !== null && filterMaxKm < 30
+                const hasLocationFilter = userLocation !== null && filterMaxKm <= 5
                 if (hasLocationFilter) {
                   // Expand distance to show all dishes regardless of location
                   setFilterMaxKm(30)
@@ -2041,18 +2041,18 @@ export default function NewHome({
 // ─── Swipe narrowing helpers (module-level — no hooks) ────────────────────────
 function _swipeDims(dish: FeedDish): string[] {
   const types = dish.txDishType ?? []
-  // El tipo primario (forma del plato) pesa 2x: si haces like a una empanada
-  // querés ver más empanadas, no solo más mariscos.
+  // Tipo primario 3x: en ...types (1x) + 2 extras
+  // Categoría principal 1x: solo categoriaNorm (sin categoriaParent)
   const primaryType = types.length > 0 ? getPrimaryDishType(types, '') : ''
   return [
     dish.categoriaNorm,
-    dish.categoriaParent ?? '',
     dish.cuisineTag ?? '',
     dish.dieta.tipo,
     dish.mealTime,
     ...dish.sabores,
     ...types,        // todos los tipos: 1x
-    primaryType,     // tipo principal extra: 2x total
+    primaryType,     // tipo principal extra #1: 2x total
+    primaryType,     // tipo principal extra #2: 3x total
   ].filter(Boolean)
 }
 
