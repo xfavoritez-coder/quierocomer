@@ -1031,7 +1031,7 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip, showSpicyT
       <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
     </svg>
   ) : (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '2px' }}>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '10px' }}>
       <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
     </svg>
   )) : null
@@ -1067,7 +1067,7 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip, showSpicyT
               onClick={e => { e.stopPropagation(); setShowSpicyTooltip(v => !v); setTimeout(() => setShowSpicyTooltip(false), 2000) }}
               style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex' }}
             >
-              <svg width="16" height="16" viewBox="0 0 32 32" fill="#FF5722" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '2px' }}>
+              <svg width="16" height="16" viewBox="0 0 32 32" fill="#FF5722" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '10px' }}>
                 <path d="M22 4c-1.5 1-3 1.5-4.5 1.2C15 4.7 13 3 11 3c-3.3 0-6 2.7-6 6 0 2 1 3.8 2.5 4.9C5.5 15.5 4 18.6 4 22c0 5.5 4.5 10 10 10s10-4.5 10-10c0-2.5-0.9-4.8-2.4-6.5C23.5 14 25 12 25 10c0-2.5-1.4-4.7-3.5-5.8C21.7 4.1 21.8 4.05 22 4z"/>
                 <path d="M14 14c0-2 1.5-3.5 3.5-4" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
