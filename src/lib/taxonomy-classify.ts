@@ -67,7 +67,7 @@ export const VALID_INGREDIENTS = [
   "huevo","pasta","arroz","papa","verduras","legumbres","queso","queso crema","pan",
   "fruta","tofu","tomate","lechuga","palta","cebolla","cebollín","jamón","salame",
   "choclo","champiñon","piña","nutella","manjar","almendra","maní","nuez","plátano","frutilla","edamame","wakame","atún","quinoa","limón","chocolate","masa madre",
-  "crema","espinaca","albahaca","calamar","reineta","jaiba",
+  "crema","espinaca","albahaca","calamar","reineta","jaiba","durazno","naranja",
 ];
 
 export const VALID_FLAVORS = ["dulce","salado","picante","frito","grillado","asado"];
