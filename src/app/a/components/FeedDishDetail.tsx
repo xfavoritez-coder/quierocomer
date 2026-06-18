@@ -304,7 +304,9 @@ function DesktopDishContent({
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showDietTooltip, setShowDietTooltip] = useState(false)
+  const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
+  const [showTaxDebug, setShowTaxDebug] = useState(false)
 
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
@@ -401,27 +403,66 @@ function DesktopDishContent({
       <div style={{ padding: '22px 24px 28px' }}>
         {/* Categoría + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <button
-            onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
-            style={{
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
-              textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
-            }}
-          >
-            {(() => {
-              const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
-              const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
-              return (
-                <>
-                  {primary}
-                  {secondary.map(t => (
-                    <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
-                  ))}
-                </>
-              )
-            })()}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
+            <button
+              onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
+              style={{
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
+                textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}
+            >
+              {(() => {
+                const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
+                const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
+                return (
+                  <>
+                    {primary}
+                    {secondary.map(t => (
+                      <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
+                    ))}
+                  </>
+                )
+              })()}
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); setShowTaxDebug(v => !v) }}
+              title="Ver taxonomía"
+              style={{
+                background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer',
+                fontSize: 11, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', lineHeight: 1,
+              }}
+            >🔍</button>
+            {showTaxDebug && (
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  position: 'absolute', top: '100%', left: 0, zIndex: 999, marginTop: 4,
+                  background: isDark ? '#1a1a1a' : '#fff',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                  borderRadius: 10, padding: '12px 14px', minWidth: 240, maxWidth: 320,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)', fontSize: 12,
+                  color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)',
+                }}
+              >
+                <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.5 }}>Taxonomía del plato</div>
+                {[
+                  ['txDishType', (dish.txDishType ?? []).join(', ') || '—'],
+                  ['categoriaNorm', dish.categoriaNorm],
+                  ['categoriaParent', dish.categoriaParent ?? '—'],
+                  ['cuisineTag', dish.cuisineTag ?? '—'],
+                  ['mealTime', dish.mealTime],
+                  ['sabores', dish.sabores.join(', ') || '—'],
+                  ['categoria (raw)', dish.categoria],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                    <span style={{ opacity: 0.45, minWidth: 110 }}>{k}:</span>
+                    <span style={{ fontWeight: 600, wordBreak: 'break-word' }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
@@ -444,7 +485,7 @@ function DesktopDishContent({
           fontSize: 26, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.25,
           paddingRight: 135,
         }}>
-          <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} />
+          <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} showSpicyTooltip={showSpicyTooltip} setShowSpicyTooltip={setShowSpicyTooltip} />
         </h2>
 
         {/* Price */}
@@ -597,7 +638,9 @@ function DishSlide({
   const [imgLoaded, setImgLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showDietTooltip, setShowDietTooltip] = useState(false)
+  const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
+  const [showTaxDebug, setShowTaxDebug] = useState(false)
 
   const [visibleRelated, setVisibleRelated] = useState(10)
   const slideRef = useRef<HTMLDivElement>(null)
@@ -739,27 +782,66 @@ function DishSlide({
       <div style={{ padding: '16px 20px 20px' }}>
         {/* Categoría + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <button
-            onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
-            style={{
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
-              textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
-            }}
-          >
-            {(() => {
-              const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
-              const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
-              return (
-                <>
-                  {primary}
-                  {secondary.map(t => (
-                    <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
-                  ))}
-                </>
-              )
-            })()}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
+            <button
+              onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
+              style={{
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
+                textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}
+            >
+              {(() => {
+                const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
+                const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
+                return (
+                  <>
+                    {primary}
+                    {secondary.map(t => (
+                      <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
+                    ))}
+                  </>
+                )
+              })()}
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); setShowTaxDebug(v => !v) }}
+              title="Ver taxonomía"
+              style={{
+                background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer',
+                fontSize: 11, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', lineHeight: 1,
+              }}
+            >🔍</button>
+            {showTaxDebug && (
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  position: 'absolute', top: '100%', left: 0, zIndex: 999, marginTop: 4,
+                  background: isDark ? '#1a1a1a' : '#fff',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                  borderRadius: 10, padding: '12px 14px', minWidth: 240, maxWidth: 300,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)', fontSize: 12,
+                  color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)',
+                }}
+              >
+                <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.5 }}>Taxonomía del plato</div>
+                {[
+                  ['txDishType', (dish.txDishType ?? []).join(', ') || '—'],
+                  ['categoriaNorm', dish.categoriaNorm],
+                  ['categoriaParent', dish.categoriaParent ?? '—'],
+                  ['cuisineTag', dish.cuisineTag ?? '—'],
+                  ['mealTime', dish.mealTime],
+                  ['sabores', dish.sabores.join(', ') || '—'],
+                  ['categoria (raw)', dish.categoria],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                    <span style={{ opacity: 0.45, minWidth: 110 }}>{k}:</span>
+                    <span style={{ fontWeight: 600, wordBreak: 'break-word' }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
@@ -782,7 +864,7 @@ function DishSlide({
           fontSize: 24, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: '-2px 0 6px', lineHeight: 1.25,
           paddingRight: 120,
         }}>
-          <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} />
+          <DishNameWithTag dish={dish} showDietTooltip={showDietTooltip} setShowDietTooltip={setShowDietTooltip} showSpicyTooltip={showSpicyTooltip} setShowSpicyTooltip={setShowSpicyTooltip} />
         </h2>
 
         {/* Price */}
@@ -929,10 +1011,12 @@ function DishSlide({
 }
 
 /* ── Diet tag pegado a la última palabra del nombre ── */
-function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
+function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip, showSpicyTooltip, setShowSpicyTooltip }: {
   dish: FeedDish
   showDietTooltip: boolean
   setShowDietTooltip: React.Dispatch<React.SetStateAction<boolean>>
+  showSpicyTooltip: boolean
+  setShowSpicyTooltip: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   const hasDiet = dish.dieta.tipo === 'VEGAN' || dish.dieta.tipo === 'VEGETARIAN'
   const hasSpicy = dish.dieta.esPicante
@@ -951,13 +1035,6 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
       <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
     </svg>
   )) : null
-
-  const spicyIcon = hasSpicy ? (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5722" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle' }}>
-      <path d="M12 3 C13 1 15 2 15 4"/>
-      <path d="M12 4 C10 5 8 8 8 12 C8 16 10 19 12 20 C14 19 16 16 16 12 C16 8 14 5 12 4 Z"/>
-    </svg>
-  ) : null
 
   const dietLabel = dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'
 
@@ -986,8 +1063,24 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip }: {
             </span>
           )}
           {hasSpicy && (
-            <span title="Picante" style={{ display: 'inline-flex' }}>
-              {spicyIcon}
+            <span
+              onClick={e => { e.stopPropagation(); setShowSpicyTooltip(v => !v); setTimeout(() => setShowSpicyTooltip(false), 2000) }}
+              style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 32 32" fill="#FF5722" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '2px' }}>
+                <path d="M22 4c-1.5 1-3 1.5-4.5 1.2C15 4.7 13 3 11 3c-3.3 0-6 2.7-6 6 0 2 1 3.8 2.5 4.9C5.5 15.5 4 18.6 4 22c0 5.5 4.5 10 10 10s10-4.5 10-10c0-2.5-0.9-4.8-2.4-6.5C23.5 14 25 12 25 10c0-2.5-1.4-4.7-3.5-5.8C21.7 4.1 21.8 4.05 22 4z"/>
+                <path d="M14 14c0-2 1.5-3.5 3.5-4" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              {showSpicyTooltip && (
+                <span style={{
+                  position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                  background: '#c62828', color: '#fff', fontSize: 12, fontWeight: 600,
+                  padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', pointerEvents: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}>
+                  Picante
+                </span>
+              )}
             </span>
           )}
         </span>

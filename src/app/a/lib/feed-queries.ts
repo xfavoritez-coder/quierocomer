@@ -59,11 +59,13 @@ export function resolveDishLeaf(
   return 'Sin categoría'
 }
 
-/** Trae platos para el feed: hasta 5 por restaurante usando una sola query SQL */
+/** Trae platos para el feed: top 4 por restaurante + 1 por tipo de plato distinto */
 async function _getFeedDishes(): Promise<FeedDish[]> {
-  const MAX_PER = 5
+  const MAX_POPULAR = 4  // top populares siempre incluidos
+  const MAX_TOTAL = 10   // tope absoluto por restaurante
 
-  // Una sola query con ROW_NUMBER() — eficiente con cualquier cantidad de restaurantes
+  // Dos row_numbers: uno por popularidad, otro por tipo de plato
+  // Garantiza diversidad: un restaurante de sushi mostrará también su gyoza/ramen/etc.
   const rows = await prisma.$queryRaw<any[]>`
     SELECT
       d.id, d.name, d.description, d.price, d."discountPrice",
@@ -76,7 +78,9 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
     FROM (
       SELECT d.id,
-        ROW_NUMBER() OVER (PARTITION BY d."restaurantId" ORDER BY d."isHero" DESC, COALESCE(fs2."popularityScore", 0) DESC, d."createdAt" DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY d."restaurantId" ORDER BY d."isHero" DESC, COALESCE(fs2."popularityScore", 0) DESC, d."createdAt" DESC) AS rn,
+        ROW_NUMBER() OVER (PARTITION BY d."restaurantId", COALESCE(d."txDishType"[1], 'other') ORDER BY d."isHero" DESC, COALESCE(fs2."popularityScore", 0) DESC, d."createdAt" DESC) AS rn_type,
+        ROW_NUMBER() OVER (PARTITION BY d."restaurantId" ORDER BY d."isHero" DESC, COALESCE(fs2."popularityScore", 0) DESC, d."createdAt" DESC) AS rn_total
       FROM "Dish" d
       JOIN "Category" c ON c.id = d."categoryId"
       JOIN "Restaurant" r ON r.id = d."restaurantId"
@@ -98,7 +102,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     JOIN "Category" c ON c.id = d."categoryId"
     JOIN "Restaurant" r ON r.id = d."restaurantId"
     LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
-    WHERE ranked.rn <= ${MAX_PER}
+    WHERE (ranked.rn <= ${MAX_POPULAR} OR ranked.rn_type = 1)
+      AND ranked.rn_total <= ${MAX_TOTAL}
   `
 
   const dishes = rows

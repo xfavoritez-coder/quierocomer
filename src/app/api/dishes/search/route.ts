@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
       SELECT
         d.id, d.name, d.description, d.price, d."discountPrice",
         d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
-        d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt",
+        d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt", d."txDishType",
         c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
         r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
         r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory", r."isShowcase",
@@ -157,6 +157,7 @@ export async function GET(req: NextRequest) {
         categoriaNorm,
         categoriaParent,
         categoriaTipo: inferDishType(categoriaNorm, d.dishType),
+        txDishType: Array.isArray(d.txDishType) ? d.txDishType : [],
         sabores: Array.isArray(d.flavorTags) ? d.flavorTags : [],
         dieta: {
           tipo: d.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',
