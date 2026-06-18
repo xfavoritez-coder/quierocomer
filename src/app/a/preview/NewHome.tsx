@@ -1992,6 +1992,34 @@ export default function NewHome({
                       ))}
                   </div>
                 )}
+                {(Object.keys(swipeLikeFreq).length > 0 || Object.keys(swipeDislikeFreq).length > 0) && (() => {
+                  const allDims = new Set([...Object.keys(swipeLikeFreq), ...Object.keys(swipeDislikeFreq)])
+                  const net = Array.from(allDims)
+                    .map(dim => ({ dim, score: (swipeLikeFreq[dim] ?? 0) - (swipeDislikeFreq[dim] ?? 0) * 2 }))
+                    .filter(x => x.score !== 0)
+                    .sort((a, b) => b.score - a.score)
+                  if (net.length === 0) return null
+                  const maxAbs = Math.max(...net.map(x => Math.abs(x.score)))
+                  return (
+                    <div>
+                      <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>NETO →</p>
+                      {net.map(({ dim, score }) => (
+                        <div key={dim} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ color: score > 0 ? '#F4A623' : '#ef4444', minWidth: 22, textAlign: 'right', fontWeight: 700 }}>
+                            {score > 0 ? `+${score}` : score}
+                          </span>
+                          <span style={{ color: score > 0 ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.5)' }}>{dim}</span>
+                          <div style={{
+                            height: 4, borderRadius: 2,
+                            background: score > 0 ? '#F4A623' : '#ef4444',
+                            width: Math.abs(score) / maxAbs * 60,
+                            opacity: 0.7,
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           )}
