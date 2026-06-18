@@ -10,17 +10,11 @@ import FeedLayout from '@/app/a/layout'
 type Props = { params: Promise<{ restaurantSlug: string; dishSlug: string }> }
 
 async function findDish(restaurantSlug: string, dishSlug: string) {
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { slug: restaurantSlug },
-    select: { id: true },
-  })
-  if (!restaurant) return null
-
+  // Single query using restaurant relation filter — avoids 2 sequential round-trips
   const dishes = await prisma.dish.findMany({
-    where: { restaurantId: restaurant.id, isActive: true, deletedAt: null },
+    where: { restaurant: { slug: restaurantSlug }, isActive: true, deletedAt: null },
     select: { id: true, name: true, description: true, price: true, photos: true, restaurant: { select: { name: true } } },
   })
-
   return dishes.find(d => slugify(d.name) === dishSlug) ?? null
 }
 

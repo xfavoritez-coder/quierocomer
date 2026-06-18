@@ -16,6 +16,7 @@ export type RestauranteMapaData = {
   lng: number
   logoUrl: string | null
   dishCount: number
+  mapsUrl: string | null
 }
 
 export type ProspectoMapaData = {
@@ -47,6 +48,7 @@ async function getRestaurantesActivos(): Promise<RestauranteMapaData[]> {
       lat: true,
       lng: true,
       logoUrl: true,
+      googleMapsUrl: true,
       _count: {
         select: {
           dishes: {
@@ -68,6 +70,7 @@ async function getRestaurantesActivos(): Promise<RestauranteMapaData[]> {
       lng: r.lng as number,
       logoUrl: r.logoUrl,
       dishCount: r._count.dishes,
+      mapsUrl: r.googleMapsUrl ?? null,
     }))
 }
 

@@ -887,7 +887,7 @@ export default function NewHome({
           return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
         <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-          <img src="/logo.png" alt="QuieroComer" style={{ height: 56, width: 'auto' }} />
+          <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
         </a>
         <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
           <input
@@ -1125,7 +1125,7 @@ export default function NewHome({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="QuieroComer" style={{ height: 56, width: 'auto' }} />
+            <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
           </a>
           <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
             <input
