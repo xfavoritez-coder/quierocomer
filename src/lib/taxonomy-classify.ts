@@ -127,6 +127,7 @@ Si el nombre del plato contiene "veggie" → diet: VEGETARIAN siempre, sin excep
 Si la categoría del plato contiene "vegano", "vegana", "veganos", "veganas" o similar → asumir VEGAN para todos los platos de esa categoría, a menos que el plato tenga ingredientes animales explícitos.
 Si la categoría contiene "vegetariano", "vegetarianos", "veggie", "vegetales", "plant" o similar → asumir VEGETARIAN por defecto, a menos que el nombre/descripción diga explícitamente "vegano" (→ VEGAN).
 OMNIVORE → SOLO si el plato contiene carne (vacuno, cerdo, cordero), ave (pollo, pavo), pescado o mariscos. Ejemplos: hamburguesa, pollo, completo, ceviche, salmón.
+Términos japoneses que son OMNIVORE: kani (cangrejo), kanikama (palito de cangrejo), ebi (camarón), maguro (atún), hamachi (pez limón), hotate (vieira), unagi (anguila), tako (pulpo), tobiko/masago/ikura (huevas de pescado), gyoza (suele tener cerdo/camarones), tonkatsu (cerdo), yakitori (pollo), katsu (cerdo), gyudon (carne), karaage (pollo), negitoro, spicy tuna, tekka.
 VEGETARIAN → sin carne/ave/pescado/mariscos. Huevo, queso, leche, mantequilla, crema, miel NO hacen OMNIVORE — son ingredientes vegetarianos.
 Waffle, pancake, crepe, omelet, huevos, pasta con queso, pizza sin carne → VEGETARIAN aunque lleven huevo o lácteos.
 VEGAN → SOLO si el plato dice explícitamente "vegano" en su nombre o descripción. Sin esa señal, nunca VEGAN — usa VEGETARIAN.
