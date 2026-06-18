@@ -179,7 +179,7 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
         style={{
           borderRadius: 16,
           border: `1px solid ${c}88`,
-          background: "rgba(8,8,8,0.72)",
+          background: "rgba(8,8,8,0.45)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           padding: "13px 16px",
