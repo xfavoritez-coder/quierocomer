@@ -82,7 +82,7 @@ function detectDishLeafOverride(dishName: string): string | null {
 function detectDishType(categoryName: string): string {
   const n = categoryName.toLowerCase();
   if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
-  if (/bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|té|limonad|gaseosa|soda/i.test(n)) return "drink";
+  if (/bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|té|limonad|gaseosa|soda|líquido|liquido|agua\b|kombucha|hidratac/i.test(n)) return "drink";
   if (/postre|dessert|dulce|helado|torta|pastel/i.test(n)) return "dessert";
   return "food";
 }
