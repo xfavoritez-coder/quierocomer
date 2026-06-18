@@ -10,7 +10,7 @@ export const metadata = {
     description: 'Descubre qué comer cerca de ti.',
     url: 'https://quierocomer.cl',
     siteName: 'QuieroComer',
-    images: [{ url: 'https://quierocomer.cl/logo.png', width: 300, height: 300 }],
+    images: [{ url: 'https://quierocomer.cl/og-square.jpg', width: 300, height: 300 }],
     type: 'website',
   },
 }
