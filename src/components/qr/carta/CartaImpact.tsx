@@ -1218,13 +1218,14 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Banner — flujo normal (scrollea y desaparece), zIndex > header para que no quede tapado */}
+      {/* Spacer para el header fijo + banner en flujo normal debajo del nav */}
+      <div style={{ height: impactHeaderH }} />
       {hasBannerActive && !showFixedCatNav && (announcements && announcements.length > 0 ? (
-        <div style={{ position: "relative", zIndex: 45, marginBottom: 8 }}>
+        <div style={{ marginBottom: 8 }}>
           <AnnouncementBanner announcements={announcements} />
         </div>
       ) : hasActiveHH ? (
-        <div style={{ position: "relative", zIndex: 45, marginBottom: 8 }}>
+        <div style={{ marginBottom: 8 }}>
           <HappyHourBanner happyHours={happyHours || []} />
         </div>
       ) : null)}
@@ -1386,8 +1387,8 @@ export default function CartaImpact({
         </div>
       )}
 
-      {/* Hero — marginTop solo por el header fijo (banner ya empujó por el flujo normal) */}
-      <div style={{ position: "relative", zIndex: 1, marginTop: hasBannerActive ? 0 : impactHeaderH }}>
+      {/* Hero — sin marginTop, spacer arriba ya reservó el espacio del header */}
+      <div style={{ position: "relative", zIndex: 1 }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
           restaurant={restaurant}
