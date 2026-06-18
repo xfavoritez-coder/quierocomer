@@ -40,7 +40,7 @@ export const VALID_DISH_TYPES = [
   // Ensaladas y bowls
   "ensalada","bowl",
   // Asiática
-  "sushi","hand roll","curry","pad thai","gyoza","wantan",
+  "sushi","hand roll","sushiburger","curry","pad thai","gyoza","wantan",
   // Mexicana/Venezolana
   "taco","burrito","quesadilla","arepa","salchipapa",
   // China-chilena
@@ -95,6 +95,8 @@ Reglas dishType:
 - Bebidas → mealSlot: café/té/jugo/batido → [desayuno, snack]. bebida (sodas) → [almuerzo, cena, snack]. alcohol → [almuerzo, cena]. mocktail → [almuerzo, cena, snack].
 - Bebidas → diet: café/té/jugo/bebida/alcohol/mocktail → VEGAN. latte/cappuccino/mocaccino/chocolate caliente/batido con leche → VEGETARIAN. Si dice explícitamente "leche de avena", "leche vegetal", "oat milk", "almendra" → VEGAN.
 - "extra" SOLO para salsas líquidas, condimentos y porciones adicionales que van pegadas a otro plato — NO son comida independiente. Criterios estrictos: el nombre empieza con "salsa", "extra de", "adicional", "porción de", "dip de", o es un condimento puro solo (ají, jengibre, chimichurri, tamarindo, soya, acevichada, huancaína, golf, mayo, ketchup, mostaza, guacamole, etc.). Si el plato es comida real que se come solo — aunque lleve ajo, queso, pan, o sea pequeño — NO es "extra". Ejemplos que NO son extra: palitos de ajo, pan de ajo, focaccia, tostadas de ajo, camembert al horno, tabla de quesos, palitos de pan, papas al horno. Ante la duda → deja dishType: [].
+- "sushiburger": preparación japonesa donde el arroz de sushi prensado reemplaza el pan, con relleno de pescado/mariscos/carne entre dos "tapas" de arroz. Incluye: sushi burger, sushiburger de salmón, de atún, etc. cuisine siempre ["japonesa"] o ["nikkei"].
+- "hand roll": cono de alga nori relleno de arroz y ingredientes, se come con la mano. Incluye: hand roll de X, temaki.
 - "satay" para brochetas marinadas al estilo asiático (satay de pollo, de cerdo, de tofu, de camarones — siempre marinado en salsa de maní, curry o especias tailandesas/indonesias). No confundir con "anticucho" (peruano) ni "kebab" (árabe).
 - "spring roll": rollitos vietnamitas (frescos O fritos) en papel de arroz de arroz. Incluye: Nem (chả giò), gỏi cuốn, rollitos vietnamitas, spring rolls con rice paper. "arrollado de primavera" / "rollito primavera": exclusivamente rollitos estilo chino con masa de trigo frita.
 - "chupe": sopa espesa y cremosa chilena, base de leche o crema, con mariscos (jaiba, camarones, mariscos, calamar), papa, choclo. MUY DISTINTO de "cazuela" (caldo liviano con verduras enteras y un trozo de carne/pollo). Chupe de jaiba, chupe de mariscos, chupe de centolla → siempre "chupe". Si lleva crema/leche y mariscos → "chupe".
