@@ -1385,40 +1385,48 @@ export const DISH_TYPE_PRIORITY: string[] = [
  * "torta" ya hacen que torta domine sobre el resto de la familia.
  */
 export const DISH_TYPE_TO_PARENT: Record<string, string> = {
-  // Postres
-  torta: 'postre', helado: 'postre', brownie: 'postre', cheesecake: 'postre',
-  churros: 'postre', muffin: 'postre', galleta: 'postre', donut: 'postre',
-  flan: 'postre', 'arroz con leche': 'postre',
-  // Desayuno
-  waffle: 'desayuno', pancake: 'desayuno', crepe: 'desayuno', omelet: 'desayuno',
-  tostada: 'desayuno', croissant: 'desayuno', bagel: 'desayuno',
-  // Japonés
-  sushi: 'japonés', ramen: 'japonés', gyoza: 'japonés', bao: 'japonés',
-  dumpling: 'japonés', mandu: 'japonés', wantan: 'japonés',
-  kimbap: 'japonés', 'hand roll': 'japonés', sushiburger: 'japonés',
-  // Peruano
-  ceviche: 'peruano', tiradito: 'peruano', causa: 'peruano',
-  'lomo saltado': 'peruano', 'ají de gallina': 'peruano',
-  'lomo a lo pobre': 'peruano', anticucho: 'peruano', chupe: 'peruano',
-  // Chileno
-  completo: 'chileno', chorrillana: 'chileno', sopaipilla: 'chileno',
-  'pastel de jaiba': 'chileno', 'pastel de choclo': 'chileno', cazuela: 'chileno',
-  // Sándwich
-  sándwich: 'sándwich', churrasco: 'sándwich', mechada: 'sándwich',
-  as: 'sándwich', wrap: 'sándwich',
-  // Pasta / italiana
-  pasta: 'pasta', lasagna: 'pasta', risotto: 'pasta', calzone: 'pasta',
+  // Sándwiches — hamburguesa y completo son familia, quien quiere uno puede querer el otro
+  hamburguesa: 'sándwiches', completo: 'sándwiches', sándwich: 'sándwiches',
+  wrap: 'sándwiches', croissant: 'sándwiches', bagel: 'sándwiches', tostada: 'sándwiches',
+  churrasco: 'sándwiches', mechada: 'sándwiches', as: 'sándwiches',
+  // Carnes
+  milanesa: 'carnes', asado: 'carnes', costillas: 'carnes', pernil: 'carnes',
+  anticucho: 'carnes', kebab: 'carnes', satay: 'carnes',
   // Pollo
   'pollo asado': 'pollo', 'pollo frito': 'pollo', tenders: 'pollo',
   alitas: 'pollo', nuggets: 'pollo',
-  // Parrilla / carne
-  asado: 'parrilla', costillas: 'parrilla', pernil: 'parrilla', milanesa: 'parrilla',
-  // Saludable
-  bowl: 'saludable', ensalada: 'saludable',
-  // Mexicano
-  taco: 'mexicano', nachos: 'mexicano', quesadilla: 'mexicano', burrito: 'mexicano',
-  // Sopa
-  sopa: 'sopa',
+  // Mariscos — ceviche y tiradito comparten ingrediente base, no solo cocina
+  ceviche: 'mariscos', tiradito: 'mariscos',
+  // Pastas y arroces
+  pasta: 'pastas', lasagna: 'pastas', risotto: 'pastas', arroz: 'pastas', fideos: 'pastas',
+  // Pizza y masas
+  pizza: 'masas', calzone: 'masas', quiche: 'masas', empanada: 'masas',
+  // Sopas — ramen acá porque quien quiere ramen suele querer sopa/cazuela/chupe también
+  sopa: 'sopas', cazuela: 'sopas', chupe: 'sopas', ramen: 'sopas',
+  // Ensaladas y bowls
+  ensalada: 'saludable', bowl: 'saludable',
+  // Asiática (sin ramen; spring rolls acá porque son entradas asiáticas)
+  sushi: 'asiática', 'hand roll': 'asiática', sushiburger: 'asiática', kimbap: 'asiática',
+  bao: 'asiática', gyoza: 'asiática', dumpling: 'asiática', mandu: 'asiática', wantan: 'asiática',
+  curry: 'asiática', 'pad thai': 'asiática', chapsui: 'asiática',
+  'spring roll': 'asiática', 'arrollado de primavera': 'asiática',
+  // Peruana (sin ceviche/tiradito que van en mariscos)
+  causa: 'peruana', 'lomo saltado': 'peruana', 'ají de gallina': 'peruana',
+  'arroz con leche': 'peruana', 'lomo a lo pobre': 'peruana',
+  // Mexicana / venezolana
+  taco: 'mexicana', burrito: 'mexicana', quesadilla: 'mexicana',
+  arepa: 'mexicana', salchipapa: 'mexicana',
+  // Chilena
+  sopaipilla: 'chilena', 'pastel de choclo': 'chilena', 'pastel de jaiba': 'chilena',
+  chorrillana: 'chilena',
+  // Desayuno
+  huevos: 'desayuno', pancake: 'desayuno', waffle: 'desayuno', crepe: 'desayuno',
+  avena: 'desayuno', omelet: 'desayuno',
+  // Snacks y entradas
+  'papas fritas': 'snacks', nachos: 'snacks', 'aros de cebolla': 'snacks', croquetas: 'snacks',
+  // Postres
+  helado: 'postre', torta: 'postre', brownie: 'postre', galleta: 'postre',
+  muffin: 'postre', cheesecake: 'postre', churros: 'postre', donut: 'postre', flan: 'postre',
 }
 
 /** Devuelve el tipo de plato de mayor prioridad (la "forma" del plato). */
