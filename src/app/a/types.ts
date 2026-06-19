@@ -27,6 +27,8 @@ export type FeedDish = {
   restauranteSlug: string
   restauranteLogo: string | null
   restauranteDireccion: string | null
+  restaurantePhone?: string | null
+  restaurantePlaceId?: string | null
   restauranteLat: number | null
   restauranteLng: number | null
   enOferta: boolean

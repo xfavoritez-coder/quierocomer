@@ -9,6 +9,19 @@ import { unstable_cache } from 'next/cache'
 const SIDE_ONLY_FROM_NAME = new Set(['Papas fritas', 'Ensaladas'])
 
 /**
+ * Tipos de txDishType que representan bebidas o extras (no platos reales).
+ * Si TODOS los tipos de un plato están en este set, el plato se excluye del feed.
+ * Cubre tanto los valores legacy ("bebida","drink","extra") como los del taxonomizador
+ * ("té","jugo","batido","café","latte","cappuccino","mocaccino","chocolate caliente","alcohol","mocktail").
+ * Los combos (["combo","hamburguesa","bebida"]) NO se excluyen porque contienen tipos de comida.
+ */
+const DRINK_ONLY_TYPES = new Set([
+  'extra', 'bebida', 'drink',
+  'té', 'jugo', 'batido', 'café', 'latte', 'cappuccino', 'mocaccino',
+  'chocolate caliente', 'alcohol', 'mocktail',
+])
+
+/**
  * Resuelve la leaf category de un plato con prioridad:
  * 1. leafOverride manual (set desde panel de revisión)
  * 2. Si la categoría es ambigua (Combos, Especiales…) → usar primaryCategory del restaurante
@@ -73,8 +86,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt", d."txDishType", d."txIngredient",
       c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
-      r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory", r."isShowcase",
-      r."googleRating", r."googleRatingCount", r."googleMapsUrl",
+      r."logoUrl", r.address, r.phone, r.lat, r.lng, r."primaryCategory", r."isShowcase",
+      r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId",
       fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
     FROM (
       SELECT d.id,
@@ -114,6 +127,9 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
   for (const d of dishes) {
     const catName = d.categoryName as string
     if (isExcludedCategory(catName)) continue
+    // Excluir extras y bebidas standalone (no platos reales)
+    const txTypes = Array.isArray((d as any).txDishType) ? (d as any).txDishType as string[] : []
+    if (txTypes.length > 0 && txTypes.every(t => DRINK_ONLY_TYPES.has(t))) continue
     // Dedup: skip if same (restaurant, dish name) already added — handles imported duplicates
     const dupKey = `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
     if (seenKey.has(dupKey)) continue
@@ -149,6 +165,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       restauranteSlug: d.restaurantSlug,
       restauranteLogo: d.logoUrl,
       restauranteDireccion: d.address,
+      restaurantePhone: (d as any).phone ?? null,
+      restaurantePlaceId: (d as any).googlePlaceId ?? null,
       restauranteLat: d.lat != null ? Number(d.lat) : null,
       restauranteLng: d.lng != null ? Number(d.lng) : null,
       isShowcase: Boolean((d as any).isShowcase ?? false),
@@ -200,6 +218,8 @@ export const getCachedCategoryCountMap = unstable_cache(
     const map: Record<string, number> = {}
     for (const row of rows) {
       if (isExcludedCategory(row.catName)) continue
+      const txTypes = Array.isArray(row.txDishType) ? row.txDishType as string[] : []
+      if (txTypes.length > 0 && txTypes.every((t: string) => DRINK_ONLY_TYPES.has(t))) continue
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, row.description, row.catNormOverride)
       const parent = getParentCategory(leaf)
       if (parent) map[parent] = (map[parent] ?? 0) + 1
@@ -222,13 +242,13 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       isLactoseFree: true, isSoyFree: true, containsNuts: true, flavorTags: true,
       isHero: true, tags: true, leafOverride: true, txDishType: true, txIngredient: true,
       category: { select: { name: true, dishType: true, cuisineTag: true, normOverride: true } },
-      restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, primaryCategory: true } },
+      restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, googlePlaceId: true, primaryCategory: true } },
       feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
     },
   })
 
   return dishes
-    .filter(d => !isExcludedCategory(d.category.name))
+    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))))
     .map(dish => {
       const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null, dish.category.normOverride ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)
@@ -252,6 +272,8 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
         restauranteLat: dish.restaurant.lat, restauranteLng: dish.restaurant.lng,
         googleRating: dish.restaurant.googleRating ?? null,
         googleRatingCount: dish.restaurant.googleRatingCount ?? null,
+        restaurantePhone: dish.restaurant.phone ?? null,
+        restaurantePlaceId: (dish.restaurant as any).googlePlaceId ?? null,
         googleMapsUrl: dish.restaurant.googleMapsUrl ?? null,
         enOferta: dish.discountPrice != null && dish.price != null && dish.discountPrice < dish.price,
         mealTime: inferMealTime(categoriaNorm), tags: dish.tags, isHero: dish.isHero,

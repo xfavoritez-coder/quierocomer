@@ -44,3 +44,20 @@ export async function findPlaceInfo(name: string, lat: number, lng: number): Pro
     scheduleJson: place.regularOpeningHours ?? null,
   }
 }
+
+/** Busca el teléfono de un lugar por su placeId usando Places API (New) */
+export async function fetchPlacePhone(placeId: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+      headers: {
+        'X-Goog-Api-Key': API_KEY,
+        'X-Goog-FieldMask': 'nationalPhoneNumber,internationalPhoneNumber',
+      },
+    })
+    if (!res.ok) return null
+    const data = await res.json() as { nationalPhoneNumber?: string; internationalPhoneNumber?: string }
+    return data.internationalPhoneNumber ?? data.nationalPhoneNumber ?? null
+  } catch {
+    return null
+  }
+}

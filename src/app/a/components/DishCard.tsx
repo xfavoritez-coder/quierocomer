@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { FeedDish } from '../types'
 import { getCategoryGradient } from '../lib/categories'
 import { distanceKm, formatDistance } from '../lib/geo'
+import { VeganIcon, VegetarianIcon, SpicyIcon } from './DietIcons'
 
 export default function DishCard({
   dish,
@@ -124,27 +125,9 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
             }}>
               {dish.nombre}
             </h3>
-            {dish.dieta.tipo === 'VEGAN' && (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M12 22V11"/>
-                <path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/>
-                <path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/>
-                <path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/>
-                <path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
-              </svg>
-            )}
-            {dish.dieta.tipo === 'VEGETARIAN' && (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66BB6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </svg>
-            )}
-            {dish.dieta.esPicante && (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF5722" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M12 3 C13 1 15 2 15 4"/>
-                <path d="M12 4 C10 5 8 8 8 12 C8 16 10 19 12 20 C14 19 16 16 16 12 C16 8 14 5 12 4 Z"/>
-              </svg>
-            )}
+            {dish.dieta.tipo === 'VEGAN' && <VeganIcon style={{ flexShrink: 0 }} />}
+            {dish.dieta.tipo === 'VEGETARIAN' && <VegetarianIcon style={{ flexShrink: 0 }} />}
+            {dish.dieta.esPicante && <SpicyIcon style={{ flexShrink: 0 }} />}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap' }}>

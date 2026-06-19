@@ -23,7 +23,7 @@ import { inferFlavorTags, detectCuisineTag, inferPrimaryCategory } from "@/app/a
 import { logClaudeUsage } from "@/lib/costTracker";
 import { classifyDishesBatched, type DishTaxonomyInput, type DishTaxonomy } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
-import { findPlaceInfo } from "@/lib/google-places";
+import { findPlaceInfo, fetchPlacePhone } from "@/lib/google-places";
 
 function slugify(name: string): string {
   return name
@@ -1038,6 +1038,7 @@ export async function importFromProspecto(params: {
     try {
       const placeInfo = await findPlaceInfo(cleanedName, params.lat, params.lng)
       if (placeInfo) {
+        const phone = await fetchPlacePhone(placeInfo.placeId)
         await (prisma.restaurant.update as any)({
           where: { id: restaurant.id },
           data: {
@@ -1045,6 +1046,7 @@ export async function importFromProspecto(params: {
             googleMapsUrl: placeInfo.mapsUrl,
             googleRating: placeInfo.rating,
             googleRatingCount: placeInfo.ratingCount,
+            ...(phone ? { phone } : {}),
             ...(placeInfo.scheduleJson ? { scheduleJson: placeInfo.scheduleJson } : {}),
           },
         })

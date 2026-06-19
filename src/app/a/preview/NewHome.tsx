@@ -151,9 +151,46 @@ export default function NewHome({
   const [serverDishes, setServerDishes] = useState<FeedDish[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
 
+  // ─── Eureka / Descubrir ───────────────────────────────────────────────────
+  const [eurekaLiked, setEurekaLiked] = useState<FeedDish[]>([])
+  const [eurekaMax, setEurekaMax] = useState(5)
+  const eurekaMaxRef = useRef(5)
+  const floatingHeaderRef = useRef<HTMLDivElement>(null)
+  const [floatingHeaderH, setFloatingHeaderH] = useState(0)
+
+  useEffect(() => {
+    const el = floatingHeaderRef.current
+    if (!el) return
+    const obs = new ResizeObserver(() => setFloatingHeaderH(el.offsetHeight))
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  // Restaurar selección previa al volver desde /descubrir
+  useEffect(() => {
+    try {
+      const isAfinar = localStorage.getItem('qc_eureka_afinar') === '1'
+      if (isAfinar) {
+        localStorage.removeItem('qc_eureka_afinar')
+        setEurekaMax(6)
+        eurekaMaxRef.current = 6
+      }
+      const raw = localStorage.getItem('qc_eureka_liked')
+      if (raw) {
+        const dishes: FeedDish[] = JSON.parse(raw)
+        if (dishes.length > 0) setEurekaLiked(dishes.slice(0, isAfinar ? 6 : 5))
+      }
+    } catch {}
+  }, [])
+
+  const handleEurekaDescubrir = () => {
+    if (eurekaLiked.length < eurekaMax) return
+    try { localStorage.setItem('qc_eureka_liked', JSON.stringify(eurekaLiked)) } catch {}
+    window.location.href = '/descubrir'
+  }
+
   // ─── Swipe narrowing ──────────────────────────────────────────────────────
   const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set())
-  const [debugMinimized, setDebugMinimized] = useState(false)
   const [swipeLikeFreq, setSwipeLikeFreq] = useState<Record<string, number>>({})
   const [swipeDislikeFreq, setSwipeDislikeFreq] = useState<Record<string, number>>({})
 
@@ -166,6 +203,8 @@ export default function NewHome({
   const [headerHeight, setHeaderHeight] = useState(130)
   const [showFloatingSearch, setShowFloatingSearch] = useState(false)
   const headerVisible = useRef(true)
+  const [stickyHeaderVisible, setStickyHeaderVisible] = useState(true)
+  const swipeLock = useRef(false)
   const lastScrollY = useRef(0)
   const scrollTicking = useRef(false)
   const [locationQuery, setLocationQuery] = useState('')
@@ -691,6 +730,7 @@ export default function NewHome({
     const observer = new IntersectionObserver(
       ([entry]) => {
         headerVisible.current = entry.isIntersecting
+        setStickyHeaderVisible(entry.isIntersecting)
         if (entry.isIntersecting) setShowFloatingSearch(false)
       },
       { threshold: 0.55 }
@@ -712,7 +752,7 @@ export default function NewHome({
         } else if (y < lastScrollY.current - 4) {
           setShowFloatingSearch(true)
         } else if (y > lastScrollY.current + 4) {
-          setShowFloatingSearch(false)
+          if (!swipeLock.current) setShowFloatingSearch(false)
         }
         lastScrollY.current = y
         scrollTicking.current = false
@@ -772,6 +812,12 @@ export default function NewHome({
         for (const d of dims) next[d] = (next[d] ?? 0) + 1
         return next
       })
+      // Eureka: agregar a lista de liked si hay espacio
+      setEurekaLiked(prev => {
+        if (prev.length >= eurekaMaxRef.current || prev.some(d => d.id === dish.id)) return prev
+        return [...prev, dish]
+      })
+
     } else {
       setSwipeDislikeFreq(prev => {
         const next = { ...prev }
@@ -811,6 +857,26 @@ export default function NewHome({
     }
   }
 
+  function resetFeed() {
+    setActiveCategory(null)
+    setSearchQuery('')
+    setSearchInput('')
+    setFilterMeal('all')
+    setFilterMealDisplay('all')
+    setFilterSort('default')
+    setFilterMaxKm(5)
+    setFilterDiet('all')
+    setQuickNearby(true)
+    setQuickPopular(false)
+    setServerDishes(null)
+    setSwipedIds(new Set())
+    setSwipeLikeFreq({})
+    setSwipeDislikeFreq({})
+    userSetMaxKm.current = false
+    window.history.replaceState(null, '', '/')
+    window.scrollTo(0, 0)
+  }
+
   return (
     <div style={{ minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
 
@@ -823,7 +889,7 @@ export default function NewHome({
           display: 'flex', alignItems: 'center',
         }}><div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px' }}>
           {/* Logo */}
-          <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <img src="/logo.png" alt="QuieroComer" style={{ height: 36, width: 'auto' }} />
           </a>
 
@@ -887,6 +953,16 @@ export default function NewHome({
                   padding: '8px 0', minWidth: 200,
                   display: 'flex', flexDirection: 'column',
                 }}>
+                  {/* Descubrir qué comer */}
+                  <a href="/descubrir" onClick={() => setDesktopMenuOpen(false)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 18px', color: isDark ? '#F4A623' : '#c97d00',
+                    fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box', fontWeight: 600,
+                  }}>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                    Descubrir qué comer
+                  </a>
+
                   {/* Mi perfil */}
                   <button onClick={() => { setView('perfil'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
@@ -962,7 +1038,7 @@ export default function NewHome({
           const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 5 || filterDiet !== 'all' || !!activeCategory
           return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
-        <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
           <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
         </a>
         <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
@@ -1186,11 +1262,12 @@ export default function NewHome({
             </div>
           )}
         </div>
+
       </header>
 
       {/* ─── Floating search bar — aparece al subir el scroll — mobile only ─── */}
       {!isDesktop && view !== 'perfil' && view !== 'contacto' && (
-        <div style={{
+        <div ref={floatingHeaderRef} style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 36,
           padding: '10px 16px',
           background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)',
@@ -1200,7 +1277,7 @@ export default function NewHome({
           boxShadow: showFloatingSearch ? '0 2px 16px rgba(0,0,0,0.10)' : 'none',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <a href="/" onClick={e => { e.preventDefault(); window.location.pathname === '/' ? window.location.reload() : (window.location.href = '/') }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
           </a>
           <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
@@ -1276,6 +1353,106 @@ export default function NewHome({
               </svg>
               Filtros
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Eureka pill → banner morph ─── */}
+      {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && (
+        <div style={{
+          position: 'fixed', left: 0, right: 0, zIndex: 35,
+          top: !isDesktop && showFloatingSearch ? floatingHeaderH : stickyHeaderVisible ? headerHeight : 8,
+          transition: 'top 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)',
+          display: 'flex', justifyContent: 'center',
+        }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: (showFloatingSearch || stickyHeaderVisible) ? '7px 16px' : '8px 12px 8px 16px',
+            background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)',
+            backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+            borderRadius: (showFloatingSearch || stickyHeaderVisible) ? 0 : 999,
+            minWidth: (showFloatingSearch || stickyHeaderVisible) ? '100%' : 0,
+            boxSizing: 'border-box' as const,
+            border: (showFloatingSearch || stickyHeaderVisible)
+              ? `none`
+              : `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+            boxShadow: (showFloatingSearch || stickyHeaderVisible)
+              ? '0 2px 10px rgba(0,0,0,0.08)'
+              : '0 3px 18px rgba(0,0,0,0.16)',
+            transition: 'border-radius 0.28s cubic-bezier(0.0,0.0,0.2,1), min-width 0.28s cubic-bezier(0.0,0.0,0.2,1), padding 0.28s cubic-bezier(0.0,0.0,0.2,1)',
+            justifyContent: 'center',
+          }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            {eurekaLiked.length < eurekaMax && (
+              <div style={{ flexShrink: 0 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
+                  Descubre qué comer
+                </p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', textAlign: 'right' }}>
+                  {`Desliza ${eurekaMax - eurekaLiked.length} más`}
+                </p>
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {Array.from({ length: eurekaMax }).map((_, i) => {
+                const dish = eurekaLiked[i]
+                return dish ? (
+                  <div key={dish.id} style={{ position: 'relative', width: 34, height: 34, flexShrink: 0 }}>
+                    <div
+                      onClick={() => setSelectedDish(dish)}
+                      style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
+                    >
+                      {dish.fotoUrl && <img src={dish.fotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEurekaLiked(prev => prev.filter(d => d.id !== dish.id)) }}
+                      style={{
+                        position: 'absolute', top: -6, right: -6,
+                        width: 16, height: 16, borderRadius: '50%',
+                        background: isDark ? '#333' : '#fff',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
+                        color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
+                        fontSize: 9, fontWeight: 700, lineHeight: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', padding: 0, zIndex: 1,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      }}
+                    >✕</button>
+                  </div>
+                ) : (
+                  <div key={i} style={{
+                    width: 34, height: 34, flexShrink: 0, borderRadius: 9,
+                    border: `2px dashed ${isDark ? 'rgba(244,166,35,0.3)' : 'rgba(244,166,35,0.4)'}`,
+                    background: isDark ? 'rgba(244,166,35,0.05)' : 'rgba(244,166,35,0.07)',
+                  }} />
+                )
+              })}
+            </div>
+            {eurekaLiked.length >= eurekaMax && (
+              <button onClick={handleEurekaDescubrir} style={{
+                padding: '7px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #F4A623, #e09200)',
+                color: '#fff', fontSize: 13, fontWeight: 700,
+                boxShadow: '0 2px 8px rgba(244,166,35,0.4)', whiteSpace: 'nowrap', flexShrink: 0,
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+              }}>
+                Descubrir
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
+            )}
+            {eurekaLiked.length < eurekaMax && (
+              <button onClick={() => setEurekaLiked([])} style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px 4px 4px', flexShrink: 0,
+                color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            )}
+          </div>
           </div>
         </div>
       )}
@@ -1561,6 +1738,21 @@ export default function NewHome({
                 Inicio
               </button>
 
+              {/* Descubrir qué comer */}
+              <a href="/descubrir" onClick={() => setMenuOpen(false)} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '9px 10px', borderRadius: 9,
+                color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)',
+                fontSize: 15, fontWeight: 400,
+                background: 'transparent',
+                textDecoration: 'none', width: '100%', WebkitTapHighlightColor: 'transparent',
+              }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                Descubrir qué comer
+              </a>
+
               <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
 
               {/* Mi perfil */}
@@ -1709,16 +1901,35 @@ export default function NewHome({
           {feedDishes.length > 0 && (
             <div style={{ padding: '2px 16px 2px', display: 'flex', alignItems: 'center', gap: 8 }}>
               {isDesktop && (
-                <button onClick={() => setLocationModalOpen(true)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-                  padding: '6px 12px', borderRadius: 20, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
-                  background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
-                  color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                  cursor: 'pointer', fontSize: 13,
-                }}>
-                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  {locationName || gpsLabel || 'Ubicación'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => setLocationModalOpen(true)} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 12px', borderRadius: 20, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                    color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                    cursor: 'pointer', fontSize: 13,
+                  }}>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {locationName || gpsLabel || 'Ubicación'}
+                  </button>
+                  {userLocation && (
+                    <button
+                      ref={distanceBadgeRef}
+                      type="button"
+                      onClick={() => setShowDistancePicker(p => !p)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(224,146,0,0.10)',
+                        border: `1px solid ${isDark ? 'rgba(244,166,35,0.25)' : 'rgba(224,146,0,0.25)'}`,
+                        borderRadius: 999, padding: '3px 10px',
+                        color: '#e09200', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                      }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {`${filterMaxKm} km`}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                  )}
+                </div>
               )}
               <div style={{ flex: 1 }} />
               {isDesktop && (
@@ -1902,93 +2113,7 @@ export default function NewHome({
 
       </div>{/* end main content */}
 
-      {/* ─── Swipe debug panel ─── */}
-      {swipedIds.size > 0 && (() => {
-        const PREFIX_LABEL: Record<string, string> = {
-          t: 'Tipo', tp: 'Familia', c: 'Categoría', k: 'Cocina', s: 'Sabor', i: 'Ingrediente', d: 'Dieta', h: 'Horario',
-        }
-        // typeConfidence: mismo cálculo que en _swipeScore — t: dims se atenúan al inicio
-        const dbgTypeConf = Math.min(swipedIds.size / 5, 1)
-        const allKeys = new Set([...Object.keys(swipeLikeFreq), ...Object.keys(swipeDislikeFreq)])
-        // Group effective scores by prefix (t: escalado por typeConfidence, resto siempre 1x)
-        const groups: Record<string, Array<{ label: string; score: number; raw: number }>> = {}
-        for (const key of allKeys) {
-          const [prefix, ...rest] = key.split(':')
-          const label = rest.join(':')
-          const likes = swipeLikeFreq[key] ?? 0
-          const dislikes = swipeDislikeFreq[key] ?? 0
-          const raw = likes - dislikes * 2
-          const score = prefix === 't' ? raw * dbgTypeConf : raw
-          const groupName = PREFIX_LABEL[prefix] ?? prefix
-          if (!groups[groupName]) groups[groupName] = []
-          // Merge dims with same label (el tipo primario aparece varias veces en dims)
-          const existing = groups[groupName].find(e => e.label === label)
-          if (existing) {
-            existing.score += score
-            existing.raw += raw
-          } else {
-            groups[groupName].push({ label, score, raw })
-          }
-        }
-        const groupOrder = ['Tipo', 'Familia', 'Cocina', 'Ingrediente', 'Sabor', 'Dieta', 'Horario']
-        const sortedGroups = groupOrder.filter(g => groups[g])
-        const maxAbs = Math.max(1, ...Object.values(groups).flat().map(x => Math.abs(x.score)))
-        return (
-          <div style={{
-            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9998,
-            background: 'rgba(0,0,0,0.92)', borderTop: '1px solid rgba(255,255,255,0.1)',
-            fontFamily: 'monospace', fontSize: 11, color: '#fff',
-          }}>
-            <div
-              onClick={() => setDebugMinimized(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', cursor: 'pointer', userSelect: 'none' }}
-            >
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 12, color: '#F4A623' }}>
-                🔬 {swipedIds.size} swiped → {activeFeedDishes.length} platos · tipo×{dbgTypeConf.toFixed(1)}
-              </p>
-              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
-                {debugMinimized ? '▲' : '▼'}
-              </span>
-            </div>
-            {!debugMinimized && (
-              <div style={{ maxHeight: 220, overflowY: 'auto', padding: '0 14px 14px', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                {sortedGroups.map(groupName => {
-                  const entries = [...groups[groupName]].sort((a, b) => b.score - a.score)
-                  return (
-                    <div key={groupName} style={{ minWidth: 120 }}>
-                      <p style={{ margin: '0 0 4px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 10, letterSpacing: '0.05em' }}>
-                        {groupName.toUpperCase()}
-                      </p>
-                      {entries.map(({ label, score }) => {
-                        const display = Math.round(score * 10) / 10
-                        return (
-                          <div key={label} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2 }}>
-                            <span style={{
-                              color: score > 0 ? '#F4A623' : score < 0 ? '#ef4444' : 'rgba(255,255,255,0.3)',
-                              minWidth: 32, textAlign: 'right', fontWeight: 700,
-                            }}>
-                              {display > 0 ? `+${display}` : display}
-                            </span>
-                            <span style={{ color: score > 0 ? 'rgba(255,255,255,0.85)' : score < 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)' }}>
-                              {label}
-                            </span>
-                            <div style={{
-                              height: 3, borderRadius: 2, flexShrink: 0,
-                              background: score > 0 ? '#F4A623' : '#ef4444',
-                              width: score !== 0 ? Math.abs(score) / maxAbs * 48 : 0,
-                              opacity: 0.6,
-                            }} />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })()}
+
 
     </div>
   )

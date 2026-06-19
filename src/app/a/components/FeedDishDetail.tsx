@@ -12,6 +12,7 @@ import type { FeedProfile } from '../lib/scoring'
 import { getSimilarDishIds } from '../lib/feed-actions'
 import { distanceKm, formatDistance } from '../lib/geo'
 import DishCard from './DishCard'
+import { VeganIcon, VegetarianIcon, SpicyIcon } from './DietIcons'
 
 export default function FeedDishDetail({
   dish,
@@ -306,7 +307,14 @@ function DesktopDishContent({
   const [showDietTooltip, setShowDietTooltip] = useState(false)
   const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
-  const [showTaxDebug, setShowTaxDebug] = useState(false)
+  const [resolvedPhone, setResolvedPhone] = useState<string | null>(dish.restaurantePhone ?? null)
+
+  useEffect(() => {
+    setResolvedPhone(dish.restaurantePhone ?? null)
+    if (dish.restaurantePhone || !dish.restaurantePlaceId) return
+    fetch(`/api/place-phone?placeId=${encodeURIComponent(dish.restaurantePlaceId)}`)
+      .then(r => r.json()).then(d => { if (d.phone) setResolvedPhone(d.phone) }).catch(() => {})
+  }, [dish.id, dish.restaurantePhone, dish.restaurantePlaceId])
 
   const gradient = getCategoryGradient(dish.categoriaNorm)
 
@@ -324,7 +332,9 @@ function DesktopDishContent({
 
   const relatedDishes = useMemo(() => {
     if (hideRelated) return []
-    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const rawPool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const seenPoolIds = new Set<string>()
+    const pool = rawPool.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
     const candidates = pool.filter(d => d.fotoUrl && d.id !== dish.id && d.restauranteId !== dish.restauranteId)
     const embRank = new Map<string, number>()
     if (embeddingSimilarIds) {
@@ -401,82 +411,36 @@ function DesktopDishContent({
 
       {/* Bottom: Content */}
       <div style={{ padding: '22px 24px 28px' }}>
-        {/* Categoría + corazón — misma fila */}
+        {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
-            <button
-              onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
-              style={{
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
-                textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
-              }}
-            >
-              {(() => {
-                const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
-                const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
-                return (
-                  <>
-                    {primary}
-                    {secondary.map(t => (
-                      <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
-                    ))}
-                  </>
-                )
-              })()}
-            </button>
-            <button
-              onClick={e => { e.stopPropagation(); setShowTaxDebug(v => !v) }}
-              title="Ver taxonomía"
-              style={{
-                background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer',
-                fontSize: 11, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', lineHeight: 1,
-              }}
-            >🔍</button>
-            {showTaxDebug && (
-              <div
-                onClick={e => e.stopPropagation()}
-                style={{
-                  position: 'absolute', top: '100%', left: 0, zIndex: 999, marginTop: 4,
-                  background: isDark ? '#1a1a1a' : '#fff',
-                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-                  borderRadius: 10, padding: '12px 14px', minWidth: 240, maxWidth: 320,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)', fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)',
-                }}
-              >
-                <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.5 }}>Taxonomía del plato</div>
-                {[
-                  ['txDishType', (dish.txDishType ?? []).join(', ') || '—'],
-                  ['categoriaNorm', dish.categoriaNorm],
-                  ['categoriaParent', dish.categoriaParent ?? '—'],
-                  ['cuisineTag', dish.cuisineTag ?? '—'],
-                  ['mealTime', dish.mealTime],
-                  ['sabores', dish.sabores.join(', ') || '—'],
-                  ['categoria (raw)', dish.categoria],
-                ].map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                    <span style={{ opacity: 0.45, minWidth: 110 }}>{k}:</span>
-                    <span style={{ fontWeight: 600, wordBreak: 'break-word' }}>{v}</span>
-                  </div>
-                ))}
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
+              {dish.restauranteLogo && !logoError
+                ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
+              }
+              <span style={{ fontSize: 16, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</span>
+            </a>
+            {dist != null && (
+              <span style={{ fontSize: 13, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)', flexShrink: 0, whiteSpace: 'nowrap' }}>· A {formatDistance(dist)}</span>
             )}
           </div>
-          <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
-            background: saved ? (isDark ? 'rgba(244,166,35,0.15)' : 'rgba(244,166,35,0.1)') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-            border: saved ? '1px solid rgba(244,166,35,0.4)' : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-            transition: 'all 0.15s',
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'} strokeWidth="2.5" strokeLinecap="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            <span style={{ fontSize: 14, fontWeight: 600, color: saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}>
-              {saved ? 'Guardado' : 'Guardar'}
-            </span>
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+            <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
+              background: saved ? (isDark ? 'rgba(244,166,35,0.15)' : 'rgba(244,166,35,0.1)') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+              border: saved ? '1px solid rgba(244,166,35,0.4)' : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+              transition: 'all 0.15s',
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'} strokeWidth="2.5" strokeLinecap="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <span style={{ fontSize: 14, fontWeight: 600, color: saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}>
+                {saved ? 'Guardado' : 'Guardar'}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Name */}
@@ -518,57 +482,76 @@ function DesktopDishContent({
         )}
 
         {/* Restaurant */}
-        <a href={
-            dish.googleMapsUrl
-              ? dish.googleMapsUrl
-              : dish.restauranteLat && dish.restauranteLng
-                ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
-                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ?? '') + ' ' + dish.restaurante)}`
-          }
-          target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-            padding: '12px 14px', borderRadius: 12, textAlign: 'left',
-            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)'}`,
-            textDecoration: 'none', marginBottom: 32, boxSizing: 'border-box',
-          }}>
-          {dish.restauranteLogo && !logoError ? (
-            <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
-              style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: 38, height: 38, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 15, fontWeight: 700 }}>
-              {dish.restaurante.charAt(0)}
+        {(() => {
+          const mapsUrl = dish.googleMapsUrl
+            ? dish.googleMapsUrl
+            : dish.restauranteLat && dish.restauranteLng
+              ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ?? '') + ' ' + dish.restaurante)}`
+          return (
+            <div style={{ marginBottom: 32 }}>
+              {/* Info ficha */}
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+                padding: '12px 14px 12px',
+                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)'}`,
+                borderRadius: '12px 12px 0 0', boxSizing: 'border-box',
+              }}>
+                {dish.restauranteLogo && !logoError ? (
+                  <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
+                    style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2 }} />
+                ) : (
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0, marginTop: 2, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 15, fontWeight: 700 }}>
+                    {dish.restaurante.charAt(0)}
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
+                  {dish.restauranteDireccion && (
+                    <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {(() => {
+                        const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
+                        if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
+                        return parts.join(', ')
+                      })()}
+                    </p>
+                  )}
+                  {dish.restaurantePhone && (
+                    <a href={`tel:${dish.restaurantePhone}`} onClick={e => e.stopPropagation()}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 5, fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', textDecoration: 'none' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      {dish.restaurantePhone}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Botón Ir a Maps */}
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%', padding: '11px 14px', boxSizing: 'border-box',
+                  background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(244,166,35,0.1)',
+                  border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.35)' : 'rgba(244,166,35,0.4)'}`,
+                  borderTop: 'none',
+                  borderRadius: '0 0 12px 12px',
+                  textDecoration: 'none',
+                  color: '#c97d00',
+                  fontSize: 14, fontWeight: 600,
+                }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                Ir a {dish.restaurante}
+                {dist != null && <span style={{ fontWeight: 400, opacity: 0.75 }}>· {formatDistance(dist)}</span>}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ marginLeft: 2 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </a>
             </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
-            {dish.restauranteDireccion && <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {(() => {
-                const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
-                if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
-                return parts.join(', ')
-              })()}
-            </p>}
-            {dist != null && (
-              <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                A {formatDistance(dist)}
-              </p>
-            )}
-          </div>
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="1.8" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', letterSpacing: '0.02em' }}>Maps</span>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} strokeWidth="2.2" strokeLinecap="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </div>
-        </a>
+          )
+        })()}
 
         {/* Más de restaurante */}
         {restDishes.length > 0 && (
@@ -640,7 +623,14 @@ function DishSlide({
   const [showDietTooltip, setShowDietTooltip] = useState(false)
   const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
-  const [showTaxDebug, setShowTaxDebug] = useState(false)
+  const [resolvedPhone, setResolvedPhone] = useState<string | null>(dish.restaurantePhone ?? null)
+
+  useEffect(() => {
+    setResolvedPhone(dish.restaurantePhone ?? null)
+    if (dish.restaurantePhone || !dish.restaurantePlaceId) return
+    fetch(`/api/place-phone?placeId=${encodeURIComponent(dish.restaurantePlaceId)}`)
+      .then(r => r.json()).then(d => { if (d.phone) setResolvedPhone(d.phone) }).catch(() => {})
+  }, [dish.id, dish.restaurantePhone, dish.restaurantePlaceId])
 
   const [visibleRelated, setVisibleRelated] = useState(10)
   const slideRef = useRef<HTMLDivElement>(null)
@@ -661,7 +651,9 @@ function DishSlide({
 
   const relatedDishes = useMemo(() => {
     if (hideRelated) return []
-    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const rawPool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const seenPoolIds = new Set<string>()
+    const pool = rawPool.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
     const candidates = pool.filter(d => d.fotoUrl && d.id !== dish.id && d.restauranteId !== dish.restauranteId)
     const embRank = new Map<string, number>()
     if (embeddingSimilarIds) {
@@ -780,82 +772,36 @@ function DishSlide({
 
       {/* Content */}
       <div style={{ padding: '16px 20px 20px' }}>
-        {/* Categoría + corazón — misma fila */}
+        {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
-            <button
-              onClick={() => { const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm); window.location.href = `/?q=${encodeURIComponent(primary)}` }}
-              style={{
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                fontSize: 13, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)', fontWeight: 600,
-                textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.08em',
-              }}
-            >
-              {(() => {
-                const primary = getPrimaryDishType(dish.txDishType ?? [], dish.categoriaNorm)
-                const secondary = getSecondaryDishTypes(dish.txDishType ?? [], primary).slice(0, 2)
-                return (
-                  <>
-                    {primary}
-                    {secondary.map(t => (
-                      <span key={t} style={{ marginLeft: 8, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.22)', fontWeight: 500 }}>· {t}</span>
-                    ))}
-                  </>
-                )
-              })()}
-            </button>
-            <button
-              onClick={e => { e.stopPropagation(); setShowTaxDebug(v => !v) }}
-              title="Ver taxonomía"
-              style={{
-                background: 'none', border: 'none', padding: '2px 4px', cursor: 'pointer',
-                fontSize: 11, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', lineHeight: 1,
-              }}
-            >🔍</button>
-            {showTaxDebug && (
-              <div
-                onClick={e => e.stopPropagation()}
-                style={{
-                  position: 'absolute', top: '100%', left: 0, zIndex: 999, marginTop: 4,
-                  background: isDark ? '#1a1a1a' : '#fff',
-                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-                  borderRadius: 10, padding: '12px 14px', minWidth: 240, maxWidth: 300,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)', fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)',
-                }}
-              >
-                <div style={{ marginBottom: 8, fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.5 }}>Taxonomía del plato</div>
-                {[
-                  ['txDishType', (dish.txDishType ?? []).join(', ') || '—'],
-                  ['categoriaNorm', dish.categoriaNorm],
-                  ['categoriaParent', dish.categoriaParent ?? '—'],
-                  ['cuisineTag', dish.cuisineTag ?? '—'],
-                  ['mealTime', dish.mealTime],
-                  ['sabores', dish.sabores.join(', ') || '—'],
-                  ['categoria (raw)', dish.categoria],
-                ].map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                    <span style={{ opacity: 0.45, minWidth: 110 }}>{k}:</span>
-                    <span style={{ fontWeight: 600, wordBreak: 'break-word' }}>{v}</span>
-                  </div>
-                ))}
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
+              {dish.restauranteLogo && !logoError
+                ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
+              }
+              <span style={{ fontSize: 16, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</span>
+            </a>
+            {dist != null && (
+              <span style={{ fontSize: 13, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)', flexShrink: 0, whiteSpace: 'nowrap' }}>· A {formatDistance(dist)}</span>
             )}
           </div>
-          <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
-            background: saved ? (isDark ? 'rgba(244,166,35,0.15)' : 'rgba(244,166,35,0.1)') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-            border: saved ? '1px solid rgba(244,166,35,0.4)' : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-            transition: 'all 0.15s',
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'} strokeWidth="2.5" strokeLinecap="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            <span style={{ fontSize: 14, fontWeight: 600, color: saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}>
-              {saved ? 'Guardado' : 'Guardar'}
-            </span>
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+            <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
+              background: saved ? (isDark ? 'rgba(244,166,35,0.15)' : 'rgba(244,166,35,0.1)') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
+              border: saved ? '1px solid rgba(244,166,35,0.4)' : `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+              transition: 'all 0.15s',
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? '#F4A623' : 'none'} stroke={saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'} strokeWidth="2.5" strokeLinecap="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <span style={{ fontSize: 14, fontWeight: 600, color: saved ? '#F4A623' : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}>
+                {saved ? 'Guardado' : 'Guardar'}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Name */}
@@ -896,58 +842,48 @@ function DishSlide({
           </p>
         )}
 
-        {/* Restaurant */}
-        <a href={
-            dish.googleMapsUrl
-              ? dish.googleMapsUrl
-              : dish.restauranteLat && dish.restauranteLng
-                ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}`
-                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ?? '') + ' ' + dish.restaurante)}`
-          }
-          target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-            padding: '14px 16px', borderRadius: 14, textAlign: 'left',
-            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)'}`,
-            textDecoration: 'none', marginBottom: 32, boxSizing: 'border-box',
-          }}>
-          {dish.restauranteLogo && !logoError ? (
-            <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
-              style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 16, fontWeight: 700 }}>
-              {dish.restaurante.charAt(0)}
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-            <p style={{ fontSize: 16, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
-            {dish.restauranteDireccion && <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {(() => {
-                const parts = dish.restauranteDireccion.split(',').map(p => p.trim().replace(/^\d{4,7}\s*/, '')).filter(p => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
-                if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
-                return parts.join(', ')
-              })()}
-            </p>}
-            {dist != null && (
-              <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                A {formatDistance(dist)}
-              </p>
-            )}
-          </div>
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="1.8" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#F4A623', letterSpacing: '0.02em' }}>Maps</span>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} strokeWidth="2.2" strokeLinecap="round">
-              <path d="M9 18l6-6-6-6" />
+        {/* Botones locales */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32 }}>
+          <a
+            href={dish.googleMapsUrl ?? (dish.restauranteLat && dish.restauranteLng ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restaurante)}`)}
+            target="_blank" rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '10px 18px', borderRadius: 999,
+              background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+              border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+              textDecoration: 'none',
+            }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#EA4335" stroke="none"/>
+              <circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/>
             </svg>
-          </div>
-        </a>
+            <span style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>
+              Ver en Google Maps
+            </span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2.2" strokeLinecap="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </a>
+          {resolvedPhone && (
+            <a
+              href={`tel:${resolvedPhone}`}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '10px 18px', borderRadius: 999,
+                background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                textDecoration: 'none',
+              }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <span style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>
+                Llamar a {dish.restaurante}
+              </span>
+            </a>
+          )}
+        </div>
 
         {/* Más de restaurante */}
         {restDishes.length > 0 && (
@@ -1026,15 +962,10 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip, showSpicyT
   const head = words.slice(0, -1).join(' ')
   const tail = words[words.length - 1]
 
-  const dietIcon = hasDiet ? (dish.dieta.tipo === 'VEGAN' ? (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle' }}>
-      <path d="M12 22V11"/><path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/><path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/><path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/><path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
-    </svg>
-  ) : (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#43A047" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '10px' }}>
-      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-    </svg>
-  )) : null
+  const dietIcon = hasDiet ? (dish.dieta.tipo === 'VEGAN'
+    ? <VeganIcon size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
+    : <VegetarianIcon size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
+  ) : null
 
   const dietLabel = dish.dieta.tipo === 'VEGAN' ? 'Vegano' : 'Vegetariano'
 
@@ -1043,7 +974,7 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip, showSpicyT
       {head && <>{head} </>}
       <span style={{ whiteSpace: 'nowrap' }}>
         {tail}
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 6, verticalAlign: 'text-top' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 6, verticalAlign: 'middle' }}>
           {hasDiet && (
             <span
               onClick={e => { e.stopPropagation(); setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000) }}
@@ -1067,10 +998,7 @@ function DishNameWithTag({ dish, showDietTooltip, setShowDietTooltip, showSpicyT
               onClick={e => { e.stopPropagation(); setShowSpicyTooltip(v => !v); setTimeout(() => setShowSpicyTooltip(false), 2000) }}
               style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex' }}
             >
-              <svg width="16" height="16" viewBox="0 0 32 32" fill="#FF5722" style={{ display: 'inline', verticalAlign: 'middle', position: 'relative', top: '10px' }}>
-                <path d="M22 4c-1.5 1-3 1.5-4.5 1.2C15 4.7 13 3 11 3c-3.3 0-6 2.7-6 6 0 2 1 3.8 2.5 4.9C5.5 15.5 4 18.6 4 22c0 5.5 4.5 10 10 10s10-4.5 10-10c0-2.5-0.9-4.8-2.4-6.5C23.5 14 25 12 25 10c0-2.5-1.4-4.7-3.5-5.8C21.7 4.1 21.8 4.05 22 4z"/>
-                <path d="M14 14c0-2 1.5-3.5 3.5-4" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <SpicyIcon size={16} style={{ display: 'inline', verticalAlign: 'middle' }} />
               {showSpicyTooltip && (
                 <span style={{
                   position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
