@@ -34,6 +34,20 @@ export function isPackagedProduct(name: string, description?: string | null): bo
 }
 
 /**
+ * Detecta ítems no alimenticios: ropa, accesorios, insumos, merchandising.
+ * Ej: "Polera Rapa Nui", "Vasos Polipapel Grande 12oz", "Envase"
+ */
+const NON_FOOD_RE = /\b(polera|camiseta|remera|buzo|hoodie|gorra|chaleco|pantalon|polipapel|vaso\s+polipapel|manga\s+pastelera|pitillo|palillo|mondadientes|llavero|im[aá]n|p[oó]ster|sticker|merchandising)\b/i
+const NON_FOOD_EXACT = new Set(['envase', 'envases', 'bolsa', 'bolsas', 'vaso', 'vasos', 'cajas'])
+export function isNonFoodItem(name: string, categoryName?: string | null): boolean {
+  const n = name.toLowerCase().trim()
+  if (NON_FOOD_EXACT.has(n)) return true
+  if (NON_FOOD_RE.test(name)) return true
+  if (categoryName && /\b(merch|merchandising|ropa|indumentaria)\b/i.test(categoryName)) return true
+  return false
+}
+
+/**
  * Resuelve la leaf category de un plato con prioridad:
  * 1. leafOverride manual (set desde panel de revisión)
  * 2. Si la categoría es ambigua (Combos, Especiales…) → usar primaryCategory del restaurante
@@ -144,6 +158,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     if (txTypes.length > 0 && txTypes.every(t => DRINK_ONLY_TYPES.has(t))) continue
     // Excluir productos envasados (gramaje en nombre o "Formato X" en descripción)
     if (isPackagedProduct(d.name as string, d.description as string | null)) continue
+    // Excluir ítems no alimenticios (ropa, accesorios, insumos, merchandising)
+    if (isNonFoodItem(d.name as string, catName)) continue
     // Dedup: skip if same (restaurant, dish name) already added — handles imported duplicates
     const dupKey = `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
     if (seenKey.has(dupKey)) continue
@@ -235,6 +251,7 @@ export const getCachedCategoryCountMap = unstable_cache(
       const txTypes = Array.isArray(row.txDishType) ? row.txDishType as string[] : []
       if (txTypes.length > 0 && txTypes.every((t: string) => DRINK_ONLY_TYPES.has(t))) continue
       if (isPackagedProduct(row.name, row.description)) continue
+      if (isNonFoodItem(row.name, row.catName)) continue
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, row.description, row.catNormOverride)
       const parent = getParentCategory(leaf)
       if (parent) map[parent] = (map[parent] ?? 0) + 1
@@ -263,7 +280,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   })
 
   return dishes
-    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isPackagedProduct(d.name, d.description))
+    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isPackagedProduct(d.name, d.description) && !isNonFoodItem(d.name, d.category.name))
     .map(dish => {
       const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null, dish.category.normOverride ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)

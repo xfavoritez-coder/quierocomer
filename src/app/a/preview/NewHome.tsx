@@ -20,6 +20,7 @@ import {
 } from '../lib/feed-actions'
 import { QC_PARENTS, getPrimaryDishType, DISH_TYPE_TO_PARENT } from '../lib/categories'
 import { slugify } from '@/lib/slugify'
+import NavMenuPanel from '../components/NavMenuPanel'
 
 function normStr(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -104,6 +105,8 @@ export default function NewHome({
       return next
     })
   }
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardPhotoIdx, setOnboardPhotoIdx] = useState(0)
   const [activeDiet, setActiveDiet] = useState(userDiet)
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [hideRelated, setHideRelated] = useState(false)
@@ -133,7 +136,10 @@ export default function NewHome({
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
   const [filterSort, setFilterSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
-  const [quickNearby, setQuickNearby] = useState(true)
+  const [quickNearby, setQuickNearby] = useState(false)
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(false)
+  const [locationPromptFading, setLocationPromptFading] = useState(false)
+  const [locationTooltipReady, setLocationTooltipReady] = useState(false)
   const [quickPopular, setQuickPopular] = useState(false)
   const [filterMaxKm, setFilterMaxKm] = useState(5)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
@@ -210,6 +216,21 @@ export default function NewHome({
   const [locationQuery, setLocationQuery] = useState('')
   const [showDistancePicker, setShowDistancePicker] = useState(false)
   const distanceBadgeRef = useRef<HTMLButtonElement>(null)
+  const locationBtnRef = useRef<HTMLButtonElement>(null)
+  const dismissLocationPrompt = () => {
+    setLocationPromptFading(true)
+    setTimeout(() => {
+      setLocationPromptDismissed(true)
+      setLocationPromptFading(false)
+      try { localStorage.setItem('qc_loc_prompt_hidden', '1') } catch {}
+    }, 200)
+  }
+  useEffect(() => {
+    if (locationPromptDismissed) return
+    const onScroll = () => dismissLocationPrompt()
+    window.addEventListener('scroll', onScroll, { once: true, passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [locationPromptDismissed])
   useEffect(() => {
     if (!showDistancePicker) return
     const close = (e: MouseEvent) => {
@@ -220,6 +241,37 @@ export default function NewHome({
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [showDistancePicker])
+  // ─── Onboarding — show once per user ─────────────────────────────────────
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('qc_onboarding_done')) {
+        setShowOnboarding(true)
+      } else {
+        // Returning user sin onboarding: tooltip listo de inmediato
+        setLocationTooltipReady(true)
+      }
+    } catch {
+      setLocationTooltipReady(true)
+    }
+  }, [])
+
+  // Cuando el onboarding se cierra, activar tooltip con delay para fade-in
+  useEffect(() => {
+    if (showOnboarding) return
+    if (locationTooltipReady) return
+    const t = setTimeout(() => setLocationTooltipReady(true), 350)
+    return () => clearTimeout(t)
+  }, [showOnboarding])
+
+  const ONBOARD_EMOJIS = ['🍔', '🍣', '🌮', '🍕', '🥗', '🍜', '🍝', '🥘']
+  useEffect(() => {
+    if (!showOnboarding) return
+    const interval = setInterval(() => {
+      setOnboardPhotoIdx(i => (i + 1) % ONBOARD_EMOJIS.length)
+    }, 1500)
+    return () => clearInterval(interval)
+  }, [showOnboarding])
+
   // Stable seed on server (avoids hydration mismatch), randomized after mount
   const [shuffleSeed, setShuffleSeed] = useState(1)
   useEffect(() => { setShuffleSeed(Math.random()) }, [])
@@ -302,6 +354,8 @@ export default function NewHome({
 
   // Location: load saved first, then ask GPS if none saved
   useEffect(() => {
+    // Restore dismissed flag
+    try { if (localStorage.getItem('qc_loc_prompt_hidden')) setLocationPromptDismissed(true) } catch {}
     // Restore saved location from localStorage
     try {
       const saved = localStorage.getItem('qc_location')
@@ -309,6 +363,7 @@ export default function NewHome({
         const { lat, lng, label } = JSON.parse(saved)
         setUserLocation({ lat, lng })
         setGpsLabel(label)
+        setQuickNearby(true)
         return // don't auto-request GPS if we have a saved location
       }
     } catch {}
@@ -333,6 +388,7 @@ export default function NewHome({
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
       setUserLocation(loc)
       setLocationName(null)
+      setQuickNearby(true)
       // No auto-cambiar filterMaxKm: evita re-fetch al servidor y reordenamiento visual brusco
       const label = await reverseGeocode(loc.lat, loc.lng) || 'Cerca de ti'
       setGpsLabel(label)
@@ -858,6 +914,7 @@ export default function NewHome({
   }
 
   function resetFeed() {
+    setView('feed')
     setActiveCategory(null)
     setSearchQuery('')
     setSearchInput('')
@@ -866,7 +923,7 @@ export default function NewHome({
     setFilterSort('default')
     setFilterMaxKm(5)
     setFilterDiet('all')
-    setQuickNearby(true)
+    setQuickNearby(!!userLocation)
     setQuickPopular(false)
     setServerDishes(null)
     setSwipedIds(new Set())
@@ -879,6 +936,227 @@ export default function NewHome({
 
   return (
     <div style={{ minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
+
+      {/* ─── Onboarding welcome modal ─── */}
+      {showOnboarding && view === 'feed' && (
+        <>
+          <style>{`
+            @keyframes qc-ob-backdrop { from { opacity:0 } to { opacity:1 } }
+            @keyframes qc-ob-card-in  { from { opacity:0; transform:translateY(24px) scale(0.96) } to { opacity:1; transform:translateY(0) scale(1) } }
+            @keyframes qc-swipe {
+              0%,10%  { transform:translateX(0) rotate(0deg); }
+              25%     { transform:translateX(60px) rotate(8deg); }
+              40%,50% { transform:translateX(0) rotate(0deg); }
+              65%     { transform:translateX(-60px) rotate(-8deg); }
+              80%,100%{ transform:translateX(0) rotate(0deg); }
+            }
+            @keyframes qc-hand {
+              0%,10%  { transform:translateX(-50%); }
+              25%     { transform:translateX(30px); }
+              40%,50% { transform:translateX(-50%); }
+              65%     { transform:translateX(-80px); }
+              80%,100%{ transform:translateX(-50%); }
+            }
+            @keyframes qc-badge-antojo {
+              0%,10%  { opacity:0; }
+              20%,30% { opacity:1; }
+              40%,100%{ opacity:0; }
+            }
+            @keyframes qc-badge-no {
+              0%,50%  { opacity:0; }
+              60%,70% { opacity:1; }
+              80%,100%{ opacity:0; }
+            }
+          `}</style>
+
+          {/* Backdrop */}
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 300,
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px 16px',
+            overflowY: 'auto',
+            animation: 'qc-ob-backdrop 0.3s ease-out',
+          }}>
+            {/* Modal card */}
+            <div style={{
+              width: '100%', maxWidth: 360,
+              maxHeight: 'calc(100dvh - 40px)',
+              overflowY: 'auto',
+              background: isDark ? '#161616' : '#fff',
+              borderRadius: 24,
+              boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
+              overflow: 'hidden',
+              flexShrink: 0,
+              animation: 'qc-ob-card-in 0.35s ease-out',
+            }}>
+              {/* Close button */}
+              <div style={{ position: 'relative', height: 5 }}>
+                <button
+                  onClick={() => { try { localStorage.setItem('qc_onboarding_done', '1') } catch {}; setShowOnboarding(false) }}
+                  style={{
+                    position: 'absolute', top: 10, right: 12, zIndex: 10,
+                    width: 28, height: 28, border: 'none', cursor: 'pointer',
+                    background: 'none',
+                    color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <div style={{ padding: '16px 24px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+                {/* Logo */}
+                <img src="/logo.png" alt="QuieroComer" style={{ height: 40, marginBottom: 14, opacity: 0.92 }} />
+
+                {/* Headline */}
+                <h2 style={{
+                  fontFamily: 'var(--font-feed-display), serif',
+                  fontSize: 23, fontWeight: 800, lineHeight: 1.2, textAlign: 'center',
+                  color: isDark ? '#fff' : '#111', margin: '0 0 7px',
+                }}>
+                  Descubre qué y dónde comer
+                </h2>
+                <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.68)', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.55 }}>
+                  Desliza las fotos <span style={{ color: '#F4A623' }}>hacia la derecha si te dan antojo</span> o hacia la izquierda si no
+                </p>
+
+                {/* Card stack animation */}
+                {(() => {
+                  const cardBase: React.CSSProperties = { position: 'absolute', inset: 0, borderRadius: 18, overflow: 'hidden' }
+                  const currentEmoji = ONBOARD_EMOJIS[onboardPhotoIdx % ONBOARD_EMOJIS.length]
+                  return (
+                    <div style={{ position: 'relative', width: 136, height: 164, marginBottom: 10 }}>
+                      {/* Back card */}
+                      <div style={{ ...cardBase, background: 'linear-gradient(145deg,#374151,#4b5563)', transform: 'rotate(-9deg) scale(0.87) translateY(7px)', zIndex: 1, opacity: 0.6 }} />
+                      {/* Middle card */}
+                      <div style={{ ...cardBase, background: 'linear-gradient(145deg,#1f2937,#374151)', transform: 'rotate(-4deg) scale(0.94) translateY(3px)', zIndex: 2, opacity: 0.8 }} />
+                      {/* Front card — anima independientemente */}
+                      <div style={{
+                        ...cardBase,
+                        background: 'linear-gradient(150deg,#0f172a,#1e293b 55%,#2d3f5f)',
+                        boxShadow: '0 14px 32px rgba(0,0,0,0.28), 0 3px 8px rgba(0,0,0,0.18)',
+                        zIndex: 3,
+                        animation: 'qc-swipe 3s ease-in-out infinite',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <span style={{ fontSize: 52, lineHeight: 1, transition: 'opacity 0.2s', userSelect: 'none' }}>{currentEmoji}</span>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%)' }} />
+                        {/* Antojo badge */}
+                        <div style={{
+                          position: 'absolute', top: 10, right: 10, zIndex: 1,
+                          background: 'rgba(22,163,74,0.92)', borderRadius: 20,
+                          padding: '4px 9px', display: 'flex', alignItems: 'center', gap: 4,
+                          animation: 'qc-badge-antojo 3s ease-in-out infinite',
+                        }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>Antojo</span>
+                        </div>
+                        {/* No badge */}
+                        <div style={{
+                          position: 'absolute', top: 10, left: 10, zIndex: 1,
+                          background: 'rgba(0,0,0,0.6)', borderRadius: 20,
+                          padding: '4px 9px', display: 'flex', alignItems: 'center', gap: 4,
+                          animation: 'qc-badge-no 3s ease-in-out infinite',
+                        }}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.8" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>No</span>
+                        </div>
+                      </div>
+                      {/* Finger — animación propia sincronizada */}
+                      <div style={{
+                        position: 'absolute', bottom: -22, left: '50%',
+                        zIndex: 10, fontSize: 26, lineHeight: 1,
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                        pointerEvents: 'none',
+                        animation: 'qc-hand 3s ease-in-out infinite',
+                      }}>
+                        👆
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)', textAlign: 'center', margin: '18px 0 20px', lineHeight: 1.5 }}>
+                  Junta 5 antojos y descubre qué y dónde comer
+                </p>
+
+                {/* CTA */}
+                <button
+                  onClick={() => {
+                    try { localStorage.setItem('qc_onboarding_done', '1') } catch {}
+                    setShowOnboarding(false)
+                  }}
+                  style={{
+                    width: '100%', height: 50, borderRadius: 13,
+                    background: '#F4A623', border: 'none', cursor: 'pointer',
+                    fontSize: 16, fontWeight: 700, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    boxShadow: '0 4px 14px rgba(244,166,35,0.4)',
+                  }}
+                >
+                  Empezar
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ─── Location prompt tooltip (informativo, surge desde botón ubicación) ─── */}
+      {!userLocation && !locationPromptDismissed && locationTooltipReady && view === 'feed' && (() => {
+        const r = locationBtnRef.current?.getBoundingClientRect()
+        if (!r) return null
+        const tooltipW = 220
+        const left = Math.round((window.innerWidth - tooltipW) / 2)
+        const arrowLeft = Math.max(10, Math.min(r.left + 8 - left, tooltipW - 20))
+        return (
+          <div style={{
+            position: 'fixed',
+            top: r.bottom + 8,
+            left,
+            zIndex: 400,
+            width: 'max-content',
+            maxWidth: tooltipW,
+            background: isDark ? '#1c1c1e' : '#fff',
+            borderRadius: 12,
+            boxShadow: '0 6px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
+            animation: 'qc-ob-card-in 0.2s ease-out',
+            opacity: locationPromptFading ? 0 : 1,
+            transform: locationPromptFading ? 'translateY(-18px)' : 'translateY(0)',
+            transition: 'opacity 0.22s ease, transform 0.22s ease',
+          }}>
+            {/* Arrow */}
+            <div style={{
+              position: 'absolute', top: -5, left: arrowLeft,
+              width: 10, height: 10,
+              background: isDark ? '#1c1c1e' : '#fff',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
+              borderRight: 'none', borderBottom: 'none',
+              transform: 'rotate(45deg)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{ padding: '11px 28px 11px 16px', position: 'relative' }}>
+              <p style={{ margin: 0, fontSize: 13.5, fontWeight: 500, lineHeight: 1.45, color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.62)' }}>
+                Selecciona una ubicación para ver platos cerca de ti
+              </p>
+              <button onClick={dismissLocationPrompt} style={{
+                position: 'absolute', top: 10, right: 8,
+                background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)',
+                display: 'flex', alignItems: 'center',
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ─── Desktop Top Navbar ─── */}
       {isDesktop && (
@@ -953,6 +1231,16 @@ export default function NewHome({
                   padding: '8px 0', minWidth: 200,
                   display: 'flex', flexDirection: 'column',
                 }}>
+                  {/* Inicio */}
+                  <button onClick={() => { resetFeed(); setDesktopMenuOpen(false) }} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%',
+                  }}>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Inicio
+                  </button>
+
                   {/* Mi perfil */}
                   <button onClick={() => { setView('perfil'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
@@ -973,15 +1261,15 @@ export default function NewHome({
                     Publicar local
                   </a>
 
-                  {/* Contáctanos */}
-                  <a href="mailto:hola@quierocomer.cl" onClick={() => setDesktopMenuOpen(false)} style={{
+                  {/* Contacto */}
+                  <button onClick={() => { setView('contacto'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '11px 18px', color: isDark ? 'rgba(255,255,255,0.85)' : '#111',
-                    fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box',
+                    padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%',
                   }}>
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    Contáctanos
-                  </a>
+                    Contacto
+                  </button>
 
                   <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', margin: '6px 14px' }} />
 
@@ -1121,7 +1409,7 @@ export default function NewHome({
 
         {/* Row 3: Quick-filter pills */}
         <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
-          <button onClick={() => setQuickNearby(p => !p)} style={pillStyle(quickNearby, 'nearby')}>
+          <button onClick={() => { if (!userLocation) { setLocationModalOpen(true); return } setQuickNearby(p => !p) }} style={pillStyle(quickNearby, 'nearby')}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
@@ -1164,10 +1452,10 @@ export default function NewHome({
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
         <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-          <button onClick={() => setLocationModalOpen(true)} style={{
+          <button ref={locationBtnRef} onClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+            color: (locationName || gpsLabel) ? '#e09200' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
             fontSize: 16, fontWeight: 400,
             flex: 1, minWidth: 0, overflow: 'hidden',
           }}>
@@ -1175,7 +1463,7 @@ export default function NewHome({
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {locationName || gpsLabel || 'Selecciona tu dirección'}
+              {locationName || gpsLabel || 'Selecciona una ubicación'}
             </span>
             <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M6 9l6 6 6-6"/>
@@ -1358,16 +1646,21 @@ export default function NewHome({
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: (showFloatingSearch || stickyHeaderVisible) ? '7px 16px' : '8px 12px 8px 16px',
-            background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)',
+            background: (showFloatingSearch || stickyHeaderVisible)
+              ? (isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)')
+              : (isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)'),
             backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
             borderRadius: (showFloatingSearch || stickyHeaderVisible) ? 0 : 999,
             minWidth: (showFloatingSearch || stickyHeaderVisible) ? '100%' : 0,
             boxSizing: 'border-box' as const,
             border: (showFloatingSearch || stickyHeaderVisible)
-              ? `none`
+              ? 'none'
               : `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+            borderTop: (showFloatingSearch || stickyHeaderVisible)
+              ? `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`
+              : 'none',
             boxShadow: (showFloatingSearch || stickyHeaderVisible)
-              ? '0 2px 10px rgba(0,0,0,0.08)'
+              ? '0 2px 8px rgba(0,0,0,0.06)'
               : '0 3px 18px rgba(0,0,0,0.16)',
             transition: 'border-radius 0.28s cubic-bezier(0.0,0.0,0.2,1), min-width 0.28s cubic-bezier(0.0,0.0,0.2,1), padding 0.28s cubic-bezier(0.0,0.0,0.2,1)',
             justifyContent: 'center',
@@ -1375,7 +1668,7 @@ export default function NewHome({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             {eurekaLiked.length < eurekaMax && (
               <div style={{ flexShrink: 0 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
                   Descubre qué comer
                 </p>
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', textAlign: 'right' }}>
@@ -1387,10 +1680,10 @@ export default function NewHome({
               {Array.from({ length: eurekaMax }).map((_, i) => {
                 const dish = eurekaLiked[i]
                 return dish ? (
-                  <div key={dish.id} style={{ position: 'relative', width: 34, height: 34, flexShrink: 0 }}>
+                  <div key={dish.id} style={{ position: 'relative', width: 45, height: 45, flexShrink: 0 }}>
                     <div
                       onClick={() => setSelectedDish(dish)}
-                      style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
+                      style={{ width: 45, height: 45, borderRadius: 12, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
                     >
                       {dish.fotoUrl && <img src={dish.fotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
@@ -1411,7 +1704,7 @@ export default function NewHome({
                   </div>
                 ) : (
                   <div key={i} style={{
-                    width: 34, height: 34, flexShrink: 0, borderRadius: 9,
+                    width: 45, height: 45, flexShrink: 0, borderRadius: 12,
                     border: `2px dashed ${isDark ? 'rgba(244,166,35,0.3)' : 'rgba(244,166,35,0.4)'}`,
                     background: isDark ? 'rgba(244,166,35,0.05)' : 'rgba(244,166,35,0.07)',
                   }} />
@@ -1674,152 +1967,16 @@ export default function NewHome({
       )}
 
       {/* ─── Hamburger menu — slide from right ─── */}
-      {menuOpen && (
-        <>
-          <div onClick={() => setMenuOpen(false)} style={{
-            position: 'fixed', inset: 0, zIndex: 55,
-            background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-          }} />
-          <div style={{
-            position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 56,
-            width: 270, maxWidth: '88vw',
-            background: isDark ? '#111' : '#fafafa',
-            borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'}`,
-            animation: 'slideRight 0.25s ease-out',
-            display: 'flex', flexDirection: 'column',
-            boxShadow: '-8px 0 40px rgba(0,0,0,0.18)',
-          }}>
-            {/* Header */}
-            <div style={{
-              padding: '18px 16px 14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            }}>
-              <a href="/qr" style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px', textDecoration: 'none' }}>
-                Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-              </a>
-              <button onClick={() => setMenuOpen(false)} style={{
-                width: 28, height: 28, background: 'none', border: 'none',
-                cursor: 'pointer', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Nav items */}
-            <nav style={{ flex: 1, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-
-              {/* Inicio */}
-              <button onClick={() => { setMenuOpen(false); setView('feed'); window.scrollTo(0, 0) }} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9,
-                color: view === 'feed' ? '#F4A623' : (isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)'),
-                fontSize: 15, fontWeight: view === 'feed' ? 600 : 400,
-                background: view === 'feed' ? (isDark ? 'rgba(244,166,35,0.1)' : 'rgba(244,166,35,0.07)') : 'transparent',
-                border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
-                WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: view === 'feed' ? 1 : 0.5 }}>
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                Inicio
-              </button>
-
-              {/* Mi perfil */}
-              <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9,
-                color: view === 'perfil' ? '#F4A623' : (isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)'),
-                fontSize: 15, fontWeight: view === 'perfil' ? 600 : 400,
-                background: view === 'perfil' ? (isDark ? 'rgba(244,166,35,0.1)' : 'rgba(244,166,35,0.07)') : 'transparent',
-                border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
-                WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: view === 'perfil' ? 1 : 0.5 }}>
-                  <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                </svg>
-                Mi perfil
-              </button>
-
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
-
-              {/* Contacto */}
-              <button onClick={() => { setMenuOpen(false); setView('contacto'); window.scrollTo(0, 0) }} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9,
-                color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.62)', fontSize: 15, fontWeight: 400,
-                background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left',
-                WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                </svg>
-                Contacto
-              </button>
-
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
-
-              {/* Publicar local */}
-              <a href="/qr" target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9,
-                color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)',
-                fontSize: 15, fontWeight: 400,
-                background: 'transparent',
-                textDecoration: 'none', width: '100%', WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                Publicar local
-              </a>
-
-            </nav>
-
-            {/* Footer */}
-            <div style={{ padding: '10px 16px 18px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}` }}>
-              {/* Apariencia */}
-              <div style={{ marginBottom: 12 }}>
-                <p style={{ margin: '0 0 7px', fontSize: 11, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Apariencia</p>
-                <div style={{ display: 'flex', borderRadius: 9, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', padding: 3, gap: 2 }}>
-                  <button onClick={() => { if (isDark) toggleTheme() }} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    padding: '6px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                    background: !isDark ? '#fff' : 'transparent',
-                    boxShadow: !isDark ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                    color: !isDark ? '#b45309' : (isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.3)'),
-                    fontSize: 13, fontWeight: !isDark ? 600 : 400, transition: 'all 0.15s',
-                  }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                    </svg>
-                    Claro
-                  </button>
-                  <button onClick={() => { if (!isDark) toggleTheme() }} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    padding: '6px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                    background: isDark ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
-                    color: isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.3)',
-                    fontSize: 13, fontWeight: isDark ? 600 : 400, transition: 'all 0.15s',
-                  }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                    </svg>
-                    Oscuro
-                  </button>
-                </div>
-              </div>
-              <p style={{ margin: 0, fontSize: 11, color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.18)', textAlign: 'center' }}>
-                © 2025 QuieroComer · Santiago, Chile
-              </p>
-            </div>
-          </div>
-        </>
-      )}
+      <NavMenuPanel
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
+        onInicio={() => { setView('feed'); window.scrollTo(0, 0) }}
+        onPerfil={() => { setView('perfil'); window.scrollTo(0, 0) }}
+        onContacto={() => { setView('contacto'); window.scrollTo(0, 0) }}
+        activeView={view}
+      />
 
       {/* ─── Feed View ─── */}
       {view === 'feed' && (

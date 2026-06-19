@@ -419,11 +419,8 @@ function DesktopDishContent({
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
               }
-              <span style={{ fontSize: 16, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</span>
+              <span style={{ fontSize: 17, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
-            {dist != null && (
-              <span style={{ fontSize: 13, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)', flexShrink: 0, whiteSpace: 'nowrap' }}>· A {formatDistance(dist)}</span>
-            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
             <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
@@ -530,30 +527,34 @@ function DesktopDishContent({
               {/* Botón Ir a Maps */}
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  width: '100%', padding: '11px 14px', boxSizing: 'border-box',
-                  background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(244,166,35,0.1)',
-                  border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.35)' : 'rgba(244,166,35,0.4)'}`,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginBottom: 12,
+                  background: isDark ? 'rgba(244,166,35,0.13)' : 'rgba(244,166,35,0.08)',
+                  border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.5)' : 'rgba(244,166,35,0.4)'}`,
                   borderTop: 'none',
                   borderRadius: '0 0 12px 12px',
                   textDecoration: 'none',
-                  color: '#c97d00',
-                  fontSize: 14, fontWeight: 600,
                 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#EA4335" stroke="none"/>
+                  <circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/>
                 </svg>
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block' }}>Ir a {dish.restaurante}{dist != null && <span style={{ fontWeight: 400, opacity: 0.75 }}> · {formatDistance(dist)}</span>}</span>
+                  <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00' }}>
+                    Cómo llegar
+                  </span>
                   {dish.restauranteDireccion && (() => {
                     const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                     if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
-                    return <span style={{ display: 'block', fontSize: 12, fontWeight: 400, opacity: 0.65, marginTop: 1 }}>{parts.join(', ')}</span>
+                    return <span style={{ display: 'block', fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1 }}>{parts.join(', ')}</span>
                   })()}
                 </span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ marginLeft: 2, flexShrink: 0 }}>
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+                  {dist != null && <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(244,166,35,0.7)' : '#c97d00', opacity: 0.85 }}>A {formatDistance(dist)}</span>}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </span>
               </a>
             </div>
           )
@@ -563,13 +564,13 @@ function DesktopDishContent({
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)', margin: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
                 <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: 15, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  Ver carta
+                  Ver carta completa
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               )}
@@ -786,11 +787,8 @@ function DishSlide({
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
               }
-              <span style={{ fontSize: 16, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dish.restaurante}</span>
+              <span style={{ fontSize: 17, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
-            {dist != null && (
-              <span style={{ fontSize: 13, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.28)', flexShrink: 0, whiteSpace: 'nowrap' }}>· A {formatDistance(dist)}</span>
-            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
             <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
@@ -849,64 +847,69 @@ function DishSlide({
         )}
 
         {/* Botones locales */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32, marginTop: 10 }}>
           <a
             href={dish.googleMapsUrl ?? (dish.restauranteLat && dish.restauranteLng ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ? dish.restauranteDireccion + ' ' : '') + dish.restaurante)}`)}
             target="_blank" rel="noopener noreferrer"
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px', borderRadius: 999,
-              background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-              border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+              display: 'flex', alignItems: 'center', gap: 10,
+              flex: 1, padding: '12px 18px', borderRadius: 12,
+              background: isDark ? 'rgba(244,166,35,0.13)' : 'rgba(244,166,35,0.08)',
+              border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.5)' : 'rgba(244,166,35,0.4)'}`,
               textDecoration: 'none',
             }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ flexShrink: 0 }}>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#EA4335" stroke="none"/>
               <circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/>
             </svg>
-            <span style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>Ver en Google Maps</span>
+            <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00', whiteSpace: 'nowrap' }}>Cómo llegar</span>
               {dish.restauranteDireccion && (() => {
                 const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                 if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
-                return <span style={{ fontSize: 12, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>{parts.join(', ')}</span>
+                return <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{parts.join(', ')}</span>
               })()}
             </span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2.2" strokeLinecap="round">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+              {dist != null && <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(244,166,35,0.7)' : '#c97d00', opacity: 0.85 }}>A {formatDistance(dist)}</span>}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </span>
           </a>
           {resolvedPhone && (
-            <a
-              href={`tel:${resolvedPhone}`}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '10px 18px', borderRadius: 999,
-                background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-                textDecoration: 'none',
-              }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <a href={`tel:${resolvedPhone}`} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              flex: 1, padding: '12px 18px', borderRadius: 12,
+              background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+              border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+              textDecoration: 'none',
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4a2 2 0 0 1 1.99-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
-              <span style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>
-                Llamar a {dish.restaurante}
+              <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap' }}>Llamar</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{resolvedPhone}</span>
               </span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)'} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
             </a>
           )}
         </div>
 
         {/* Más de restaurante */}
         {restDishes.length > 0 && (
-          <div style={{ marginBottom: 14 }}>
+          <div style={{ marginBottom: 14, marginTop: 20 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)', margin: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
                 <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: 15, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  Ver carta
+                  Ver carta completa
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               )}
