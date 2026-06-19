@@ -1488,7 +1488,7 @@ export default function NewHome({
         </div>
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
-        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <div style={{ display: view === 'perfil' || view === 'contacto' || view === 'mapa' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
           <button ref={locationBtnRef} onClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -2095,7 +2095,7 @@ export default function NewHome({
           </div>
 
           {/* Results count strip */}
-          {feedDishes.length > 0 && (
+          {feedDishes.length > 0 && view !== 'mapa' && (
             <div style={{ padding: '2px 16px 2px', display: 'flex', alignItems: 'center', gap: 8 }}>
               {isDesktop && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
