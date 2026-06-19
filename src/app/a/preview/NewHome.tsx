@@ -165,8 +165,8 @@ export default function NewHome({
 
   // ─── Eureka / Descubrir ───────────────────────────────────────────────────
   const [eurekaLiked, setEurekaLiked] = useState<FeedDish[]>([])
-  const [eurekaMax, setEurekaMax] = useState(5)
-  const eurekaMaxRef = useRef(5)
+  const eurekaMax = 3
+  const eurekaMaxRef = useRef(3)
   const [showEurekaModal, setShowEurekaModal] = useState(false)
   const eurekaModalShownRef = useRef(false)
   const floatingHeaderRef = useRef<HTMLDivElement>(null)
@@ -183,20 +183,13 @@ export default function NewHome({
   // Restaurar selección previa al volver desde /descubrir
   useEffect(() => {
     try {
-      const isAfinar = localStorage.getItem('qc_eureka_afinar') === '1'
-      if (isAfinar) {
-        localStorage.removeItem('qc_eureka_afinar')
-        setEurekaMax(6)
-        eurekaMaxRef.current = 6
-      }
       const raw = localStorage.getItem('qc_eureka_liked')
       if (raw) {
         const dishes: FeedDish[] = JSON.parse(raw)
         if (dishes.length > 0) {
-          const max = isAfinar ? 6 : 5
-          setEurekaLiked(dishes.slice(0, max))
+          setEurekaLiked(dishes.slice(0, 3))
           // Ya tenía selecciones guardadas — no mostrar el modal al cargar
-          if (dishes.length >= max) eurekaModalShownRef.current = true
+          if (dishes.length >= 3) eurekaModalShownRef.current = true
         }
       }
     } catch {}
