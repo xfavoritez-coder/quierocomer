@@ -32,6 +32,8 @@ interface RestaurantData {
   instagram: string | null; website: string | null;
   scheduleJson: Record<string, string> | null;
   dietType: string | null;
+  subscriptionStatus: string | null;
+  trialEndsAt: string | null;
 }
 
 function Card({ children, title, icon: Icon }: { children: React.ReactNode; title: string; icon?: any }) {
@@ -245,6 +247,24 @@ export default function MiRestaurantePage() {
                 </button>
               </div>
             </div>
+            {/* Trial end date banner */}
+            {data?.subscriptionStatus === "TRIALING" && data?.trialEndsAt && (() => {
+              const trialDate = new Date(data.trialEndsAt);
+              const dateStr = trialDate.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+              return (
+                <div style={{
+                  padding: "12px 16px", borderRadius: 12,
+                  background: "rgba(167,139,250,0.08)",
+                  border: "1px solid rgba(167,139,250,0.25)",
+                  display: "flex", alignItems: "flex-start", gap: 10,
+                }}>
+                  <span style={{ fontSize: "1rem", flexShrink: 0 }}>🎁</span>
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+                    Tienes este plan gratis hasta el <strong style={{ color: "var(--adm-text)" }}>{dateStr}</strong>. Luego la carta vuelve al plan gratuito, no perderás nada.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         );
       })()}

@@ -366,13 +366,9 @@ export function trialEndingSoonEmailHtml(
     </table>
   </td></tr>
 
-  <tr><td style="padding-bottom:12px;">${btn(suscripcionLink, "Ver planes disponibles")}</td></tr>
+  ${slug ? `<tr><td style="padding-bottom:12px;">${btn(`${BASE_URL}/qr/${slug}`, "Ver mi carta")}</td></tr>` : ""}
 
-  ${slug ? `<tr><td style="padding-bottom:24px;" align="center">
-    <a href="${BASE_URL}/qr/${slug}" style="display:inline-block;font-size:14px;color:${GOLD};font-weight:700;text-decoration:none;padding:14px 28px;border:1.5px solid #ead7b7;border-radius:14px;background:#fffbf3;">
-      👁 Ver mi carta
-    </a>
-  </td></tr>` : ""}
+  <tr><td style="padding-bottom:24px;">${btn(suscripcionLink, "Ver planes", false)}</td></tr>
 
   <tr><td style="padding-top:8px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
