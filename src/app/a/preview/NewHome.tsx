@@ -1108,7 +1108,7 @@ export default function NewHome({
       )}
 
       {/* ─── Location prompt tooltip (informativo, surge desde botón ubicación) ─── */}
-      {!userLocation && !locationPromptDismissed && locationTooltipReady && view === 'feed' && (() => {
+      {!userLocation && !locationPromptDismissed && locationTooltipReady && !showOnboarding && view === 'feed' && (() => {
         const r = locationBtnRef.current?.getBoundingClientRect()
         if (!r) return null
         const tooltipW = 220
