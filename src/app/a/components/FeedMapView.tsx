@@ -13,9 +13,10 @@ type Props = {
   isDark: boolean
   onDishTap: (d: FeedDish) => void
   geocodeRef?: React.MutableRefObject<((q: string) => void) | null>
+  userLocation?: { lat: number; lng: number } | null
 }
 
-export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: Props) {
+export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, userLocation }: Props) {
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [sheetExpanded, setSheetExpanded] = useState(false)
   const [mapReady, setMapReady] = useState(false)
@@ -157,6 +158,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: P
           isDark={isDark}
           locateRef={locateRef}
           flyToRef={flyToRef}
+          userLocation={userLocation}
         />
       </div>
 

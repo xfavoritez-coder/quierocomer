@@ -12,6 +12,7 @@ type Props = {
   isDark: boolean
   locateRef?: React.RefObject<((onDone?: () => void) => void) | null>
   flyToRef?: React.RefObject<((lat: number, lng: number, zoom?: number) => void) | null>
+  userLocation?: { lat: number; lng: number } | null
 }
 
 const normalStyle: L.CircleMarkerOptions = {
@@ -56,7 +57,7 @@ function buildPopupHtml(r: MapRestaurant, isDark: boolean): string {
   `
 }
 
-export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef, flyToRef }: Props) {
+export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef, flyToRef, userLocation }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.CircleMarker[]>([])
@@ -83,8 +84,19 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = L.map(containerRef.current, { center: [-33.4470, -70.6270], zoom: 14 })
+    const initCenter: [number, number] = userLocation
+      ? [userLocation.lat, userLocation.lng]
+      : [-33.4470, -70.6270]
+    const map = L.map(containerRef.current, { center: initCenter, zoom: 14 })
     mapRef.current = map
+
+    // Si hay ubicación activa, mostrar punto azul desde el inicio
+    if (userLocation) {
+      userMarkerRef.current = L.circleMarker([userLocation.lat, userLocation.lng], {
+        radius: 8, fillColor: '#4A90E2', color: '#fff',
+        weight: 2.5, opacity: 1, fillOpacity: 1,
+      }).addTo(map)
+    }
 
     const url = isDark
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -136,6 +148,20 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Update user location marker when prop changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    userMarkerRef.current?.remove()
+    userMarkerRef.current = null
+    if (userLocation) {
+      userMarkerRef.current = L.circleMarker([userLocation.lat, userLocation.lng], {
+        radius: 8, fillColor: '#4A90E2', color: '#fff',
+        weight: 2.5, opacity: 1, fillOpacity: 1,
+      }).addTo(map)
+    }
+  }, [userLocation])
 
   // Update markers when restaurants change
   useEffect(() => {

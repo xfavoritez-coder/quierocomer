@@ -1488,7 +1488,7 @@ export default function NewHome({
         </div>
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
-        <div style={{ display: view === 'perfil' || view === 'contacto' || view === 'mapa' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
           <button ref={locationBtnRef} onClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -1506,8 +1506,8 @@ export default function NewHome({
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
-          {/* Badge distancia — pegado a la derecha de la dirección, siempre visible */}
-          {userLocation && (
+          {/* Badge distancia — oculto en modo mapa */}
+          {userLocation && view !== 'mapa' && (
             <div style={{ flexShrink: 0 }}>
               <button
                 ref={distanceBadgeRef}
@@ -2151,6 +2151,7 @@ export default function NewHome({
               isDark={isDark}
               onDishTap={handleDishTap}
               geocodeRef={mapGeocoderRef}
+              userLocation={userLocation}
             />
           )}
 
