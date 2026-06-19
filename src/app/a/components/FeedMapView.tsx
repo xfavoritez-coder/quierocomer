@@ -20,6 +20,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: P
   const [sheetExpanded, setSheetExpanded] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [updatingDishes, setUpdatingDishes] = useState(false)
+  const [locating, setLocating] = useState(false)
   const prevDishesRef = useRef(dishes)
   const flyToRef = useRef<((lat: number, lng: number, zoom?: number) => void) | null>(null)
 
@@ -86,7 +87,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: P
     return Array.from(map.values())
   }, [dishes])
 
-  const locateRef = useRef<(() => void) | null>(null)
+  const locateRef = useRef<((onDone?: () => void) => void) | null>(null)
 
   const handleBoundsChange = useCallback((b: Bounds) => {
     setBounds(b)
@@ -161,7 +162,11 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: P
 
       {/* GPS locate button — fuera del div isolate para no quedar tapado por el sheet */}
       <button
-        onClick={() => locateRef.current?.()}
+        onClick={() => {
+          if (locating) return
+          setLocating(true)
+          locateRef.current?.(() => setLocating(false))
+        }}
         style={{
           position: 'absolute', bottom: 216, right: 12, zIndex: 41,
           width: 40, height: 40, borderRadius: '50%',
@@ -169,18 +174,27 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: P
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
           boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', padding: 0,
-          color: isDark ? 'rgba(255,255,255,0.75)' : '#333',
+          cursor: locating ? 'default' : 'pointer', padding: 0,
+          color: locating ? '#4A90E2' : (isDark ? 'rgba(255,255,255,0.75)' : '#333'),
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10"/>
-          <circle cx="12" cy="12" r="3"/>
-          <line x1="12" y1="2" x2="12" y2="5"/>
-          <line x1="12" y1="19" x2="12" y2="22"/>
-          <line x1="2" y1="12" x2="5" y2="12"/>
-          <line x1="19" y1="12" x2="22" y2="12"/>
-        </svg>
+        {locating ? (
+          <div style={{
+            width: 16, height: 16, borderRadius: '50%',
+            border: '2px solid rgba(74,144,226,0.25)',
+            borderTop: '2px solid #4A90E2',
+            animation: 'feedmap-spin 0.8s linear infinite',
+          }} />
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3"/>
+            <line x1="12" y1="2" x2="12" y2="5"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="2" y1="12" x2="5" y2="12"/>
+            <line x1="19" y1="12" x2="22" y2="12"/>
+          </svg>
+        )}
       </button>
 
       {/* Bottom sheet */}

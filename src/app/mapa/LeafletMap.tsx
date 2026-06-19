@@ -10,7 +10,7 @@ type Props = {
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void
   onRestaurantClick: (r: MapRestaurant) => void
   isDark: boolean
-  locateRef?: React.RefObject<(() => void) | null>
+  locateRef?: React.RefObject<((onDone?: () => void) => void) | null>
   flyToRef?: React.RefObject<((lat: number, lng: number, zoom?: number) => void) | null>
 }
 
@@ -83,7 +83,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = L.map(containerRef.current, { center: [-33.4489, -70.6693], zoom: 12 })
+    const map = L.map(containerRef.current, { center: [-33.4470, -70.6270], zoom: 14 })
     mapRef.current = map
 
     const url = isDark
@@ -104,19 +104,19 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
 
     // Expose locate function via ref
     if (locateRef) {
-      locateRef.current = () => {
+      locateRef.current = (onDone?: () => void) => {
         navigator.geolocation.getCurrentPosition(
           pos => {
             const { latitude: lat, longitude: lng } = pos.coords
             map.flyTo([lat, lng], 15, { animate: true, duration: 1 })
-            // Punto azul de posición
             userMarkerRef.current?.remove()
             userMarkerRef.current = L.circleMarker([lat, lng], {
               radius: 8, fillColor: '#4A90E2', color: '#fff',
               weight: 2.5, opacity: 1, fillOpacity: 1,
             }).addTo(map)
+            onDone?.()
           },
-          () => {},
+          () => { onDone?.() },
           { enableHighAccuracy: true, timeout: 8000 }
         )
       }
