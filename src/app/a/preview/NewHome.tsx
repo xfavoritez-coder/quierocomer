@@ -1676,7 +1676,7 @@ export default function NewHome({
             justifyContent: 'center',
           }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flexShrink: 0 }}>
+            <div style={{ flexShrink: 0, marginRight: 4 }}>
               {eurekaLiked.length < eurekaMax ? (
                 <>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
