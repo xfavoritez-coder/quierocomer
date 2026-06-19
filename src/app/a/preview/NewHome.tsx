@@ -2314,6 +2314,21 @@ export default function NewHome({
               position: 'relative',
               boxShadow: '0 24px 60px rgba(0,0,0,0.3)',
             }}>
+              {/* Close X */}
+              <button
+                onClick={() => setShowEurekaModal(false)}
+                style={{
+                  position: 'absolute', top: 14, right: 14,
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                  lineHeight: 1, display: 'flex',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+
               {/* Emoji burst */}
               <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 12, userSelect: 'none' }}>🎉</div>
 
