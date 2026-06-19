@@ -462,12 +462,12 @@ export default function DescubrirClient() {
                       onClick={() => setPage(p => Math.max(0, p - 1))}
                       disabled={page === 0}
                       style={{
-                        width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
+                        width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: page === 0 ? 'transparent' : 'rgba(244,166,35,0.12)',
                         color: page === 0 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
                       }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
                     </button>
                     <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center' }}>
                       {page + 1}/{totalPages}
@@ -476,12 +476,12 @@ export default function DescubrirClient() {
                       onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                       disabled={page >= totalPages - 1}
                       style={{
-                        width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: page >= totalPages - 1 ? 'default' : 'pointer',
+                        width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: page >= totalPages - 1 ? 'default' : 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: page >= totalPages - 1 ? 'transparent' : 'rgba(244,166,35,0.12)',
                         color: page >= totalPages - 1 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
                       }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
                   </div>
                 )}
