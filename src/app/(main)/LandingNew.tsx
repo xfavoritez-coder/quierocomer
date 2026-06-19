@@ -308,7 +308,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
               { icon: "🔔", title: "Llamar al garzón", desc: "El cliente puede llamar al garzón directamente desde la carta QR, sin levantar la mano ni esperar." },
               { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos, acompañamientos o postres mientras el cliente decide." },
               { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso." },
-              { icon: "🎂", title: "Cumpleaños automáticos", desc: "Envía automáticamente regalos, descuentos o promociones de cumpleaños a tus clientes." },
+              { icon: "👥", title: "Clientes ilimitados", desc: "Captura emails y preferencias de tus clientes sin límite. Exporta y usa donde quieras." },
               { icon: "🏷️", title: "Promociones visibles", desc: "Muestra promociones, productos nuevos o platos estratégicos directamente en tu carta QR." },
               { icon: "🌍", title: "Varios idiomas", desc: "Facilita la experiencia de turistas y clientes extranjeros con tu carta traducida." },
             ].map((f, i) => (
@@ -417,7 +417,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
                 ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
                 ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
                 ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"],
-                ["Estadísticas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
+                ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
                 ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
               <PlanCard name="Premium" price={anual ? "$35.900" : "$44.900"} period={anual ? "/mes + IVA · $430.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
@@ -425,9 +425,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Cross-selling", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
                 ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
-                ["Cumpleaños automáticos", "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante"],
-                ["Clientes ilimitados", "Sin límite de clientes registrados"],
-                ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
+                ["Ver clientes ilimitados", "Sin límite de clientes registrados. Ve correos, preferencias y más"],
                 ["Multi-carta", "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary={false} />
             </div>

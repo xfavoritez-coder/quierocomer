@@ -10,13 +10,13 @@ const FB = "var(--font-body)";
 const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; icon: typeof Tag }>> = {
   promotions: { title: "Ofertas y promociones", desc: "Crea ofertas temporales que aparecen directo en la carta de tus clientes.", icon: Tag },
   announcements: { title: "Anuncios en la carta", desc: "Lo primero que ven tus clientes al abrir la carta. Novedades, eventos, horarios.", icon: Megaphone },
-  stats_basic: { title: "Estadísticas", desc: "Qué platos miran, qué ignoran y a qué hora llega más gente.", icon: BarChart3 },
+  stats_basic: { title: "Estadísticas básicas", desc: "Qué platos miran, qué ignoran y a qué hora llega más gente.", icon: BarChart3 },
   stats_advanced: { title: "Estadísticas avanzadas", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", icon: BarChart3 },
   waiter: { title: "Llamar al garzón", desc: "Tu cliente toca un botón y el garzón lo sabe al instante.", icon: Bell },
   automations: { title: "Cumpleaños automáticos", desc: "Se envían solos, tú no haces nada.", icon: Cake },
   campaigns: { title: "Email marketing", desc: "Envía promos y novedades directo al correo de tus clientes.", icon: Mail },
   multilang: { title: "Carta en varios idiomas", desc: "Turistas leen tu menú en su idioma. Automático.", icon: Globe },
-  clients_full: { title: "Clientes capturados", desc: "Emails, cumpleaños, preferencias. Exporta y usa donde quieras.", icon: Users },
+  clients_full: { title: "Ver clientes ilimitados", desc: "Sin límite de clientes registrados. Ve correos, preferencias y más.", icon: Users },
   suggestions: { title: "Cross-selling", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", icon: UtensilsCrossed },
   multi_menu: { title: "Multi-carta", desc: "Un QR, múltiples cartas. Ideal para locales con más de un concepto.", icon: LayoutGrid },
 };

@@ -45,19 +45,6 @@ const heroes: Record<
     card: "Base de clientes propia",
     bullets: ["Nombre y correo", "Fecha de cumpleaños", "Promociones futuras"],
   },
-  cumpleanos: {
-    bg: "/funciones/cumpleanos.jpg",
-    pill: "Fidelización automática",
-    title: "Haz que tus clientes",
-    titleHighlight: "vuelvan en su cumpleaños.",
-    text: "Envía automáticamente regalos, descuentos o promociones de cumpleaños.",
-    card: "Emails automáticos",
-    bullets: [
-      "Correos automáticos",
-      "Cupones personalizados",
-      "Más clientes volviendo",
-    ],
-  },
   promos: {
     bg: "/funciones/promos.jpg",
     pill: "Promociones",
@@ -93,14 +80,6 @@ const features = [
     desc: "Convierte tu carta en una experiencia visual que hace más fácil elegir.",
     tags: ["Fotos grandes", "Platos destacados"],
     img: "/funciones/fotos.jpg",
-    imgPos: "center 30%",
-  },
-  {
-    num: "05",
-    title: "Cumpleaños automáticos",
-    desc: "Envía automáticamente regalos, descuentos o promociones de cumpleaños a tus clientes.",
-    tags: ["Cumpleaños", "Automático", "Fidelización"],
-    img: "/funciones/cumpleanos.jpg",
     imgPos: "center 30%",
   },
   {

@@ -62,7 +62,6 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     featureDisplay: [
       { text: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante." },
       { text: "1 vista de carta", tip: "Vista lista para mostrar tu carta." },
-      { text: "Genio IA incluido", tip: "El Genio reordena tu carta según los gustos de cada cliente." },
       { text: "Panel autoadministrable", tip: "Edita platos, precios y fotos desde tu celular." },
     ],
     inheritsFrom: null,
@@ -111,7 +110,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "multilang", "suggestions",
     ]),
     featureDisplay: [
-      { text: "Estadísticas", tip: "Visitas, platos más vistos y duración promedio." },
+      { text: "Estadísticas básicas", tip: "Visitas, platos más vistos y duración promedio." },
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente." },
       { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
@@ -141,9 +140,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     featureDisplay: [
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
       { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación push." },
-      { text: "Clientes capturados", tip: "Ve todos los clientes capturados: correos, cumpleaños, preferencias y más." },
-      { text: "Email marketing", tip: "Envía campañas de email a tu base de clientes." },
-      { text: "Cumpleaños automáticos", tip: "Enviamos email a tus clientes que están de cumpleaños invitándolos a que vayan a celebrar a tu restaurante." },
+      { text: "Ver clientes ilimitados", tip: "Sin límite de clientes registrados. Ve correos, preferencias y más." },
       { text: "Multi-menú", tip: "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico." },
     ],
     inheritsFrom: "Todo lo del plan Gold",
