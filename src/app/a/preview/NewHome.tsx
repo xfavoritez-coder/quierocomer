@@ -1649,7 +1649,7 @@ export default function NewHome({
       {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && (
         <div style={{
           position: 'fixed', left: 0, right: 0, zIndex: 35,
-          top: !isDesktop && showFloatingSearch ? floatingHeaderH : stickyHeaderVisible ? headerHeight : 8,
+          top: !isDesktop && showFloatingSearch ? floatingHeaderH : stickyHeaderVisible ? headerHeight + 8 : 16,
           transition: 'top 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)',
           display: 'flex', justifyContent: 'center',
         }}>
