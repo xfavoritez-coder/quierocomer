@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import type { FeedDish } from '../types'
 import type { MapRestaurant } from '../../mapa/MapaClient'
@@ -12,14 +12,33 @@ type Props = {
   dishes: FeedDish[]
   isDark: boolean
   onDishTap: (d: FeedDish) => void
+  geocodeRef?: React.MutableRefObject<((q: string) => void) | null>
 }
 
-export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
+export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef }: Props) {
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [sheetExpanded, setSheetExpanded] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [updatingDishes, setUpdatingDishes] = useState(false)
   const prevDishesRef = useRef(dishes)
+  const flyToRef = useRef<((lat: number, lng: number, zoom?: number) => void) | null>(null)
+
+  // Populate geocodeRef with Nominatim geocoder
+  useEffect(() => {
+    if (!geocodeRef) return
+    geocodeRef.current = async (query: string) => {
+      if (!query.trim()) return
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=cl`,
+          { headers: { 'Accept-Language': 'es' } }
+        )
+        const data = await res.json()
+        if (data[0]) flyToRef.current?.(parseFloat(data[0].lat), parseFloat(data[0].lon), 15)
+      } catch { /* silencioso */ }
+    }
+    return () => { if (geocodeRef) geocodeRef.current = null }
+  }, [geocodeRef])
 
   // Show brief loading when filtered dishes change
   useEffect(() => {
@@ -136,6 +155,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
           onRestaurantClick={handleRestaurantClick}
           isDark={isDark}
           locateRef={locateRef}
+          flyToRef={flyToRef}
         />
       </div>
 

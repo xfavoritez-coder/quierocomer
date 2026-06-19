@@ -11,6 +11,7 @@ type Props = {
   onRestaurantClick: (r: MapRestaurant) => void
   isDark: boolean
   locateRef?: React.RefObject<(() => void) | null>
+  flyToRef?: React.RefObject<((lat: number, lng: number, zoom?: number) => void) | null>
 }
 
 const normalStyle: L.CircleMarkerOptions = {
@@ -55,7 +56,7 @@ function buildPopupHtml(r: MapRestaurant, isDark: boolean): string {
   `
 }
 
-export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef }: Props) {
+export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef, flyToRef }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.CircleMarker[]>([])
@@ -121,11 +122,17 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
       }
     }
 
+    // Expose flyTo function via ref
+    if (flyToRef) {
+      flyToRef.current = (lat, lng, zoom = 15) => map.flyTo([lat, lng], zoom, { animate: true, duration: 1 })
+    }
+
     return () => {
       map.remove()
       mapRef.current = null
       userMarkerRef.current = null
       if (locateRef) locateRef.current = null
+      if (flyToRef) flyToRef.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

@@ -133,6 +133,7 @@ export default function NewHome({
     return ''
   })
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const mapGeocoderRef = useRef<((q: string) => void) | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
@@ -538,6 +539,12 @@ export default function NewHome({
 
   const executeSearch = useCallback((query: string) => {
     const trimmed = query.trim()
+    // En modo mapa: geocodificar dirección en vez de buscar platos
+    if (view === 'mapa') {
+      if (trimmed) mapGeocoderRef.current?.(trimmed)
+      setSearchInput('')
+      return
+    }
     setSearchQuery(trimmed)
     setSearchInput(trimmed)
     // Clear category pill when searching so it doesn't conflict with the query
@@ -546,7 +553,7 @@ export default function NewHome({
       const url = trimmed ? `/?q=${encodeURIComponent(trimmed)}` : '/'
       window.history.replaceState(null, '', url)
     }
-  }, [])
+  }, [view])
 
   // Server-side fetch — triggered by search, category pill, diet, location, distance filter
   const fetchServerDishes = useCallback(async (params: {
@@ -1189,7 +1196,7 @@ export default function NewHome({
               type="text" value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               autoComplete="off"
-              placeholder="Buscar en QuieroComer"
+              placeholder={view === 'mapa' ? 'Buscar dirección…' : 'Buscar en QuieroComer'}
               style={{
                 width: '100%', padding: '9px 34px 9px 16px', borderRadius: 999, fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
@@ -1338,7 +1345,7 @@ export default function NewHome({
             onChange={e => setSearchInput(e.target.value)}
             onFocus={() => { setShowSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
             onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
-            placeholder="Buscar en QuieroComer"
+            placeholder={view === 'mapa' ? 'Buscar dirección…' : 'Buscar en QuieroComer'}
             autoComplete="off"
             style={{
               width: '100%', padding: '12px 20px 12px 24px', fontSize: 17,
@@ -1595,7 +1602,7 @@ export default function NewHome({
               onChange={e => setSearchInput(e.target.value)}
               onFocus={() => { setSearchFocused(true); searchTouched.current = true }}
               onBlur={() => setSearchFocused(false)}
-              placeholder="Buscar en QuieroComer"
+              placeholder={view === 'mapa' ? 'Buscar dirección…' : 'Buscar en QuieroComer'}
               className="feed-floating-input"
               style={{
                 width: '100%', padding: '12px 38px 12px 24px',
@@ -2143,6 +2150,7 @@ export default function NewHome({
               dishes={feedDishes}
               isDark={isDark}
               onDishTap={handleDishTap}
+              geocodeRef={mapGeocoderRef}
             />
           )}
 
