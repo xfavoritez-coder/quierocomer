@@ -137,7 +137,9 @@ export default function NewHome({
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
   const [filterSort, setFilterSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
   const [quickNearby, setQuickNearby] = useState(false)
-  const [locationPromptDismissed, setLocationPromptDismissed] = useState(false)
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(() => {
+    try { return !!localStorage.getItem('qc_loc_prompt_hidden') } catch { return false }
+  })
   const [locationPromptFading, setLocationPromptFading] = useState(false)
   const [locationTooltipReady, setLocationTooltipReady] = useState(false)
   const [quickPopular, setQuickPopular] = useState(false)
@@ -354,8 +356,6 @@ export default function NewHome({
 
   // Location: load saved first, then ask GPS if none saved
   useEffect(() => {
-    // Restore dismissed flag
-    try { if (localStorage.getItem('qc_loc_prompt_hidden')) setLocationPromptDismissed(true) } catch {}
     // Restore saved location from localStorage
     try {
       const saved = localStorage.getItem('qc_location')
