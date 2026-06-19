@@ -22,6 +22,18 @@ const DRINK_ONLY_TYPES = new Set([
 ])
 
 /**
+ * Detecta productos envasados/ingredientes crudos por el gramaje en el nombre.
+ * Ej: "Tagliatelle N° 2 Granoro 500 grs." → excluir del feed.
+ * Aplica en el importer y en el filtro del feed como última línea de defensa.
+ */
+const PACKAGED_PRODUCT_RE = /\d+\s*(grs?\.?|kg\.?|ml\.?|lt\.?)\s*$/i
+export function isPackagedProduct(name: string, description?: string | null): boolean {
+  if (PACKAGED_PRODUCT_RE.test(name)) return true
+  if (description && /formato\s+\d/i.test(description)) return true
+  return false
+}
+
+/**
  * Resuelve la leaf category de un plato con prioridad:
  * 1. leafOverride manual (set desde panel de revisión)
  * 2. Si la categoría es ambigua (Combos, Especiales…) → usar primaryCategory del restaurante
@@ -130,6 +142,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     // Excluir extras y bebidas standalone (no platos reales)
     const txTypes = Array.isArray((d as any).txDishType) ? (d as any).txDishType as string[] : []
     if (txTypes.length > 0 && txTypes.every(t => DRINK_ONLY_TYPES.has(t))) continue
+    // Excluir productos envasados (gramaje en nombre o "Formato X" en descripción)
+    if (isPackagedProduct(d.name as string, d.description as string | null)) continue
     // Dedup: skip if same (restaurant, dish name) already added — handles imported duplicates
     const dupKey = `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
     if (seenKey.has(dupKey)) continue
@@ -220,6 +234,7 @@ export const getCachedCategoryCountMap = unstable_cache(
       if (isExcludedCategory(row.catName)) continue
       const txTypes = Array.isArray(row.txDishType) ? row.txDishType as string[] : []
       if (txTypes.length > 0 && txTypes.every((t: string) => DRINK_ONLY_TYPES.has(t))) continue
+      if (isPackagedProduct(row.name, row.description)) continue
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, row.description, row.catNormOverride)
       const parent = getParentCategory(leaf)
       if (parent) map[parent] = (map[parent] ?? 0) + 1
@@ -248,7 +263,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   })
 
   return dishes
-    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))))
+    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isPackagedProduct(d.name, d.description))
     .map(dish => {
       const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null, dish.category.normOverride ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)
