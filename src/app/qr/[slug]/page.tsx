@@ -216,7 +216,32 @@ export default async function CartaPage({
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
   const accentColor = hasDesignFeatures ? ((restaurant as any).cartaAccentColor || null) : null;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Restaurant',
+    name: restaurant.name,
+    url: `https://quierocomer.cl/qr/${slug}`,
+    hasMenu: `https://quierocomer.cl/qr/${slug}`,
+    ...((restaurant as any).address ? {
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: (restaurant as any).address,
+      },
+    } : {}),
+    ...((restaurant as any).phone ? { telephone: (restaurant as any).phone } : {}),
+    ...(restaurant.logoUrl ? { image: restaurant.logoUrl } : {}),
+    ...((restaurant as any).googleRating ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: (restaurant as any).googleRating,
+        reviewCount: (restaurant as any).googleRatingCount ?? 1,
+      },
+    } : {}),
+  }
+
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       <script dangerouslySetInnerHTML={{ __html: `
         try {
@@ -302,5 +327,6 @@ export default async function CartaPage({
         </DesktopWrapper>
       )}
     </div>
+    </>
   );
 }

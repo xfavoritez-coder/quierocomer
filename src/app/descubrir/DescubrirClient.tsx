@@ -290,8 +290,8 @@ export default function DescubrirClient() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)'} strokeWidth="2" strokeLinecap="round">
                       <path d="M12 5v14M5 12h14"/>
                     </svg>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3 }}>Afinar</p>
-                    <p style={{ margin: 0, fontSize: 9, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', textAlign: 'center', lineHeight: 1.3 }}>Agregar 1 más</p>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3 }}>Afinar</p>
+                    <p style={{ margin: 0, fontSize: 10, color: isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.32)', textAlign: 'center', lineHeight: 1.3 }}>Agregar 1 más</p>
                   </a>
                 )
               })}
@@ -304,9 +304,14 @@ export default function DescubrirClient() {
           {allRecommended.length > 0 && (
             <>
               <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
-                  Platos nuevos que te podrían gustar
-                </p>
+                <div>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
+                    Platos que te podrían gustar
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 400, color: mutedColor, opacity: 0.7, letterSpacing: 0, textTransform: 'none' }}>
+                    basado en tus elegidos
+                  </p>
+                </div>
                 {totalPages > 1 && (
                   <span style={{ fontSize: 11, color: mutedColor }}>
                     {page + 1} / {totalPages}
@@ -360,7 +365,7 @@ export default function DescubrirClient() {
               padding: '10px 20px', borderRadius: 12,
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
               color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
-              textDecoration: 'none', fontSize: 14,
+              textDecoration: 'none', fontSize: 14, whiteSpace: 'nowrap',
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>

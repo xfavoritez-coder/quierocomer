@@ -4,7 +4,7 @@ import { slugify } from '@/lib/slugify'
 
 const BASE = 'https://quierocomer.cl'
 
-// Revalidate once per day — sitemap doesn't need to be real-time
+// Cached 24h — Google doesn't need real-time sitemaps
 export const revalidate = 86400
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         restaurant: { select: { slug: true } },
       },
       orderBy: { updatedAt: 'desc' },
+      take: 45000,
     }),
   ])
 

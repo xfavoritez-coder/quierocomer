@@ -953,16 +953,6 @@ export default function NewHome({
                   padding: '8px 0', minWidth: 200,
                   display: 'flex', flexDirection: 'column',
                 }}>
-                  {/* Descubrir qué comer */}
-                  <a href="/descubrir" onClick={() => setDesktopMenuOpen(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '11px 18px', color: isDark ? '#F4A623' : '#c97d00',
-                    fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box', fontWeight: 600,
-                  }}>
-                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                    Descubrir qué comer
-                  </a>
-
                   {/* Mi perfil */}
                   <button onClick={() => { setView('perfil'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
@@ -973,14 +963,14 @@ export default function NewHome({
                     Mi perfil
                   </button>
 
-                  {/* Tienes un local */}
-                  <a href="/qr" onClick={() => setDesktopMenuOpen(false)} style={{
+                  {/* Publicar local */}
+                  <a href="/qr" target="_blank" rel="noopener noreferrer" onClick={() => setDesktopMenuOpen(false)} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '11px 18px', color: isDark ? 'rgba(255,255,255,0.85)' : '#111',
                     fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box',
                   }}>
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    Tienes un local
+                    Publicar local
                   </a>
 
                   {/* Contáctanos */}
@@ -1705,9 +1695,9 @@ export default function NewHome({
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
             }}>
-              <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px' }}>
+              <a href="/qr" style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 19, fontWeight: 700, color: isDark ? '#fff' : '#111', letterSpacing: '-0.3px', textDecoration: 'none' }}>
                 Quiero<span style={{ color: '#F4A623' }}>Comer</span>
-              </span>
+              </a>
               <button onClick={() => setMenuOpen(false)} style={{
                 width: 28, height: 28, background: 'none', border: 'none',
                 cursor: 'pointer', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
@@ -1737,23 +1727,6 @@ export default function NewHome({
                 </svg>
                 Inicio
               </button>
-
-              {/* Descubrir qué comer */}
-              <a href="/descubrir" onClick={() => setMenuOpen(false)} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9,
-                color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)',
-                fontSize: 15, fontWeight: 400,
-                background: 'transparent',
-                textDecoration: 'none', width: '100%', WebkitTapHighlightColor: 'transparent',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                </svg>
-                Descubrir qué comer
-              </a>
-
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
 
               {/* Mi perfil */}
               <button onClick={() => { setMenuOpen(false); setView('perfil'); window.scrollTo(0, 0) }} style={{
@@ -1789,8 +1762,27 @@ export default function NewHome({
 
               <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', margin: '3px 4px' }} />
 
+              {/* Publicar local */}
+              <a href="/qr" target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '9px 10px', borderRadius: 9,
+                color: isDark ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.72)',
+                fontSize: 15, fontWeight: 400,
+                background: 'transparent',
+                textDecoration: 'none', width: '100%', WebkitTapHighlightColor: 'transparent',
+              }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                Publicar local
+              </a>
+
+            </nav>
+
+            {/* Footer */}
+            <div style={{ padding: '10px 16px 18px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}` }}>
               {/* Apariencia */}
-              <div style={{ padding: '6px 10px 4px' }}>
+              <div style={{ marginBottom: 12 }}>
                 <p style={{ margin: '0 0 7px', fontSize: 11, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Apariencia</p>
                 <div style={{ display: 'flex', borderRadius: 9, background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', padding: 3, gap: 2 }}>
                   <button onClick={() => { if (isDark) toggleTheme() }} style={{
@@ -1821,10 +1813,6 @@ export default function NewHome({
                   </button>
                 </div>
               </div>
-            </nav>
-
-            {/* Footer */}
-            <div style={{ padding: '10px 16px 22px' }}>
               <p style={{ margin: 0, fontSize: 11, color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.18)', textAlign: 'center' }}>
                 © 2025 QuieroComer · Santiago, Chile
               </p>
