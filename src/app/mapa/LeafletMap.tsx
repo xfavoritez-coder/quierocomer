@@ -30,14 +30,18 @@ function buildPopupHtml(r: MapRestaurant, isDark: boolean): string {
   const subColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)'
   const border = isDark ? 'none' : '1px solid rgba(0,0,0,0.08)'
 
+  const fallbackLetter = `<div style="width:36px;height:36px;border-radius:8px;background:rgba(244,166,35,0.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#F4A623">${r.name[0].toUpperCase()}</div>`
   const logoHtml = r.logo
-    ? `<img src="${r.logo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0"/>`
-    : `<div style="width:36px;height:36px;border-radius:8px;background:rgba(244,166,35,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700;color:#F4A623">${r.name[0].toUpperCase()}</div>`
+    ? `<div style="position:relative;width:36px;height:36px;flex-shrink:0">
+         ${fallbackLetter}
+         <img src="${r.logo}" style="position:absolute;inset:0;width:36px;height:36px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'"/>
+       </div>`
+    : `<div style="flex-shrink:0">${fallbackLetter}</div>`
 
   const dishPhotos = r.dishes.filter(d => d.fotoUrl).slice(0, 3)
   const fotosHtml = dishPhotos.length > 0
     ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px">
-        ${dishPhotos.map(d => `<img src="${d.fotoUrl}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block">`).join('')}
+        ${dishPhotos.map(d => `<img src="${d.fotoUrl}" loading="lazy" data-dish-id="${d.id}" onclick="window.__qcDishClick&&window.__qcDishClick('${d.id}')" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;cursor:pointer">`).join('')}
        </div>`
     : ''
 

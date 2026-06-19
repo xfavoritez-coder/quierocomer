@@ -42,6 +42,15 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
     return () => { if (geocodeRef) geocodeRef.current = null }
   }, [geocodeRef])
 
+  // Exponer callback global para que los popups de Leaflet (HTML puro) abran el modal de plato
+  useEffect(() => {
+    (window as Window & { __qcDishClick?: (id: string) => void }).__qcDishClick = (dishId: string) => {
+      const dish = dishes.find(d => d.id === dishId)
+      if (dish) onDishTap(dish)
+    }
+    return () => { delete (window as Window & { __qcDishClick?: (id: string) => void }).__qcDishClick }
+  }, [dishes, onDishTap])
+
   // Show brief loading when filtered dishes change
   useEffect(() => {
     if (prevDishesRef.current !== dishes) {
