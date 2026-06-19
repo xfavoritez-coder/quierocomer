@@ -386,38 +386,56 @@ export default function DescubrirClient() {
 
           {liked.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 32 }}>
-              {liked.slice(0, 3).map((d) => (
-                <div key={d.id} style={{ position: 'relative', aspectRatio: '1' }}>
-                  <div onClick={() => handleTap(d)} style={{
-                    position: 'absolute', inset: 0, borderRadius: 14, overflow: 'hidden',
-                    cursor: 'pointer', outline: '2px solid #F4A623', outlineOffset: -2,
-                  }}>
-                    {d.fotoUrl
-                      ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
-                    }
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '24px 8px 8px' }}>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} /></p>
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.restaurante}</p>
+              {Array.from({ length: 3 }).map((_, i) => {
+                const d = liked[i]
+                if (d) return (
+                  <div key={d.id} style={{ position: 'relative', aspectRatio: '1' }}>
+                    <div onClick={() => handleTap(d)} style={{
+                      position: 'absolute', inset: 0, borderRadius: 14, overflow: 'hidden',
+                      cursor: 'pointer', outline: '2px solid #F4A623', outlineOffset: -2,
+                    }}>
+                      {d.fotoUrl
+                        ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
+                      }
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '24px 8px 8px' }}>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} /></p>
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.restaurante}</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => {
+                        const next = liked.filter(x => x.id !== d.id)
+                        setLiked(next)
+                        try { localStorage.setItem('qc_eureka_liked', JSON.stringify(next)) } catch {}
+                      }}
+                      style={{
+                        position: 'absolute', top: 6, right: 6, zIndex: 2,
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: 'rgba(0,0,0,0.55)', border: 'none',
+                        color: '#fff', fontSize: 11, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', lineHeight: 1,
+                      }}
+                    >✕</button>
                   </div>
-                  <button
-                    onClick={() => {
-                      const next = liked.filter(x => x.id !== d.id)
-                      setLiked(next)
-                      try { localStorage.setItem('qc_eureka_liked', JSON.stringify(next)) } catch {}
-                    }}
-                    style={{
-                      position: 'absolute', top: 6, right: 6, zIndex: 2,
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: 'rgba(0,0,0,0.55)', border: 'none',
-                      color: '#fff', fontSize: 11, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', lineHeight: 1,
-                    }}
-                  >✕</button>
-                </div>
-              ))}
+                )
+                return (
+                  <a key={i} href="/" onClick={(e) => { e.preventDefault(); goHomeKeep() }} style={{
+                    aspectRatio: '1', borderRadius: 14,
+                    border: `2px dashed rgba(244,166,35,0.45)`,
+                    background: isDark ? 'rgba(244,166,35,0.07)' : 'rgba(244,166,35,0.06)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    textDecoration: 'none', cursor: 'pointer', padding: '0 6px',
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(244,166,35,0.8)" strokeWidth="2" strokeLinecap="round">
+                      <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#F4A623', textAlign: 'center', lineHeight: 1.3 }}>Agregar</p>
+                    <p style={{ margin: 0, fontSize: 10, color: isDark ? 'rgba(244,166,35,0.6)' : 'rgba(180,120,0,0.65)', textAlign: 'center', lineHeight: 1.3 }}>Volver al feed</p>
+                  </a>
+                )
+              })}
             </div>
           ) : (
             <p style={{ fontSize: 13, color: mutedColor, marginBottom: 32 }}>Sin resultados.</p>
