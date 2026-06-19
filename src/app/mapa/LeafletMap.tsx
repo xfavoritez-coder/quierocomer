@@ -85,14 +85,26 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     }).addTo(map)
   }, [isDark])
 
+  // Desplaza un punto geográfico hacia abajo en píxeles para compensar el bottom sheet
+  // El sheet cubre ~200px → subimos el punto visible 100px (la mitad del sheet)
+  const SHEET_OFFSET_PX = 100
+  function centerWithSheet(map: L.Map, lat: number, lng: number, zoom: number): L.LatLng {
+    const px = map.project([lat, lng], zoom)
+    return map.unproject(L.point(px.x, px.y + SHEET_OFFSET_PX), zoom)
+  }
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const initCenter: [number, number] = userLocation
+    const rawCenter: [number, number] = userLocation
       ? [userLocation.lat, userLocation.lng]
       : [-33.4470, -70.6270]
-    const map = L.map(containerRef.current, { center: initCenter, zoom: 14 })
+    const INIT_ZOOM = 14
+    const map = L.map(containerRef.current, { center: rawCenter, zoom: INIT_ZOOM })
     mapRef.current = map
+
+    // Ajustar centro para que el punto quede en el área visible (sobre el sheet)
+    map.setView(centerWithSheet(map, rawCenter[0], rawCenter[1], INIT_ZOOM), INIT_ZOOM, { animate: false })
 
     // Si hay ubicación activa, mostrar punto azul desde el inicio
     if (userLocation) {
@@ -124,7 +136,8 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
         navigator.geolocation.getCurrentPosition(
           pos => {
             const { latitude: lat, longitude: lng } = pos.coords
-            map.flyTo([lat, lng], 15, { animate: true, duration: 1 })
+            const zoom = 15
+            map.flyTo(centerWithSheet(map, lat, lng, zoom), zoom, { animate: true, duration: 1 })
             userMarkerRef.current?.remove()
             userMarkerRef.current = L.circleMarker([lat, lng], {
               radius: 8, fillColor: '#4A90E2', color: '#fff',
@@ -140,7 +153,8 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
 
     // Expose flyTo function via ref
     if (flyToRef) {
-      flyToRef.current = (lat, lng, zoom = 15) => map.flyTo([lat, lng], zoom, { animate: true, duration: 1 })
+      flyToRef.current = (lat, lng, zoom = 15) =>
+        map.flyTo(centerWithSheet(map, lat, lng, zoom), zoom, { animate: true, duration: 1 })
     }
 
     return () => {
