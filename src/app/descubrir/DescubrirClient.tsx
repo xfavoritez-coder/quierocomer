@@ -88,6 +88,7 @@ export default function DescubrirClient() {
   const recommendedRef = useRef<HTMLDivElement>(null)
   const likedIdsRef = useRef<string[]>([])
   const initialLoadDone = useRef(false)
+  const swipeTouchX = useRef<number | null>(null)
 
   // Init: read location + filters from localStorage
   useEffect(() => {
@@ -487,7 +488,18 @@ export default function DescubrirClient() {
                 )}
               </div>
               {filteredRecommended.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}
+                  onTouchStart={e => { swipeTouchX.current = e.touches[0].clientX }}
+                  onTouchEnd={e => {
+                    if (swipeTouchX.current === null) return
+                    const dx = swipeTouchX.current - e.changedTouches[0].clientX
+                    swipeTouchX.current = null
+                    if (Math.abs(dx) < 50) return
+                    if (dx > 0) setPage(p => Math.min(totalPages - 1, p + 1))
+                    else setPage(p => Math.max(0, p - 1))
+                  }}
+                >
                   {filteredRecommended.map(d => (
                     <div key={d.id} onClick={() => handleTap(d)} style={{
                       position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
