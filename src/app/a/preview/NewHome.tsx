@@ -163,6 +163,8 @@ export default function NewHome({
   const [eurekaLiked, setEurekaLiked] = useState<FeedDish[]>([])
   const [eurekaMax, setEurekaMax] = useState(5)
   const eurekaMaxRef = useRef(5)
+  const [showEurekaModal, setShowEurekaModal] = useState(false)
+  const eurekaModalShownRef = useRef(false)
   const floatingHeaderRef = useRef<HTMLDivElement>(null)
   const [floatingHeaderH, setFloatingHeaderH] = useState(0)
 
@@ -190,6 +192,14 @@ export default function NewHome({
       }
     } catch {}
   }, [])
+
+  // Show milestone modal on first reach of eurekaMax
+  useEffect(() => {
+    if (eurekaLiked.length >= eurekaMax && !eurekaModalShownRef.current) {
+      eurekaModalShownRef.current = true
+      setShowEurekaModal(true)
+    }
+  }, [eurekaLiked.length, eurekaMax])
 
   const handleEurekaDescubrir = () => {
     if (eurekaLiked.length < eurekaMax) return
@@ -2258,7 +2268,131 @@ export default function NewHome({
 
       </div>{/* end main content */}
 
+      {/* ─── 5 Antojos milestone modal ─── */}
+      {showEurekaModal && (
+        <>
+          <style>{`
+            @keyframes qc-eureka-in {
+              from { opacity:0; transform:scale(0.92) translateY(16px) }
+              to   { opacity:1; transform:scale(1) translateY(0) }
+            }
+            @keyframes qc-eureka-backdrop {
+              from { opacity:0 }
+              to   { opacity:1 }
+            }
+            @keyframes qc-eureka-confetti {
+              0%   { transform:translateY(0) rotate(0deg); opacity:1 }
+              100% { transform:translateY(-40px) rotate(20deg); opacity:0 }
+            }
+          `}</style>
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowEurekaModal(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 200,
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(4px)',
+              animation: 'qc-eureka-backdrop 0.3s ease',
+            }}
+          />
+          {/* Card */}
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 201,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '0 20px',
+            pointerEvents: 'none',
+          }}>
+            <div style={{
+              background: isDark ? '#1a1a1a' : '#fff',
+              borderRadius: 24,
+              padding: '32px 24px 28px',
+              maxWidth: 360,
+              width: '100%',
+              textAlign: 'center',
+              animation: 'qc-eureka-in 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+              pointerEvents: 'auto',
+              position: 'relative',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.3)',
+            }}>
+              {/* Emoji burst */}
+              <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 12, userSelect: 'none' }}>🎉</div>
 
+              <h2 style={{
+                fontFamily: 'var(--font-feed-display), serif',
+                fontSize: 26,
+                fontWeight: 700,
+                color: isDark ? '#fff' : '#111',
+                margin: '0 0 8px',
+                lineHeight: 1.2,
+              }}>
+                ¡Ya tienes {eurekaMax} antojos!
+              </h2>
+              <p style={{
+                fontSize: 15,
+                fontWeight: 500,
+                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
+                margin: '0 0 22px',
+                lineHeight: 1.5,
+              }}>
+                Descubre qué y dónde comer basado en tus gustos
+              </p>
+
+              {/* Dish thumbnails */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
+                {eurekaLiked.slice(0, eurekaMax).map((d, i) => (
+                  <div key={d.id} style={{
+                    width: 46, height: 46, borderRadius: 12, overflow: 'hidden',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                    border: `2px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                    animationDelay: `${i * 0.05}s`,
+                  }}>
+                    {d.fotoUrl ? (
+                      <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', background: isDark ? '#2a2a2a' : '#f0ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={handleEurekaDescubrir}
+                style={{
+                  width: '100%', padding: '14px 20px', borderRadius: 14,
+                  border: 'none', cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #F4A623, #e09200)',
+                  color: '#fff', fontSize: 16, fontWeight: 700,
+                  letterSpacing: '-0.2px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  boxShadow: '0 4px 16px rgba(244,166,35,0.4)',
+                  marginBottom: 12,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                Descubrir ahora
+              </button>
+
+              <button
+                onClick={() => setShowEurekaModal(false)}
+                style={{
+                  width: '100%', padding: '11px 20px', borderRadius: 14,
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  fontSize: 14, fontWeight: 500,
+                }}
+              >
+                Seguir explorando
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   )
