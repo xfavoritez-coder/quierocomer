@@ -2182,7 +2182,7 @@ export default function NewHome({
                 </div>
               )}
             </>
-          ) : (
+          ) : view !== 'mapa' ? (
             <div style={{ textAlign: 'center', padding: '80px 30px', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' }}>
               <p style={{ fontSize: 36, margin: '0 0 14px', lineHeight: 1, fontWeight: 300, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)', letterSpacing: 2 }}>:(</p>
               <p style={{ fontSize: 17, fontWeight: 400, margin: '0 0 16px', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
@@ -2210,7 +2210,7 @@ export default function NewHome({
                 {userLocation !== null && filterMaxKm < 30 ? 'Restablecer filtro' : 'Ver todos los platos'}
               </button>
             </div>
-          )}
+          ) : null}
         </>
       )}
 
