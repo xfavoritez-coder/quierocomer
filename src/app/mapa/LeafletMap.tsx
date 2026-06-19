@@ -116,7 +116,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
 
   // Desplaza un punto geográfico hacia abajo en píxeles para compensar el bottom sheet
   // El sheet cubre ~200px → subimos el punto visible 100px (la mitad del sheet)
-  const SHEET_OFFSET_PX = 100
+  const SHEET_OFFSET_PX = 125
   function centerWithSheet(map: L.Map, lat: number, lng: number, zoom: number): L.LatLng {
     const px = map.project([lat, lng], zoom)
     return map.unproject(L.point(px.x, px.y + SHEET_OFFSET_PX), zoom)

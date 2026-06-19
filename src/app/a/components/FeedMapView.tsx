@@ -3,6 +3,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import type { FeedDish } from '../types'
 import type { MapRestaurant } from '../../mapa/MapaClient'
+import { VeganIcon, VegetarianIcon, SpicyIcon } from './DietIcons'
 
 const LeafletMap = dynamic(() => import('../../mapa/LeafletMap'), { ssr: false })
 
@@ -126,6 +127,18 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
     [dishes, visibleRestaurantIds]
   )
 
+  function dietTag(dish: FeedDish) {
+    const hasTag = dish.dieta.tipo !== 'OMNIVORE' || dish.dieta.esPicante
+    if (!hasTag) return null
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {dish.dieta.tipo === 'VEGAN' && <VeganIcon size={13} />}
+        {dish.dieta.tipo === 'VEGETARIAN' && <VegetarianIcon size={13} />}
+        {dish.dieta.esPicante && <SpicyIcon size={13} />}
+      </span>
+    )
+  }
+
   const sheetBg = isDark ? '#111' : '#f5f4f1'
   const pillBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.15)'
   const countColor = isDark ? 'rgba(255,255,255,0.9)' : '#111'
@@ -194,7 +207,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
           locateRef.current?.(() => setLocating(false))
         }}
         style={{
-          position: 'absolute', bottom: 216, right: 12, zIndex: 41,
+          position: 'absolute', top: 12, right: 12, zIndex: 41,
           width: 40, height: 40, borderRadius: '50%',
           background: isDark ? '#1a1a1a' : '#fff',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
@@ -226,7 +239,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
       {/* Bottom sheet */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 40,
-        height: sheetExpanded ? '60vh' : '200px',
+        height: sheetExpanded ? '68vh' : '250px',
         transition: 'height 0.35s cubic-bezier(0.32,0.72,0,1)',
         background: sheetBg,
         borderRadius: '20px 20px 0 0',
@@ -234,10 +247,10 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        {/* Handle */}
+        {/* Handle + header */}
         <div
           onClick={() => setSheetExpanded(p => !p)}
-          style={{ padding: '12px 16px 8px', cursor: 'pointer', flexShrink: 0 }}
+          style={{ padding: '10px 16px 10px', cursor: 'pointer', flexShrink: 0 }}
         >
           <div style={{
             width: 36, height: 4, borderRadius: 99,
@@ -263,25 +276,37 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
                 ? `${visibleDishes.length} platos en esta zona`
                 : 'Mueve el mapa para explorar'}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Botón expand/collapse visible */}
+            <button
+              onClick={e => { e.stopPropagation(); setSheetExpanded(p => !p) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                border: 'none', borderRadius: 20, padding: '5px 10px',
+                cursor: 'pointer', color: countColor, fontSize: 12, fontWeight: 600,
+                fontFamily: 'var(--font-feed-body), sans-serif',
+              }}
+            >
               {visibleRestaurants.length > 0 && (
-                <span style={{ fontSize: 12, color: emptyColor, fontFamily: 'var(--font-feed-body), sans-serif' }}>
-                  {visibleRestaurants.length} locales
-                </span>
+                <span style={{ color: emptyColor }}>{visibleRestaurants.length} locales</span>
               )}
               <svg
-                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke={chevronStroke} strokeWidth="2.5" strokeLinecap="round"
-                style={{ transform: sheetExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                style={{ transform: sheetExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s', flexShrink: 0 }}
               >
                 <polyline points="18 15 12 9 6 15"/>
               </svg>
-            </div>
+            </button>
           </div>
         </div>
 
-        {/* Dish cards */}
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* Dish cards — fade cuando actualiza */}
+        <div style={{
+          flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column',
+          opacity: updatingDishes ? 0.3 : 1,
+          transition: 'opacity 0.2s ease',
+        }}>
           {visibleDishes.length === 0 ? (
             <div style={{
               flex: 1, display: 'flex', flexDirection: 'column',
@@ -292,10 +317,59 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
                 Mueve el mapa para ver platos de esta zona
               </p>
             </div>
+          ) : sheetExpanded ? (
+            /* Grilla 2 columnas cuando está expandido */
+            <div className="feedmap-scroll" style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr',
+              gap: 10, padding: '4px 14px 24px',
+              overflowY: 'auto', alignContent: 'start',
+              scrollbarWidth: 'none',
+            }}>
+              {visibleDishes.map((dish) => (
+                <div
+                  key={dish.id}
+                  onClick={() => onDishTap(dish)}
+                  style={{
+                    borderRadius: 14, background: cardBg,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+                    overflow: 'hidden', cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column',
+                  }}
+                >
+                  <div style={{
+                    aspectRatio: '4/3', flexShrink: 0,
+                    background: dish.fotoUrl ? `url(${dish.fotoUrl}) center/cover` : cardNoPhoto,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 24,
+                  }}>
+                    {!dish.fotoUrl && '🍽'}
+                  </div>
+                  <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <span style={{
+                      fontSize: 12, fontWeight: 700, color: cardNameColor,
+                      fontFamily: 'var(--font-feed-body), sans-serif',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>{dish.nombre}</span>
+                    <span style={{
+                      fontSize: 10, color: cardRestColor,
+                      fontFamily: 'var(--font-feed-body), sans-serif',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>{dish.restaurante}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', fontFamily: 'var(--font-feed-body), sans-serif' }}>
+                        ${dish.precio.toLocaleString('es-CL')}
+                      </span>
+                      {dietTag(dish)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
+            /* Scroll horizontal cuando está minimizado */
             <div className="feedmap-scroll" style={{
               display: 'flex', overflowX: 'auto',
-              gap: 12, padding: '4px 16px 20px',
+              gap: 10, padding: '4px 14px 16px',
               scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' as const,
               alignItems: 'flex-start',
             }}>
@@ -304,21 +378,21 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
                   key={dish.id}
                   onClick={() => onDishTap(dish)}
                   style={{
-                    width: 145, minWidth: 145, borderRadius: 16,
-                    background: cardBg, boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    width: 140, minWidth: 140, borderRadius: 14,
+                    background: cardBg, boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
                     overflow: 'hidden', flexShrink: 0, display: 'flex', flexDirection: 'column',
-                    height: 175, cursor: 'pointer',
+                    height: 170, cursor: 'pointer',
                   }}
                 >
                   <div style={{
-                    height: 100, flexShrink: 0,
+                    height: 95, flexShrink: 0,
                     background: dish.fotoUrl ? `url(${dish.fotoUrl}) center/cover` : cardNoPhoto,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 28,
+                    fontSize: 26,
                   }}>
                     {!dish.fotoUrl && '🍽'}
                   </div>
-                  <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflow: 'hidden' }}>
+                  <div style={{ padding: '7px 9px', display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflow: 'hidden' }}>
                     <span style={{
                       fontSize: 12, fontWeight: 700, color: cardNameColor,
                       fontFamily: 'var(--font-feed-body), sans-serif',
@@ -329,10 +403,12 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
                       fontFamily: 'var(--font-feed-body), sans-serif',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block',
                     }}>{dish.restaurante}</span>
-                    <span style={{
-                      fontSize: 12, fontWeight: 600, color: '#F4A623',
-                      fontFamily: 'var(--font-feed-body), sans-serif', marginTop: 'auto',
-                    }}>${dish.precio.toLocaleString('es-CL')}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', fontFamily: 'var(--font-feed-body), sans-serif' }}>
+                        ${dish.precio.toLocaleString('es-CL')}
+                      </span>
+                      {dietTag(dish)}
+                    </div>
                   </div>
                 </div>
               ))}
