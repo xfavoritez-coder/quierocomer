@@ -500,9 +500,9 @@ function DesktopDishContent({
               }}>
                 {dish.restauranteLogo && !logoError ? (
                   <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)}
-                    style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2 }} />
+                    style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2 }} />
                 ) : (
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0, marginTop: 2, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 15, fontWeight: 700 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, marginTop: 2, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)', fontSize: 13, fontWeight: 700 }}>
                     {dish.restaurante.charAt(0)}
                   </div>
                 )}
@@ -543,9 +543,15 @@ function DesktopDishContent({
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                 </svg>
-                Ir a {dish.restaurante}
-                {dist != null && <span style={{ fontWeight: 400, opacity: 0.75 }}>· {formatDistance(dist)}</span>}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ marginLeft: 2 }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block' }}>Ir a {dish.restaurante}{dist != null && <span style={{ fontWeight: 400, opacity: 0.75 }}> · {formatDistance(dist)}</span>}</span>
+                  {dish.restauranteDireccion && (() => {
+                    const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
+                    if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
+                    return <span style={{ display: 'block', fontSize: 12, fontWeight: 400, opacity: 0.65, marginTop: 1 }}>{parts.join(', ')}</span>
+                  })()}
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ marginLeft: 2, flexShrink: 0 }}>
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
               </a>
@@ -845,7 +851,7 @@ function DishSlide({
         {/* Botones locales */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32 }}>
           <a
-            href={dish.googleMapsUrl ?? (dish.restauranteLat && dish.restauranteLng ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dish.restaurante)}`)}
+            href={dish.googleMapsUrl ?? (dish.restauranteLat && dish.restauranteLng ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ? dish.restauranteDireccion + ' ' : '') + dish.restaurante)}`)}
             target="_blank" rel="noopener noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -858,8 +864,13 @@ function DishSlide({
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#EA4335" stroke="none"/>
               <circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/>
             </svg>
-            <span style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>
-              Ver en Google Maps
+            <span style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>Ver en Google Maps</span>
+              {dish.restauranteDireccion && (() => {
+                const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
+                if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
+                return <span style={{ fontSize: 12, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>{parts.join(', ')}</span>
+              })()}
             </span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'} strokeWidth="2.2" strokeLinecap="round">
               <path d="M9 18l6-6-6-6"/>

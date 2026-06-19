@@ -14,8 +14,11 @@ type Props = { params: Promise<{ restaurantSlug: string; dishSlug: string }> }
 const findDishCached = unstable_cache(
   async (restaurantSlug: string, dishSlug: string) => {
     const dishes = await prisma.dish.findMany({
-      where: { restaurant: { slug: restaurantSlug }, isActive: true, deletedAt: null },
-      select: { id: true, name: true, description: true, price: true, photos: true, restaurant: { select: { name: true } } },
+      where: { restaurant: { slug: restaurantSlug }, isActive: true },
+      select: {
+        id: true, name: true, description: true, price: true, photos: true,
+        restaurant: { select: { name: true, address: true, logoUrl: true } },
+      },
     })
     return dishes.find(d => slugify(d.name) === dishSlug) ?? null
   },
@@ -71,15 +74,40 @@ export default async function DishSlugPage({ params }: Props) {
     ? feedDishes
     : [...(await getDishesById([dish.id])), ...feedDishes]
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'MenuItem',
+    name: dish.name,
+    description: dish.description ?? undefined,
+    offers: {
+      '@type': 'Offer',
+      price: dish.price,
+      priceCurrency: 'CLP',
+      availability: 'https://schema.org/InStock',
+    },
+    ...(dish.photos[0] ? { image: dish.photos[0] } : {}),
+    inMenu: {
+      '@type': 'Menu',
+      hasMenuSection: {
+        '@type': 'MenuSection',
+        name: dish.restaurant.name,
+      },
+    },
+    suitableForDiet: 'https://schema.org/OmnivoreConsideration',
+  }
+
   return (
-    <FeedLayout>
-      <NewHome
-        dishes={dishesWithInitial}
-        categoryScores={(user.categoryScores as Record<string, number>) ?? {}}
-        keywordScores={(user.keywordScores as Record<string, number>) ?? {}}
-        totalInteractions={user.totalInteractions}
-        initialDishId={dish.id}
-      />
-    </FeedLayout>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <FeedLayout>
+        <NewHome
+          dishes={dishesWithInitial}
+          categoryScores={(user.categoryScores as Record<string, number>) ?? {}}
+          keywordScores={(user.keywordScores as Record<string, number>) ?? {}}
+          totalInteractions={user.totalInteractions}
+          initialDishId={dish.id}
+        />
+      </FeedLayout>
+    </>
   )
 }
