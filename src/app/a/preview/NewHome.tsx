@@ -1688,10 +1688,10 @@ export default function NewHome({
                 </>
               ) : (
                 <>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', color: '#F4A623', lineHeight: 1.15 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', color: '#F4A623', lineHeight: 1.15, textAlign: 'right' }}>
                     Ya tienes 5
                   </p>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.15, color: '#F4A623' }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.15, color: '#F4A623', textAlign: 'right' }}>
                     antojos
                   </p>
                 </>
