@@ -200,9 +200,9 @@ export const getFeedDishes = unstable_cache(
 /** Cached category count map — full DB, revalidates every 12 hours via cron */
 export const getCachedCategoryCountMap = unstable_cache(
   async () => {
-    const rows = await prisma.$queryRaw<{ name: string; catName: string; leafOverride: string | null; primaryCategory: string | null; description: string | null; catNormOverride: string | null }[]>`
+    const rows = await prisma.$queryRaw<{ name: string; catName: string; leafOverride: string | null; primaryCategory: string | null; description: string | null; catNormOverride: string | null; txDishType: string[] }[]>`
       SELECT d.name, c.name AS "catName", d."leafOverride", r."primaryCategory", d.description,
-             c."normOverride" AS "catNormOverride"
+             c."normOverride" AS "catNormOverride", d."txDishType"
       FROM "Dish" d
       JOIN "Category" c ON c.id = d."categoryId"
       JOIN "Restaurant" r ON r.id = d."restaurantId"
