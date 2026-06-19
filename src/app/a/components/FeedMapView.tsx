@@ -67,11 +67,13 @@ export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
     return Array.from(map.values())
   }, [dishes])
 
+  const locateRef = useRef<(() => void) | null>(null)
+
   const handleBoundsChange = useCallback((b: Bounds) => {
     setBounds(b)
     setMapReady(true)
   }, [])
-  const handleRestaurantClick = useCallback(() => setSheetExpanded(true), [])
+  const handleRestaurantClick = useCallback(() => setSheetExpanded(false), [])
 
   const visibleRestaurants = bounds
     ? restaurants.filter(r =>
@@ -133,7 +135,30 @@ export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
           onBoundsChange={handleBoundsChange}
           onRestaurantClick={handleRestaurantClick}
           isDark={isDark}
+          locateRef={locateRef}
         />
+        {/* GPS locate button */}
+        <button
+          onClick={() => locateRef.current?.()}
+          style={{
+            position: 'absolute', bottom: 216, right: 12, zIndex: 41,
+            width: 40, height: 40, borderRadius: '50%',
+            background: isDark ? '#1a1a1a' : '#fff',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', padding: 0,
+            color: isDark ? 'rgba(255,255,255,0.75)' : '#333',
+          }}
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <line x1="12" y1="2" x2="12" y2="6"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+            <line x1="2" y1="12" x2="6" y2="12"/>
+            <line x1="18" y1="12" x2="22" y2="12"/>
+          </svg>
+        </button>
       </div>
 
       {/* Bottom sheet */}

@@ -10,30 +10,27 @@ type Props = {
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void
   onRestaurantClick: (r: MapRestaurant) => void
   isDark: boolean
+  locateRef?: React.RefObject<(() => void) | null>
 }
 
 const normalStyle: L.CircleMarkerOptions = {
-  radius: 7,
-  fillColor: '#F4A623',
-  color: 'rgba(255,255,255,0.4)',
-  weight: 2,
-  opacity: 1,
-  fillOpacity: 1,
+  radius: 7, fillColor: '#F4A623', color: 'rgba(255,255,255,0.4)',
+  weight: 2, opacity: 1, fillOpacity: 1,
 }
-
 const selectedStyle: L.CircleMarkerOptions = {
-  radius: 10,
-  fillColor: '#e09200',
-  color: '#ffffff',
-  weight: 2.5,
-  opacity: 1,
-  fillOpacity: 1,
+  radius: 10, fillColor: '#e09200', color: '#ffffff',
+  weight: 2.5, opacity: 1, fillOpacity: 1,
 }
 
-function buildPopupHtml(r: MapRestaurant): string {
+function buildPopupHtml(r: MapRestaurant, isDark: boolean): string {
+  const bg = isDark ? '#1a1a1a' : '#fff'
+  const textColor = isDark ? '#fff' : '#111'
+  const subColor = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)'
+  const border = isDark ? 'none' : '1px solid rgba(0,0,0,0.08)'
+
   const logoHtml = r.logo
     ? `<img src="${r.logo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0"/>`
-    : `<div style="width:36px;height:36px;border-radius:8px;background:rgba(244,166,35,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700;color:#F4A623">${r.name[0].toUpperCase()}</div>`
+    : `<div style="width:36px;height:36px;border-radius:8px;background:rgba(244,166,35,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700;color:#F4A623">${r.name[0].toUpperCase()}</div>`
 
   const dishPhotos = r.dishes.filter(d => d.fotoUrl).slice(0, 3)
   const fotosHtml = dishPhotos.length > 0
@@ -43,12 +40,12 @@ function buildPopupHtml(r: MapRestaurant): string {
     : ''
 
   return `
-    <div style="background:#1a1a1a;border-radius:14px;padding:14px;min-width:200px;max-width:240px;color:#fff;font-family:system-ui,sans-serif;">
+    <div style="background:${bg};border-radius:14px;padding:14px;min-width:200px;max-width:240px;color:${textColor};font-family:system-ui,sans-serif;border:${border}">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
         ${logoHtml}
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px">
+          <div style="font-size:11px;color:${subColor};margin-top:1px">
             ${r.googleRating ? `⭐ ${r.googleRating.toFixed(1)}` : ''} · ${r.dishes.length} platos
           </div>
         </div>
@@ -58,35 +55,33 @@ function buildPopupHtml(r: MapRestaurant): string {
   `
 }
 
-export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark }: Props) {
+export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.CircleMarker[]>([])
   const activeIdRef = useRef<string | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
+  const isDarkRef = useRef(isDark)
+  useEffect(() => { isDarkRef.current = isDark }, [isDark])
 
   // Swap tile layer when isDark changes
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
-    if (tileLayerRef.current) { tileLayerRef.current.remove() }
+    tileLayerRef.current?.remove()
     const url = isDark
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
     tileLayerRef.current = L.tileLayer(url, {
       attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
+      subdomains: 'abcd', maxZoom: 19,
     }).addTo(map)
   }, [isDark])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = L.map(containerRef.current, {
-      center: [-33.4489, -70.6693],
-      zoom: 12,
-    })
+    const map = L.map(containerRef.current, { center: [-33.4489, -70.6693], zoom: 12 })
     mapRef.current = map
 
     const url = isDark
@@ -94,22 +89,32 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
       : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
     tileLayerRef.current = L.tileLayer(url, {
       attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
+      subdomains: 'abcd', maxZoom: 19,
     }).addTo(map)
 
     const emitBounds = () => {
       const b = map.getBounds()
       onBoundsChange({ north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() })
     }
-
     map.on('moveend', emitBounds)
     map.on('zoomend', emitBounds)
     setTimeout(emitBounds, 300)
 
+    // Expose locate function via ref
+    if (locateRef) {
+      locateRef.current = () => {
+        navigator.geolocation.getCurrentPosition(
+          pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 15, { animate: true, duration: 1 }),
+          () => {},
+          { enableHighAccuracy: true, timeout: 8000 }
+        )
+      }
+    }
+
     return () => {
       map.remove()
       mapRef.current = null
+      if (locateRef) locateRef.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -131,11 +136,10 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
         className: 'qc-mapa-popup',
         maxWidth: 260,
         offset: [0, -8],
-      }).setContent(buildPopupHtml(r))
+      }).setContent(buildPopupHtml(r, isDarkRef.current))
 
       circle.on('click', (e) => {
         L.DomEvent.stopPropagation(e)
-
         if (activeIdRef.current && activeIdRef.current !== r.id) {
           const prev = markersRef.current.find(m => (m as L.CircleMarker & { _qcId?: string })._qcId === activeIdRef.current)
           if (prev) prev.setStyle(normalStyle)
@@ -143,6 +147,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
         activeIdRef.current = r.id
         ;(circle as L.CircleMarker & { _qcId?: string })._qcId = r.id
         circle.setStyle(selectedStyle)
+        popup.setContent(buildPopupHtml(r, isDarkRef.current))
         circle.bindPopup(popup).openPopup()
         onRestaurantClick(r)
       })
@@ -160,30 +165,38 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     })
   }, [restaurants, onRestaurantClick])
 
+  const zoomBg = isDark ? '#1a1a1a' : '#fff'
+  const zoomColor = isDark ? '#fff' : '#333'
+  const zoomBorder = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+  const zoomHover = isDark ? '#2a2a2a' : '#f5f4f1'
+  const attrBg = isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)'
+  const attrColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'
+  const popupBorder = isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)'
+
   return (
     <>
       <style>{`
         .qc-mapa-popup .leaflet-popup-content-wrapper {
           background: transparent !important;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
           border-radius: 14px !important;
           padding: 0 !important;
-          border: 1px solid rgba(255,255,255,0.08);
+          border: ${popupBorder};
         }
         .qc-mapa-popup .leaflet-popup-content { margin: 0 !important; }
         .qc-mapa-popup .leaflet-popup-tip-container { display: none; }
         .leaflet-control-attribution {
           font-size: 9px !important;
-          background: rgba(0,0,0,0.6) !important;
-          color: rgba(255,255,255,0.3) !important;
+          background: ${attrBg} !important;
+          color: ${attrColor} !important;
         }
-        .leaflet-control-attribution a { color: rgba(255,255,255,0.3) !important; }
+        .leaflet-control-attribution a { color: ${attrColor} !important; }
         .leaflet-control-zoom a {
-          background: #1a1a1a !important;
-          color: #fff !important;
-          border-color: rgba(255,255,255,0.15) !important;
+          background: ${zoomBg} !important;
+          color: ${zoomColor} !important;
+          border-color: ${zoomBorder} !important;
         }
-        .leaflet-control-zoom a:hover { background: #2a2a2a !important; }
+        .leaflet-control-zoom a:hover { background: ${zoomHover} !important; }
       `}</style>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </>
