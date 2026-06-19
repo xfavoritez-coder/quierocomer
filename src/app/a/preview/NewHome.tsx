@@ -1655,7 +1655,7 @@ export default function NewHome({
         }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: (showFloatingSearch || stickyHeaderVisible) ? '7px 16px' : '8px 12px 8px 16px',
+            padding: (showFloatingSearch || stickyHeaderVisible) ? '10px 20px' : '10px 20px',
             background: (showFloatingSearch || stickyHeaderVisible)
               ? (isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)')
               : (isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)'),
@@ -1679,12 +1679,10 @@ export default function NewHome({
             <div style={{ flexShrink: 0, marginRight: 4 }}>
               {eurekaLiked.length < eurekaMax ? (
                 <>
-                  {isDesktop && (
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
-                      Descubre qué comer
-                    </p>
-                  )}
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.25, textAlign: 'right' }}>
+                    Descubre<br />qué comer
+                  </p>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)', textAlign: 'right' }}>
                     {`Desliza ${eurekaMax - eurekaLiked.length} más`}
                   </p>
                 </>
@@ -1697,7 +1695,7 @@ export default function NewHome({
                     display: 'flex', alignItems: 'center',
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                   </svg>
                 </button>
@@ -1757,7 +1755,7 @@ export default function NewHome({
                 background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px 4px 4px', flexShrink: 0,
                 color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center',
               }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
               </button>
@@ -1916,10 +1914,10 @@ export default function NewHome({
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                 {[
-                  { display: 'all' as const, meal: 'all' as const, label: 'Todo el día', activeColor: '#F4A623', icon: (c: string) => <svg width="20" height="20" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-                  { display: 'desayuno' as const, meal: 'desayuno' as const, label: 'Desayuno', activeColor: '#f59e0b', icon: (c: string) => <svg width="20" height="20" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /></svg> },
-                  { display: 'almuerzo' as const, meal: 'almuerzo_cena' as const, label: 'Almuerzo', activeColor: '#f97316', icon: (c: string) => <svg width="20" height="20" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /></svg> },
-                  { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', activeColor: '#6366f1', icon: (c: string) => <svg width="20" height="20" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
+                  { display: 'all' as const, meal: 'all' as const, label: 'Todo el día', activeColor: '#F4A623', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                  { display: 'desayuno' as const, meal: 'desayuno' as const, label: 'Desayuno', activeColor: '#f59e0b', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /></svg> },
+                  { display: 'almuerzo' as const, meal: 'almuerzo_cena' as const, label: 'Almuerzo', activeColor: '#f97316', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /></svg> },
+                  { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', activeColor: '#6366f1', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
                 ].map((m, i) => {
                   const isActive = draftMealDisplay === m.display
                   const iconColor = isActive ? m.activeColor : isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.25)'
@@ -2123,7 +2121,7 @@ export default function NewHome({
           {feedDishes.length > 0 ? (
             <>
               <div style={{ marginTop: -6 }} />
-              <div style={{ position: 'relative', paddingTop: eurekaLiked.length > 0 ? 66 : 0, transition: 'padding-top 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>
+              <div style={{ position: 'relative', paddingTop: eurekaLiked.length > 0 ? 73 : 0, transition: 'padding-top 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>
                 <MasonryGrid
                   dishes={activeFeedDishes.slice(0, visibleCount)}
                   onDishTap={handleDishTap}
@@ -2210,7 +2208,7 @@ export default function NewHome({
         <div style={{ padding: '8px 3px 100px' }}>
           <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             </button>
             <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
               Me han gustado
@@ -2249,7 +2247,7 @@ export default function NewHome({
         <div style={{ padding: '8px 16px 100px' }}>
           <div style={{ padding: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => setView('perfil')} style={{ background: 'none', border: 'none', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             </button>
             <h2 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 18, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
               Guardados
