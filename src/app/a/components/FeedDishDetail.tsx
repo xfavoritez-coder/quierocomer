@@ -560,35 +560,6 @@ function DesktopDishContent({
           )
         })()}
 
-        {/* Más de restaurante */}
-        {restDishes.length > 0 && (
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
-                Más de {dish.restaurante}
-              </p>
-              {!dish.isShowcase && (
-                <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 15, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  Ver carta completa
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                </a>
-              )}
-            </div>
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {restDishes.map(d => (
-                  <div key={d.id} onClick={() => onDishTap(d)} style={{
-                    flex: '0 0 auto', width: 'calc(25% - 5px)', cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
-                    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
-                  }}>
-                    <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (

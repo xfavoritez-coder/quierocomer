@@ -237,53 +237,6 @@ export default function DishModal({
             )}
           </div>
 
-          {/* Más de [restaurante] — always visible, full bleed */}
-          {restDishes.length > 0 && (
-            <div style={{ paddingBottom: 8 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)', margin: '0 0 10px', paddingLeft: 20 }}>
-                Más de {dish.restaurante}
-              </p>
-              {/* Scroll strip with fixed "ver carta" button on right */}
-              <div style={{ position: 'relative' }}>
-                {/* gradient fade before "ver carta" */}
-                <div style={{
-                  position: 'absolute', right: 72, top: 0, bottom: 4,
-                  width: 36, background: 'linear-gradient(to right, transparent, #111)',
-                  zIndex: 2, pointerEvents: 'none',
-                }} />
-                {/* "ver carta" fixed button */}
-                <a
-                  href={`/${dish.restauranteSlug}`}
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    position: 'absolute', right: 0, top: 0, bottom: 4, width: 72,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 4, background: '#111', zIndex: 3, textDecoration: 'none',
-                    borderLeft: '1px solid rgba(255,255,255,0.06)',
-                  }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2" strokeLinecap="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#F4A623', textAlign: 'center', lineHeight: 1.2 }}>ver{'\n'}carta</span>
-                </a>
-                {/* scrollable photos */}
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingLeft: 20, paddingRight: 80, paddingBottom: 4, scrollbarWidth: 'none' }}>
-                  {restDishes.map(d => (
-                    <div key={d.id} onClick={() => onDishTap(d)} style={{
-                      flexShrink: 0, width: 110, cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
-                      background: 'rgba(255,255,255,0.04)',
-                    }}>
-                      <img src={d.fotoUrl!} alt={d.nombre} style={{ width: 110, height: 80, objectFit: 'cover', display: 'block' }} />
-                      <div style={{ padding: '6px 8px' }}>
-                        <p style={{ fontSize: 11, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}</p>
-                        {d.precio != null && <p style={{ fontSize: 10, color: '#F4A623', margin: '2px 0 0', fontWeight: 600 }}>${d.precio.toLocaleString('es-CL')}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Related dishes */}
           {!hideRelated && relatedDishes.length > 0 && (

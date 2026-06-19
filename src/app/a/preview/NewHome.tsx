@@ -2282,13 +2282,13 @@ export default function NewHome({
               </p>
 
               {/* Dish thumbnails */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
                 {eurekaLiked.slice(0, eurekaMax).map((d, i) => (
                   <div key={d.id} style={{
-                    width: 46, height: 46, borderRadius: 12, overflow: 'hidden',
+                    width: 72, height: 72, borderRadius: 14, overflow: 'hidden',
                     flexShrink: 0,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                    border: `2px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
+                    border: `2px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
                     animationDelay: `${i * 0.05}s`,
                   }}>
                     {d.fotoUrl ? (
