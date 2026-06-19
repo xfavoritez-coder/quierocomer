@@ -611,6 +611,11 @@ export default function NewHome({
     return () => { if (searchFetchRef.current) clearTimeout(searchFetchRef.current) }
   }, [searchQuery, activeCategory, filterDiet, filterMeal, filterMaxKm, locationName, userLocation, quickPopular, needsServerFetch, fetchServerDishes])
 
+  // Persistir filtros activos para /descubrir
+  useEffect(() => {
+    try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filterDiet, maxKm: filterMaxKm })) } catch {}
+  }, [filterDiet, filterMaxKm])
+
   // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {
     // Base: server results when filtered/searching, initial dishes when browsing

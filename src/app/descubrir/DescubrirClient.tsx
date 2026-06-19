@@ -7,6 +7,7 @@ import FeedDishDetail from '../a/components/FeedDishDetail'
 import { createEmptyProfile } from '../a/lib/scoring'
 import { trackInteraction } from '../a/lib/feed-actions'
 import { VeganIcon, VegetarianIcon, SpicyIcon } from '../a/components/DietIcons'
+import NavMenuPanel from '../a/components/NavMenuPanel'
 
 const profile = createEmptyProfile()
 const PAGE_SIZE = 6
@@ -46,6 +47,15 @@ function goHomeKeep() {
   window.location.href = '/'
 }
 
+function toggleTheme(setIsDark: (fn: (p: boolean) => boolean) => void) {
+  setIsDark(prev => {
+    const next = !prev
+    localStorage.setItem('qc_theme', next ? 'dark' : 'light')
+    document.documentElement.classList.toggle('dark', next)
+    return next
+  })
+}
+
 export default function DescubrirClient() {
   const [liked, setLiked] = useState<FeedDish[]>([])
   const [allRecommended, setAllRecommended] = useState<FeedDish[]>([])
@@ -54,7 +64,10 @@ export default function DescubrirClient() {
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [isDark, setIsDark] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [activeDiet, setActiveDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
+  const [activeMaxKm, setActiveMaxKm] = useState<number>(15)
   const [search, setSearch] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const recommendedRef = useRef<HTMLDivElement>(null)
 
@@ -69,6 +82,14 @@ export default function DescubrirClient() {
       if (saved) {
         const { lat, lng } = JSON.parse(saved)
         setUserLocation({ lat, lng })
+      }
+    } catch {}
+    try {
+      const savedFilters = localStorage.getItem('qc_active_filters')
+      if (savedFilters) {
+        const { diet, maxKm } = JSON.parse(savedFilters)
+        if (diet && diet !== 'all') setActiveDiet(diet)
+        if (maxKm && maxKm < 30) setActiveMaxKm(maxKm)
       }
     } catch {}
   }, [])
@@ -87,6 +108,13 @@ export default function DescubrirClient() {
         const loc = locRaw ? JSON.parse(locRaw) : {}
         locRef.current = loc
 
+        const filtersRaw = localStorage.getItem('qc_active_filters')
+        const activeFilters = filtersRaw ? JSON.parse(filtersRaw) : {}
+        const diet = activeFilters.diet && activeFilters.diet !== 'all' ? activeFilters.diet : undefined
+        const maxKm = loc?.lat ? (activeFilters.maxKm ?? 15) : undefined
+        if (activeFilters.diet && activeFilters.diet !== 'all') setActiveDiet(activeFilters.diet)
+        if (activeFilters.maxKm && activeFilters.maxKm < 30) setActiveMaxKm(activeFilters.maxKm)
+
         const res = await fetch('/api/eureka', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -94,7 +122,8 @@ export default function DescubrirClient() {
             dishIds: likedDishes.map(d => d.id),
             lat: loc?.lat,
             lng: loc?.lng,
-            maxKm: 15,
+            maxKm,
+            diet,
           }),
         })
         const data = await res.json()
@@ -179,22 +208,62 @@ export default function DescubrirClient() {
               </button>
             )}
           </div>
-          <a href="/" onClick={(e) => { e.preventDefault(); goHome() }} style={{
-            flexShrink: 0, width: 49, height: 49, borderRadius: '50%',
+          <button onClick={() => setMenuOpen(true)} style={{
+            flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
+            width: 49, height: 49, borderRadius: '50%',
             background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
             boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-            textDecoration: 'none', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
-          </a>
+          </button>
         </div>
+
+        {/* Filtros activos heredados del feed */}
+        {(activeDiet !== 'all' || (userLocation && activeMaxKm < 30)) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, color: mutedColor, marginRight: 2 }}>Filtrando por:</span>
+            {activeDiet !== 'all' && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 99,
+                background: isDark ? 'rgba(76,175,80,0.18)' : 'rgba(76,175,80,0.12)',
+                color: '#388E3C',
+              }}>
+                {activeDiet === 'VEGAN' ? '🌱 Vegano' : '🥦 Vegetariano'}
+              </span>
+            )}
+            {userLocation && activeMaxKm < 30 && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 99,
+                background: isDark ? 'rgba(74,144,226,0.18)' : 'rgba(74,144,226,0.12)',
+                color: '#1976D2',
+              }}>
+                📍 ≤{activeMaxKm} km
+              </span>
+            )}
+            <a href="/" onClick={(e) => { e.preventDefault(); goHomeKeep() }} style={{
+              fontSize: 11, color: mutedColor, textDecoration: 'underline', marginLeft: 2,
+            }}>
+              Cambiar
+            </a>
+          </div>
+        )}
       </header>
+
+      <NavMenuPanel
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        isDark={isDark}
+        onToggleTheme={() => toggleTheme(setIsDark)}
+        onInicio={goHomeKeep}
+        onPerfil={goHomeKeep}
+        onContacto={() => { window.location.href = 'mailto:hola@quierocomer.cl' }}
+      />
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
@@ -282,16 +351,16 @@ export default function DescubrirClient() {
                 return (
                   <a key={i} href="/" onClick={(e) => { e.preventDefault(); try { localStorage.setItem('qc_eureka_afinar', '1') } catch {}; goHomeKeep() }} style={{
                     aspectRatio: '1', borderRadius: 14,
-                    border: `2px dashed ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
-                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    border: `2px dashed rgba(244,166,35,0.45)`,
+                    background: isDark ? 'rgba(244,166,35,0.07)' : 'rgba(244,166,35,0.06)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
                     textDecoration: 'none', cursor: 'pointer', padding: '0 6px',
                   }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)'} strokeWidth="2" strokeLinecap="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(244,166,35,0.8)" strokeWidth="2" strokeLinecap="round">
                       <path d="M12 5v14M5 12h14"/>
                     </svg>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.3 }}>Afinar</p>
-                    <p style={{ margin: 0, fontSize: 10, color: isDark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.32)', textAlign: 'center', lineHeight: 1.3 }}>Agregar 1 más</p>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#F4A623', textAlign: 'center', lineHeight: 1.3 }}>Afinar</p>
+                    <p style={{ margin: 0, fontSize: 10, color: isDark ? 'rgba(244,166,35,0.6)' : 'rgba(180,120,0,0.65)', textAlign: 'center', lineHeight: 1.3 }}>Agregar 1 más</p>
                   </a>
                 )
               })}
@@ -305,17 +374,44 @@ export default function DescubrirClient() {
             <>
               <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
                     Platos que te podrían gustar
                   </p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 400, color: mutedColor, opacity: 0.7, letterSpacing: 0, textTransform: 'none' }}>
-                    basado en tus elegidos
+                  <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 400, color: mutedColor, opacity: 0.7, letterSpacing: 0, textTransform: 'none' }}>
+                    Basado en tus elegidos
                   </p>
                 </div>
                 {totalPages > 1 && (
-                  <span style={{ fontSize: 11, color: mutedColor }}>
-                    {page + 1} / {totalPages}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                      style={{
+                        width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: page === 0 ? 'transparent' : 'rgba(244,166,35,0.12)',
+                        color: page === 0 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
+                      }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center' }}>
+                      {page + 1}/{totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1}
+                      style={{
+                        width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: page >= totalPages - 1 ? 'default' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: page >= totalPages - 1 ? 'transparent' : 'rgba(244,166,35,0.12)',
+                        color: page >= totalPages - 1 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
+                      }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </div>
                 )}
               </div>
               {filteredRecommended.length > 0 ? (
@@ -373,51 +469,6 @@ export default function DescubrirClient() {
               Volver a explorar
             </a>
 
-            {visiblePages > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* Prev */}
-                <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  style={{
-                    width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: page === 0 ? 'transparent' : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-                    color: page === 0 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : (isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'),
-                  }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-
-                {/* Page numbers */}
-                {Array.from({ length: visiblePages }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPage(i)}
-                    style={{
-                      width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, fontWeight: 600,
-                      background: page === i ? '#F4A623' : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-                      color: page === i ? '#fff' : (isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'),
-                      transition: 'all 0.15s',
-                    }}
-                  >{i + 1}</button>
-                ))}
-
-                {/* Next */}
-                <button
-                  onClick={() => setPage(p => Math.min(visiblePages - 1, p + 1))}
-                  disabled={page >= visiblePages - 1}
-                  style={{
-                    width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: page >= visiblePages - 1 ? 'default' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: page >= visiblePages - 1 ? 'transparent' : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-                    color: page >= visiblePages - 1 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : (isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'),
-                  }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-              </div>
-            )}
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
