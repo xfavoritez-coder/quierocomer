@@ -178,6 +178,35 @@ export default function ClientesPage() {
             Personas que se registraron desde tu carta digital. {total} cliente{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}.
           </p>
         </div>
+        {clients.length > 0 && (
+          canExport ? (
+            <button
+              onClick={exportCSV}
+              title="Exportar clientes como CSV"
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+                background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+                fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)",
+                flexShrink: 0,
+              }}
+            >
+              <Download size={14} />
+              Exportar CSV
+            </button>
+          ) : (
+            <div title="Disponible en plan superior" style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", borderRadius: 8,
+              background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+              color: "var(--adm-text3)", opacity: 0.6, flexShrink: 0, cursor: "not-allowed",
+            }}>
+              <Download size={14} />
+              Exportar CSV
+            </div>
+          )
+        )}
       </div>
 
       {clients.length === 0 ? (
