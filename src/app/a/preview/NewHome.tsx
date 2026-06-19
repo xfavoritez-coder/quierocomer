@@ -1617,31 +1617,31 @@ export default function NewHome({
               {Array.from({ length: eurekaMax }).map((_, i) => {
                 const dish = eurekaLiked[i]
                 return dish ? (
-                  <div key={dish.id} style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+                  <div key={dish.id} style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
                     <div
                       onClick={() => setSelectedDish(dish)}
-                      style={{ width: 52, height: 52, borderRadius: 13, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
+                      style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
                     >
                       {dish.fotoUrl && <img src={dish.fotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEurekaLiked(prev => prev.filter(d => d.id !== dish.id)) }}
                       style={{
-                        position: 'absolute', top: -6, right: -6,
-                        width: 16, height: 16, borderRadius: '50%',
+                        position: 'absolute', top: -8, right: -8,
+                        width: 24, height: 24, borderRadius: '50%',
                         background: isDark ? '#333' : '#fff',
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
-                        color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-                        fontSize: 9, fontWeight: 700, lineHeight: 1,
+                        border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.18)'}`,
+                        color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)',
+                        fontSize: 11, fontWeight: 700, lineHeight: 1,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer', padding: 0, zIndex: 1,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
                       }}
                     >✕</button>
                   </div>
                 ) : (
                   <div key={i} style={{
-                    width: 52, height: 52, flexShrink: 0, borderRadius: 13,
+                    width: 64, height: 64, flexShrink: 0, borderRadius: 14,
                     border: `2px dashed ${isDark ? 'rgba(244,166,35,0.3)' : 'rgba(244,166,35,0.4)'}`,
                     background: isDark ? 'rgba(244,166,35,0.05)' : 'rgba(244,166,35,0.07)',
                   }} />
