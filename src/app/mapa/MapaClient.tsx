@@ -12,7 +12,7 @@ export type MapRestaurant = {
   logo: string | null
   googleRating: number | null
   googleRatingCount: number | null
-  dishes: { id: string; name: string; fotoUrl: string | null; precio: number; categoria: string }[]
+  dishes: { id: string; name: string; fotoUrl: string | null; precio: number; categoria: string; dieta?: { tipo: 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE'; esPicante: boolean } }[]
 }
 
 type Bounds = { north: number; south: number; east: number; west: number }

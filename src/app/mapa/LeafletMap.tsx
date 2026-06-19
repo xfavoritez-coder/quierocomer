@@ -13,6 +13,7 @@ type Props = {
   locateRef?: React.RefObject<((onDone?: () => void) => void) | null>
   flyToRef?: React.RefObject<((lat: number, lng: number, zoom?: number) => void) | null>
   userLocation?: { lat: number; lng: number } | null
+  userLocationLabel?: string | null
 }
 
 const normalStyle: L.CircleMarkerOptions = {
@@ -38,10 +39,22 @@ function buildPopupHtml(r: MapRestaurant, isDark: boolean): string {
        </div>`
     : `<div style="flex-shrink:0">${fallbackLetter}</div>`
 
+  function dietaTag(d: MapRestaurant['dishes'][0]): string {
+    if (!d.dieta) return ''
+    const tags: string[] = []
+    if (d.dieta.tipo === 'VEGAN') tags.push('<span style="font-size:9px;background:rgba(76,175,80,0.15);color:#388E3C;border-radius:4px;padding:1px 5px;font-weight:600">🌱 Vegano</span>')
+    else if (d.dieta.tipo === 'VEGETARIAN') tags.push('<span style="font-size:9px;background:rgba(76,175,80,0.15);color:#388E3C;border-radius:4px;padding:1px 5px;font-weight:600">🥦 Veggie</span>')
+    if (d.dieta.esPicante) tags.push('<span style="font-size:9px;background:rgba(244,67,54,0.12);color:#D32F2F;border-radius:4px;padding:1px 5px;font-weight:600">🌶 Picante</span>')
+    return tags.length ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">${tags.join('')}</div>` : ''
+  }
+
   const dishPhotos = r.dishes.filter(d => d.fotoUrl).slice(0, 3)
   const fotosHtml = dishPhotos.length > 0
     ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px">
-        ${dishPhotos.map(d => `<img src="${d.fotoUrl}" loading="lazy" data-dish-id="${d.id}" onclick="window.__qcDishClick&&window.__qcDishClick('${d.id}')" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;cursor:pointer">`).join('')}
+        ${dishPhotos.map(d => `<div style="position:relative;cursor:pointer" onclick="window.__qcDishClick&&window.__qcDishClick('${d.id}')">
+          <img src="${d.fotoUrl}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block">
+          ${dietaTag(d)}
+        </div>`).join('')}
        </div>`
     : ''
 
@@ -61,13 +74,15 @@ function buildPopupHtml(r: MapRestaurant, isDark: boolean): string {
   `
 }
 
-export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef, flyToRef, userLocation }: Props) {
+export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark, locateRef, flyToRef, userLocation, userLocationLabel }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.CircleMarker[]>([])
   const activeIdRef = useRef<string | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
   const userMarkerRef = useRef<L.CircleMarker | null>(null)
+  const userLocationLabelRef = useRef(userLocationLabel)
+  useEffect(() => { userLocationLabelRef.current = userLocationLabel }, [userLocationLabel])
   const isDarkRef = useRef(isDark)
   useEffect(() => { isDarkRef.current = isDark }, [isDark])
 
@@ -84,6 +99,20 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
       subdomains: 'abcd', maxZoom: 19,
     }).addTo(map)
   }, [isDark])
+
+  function addUserMarker(map: L.Map, lat: number, lng: number) {
+    const marker = L.circleMarker([lat, lng], {
+      radius: 8, fillColor: '#4A90E2', color: '#fff',
+      weight: 2.5, opacity: 1, fillOpacity: 1,
+    }).addTo(map)
+    marker.on('click', () => {
+      const label = userLocationLabelRef.current || 'Tu ubicación'
+      const popup = L.popup({ closeButton: false, className: 'qc-mapa-popup', offset: [0, -8] })
+        .setContent(`<div style="padding:10px 14px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;white-space:nowrap">📍 ${label}</div>`)
+      marker.bindPopup(popup).openPopup()
+    })
+    return marker
+  }
 
   // Desplaza un punto geográfico hacia abajo en píxeles para compensar el bottom sheet
   // El sheet cubre ~200px → subimos el punto visible 100px (la mitad del sheet)
@@ -108,10 +137,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
 
     // Si hay ubicación activa, mostrar punto azul desde el inicio
     if (userLocation) {
-      userMarkerRef.current = L.circleMarker([userLocation.lat, userLocation.lng], {
-        radius: 8, fillColor: '#4A90E2', color: '#fff',
-        weight: 2.5, opacity: 1, fillOpacity: 1,
-      }).addTo(map)
+      userMarkerRef.current = addUserMarker(map, userLocation.lat, userLocation.lng)
     }
 
     const url = isDark
@@ -139,10 +165,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
             const zoom = 15
             map.flyTo(centerWithSheet(map, lat, lng, zoom), zoom, { animate: true, duration: 1 })
             userMarkerRef.current?.remove()
-            userMarkerRef.current = L.circleMarker([lat, lng], {
-              radius: 8, fillColor: '#4A90E2', color: '#fff',
-              weight: 2.5, opacity: 1, fillOpacity: 1,
-            }).addTo(map)
+            userMarkerRef.current = addUserMarker(map, lat, lng)
             onDone?.()
           },
           () => { onDone?.() },
@@ -174,10 +197,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     userMarkerRef.current?.remove()
     userMarkerRef.current = null
     if (userLocation) {
-      userMarkerRef.current = L.circleMarker([userLocation.lat, userLocation.lng], {
-        radius: 8, fillColor: '#4A90E2', color: '#fff',
-        weight: 2.5, opacity: 1, fillOpacity: 1,
-      }).addTo(map)
+      userMarkerRef.current = addUserMarker(map, userLocation.lat, userLocation.lng)
     }
   }, [userLocation])
 

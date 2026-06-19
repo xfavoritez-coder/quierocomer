@@ -14,10 +14,11 @@ type Props = {
   onDishTap: (d: FeedDish) => void
   geocodeRef?: React.MutableRefObject<((q: string) => void) | null>
   userLocation?: { lat: number; lng: number } | null
+  userLocationLabel?: string | null
   isSearching?: boolean
 }
 
-export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, userLocation, isSearching }: Props) {
+export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, userLocation, userLocationLabel, isSearching }: Props) {
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [sheetExpanded, setSheetExpanded] = useState(false)
   const [mapReady, setMapReady] = useState(false)
@@ -83,6 +84,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
             fotoUrl: dish.fotoUrl,
             precio: dish.precio,
             categoria: dish.categoria,
+            dieta: { tipo: dish.dieta.tipo, esPicante: dish.dieta.esPicante },
           }],
         })
       } else if (existing.dishes.length < 5) {
@@ -92,6 +94,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
           fotoUrl: dish.fotoUrl,
           precio: dish.precio,
           categoria: dish.categoria,
+          dieta: { tipo: dish.dieta.tipo, esPicante: dish.dieta.esPicante },
         })
       }
     }
@@ -169,6 +172,7 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
           locateRef={locateRef}
           flyToRef={flyToRef}
           userLocation={userLocation}
+          userLocationLabel={userLocationLabel}
         />
       </div>
 
