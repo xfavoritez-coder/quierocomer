@@ -1679,9 +1679,11 @@ export default function NewHome({
             <div style={{ flexShrink: 0, marginRight: 4 }}>
               {eurekaLiked.length < eurekaMax ? (
                 <>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
-                    Descubre qué comer
-                  </p>
+                  {isDesktop && (
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.2 }}>
+                      Descubre qué comer
+                    </p>
+                  )}
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', textAlign: 'right' }}>
                     {`Desliza ${eurekaMax - eurekaLiked.length} más`}
                   </p>
