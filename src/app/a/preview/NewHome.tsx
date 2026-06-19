@@ -202,9 +202,11 @@ export default function NewHome({
     } catch {}
   }, [])
 
-  // Show milestone modal on first reach of eurekaMax
+  // Show milestone modal on first reach of eurekaMax; reset ref when cleared so it can trigger again
   useEffect(() => {
-    if (eurekaLiked.length >= eurekaMax && !eurekaModalShownRef.current) {
+    if (eurekaLiked.length < eurekaMax) {
+      eurekaModalShownRef.current = false
+    } else if (!eurekaModalShownRef.current) {
       eurekaModalShownRef.current = true
       setShowEurekaModal(true)
     }
@@ -1590,7 +1592,7 @@ export default function NewHome({
         </div>
       )}
 
-      {/* ─── Eureka pill → banner morph ─── */}
+      {/* ─── Eureka pill flotante ─── */}
       {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && view !== 'mapa' && (
         <div style={{
           position: 'fixed', left: 0, right: 0, zIndex: 35,
@@ -1604,46 +1606,28 @@ export default function NewHome({
             background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)',
             backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
             borderRadius: 999,
-            boxSizing: 'border-box' as const,
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
             boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
-            justifyContent: 'center',
             pointerEvents: 'auto',
           }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flexShrink: 0, marginRight: 4 }}>
-              {eurekaLiked.length < eurekaMax ? (
-                <>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.25, textAlign: 'right' }}>
-                    Descubre<br />qué comer
-                  </p>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)', textAlign: 'right' }}>
-                    {`Desliza ${eurekaMax - eurekaLiked.length} más`}
-                  </p>
-                </>
-              ) : (
-                <button
-                  onClick={() => setEurekaLiked([])}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px',
-                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.28)',
-                    display: 'flex', alignItems: 'center',
-                  }}
-                >
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              )}
-            </div>
+            {eurekaLiked.length < eurekaMax && (
+              <div style={{ flexShrink: 0, marginRight: 4 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)', lineHeight: 1.25, textAlign: 'right' }}>
+                  Descubre<br />qué comer
+                </p>
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', lineHeight: 1.3, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)', textAlign: 'right' }}>
+                  {`Desliza ${eurekaMax - eurekaLiked.length} más`}
+                </p>
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {Array.from({ length: eurekaMax }).map((_, i) => {
                 const dish = eurekaLiked[i]
                 return dish ? (
-                  <div key={dish.id} style={{ position: 'relative', width: 45, height: 45, flexShrink: 0 }}>
+                  <div key={dish.id} style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
                     <div
                       onClick={() => setSelectedDish(dish)}
-                      style={{ width: 45, height: 45, borderRadius: 12, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
+                      style={{ width: 52, height: 52, borderRadius: 13, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
                     >
                       {dish.fotoUrl && <img src={dish.fotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
@@ -1664,7 +1648,7 @@ export default function NewHome({
                   </div>
                 ) : (
                   <div key={i} style={{
-                    width: 45, height: 45, flexShrink: 0, borderRadius: 12,
+                    width: 52, height: 52, flexShrink: 0, borderRadius: 13,
                     border: `2px dashed ${isDark ? 'rgba(244,166,35,0.3)' : 'rgba(244,166,35,0.4)'}`,
                     background: isDark ? 'rgba(244,166,35,0.05)' : 'rgba(244,166,35,0.07)',
                   }} />
@@ -1695,7 +1679,6 @@ export default function NewHome({
                 </svg>
               </button>
             )}
-          </div>
           </div>
         </div>
       )}

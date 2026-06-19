@@ -27,6 +27,7 @@ type Props = {
   onMapToggle?: () => void
   showSortFilter?: boolean
   showMealFilter?: boolean
+  showDistanceBadge?: boolean
   applyLabel?: string
 }
 
@@ -43,6 +44,7 @@ export default function FeedFilterBar({
   onMapToggle,
   showSortFilter = true,
   showMealFilter = true,
+  showDistanceBadge = true,
   applyLabel = 'Aplicar',
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
@@ -206,7 +208,7 @@ export default function FeedFilterBar({
           </svg>
         </button>
 
-        {userLocation && (
+        {userLocation && showDistanceBadge && (
           <div style={{ flexShrink: 0 }}>
             <button
               ref={distanceBadgeRef}

@@ -564,7 +564,7 @@ function DesktopDishContent({
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (
@@ -593,7 +593,7 @@ function DesktopDishContent({
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (
           <div style={{ paddingTop: 28, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}` }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 10px' }}>También te podría gustar</p>
+            <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: '0 0 10px' }}>También te podría gustar</p>
             <div style={{ margin: '0 -24px', padding: '0 10px' }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[0, 1].map(col => (
@@ -903,7 +903,7 @@ function DishSlide({
         {restDishes.length > 0 && (
           <div style={{ marginBottom: 14, marginTop: 20 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
                 Más de {dish.restaurante}
               </p>
               {!dish.isShowcase && (

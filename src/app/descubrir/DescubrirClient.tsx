@@ -262,6 +262,7 @@ export default function DescubrirClient() {
           showMapButton={false}
           showSortFilter={false}
           showMealFilter={false}
+          showDistanceBadge={false}
           applyLabel="Actualizar sugerencias"
         />
       </header>
