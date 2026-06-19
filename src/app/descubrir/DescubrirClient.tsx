@@ -12,7 +12,7 @@ import FeedFilterBar, { type FilterBarFilters } from '../a/components/FeedFilter
 import LocationModal from '../a/components/LocationModal'
 
 const profile = createEmptyProfile()
-const PAGE_SIZE = 6
+const PAGE_SIZE = 4
 
 function DietTag({ dieta, sabores }: { dieta?: { tipo: string; esPicante: boolean }; sabores?: string[] }) {
   if (!dieta) return null
@@ -27,6 +27,14 @@ function DietTag({ dieta, sabores }: { dieta?: { tipo: string; esPicante: boolea
       {isPicante && <SpicyIcon />}
     </span>
   )
+}
+
+function distKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 function distanceLabel(lat1: number, lng1: number, lat2: number | null, lng2: number | null): string | null {
@@ -95,11 +103,12 @@ export default function DescubrirClient() {
     try {
       const savedFilters = localStorage.getItem('qc_active_filters')
       if (savedFilters) {
-        const { diet, maxKm } = JSON.parse(savedFilters)
+        const { diet, maxKm, nearby } = JSON.parse(savedFilters)
         setFilters(f => ({
           ...f,
           diet: diet ?? 'all',
           maxKm: maxKm ?? 5,
+          nearby: nearby ?? false,
         }))
       }
     } catch {}
@@ -149,7 +158,7 @@ export default function DescubrirClient() {
           diet: savedFilters.diet ?? 'all',
           maxKm: savedFilters.maxKm ?? 5,
           sort: 'default', meal: 'all', mealDisplay: 'all',
-          nearby: false, popular: false,
+          nearby: savedFilters.nearby ?? false, popular: false,
         }
 
         await fetchRecommendations(likedDishes.map(d => d.id), loc, initFilters)
@@ -166,15 +175,26 @@ export default function DescubrirClient() {
     if (!likedIdsRef.current.length) return
     const loc = userLocation ?? {}
     fetchRecommendations(likedIdsRef.current, loc, filters, true)
-    try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filters.diet, maxKm: filters.maxKm })) } catch {}
+    try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filters.diet, maxKm: filters.maxKm, nearby: filters.nearby })) } catch {}
   }, [filters, fetchRecommendations, userLocation])
 
   const q = search.toLowerCase()
-  const pageRecommended = allRecommended.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const cappedRecommended = (() => {
+    const results = allRecommended.slice(0, PAGE_SIZE * 4)
+    if (filters.nearby && userLocation) {
+      return [...results].sort((a, b) => {
+        const da = a.restauranteLat != null && a.restauranteLng != null ? distKm(userLocation.lat, userLocation.lng, a.restauranteLat, a.restauranteLng) : Infinity
+        const db = b.restauranteLat != null && b.restauranteLng != null ? distKm(userLocation.lat, userLocation.lng, b.restauranteLat, b.restauranteLng) : Infinity
+        return da - db
+      })
+    }
+    return results
+  })()
+  const pageRecommended = cappedRecommended.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const filteredRecommended = pageRecommended.filter(d =>
     !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
   )
-  const totalPages = Math.ceil(allRecommended.length / PAGE_SIZE)
+  const totalPages = Math.min(4, Math.ceil(cappedRecommended.length / PAGE_SIZE))
   const allDishes = [...liked, ...allRecommended]
 
   const activeFilterCount = (filters.diet !== 'all' ? 1 : 0) + (filters.maxKm !== 5 ? 1 : 0)
@@ -201,12 +221,11 @@ export default function DescubrirClient() {
         position: 'sticky', top: 0, zIndex: 40,
         background: headerBg,
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-        borderBottom: `1px solid ${border}`,
-        padding: '8px 16px 10px',
+        padding: '8px 16px 6px',
         display: 'flex', flexDirection: 'column', gap: 7,
       }}>
         {/* Row 1: logo + search + hamburger */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, marginBottom: 4 }}>
           <a href="/" onClick={(e) => { e.preventDefault(); goHome() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
           </a>
@@ -216,10 +235,11 @@ export default function DescubrirClient() {
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar en sugerencias"
+              placeholder="Buscar en QuieroComer"
+              className="feed-search-input"
               style={{
-                width: '100%', padding: '11px 36px 11px 20px',
-                borderRadius: 999, fontSize: 15, boxSizing: 'border-box',
+                width: '100%', padding: '12px 38px 12px 24px',
+                borderRadius: 999, fontSize: 17, boxSizing: 'border-box',
                 background: inputBg, border: inputBorder,
                 color: isDark ? '#fff' : '#111', outline: 'none',
               }}
@@ -250,7 +270,7 @@ export default function DescubrirClient() {
           </button>
         </div>
 
-        {/* Rows 3+4: mismo filter bar que el home */}
+        {/* Pills row (sticky) */}
         <FeedFilterBar
           isDark={isDark}
           userLocation={userLocation}
@@ -263,9 +283,30 @@ export default function DescubrirClient() {
           showSortFilter={false}
           showMealFilter={false}
           showDistanceBadge={false}
+          showLocationRow={false}
           applyLabel="Actualizar sugerencias"
         />
       </header>
+
+      {/* Location row — no sticky, se va con el scroll */}
+      <div style={{ padding: '0 16px 0', marginBottom: -8, background: headerBg, position: 'relative', zIndex: 41 }}>
+        <button onClick={() => setLocationModalOpen(true)} style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          color: locationLabel ? '#e09200' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+          fontSize: 16, fontWeight: 400,
+        }}>
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" style={{ flexShrink: 0 }}>
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {locationLabel || 'Selecciona una ubicación'}
+          </span>
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+      </div>
 
       <NavMenuPanel
         isOpen={menuOpen}
@@ -458,7 +499,7 @@ export default function DescubrirClient() {
                 )}
               </div>
               {filteredRecommended.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
                   {filteredRecommended.map(d => (
                     <div key={d.id} onClick={() => handleTap(d)} style={{
                       position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
@@ -468,7 +509,7 @@ export default function DescubrirClient() {
                         : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
                       }
                       <span style={{
-                        position: 'absolute', top: 6, left: 6,
+                        position: 'absolute', top: 6, right: 6,
                         background: '#F4A623', borderRadius: 20,
                         padding: '4px 8px', lineHeight: 1,
                         fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em',
@@ -479,10 +520,9 @@ export default function DescubrirClient() {
                         </svg>
                         para ti
                       </span>
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '24px 8px 8px' }}>
-                        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>{d.nombre}</span>
-                          <DietTag dieta={d.dieta} sabores={d.sabores} />
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '28px 10px 10px' }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
                         </p>
                         <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}

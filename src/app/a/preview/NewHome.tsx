@@ -610,8 +610,8 @@ export default function NewHome({
 
   // Persistir filtros activos para /descubrir
   useEffect(() => {
-    try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filterDiet, maxKm: filterMaxKm })) } catch {}
-  }, [filterDiet, filterMaxKm])
+    try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filterDiet, maxKm: filterMaxKm, nearby: quickNearby })) } catch {}
+  }, [filterDiet, filterMaxKm, quickNearby])
 
   // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {

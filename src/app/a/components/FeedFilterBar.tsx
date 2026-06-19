@@ -28,6 +28,7 @@ type Props = {
   showSortFilter?: boolean
   showMealFilter?: boolean
   showDistanceBadge?: boolean
+  showLocationRow?: boolean
   applyLabel?: string
 }
 
@@ -45,6 +46,7 @@ export default function FeedFilterBar({
   showSortFilter = true,
   showMealFilter = true,
   showDistanceBadge = true,
+  showLocationRow = true,
   applyLabel = 'Aplicar',
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
@@ -189,7 +191,7 @@ export default function FeedFilterBar({
       </div>
 
       {/* Row ubicación */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      {showLocationRow && <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
         <button onClick={onLocationClick} style={{
           display: 'flex', alignItems: 'center', gap: 5,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -281,7 +283,7 @@ export default function FeedFilterBar({
             )}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Filter panel modal */}
       {filterOpen && (
