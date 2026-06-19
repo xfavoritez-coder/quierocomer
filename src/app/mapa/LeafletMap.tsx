@@ -61,6 +61,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
   const markersRef = useRef<L.CircleMarker[]>([])
   const activeIdRef = useRef<string | null>(null)
   const tileLayerRef = useRef<L.TileLayer | null>(null)
+  const userMarkerRef = useRef<L.CircleMarker | null>(null)
   const isDarkRef = useRef(isDark)
   useEffect(() => { isDarkRef.current = isDark }, [isDark])
 
@@ -104,7 +105,16 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     if (locateRef) {
       locateRef.current = () => {
         navigator.geolocation.getCurrentPosition(
-          pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 15, { animate: true, duration: 1 }),
+          pos => {
+            const { latitude: lat, longitude: lng } = pos.coords
+            map.flyTo([lat, lng], 15, { animate: true, duration: 1 })
+            // Punto azul de posición
+            userMarkerRef.current?.remove()
+            userMarkerRef.current = L.circleMarker([lat, lng], {
+              radius: 8, fillColor: '#4A90E2', color: '#fff',
+              weight: 2.5, opacity: 1, fillOpacity: 1,
+            }).addTo(map)
+          },
           () => {},
           { enableHighAccuracy: true, timeout: 8000 }
         )
@@ -114,6 +124,7 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     return () => {
       map.remove()
       mapRef.current = null
+      userMarkerRef.current = null
       if (locateRef) locateRef.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
