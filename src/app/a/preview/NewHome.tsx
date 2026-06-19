@@ -2117,7 +2117,7 @@ export default function NewHome({
           {feedDishes.length > 0 ? (
             <>
               <div style={{ marginTop: -6 }} />
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', paddingTop: eurekaLiked.length > 0 ? 66 : 0, transition: 'padding-top 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>
                 <MasonryGrid
                   dishes={activeFeedDishes.slice(0, visibleCount)}
                   onDishTap={handleDishTap}

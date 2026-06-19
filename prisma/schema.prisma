@@ -1698,6 +1698,17 @@ model FeedDishStats {
   @@index([trendingScore])
 }
 
+model FeedSearchLog {
+  id           String   @id @default(cuid())
+  query        String
+  resultsCount Int
+  feedUserId   String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([query])
+}
+
 model MapaProspecto {
   id           String   @id
   name         String

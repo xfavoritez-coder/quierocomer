@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
@@ -203,6 +204,18 @@ export async function GET(req: NextRequest) {
 
     if (meal !== 'all') {
       feedDishes = feedDishes.filter(d => d.mealTime === meal)
+    }
+
+    // Log search query (fire-and-forget, only when there's an actual text search)
+    if (q) {
+      const cookieStore = await cookies()
+      const fingerprint = cookieStore.get('qc_feed_user')?.value ?? null
+      const feedUserId = fingerprint
+        ? (await prisma.feedUser.findUnique({ where: { fingerprint }, select: { id: true } }))?.id ?? null
+        : null
+      prisma.feedSearchLog.create({
+        data: { query: q, resultsCount: feedDishes.length, feedUserId },
+      }).catch(() => {})
     }
 
     return NextResponse.json(feedDishes, {
