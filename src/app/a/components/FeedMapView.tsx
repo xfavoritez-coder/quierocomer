@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import type { FeedDish } from '../types'
 import type { MapRestaurant } from '../../mapa/MapaClient'
@@ -17,6 +17,19 @@ type Props = {
 export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [sheetExpanded, setSheetExpanded] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
+  const [updatingDishes, setUpdatingDishes] = useState(false)
+  const prevDishesRef = useRef(dishes)
+
+  // Show brief loading when filtered dishes change
+  useEffect(() => {
+    if (prevDishesRef.current !== dishes) {
+      prevDishesRef.current = dishes
+      setUpdatingDishes(true)
+      const t = setTimeout(() => setUpdatingDishes(false), 600)
+      return () => clearTimeout(t)
+    }
+  }, [dishes])
 
   const restaurants = useMemo<MapRestaurant[]>(() => {
     const map = new Map<string, MapRestaurant>()
@@ -54,7 +67,10 @@ export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
     return Array.from(map.values())
   }, [dishes])
 
-  const handleBoundsChange = useCallback((b: Bounds) => setBounds(b), [])
+  const handleBoundsChange = useCallback((b: Bounds) => {
+    setBounds(b)
+    setMapReady(true)
+  }, [])
   const handleRestaurantClick = useCallback(() => setSheetExpanded(true), [])
 
   const visibleRestaurants = bounds
@@ -86,10 +102,32 @@ export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
 
   return (
     <div style={{ position: 'relative', height: 'calc(100dvh - 130px)', overflow: 'hidden' }}>
-      <style>{`.feedmap-scroll::-webkit-scrollbar { display: none; }`}</style>
+      <style>{`
+        .feedmap-scroll::-webkit-scrollbar { display: none; }
+        @keyframes feedmap-spin { to { transform: rotate(360deg); } }
+      `}</style>
 
       {/* Map */}
       <div style={{ position: 'absolute', inset: 0, isolation: 'isolate' }}>
+        {/* Loading overlay — mientras Leaflet inicializa */}
+        {!mapReady && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 10,
+            background: isDark ? '#1a1a1a' : '#dde0e3',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 10,
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%',
+              border: '3px solid rgba(0,0,0,0.1)',
+              borderTop: '3px solid #F4A623',
+              animation: 'feedmap-spin 0.8s linear infinite',
+            }} />
+            <span style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', fontFamily: 'var(--font-feed-body), sans-serif' }}>
+              Cargando mapa…
+            </span>
+          </div>
+        )}
         <LeafletMap
           restaurants={restaurants}
           onBoundsChange={handleBoundsChange}
@@ -122,8 +160,19 @@ export default function FeedMapView({ dishes, isDark, onDishTap }: Props) {
             <span style={{
               fontSize: 15, fontWeight: 700, color: countColor,
               fontFamily: 'var(--font-feed-body), sans-serif',
+              display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              {visibleDishes.length > 0
+              {updatingDishes ? (
+                <>
+                  <div style={{
+                    width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+                    border: `2px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                    borderTop: '2px solid #F4A623',
+                    animation: 'feedmap-spin 0.7s linear infinite',
+                  }} />
+                  Actualizando…
+                </>
+              ) : visibleDishes.length > 0
                 ? `${visibleDishes.length} platos en esta zona`
                 : 'Mueve el mapa para explorar'}
             </span>
