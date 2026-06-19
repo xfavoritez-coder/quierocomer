@@ -2146,6 +2146,7 @@ export default function NewHome({
               onDishTap={handleDishTap}
               geocodeRef={mapGeocoderRef}
               userLocation={userLocation}
+              isSearching={isSearching}
             />
           )}
 

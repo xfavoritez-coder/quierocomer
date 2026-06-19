@@ -14,9 +14,10 @@ type Props = {
   onDishTap: (d: FeedDish) => void
   geocodeRef?: React.MutableRefObject<((q: string) => void) | null>
   userLocation?: { lat: number; lng: number } | null
+  isSearching?: boolean
 }
 
-export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, userLocation }: Props) {
+export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, userLocation, isSearching }: Props) {
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [sheetExpanded, setSheetExpanded] = useState(false)
   const [mapReady, setMapReady] = useState(false)
@@ -170,6 +171,16 @@ export default function FeedMapView({ dishes, isDark, onDishTap, geocodeRef, use
           userLocation={userLocation}
         />
       </div>
+
+      {/* Overlay de carga cuando se aplica un filtro */}
+      {isSearching && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 39,
+          background: isDark ? 'rgba(14,14,14,0.55)' : 'rgba(255,255,255,0.6)',
+          pointerEvents: 'none',
+          transition: 'opacity 0.25s',
+        }} />
+      )}
 
       {/* GPS locate button — fuera del div isolate para no quedar tapado por el sheet */}
       <button
