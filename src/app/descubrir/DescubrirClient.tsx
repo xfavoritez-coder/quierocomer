@@ -289,7 +289,7 @@ export default function DescubrirClient() {
       </header>
 
       {/* Location row — no sticky, se va con el scroll */}
-      <div style={{ padding: '0 16px 0', marginBottom: -8, background: headerBg, position: 'relative', zIndex: 41 }}>
+      <div style={{ padding: '0 16px 0', marginBottom: -8, background: headerBg, position: 'relative', zIndex: 30 }}>
         <button onClick={() => setLocationModalOpen(true)} style={{
           display: 'flex', alignItems: 'center', gap: 5,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -377,20 +377,8 @@ export default function DescubrirClient() {
             </div>
           )}
 
-          {/* Back + título */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <a href="/" onClick={(e) => { e.preventDefault(); goHomeKeep() }} style={{
-              flexShrink: 0, width: 34, height: 34, borderRadius: '50%',
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.09)'}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)',
-              textDecoration: 'none',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-            </a>
+          {/* Título */}
+          <div style={{ marginBottom: 12 }}>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
               Tus elegidos
             </p>
