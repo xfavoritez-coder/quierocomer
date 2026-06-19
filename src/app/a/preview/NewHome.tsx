@@ -73,6 +73,7 @@ export default function NewHome({
   userDiet,
   initialDishId,
   categoryCountMap: categoryCountMapProp,
+  totalDishCount = 0,
 }: {
   dishes: FeedDish[]
   categoryScores: Record<string, number>
@@ -83,6 +84,7 @@ export default function NewHome({
   userDiet?: { isVegan: boolean; isVegetarian: boolean; isGlutenFree: boolean; isLactoseFree: boolean }
   initialDishId?: string
   categoryCountMap?: Record<string, number>
+  totalDishCount?: number
 }) {
   const [view, setView] = useState<View>('feed')
   const [isDark, setIsDark] = useState(false)
@@ -190,7 +192,12 @@ export default function NewHome({
       const raw = localStorage.getItem('qc_eureka_liked')
       if (raw) {
         const dishes: FeedDish[] = JSON.parse(raw)
-        if (dishes.length > 0) setEurekaLiked(dishes.slice(0, isAfinar ? 6 : 5))
+        if (dishes.length > 0) {
+          const max = isAfinar ? 6 : 5
+          setEurekaLiked(dishes.slice(0, max))
+          // Ya tenía selecciones guardadas — no mostrar el modal al cargar
+          if (dishes.length >= max) eurekaModalShownRef.current = true
+        }
       }
     } catch {}
   }, [])
@@ -228,8 +235,6 @@ export default function NewHome({
   const lastScrollY = useRef(0)
   const scrollTicking = useRef(false)
   const [locationQuery, setLocationQuery] = useState('')
-  const [showDistancePicker, setShowDistancePicker] = useState(false)
-  const distanceBadgeRef = useRef<HTMLButtonElement>(null)
   const locationBtnRef = useRef<HTMLButtonElement>(null)
   const dismissLocationPrompt = () => {
     setLocationPromptFading(true)
@@ -245,16 +250,6 @@ export default function NewHome({
     window.addEventListener('scroll', onScroll, { once: true, passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [locationPromptDismissed])
-  useEffect(() => {
-    if (!showDistancePicker) return
-    const close = (e: MouseEvent) => {
-      // Badge button handles its own toggle — don't interfere
-      if (distanceBadgeRef.current?.contains(e.target as Node)) return
-      setShowDistancePicker(false)
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [showDistancePicker])
   // ─── Onboarding — show once per user ─────────────────────────────────────
   useEffect(() => {
     try {
@@ -711,6 +706,11 @@ export default function NewHome({
     }
     return final
   }, [serverDishes, dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
+
+  const isFiltered = !!(
+    searchQuery || activeCategory || filterDiet !== 'all' || filterMeal !== 'all'
+  )
+  const displayDishCount = isFiltered ? feedDishes.length : (totalDishCount || feedDishes.length)
 
   // ─── Modal allDishes snapshot — frozen when dish opens, immune to GPS reordering ──
   if (selectedDish) {
@@ -1465,25 +1465,7 @@ export default function NewHome({
               }}>{activeFilterCount}</span>
             )}
           </div>
-          <button
-            onClick={() => { setView(view === 'mapa' ? 'feed' : 'mapa'); window.scrollTo(0, 0) }}
-            style={{
-              flexShrink: 0,
-              width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: 'pointer',
-              background: view === 'mapa'
-                ? (isDark ? 'rgba(244,166,35,0.18)' : 'rgba(244,166,35,0.15)')
-                : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'),
-              color: view === 'mapa' ? '#F4A623' : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)'),
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              outline: `1px solid ${view === 'mapa' ? 'rgba(244,166,35,0.45)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)')}`,
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-              <line x1="8" y1="2" x2="8" y2="18"/>
-              <line x1="16" y1="6" x2="16" y2="22"/>
-            </svg>
-          </button>
+          {/* Botón mapa oculto por ahora */}
         </div>
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
@@ -1505,76 +1487,13 @@ export default function NewHome({
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
-          {/* Badge distancia — oculto en modo mapa */}
-          {userLocation && view !== 'mapa' && (
-            <div style={{ flexShrink: 0 }}>
-              <button
-                ref={distanceBadgeRef}
-                type="button"
-                onClick={() => setShowDistancePicker(p => !p)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(224,146,0,0.10)',
-                  border: `1px solid ${isDark ? 'rgba(244,166,35,0.25)' : 'rgba(224,146,0,0.25)'}`,
-                  borderRadius: 999, padding: '3px 10px',
-                  color: '#e09200', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {`${filterMaxKm} km`}
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
-              </button>
-              {showDistancePicker && typeof document !== 'undefined' && createPortal(
-                (() => {
-                  const r = distanceBadgeRef.current?.getBoundingClientRect()
-                  if (!r) return null
-                  return (
-                    <div style={{
-                      position: 'fixed', top: r.bottom + 6, right: window.innerWidth - r.right, zIndex: 99999,
-                      background: isDark ? '#1a1a1a' : '#fff',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                      borderRadius: 12, overflow: 'hidden',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                      minWidth: 120,
-                      fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-                    }}
-                    onMouseDown={e => e.stopPropagation()}>
-                      <div style={{ padding: '8px 12px 4px', fontSize: 11, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                        Radio
-                      </div>
-                      {[1, 3, 5, 10, 20, 30].map(km => (
-                        <button
-                          key={km}
-                          type="button"
-                          onMouseDown={e => e.preventDefault()}
-                          onClick={() => {
-                            setFilterMaxKm(km)
-                            setDraftMaxKm(km)
-                            userSetMaxKm.current = true
-                            setShowDistancePicker(false)
-                          }}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            width: '100%', padding: '9px 14px',
-                            background: filterMaxKm === km || (km === 30 && filterMaxKm >= 30) ? (isDark ? 'rgba(244,166,35,0.12)' : 'rgba(244,166,35,0.1)') : 'none',
-                            border: 'none', cursor: 'pointer',
-                            color: filterMaxKm === km || (km === 30 && filterMaxKm >= 30) ? '#e09200' : isDark ? 'rgba(255,255,255,0.75)' : '#333',
-                            fontSize: 14, fontWeight: filterMaxKm === km ? 600 : 400,
-                            textAlign: 'left',
-                          }}
-                        >
-                          {km >= 30 ? 'Todo' : `${km} km`}
-                          {(filterMaxKm === km || (km === 30 && filterMaxKm >= 30)) && (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e09200" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )
-                })(),
-                document.body
-              )}
-            </div>
-          )}
+          <span style={{
+            flexShrink: 0, fontSize: 14, fontWeight: 500,
+            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+            whiteSpace: 'nowrap',
+          }}>
+            {displayDishCount.toLocaleString('es-CL')} platos
+          </span>
         </div>
 
       </header>
@@ -1675,31 +1594,21 @@ export default function NewHome({
       {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && view !== 'mapa' && (
         <div style={{
           position: 'fixed', left: 0, right: 0, zIndex: 35,
-          top: !isDesktop && showFloatingSearch ? floatingHeaderH : stickyHeaderVisible ? headerHeight : 8,
-          transition: 'top 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)',
+          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
           display: 'flex', justifyContent: 'center',
+          pointerEvents: 'none',
         }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: (showFloatingSearch || stickyHeaderVisible) ? '10px 20px' : '10px 20px',
-            background: (showFloatingSearch || stickyHeaderVisible)
-              ? (isDark ? 'rgba(14,14,14,0.97)' : 'rgba(245,244,241,0.97)')
-              : (isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)'),
+            padding: '10px 16px',
+            background: isDark ? 'rgba(14,14,14,0.97)' : 'rgba(255,255,255,0.97)',
             backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-            borderRadius: (showFloatingSearch || stickyHeaderVisible) ? 0 : 999,
-            minWidth: (showFloatingSearch || stickyHeaderVisible) ? '100%' : 0,
+            borderRadius: 999,
             boxSizing: 'border-box' as const,
-            border: (showFloatingSearch || stickyHeaderVisible)
-              ? 'none'
-              : `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
-            borderTop: (showFloatingSearch || stickyHeaderVisible)
-              ? `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`
-              : 'none',
-            boxShadow: (showFloatingSearch || stickyHeaderVisible)
-              ? '0 2px 8px rgba(0,0,0,0.06)'
-              : '0 3px 18px rgba(0,0,0,0.16)',
-            transition: 'border-radius 0.28s cubic-bezier(0.0,0.0,0.2,1), min-width 0.28s cubic-bezier(0.0,0.0,0.2,1), padding 0.28s cubic-bezier(0.0,0.0,0.2,1)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+            boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
             justifyContent: 'center',
+            pointerEvents: 'auto',
           }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flexShrink: 0, marginRight: 4 }}>
@@ -2108,23 +2017,13 @@ export default function NewHome({
                     <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     {locationName || gpsLabel || 'Ubicación'}
                   </button>
-                  {userLocation && (
-                    <button
-                      ref={distanceBadgeRef}
-                      type="button"
-                      onClick={() => setShowDistancePicker(p => !p)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        background: isDark ? 'rgba(244,166,35,0.12)' : 'rgba(224,146,0,0.10)',
-                        border: `1px solid ${isDark ? 'rgba(244,166,35,0.25)' : 'rgba(224,146,0,0.25)'}`,
-                        borderRadius: 999, padding: '3px 10px',
-                        color: '#e09200', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                      }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      {`${filterMaxKm} km`}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
-                    </button>
-                  )}
+                  <span style={{
+                    fontSize: 12, fontWeight: 500,
+                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {displayDishCount.toLocaleString('es-CL')} platos
+                  </span>
                 </div>
               )}
               <div style={{ flex: 1 }} />
@@ -2160,7 +2059,7 @@ export default function NewHome({
           {view !== 'mapa' && feedDishes.length > 0 ? (
             <>
               <div style={{ marginTop: -6 }} />
-              <div style={{ position: 'relative', paddingTop: eurekaLiked.length > 0 ? 73 : 0, transition: 'padding-top 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>
+              <div style={{ position: 'relative', paddingBottom: eurekaLiked.length > 0 ? 90 : 0, transition: 'padding-bottom 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>
                 <MasonryGrid
                   dishes={activeFeedDishes.slice(0, visibleCount)}
                   onDishTap={handleDishTap}

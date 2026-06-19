@@ -8,6 +8,8 @@ import { createEmptyProfile } from '../a/lib/scoring'
 import { trackInteraction } from '../a/lib/feed-actions'
 import { VeganIcon, VegetarianIcon, SpicyIcon } from '../a/components/DietIcons'
 import NavMenuPanel from '../a/components/NavMenuPanel'
+import FeedFilterBar, { type FilterBarFilters } from '../a/components/FeedFilterBar'
+import LocationModal from '../a/components/LocationModal'
 
 const profile = createEmptyProfile()
 const PAGE_SIZE = 6
@@ -61,39 +63,73 @@ export default function DescubrirClient() {
   const [allRecommended, setAllRecommended] = useState<FeedDish[]>([])
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [refetching, setRefetching] = useState(false)
   const [selectedDish, setSelectedDish] = useState<FeedDish | null>(null)
   const [isDark, setIsDark] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [activeDiet, setActiveDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
-  const [activeMaxKm, setActiveMaxKm] = useState<number>(15)
+  const [locationLabel, setLocationLabel] = useState<string | null>(null)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [filters, setFilters] = useState<FilterBarFilters>({
+    diet: 'all', maxKm: 5, sort: 'default',
+    meal: 'all', mealDisplay: 'all',
+    nearby: false, popular: false,
+  })
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const recommendedRef = useRef<HTMLDivElement>(null)
-
-  // Keep references for re-fetching
   const likedIdsRef = useRef<string[]>([])
-  const locRef = useRef<{ lat?: number; lng?: number }>({})
+  const initialLoadDone = useRef(false)
 
+  // Init: read location + filters from localStorage
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'))
     try {
       const saved = localStorage.getItem('qc_location')
       if (saved) {
-        const { lat, lng } = JSON.parse(saved)
+        const { lat, lng, label } = JSON.parse(saved)
         setUserLocation({ lat, lng })
+        setLocationLabel(label ?? null)
       }
     } catch {}
     try {
       const savedFilters = localStorage.getItem('qc_active_filters')
       if (savedFilters) {
         const { diet, maxKm } = JSON.parse(savedFilters)
-        if (diet && diet !== 'all') setActiveDiet(diet)
-        if (maxKm && maxKm < 30) setActiveMaxKm(maxKm)
+        setFilters(f => ({
+          ...f,
+          diet: diet ?? 'all',
+          maxKm: maxKm ?? 5,
+        }))
       }
     } catch {}
   }, [])
 
+  // Fetch recommendations
+  const fetchRecommendations = useCallback(async (
+    dishIds: string[],
+    loc: { lat?: number; lng?: number },
+    f: FilterBarFilters,
+    isRefetch = false,
+  ) => {
+    if (!dishIds.length) return
+    if (isRefetch) setRefetching(true)
+    try {
+      const diet = f.diet !== 'all' ? f.diet : undefined
+      const maxKm = loc.lat ? f.maxKm : undefined
+      const res = await fetch('/api/eureka', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dishIds, lat: loc.lat, lng: loc.lng, maxKm, diet }),
+      })
+      const data = await res.json()
+      setAllRecommended(data.dishes ?? [])
+      setPage(0)
+    } catch {}
+    if (isRefetch) setRefetching(false)
+  }, [])
+
+  // Initial load
   useEffect(() => {
     async function load() {
       try {
@@ -106,50 +142,42 @@ export default function DescubrirClient() {
 
         const locRaw = localStorage.getItem('qc_location')
         const loc = locRaw ? JSON.parse(locRaw) : {}
-        locRef.current = loc
 
         const filtersRaw = localStorage.getItem('qc_active_filters')
-        const activeFilters = filtersRaw ? JSON.parse(filtersRaw) : {}
-        const diet = activeFilters.diet && activeFilters.diet !== 'all' ? activeFilters.diet : undefined
-        const maxKm = loc?.lat ? (activeFilters.maxKm ?? 15) : undefined
-        if (activeFilters.diet && activeFilters.diet !== 'all') setActiveDiet(activeFilters.diet)
-        if (activeFilters.maxKm && activeFilters.maxKm < 30) setActiveMaxKm(activeFilters.maxKm)
+        const savedFilters = filtersRaw ? JSON.parse(filtersRaw) : {}
+        const initFilters: FilterBarFilters = {
+          diet: savedFilters.diet ?? 'all',
+          maxKm: savedFilters.maxKm ?? 5,
+          sort: 'default', meal: 'all', mealDisplay: 'all',
+          nearby: false, popular: false,
+        }
 
-        const res = await fetch('/api/eureka', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            dishIds: likedDishes.map(d => d.id),
-            lat: loc?.lat,
-            lng: loc?.lng,
-            maxKm,
-            diet,
-          }),
-        })
-        const data = await res.json()
-        setAllRecommended(data.dishes ?? [])
+        await fetchRecommendations(likedDishes.map(d => d.id), loc, initFilters)
       } catch {}
       setLoading(false)
+      initialLoadDone.current = true
     }
     load()
-  }, [])
+  }, [fetchRecommendations])
+
+  // Re-fetch when filters change (after initial load)
+  useEffect(() => {
+    if (!initialLoadDone.current) return
+    if (!likedIdsRef.current.length) return
+    const loc = userLocation ?? {}
+    fetchRecommendations(likedIdsRef.current, loc, filters, true)
+    try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filters.diet, maxKm: filters.maxKm })) } catch {}
+  }, [filters, fetchRecommendations, userLocation])
 
   const q = search.toLowerCase()
-
   const pageRecommended = allRecommended.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  const filteredLiked = liked.filter(d =>
-    !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
-  )
   const filteredRecommended = pageRecommended.filter(d =>
     !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
   )
-
   const totalPages = Math.ceil(allRecommended.length / PAGE_SIZE)
-
-  const MAX_PAGES = 4
-  const visiblePages = Math.min(totalPages, MAX_PAGES)
-
   const allDishes = [...liked, ...allRecommended]
+
+  const activeFilterCount = (filters.diet !== 'all' ? 1 : 0) + (filters.maxKm !== 5 ? 1 : 0)
 
   const handleTap = useCallback((dish: FeedDish) => {
     setSelectedDish(dish)
@@ -188,7 +216,7 @@ export default function DescubrirClient() {
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar en QuieroComer"
+              placeholder="Buscar en sugerencias"
               style={{
                 width: '100%', padding: '11px 36px 11px 20px',
                 borderRadius: 999, fontSize: 15, boxSizing: 'border-box',
@@ -222,37 +250,20 @@ export default function DescubrirClient() {
           </button>
         </div>
 
-        {/* Filtros activos heredados del feed */}
-        {(activeDiet !== 'all' || (userLocation && activeMaxKm < 30)) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 11, color: mutedColor, marginRight: 2 }}>Filtrando por:</span>
-            {activeDiet !== 'all' && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 99,
-                background: isDark ? 'rgba(76,175,80,0.18)' : 'rgba(76,175,80,0.12)',
-                color: '#388E3C',
-              }}>
-                {activeDiet === 'VEGAN' ? '🌱 Vegano' : '🥦 Vegetariano'}
-              </span>
-            )}
-            {userLocation && activeMaxKm < 30 && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 99,
-                background: isDark ? 'rgba(74,144,226,0.18)' : 'rgba(74,144,226,0.12)',
-                color: '#1976D2',
-              }}>
-                📍 ≤{activeMaxKm} km
-              </span>
-            )}
-            <a href="/" onClick={(e) => { e.preventDefault(); goHomeKeep() }} style={{
-              fontSize: 11, color: mutedColor, textDecoration: 'underline', marginLeft: 2,
-            }}>
-              Cambiar
-            </a>
-          </div>
-        )}
+        {/* Rows 3+4: mismo filter bar que el home */}
+        <FeedFilterBar
+          isDark={isDark}
+          userLocation={userLocation}
+          locationLabel={locationLabel}
+          filters={filters}
+          activeFilterCount={activeFilterCount}
+          onLocationClick={() => setLocationModalOpen(true)}
+          onFiltersChange={setFilters}
+          showMapButton={false}
+          showSortFilter={false}
+          showMealFilter={false}
+          applyLabel="Actualizar sugerencias"
+        />
       </header>
 
       <NavMenuPanel
@@ -264,6 +275,19 @@ export default function DescubrirClient() {
         onPerfil={goHomeKeep}
         onContacto={() => { window.location.href = 'mailto:hola@quierocomer.cl' }}
       />
+
+      {locationModalOpen && (
+        <LocationModal
+          isDark={isDark}
+          onClose={() => setLocationModalOpen(false)}
+          onConfirm={({ lat, lng, label }) => {
+            setUserLocation({ lat, lng })
+            setLocationLabel(label)
+            try { localStorage.setItem('qc_location', JSON.stringify({ lat, lng, label })) } catch {}
+            setLocationModalOpen(false)
+          }}
+        />
+      )}
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
@@ -291,7 +315,25 @@ export default function DescubrirClient() {
           </a>
         </div>
       ) : (
-        <div style={{ padding: '20px 14px 80px' }}>
+        <div style={{ padding: '20px 14px 80px', position: 'relative' }}>
+
+          {/* Loading overlay while refetching */}
+          {refetching && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 10,
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+              paddingTop: 60,
+              background: isDark ? 'rgba(14,14,14,0.6)' : 'rgba(245,244,241,0.6)',
+              backdropFilter: 'blur(2px)',
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                border: `3px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                borderTopColor: '#F4A623',
+                animation: 'spin 0.8s linear infinite',
+              }} />
+            </div>
+          )}
 
           {/* Back + título */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -311,6 +353,7 @@ export default function DescubrirClient() {
               Tus elegidos
             </p>
           </div>
+
           {liked.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 32 }}>
               {Array.from({ length: 6 }).map((_, i) => {
@@ -330,7 +373,6 @@ export default function DescubrirClient() {
                         <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.restaurante}</p>
                       </div>
                     </div>
-                    {/* X para quitar */}
                     <button
                       onClick={() => {
                         const next = liked.filter(x => x.id !== d.id)
@@ -369,7 +411,7 @@ export default function DescubrirClient() {
             <p style={{ fontSize: 13, color: mutedColor, marginBottom: 32 }}>Sin resultados.</p>
           )}
 
-          {/* Platos nuevos que te podrían gustar */}
+          {/* Platos que te podrían gustar */}
           {allRecommended.length > 0 && (
             <>
               <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -468,7 +510,6 @@ export default function DescubrirClient() {
               </svg>
               Volver a explorar
             </a>
-
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>

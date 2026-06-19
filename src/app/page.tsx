@@ -25,6 +25,8 @@ export default async function HomePage() {
     getCachedCategoryCountMap(),
   ])
 
+  const totalDishCount = Object.values(categoryCountMap).reduce((s, n) => s + n, 0)
+
   return (
     <FeedLayout>
       <NewHome
@@ -33,6 +35,7 @@ export default async function HomePage() {
         keywordScores={{}}
         totalInteractions={0}
         categoryCountMap={categoryCountMap}
+        totalDishCount={totalDishCount}
       />
     </FeedLayout>
   )
