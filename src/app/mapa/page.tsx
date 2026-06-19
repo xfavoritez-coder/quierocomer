@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
-import dynamic from 'next/dynamic'
 import FeedLayout from '../a/layout'
-
-const MapaClient = dynamic(() => import('./MapaClient'), { ssr: false })
+import MapaClient from './MapaClient'
 
 export const metadata: Metadata = {
   title: 'Mapa — QuieroComer',

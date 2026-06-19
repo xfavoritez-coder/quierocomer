@@ -21,6 +21,7 @@ import {
 import { QC_PARENTS, getPrimaryDishType, DISH_TYPE_TO_PARENT } from '../lib/categories'
 import { slugify } from '@/lib/slugify'
 import NavMenuPanel from '../components/NavMenuPanel'
+import FeedMapView from '../components/FeedMapView'
 
 function normStr(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -60,7 +61,7 @@ function detectMealSlot(): MealSlot {
   return 'cena'
 }
 
-type View = 'feed' | 'perfil' | 'all-liked' | 'all-saved' | 'contacto'
+type View = 'feed' | 'perfil' | 'all-liked' | 'all-saved' | 'contacto' | 'mapa'
 
 export default function NewHome({
   dishes,
@@ -1458,6 +1459,25 @@ export default function NewHome({
               }}>{activeFilterCount}</span>
             )}
           </div>
+          <button
+            onClick={() => { setView(view === 'mapa' ? 'feed' : 'mapa'); window.scrollTo(0, 0) }}
+            style={{
+              flexShrink: 0,
+              width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: 'pointer',
+              background: view === 'mapa'
+                ? (isDark ? 'rgba(244,166,35,0.18)' : 'rgba(244,166,35,0.15)')
+                : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'),
+              color: view === 'mapa' ? '#F4A623' : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)'),
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              outline: `1px solid ${view === 'mapa' ? 'rgba(244,166,35,0.45)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)')}`,
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+              <line x1="8" y1="2" x2="8" y2="18"/>
+              <line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+          </button>
         </div>
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
@@ -1646,7 +1666,7 @@ export default function NewHome({
       )}
 
       {/* ─── Eureka pill → banner morph ─── */}
-      {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && (
+      {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && view !== 'mapa' && (
         <div style={{
           position: 'fixed', left: 0, right: 0, zIndex: 35,
           top: !isDesktop && showFloatingSearch ? floatingHeaderH : stickyHeaderVisible ? headerHeight : 8,
@@ -2003,8 +2023,8 @@ export default function NewHome({
         activeView={view}
       />
 
-      {/* ─── Feed View ─── */}
-      {view === 'feed' && (
+      {/* ─── Feed View / Mapa View ─── */}
+      {(view === 'feed' || view === 'mapa') && (
         <>
 
           {/* Location dropdown anchor */}
@@ -2117,8 +2137,17 @@ export default function NewHome({
             </div>
           )}
 
+          {/* Map view */}
+          {view === 'mapa' && (
+            <FeedMapView
+              dishes={feedDishes}
+              isDark={isDark}
+              onDishTap={handleDishTap}
+            />
+          )}
+
           {/* Feed masonry */}
-          {feedDishes.length > 0 ? (
+          {view !== 'mapa' && feedDishes.length > 0 ? (
             <>
               <div style={{ marginTop: -6 }} />
               <div style={{ position: 'relative', paddingTop: eurekaLiked.length > 0 ? 73 : 0, transition: 'padding-top 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>

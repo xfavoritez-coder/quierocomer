@@ -3,72 +3,115 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-
-export type MapRestaurant = {
-  id: string
-  name: string
-  slug: string
-  lat: number
-  lng: number
-  logo: string | null
-  googleRating: number | null
-  googleRatingCount: number | null
-  dishes: { id: string; name: string; fotoUrl: string | null; precio: number; categoria: string }[]
-}
+import type { MapRestaurant } from './MapaClient'
 
 type Props = {
   restaurants: MapRestaurant[]
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void
   onRestaurantClick: (r: MapRestaurant) => void
+  isDark: boolean
 }
 
-export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick }: Props) {
+const normalStyle: L.CircleMarkerOptions = {
+  radius: 7,
+  fillColor: '#F4A623',
+  color: 'rgba(255,255,255,0.4)',
+  weight: 2,
+  opacity: 1,
+  fillOpacity: 1,
+}
+
+const selectedStyle: L.CircleMarkerOptions = {
+  radius: 10,
+  fillColor: '#e09200',
+  color: '#ffffff',
+  weight: 2.5,
+  opacity: 1,
+  fillOpacity: 1,
+}
+
+function buildPopupHtml(r: MapRestaurant): string {
+  const logoHtml = r.logo
+    ? `<img src="${r.logo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0"/>`
+    : `<div style="width:36px;height:36px;border-radius:8px;background:rgba(244,166,35,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:700;color:#F4A623">${r.name[0].toUpperCase()}</div>`
+
+  const dishPhotos = r.dishes.filter(d => d.fotoUrl).slice(0, 3)
+  const fotosHtml = dishPhotos.length > 0
+    ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px">
+        ${dishPhotos.map(d => `<img src="${d.fotoUrl}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block">`).join('')}
+       </div>`
+    : ''
+
+  return `
+    <div style="background:#1a1a1a;border-radius:14px;padding:14px;min-width:200px;max-width:240px;color:#fff;font-family:system-ui,sans-serif;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        ${logoHtml}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px">
+            ${r.googleRating ? `⭐ ${r.googleRating.toFixed(1)}` : ''} · ${r.dishes.length} platos
+          </div>
+        </div>
+      </div>
+      ${fotosHtml}
+    </div>
+  `
+}
+
+export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantClick, isDark }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
-  const markersRef = useRef<L.Marker[]>([])
+  const markersRef = useRef<L.CircleMarker[]>([])
+  const activeIdRef = useRef<string | null>(null)
+  const tileLayerRef = useRef<L.TileLayer | null>(null)
 
-  // Initialize map once
+  // Swap tile layer when isDark changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (tileLayerRef.current) { tileLayerRef.current.remove() }
+    const url = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+    tileLayerRef.current = L.tileLayer(url, {
+      attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map)
+  }, [isDark])
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
     const map = L.map(containerRef.current, {
       center: [-33.4489, -70.6693],
       zoom: 12,
-      zoomControl: true,
     })
+    mapRef.current = map
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    const url = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+    tileLayerRef.current = L.tileLayer(url, {
+      attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
+      subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map)
 
     const emitBounds = () => {
       const b = map.getBounds()
-      onBoundsChange({
-        north: b.getNorth(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        west: b.getWest(),
-      })
+      onBoundsChange({ north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() })
     }
 
     map.on('moveend', emitBounds)
     map.on('zoomend', emitBounds)
-
-    mapRef.current = map
-
-    // Emit initial bounds after tiles load
-    map.once('load', emitBounds)
-    // Fallback: emit after a short tick in case 'load' already fired
     setTimeout(emitBounds, 300)
 
     return () => {
-      map.off('moveend', emitBounds)
-      map.off('zoomend', emitBounds)
       map.remove()
       mapRef.current = null
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Update markers when restaurants change
@@ -76,46 +119,73 @@ export default function LeafletMap({ restaurants, onBoundsChange, onRestaurantCl
     const map = mapRef.current
     if (!map) return
 
-    // Remove old markers
-    markersRef.current.forEach((m) => m.remove())
+    markersRef.current.forEach(m => m.remove())
     markersRef.current = []
+    activeIdRef.current = null
 
-    restaurants.forEach((r) => {
-      const logoHtml = r.logo
-        ? `<img src="${r.logo}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=\\'font-size:18px\\'>🍽</span>'"/>`
-        : '<span style="font-size:18px">🍽</span>'
+    restaurants.forEach(r => {
+      const circle = L.circleMarker([r.lat, r.lng], normalStyle)
 
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style="width:36px;height:36px;border-radius:50%;border:2.5px solid #F4A623;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.18);cursor:pointer">${logoHtml}</div>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-        popupAnchor: [0, -20],
-      })
+      const popup = L.popup({
+        closeButton: false,
+        className: 'qc-mapa-popup',
+        maxWidth: 260,
+        offset: [0, -8],
+      }).setContent(buildPopupHtml(r))
 
-      const ratingText = r.googleRating ? `⭐ ${r.googleRating.toFixed(1)}` : '⭐ –'
-      const marker = L.marker([r.lat, r.lng], { icon })
-        .bindPopup(
-          `<div style="font-family:system-ui,sans-serif;min-width:140px">
-            <b style="font-size:14px">${r.name}</b><br/>
-            <span style="font-size:12px;color:#666">${ratingText} · ${r.dishes.length} platos</span>
-          </div>`,
-          { offset: [0, -4] }
-        )
-        .addTo(map)
+      circle.on('click', (e) => {
+        L.DomEvent.stopPropagation(e)
 
-      marker.on('click', () => {
+        if (activeIdRef.current && activeIdRef.current !== r.id) {
+          const prev = markersRef.current.find(m => (m as L.CircleMarker & { _qcId?: string })._qcId === activeIdRef.current)
+          if (prev) prev.setStyle(normalStyle)
+        }
+        activeIdRef.current = r.id
+        ;(circle as L.CircleMarker & { _qcId?: string })._qcId = r.id
+        circle.setStyle(selectedStyle)
+        circle.bindPopup(popup).openPopup()
         onRestaurantClick(r)
       })
 
-      markersRef.current.push(marker)
+      popup.on('remove', () => {
+        if (activeIdRef.current === r.id) {
+          circle.setStyle(normalStyle)
+          activeIdRef.current = null
+        }
+      })
+
+      ;(circle as L.CircleMarker & { _qcId?: string })._qcId = r.id
+      circle.addTo(map)
+      markersRef.current.push(circle)
     })
   }, [restaurants, onRestaurantClick])
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%' }}
-    />
+    <>
+      <style>{`
+        .qc-mapa-popup .leaflet-popup-content-wrapper {
+          background: transparent !important;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+          border-radius: 14px !important;
+          padding: 0 !important;
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+        .qc-mapa-popup .leaflet-popup-content { margin: 0 !important; }
+        .qc-mapa-popup .leaflet-popup-tip-container { display: none; }
+        .leaflet-control-attribution {
+          font-size: 9px !important;
+          background: rgba(0,0,0,0.6) !important;
+          color: rgba(255,255,255,0.3) !important;
+        }
+        .leaflet-control-attribution a { color: rgba(255,255,255,0.3) !important; }
+        .leaflet-control-zoom a {
+          background: #1a1a1a !important;
+          color: #fff !important;
+          border-color: rgba(255,255,255,0.15) !important;
+        }
+        .leaflet-control-zoom a:hover { background: #2a2a2a !important; }
+      `}</style>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    </>
   )
 }
