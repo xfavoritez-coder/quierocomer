@@ -63,6 +63,19 @@ const MENU_PROVIDERS = new Set(['Fudo', 'OlaClick', 'Gourmedia', 'Queresto', 'To
 const PEDIR_ONLINE_PROVIDERS = new Set(['Rappi', 'Justo', 'UberEats', 'Mercat'])
 const PEDIR_ONLINE_DOMAINS = ['rappi.com', 'rappi.cl', 'ubereats.com', 'getjusto.com', 'justo.pe', 'justo.cl', 'mercat.cl']
 
+function getInstagramInfo(ig: string | null | undefined): { url: string; handle: string } | null {
+  if (!ig) return null
+  if (ig.startsWith('http')) {
+    const match = ig.match(/instagram\.com\/([^/?#]+)/)
+    const handle = match ? match[1] : null
+    if (!handle) return null
+    return { url: ig, handle: `@${handle}` }
+  }
+  const handle = ig.replace(/^@/, '').trim()
+  if (!handle) return null
+  return { url: `https://www.instagram.com/${handle}/`, handle: `@${handle}` }
+}
+
 function getPedirOnlineUrl(website: string | null | undefined, cartaProvider?: string | null): string | null {
   if (!website) return null
   if (cartaProvider) return PEDIR_ONLINE_PROVIDERS.has(cartaProvider) ? website : null
@@ -715,6 +728,31 @@ function DesktopDishContent({
                   </svg>
                 </a>
               )}
+              {/* Instagram */}
+              {(() => {
+                const ig = getInstagramInfo(dish.restauranteInstagram)
+                if (!ig) return null
+                return (
+                  <a href={ig.url} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
+                    background: isDark ? 'rgba(225,48,108,0.08)' : 'rgba(225,48,108,0.06)',
+                    border: `1.5px solid ${isDark ? 'rgba(225,48,108,0.25)' : 'rgba(225,48,108,0.2)'}`,
+                    borderRadius: 12, textDecoration: 'none',
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                    </svg>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#E1306C' }}>Ver Instagram</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(225,48,108,0.6)' : 'rgba(180,30,80,0.6)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ig.handle}</span>
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(225,48,108,0.4)" strokeWidth="2.2" strokeLinecap="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </a>
+                )
+              })()}
             </div>
           )
         })()}
@@ -1075,6 +1113,31 @@ function DishSlide({
               </svg>
             </a>
           )}
+          {/* Instagram */}
+          {(() => {
+            const ig = getInstagramInfo(dish.restauranteInstagram)
+            if (!ig) return null
+            return (
+              <a href={ig.url} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
+                background: isDark ? 'rgba(225,48,108,0.08)' : 'rgba(225,48,108,0.06)',
+                border: `1.5px solid ${isDark ? 'rgba(225,48,108,0.25)' : 'rgba(225,48,108,0.2)'}`,
+                textDecoration: 'none',
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+                <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#E1306C', whiteSpace: 'nowrap' }}>Ver Instagram</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(225,48,108,0.6)' : 'rgba(180,30,80,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ig.handle}</span>
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(225,48,108,0.4)" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </a>
+            )
+          })()}
         </div>
 
         {/* Related dishes */}
