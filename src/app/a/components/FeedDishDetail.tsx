@@ -133,7 +133,7 @@ function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, 
   if (!website) {
     // Fallback: si tiene cartaProvider de carta digital pero sin URL externa, usar la carta en QC
     if (cartaProvider && MENU_PROVIDERS.has(cartaProvider) && slug) {
-      return { url: `/${slug}`, type: 'menu' }
+      return { url: `/qr/${slug}`, type: 'menu' }
     }
     return null
   }
@@ -782,7 +782,7 @@ function DesktopDishContent({
               )}
               {/* Ver carta QR — carta de QuieroComer */}
               {!dish.isShowcase && (
-                <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
@@ -1197,7 +1197,7 @@ function DishSlide({
 
           {/* Ver carta QR — carta de QuieroComer */}
           {!dish.isShowcase && (
-            <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+            <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
