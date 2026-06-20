@@ -80,6 +80,40 @@ export async function POST(req: NextRequest) {
   // Invalidar cache del feed para que aparezca de inmediato
   revalidateTag("feed-dishes", { expire: 0 });
 
+  // Vincular con MapaProspecto: marcar como importado para que el pin quede naranja
+  // Busca primero por placeId (Google Place ID = MapaProspecto.id), luego por mapsUrl
+  try {
+    const placeId = restaurantData.placeId ?? null;
+    const mapsUrl = restaurantData.mapsUrl ?? restaurantData.googleMapsUrl ?? null;
+    let matched = false;
+
+    if (placeId) {
+      const updated = await prisma.mapaProspecto.updateMany({
+        where: { id: placeId, importedSlug: null },
+        data: { importedSlug: slug },
+      });
+      matched = updated.count > 0;
+    }
+
+    if (!matched && mapsUrl) {
+      // Fallback: buscar por mapsUrl exacto o por inicio de URL (sin parámetros de tracking)
+      const baseUrl = mapsUrl.split('?')[0];
+      await prisma.mapaProspecto.updateMany({
+        where: {
+          OR: [
+            { mapsUrl: mapsUrl },
+            { mapsUrl: { startsWith: baseUrl } },
+          ],
+          importedSlug: null,
+        },
+        data: { importedSlug: slug },
+      });
+    }
+  } catch (e) {
+    // No crítico — el showcase se crea igual aunque no haga match
+    console.warn("[showcase/create] No se pudo vincular MapaProspecto:", e);
+  }
+
   return NextResponse.json({ slug, restaurantId: restaurant.id });
   } catch (e: any) {
     console.error("[showcase/create] Error:", e);

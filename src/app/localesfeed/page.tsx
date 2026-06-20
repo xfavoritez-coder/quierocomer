@@ -1765,6 +1765,7 @@ type ShowcasePlaceInfo = {
   lat: number
   lng: number
   mapsUrl: string
+  placeId: string | null
   rating: number | null
   reviews: number | null
 }
@@ -1813,6 +1814,7 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
         lat: data.lat ?? 0,
         lng: data.lng ?? 0,
         mapsUrl: mapsUrl.trim(),
+        placeId: data.placeId ?? null,
         rating: data.rating ?? null,
         reviews: data.reviews ?? null,
       })
@@ -1885,6 +1887,8 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
             googleRatingCount: placeInfo.reviews,
             website: websiteInput.trim() || null,
             instagram: instagramInput.trim() || null,
+            placeId: placeInfo.placeId,
+            mapsUrl: placeInfo.mapsUrl,
           },
           dishes: dishes.filter(d => d.name.trim()),
         }),
