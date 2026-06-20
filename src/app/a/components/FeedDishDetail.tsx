@@ -811,8 +811,8 @@ function DesktopDishContent({
                   </svg>
                 </a>
               )}
-              {/* Ver Instagram */}
-              {(() => {
+              {/* Ver Instagram — solo showcase */}
+              {dish.isShowcase && (() => {
                 const ig = getInstagramInfo(dish.restauranteInstagram)
                 if (!ig) return null
                 return (
@@ -1231,8 +1231,8 @@ function DishSlide({
             </a>
           )}
 
-          {/* Ver Instagram */}
-          {(() => {
+          {/* Ver Instagram — solo showcase */}
+          {dish.isShowcase && (() => {
             const ig = getInstagramInfo(dish.restauranteInstagram)
             if (!ig) return null
             return (
