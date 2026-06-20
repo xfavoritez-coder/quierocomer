@@ -306,8 +306,8 @@ function TabMapa() {
   // Modal agregar manual
   const [addModal, setAddModal] = useState(false)
 
-  // Modal showcase
-  const [showcaseModal, setShowcaseModal] = useState(false)
+  // Modal showcase — null=cerrado, {}=sin prefill, {mapsUrl,name,...}=prefill desde fila
+  const [showcaseModal, setShowcaseModal] = useState<{ mapsUrl?: string; placeId?: string; name?: string; address?: string; lat?: number; lng?: number } | null>(null)
 
   // Polling: detectar cuando la taxonomía termina. Timeout de 3 min para no colgar el spinner.
   useEffect(() => {
@@ -691,7 +691,7 @@ function TabMapa() {
           {filtered.length} local{filtered.length !== 1 ? 'es' : ''}{isFiltering ? ` de ${places.length}` : ''} · {selected.size} seleccionado{selected.size !== 1 ? 's' : ''}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => setShowcaseModal(true)} style={{ fontSize: 12, color: '#34d399', background: 'none', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
+          <button onClick={() => setShowcaseModal({})} style={{ fontSize: 12, color: '#34d399', background: 'none', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
             + Agregar showcase
           </button>
           <button onClick={() => setAddModal(true)} style={{ fontSize: 12, color: '#a78bfa', background: 'none', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
@@ -865,7 +865,7 @@ function TabMapa() {
           return (
           <div
             key={p.id}
-            style={{ display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 70px 120px 120px 110px 36px', padding: '10px 14px', alignItems: 'center', borderBottom: '1px solid #1a1a1a', border: lastAddedId === p.id ? '2px solid #a78bfa' : undefined, transition: 'background 0.1s', background: lastAddedId === p.id ? 'rgba(167,139,250,0.07)' : selected.has(p.id) ? '#1a1100' : 'transparent' }}
+            style={{ display: 'grid', gridTemplateColumns: '32px 2fr 1.5fr 70px 120px 120px 110px 28px 36px', padding: '10px 14px', alignItems: 'center', borderBottom: '1px solid #1a1a1a', border: lastAddedId === p.id ? '2px solid #a78bfa' : undefined, transition: 'background 0.1s', background: lastAddedId === p.id ? 'rgba(167,139,250,0.07)' : selected.has(p.id) ? '#1a1100' : 'transparent' }}
             onMouseOver={e => { if (!selected.has(p.id) && lastAddedId !== p.id) e.currentTarget.style.background = '#1a1a1a' }}
             onMouseOut={e => { e.currentTarget.style.background = lastAddedId === p.id ? 'rgba(167,139,250,0.07)' : selected.has(p.id) ? '#1a1100' : 'transparent' }}
           >
@@ -1050,6 +1050,11 @@ function TabMapa() {
               })()}
             </div>
 
+            <button
+              title="Agregar como showcase"
+              onClick={() => setShowcaseModal({ mapsUrl: p.mapsUrl, placeId: p.id, name: p.name, address: p.address, lat: p.lat, lng: p.lng })}
+              style={{ background: 'none', border: 'none', color: '#34d399', fontSize: 15, cursor: 'pointer', padding: 0, textAlign: 'center' }}
+            >📸</button>
             <button onClick={() => removePlace(p.id)} style={{ background: 'none', border: 'none', color: '#333', fontSize: 16, cursor: 'pointer', padding: 0, textAlign: 'center' }}>
               ×
             </button>
@@ -1094,7 +1099,7 @@ function TabMapa() {
       )}
 
       {/* Showcase modal */}
-      {showcaseModal && <ShowcaseModal onClose={() => setShowcaseModal(false)} />}
+      {showcaseModal !== null && <ShowcaseModal initialPlace={showcaseModal} onClose={() => setShowcaseModal(null)} />}
     </>
   )
 }
@@ -1770,13 +1775,27 @@ type ShowcasePlaceInfo = {
   reviews: number | null
 }
 
-function ShowcaseModal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(1)
+function ShowcaseModal({ onClose, initialPlace }: { onClose: () => void; initialPlace?: { mapsUrl?: string; placeId?: string; name?: string; address?: string; lat?: number; lng?: number } }) {
+  // Si viene con datos desde una fila, pre-resolvemos y saltamos al paso 2
+  const hasPrefill = !!initialPlace?.name && initialPlace.lat != null
+
+  const [step, setStep] = useState(hasPrefill ? 2 : 1)
 
   // Step 1
-  const [mapsUrl, setMapsUrl] = useState('')
+  const [mapsUrl, setMapsUrl] = useState(initialPlace?.mapsUrl ?? '')
   const [resolving, setResolving] = useState(false)
-  const [placeInfo, setPlaceInfo] = useState<ShowcasePlaceInfo | null>(null)
+  const [placeInfo, setPlaceInfo] = useState<ShowcasePlaceInfo | null>(
+    hasPrefill ? {
+      name: initialPlace!.name!,
+      address: initialPlace!.address ?? '',
+      lat: initialPlace!.lat!,
+      lng: initialPlace!.lng!,
+      mapsUrl: initialPlace!.mapsUrl ?? '',
+      placeId: initialPlace!.placeId ?? null,
+      rating: null,
+      reviews: null,
+    } : null
+  )
   const [resolveError, setResolveError] = useState<string | null>(null)
 
   // Links opcionales
@@ -1858,7 +1877,7 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
         }
       } catch {}
 
-      const drafts: ShowcaseDishDraft[] = urls.map((url, i) => ({
+      const drafts: ShowcaseDishDraft[] = (urls as string[]).map((url: string, i: number) => ({
         name: recognized[i]?.name ?? '',
         description: recognized[i]?.description ?? null,
         photoUrl: url,
