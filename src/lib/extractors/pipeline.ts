@@ -963,6 +963,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
  * importFromProspecto — import a prospected place directly into the feed.
  * No Lead, no owner, no emails/WhatsApp. Creates Restaurant + Categories + Dishes.
  */
+// Proveedores que permiten ordenar online (no solo ver la carta)
+const ORDERING_PROVIDERS = new Set(['UberEats', 'Rappi', 'Justo', 'PedidosYa', 'Mercat'])
+
 export async function importFromProspecto(params: {
   prospectoId: string
   name: string
@@ -974,6 +977,7 @@ export async function importFromProspecto(params: {
   providerName: string | null
   onProgress?: (type: string, data: object) => void
 }): Promise<{ slug: string; dishCount: number }> {
+  const isOrderingProvider = ORDERING_PROVIDERS.has(params.providerName ?? '')
   // Get provider config from DB if known provider
   const provider = params.providerName
     ? await prisma.menuProvider.findFirst({
@@ -1009,7 +1013,7 @@ export async function importFromProspecto(params: {
     await prisma.category.deleteMany({ where: { restaurantId: existing.id } })
     await prisma.restaurant.update({
       where: { id: existing.id },
-      data: { name: cleanedName, logoUrl: extraction.logoUrl, website: params.cartaUrl, isActive: true, isDemo: false, menuImported: true },
+      data: { name: cleanedName, logoUrl: extraction.logoUrl, website: params.cartaUrl, websiteIsOrderUrl: isOrderingProvider, isActive: true, isDemo: false, menuImported: true },
     })
   }
 
@@ -1022,6 +1026,7 @@ export async function importFromProspecto(params: {
           lat: params.lat ?? null,
           lng: params.lng ?? null,
           website: params.cartaUrl,
+          websiteIsOrderUrl: isOrderingProvider,
           logoUrl: extraction.logoUrl ?? null,
           cartaTheme: "PREMIUM",
           cartaColorMode: "DARK",

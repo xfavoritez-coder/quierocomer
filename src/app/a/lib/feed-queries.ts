@@ -276,7 +276,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       isLactoseFree: true, isSoyFree: true, containsNuts: true, flavorTags: true,
       isHero: true, tags: true, leafOverride: true, txDishType: true, txIngredient: true,
       category: { select: { name: true, dishType: true, cuisineTag: true, normOverride: true } },
-      restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, googlePlaceId: true, primaryCategory: true, website: true } },
+      restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, googlePlaceId: true, primaryCategory: true, website: true, websiteIsOrderUrl: true } },
       feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
     },
   })
