@@ -6,13 +6,23 @@ function getSecondaryDishTypes(types: string[], primary: string): string[] {
   return types.filter(t => t !== primary && t !== 'extra' && t !== 'combo')
 }
 
-/** Redes sociales y links inútiles — no se muestra ningún botón */
-const SOCIAL_BLOCKED_SUFFIXES = [
-  'instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com',
-  'linktr.ee', 'linktree.com', 'atom.bio',
+/** Links sin valor para el usuario — no se muestra botón */
+const NO_BUTTON_SUFFIXES = [
   'tripadvisor.cl', 'tripadvisor.com',
   'google.com', 'share.google',
   'quierocomer.cl',
+]
+
+/** Redes sociales → "Ver Instagram" / "Ver Facebook" / etc. */
+const SOCIAL_PLATFORMS: { suffix: string; name: string }[] = [
+  { suffix: 'instagram.com', name: 'Instagram' },
+  { suffix: 'facebook.com', name: 'Facebook' },
+  { suffix: 'tiktok.com', name: 'TikTok' },
+  { suffix: 'twitter.com', name: 'Twitter' },
+  { suffix: 'x.com', name: 'Twitter' },
+  { suffix: 'linktr.ee', name: 'Linktree' },
+  { suffix: 'linktree.com', name: 'Linktree' },
+  { suffix: 'atom.bio', name: 'Bio' },
 ]
 
 /** Plataformas de pedido / delivery online → "Pedir online" */
@@ -45,13 +55,13 @@ const MENU_CARD_SUFFIXES = [
   'netlify.app',
 ]
 
-type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' }
+type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' | 'social'; socialName?: string }
 
 function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean): OrderInfo | null {
   if (!website) return null
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
-    if (SOCIAL_BLOCKED_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
+    if (NO_BUTTON_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
     if (isOrderUrl) return { url: website, type: 'delivery' }
     if (
       DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
@@ -60,6 +70,8 @@ function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean):
     if (MENU_CARD_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) {
       return { url: website, type: 'menu' }
     }
+    const social = SOCIAL_PLATFORMS.find(p => host === p.suffix || host.endsWith('.' + p.suffix))
+    if (social) return { url: website, type: 'social', socialName: social.name }
     return { url: website, type: 'website' }
   } catch { return null }
 }
@@ -606,26 +618,32 @@ function DesktopDishContent({
                   </svg>
                 </span>
               </a>
-              {/* Botón Pedir online / Ver carta online / Ver página web */}
+              {/* Botón Pedir online / Ver carta online / Ver página web / Ver Instagram… */}
               {(() => {
                 const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
                 if (!info) return null
-                const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : 'Ver página web'
+                const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : info.type === 'social' ? `Ver ${info.socialName}` : 'Ver página web'
                 const accent = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
                   : info.type === 'menu'
                     ? (isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a')
-                    : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
+                    : info.type === 'social'
+                      ? (isDark ? 'rgba(192,132,252,0.9)' : '#9333ea')
+                      : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
                 const accentBg = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
                   : info.type === 'menu'
                     ? (isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)')
-                    : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
+                    : info.type === 'social'
+                      ? (isDark ? 'rgba(192,132,252,0.12)' : 'rgba(147,51,234,0.08)')
+                      : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
                 const accentBorder = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
                   : info.type === 'menu'
                     ? (isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)')
-                    : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
+                    : info.type === 'social'
+                      ? (isDark ? 'rgba(192,132,252,0.45)' : 'rgba(147,51,234,0.35)')
+                      : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
                 return (
                   <a href={info.url} target="_blank" rel="noopener noreferrer"
                     style={{
@@ -643,6 +661,11 @@ function DesktopDishContent({
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                         <path d="M4 6h16M4 10h16M4 14h10"/>
                         <rect x="2" y="3" width="20" height="18" rx="2"/>
+                      </svg>
+                    ) : info.type === 'social' ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                        <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
                       </svg>
                     ) : (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -968,22 +991,28 @@ function DishSlide({
           {(() => {
             const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
             if (!info) return null
-            const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : 'Ver página web'
+            const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : info.type === 'social' ? `Ver ${info.socialName}` : 'Ver página web'
             const accent = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
               : info.type === 'menu'
                 ? (isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a')
-                : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
+                : info.type === 'social'
+                  ? (isDark ? 'rgba(192,132,252,0.9)' : '#9333ea')
+                  : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
             const accentBg = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
               : info.type === 'menu'
                 ? (isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)')
-                : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
+                : info.type === 'social'
+                  ? (isDark ? 'rgba(192,132,252,0.12)' : 'rgba(147,51,234,0.08)')
+                  : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
             const accentBorder = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
               : info.type === 'menu'
                 ? (isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)')
-                : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
+                : info.type === 'social'
+                  ? (isDark ? 'rgba(192,132,252,0.45)' : 'rgba(147,51,234,0.35)')
+                  : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
             return (
               <a href={info.url} target="_blank" rel="noopener noreferrer"
                 style={{
@@ -1001,6 +1030,11 @@ function DishSlide({
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <path d="M4 6h16M4 10h16M4 14h10"/>
                     <rect x="2" y="3" width="20" height="18" rx="2"/>
+                  </svg>
+                ) : info.type === 'social' ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
                   </svg>
                 ) : (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
