@@ -233,7 +233,8 @@ export default function DescubrirClient() {
           <div style={{ position: 'relative', flex: 1 }}>
             <input
               ref={searchRef}
-              type="search"
+              type="text"
+              autoComplete="off"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar en QuieroComer"
