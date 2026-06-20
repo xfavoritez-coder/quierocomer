@@ -91,7 +91,7 @@ export default function PublicarLocalView({
             </svg>
           </button>
           <h1 style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 700, color: isDark ? '#fff' : '#111', margin: 0 }}>
-            Publicar mi local
+            Tengo un local
           </h1>
         </div>
 
