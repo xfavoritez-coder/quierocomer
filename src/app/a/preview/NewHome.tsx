@@ -1304,14 +1304,14 @@ export default function NewHome({
                     Mi perfil
                   </button>
 
-                  {/* Publicar local */}
+                  {/* Tengo un local */}
                   <button onClick={() => { setView('publicar'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
                     color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%', boxSizing: 'border-box',
                   }}>
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    Publicar local
+                    Tengo un local
                   </button>
 
                   {/* Contacto */}
