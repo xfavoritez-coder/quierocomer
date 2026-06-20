@@ -14,6 +14,34 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 
 const TARGET = 24
 
+/**
+ * Tipos de plato conceptualmente relacionados.
+ * Se usan en el fallback para sugerir categorías similares
+ * sin salir al universo de ingredientes (que contamina con sushi via palta, etc.)
+ */
+const RELATED_TX_TYPES: Record<string, string[]> = {
+  'sándwich':    ['hamburguesa', 'hot dog', 'wrap', 'burrito', 'tostada', 'lomito', 'completo'],
+  'hamburguesa': ['sándwich', 'hot dog', 'lomito', 'wrap'],
+  'hot dog':     ['sándwich', 'hamburguesa', 'completo'],
+  'completo':    ['sándwich', 'hot dog', 'hamburguesa'],
+  'lomito':      ['sándwich', 'hamburguesa'],
+  'wrap':        ['sándwich', 'burrito', 'taco'],
+  'burrito':     ['wrap', 'taco', 'sándwich'],
+  'taco':        ['burrito', 'wrap'],
+  'pizza':       ['pasta', 'focaccia'],
+  'pasta':       ['pizza', 'risotto', 'gnocchi'],
+  'risotto':     ['pasta'],
+  'sushi':       ['sashimi', 'poke', 'temaki'],
+  'sashimi':     ['sushi', 'poke'],
+  'poke':        ['sushi', 'bowl'],
+  'pollo frito': ['hamburguesa', 'sándwich', 'tenders'],
+  'tenders':     ['pollo frito', 'nuggets', 'hamburguesa'],
+  'nuggets':     ['tenders', 'pollo frito'],
+  'empanada':    ['calzone', 'masa rellena'],
+  'ensalada':    ['bowl', 'poke'],
+  'bowl':        ['ensalada', 'poke'],
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -145,24 +173,59 @@ export async function POST(req: Request) {
 
     // ── 6. Selección proporcional ─────────────────────────────────────────────
     const selected: Candidate[] = []
+    const usedIds = new Set<string>()
+
     for (const cat of cats) {
       const n = slots[cat] ?? 0
       if (n === 0) continue
       const pool = (byCat[cat] ?? []).sort((a, b) => b.score - a.score)
-      selected.push(...pool.slice(0, n))
+      for (const c of pool.slice(0, n)) {
+        selected.push(c)
+        usedIds.add(c.row.id)
+      }
     }
 
-    // Si quedaron slots vacíos (sin candidatos en esa cat), rellenar con cualquier otro
+    // Fase 2: overflow de las mismas categorías liked (antes de salir a fallback)
+    // Cubre el caso donde una cat tiene < slots asignados por falta de candidatos cercanos
     if (selected.length < TARGET) {
-      const usedIds = new Set(selected.map(s => s.row.id))
-      const fallback = candidates
-        .filter(r => !usedIds.has(r.id))
-        .slice(0, TARGET - selected.length)
-        .map(row => {
-          const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
-          return { row, leaf, score: 0 }
-        })
-      selected.push(...fallback)
+      for (const cat of cats) {
+        if (selected.length >= TARGET) break
+        const pool = (byCat[cat] ?? []).sort((a, b) => b.score - a.score)
+        for (const c of pool) {
+          if (selected.length >= TARGET) break
+          if (!usedIds.has(c.row.id)) {
+            selected.push(c)
+            usedIds.add(c.row.id)
+          }
+        }
+      }
+    }
+
+    // Fase 3: fallback — solo por txDishType (no ingrediente) para evitar que coincidencias
+    // de ingrediente (palta en sushi, tomate en pizza) contaminen las recomendaciones.
+    // Expande a categorías relacionadas (hamburguesas cuando liked=sándwich, etc.)
+    // y limita a máx 4 por leaf para asegurar diversidad.
+    if (selected.length < TARGET) {
+      // Expandir los tipos liked con categorías conceptualmente relacionadas
+      const expandedTxTypes = new Set<string>(allTxTypes)
+      for (const t of allTxTypes) {
+        for (const related of (RELATED_TX_TYPES[t] ?? [])) expandedTxTypes.add(related)
+      }
+
+      const catCount: Record<string, number> = {}
+      for (const s of selected) catCount[s.leaf] = (catCount[s.leaf] ?? 0) + 1
+
+      for (const row of candidates) {
+        if (selected.length >= TARGET) break
+        if (usedIds.has(row.id)) continue
+        const types: string[] = Array.isArray(row.txDishType) ? row.txDishType : []
+        if (!types.some(t => expandedTxTypes.has(t))) continue
+        const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
+        if ((catCount[leaf] ?? 0) >= 4) continue  // max 4 por categoría en fallback
+        catCount[leaf] = (catCount[leaf] ?? 0) + 1
+        selected.push({ row, leaf, score: 0 })
+        usedIds.add(row.id)
+      }
     }
 
     const dishes = selected.map(({ row, leaf }) => ({
