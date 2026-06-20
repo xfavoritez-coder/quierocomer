@@ -526,13 +526,24 @@ export default function NewHome({
     // 2. Buscar en platos
     const matches = dishSearchIndex.filter(d => d._search.includes(q))
 
-    // Restaurantes que hacen match en nombre
+    // Restaurantes que hacen match en nombre (desde índice local)
     const seenRestaurants = new Set<string>()
     for (const d of matches) {
       if (normStr(d.restaurante).includes(q) && !seenRestaurants.has(d.restaurante)) {
         seenRestaurants.add(d.restaurante)
         results.push({ text: d.restaurante, type: 'local' })
         if (seenRestaurants.size >= 3) break
+      }
+    }
+
+    // Restaurantes desde serverDishes (cubre locales nuevos no en cache ISR)
+    if (serverDishes && seenRestaurants.size < 3) {
+      for (const d of serverDishes) {
+        if (normStr(d.restaurante).includes(q) && !seenRestaurants.has(d.restaurante)) {
+          seenRestaurants.add(d.restaurante)
+          results.push({ text: d.restaurante, type: 'local' })
+          if (seenRestaurants.size >= 3) break
+        }
       }
     }
 
@@ -559,7 +570,7 @@ export default function NewHome({
     }
 
     return results.length ? results : null
-  }, [searchInput, dishSearchIndex, ALL_QC_TERMS])
+  }, [searchInput, dishSearchIndex, ALL_QC_TERMS, serverDishes])
 
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
