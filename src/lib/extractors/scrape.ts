@@ -48,10 +48,9 @@ async function fetchPage(url: string, forceJina = false): Promise<string> {
     if (domain.includes("ola.click")) {
       spaHeaders = { "X-Wait-For-Selector": ".products", "X-Timeout": "30000" };
     } else if (domain.includes("fu.do")) {
-      // menu.fu.do es Angular SPA — usar la URL completa tal cual (incluyendo /qr-menu si la tiene)
-      // X-No-Cache fuerza Jina a renderizar en vivo en lugar de devolver snapshot cacheado vacío
-      spaHeaders = { "X-Timeout": "25000" };
-      try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 30000, spaHeaders); } catch {}
+      // menu.fu.do es Angular SPA — Jina necesita tiempo para renderizar
+      spaHeaders = { "X-Timeout": "40000" };
+      try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 45000, spaHeaders); } catch {}
       return await fetchWithTimeout(url, 8000);
     }
     try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, spaHeaders ? 35000 : 12000, spaHeaders); } catch {}
@@ -380,7 +379,9 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
   const cfgUseJina = extractionConfig?.useJina === true;
-  const cfgMaxChars = extractionConfig?.maxContentChars || 40000;
+  // Fudo menus can be very large — cap at 32k to keep Claude under timeout
+  const isFudo = getDomain(menuUrl).includes("fu.do");
+  const cfgMaxChars = extractionConfig?.maxContentChars || (isFudo ? 32000 : 40000);
   const needsJina = cfgUseJina || ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
 
   console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "", extractionConfig ? `(config: ${JSON.stringify(extractionConfig)})` : "");

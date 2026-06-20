@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
               providerName: p.provider,
               onProgress: (type, data) => send({ type, id: p.id, ...data }),
             }),
-            150_000,
+            240_000,
             p.name,
           )
           ok++
