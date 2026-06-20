@@ -113,11 +113,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     } else {
       // Owner: silently filter to allowed fields only
       data = pickFields(body, OWNER_EDITABLE_FIELDS);
-      // Toteat credentials: solo owners de locales PREMIUM pueden editarlos
-      const wantsToteat = body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
-      if (wantsToteat) {
+      // Plan checks: some fields require SILVER+ or PREMIUM
+      const needsPlanCheck = data.defaultView !== undefined || body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
+      if (needsPlanCheck) {
         const r = await prisma.restaurant.findUnique({ where: { id }, select: { plan: true, toteatWebhookSecret: true } });
-        if (r?.plan === "PREMIUM") {
+        // Vista por defecto: solo SILVER+ (FREE solo puede tener "lista")
+        if (data.defaultView !== undefined && r?.plan === "FREE") {
+          delete data.defaultView;
+        }
+        // Toteat credentials: solo owners de locales PREMIUM pueden editarlos
+        const wantsToteat = body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
+        if (wantsToteat && r?.plan === "PREMIUM") {
           if (body.toteatRestaurantId !== undefined) data.toteatRestaurantId = body.toteatRestaurantId || null;
           if (body.toteatLocalId !== undefined) data.toteatLocalId = body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId);
           if (body.toteatUserId !== undefined) data.toteatUserId = body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId);
