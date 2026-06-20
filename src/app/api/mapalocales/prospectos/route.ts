@@ -12,16 +12,23 @@ export async function GET() {
   // Para prospectos ya importados, calcular categorías sin mapear
   const importedSlugs = prospectos.map(p => p.importedSlug).filter(Boolean) as string[]
   let unmappedBySlug: Record<string, string[]> = {}
+  let isShowcaseBySlug: Record<string, boolean> = {}
 
   if (importedSlugs.length > 0) {
-    const cats = await prisma.category.findMany({
-      where: {
-        restaurant: { slug: { in: importedSlugs } },
-        normOverride: null,
-        dishes: { some: { isActive: true, deletedAt: null, photos: { isEmpty: false } } },
-      },
-      select: { name: true, restaurant: { select: { slug: true } } },
-    })
+    const [cats, restaurants] = await Promise.all([
+      prisma.category.findMany({
+        where: {
+          restaurant: { slug: { in: importedSlugs } },
+          normOverride: null,
+          dishes: { some: { isActive: true, deletedAt: null, photos: { isEmpty: false } } },
+        },
+        select: { name: true, restaurant: { select: { slug: true } } },
+      }),
+      prisma.restaurant.findMany({
+        where: { slug: { in: importedSlugs } },
+        select: { slug: true, isShowcase: true },
+      }),
+    ])
     for (const cat of cats) {
       const slug = cat.restaurant.slug
       const norm = normalizeCategory(cat.name.trim())
@@ -30,11 +37,15 @@ export async function GET() {
         if (!unmappedBySlug[slug].includes(cat.name)) unmappedBySlug[slug].push(cat.name)
       }
     }
+    for (const r of restaurants) {
+      isShowcaseBySlug[r.slug] = r.isShowcase
+    }
   }
 
   const result = prospectos.map(p => ({
     ...p,
     unmappedCategories: p.importedSlug ? (unmappedBySlug[p.importedSlug] ?? []) : undefined,
+    isShowcase: p.importedSlug ? (isShowcaseBySlug[p.importedSlug] ?? false) : false,
   }))
 
   return NextResponse.json(result)

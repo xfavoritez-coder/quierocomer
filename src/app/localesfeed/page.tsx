@@ -232,6 +232,7 @@ type ImportResult = {
   dishCount?: number
   error?: string
   unmappedCategories?: string[]
+  isShowcase?: boolean
 }
 
 const EXTRACTABLE_PROVIDERS = new Set([
@@ -416,6 +417,7 @@ function TabMapa() {
               status: 'ok',
               slug: r.importedSlug,
               unmappedCategories: r.unmappedCategories?.length > 0 ? r.unmappedCategories : undefined,
+              isShowcase: r.isShowcase ?? false,
             }
           }
         }
@@ -1050,11 +1052,15 @@ function TabMapa() {
               })()}
             </div>
 
-            <button
-              title="Agregar como showcase"
-              onClick={() => setShowcaseModal({})}
-              style={{ background: 'none', border: 'none', color: '#34d399', fontSize: 15, cursor: 'pointer', padding: 0, textAlign: 'center' }}
-            >📸</button>
+            {importMap[p.id]?.isShowcase ? (
+              <span title="Agregado como showcase" style={{ fontSize: 14, textAlign: 'center', display: 'block' }}>📸</span>
+            ) : (
+              <button
+                title="Agregar como showcase"
+                onClick={() => setShowcaseModal({})}
+                style={{ background: 'none', border: 'none', color: '#555', fontSize: 15, cursor: 'pointer', padding: 0, textAlign: 'center' }}
+              >📸</button>
+            )}
             <button onClick={() => removePlace(p.id)} style={{ background: 'none', border: 'none', color: '#333', fontSize: 16, cursor: 'pointer', padding: 0, textAlign: 'center' }}>
               ×
             </button>
