@@ -432,7 +432,7 @@ export default function DescubrirClient() {
                       </svg>
                       para ti
                     </span>
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', padding: '36px 14px 14px' }}>
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', padding: '36px 14px 14px', textAlign: 'center' }}>
                       <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
                       </p>
