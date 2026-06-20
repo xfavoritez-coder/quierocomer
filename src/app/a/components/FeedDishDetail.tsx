@@ -36,6 +36,13 @@ const DELIVERY_SUFFIXES = [
   'wa.me',
 ]
 
+/**
+ * Prefijos de subdominio que identifican plataformas de pedido online
+ * aunque el dominio principal sea propio del local.
+ * Ej: carta.juanalabrava.cl, pedir.autentikofrenchtakos.cl
+ */
+const DELIVERY_SUBDOMAIN_PREFIXES = ['carta.', 'pedir.', 'pedido.', 'order.', 'menu.mercat.']
+
 type OrderInfo = { url: string; type: 'delivery' | 'website' }
 
 function getOrderInfo(website: string | null | undefined): OrderInfo | null {
@@ -43,7 +50,9 @@ function getOrderInfo(website: string | null | undefined): OrderInfo | null {
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
     if (MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
-    const isDelivery = DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))
+    const isDelivery =
+      DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
+      DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p))
     return { url: website, type: isDelivery ? 'delivery' : 'website' }
   } catch { return null }
 }
