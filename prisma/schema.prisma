@@ -284,6 +284,7 @@ model Restaurant {
   instagram                  String?
   scheduleJson               Json?
   website                    String?
+  websiteIsOrderUrl          Boolean                  @default(false)
   whatsapp                   String?
   qrToken                    String?                  @unique
   allPhotosReferential       Boolean                  @default(false)

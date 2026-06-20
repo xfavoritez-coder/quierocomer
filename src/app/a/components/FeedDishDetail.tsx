@@ -45,11 +45,12 @@ const DELIVERY_SUBDOMAIN_PREFIXES = ['carta.', 'pedir.', 'pedido.', 'order.', 'm
 
 type OrderInfo = { url: string; type: 'delivery' | 'website' }
 
-function getOrderInfo(website: string | null | undefined): OrderInfo | null {
+function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean): OrderInfo | null {
   if (!website) return null
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
     if (MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
+    if (isOrderUrl) return { url: website, type: 'delivery' }
     const isDelivery =
       DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
       DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p))
@@ -601,7 +602,7 @@ function DesktopDishContent({
               </a>
               {/* Botón Pedir online / Ver página web */}
               {(() => {
-                const info = getOrderInfo(dish.restauranteWebsite)
+                const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
                 if (!info) return null
                 const isDelivery = info.type === 'delivery'
                 const accent = isDelivery
@@ -948,7 +949,7 @@ function DishSlide({
             </a>
           )}
           {(() => {
-            const info = getOrderInfo(dish.restauranteWebsite)
+            const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
             if (!info) return null
             const isDelivery = info.type === 'delivery'
             const accent = isDelivery

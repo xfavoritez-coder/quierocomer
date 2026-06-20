@@ -113,7 +113,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
       r."logoUrl", r.address, r.phone, r.lat, r.lng, r."primaryCategory", r."isShowcase",
-      r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId", r.website,
+      r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId", r.website, r."websiteIsOrderUrl",
       fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
     FROM (
       SELECT d.id,
@@ -208,6 +208,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       googleRatingCount: d.googleRatingCount != null ? Number(d.googleRatingCount) : null,
       googleMapsUrl: d.googleMapsUrl ?? null,
       restauranteWebsite: (d as any).website ?? null,
+      restauranteWebsiteIsOrderUrl: Boolean((d as any).websiteIsOrderUrl ?? false),
       avgRating: d.avgRating != null ? Number(d.avgRating) : null,
       ratingCount: Number(d.ratingCount ?? 0),
       commentCount: Number(d.commentCount ?? 0),
@@ -223,7 +224,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
 /** Cached version — shared across all users, revalidates every 5 minutes */
 export const getFeedDishes = unstable_cache(
   _getFeedDishes,
-  ['feed-dishes-v3'],
+  ['feed-dishes-v4'],
   { revalidate: 300, tags: ['feed-dishes'] }, // 5 minutes
 )
 
@@ -309,6 +310,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
         restaurantePlaceId: (dish.restaurant as any).googlePlaceId ?? null,
         googleMapsUrl: dish.restaurant.googleMapsUrl ?? null,
         restauranteWebsite: dish.restaurant.website ?? null,
+        restauranteWebsiteIsOrderUrl: Boolean((dish.restaurant as any).websiteIsOrderUrl ?? false),
         enOferta: dish.discountPrice != null && dish.price != null && dish.discountPrice < dish.price,
         mealTime: inferMealTime(categoriaNorm), tags: dish.tags, isHero: dish.isHero,
         avgRating: dish.feedStats?.avgRating ?? null,

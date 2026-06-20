@@ -40,6 +40,7 @@ export type FeedDish = {
   googleRatingCount?: number | null
   googleMapsUrl?: string | null
   restauranteWebsite?: string | null  // Restaurant.website — URL de pedido online (Rappi, UberEats, web propia)
+  restauranteWebsiteIsOrderUrl?: boolean  // true = website es plataforma de pedido (Mercat custom domain, etc.)
   // Stats (de FeedDishStats, si existen)
   avgRating: number | null
   ratingCount: number
