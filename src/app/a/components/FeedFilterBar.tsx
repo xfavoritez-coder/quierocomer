@@ -285,8 +285,8 @@ export default function FeedFilterBar({
         )}
       </div>}
 
-      {/* Filter panel modal */}
-      {filterOpen && (
+      {/* Filter panel modal — rendered via portal to avoid transform/overflow clipping */}
+      {filterOpen && createPortal(
         <>
           <style>{`@keyframes slideUp { from { transform:translateY(100%) } to { transform:translateY(0) } }`}</style>
           <div
@@ -450,7 +450,8 @@ export default function FeedFilterBar({
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   )
