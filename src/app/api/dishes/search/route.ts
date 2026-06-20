@@ -116,7 +116,8 @@ export async function GET(req: NextRequest) {
         c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
         r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
         r."logoUrl", r.address, r.lat, r.lng, r."primaryCategory", r."isShowcase",
-        r."googleRating", r."googleRatingCount", r."googleMapsUrl",
+        r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId",
+        r.phone, r.website, r."websiteIsOrderUrl", r."cartaProvider", r.instagram,
         fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
       FROM "Dish" d
       JOIN "Category" c ON c.id = d."categoryId"
@@ -173,6 +174,12 @@ export async function GET(req: NextRequest) {
         restauranteSlug: d.restaurantSlug,
         restauranteLogo: d.logoUrl,
         restauranteDireccion: d.address,
+        restaurantePhone: d.phone ?? null,
+        restaurantePlaceId: d.googlePlaceId ?? null,
+        restauranteWebsite: d.website ?? null,
+        restauranteWebsiteIsOrderUrl: Boolean(d.websiteIsOrderUrl ?? false),
+        restauranteCartaProvider: d.cartaProvider ?? null,
+        restauranteInstagram: d.instagram ?? null,
         restauranteLat: d.lat != null ? Number(d.lat) : null,
         restauranteLng: d.lng != null ? Number(d.lng) : null,
         enOferta: d.discountPrice != null && Number(d.discountPrice) < Number(d.price),
