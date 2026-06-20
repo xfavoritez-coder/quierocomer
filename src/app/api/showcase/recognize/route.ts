@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
               role: "user",
               content: [
                 { type: "image", source: { type: "base64", media_type: mediaType, data } },
-                { type: "text", text: '¿Qué aparece en esta foto? Responde SOLO con JSON válido: {"name":"nombre en español","description":"descripción breve o null","type":"plato|bebida|extra"}\n- type="plato" si es un plato principal, entrada o postre\n- type="bebida" si es una bebida (agua, jugo, vino, cerveza, trago, etc.)\n- type="extra" si es un condimento, salsa, guarnición suelta o accesorio (ej: salsa soya, pebre, almendras, limón)' }
+                { type: "text", text: '¿Qué aparece en esta foto? Responde SOLO con JSON válido: {"name":"nombre en español","description":"descripción breve o null","type":"plato|bebida|extra"}\n- type="plato" si es un plato principal, entrada o postre\n- type="bebida" si es una bebida (agua, jugo, vino, cerveza, trago, cóctel, mojito, caipirinha, pisco sour, etc.)\n- type="extra" si es un condimento, salsa, guarnición suelta o accesorio (ej: salsa soya, pebre, almendras, limón)' }
               ]
             }]
           });

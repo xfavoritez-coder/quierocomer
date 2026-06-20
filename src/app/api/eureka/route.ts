@@ -123,7 +123,13 @@ export async function POST(req: Request) {
     `
 
     // ── 2. Perfil de preferencias: frecuencia por categoría + txDishType ─────
-    // catFreq: cuántos de los 6 liked son de cada categoría
+    // Peso decreciente: primera selección = n, segunda = n-1, ..., última = 1
+    const positionWeight: Record<string, number> = {}
+    dishIds.forEach((id: string, idx: number) => {
+      positionWeight[id] = dishIds.length - idx
+    })
+
+    // catFreq: suma de pesos de los liked por cada categoría
     const catFreq: Record<string, number> = {}
     const txTypesByCat: Record<string, Set<string>> = {}
     const ingsByCat: Record<string, Set<string>> = {}
@@ -132,14 +138,15 @@ export async function POST(req: Request) {
 
     for (const row of likedRows) {
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
-      catFreq[leaf] = (catFreq[leaf] ?? 0) + 1
+      const w = positionWeight[row.id] ?? 1
+      catFreq[leaf] = (catFreq[leaf] ?? 0) + w
       if (!txTypesByCat[leaf]) txTypesByCat[leaf] = new Set()
       if (!ingsByCat[leaf]) ingsByCat[leaf] = new Set()
       if (Array.isArray(row.txDishType)) row.txDishType.forEach((t: string) => { txTypesByCat[leaf].add(t); allTxTypes.add(t) })
       if (Array.isArray(row.txIngredient)) row.txIngredient.forEach((i: string) => { ingsByCat[leaf].add(i); allIngs.add(i) })
     }
 
-    const totalLiked = likedRows.length
+    const totalLiked = Object.values(positionWeight).reduce((s, v) => s + v, 0)
     const cats = Object.keys(catFreq)
     const txArray = [...allTxTypes]
     const ingArray = [...allIngs]
@@ -154,6 +161,8 @@ export async function POST(req: Request) {
     floors.forEach((f, i) => { slots[f.cat] = f.floor + (i < remaining ? 1 : 0) })
 
     // ── 4. Buscar candidatos ──────────────────────────────────────────────────
+    const likedCatNames = [...new Set(likedRows.map((r: any) => r.catName as string))]
+
     const candidates = await prisma.$queryRaw<any[]>`
       SELECT
         d.id, d.name, d.description, d.price, d."discountPrice",
@@ -178,7 +187,12 @@ export async function POST(req: Request) {
         AND r."isDemo" = false
         AND r.lat IS NOT NULL AND r.lng IS NOT NULL
         AND d.id != ALL(${allExcluded})
-        ${restaurantId ? Prisma.sql`AND r.id = ${restaurantId}` : Prisma.sql`AND (d."txDishType" && ${txArray.length > 0 ? txArray : ['']} OR d."txIngredient" && ${ingArray.length > 0 ? ingArray : ['']})`}
+        ${restaurantId
+          ? Prisma.sql`AND r.id = ${restaurantId}`
+          : (txArray.length > 0 || ingArray.length > 0)
+            ? Prisma.sql`AND (d."txDishType" && ${txArray.length > 0 ? txArray : ['']} OR d."txIngredient" && ${ingArray.length > 0 ? ingArray : ['']})`
+            : Prisma.sql`AND c.name = ANY(${likedCatNames})`
+        }
       ORDER BY COALESCE(fs."popularityScore", 0) DESC
       LIMIT 500
     `

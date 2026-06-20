@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { resolveDishLeaf, isBrandedDrink, isNamedDrink, isVolumeBeverage, isPackagedProduct, isNonFoodItem, isCondimentOrExtra } from '@/app/a/lib/feed-queries'
+import { resolveDishLeaf, isBrandedDrink, isNamedDrink, isCocktailDrink, isVolumeBeverage, isPackagedProduct, isNonFoodItem, isCondimentOrExtra } from '@/app/a/lib/feed-queries'
 import { isExcludedCategory, inferMealTime, inferDishType, getParentCategory } from '@/app/a/lib/categories'
 import type { FeedDish } from '@/app/a/types'
 
@@ -136,6 +136,7 @@ export async function GET(req: NextRequest) {
       if (isExcludedCategory(catName)) continue
       if (isBrandedDrink(d.name as string)) continue
       if (isNamedDrink(d.name as string)) continue
+      if (isCocktailDrink(d.name as string)) continue
       if (isVolumeBeverage(d.name as string)) continue
       if (isPackagedProduct(d.name as string, d.description as string | null)) continue
       if (isNonFoodItem(d.name as string, catName)) continue
