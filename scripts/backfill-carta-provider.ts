@@ -1,100 +1,80 @@
 /**
- * Backfill Restaurant.cartaProvider y Restaurant.website desde MapaProspecto.
- * Cubre dos casos:
- *   A) importedSlug está seteado → link directo
- *   B) importedSlug es null pero el nombre/mapsUrl coincide → link por nombre
+ * Backfill Restaurant.cartaProvider + website desde MapaProspecto.
+ * Tres vías de match: importedSlug → googleMapsUrl → nombre.
  *
- * Uso:
- *   DRY_RUN=0 npx ts-node -r tsconfig-paths/register scripts/backfill-carta-provider.ts
+ * DRY_RUN=0 npx ts-node -r tsconfig-paths/register scripts/backfill-carta-provider.ts
  */
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.env.DRY_RUN !== "0";
-
 const ORDERING_PROVIDERS = new Set(['UberEats', 'Rappi', 'Justo', 'PedidosYa', 'Mercat'])
 
+function needsUpdate(r: { cartaProvider: string | null; website: string | null }, mp: { provider: string | null; cartaUrl: string | null }) {
+  return r.cartaProvider !== mp.provider || (!r.website && mp.cartaUrl)
+}
+
+async function applyUpdate(id: string, slug: string, mp: { provider: string | null; cartaUrl: string | null }, currentWebsite: string | null, via: string) {
+  const isOrder = ORDERING_PROVIDERS.has(mp.provider ?? '')
+  const data: any = { cartaProvider: mp.provider }
+  if (!currentWebsite && mp.cartaUrl) {
+    data.website = mp.cartaUrl
+    data.websiteIsOrderUrl = isOrder
+  }
+  console.log(`  [${slug}] via ${via}: provider→${mp.provider}${!currentWebsite && mp.cartaUrl ? ` | website→${mp.cartaUrl}` : ''}`)
+  if (!DRY_RUN) await prisma.restaurant.update({ where: { id }, data })
+}
+
 async function main() {
-  // Caso A: prospectos con importedSlug definido
-  const linked = await prisma.mapaProspecto.findMany({
-    where: { importedSlug: { not: null }, provider: { not: null } },
-    select: { importedSlug: true, provider: true, cartaUrl: true },
+  // Traer todos los prospectos con datos útiles
+  const prospectos = await prisma.mapaProspecto.findMany({
+    where: { provider: { not: null } },
+    select: { id: true, importedSlug: true, mapsUrl: true, name: true, provider: true, cartaUrl: true },
   })
 
-  console.log(`=== Caso A: prospectos con importedSlug (${linked.length}) ===`)
-  let updatedA = 0
-
-  for (const p of linked) {
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { slug: p.importedSlug! },
-      select: { id: true, name: true, cartaProvider: true, website: true },
-    })
-    if (!restaurant) continue
-
-    const needsProvider = restaurant.cartaProvider !== p.provider
-    const needsWebsite = !restaurant.website && p.cartaUrl
-    const isOrderProvider = ORDERING_PROVIDERS.has(p.provider ?? '')
-    const needsOrderUrl = needsWebsite && isOrderProvider
-
-    if (!needsProvider && !needsWebsite) continue
-
-    console.log(`  [${p.importedSlug}] provider: ${restaurant.cartaProvider ?? 'null'} → ${p.provider}${needsWebsite ? ` | website: null → ${p.cartaUrl}` : ''}`)
-
-    if (!DRY_RUN) {
-      await prisma.restaurant.update({
-        where: { id: restaurant.id },
-        data: {
-          ...(needsProvider ? { cartaProvider: p.provider } : {}),
-          ...(needsWebsite ? { website: p.cartaUrl, websiteIsOrderUrl: isOrderProvider } : {}),
-        },
-      })
-    }
-    updatedA++
-  }
-
-  // Caso B: restaurants sin website y sin cartaProvider, buscar en prospectos por nombre
-  console.log(`\n=== Caso B: restaurants sin website ni provider ===`)
-  const orphans = await prisma.restaurant.findMany({
-    where: { website: null, cartaProvider: null, isShowcase: false, isDemo: false },
-    select: { id: true, slug: true, name: true },
+  // Traer todos los restaurants feed (no demo, no showcase vacío)
+  const restaurants = await prisma.restaurant.findMany({
+    where: { isDemo: false },
+    select: { id: true, slug: true, name: true, cartaProvider: true, website: true, googleMapsUrl: true },
   })
 
-  console.log(`Restaurants sin website ni cartaProvider: ${orphans.length}`)
-  let updatedB = 0
+  // Índices de prospectos
+  const bySlug = new Map(prospectos.filter(p => p.importedSlug).map(p => [p.importedSlug!, p]))
+  const byMapsUrl = new Map(prospectos.filter(p => p.mapsUrl).map(p => [p.mapsUrl!.split('?')[0], p]))
+  const byName = new Map(prospectos.map(p => [p.name.toLowerCase().trim(), p]))
 
-  for (const r of orphans) {
-    // Buscar prospecto que coincida por nombre (case insensitive)
-    const prospecto = await prisma.mapaProspecto.findFirst({
-      where: {
-        name: { equals: r.name, mode: 'insensitive' },
-        cartaUrl: { not: null },
-        provider: { not: null },
-      },
-      select: { provider: true, cartaUrl: true },
-    })
-    if (!prospecto) continue
+  let updated = 0
+  const seen = new Set<string>()
 
-    console.log(`  [${r.slug}] "${r.name}" → provider: ${prospecto.provider} | website: ${prospecto.cartaUrl}`)
+  for (const r of restaurants) {
+    if (seen.has(r.id)) continue
 
-    if (!DRY_RUN) {
-      const isOrderProvider = ORDERING_PROVIDERS.has(prospecto.provider ?? '')
-      await prisma.restaurant.update({
-        where: { id: r.id },
-        data: {
-          cartaProvider: prospecto.provider,
-          website: prospecto.cartaUrl,
-          websiteIsOrderUrl: isOrderProvider,
-        },
-      })
+    // 1. Match por importedSlug
+    let mp = bySlug.get(r.slug)
+    let via = 'slug'
+
+    // 2. Match por googleMapsUrl
+    if (!mp && r.googleMapsUrl) {
+      const base = r.googleMapsUrl.split('?')[0]
+      mp = byMapsUrl.get(base)
+      via = 'mapsUrl'
     }
-    updatedB++
+
+    // 3. Match por nombre exacto
+    if (!mp) {
+      mp = byName.get(r.name.toLowerCase().trim())
+      via = 'nombre'
+    }
+
+    if (!mp) continue
+    if (!needsUpdate(r, mp)) continue
+
+    seen.add(r.id)
+    await applyUpdate(r.id, r.slug, mp, r.website, via)
+    updated++
   }
 
-  if (DRY_RUN) {
-    console.log(`\nDRY_RUN — A:${updatedA} + B:${updatedB} = ${updatedA + updatedB} a actualizar.`)
-  } else {
-    console.log(`\n✓ Caso A: ${updatedA} | Caso B: ${updatedB} | Total: ${updatedA + updatedB}`)
-  }
+  console.log(`\n${DRY_RUN ? 'DRY_RUN —' : '✓'} ${updated} restaurants ${DRY_RUN ? 'a actualizar' : 'actualizados'}`)
 }
 
 main()
