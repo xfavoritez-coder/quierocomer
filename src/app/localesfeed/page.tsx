@@ -1862,12 +1862,19 @@ function ShowcaseModal({ onClose, initialPlace }: { onClose: () => void; initial
     setUploading(true)
     setUploadError(null)
     try {
-      // 1. Upload photos
-      const formData = new FormData()
-      files.forEach(f => formData.append('photos', f))
-      const upRes = await fetch('/api/showcase/upload-photos', { method: 'POST', body: formData })
-      if (!upRes.ok) throw new Error(`Upload failed: ${upRes.status}`)
-      const { urls } = await upRes.json()
+      // 1. Upload photos in batches of 3 to avoid 413 Payload Too Large
+      const BATCH = 3
+      const allUrls: string[] = []
+      for (let i = 0; i < files.length; i += BATCH) {
+        const batch = files.slice(i, i + BATCH)
+        const formData = new FormData()
+        batch.forEach(f => formData.append('photos', f))
+        const upRes = await fetch('/api/showcase/upload-photos', { method: 'POST', body: formData })
+        if (!upRes.ok) throw new Error(`Upload failed: ${upRes.status}`)
+        const { urls: batchUrls } = await upRes.json()
+        allUrls.push(...batchUrls)
+      }
+      const urls = allUrls
 
       // 2. Recognize with AI (si falla igual pasamos al paso 3 con nombres vacíos)
       let recognized: any[] = []
