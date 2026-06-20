@@ -618,6 +618,11 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             isSoyFree: isDrinkCat ? false : detected.isSoyFree,
             flavorTags,
             isActive: true,
+            txDishType: [],
+            txIngredient: [],
+            txCuisine: [],
+            txMealSlot: [],
+            txEstilo: [],
             ...(leafOverride ? { leafOverride } : {}),
           },
         });
@@ -1131,6 +1136,11 @@ export async function importFromProspecto(params: {
         isSoyFree: isDrinkCat ? false : detected.isSoyFree,
         flavorTags,
         isActive: true,
+        txDishType: [],
+        txIngredient: [],
+        txCuisine: [],
+        txMealSlot: [],
+        txEstilo: [],
         ...(leafOverride ? { leafOverride } : {}),
       })
     })
