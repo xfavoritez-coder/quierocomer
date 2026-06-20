@@ -3,6 +3,13 @@ import OpenAI from "openai";
 
 export const maxDuration = 60;
 
+async function urlToBase64(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+  return `data:image/webp;base64,${buffer.toString("base64")}`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { photos } = await req.json() as { photos: string[] };
@@ -10,7 +17,6 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      // Sin key → devolver nombres vacíos, el usuario los llena
       return NextResponse.json({ dishes: photos.map((_, i) => ({ name: '', description: null, photoIndex: i })) });
     }
 
@@ -19,13 +25,16 @@ export async function POST(req: NextRequest) {
     const results = await Promise.allSettled(
       photos.map(async (url, i) => {
         try {
+          // Convertir a base64 para no depender de que OpenAI pueda fetchear la URL
+          const dataUrl = await urlToBase64(url);
+
           const msg = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             max_tokens: 200,
             messages: [{
               role: "user",
               content: [
-                { type: "image_url", image_url: { url, detail: "low" } },
+                { type: "image_url", image_url: { url: dataUrl, detail: "low" } },
                 { type: "text", text: '¿Qué plato aparece en esta foto? Responde SOLO con JSON válido: {"name":"nombre del plato en español","description":"descripción breve o null"}' }
               ]
             }]
@@ -35,7 +44,8 @@ export async function POST(req: NextRequest) {
           if (!match) return { name: '', description: null, photoIndex: i };
           const parsed = JSON.parse(match[0]);
           return { name: parsed.name || '', description: parsed.description || null, photoIndex: i };
-        } catch {
+        } catch (e: any) {
+          console.error(`[showcase/recognize] foto ${i} error:`, e?.message);
           return { name: '', description: null, photoIndex: i };
         }
       })
@@ -47,8 +57,7 @@ export async function POST(req: NextRequest) {
       )
     });
   } catch (e: any) {
-    console.error("[showcase/recognize] Error:", e?.message);
-    // En vez de 500, devolver nombres vacíos para que el flujo continue
+    console.error("[showcase/recognize] Error global:", e?.message);
     return NextResponse.json({ dishes: [] });
   }
 }
