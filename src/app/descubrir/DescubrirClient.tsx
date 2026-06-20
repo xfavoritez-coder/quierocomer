@@ -253,12 +253,12 @@ export default function DescubrirClient() {
       </header>
 
       {/* Location row — no sticky, se va con el scroll */}
-      <div style={{ padding: '0 16px 0', marginBottom: -8, background: headerBg, position: 'relative', zIndex: 30 }}>
+      <div style={{ padding: '0 16px 0', marginBottom: -8, background: headerBg, position: 'relative', zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => setLocationModalOpen(true)} style={{
           display: 'flex', alignItems: 'center', gap: 5,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
           color: locationLabel ? '#e09200' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
-          fontSize: 16, fontWeight: 400,
+          fontSize: 16, fontWeight: 400, minWidth: 0,
         }}>
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" style={{ flexShrink: 0 }}>
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
@@ -270,6 +270,11 @@ export default function DescubrirClient() {
             <path d="M6 9l6 6 6-6"/>
           </svg>
         </button>
+        {allRecommended.length > 0 && (
+          <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)', marginLeft: 8 }}>
+            {allRecommended.length} platos
+          </span>
+        )}
       </div>
 
       <NavMenuPanel
@@ -344,7 +349,7 @@ export default function DescubrirClient() {
           {/* ── 1. Platos que te podrían gustar ── */}
           {allRecommended.length > 0 && (
             <>
-              <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10, padding: '0 14px' }}>
+              <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '0 14px' }}>
                 <div>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
@@ -354,7 +359,7 @@ export default function DescubrirClient() {
                   </p>
                 </div>
                 {totalPages > 1 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <button
                       onClick={() => {
                         const next = Math.max(0, page - 1)
@@ -370,7 +375,7 @@ export default function DescubrirClient() {
                       }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
                     </button>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center', position: 'relative', top: -2 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center' }}>
                       {page + 1}/{totalPages}
                     </span>
                     <button
