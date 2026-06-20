@@ -1777,6 +1777,7 @@ type ShowcasePlaceInfo = {
   lng: number
   mapsUrl: string
   placeId: string | null
+  phone: string | null
   rating: number | null
   reviews: number | null
 }
@@ -1798,6 +1799,7 @@ function ShowcaseModal({ onClose, initialPlace }: { onClose: () => void; initial
       lng: initialPlace!.lng!,
       mapsUrl: initialPlace!.mapsUrl ?? '',
       placeId: initialPlace!.placeId ?? null,
+      phone: null,
       rating: null,
       reviews: null,
     } : null
@@ -1840,6 +1842,7 @@ function ShowcaseModal({ onClose, initialPlace }: { onClose: () => void; initial
         lng: data.lng ?? 0,
         mapsUrl: mapsUrl.trim(),
         placeId: data.placeId ?? null,
+        phone: data.phone ?? null,
         rating: data.rating ?? null,
         reviews: data.reviews ?? null,
       })
@@ -1925,6 +1928,7 @@ function ShowcaseModal({ onClose, initialPlace }: { onClose: () => void; initial
             website: websiteInput.trim() || null,
             instagram: instagramInput.trim() || null,
             placeId: placeInfo.placeId,
+            phone: placeInfo.phone ?? null,
             mapsUrl: placeInfo.mapsUrl,
           },
           dishes: dishes.filter(d => d.name.trim()),

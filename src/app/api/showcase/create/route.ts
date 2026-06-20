@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       googleMapsUrl: restaurantData.googleMapsUrl ?? "",
       googleRating: restaurantData.googleRating ?? null,
       googleRatingCount: restaurantData.googleRatingCount ?? null,
+      googlePlaceId: restaurantData.placeId ?? null,
+      phone: restaurantData.phone ?? null,
       website: restaurantData.website ?? null,
       instagram: restaurantData.instagram ?? null,
       isDemo: false,
