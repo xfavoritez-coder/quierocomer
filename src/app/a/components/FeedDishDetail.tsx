@@ -7,25 +7,31 @@ function getSecondaryDishTypes(types: string[], primary: string): string[] {
 }
 
 /**
- * Dominios que NO son plataformas de pedido online:
- * menú-solo (Toteat, Fudo…) + redes sociales + linktree
+ * Dominios (o sufijos de dominio) que NO son plataformas de pedido online.
+ * Se chequea sufijo para cubrir subdominios: menu.fu.do, xxx.ola.click, etc.
  */
-const MENU_ONLY_DOMAINS = new Set([
-  // Plataformas de menú digital (no ordenar)
-  'toteat.com', 'toteat.app', 'gourmedia.cl', 'fu.do', 'heyzine.com',
-  'canva.com', 'drive.google.com', 'docs.google.com', 'qrpro.io',
-  'micartaqr.cl', 'olaclick.com', 'queresto.com', 'flipsnack.com',
-  'yumpu.com', 'issuu.com', 'gourmetclick.cl', 'lacarte.cl',
-  // Redes sociales (no pedido directo)
+const MENU_ONLY_SUFFIXES = [
+  // Menú digital (no ordenar)
+  'toteat.com', 'toteat.app', 'gourmedia.cl', 'gour.media',
+  'fu.do', 'heyzine.com', 'canva.com',
+  'drive.google.com', 'docs.google.com', 'share.google',
+  'qrpro.io', 'micartaqr.cl', 'olaclick.com', 'ola.click',
+  'queresto.com', 'flipsnack.com', 'yumpu.com', 'issuu.com',
+  'gourmetclick.cl', 'lacarte.cl', 'avocaty.io', 'socialreacts.com',
+  'netlify.app',
+  // Redes sociales y bio-links
   'instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com',
-  'linktr.ee', 'linktree.com',
-])
+  'linktr.ee', 'linktree.com', 'atom.bio',
+  // Carta propia QC (no es plataforma de pedido externa)
+  'quierocomer.cl',
+]
 
 function getOrderUrl(website: string | null | undefined): string | null {
   if (!website) return null
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
-    if (MENU_ONLY_DOMAINS.has(host)) return null
+    const blocked = MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))
+    if (blocked) return null
     return website
   } catch { return null }
 }

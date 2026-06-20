@@ -9,19 +9,23 @@ import { PrismaClient } from "@prisma/client";
 
 const p = new PrismaClient();
 
-const MENU_ONLY_DOMAINS = new Set([
-  "toteat.com", "toteat.app", "gourmedia.cl", "fu.do", "heyzine.com",
-  "canva.com", "drive.google.com", "docs.google.com", "qrpro.io",
-  "micartaqr.cl", "olaclick.com", "queresto.com", "flipsnack.com",
-  "yumpu.com", "issuu.com", "gourmetclick.cl", "lacarte.cl", "share.google",
+const MENU_ONLY_SUFFIXES = [
+  "toteat.com", "toteat.app", "gourmedia.cl", "gour.media",
+  "fu.do", "heyzine.com", "canva.com",
+  "drive.google.com", "docs.google.com", "share.google",
+  "qrpro.io", "micartaqr.cl", "olaclick.com", "ola.click",
+  "queresto.com", "flipsnack.com", "yumpu.com", "issuu.com",
+  "gourmetclick.cl", "lacarte.cl", "avocaty.io", "socialreacts.com",
+  "netlify.app",
   "instagram.com", "facebook.com", "twitter.com", "tiktok.com",
-  "linktr.ee", "linktree.com",
-]);
+  "linktr.ee", "linktree.com", "atom.bio",
+  "quierocomer.cl",
+];
 
 function isOrderable(url: string): boolean {
   try {
     const host = new URL(url).hostname.replace(/^www\./, "");
-    return !MENU_ONLY_DOMAINS.has(host);
+    return !MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith("." + s));
   } catch { return false; }
 }
 
