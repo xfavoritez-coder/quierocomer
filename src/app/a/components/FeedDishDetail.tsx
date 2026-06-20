@@ -759,7 +759,7 @@ function DesktopDishContent({
                     </svg>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: orange }}>Ver carta online</span>
-                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(orderInfo.url).hostname.replace(/^www\./, '')}</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(() => { try { return new URL(orderInfo.url).hostname.replace(/^www\./, '') } catch { return null } })()}</span>
                     </span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={orange} strokeWidth="2.2" strokeLinecap="round">
                       <path d="M9 18l6-6-6-6"/>
