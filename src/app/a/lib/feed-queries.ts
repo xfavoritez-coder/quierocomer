@@ -34,6 +34,16 @@ export function isPackagedProduct(name: string, description?: string | null): bo
 }
 
 /**
+ * Detecta bebidas de marca industrial que nunca deberían aparecer en el feed de platos.
+ * Sprite Zero, Fanta, Coca-Cola, etc. suelen importarse desde cartas con txDishType=[]
+ * y no son filtrados por el check de DRINK_ONLY_TYPES (que requiere length>0).
+ */
+const BRANDED_DRINK_RE = /\b(sprite|fanta|coca.?cola|pepsi|7\s*up|seven\s*up|gatorade|powerade|monster|red\s*bull|lipton|nestea|crush|inca\s*kola|bilz|pap[iy]|rc\s*cola|canada\s*dry|schweppes|agua\s*mineral|agua\s*de\s*manantial|evian|vittel|san\s*pellegrino|guaraná|guarana)\b/i
+export function isBrandedDrink(name: string): boolean {
+  return BRANDED_DRINK_RE.test(name)
+}
+
+/**
  * Detecta ítems no alimenticios: ropa, accesorios, insumos, merchandising.
  * Ej: "Polera Rapa Nui", "Vasos Polipapel Grande 12oz", "Envase"
  */
@@ -156,6 +166,8 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     // Excluir extras y bebidas standalone (no platos reales)
     const txTypes = Array.isArray((d as any).txDishType) ? (d as any).txDishType as string[] : []
     if (txTypes.length > 0 && txTypes.every(t => DRINK_ONLY_TYPES.has(t))) continue
+    // Excluir bebidas de marca industrial (Sprite Zero, Fanta, etc.) aunque txDishType esté vacío
+    if (isBrandedDrink(d.name as string)) continue
     // Excluir productos envasados (gramaje en nombre o "Formato X" en descripción)
     if (isPackagedProduct(d.name as string, d.description as string | null)) continue
     // Excluir ítems no alimenticios (ropa, accesorios, insumos, merchandising)
@@ -253,6 +265,7 @@ export const getCachedCategoryCountMap = unstable_cache(
       if (isExcludedCategory(row.catName)) continue
       const txTypes = Array.isArray(row.txDishType) ? row.txDishType as string[] : []
       if (txTypes.length > 0 && txTypes.every((t: string) => DRINK_ONLY_TYPES.has(t))) continue
+      if (isBrandedDrink(row.name)) continue
       if (isPackagedProduct(row.name, row.description)) continue
       if (isNonFoodItem(row.name, row.catName)) continue
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, row.description, row.catNormOverride)
@@ -283,7 +296,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   })
 
   return dishes
-    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isPackagedProduct(d.name, d.description) && !isNonFoodItem(d.name, d.category.name))
+    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isBrandedDrink(d.name) && !isPackagedProduct(d.name, d.description) && !isNonFoodItem(d.name, d.category.name))
     .map(dish => {
       const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null, dish.category.normOverride ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)

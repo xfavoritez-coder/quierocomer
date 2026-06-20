@@ -84,7 +84,7 @@ function detectDishType(categoryName: string): string {
   if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
   // Bebidas — detectar ANTES de postres: "té helado", "te helado", "iced tea", "arizona" evitan
   // que "helado" en el nombre de una categoría de té se clasifique como postre.
-  if (/t[eé]\s+helado|iced\s+tea|t[eé]\b|bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|limonad|gaseosa|soda|líquido|liquido|agua\b|kombucha|hidratac/i.test(n)) return "drink";
+  if (/t[eé]\s+helado|iced\s+tea|t[eé]\b|bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|limonad|gaseosa|refresco|soda|líquido|liquido|agua\b|kombucha|hidratac/i.test(n)) return "drink";
   if (/postre|dessert|dulce|helado|torta|pastel/i.test(n)) return "dessert";
   return "food";
 }
