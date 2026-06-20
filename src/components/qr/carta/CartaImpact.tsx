@@ -1334,15 +1334,19 @@ export default function CartaImpact({
       )}
       </header>
 
-        {/* Banner — debajo del nav, encima del hero */}
-        {hasBannerActive && !showFixedCatNav && (
-          <div style={{ padding: "0 12px 6px" }}>
-            {announcements && announcements.length > 0
-              ? <AnnouncementBanner announcements={announcements} />
-              : <HappyHourBanner happyHours={happyHours || []} />}
-          </div>
-        )}
       </div>{/* end fixed wrapper */}
+
+      {/* Spacer: reserva el espacio del nav fixed para que el contenido no quede debajo */}
+      <div style={{ height: impactHeaderH }} />
+
+      {/* Banner — flujo normal, debajo del nav, encima del hero */}
+      {hasBannerActive && (
+        <div style={{ padding: "4px 12px 8px", position: "relative", zIndex: 1 }}>
+          {announcements && announcements.length > 0
+            ? <AnnouncementBanner announcements={announcements} />
+            : <HappyHourBanner happyHours={happyHours || []} />}
+        </div>
+      )}
 
       {/* Search overlay */}
       {searchOpen && (
@@ -1375,7 +1379,7 @@ export default function CartaImpact({
         </div>
       )}
 
-      {/* Hero — sin marginTop, spacer arriba ya reservó el espacio del header */}
+      {/* Hero */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
