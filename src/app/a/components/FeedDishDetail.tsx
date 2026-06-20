@@ -76,14 +76,23 @@ function getInstagramInfo(ig: string | null | undefined): { url: string; handle:
   return { url: `https://www.instagram.com/${handle}/`, handle: `@${handle}` }
 }
 
+const DELIVERY_FALLBACK_URLS: Record<string, string> = {
+  Rappi: 'https://www.rappi.cl/restaurantes',
+  UberEats: 'https://www.ubereats.com/cl',
+  Justo: 'https://www.getjusto.com',
+  Mercat: 'https://www.mercat.cl',
+}
+
 function getPedirOnlineUrl(
   website: string | null | undefined,
   cartaProvider?: string | null,
   websiteIsOrderUrl?: boolean,
 ): string | null {
+  // 1. Si el proveedor es delivery conocido → usar su URL o fallback a la plataforma
+  if (cartaProvider && PEDIR_ONLINE_PROVIDERS.has(cartaProvider)) {
+    return website || DELIVERY_FALLBACK_URLS[cartaProvider] || null
+  }
   if (!website) return null
-  // 1. Si el proveedor es delivery conocido → siempre mostrar
-  if (cartaProvider && PEDIR_ONLINE_PROVIDERS.has(cartaProvider)) return website
   // 2. Si el proveedor es carta/menú conocido (Fudo, OlaClick, etc.) → no es pedir online
   if (cartaProvider && MENU_PROVIDERS.has(cartaProvider)) return null
   // 3. Fallback: websiteIsOrderUrl marcado por admin, o detección por URL
