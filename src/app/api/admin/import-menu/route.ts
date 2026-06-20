@@ -9,6 +9,17 @@ import type { ExtractionResult } from "@/lib/extractors/types";
 
 export const maxDuration = 300;
 
+/**
+ * Detects bulk/wholesale products that aren't individual menu dishes.
+ * e.g. "Ravioli de Ricotta 48 Un", "Bandeja de 24 unidades"
+ */
+function isBulkProduct(name: string, description?: string | null): boolean {
+  const text = `${name} ${description || ""}`;
+  // Match: "48 un", "24 und", "100 unidades", "x48", "pack de 24", "caja de 12"
+  return /\b\d{2,}\s*(un|und|unid|unidades?)\b/i.test(text) ||
+    /\b(pack|caja|paquete|bolsa|bandeja)\s+de\s+\d+/i.test(text);
+}
+
 function detectDishType(categoryName: string): string {
   const n = categoryName.toLowerCase();
   if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
@@ -123,6 +134,7 @@ export async function POST(req: NextRequest) {
 
     for (let j = 0; j < catDishes.length; j++) {
       const dish = catDishes[j];
+      if (isBulkProduct(dish.name, dish.description)) continue;
       const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: "" });
 
       await prisma.dish.create({

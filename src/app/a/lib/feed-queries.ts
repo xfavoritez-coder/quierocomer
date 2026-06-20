@@ -113,7 +113,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
       r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
       r."logoUrl", r.address, r.phone, r.lat, r.lng, r."primaryCategory", r."isShowcase",
-      r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId",
+      r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId", r.website,
       fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
     FROM (
       SELECT d.id,
@@ -207,6 +207,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       googleRating: d.googleRating != null ? Number(d.googleRating) : null,
       googleRatingCount: d.googleRatingCount != null ? Number(d.googleRatingCount) : null,
       googleMapsUrl: d.googleMapsUrl ?? null,
+      restauranteWebsite: (d as any).website ?? null,
       avgRating: d.avgRating != null ? Number(d.avgRating) : null,
       ratingCount: Number(d.ratingCount ?? 0),
       commentCount: Number(d.commentCount ?? 0),
@@ -274,7 +275,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
       isLactoseFree: true, isSoyFree: true, containsNuts: true, flavorTags: true,
       isHero: true, tags: true, leafOverride: true, txDishType: true, txIngredient: true,
       category: { select: { name: true, dishType: true, cuisineTag: true, normOverride: true } },
-      restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, googlePlaceId: true, primaryCategory: true } },
+      restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true, lat: true, lng: true, googleRating: true, googleRatingCount: true, googleMapsUrl: true, googlePlaceId: true, primaryCategory: true, website: true } },
       feedStats: { select: { avgRating: true, ratingCount: true, commentCount: true, popularityScore: true } },
     },
   })
@@ -307,6 +308,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
         restaurantePhone: dish.restaurant.phone ?? null,
         restaurantePlaceId: (dish.restaurant as any).googlePlaceId ?? null,
         googleMapsUrl: dish.restaurant.googleMapsUrl ?? null,
+        restauranteWebsite: dish.restaurant.website ?? null,
         enOferta: dish.discountPrice != null && dish.price != null && dish.discountPrice < dish.price,
         mealTime: inferMealTime(categoriaNorm), tags: dish.tags, isHero: dish.isHero,
         avgRating: dish.feedStats?.avgRating ?? null,

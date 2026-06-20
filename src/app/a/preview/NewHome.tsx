@@ -135,6 +135,8 @@ export default function NewHome({
     return ''
   })
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const floatingInputRef = useRef<HTMLInputElement>(null)
+  const [showFloatingSuggestions, setShowFloatingSuggestions] = useState(false)
   const mapGeocoderRef = useRef<((q: string) => void) | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
@@ -164,11 +166,27 @@ export default function NewHome({
   const [isSearching, setIsSearching] = useState(false)
 
   // ─── Eureka / Descubrir ───────────────────────────────────────────────────
-  const [eurekaLiked, setEurekaLiked] = useState<FeedDish[]>([])
+  // Initialize from localStorage so returning from /descubrir restores selections
+  const [eurekaLiked, setEurekaLiked] = useState<FeedDish[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem('qc_eureka_liked')
+      if (raw) return (JSON.parse(raw) as FeedDish[]).slice(0, 3)
+    } catch {}
+    return []
+  })
   const eurekaMax = 3
   const eurekaMaxRef = useRef(3)
   const [showEurekaModal, setShowEurekaModal] = useState(false)
-  const eurekaModalShownRef = useRef(false)
+  // Pre-init to true when restoring 3 dishes — prevents modal re-trigger on return from /descubrir
+  const [_eurekaAlreadyShown] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      const raw = localStorage.getItem('qc_eureka_liked')
+      return !!raw && JSON.parse(raw).length >= 3
+    } catch { return false }
+  })
+  const eurekaModalShownRef = useRef(_eurekaAlreadyShown)
   const floatingHeaderRef = useRef<HTMLDivElement>(null)
   const [floatingHeaderH, setFloatingHeaderH] = useState(0)
 
@@ -178,21 +196,6 @@ export default function NewHome({
     const obs = new ResizeObserver(() => setFloatingHeaderH(el.offsetHeight))
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
-
-  // Restaurar selección previa al volver desde /descubrir
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('qc_eureka_liked')
-      if (raw) {
-        const dishes: FeedDish[] = JSON.parse(raw)
-        if (dishes.length > 0) {
-          setEurekaLiked(dishes.slice(0, 3))
-          // Ya tenía selecciones guardadas — no mostrar el modal al cargar
-          if (dishes.length >= 3) eurekaModalShownRef.current = true
-        }
-      }
-    } catch {}
   }, [])
 
   // Show milestone modal on first reach of eurekaMax; reset ref when cleared so it can trigger again
@@ -1508,18 +1511,21 @@ export default function NewHome({
           <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
           </a>
-          <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); if (searchInput.trim()) executeSearch(searchInput.trim()); (document.activeElement as HTMLElement)?.blur() }}>
+          <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); floatingInputRef.current?.blur(); setShowFloatingSuggestions(false) }}>
             <input
-              type="search"
+              ref={floatingInputRef}
+              type="text"
+              autoComplete="off"
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              onFocus={() => { setSearchFocused(true); searchTouched.current = true }}
-              onBlur={() => setSearchFocused(false)}
+              onFocus={() => { setShowFloatingSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
+              onBlur={() => { setTimeout(() => setShowFloatingSuggestions(false), 150); setSearchFocused(false) }}
               placeholder="Buscar en QuieroComer"
               className="feed-floating-input"
               style={{
                 width: '100%', padding: '12px 38px 12px 24px',
-                borderRadius: 999, fontSize: 17,
+                borderRadius: showFloatingSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
+                fontSize: 17,
                 background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
                 border: isDark ? '1px solid rgba(255,255,255,0.10)' : '2px solid rgba(0,0,0,0.07)',
                 boxShadow: 'none',
@@ -1527,15 +1533,56 @@ export default function NewHome({
               }}
             />
             {searchInput && (
-              <button onClick={() => { setSearchInput(''); executeSearch('') }} style={{
-                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+              <button type="button" onClick={() => { setSearchInput(''); executeSearch(''); setShowFloatingSuggestions(false) }} style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                 background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
+                color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
               }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
+            )}
+            {showFloatingSuggestions && searchSuggestions && typeof document !== 'undefined' && createPortal(
+              (() => {
+                const r = floatingInputRef.current?.getBoundingClientRect()
+                if (!r) return null
+                return (
+                  <div style={{
+                    position: 'fixed', top: r.bottom - 2, left: r.left, width: r.width, zIndex: 99999,
+                    background: isDark ? 'rgba(40,40,40,1)' : '#fff',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+                    borderTop: 'none',
+                    borderRadius: '0 0 20px 20px', overflow: 'hidden',
+                    boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.12)',
+                    clipPath: 'inset(0 -30px -30px -30px)',
+                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                  }}>
+                    <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
+                    {searchSuggestions.map((s, i) => (
+                      <button
+                        key={`${s.type}-${s.text}`}
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => { executeSearch(s.text); setShowFloatingSuggestions(false) }}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                          color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                          borderTop: i > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <span style={{ flex: 1 }}>{s.text}</span>
+                        <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.32)', fontStyle: 'italic', flexShrink: 0 }}>{s.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                )
+              })(),
+              document.body
             )}
           </form>
           <button onClick={() => setMenuOpen(true)} style={{

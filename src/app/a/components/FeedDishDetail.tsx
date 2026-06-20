@@ -5,6 +5,30 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 function getSecondaryDishTypes(types: string[], primary: string): string[] {
   return types.filter(t => t !== primary && t !== 'extra' && t !== 'combo')
 }
+
+/**
+ * Dominios que NO son plataformas de pedido online:
+ * menú-solo (Toteat, Fudo…) + redes sociales + linktree
+ */
+const MENU_ONLY_DOMAINS = new Set([
+  // Plataformas de menú digital (no ordenar)
+  'toteat.com', 'toteat.app', 'gourmedia.cl', 'fu.do', 'heyzine.com',
+  'canva.com', 'drive.google.com', 'docs.google.com', 'qrpro.io',
+  'micartaqr.cl', 'olaclick.com', 'queresto.com', 'flipsnack.com',
+  'yumpu.com', 'issuu.com', 'gourmetclick.cl', 'lacarte.cl',
+  // Redes sociales (no pedido directo)
+  'instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com',
+  'linktr.ee', 'linktree.com',
+])
+
+function getOrderUrl(website: string | null | undefined): string | null {
+  if (!website) return null
+  try {
+    const host = new URL(website).hostname.replace(/^www\./, '')
+    if (MENU_ONLY_DOMAINS.has(host)) return null
+    return website
+  } catch { return null }
+}
 import type { FeedDish } from '../types'
 import { getCategoryGradient, isValidQcCategory, DISH_TYPE_PRIORITY, getPrimaryDishType } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
@@ -381,14 +405,6 @@ function DesktopDishContent({
     return result
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
-  const restDishes = useMemo(() => {
-    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
-    const candidates = pool.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
-    const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
-    const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
-    return [...sameLeaf, ...others].slice(0, 4)
-  }, [dish, allDishes, dishPool])
-
   return (
     <>
       {/* Top: Photo */}
@@ -414,7 +430,7 @@ function DesktopDishContent({
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
+            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flex: 1 }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
@@ -546,7 +562,7 @@ function DesktopDishContent({
                   {dish.restauranteDireccion && (() => {
                     const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                     if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
-                    return <span style={{ display: 'block', fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1 }}>{parts.join(', ')}</span>
+                    return <span style={{ display: 'block', fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{parts.join(', ')}</span>
                   })()}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
@@ -556,6 +572,33 @@ function DesktopDishContent({
                   </svg>
                 </span>
               </a>
+              {/* Botón Pedir online */}
+              {(() => {
+                const orderUrl = getOrderUrl(dish.restauranteWebsite)
+                if (!orderUrl) return null
+                return (
+                  <a href={orderUrl} target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
+                      background: isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)',
+                      border: `1.5px solid ${isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)'}`,
+                      borderRadius: 12, textDecoration: 'none',
+                    }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.9)' : '#16a34a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    </svg>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(34,197,94,0.9)' : '#16a34a' }}>Pedir online</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(orderUrl).hostname.replace(/^www\./, '')}</span>
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.7)' : '#16a34a'} strokeWidth="2.2" strokeLinecap="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </a>
+                )
+              })()}
             </div>
           )
         })()}
@@ -680,14 +723,6 @@ function DishSlide({
     return result
   }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
 
-  const restDishes = useMemo(() => {
-    const pool = dishPool && dishPool.length > 0 ? dishPool : allDishes
-    const candidates = pool.filter(d => d.restauranteId === dish.restauranteId && d.id !== dish.id && d.fotoUrl)
-    const sameLeaf = candidates.filter(d => d.categoriaNorm === dish.categoriaNorm)
-    const others = candidates.filter(d => d.categoriaNorm !== dish.categoriaNorm)
-    return [...sameLeaf, ...others].slice(0, 4)
-  }, [dish, allDishes, dishPool])
-
   // Infinite scroll for related dishes inside slide
   useEffect(() => {
     const el = slideRef.current
@@ -753,7 +788,7 @@ function DishSlide({
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
+            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flex: 1 }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
@@ -868,37 +903,33 @@ function DishSlide({
               </svg>
             </a>
           )}
+          {(() => {
+            const orderUrl = getOrderUrl(dish.restauranteWebsite)
+            if (!orderUrl) return null
+            return (
+              <a href={orderUrl} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  width: '100%', padding: '12px 18px', borderRadius: 12, marginTop: 2,
+                  background: isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)',
+                  border: `1.5px solid ${isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)'}`,
+                  textDecoration: 'none', boxSizing: 'border-box',
+                }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.9)' : '#16a34a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+                <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? 'rgba(34,197,94,0.9)' : '#16a34a', whiteSpace: 'nowrap' }}>Pedir online</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new URL(orderUrl).hostname.replace(/^www\./, '')}</span>
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.7)' : '#16a34a'} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </a>
+            )
+          })()}
         </div>
-
-        {/* Más de restaurante */}
-        {restDishes.length > 0 && (
-          <div style={{ marginBottom: 14, marginTop: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', margin: 0 }}>
-                Más de {dish.restaurante}
-              </p>
-              {!dish.isShowcase && (
-                <a href={`/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 15, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  Ver carta completa
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                </a>
-              )}
-            </div>
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {restDishes.map(d => (
-                  <div key={d.id} onClick={() => onDishTap(d)} style={{
-                    flex: '0 0 auto', width: 'calc(25% - 5px)', cursor: 'pointer', borderRadius: 10, overflow: 'hidden',
-                    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
-                  }}>
-                    <img src={d.fotoUrl!} alt={d.nombre} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Related dishes */}
         {!hideRelated && relatedDishes.length > 0 && (
