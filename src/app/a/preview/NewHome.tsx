@@ -557,6 +557,14 @@ export default function NewHome({
       const url = trimmed ? `/?q=${encodeURIComponent(trimmed)}` : '/'
       window.history.replaceState(null, '', url)
     }
+    // Fire-and-forget search tracking
+    if (trimmed.length >= 2) {
+      fetch('/api/feed/track-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: trimmed }),
+      }).catch(() => {})
+    }
   }, [])
 
   // Server-side fetch — triggered by search, category pill, diet, location, distance filter
