@@ -182,13 +182,19 @@ export default async function CartaPage({
   const validViews = ["premium", "lista", "impact", "feed"];
   const serverView = validViews.includes(urlView || "") ? urlView! : ((restaurant as any).defaultView || "premium");
 
+  // Plan-based feature gating (done server-side so bypassing devtools doesn't help)
+  const plan = ((restaurant as any).plan || "FREE").toUpperCase();
+  const canShowPromos = plan === "SILVER" || plan === "GOLD" || plan === "PREMIUM";
+  const canShowAnnouncements = plan === "GOLD" || plan === "PREMIUM";
+  const hasDesignFeatures = plan === "SILVER" || plan === "GOLD" || plan === "PREMIUM";
+
   const isPremium = restaurant.cartaTheme === "PREMIUM";
   const cartaProps = {
     restaurant,
     categories,
     dishes,
     promotions: restaurant.promotions,
-    marketingPromos,
+    marketingPromos: canShowPromos ? marketingPromos : [],
     ratingMap: restaurant.ratingMap,
     reviews: restaurant.reviews,
     tableId,
@@ -199,7 +205,7 @@ export default async function CartaPage({
     timeOfDay,
     weather,
     popularDishIds: Array.from(topDishesResult.dishIds),
-    announcements: activeAnnouncements,
+    announcements: canShowAnnouncements ? activeAnnouncements : [],
   };
 
   // Fetch lead data for DemoBanner inline form (only if demo)
@@ -208,10 +214,6 @@ export default async function CartaPage({
     select: { ownerName: true, email: true, whatsapp: true },
     orderBy: { createdAt: "desc" },
   }) : null;
-
-  // Dark mode & custom colors: Silver+ plans
-  const plan = ((restaurant as any).plan || "FREE").toUpperCase();
-  const hasDesignFeatures = plan === "SILVER" || plan === "GOLD" || plan === "PREMIUM";
   const colorMode = hasDesignFeatures ? ((restaurant as any).cartaColorMode || "LIGHT") : "LIGHT";
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
   const accentColor = hasDesignFeatures ? ((restaurant as any).cartaAccentColor || null) : null;

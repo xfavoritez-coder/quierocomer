@@ -26,7 +26,14 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 12px" }}>
+    <div className="promo-compact-scroll" style={{
+      display: "flex", flexDirection: "row", gap: 10,
+      padding: "0 12px", overflowX: "auto", scrollSnapType: "x mandatory",
+      WebkitOverflowScrolling: "touch",
+      scrollbarWidth: "none",
+      msOverflowStyle: "none" as any,
+    }}>
+      <style>{`.promo-compact-scroll::-webkit-scrollbar { display: none; }`}</style>
       {promos.map((p) => {
         const dish = p.dishes?.[0];
         const photo = p.imageUrl || dish?.photos?.[0];
@@ -40,8 +47,9 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
             key={p.id}
             onClick={() => { if (dish && onViewDish) onViewDish(dish.id); }}
             style={{
-              width: "100%", height: 150, borderRadius: 18, overflow: "hidden", position: "relative",
+              minWidth: 280, width: 280, height: 150, borderRadius: 18, overflow: "hidden", position: "relative",
               background: "#111", display: "flex", border: "none", cursor: "pointer", textAlign: "left",
+              flexShrink: 0, scrollSnapAlign: "start",
             }}
           >
             {/* Full background photo with gradient */}
