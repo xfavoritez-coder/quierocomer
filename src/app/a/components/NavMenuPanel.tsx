@@ -13,6 +13,7 @@ export default function NavMenuPanel({
   onInicio,
   onPerfil,
   onContacto,
+  onPublicar,
   activeView,
 }: {
   isOpen: boolean
@@ -22,7 +23,8 @@ export default function NavMenuPanel({
   onInicio: () => void
   onPerfil: () => void
   onContacto: () => void
-  activeView?: 'feed' | 'perfil' | 'contacto' | string
+  onPublicar?: () => void
+  activeView?: 'feed' | 'perfil' | 'contacto' | 'publicar' | string
 }) {
   if (!isOpen) return null
 
@@ -102,12 +104,12 @@ export default function NavMenuPanel({
           </button>
 
           {/* Publicar local */}
-          <a href="/qr" target="_blank" rel="noopener noreferrer" onClick={onClose} style={itemStyle(false)}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={iconOpacity(false)}>
+          <button onClick={() => { onClose(); onPublicar?.() }} style={itemStyle(activeView === 'publicar')}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={iconOpacity(activeView === 'publicar')}>
               <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
             </svg>
             Publicar local
-          </a>
+          </button>
 
           {divider}
 

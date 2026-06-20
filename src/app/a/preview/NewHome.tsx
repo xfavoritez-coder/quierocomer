@@ -10,6 +10,7 @@ import FeedDishDetail from '../components/FeedDishDetail'
 import SavedList from '../components/SavedList'
 import ProfileView from '../components/ProfileView'
 import ContactView from '../components/ContactView'
+import PublicarLocalView from '../components/PublicarLocalView'
 import { createEmptyProfile, getRecommendationReason, type FeedProfile } from '../lib/scoring'
 import {
   trackInteraction,
@@ -61,7 +62,7 @@ function detectMealSlot(): MealSlot {
   return 'cena'
 }
 
-type View = 'feed' | 'perfil' | 'all-liked' | 'all-saved' | 'contacto' | 'mapa'
+type View = 'feed' | 'perfil' | 'all-liked' | 'all-saved' | 'contacto' | 'publicar' | 'mapa'
 
 export default function NewHome({
   dishes,
@@ -1278,14 +1279,14 @@ export default function NewHome({
                   </button>
 
                   {/* Publicar local */}
-                  <a href="/qr" target="_blank" rel="noopener noreferrer" onClick={() => setDesktopMenuOpen(false)} style={{
+                  <button onClick={() => { setView('publicar'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '11px 18px', color: isDark ? 'rgba(255,255,255,0.85)' : '#111',
-                    fontSize: 14, textDecoration: 'none', width: '100%', boxSizing: 'border-box',
+                    padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%', boxSizing: 'border-box',
                   }}>
                     <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     Publicar local
-                  </a>
+                  </button>
 
                   {/* Contacto */}
                   <button onClick={() => { setView('contacto'); window.scrollTo(0, 0); setDesktopMenuOpen(false) }} style={{
@@ -1434,7 +1435,7 @@ export default function NewHome({
         })()}{/* end Row 2 */}
 
         {/* Row 3: Quick-filter pills */}
-        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
+        <div style={{ display: view === 'perfil' || view === 'contacto' || view === 'publicar' ? 'none' : 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
           <button onClick={() => { if (!userLocation) { setLocationModalOpen(true); return } setQuickNearby(p => !p) }} style={pillStyle(quickNearby, 'nearby')}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
@@ -1478,7 +1479,7 @@ export default function NewHome({
         </div>
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
-        <div style={{ display: view === 'perfil' || view === 'contacto' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <div style={{ display: view === 'perfil' || view === 'contacto' || view === 'publicar' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
           <button ref={locationBtnRef} onClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -1508,7 +1509,7 @@ export default function NewHome({
       </header>
 
       {/* ─── Floating search bar — aparece al subir el scroll — mobile only ─── */}
-      {!isDesktop && view !== 'perfil' && view !== 'contacto' && (
+      {!isDesktop && view !== 'perfil' && view !== 'contacto' && view !== 'publicar' && (
         <div ref={floatingHeaderRef} style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 36,
           padding: '10px 16px',
@@ -1644,7 +1645,7 @@ export default function NewHome({
       )}
 
       {/* ─── Eureka pill flotante ─── */}
-      {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && view !== 'mapa' && (
+      {eurekaLiked.length > 0 && view !== 'perfil' && view !== 'contacto' && view !== 'publicar' && view !== 'mapa' && (
         <div style={{
           position: 'fixed', left: 0, right: 0, zIndex: 35,
           bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
@@ -1969,6 +1970,7 @@ export default function NewHome({
         onInicio={() => { setView('feed'); window.scrollTo(0, 0) }}
         onPerfil={() => { setView('perfil'); window.scrollTo(0, 0) }}
         onContacto={() => { setView('contacto'); window.scrollTo(0, 0) }}
+        onPublicar={() => { setView('publicar'); window.scrollTo(0, 0) }}
         activeView={view}
       />
 
@@ -2173,6 +2175,11 @@ export default function NewHome({
       {/* ─── Contacto View ─── */}
       {view === 'contacto' && (
         <ContactView onBack={() => { setView('feed'); window.scrollTo(0, 0) }} isDark={isDark} />
+      )}
+
+      {/* ─── Publicar Local View ─── */}
+      {view === 'publicar' && (
+        <PublicarLocalView onBack={() => { setView('feed'); window.scrollTo(0, 0) }} isDark={isDark} />
       )}
 
       {/* ─── All Liked View ─── */}
