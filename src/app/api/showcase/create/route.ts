@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 function slugify(name: string): string {
@@ -79,8 +79,9 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Invalidar cache del feed para que aparezca de inmediato
+  // Invalidar cache del feed y la página para que aparezca de inmediato
   revalidateTag("feed-dishes", { expire: 0 });
+  revalidatePath('/');
 
   // Vincular con MapaProspecto: marcar como importado para que el pin quede naranja.
   // Si no existe, crear uno nuevo para que aparezca en /localesfeed y /mapalocales.

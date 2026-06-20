@@ -1216,7 +1216,7 @@ export default function NewHome({
               placeholder="Buscar sushi"
               style={{
                 width: '100%', padding: '9px 34px 9px 16px', fontSize: 17,
-                borderRadius: showDesktopSuggestions && !!(searchInput.trim().length >= 2 ? searchSuggestions?.length : true) ? '20px 20px 0 0' : 999,
+                borderRadius: showDesktopSuggestions && !!(searchInput.trim().length >= 2 ? (searchSuggestions?.length || searchInput.trim().length >= 2) : true) ? '20px 20px 0 0' : 999,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
                 border: isDark ? '1px solid rgba(255,255,255,0.1)' : '2px solid rgba(0,0,0,0.07)',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
@@ -1233,8 +1233,10 @@ export default function NewHome({
             )}
             {showDesktopSuggestions && typeof document !== 'undefined' && createPortal(
               (() => {
-                const suggestions = searchInput.trim().length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
-                if (!suggestions?.length) return null
+                const trimmedInput = searchInput.trim()
+                const suggestions = trimmedInput.length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
+                const fallbackSearch = trimmedInput.length >= 2 && !suggestions?.length ? trimmedInput : null
+                if (!suggestions?.length && !fallbackSearch) return null
                 const r = desktopSearchRef.current?.getBoundingClientRect()
                 if (!r) return null
                 return (
@@ -1248,7 +1250,23 @@ export default function NewHome({
                     fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                   }}>
                     <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
-                    {suggestions.map((s, i) => (
+                    {fallbackSearch ? (
+                      <button
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => { executeSearch(fallbackSearch); setShowDesktopSuggestions(false) }}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                          color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <span style={{ flex: 1 }}>Buscar &ldquo;{fallbackSearch}&rdquo;</span>
+                      </button>
+                    ) : suggestions!.map((s, i) => (
                       <button
                         key={`${s.type}-${s.text}`}
                         onMouseDown={e => e.preventDefault()}
@@ -1402,13 +1420,15 @@ export default function NewHome({
           onSearchFocus={() => { setShowSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
           onSearchBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
           placeholder="Buscar sushi"
-          suggestionsOpen={showSuggestions && !!(searchInput.trim().length >= 2 ? searchSuggestions?.length : true)}
+          suggestionsOpen={showSuggestions && !!(searchInput.trim().length >= 2 ? (searchSuggestions?.length || searchInput.trim().length >= 2) : true)}
         >
           {/* Dropdown de sugerencias — portal en body para escapar stacking context */}
           {showSuggestions && typeof document !== 'undefined' && createPortal(
             (() => {
-              const suggestions = searchInput.trim().length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
-              if (!suggestions?.length) return null
+              const trimmedInput = searchInput.trim()
+              const suggestions = trimmedInput.length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
+              const fallbackSearch = trimmedInput.length >= 2 && !suggestions?.length ? trimmedInput : null
+              if (!suggestions?.length && !fallbackSearch) return null
               const r = searchInputRef.current?.getBoundingClientRect()
               if (!r) return null
               return (
@@ -1423,7 +1443,23 @@ export default function NewHome({
                   fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                 }}>
                   <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
-                  {suggestions.map((s, i) => (
+                  {fallbackSearch ? (
+                    <button
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => { executeSearch(fallbackSearch); setShowSuggestions(false) }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                        color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                        fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                      }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                      </svg>
+                      <span style={{ flex: 1 }}>Buscar &ldquo;{fallbackSearch}&rdquo;</span>
+                    </button>
+                  ) : suggestions!.map((s, i) => (
                     <button
                       key={`${s.type}-${s.text}`}
                       onMouseDown={e => e.preventDefault()}
@@ -1517,12 +1553,14 @@ export default function NewHome({
             onSearchFocus={() => { setShowFloatingSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
             onSearchBlur={() => { setTimeout(() => setShowFloatingSuggestions(false), 150); setSearchFocused(false) }}
             placeholder="Buscar sushi"
-            suggestionsOpen={showFloatingSuggestions && !!(searchInput.trim().length >= 2 ? searchSuggestions?.length : true)}
+            suggestionsOpen={showFloatingSuggestions && !!(searchInput.trim().length >= 2 ? (searchSuggestions?.length || searchInput.trim().length >= 2) : true)}
           >
             {showFloatingSuggestions && typeof document !== 'undefined' && createPortal(
               (() => {
-                const suggestions = searchInput.trim().length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
-                if (!suggestions?.length) return null
+                const trimmedInput = searchInput.trim()
+                const suggestions = trimmedInput.length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
+                const fallbackSearch = trimmedInput.length >= 2 && !suggestions?.length ? trimmedInput : null
+                if (!suggestions?.length && !fallbackSearch) return null
                 const r = floatingInputRef.current?.getBoundingClientRect()
                 if (!r) return null
                 return (
@@ -1537,7 +1575,23 @@ export default function NewHome({
                     fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                   }}>
                     <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
-                    {suggestions.map((s, i) => (
+                    {fallbackSearch ? (
+                      <button
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => { executeSearch(fallbackSearch); setShowFloatingSuggestions(false) }}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                          color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <span style={{ flex: 1 }}>Buscar &ldquo;{fallbackSearch}&rdquo;</span>
+                      </button>
+                    ) : suggestions!.map((s, i) => (
                       <button
                         key={`${s.type}-${s.text}`}
                         onMouseDown={e => e.preventDefault()}
