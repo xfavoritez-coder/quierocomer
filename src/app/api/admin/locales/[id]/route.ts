@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
 import crypto from "crypto";
@@ -148,6 +149,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const restaurant = await prisma.restaurant.update({ where: { id }, data });
+    // Invalidar cache del feed si cambiaron campos visibles al usuario
+    const feedFields = ['name','phone','website','websiteIsOrderUrl','cartaProvider','instagram','googleMapsUrl','address','logoUrl','isActive'];
+    if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes');
     return NextResponse.json(restaurant);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
