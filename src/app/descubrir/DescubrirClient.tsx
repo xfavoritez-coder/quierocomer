@@ -87,6 +87,8 @@ export default function DescubrirClient() {
   const recommendedRef = useRef<HTMLDivElement>(null)
   const likedIdsRef = useRef<string[]>([])
   const initialLoadDone = useRef(false)
+  const stripRef = useRef<HTMLDivElement>(null)
+  const [stripPage, setStripPage] = useState(0)
 
   // Init: read location + filters from localStorage
   useEffect(() => {
@@ -348,26 +350,66 @@ export default function DescubrirClient() {
           {/* ── 1. Platos que te podrían gustar ── */}
           {allRecommended.length > 0 && (
             <>
-              <div ref={recommendedRef} style={{ marginBottom: 10, padding: '0 14px' }}>
+              {(() => {
+                const visibleDishes = cappedRecommended.filter(d =>
+                  !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
+                )
+                const totalCards = visibleDishes.length
+                const scrollToCard = (idx: number) => {
+                  const el = stripRef.current
+                  if (!el) return
+                  const cardWidth = el.offsetWidth * 0.76 + 8
+                  el.scrollTo({ left: idx * cardWidth, behavior: 'smooth' })
+                  setStripPage(idx)
+                }
+                return (
+                <>
+              <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '0 14px' }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                   Platos que te podrían gustar
                 </p>
+                {totalCards > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <button onClick={() => scrollToCard(Math.max(0, stripPage - 1))} disabled={stripPage === 0} style={{
+                      width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: stripPage === 0 ? 'default' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: stripPage === 0 ? 'transparent' : 'rgba(244,166,35,0.12)',
+                      color: stripPage === 0 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center' }}>
+                      {stripPage + 1}/{totalCards}
+                    </span>
+                    <button onClick={() => scrollToCard(Math.min(totalCards - 1, stripPage + 1))} disabled={stripPage >= totalCards - 1} style={{
+                      width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: stripPage >= totalCards - 1 ? 'default' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: stripPage >= totalCards - 1 ? 'transparent' : 'rgba(244,166,35,0.12)',
+                      color: stripPage >= totalCards - 1 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Strip horizontal 1×1 — máx 4 fotos, scroll snap */}
-              <div style={{
+              <div ref={stripRef} style={{
                 display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory',
                 scrollbarWidth: 'none', msOverflowStyle: 'none' as any,
                 gap: 8, paddingLeft: 14, paddingRight: 14,
                 marginBottom: 28,
+              }} onScroll={e => {
+                const el = e.currentTarget
+                const cardWidth = el.offsetWidth * 0.76 + 8
+                const newPage = Math.round(el.scrollLeft / cardWidth)
+                if (newPage !== stripPage) setStripPage(newPage)
               }}>
                 <style>{`.descubrir-strip::-webkit-scrollbar { display: none; }`}</style>
-                {cappedRecommended.filter(d =>
-                  !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
-                ).map(d => (
+                {visibleDishes.map(d => (
                   <div key={d.id} onClick={() => handleTap(d)} style={{
                     position: 'relative', flexShrink: 0,
                     width: '76%', aspectRatio: '1',
@@ -401,6 +443,9 @@ export default function DescubrirClient() {
                   </div>
                 ))}
               </div>
+              </>
+                )
+              })()}
             </>
           )}
 
