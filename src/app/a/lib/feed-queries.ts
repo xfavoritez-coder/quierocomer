@@ -238,7 +238,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
 /** Cached version — shared across all users, revalidates every 5 minutes */
 export const getFeedDishes = unstable_cache(
   _getFeedDishes,
-  ['feed-dishes-v4'],
+  ['feed-dishes-v5'],
   { revalidate: 300, tags: ['feed-dishes'] }, // 5 minutes
 )
 
