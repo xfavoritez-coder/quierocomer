@@ -23,6 +23,16 @@ import { QC_PARENTS, getPrimaryDishType, DISH_TYPE_TO_PARENT } from '../lib/cate
 import { slugify } from '@/lib/slugify'
 import NavMenuPanel from '../components/NavMenuPanel'
 import FeedMapView from '../components/FeedMapView'
+import FeedTopNav from '../components/FeedTopNav'
+import FeedFilterBar, { type FilterBarFilters } from '../components/FeedFilterBar'
+
+const DEFAULT_SUSHI_SUGGESTIONS: { text: string; type: 'plato' | 'local' | 'categoría' | 'ingrediente' }[] = [
+  { text: 'Sushi', type: 'categoría' },
+  { text: 'Maki', type: 'plato' },
+  { text: 'Sashimi', type: 'plato' },
+  { text: 'Nigiri', type: 'plato' },
+  { text: 'Rolls', type: 'plato' },
+]
 
 function normStr(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -139,7 +149,6 @@ export default function NewHome({
   const floatingInputRef = useRef<HTMLInputElement>(null)
   const [showFloatingSuggestions, setShowFloatingSuggestions] = useState(false)
   const mapGeocoderRef = useRef<((q: string) => void) | null>(null)
-  const [filterOpen, setFilterOpen] = useState(false)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
   const [filterSort, setFilterSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
@@ -152,12 +161,6 @@ export default function NewHome({
   const [quickPopular, setQuickPopular] = useState(false)
   const [filterMaxKm, setFilterMaxKm] = useState(5)
   const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
-  // Draft state — se usan dentro del panel, solo se aplican al hacer "Guardar cambios"
-  const [draftMeal, setDraftMeal] = useState(filterMeal)
-  const [draftMealDisplay, setDraftMealDisplay] = useState(filterMealDisplay)
-  const [draftSort, setDraftSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
-  const [draftMaxKm, setDraftMaxKm] = useState(filterMaxKm)
-  const [draftDiet, setDraftDiet] = useState(filterDiet)
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   // Track if user explicitly changed filterMaxKm from the modal (vs auto-set by GPS)
   const userSetMaxKm = useRef(false)
@@ -765,19 +768,6 @@ export default function NewHome({
   }, [dishes])
 
   // Preview count para el botón "Guardar cambios" — aprox sobre resultado actual
-  const draftDishCount = useMemo(() => {
-    let filtered = (serverDishes ?? dishes).filter(d => d.fotoUrl)
-    if (userLocation) {
-      filtered = filtered
-        .filter(d => d.restauranteLat && d.restauranteLng)
-        .filter(d => distanceKm(userLocation.lat, userLocation.lng, d.restauranteLat!, d.restauranteLng!) <= draftMaxKm)
-    }
-    if (draftMeal !== 'all') filtered = filtered.filter(d => d.mealTime === draftMeal)
-    if (draftDiet === 'VEGAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN')
-    else if (draftDiet === 'VEGETARIAN') filtered = filtered.filter(d => d.dieta.tipo === 'VEGAN' || d.dieta.tipo === 'VEGETARIAN')
-    return filtered.length
-  }, [dishes, serverDishes, userLocation, draftMaxKm, draftMeal, draftDiet])
-
   // Infinite scroll — IntersectionObserver sobre sentinel al final del feed
   useEffect(() => {
     const el = sentinelRef.current
@@ -914,30 +904,18 @@ export default function NewHome({
   // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
   const activeFilterCount = (filterDiet !== 'all' ? 1 : 0) + (filterSort !== 'default' ? 1 : 0) + (userSetMaxKm.current && filterMaxKm !== 5 ? 1 : 0) + (filterMeal !== 'all' ? 1 : 0)
 
-  // Pills helpers — usados tanto en Row 3 como en el floating header
-  const openFilters = () => {
-    setDraftSort(filterSort)
-    setDraftMaxKm(filterMaxKm)
-    setDraftDiet(filterDiet)
-    setDraftMeal(filterMeal)
-    setDraftMealDisplay(filterMealDisplay)
-    setFilterOpen(true)
+  // Shared filter state object + handler for FeedFilterBar
+  const feedFilters: FilterBarFilters = {
+    diet: filterDiet, maxKm: filterMaxKm, sort: filterSort,
+    meal: filterMeal, mealDisplay: filterMealDisplay,
+    nearby: quickNearby, popular: quickPopular,
   }
-  type PillType = 'nearby' | 'popular' | 'green' | 'default'
-  const pillActiveColor = (type: PillType) => type === 'popular' ? '#D32F2F' : type === 'green' ? '#2E7D32' : '#c97d00'
-  const pillStyle = (active: boolean, type: PillType = 'default') => {
-    const ac = pillActiveColor(type)
-    return {
-      flex: 1, padding: '9px 4px', borderRadius: 999 as const, fontSize: 14, fontWeight: 500,
-      cursor: 'pointer' as const, whiteSpace: 'nowrap' as const,
-      textAlign: 'center' as const, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-      background: active
-        ? (type === 'popular' ? (isDark ? 'rgba(211,47,47,0.15)' : 'rgba(211,47,47,0.1)') : type === 'green' ? (isDark ? 'rgba(46,125,50,0.18)' : 'rgba(46,125,50,0.12)') : (isDark ? 'rgba(244,166,35,0.18)' : 'rgba(244,166,35,0.15)'))
-        : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
-      border: `1px solid ${active ? (type === 'popular' ? 'rgba(211,47,47,0.45)' : type === 'green' ? 'rgba(46,125,50,0.4)' : 'rgba(244,166,35,0.5)') : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)')}`,
-      color: active ? ac : (isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)'),
-    }
+  function handleFiltersChange(f: FilterBarFilters) {
+    if (f.maxKm !== filterMaxKm) userSetMaxKm.current = true
+    setFilterDiet(f.diet); setFilterMaxKm(f.maxKm); setFilterSort(f.sort)
+    setFilterMeal(f.meal); setFilterMealDisplay(f.mealDisplay)
+    setQuickNearby(f.nearby); setQuickPopular(f.popular)
+    setShuffleSeed(Math.random())
   }
 
   function resetFeed() {
@@ -1338,46 +1316,26 @@ export default function NewHome({
       >
 
 
-        {/* Row 2: Search bar */}
-        {(() => {
-          const hasActiveFilters = filterSort !== 'default' || quickNearby || quickPopular || filterMaxKm !== 5 || filterDiet !== 'all' || !!activeCategory
-          return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, marginTop: 12 }}>
-        <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-          <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
-        </a>
-        <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}>
-          <input
-            ref={searchInputRef}
-            className="feed-search-input"
-            type="text" value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            onFocus={() => { setShowSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
-            onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
-            placeholder="Buscar en QuieroComer"
-            autoComplete="off"
-            style={{
-              width: '100%', padding: '12px 20px 12px 24px', fontSize: 17,
-              borderRadius: showSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
-              background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
-              border: isDark ? '1px solid rgba(255,255,255,0.10)' : '2px solid rgba(0,0,0,0.07)',
-              boxShadow: 'none',
-              color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
-            }}
-          />
-          {searchInput && (
-            <button type="button" onClick={() => { setSearchInput(''); executeSearch(''); setShowSuggestions(false) }} style={{
-              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-          {/* Dropdown de sugerencias — se renderiza vía portal en body para escapar todo stacking context */}
-          {showSuggestions && searchSuggestions && typeof document !== 'undefined' && createPortal(
+        {/* Row 2: Top nav (FeedTopNav shared component) */}
+        <FeedTopNav
+          ref={searchInputRef}
+          isDark={isDark}
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
+          onSearchClear={() => { setSearchInput(''); executeSearch(''); setShowSuggestions(false) }}
+          onSearchSubmit={() => { executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}
+          onLogoClick={resetFeed}
+          onMenuOpen={() => setMenuOpen(true)}
+          onSearchFocus={() => { setShowSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
+          onSearchBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
+          placeholder="Buscar sushi"
+          suggestionsOpen={showSuggestions && !!(searchInput.trim().length >= 2 ? searchSuggestions?.length : true)}
+        >
+          {/* Dropdown de sugerencias — portal en body para escapar stacking context */}
+          {showSuggestions && typeof document !== 'undefined' && createPortal(
             (() => {
+              const suggestions = searchInput.trim().length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
+              if (!suggestions?.length) return null
               const r = searchInputRef.current?.getBoundingClientRect()
               if (!r) return null
               return (
@@ -1392,7 +1350,7 @@ export default function NewHome({
                   fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                 }}>
                   <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
-                  {searchSuggestions.map((s, i) => (
+                  {suggestions.map((s, i) => (
                     <button
                       key={`${s.type}-${s.text}`}
                       onMouseDown={e => e.preventDefault()}
@@ -1417,66 +1375,21 @@ export default function NewHome({
             })(),
             document.body
           )}
-        </form>{/* end search input */}
-        <button onClick={() => setMenuOpen(true)} style={{
-          flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
-          width: 49, height: 49, borderRadius: '50%',
-          background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-          boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
-          color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        </div>
-          )
-        })()}{/* end Row 2 */}
+        </FeedTopNav>
 
-        {/* Row 3: Quick-filter pills */}
-        <div style={{ display: view === 'perfil' || view === 'contacto' || view === 'publicar' ? 'none' : 'flex', alignItems: 'center', gap: 6, marginBottom: 8, marginTop: 8 }}>
-          <button onClick={() => { if (!userLocation) { setLocationModalOpen(true); return } setQuickNearby(p => !p) }} style={pillStyle(quickNearby, 'nearby')}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-            </svg>
-            Cerca
-          </button>
-          <button onClick={() => setQuickPopular(p => !p)} style={pillStyle(quickPopular, 'popular')}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-            </svg>
-            Popular
-          </button>
-          <button onClick={() => setFilterDiet(filterDiet !== 'all' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet !== 'all', 'green')}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-            </svg>
-            Veggie
-          </button>
-          <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-            <button onClick={openFilters} style={{ ...pillStyle(false, 'default'), width: '100%' }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-                <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-                <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
-              </svg>
-              Filtros
-            </button>
-            {activeFilterCount > 0 && (
-              <span style={{
-                position: 'absolute', top: 1, right: -3, pointerEvents: 'none',
-                background: '#F4A623', color: '#fff',
-                borderRadius: 999, fontSize: 11, fontWeight: 700,
-                minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '0 3px', lineHeight: 1, zIndex: 1,
-              }}>{activeFilterCount}</span>
-            )}
-          </div>
-          {/* Botón mapa oculto por ahora */}
-        </div>
+        {/* Row 3: Filter pills (FeedFilterBar shared component) */}
+        {view !== 'perfil' && view !== 'contacto' && view !== 'publicar' && (
+          <FeedFilterBar
+            isDark={isDark}
+            userLocation={userLocation}
+            locationLabel={locationName || gpsLabel}
+            filters={feedFilters}
+            activeFilterCount={activeFilterCount}
+            onLocationClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }}
+            onFiltersChange={handleFiltersChange}
+            showLocationRow={false}
+          />
+        )}
 
         {/* Row 4: Ubicación + badge distancia en la misma línea */}
         <div style={{ display: view === 'perfil' || view === 'contacto' || view === 'publicar' ? 'none' : 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -1519,44 +1432,24 @@ export default function NewHome({
           transition: showFloatingSearch ? 'transform 0.28s cubic-bezier(0.0, 0.0, 0.2, 1)' : 'none',
           boxShadow: showFloatingSearch ? '0 2px 16px rgba(0,0,0,0.10)' : 'none',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
-          </a>
-          <form style={{ position: 'relative', flex: 1 }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); floatingInputRef.current?.blur(); setShowFloatingSuggestions(false) }}>
-            <input
-              ref={floatingInputRef}
-              type="text"
-              autoComplete="off"
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              onFocus={() => { setShowFloatingSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
-              onBlur={() => { setTimeout(() => setShowFloatingSuggestions(false), 150); setSearchFocused(false) }}
-              placeholder="Buscar en QuieroComer"
-              className="feed-floating-input"
-              style={{
-                width: '100%', padding: '12px 38px 12px 24px',
-                borderRadius: showFloatingSuggestions && searchSuggestions?.length ? '20px 20px 0 0' : 999,
-                fontSize: 17,
-                background: isDark ? 'rgba(255,255,255,0.08)' : '#fff',
-                border: isDark ? '1px solid rgba(255,255,255,0.10)' : '2px solid rgba(0,0,0,0.07)',
-                boxShadow: 'none',
-                color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-            {searchInput && (
-              <button type="button" onClick={() => { setSearchInput(''); executeSearch(''); setShowFloatingSuggestions(false) }} style={{
-                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            {showFloatingSuggestions && searchSuggestions && typeof document !== 'undefined' && createPortal(
+          <FeedTopNav
+            ref={floatingInputRef}
+            isDark={isDark}
+            searchValue={searchInput}
+            onSearchChange={setSearchInput}
+            onSearchClear={() => { setSearchInput(''); executeSearch(''); setShowFloatingSuggestions(false) }}
+            onSearchSubmit={() => { executeSearch(searchInput); floatingInputRef.current?.blur(); setShowFloatingSuggestions(false) }}
+            onLogoClick={resetFeed}
+            onMenuOpen={() => setMenuOpen(true)}
+            onSearchFocus={() => { setShowFloatingSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
+            onSearchBlur={() => { setTimeout(() => setShowFloatingSuggestions(false), 150); setSearchFocused(false) }}
+            placeholder="Buscar sushi"
+            suggestionsOpen={showFloatingSuggestions && !!(searchInput.trim().length >= 2 ? searchSuggestions?.length : true)}
+          >
+            {showFloatingSuggestions && typeof document !== 'undefined' && createPortal(
               (() => {
+                const suggestions = searchInput.trim().length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
+                if (!suggestions?.length) return null
                 const r = floatingInputRef.current?.getBoundingClientRect()
                 if (!r) return null
                 return (
@@ -1571,7 +1464,7 @@ export default function NewHome({
                     fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                   }}>
                     <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
-                    {searchSuggestions.map((s, i) => (
+                    {suggestions.map((s, i) => (
                       <button
                         key={`${s.type}-${s.text}`}
                         onMouseDown={e => e.preventDefault()}
@@ -1596,51 +1489,17 @@ export default function NewHome({
               })(),
               document.body
             )}
-          </form>
-          <button onClick={() => setMenuOpen(true)} style={{
-            flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
-            width: 49, height: 49, borderRadius: '50%',
-            background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-            boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
-            color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          </div>
-          {/* Pills de filtro en el floating header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <button onClick={() => setQuickNearby(p => !p)} style={pillStyle(quickNearby, 'nearby')}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-              </svg>
-              Cerca
-            </button>
-            <button onClick={() => setQuickPopular(p => !p)} style={pillStyle(quickPopular, 'popular')}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-              </svg>
-              Popular
-            </button>
-            <button onClick={() => setFilterDiet(filterDiet !== 'all' ? 'all' : 'VEGETARIAN')} style={pillStyle(filterDiet !== 'all', 'green')}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </svg>
-              Veggie
-            </button>
-            <button onClick={openFilters} style={pillStyle(false, 'default')}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-                <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-                <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
-              </svg>
-              Filtros
-            </button>
-          </div>
+          </FeedTopNav>
+          <FeedFilterBar
+            isDark={isDark}
+            userLocation={userLocation}
+            locationLabel={locationName || gpsLabel}
+            filters={feedFilters}
+            activeFilterCount={activeFilterCount}
+            onLocationClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }}
+            onFiltersChange={handleFiltersChange}
+            showLocationRow={false}
+          />
         </div>
       )}
 
@@ -1735,231 +1594,6 @@ export default function NewHome({
         </div>
       )}
 
-      {/* ─── Filter sheet ─── */}
-      {filterOpen && (
-        <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.3)' }} />
-          <div style={{
-            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 81,
-            maxHeight: 'min(88vh, calc(100dvh - 72px))',
-            display: 'flex', flexDirection: 'column',
-            background: isDark ? '#1a1a1a' : '#fff',
-            borderRadius: '24px 24px 0 0',
-            animation: 'slideUp 0.25s ease-out',
-            overflow: 'hidden',
-          }}>
-            {/* X fija arriba a la derecha */}
-            <button onClick={() => setFilterOpen(false)} style={{
-              position: 'absolute', top: 14, right: 16, zIndex: 2,
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              border: 'none', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-              fontSize: 22, lineHeight: 1, cursor: 'pointer', borderRadius: '50%',
-              width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>×</button>
-
-            {/* Contenido scrolleable — incluye título + filtros */}
-            <div style={{ overflowY: 'auto', flex: 1, padding: '20px 16px calc(16px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
-              {/* Drag handle + título dentro del scroll */}
-              <div style={{ width: 40, height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)', borderRadius: 999, margin: '0 auto 16px' }} />
-              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-feed-display), serif', color: isDark ? '#fff' : '#111' }}>Filtros</h2>
-
-            {/* Dieta */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Dieta
-              </h3>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[
-                  {
-                    id: 'all' as const, label: 'Como de todo',
-                    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>,
-                    activeColor: '#c97d00', activeBg: 'rgba(244,166,35,0.07)', activeBorder: '#F4A623',
-                  },
-                  {
-                    id: 'VEGETARIAN' as const, label: 'Veggie',
-                    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-                    </svg>,
-                    activeColor: '#2E7D32', activeBg: 'rgba(46,125,50,0.08)', activeBorder: 'rgba(46,125,50,0.5)',
-                  },
-                  {
-                    id: 'VEGAN' as const, label: 'Vegano',
-                    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22V11"/>
-                      <path d="M12 11a6 6 0 0 0-6-6c0 3.31 2.69 6 6 6z"/>
-                      <path d="M12 11a6 6 0 0 1 6-6c0 3.31-2.69 6-6 6z"/>
-                      <path d="M12 17a5 5 0 0 0-5-5c0 2.76 2.24 5 5 5z"/>
-                      <path d="M12 17a5 5 0 0 1 5-5c0 2.76-2.24 5-5 5z"/>
-                    </svg>,
-                    activeColor: '#2E7D32', activeBg: 'rgba(46,125,50,0.08)', activeBorder: 'rgba(46,125,50,0.5)',
-                  },
-                ].map(d => (
-                  <button key={d.id} onClick={() => setDraftDiet(d.id)} style={{
-                    border: draftDiet === d.id ? `1.5px solid ${d.activeBorder}` : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                    borderRadius: 14, padding: '10px 16px',
-                    display: 'flex', alignItems: 'center', gap: 7,
-                    background: draftDiet === d.id ? d.activeBg : isDark ? '#2a2a2a' : '#fff',
-                    color: draftDiet === d.id ? d.activeColor : isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
-                    fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
-                  }}>
-                    {d.icon}
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Distancia */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Distancia
-              </h3>
-              <div style={{ border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: '16px 14px', background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }}>
-                <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 600, color: isDark ? '#fff' : '#111' }}>
-                  Hasta <strong style={{ color: '#F4A623', marginLeft: 4 }}>{draftMaxKm} km</strong>
-                </p>
-                <div style={{ position: 'relative', height: 5, background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderRadius: 999 }}>
-                  <div style={{ width: `${(draftMaxKm / 30) * 100}%`, height: '100%', background: '#F4A623', borderRadius: 999 }} />
-                  <div style={{ position: 'absolute', left: `${(draftMaxKm / 30) * 100}%`, top: '50%', width: 22, height: 22, background: '#F4A623', borderRadius: 999, transform: 'translate(-50%, -50%)', boxShadow: '0 1px 4px rgba(244,166,35,0.4)' }} />
-                </div>
-                <input type="range" min={1} max={30} value={draftMaxKm}
-                  onChange={e => setDraftMaxKm(Number(e.target.value))}
-                  style={{ width: '100%', height: 22, appearance: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', marginTop: -12, opacity: 0 }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontSize: 11, marginTop: 4 }}>
-                  <span>1 km</span><span>10 km</span><span>20 km</span><span>30 km</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Ordenar */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Ordenar por
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <button onClick={() => setQuickNearby(p => !p)} style={{
-                  border: quickNearby ? '1.5px solid #c97d00' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                  borderRadius: 14, padding: '10px 16px',
-                  background: quickNearby ? 'rgba(244,166,35,0.08)' : isDark ? '#2a2a2a' : '#fff',
-                  color: quickNearby ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  Cerca
-                </button>
-                <button onClick={() => setQuickPopular(p => !p)} style={{
-                  border: quickPopular ? '1.5px solid #D32F2F' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                  borderRadius: 14, padding: '10px 16px',
-                  background: quickPopular ? 'rgba(211,47,47,0.08)' : isDark ? '#2a2a2a' : '#fff',
-                  color: quickPopular ? '#D32F2F' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                  fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                  Popular
-                </button>
-                {[
-                  { id: 'recent' as const, label: 'Últimos agregados' },
-                  { id: 'price-asc' as const, label: 'Precio ↑' },
-                  { id: 'price-desc' as const, label: 'Precio ↓' },
-                ].map(s => (
-                  <button key={s.id} onClick={() => setDraftSort(draftSort === s.id ? 'default' : s.id)} style={{
-                    border: draftSort === s.id ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                    borderRadius: 14, padding: '10px 16px',
-                    background: draftSort === s.id ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                    color: draftSort === s.id ? '#c97d00' : isDark ? 'rgba(255,255,255,0.7)' : '#111',
-                    fontSize: 13, cursor: 'pointer',
-                  }}>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Momento */}
-            <div style={{ marginBottom: 22 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Momento
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                {[
-                  { display: 'all' as const, meal: 'all' as const, label: 'Todo el día', activeColor: '#F4A623', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-                  { display: 'desayuno' as const, meal: 'desayuno' as const, label: 'Desayuno', activeColor: '#f59e0b', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /></svg> },
-                  { display: 'almuerzo' as const, meal: 'almuerzo_cena' as const, label: 'Almuerzo', activeColor: '#f97316', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /></svg> },
-                  { display: 'cena' as const, meal: 'almuerzo_cena' as const, label: 'Cena', activeColor: '#6366f1', icon: (c: string) => <svg width="17" height="17" fill="none" stroke={c} strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg> },
-                ].map((m, i) => {
-                  const isActive = draftMealDisplay === m.display
-                  const iconColor = isActive ? m.activeColor : isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.25)'
-                  return (
-                  <button key={i} onClick={() => { setDraftMeal(m.meal); setDraftMealDisplay(m.display) }} style={{
-                    minHeight: 68, borderRadius: 12,
-                    border: isActive ? '1.5px solid #F4A623' : `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-                    background: isActive ? 'rgba(244,166,35,0.07)' : isDark ? '#2a2a2a' : '#fff',
-                    color: isActive ? '#c97d00' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
-                    fontSize: 12, display: 'flex', flexDirection: 'column', gap: 6,
-                    alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                  }}>
-                    {m.icon(iconColor)}
-                    {m.label}
-                  </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div style={{ height: 80 }} />
-          </div>
-
-          <div style={{
-            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 82,
-            padding: '12px 18px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-            background: isDark ? 'linear-gradient(to top, #1a1a1a 60%, transparent)' : 'linear-gradient(to top, #fff 60%, transparent)',
-            display: 'flex', flexDirection: 'column', gap: 8,
-          }}>
-            <button onClick={() => {
-              setFilterSort(draftSort)
-              setFilterMaxKm(draftMaxKm)
-              if (draftMaxKm !== 30) userSetMaxKm.current = true
-              else userSetMaxKm.current = false
-              setFilterDiet(draftDiet)
-              setFilterMeal(draftMeal)
-              setFilterMealDisplay(draftMealDisplay)
-              setFilterOpen(false)
-              setShuffleSeed(Math.random())
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }} style={{
-              width: '100%', height: 52, border: 'none', borderRadius: 16,
-              background: '#F4A623', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
-            }}>
-              {isSearching ? 'Buscando...' : `Ver ${draftDishCount} ${draftDishCount === 1 ? 'plato' : 'platos'}`}
-            </button>
-            <button onClick={() => {
-              setFilterSort('default')
-              setFilterMaxKm(5)
-              userSetMaxKm.current = false
-              setFilterDiet('all')
-              setFilterMeal('all')
-              setFilterMealDisplay('all')
-              setDraftSort('default')
-              setDraftMaxKm(30)
-              setDraftDiet('all')
-              setDraftMeal('all')
-              setDraftMealDisplay('all')
-              setFilterOpen(false)
-              setShuffleSeed(Math.random())
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }} style={{
-              width: '100%', height: 40, border: 'none', borderRadius: 12,
-              background: 'none', color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
-              fontSize: 14, fontWeight: 500, cursor: 'pointer',
-            }}>
-              Limpiar filtros
-            </button>
-          </div>
-          </div>{/* end scrollable content */}
-        </>
-      )}
 
       {/* ─── Hamburger menu — slide from right ─── */}
       <NavMenuPanel
@@ -2064,16 +1698,16 @@ export default function NewHome({
               )}
               <div style={{ flex: 1 }} />
               {isDesktop && (
-                <button onClick={() => setFilterOpen(true)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-                  padding: '6px 12px', borderRadius: 20, border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
-                  background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
-                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
-                  cursor: 'pointer', fontSize: 13,
-                }}>
-                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-                  Filtros
-                </button>
+                <FeedFilterBar
+                  isDark={isDark}
+                  userLocation={userLocation}
+                  locationLabel={locationName || gpsLabel}
+                  filters={feedFilters}
+                  activeFilterCount={activeFilterCount}
+                  onLocationClick={() => setLocationModalOpen(true)}
+                  onFiltersChange={handleFiltersChange}
+                  showLocationRow={false}
+                />
               )}
             </div>
           )}
@@ -2138,7 +1772,6 @@ export default function NewHome({
                 if (hasLocationFilter) {
                   // Expand distance to show all dishes regardless of location
                   setFilterMaxKm(30)
-                  setDraftMaxKm(30)
                 } else {
                   setSearchQuery('')
                   setSearchInput('')

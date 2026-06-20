@@ -9,6 +9,7 @@ import { trackInteraction } from '../a/lib/feed-actions'
 import { VeganIcon, VegetarianIcon, SpicyIcon } from '../a/components/DietIcons'
 import NavMenuPanel from '../a/components/NavMenuPanel'
 import FeedFilterBar, { type FilterBarFilters } from '../a/components/FeedFilterBar'
+import FeedTopNav from '../a/components/FeedTopNav'
 import LocationModal from '../a/components/LocationModal'
 
 const profile = createEmptyProfile()
@@ -223,51 +224,15 @@ export default function DescubrirClient() {
         display: 'flex', flexDirection: 'column', gap: 7,
       }}>
         {/* Row 1: logo + search + hamburger */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, marginBottom: 4 }}>
-          <a href="/" onClick={(e) => { e.preventDefault(); goHome() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="QuieroComer" style={{ height: 55, width: 'auto' }} />
-          </a>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <input
-              ref={searchRef}
-              type="text"
-              autoComplete="off"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar en QuieroComer"
-              className="feed-search-input"
-              style={{
-                width: '100%', padding: '12px 38px 12px 24px',
-                borderRadius: 999, fontSize: 17, boxSizing: 'border-box',
-                background: inputBg, border: inputBorder,
-                color: isDark ? '#fff' : '#111', outline: 'none',
-              }}
-            />
-            {search && (
-              <button onClick={() => setSearch('')} style={{
-                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                color: mutedColor, display: 'flex', alignItems: 'center',
-              }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-              </button>
-            )}
-          </div>
-          <button onClick={() => setMenuOpen(true)} style={{
-            flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
-            width: 49, height: 49, borderRadius: '50%',
-            background: isDark ? 'rgba(255,255,255,0.10)' : '#fff',
-            boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
-            color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </button>
-        </div>
+        <FeedTopNav
+          ref={searchRef}
+          isDark={isDark}
+          searchValue={search}
+          onSearchChange={setSearch}
+          onSearchClear={() => setSearch('')}
+          onLogoClick={goHome}
+          onMenuOpen={() => setMenuOpen(true)}
+        />
 
         {/* Pills row (sticky) */}
         <FeedFilterBar
