@@ -13,25 +13,36 @@ interface Props {
   announcements: Announcement[];
 }
 
+const LINE_CLAMP = 2;
+
 export default function AnnouncementBanner({ announcements }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const [current, setCurrent] = useState(0);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (announcements.length <= 1) return;
-    const timer = setInterval(() => setCurrent((c) => (c + 1) % announcements.length), 5000);
+    const timer = setInterval(() => {
+      setCurrent((c) => (c + 1) % announcements.length);
+      setExpanded(false);
+    }, 5000);
     return () => clearInterval(timer);
   }, [announcements.length]);
 
   if (dismissed || announcements.length === 0) return null;
 
   const ann = announcements[current];
+  // Estimate if text needs clamping: ~45 chars per line at this font size
+  const needsClamp = ann.text.length > 90;
 
-  const textContent = (
+  const textNode = (
     <span
       className="font-[family-name:var(--font-dm)]"
       style={{
-        display: "block",
+        display: "-webkit-box",
+        WebkitBoxOrient: "vertical" as any,
+        WebkitLineClamp: expanded ? "unset" : LINE_CLAMP,
+        overflow: "hidden",
         fontSize: "0.88rem",
         fontWeight: 700,
         color: "#fff",
@@ -56,19 +67,27 @@ export default function AnnouncementBanner({ announcements }: Props) {
           overflow: "hidden",
         }}
       >
-        {/* Content */}
         <div style={{ padding: "13px 40px 13px 16px", textAlign: "center" }}>
-          {ann.linkUrl ? (
-            <a
-              href={ann.linkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ textDecoration: "none", display: "block" }}
-            >
-              {textContent}
+          {ann.linkUrl && !needsClamp ? (
+            <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+              {textNode}
             </a>
           ) : (
-            textContent
+            textNode
+          )}
+
+          {needsClamp && (
+            <button
+              onClick={() => setExpanded(e => !e)}
+              style={{
+                background: "none", border: "none", cursor: "pointer", padding: "2px 0 0",
+                fontSize: "0.75rem", fontWeight: 700,
+                color: "var(--carta-accent, #F4A623)",
+                display: "block", margin: "0 auto",
+              }}
+            >
+              {expanded ? "Ver menos ▲" : "Ver más ▼"}
+            </button>
           )}
 
           {announcements.length > 1 && (
@@ -84,7 +103,6 @@ export default function AnnouncementBanner({ announcements }: Props) {
           )}
         </div>
 
-        {/* Close */}
         <button
           onClick={() => setDismissed(true)}
           style={{

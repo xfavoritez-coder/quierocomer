@@ -145,14 +145,18 @@ export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
   );
 }
 
+const LINE_CLAMP = 2;
+
 export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
   const [active, setActive] = useState<HappyHour | null>(null);
   const [countdown, setCountdown] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const check = () => {
       const hh = findActiveHappyHour(happyHours as HappyHour[]);
       setActive(hh);
+      setExpanded(false);
       if (hh) {
         const mins = getMinutesUntil(hh.endTime);
         setCountdown(formatCountdown(mins));
@@ -170,6 +174,8 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
       ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
       : `${active.name} — ${active.discountValue}% de descuento`);
 
+  const needsClamp = bannerText.length > 90;
+
   return (
     <div style={{ padding: "calc(8px + env(safe-area-inset-top)) 12px 0", position: "relative", zIndex: 15 }}>
       <div
@@ -184,15 +190,31 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
           textAlign: "center",
         }}
       >
-        <strong style={{
-          display: "block",
+        <span style={{
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical" as any,
+          WebkitLineClamp: expanded ? "unset" : LINE_CLAMP,
+          overflow: "hidden",
           fontSize: "0.88rem",
           fontWeight: 700,
           color: "#fff",
           lineHeight: 1.4,
         }}>
           {bannerText}
-        </strong>
+        </span>
+        {needsClamp && (
+          <button
+            onClick={() => setExpanded(e => !e)}
+            style={{
+              background: "none", border: "none", cursor: "pointer", padding: "2px 0 0",
+              fontSize: "0.75rem", fontWeight: 700,
+              color: "var(--carta-accent, #F4A623)",
+              display: "block", margin: "0 auto",
+            }}
+          >
+            {expanded ? "Ver menos ▲" : "Ver más ▼"}
+          </button>
+        )}
         {countdown && (
           <span style={{
             display: "inline-block",

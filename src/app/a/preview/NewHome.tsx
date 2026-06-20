@@ -198,6 +198,17 @@ export default function NewHome({
     return () => obs.disconnect()
   }, [])
 
+  // Persist eurekaLiked to localStorage on every change (including removals)
+  useEffect(() => {
+    try {
+      if (eurekaLiked.length === 0) {
+        localStorage.removeItem('qc_eureka_liked')
+      } else {
+        localStorage.setItem('qc_eureka_liked', JSON.stringify(eurekaLiked))
+      }
+    } catch {}
+  }, [eurekaLiked])
+
   // Show milestone modal on first reach of eurekaMax; reset ref when cleared so it can trigger again
   useEffect(() => {
     if (eurekaLiked.length < eurekaMax) {

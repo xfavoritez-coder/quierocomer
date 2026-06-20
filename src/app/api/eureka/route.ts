@@ -15,9 +15,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 const TARGET = 24
 
 /**
- * Tipos de plato conceptualmente relacionados.
- * Se usan en el fallback para sugerir categorías similares
- * sin salir al universo de ingredientes (que contamina con sushi via palta, etc.)
+ * Tipos de plato conceptualmente relacionados (hermanos en la misma familia).
  */
 const RELATED_TX_TYPES: Record<string, string[]> = {
   'sándwich':    ['hamburguesa', 'hot dog', 'wrap', 'burrito', 'tostada', 'lomito', 'completo'],
@@ -27,20 +25,64 @@ const RELATED_TX_TYPES: Record<string, string[]> = {
   'lomito':      ['sándwich', 'hamburguesa'],
   'wrap':        ['sándwich', 'burrito', 'taco'],
   'burrito':     ['wrap', 'taco', 'sándwich'],
-  'taco':        ['burrito', 'wrap'],
-  'pizza':       ['pasta', 'focaccia'],
-  'pasta':       ['pizza', 'risotto', 'gnocchi'],
-  'risotto':     ['pasta'],
-  'sushi':       ['sashimi', 'poke', 'temaki'],
-  'sashimi':     ['sushi', 'poke'],
-  'poke':        ['sushi', 'bowl'],
+  'taco':        ['burrito', 'wrap', 'quesadilla'],
+  'quesadilla':  ['taco', 'burrito'],
+  'pizza':       ['pasta', 'focaccia', 'calzone'],
+  'focaccia':    ['pizza', 'pasta'],
+  'calzone':     ['pizza', 'empanada'],
+  'pasta':       ['pizza', 'risotto', 'gnocchi', 'lasaña', 'ravioli', 'fettuccine', 'spaghetti', 'tagliatelle', 'tortellini'],
+  'lasaña':      ['pasta', 'pizza', 'risotto', 'gnocchi'],
+  'gnocchi':     ['pasta', 'risotto'],
+  'ravioli':     ['pasta', 'gnocchi'],
+  'risotto':     ['pasta', 'gnocchi'],
+  'sushi':       ['sashimi', 'poke', 'temaki', 'nigiri', 'uramaki'],
+  'sashimi':     ['sushi', 'poke', 'temaki'],
+  'temaki':      ['sushi', 'sashimi'],
+  'nigiri':      ['sushi', 'sashimi'],
+  'poke':        ['sushi', 'bowl', 'ensalada'],
   'pollo frito': ['hamburguesa', 'sándwich', 'tenders'],
   'tenders':     ['pollo frito', 'nuggets', 'hamburguesa'],
   'nuggets':     ['tenders', 'pollo frito'],
   'empanada':    ['calzone', 'masa rellena'],
   'ensalada':    ['bowl', 'poke'],
   'bowl':        ['ensalada', 'poke'],
+  'ceviche':     ['causa', 'tiradito', 'leche de tigre'],
+  'causa':       ['ceviche', 'tiradito'],
+  'curry':       ['bowl', 'arroz'],
+  'ramen':       ['sopa', 'fideos'],
 }
+
+/**
+ * Tipos de plato → su familia "padre" (categoría superior).
+ * Permite que si el usuario eligió lasañas, el fallback sea pasta en general.
+ */
+const PARENT_FAMILY: Record<string, string> = {
+  'lasaña': 'pasta', 'lasagna': 'pasta',
+  'gnocchi': 'pasta', 'ravioli': 'pasta', 'fettuccine': 'pasta',
+  'spaghetti': 'pasta', 'tagliatelle': 'pasta', 'tortellini': 'pasta',
+  'linguine': 'pasta', 'penne': 'pasta', 'rigatoni': 'pasta',
+  'sashimi': 'sushi', 'temaki': 'sushi', 'nigiri': 'sushi',
+  'uramaki': 'sushi', 'maki': 'sushi',
+  'burrito': 'taco', 'quesadilla': 'taco', 'enchilada': 'taco',
+  'hot dog': 'sándwich', 'completo': 'sándwich', 'lomito': 'sándwich',
+  'wrap': 'sándwich', 'submarino': 'sándwich',
+  'focaccia': 'pizza', 'calzone': 'pizza',
+  'tenders': 'pollo frito', 'nuggets': 'pollo frito',
+  'tiradito': 'ceviche', 'causa': 'ceviche',
+  'ramen': 'sopa', 'fideos': 'sopa',
+}
+
+/**
+ * Tipos de plato dulces/postres.
+ * Si el usuario no eligió ninguno dulce, se excluyen del fallback.
+ */
+const DULCE_TX_TYPES = new Set([
+  'postre', 'helado', 'torta', 'cheesecake', 'brownie', 'muffin', 'waffles',
+  'crepe', 'pannacotta', 'tiramisú', 'flan', 'mousse', 'pie', 'tarta',
+  'churro', 'donuts', 'galleta', 'cupcake', 'milkshake', 'frappe', 'parfait',
+  'chocolate', 'pudding', 'soufflé', 'paleta', 'gelato', 'sorbet',
+  'cinnamon roll', 'croissant dulce', 'danish', 'baklava', 'arroz con leche',
+])
 
 export async function POST(req: Request) {
   try {
@@ -201,16 +243,21 @@ export async function POST(req: Request) {
       }
     }
 
-    // Fase 3: fallback — solo por txDishType (no ingrediente) para evitar que coincidencias
-    // de ingrediente (palta en sushi, tomate en pizza) contaminen las recomendaciones.
-    // Expande a categorías relacionadas (hamburguesas cuando liked=sándwich, etc.)
-    // y limita a máx 4 por leaf para asegurar diversidad.
+    // Fase 3: fallback por familia superior → si eligió lasañas, busca pastas en general.
+    // Nunca sugiere postres si el usuario solo eligió cosas saladas.
     if (selected.length < TARGET) {
-      // Expandir los tipos liked con categorías conceptualmente relacionadas
-      const expandedTxTypes = new Set<string>(allTxTypes)
+      // 3a. Construir tipos de la familia expandida:
+      //     txType propio → resolver al padre (lasaña→pasta) → hermanos del padre (pizza, risotto…)
+      const familyExpanded = new Set<string>(allTxTypes)
       for (const t of allTxTypes) {
-        for (const related of (RELATED_TX_TYPES[t] ?? [])) expandedTxTypes.add(related)
+        const parent = PARENT_FAMILY[t] ?? t
+        familyExpanded.add(parent)
+        for (const sibling of (RELATED_TX_TYPES[parent] ?? [])) familyExpanded.add(sibling)
+        for (const related of (RELATED_TX_TYPES[t] ?? [])) familyExpanded.add(related)
       }
+
+      // 3b. Detectar si el usuario eligió algo dulce; si no, excluir postres del fallback
+      const userWantsDulce = [...allTxTypes].some(t => DULCE_TX_TYPES.has(t))
 
       const catCount: Record<string, number> = {}
       for (const s of selected) catCount[s.leaf] = (catCount[s.leaf] ?? 0) + 1
@@ -219,9 +266,12 @@ export async function POST(req: Request) {
         if (selected.length >= TARGET) break
         if (usedIds.has(row.id)) continue
         const types: string[] = Array.isArray(row.txDishType) ? row.txDishType : []
-        if (!types.some(t => expandedTxTypes.has(t))) continue
+        // Debe pertenecer a la familia expandida
+        if (!types.some(t => familyExpanded.has(t))) continue
+        // Excluir postres/dulces si el usuario no eligió ninguno
+        if (!userWantsDulce && types.some(t => DULCE_TX_TYPES.has(t))) continue
         const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
-        if ((catCount[leaf] ?? 0) >= 4) continue  // max 4 por categoría en fallback
+        if ((catCount[leaf] ?? 0) >= 4) continue
         catCount[leaf] = (catCount[leaf] ?? 0) + 1
         selected.push({ row, leaf, score: 0 })
         usedIds.add(row.id)

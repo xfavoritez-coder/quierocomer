@@ -89,6 +89,7 @@ export default function DescubrirClient() {
   const likedIdsRef = useRef<string[]>([])
   const initialLoadDone = useRef(false)
   const swipeTouchX = useRef<number | null>(null)
+  const carouselRef = useRef<HTMLDivElement>(null)
 
   // Init: read location + filters from localStorage
   useEffect(() => {
@@ -191,10 +192,6 @@ export default function DescubrirClient() {
     }
     return results
   })()
-  const pageRecommended = cappedRecommended.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  const filteredRecommended = pageRecommended.filter(d =>
-    !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
-  )
   const totalPages = Math.min(4, Math.ceil(cappedRecommended.length / PAGE_SIZE))
   const allDishes = [...liked, ...allRecommended]
 
@@ -359,7 +356,7 @@ export default function DescubrirClient() {
           </a>
         </div>
       ) : (
-        <div style={{ padding: '20px 14px 80px', position: 'relative' }}>
+        <div style={{ padding: '20px 0 80px', position: 'relative' }}>
 
           {/* Loading overlay while refetching */}
           {refetching && (
@@ -379,15 +376,132 @@ export default function DescubrirClient() {
             </div>
           )}
 
-          {/* Título */}
-          <div style={{ marginBottom: 12 }}>
+          {/* ── 1. Platos que te podrían gustar ── */}
+          {allRecommended.length > 0 && (
+            <>
+              <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10, padding: '0 14px' }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Platos que te podrían gustar
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 400, color: mutedColor, opacity: 0.7, letterSpacing: 0, textTransform: 'none' }}>
+                    Basado en tus elegidos
+                  </p>
+                </div>
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                    <button
+                      onClick={() => {
+                        const next = Math.max(0, page - 1)
+                        setPage(next)
+                        carouselRef.current?.scrollTo({ left: next * carouselRef.current.offsetWidth, behavior: 'smooth' })
+                      }}
+                      disabled={page === 0}
+                      style={{
+                        width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: page === 0 ? 'transparent' : 'rgba(244,166,35,0.12)',
+                        color: page === 0 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
+                      }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center', position: 'relative', top: -2 }}>
+                      {page + 1}/{totalPages}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const next = Math.min(totalPages - 1, page + 1)
+                        setPage(next)
+                        carouselRef.current?.scrollTo({ left: next * carouselRef.current.offsetWidth, behavior: 'smooth' })
+                      }}
+                      disabled={page >= totalPages - 1}
+                      style={{
+                        width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: page >= totalPages - 1 ? 'default' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: page >= totalPages - 1 ? 'transparent' : 'rgba(244,166,35,0.12)',
+                        color: page >= totalPages - 1 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
+                      }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Swipe carousel */}
+              <div
+                ref={carouselRef}
+                style={{
+                  display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory',
+                  scrollbarWidth: 'none', msOverflowStyle: 'none' as any,
+                  WebkitOverflowScrolling: 'touch' as any,
+                  marginBottom: 28,
+                }}
+                onScroll={e => {
+                  const el = e.currentTarget
+                  const newPage = Math.round(el.scrollLeft / el.offsetWidth)
+                  if (newPage !== page) setPage(newPage)
+                }}
+              >
+                <style>{`.descubrir-carousel::-webkit-scrollbar { display: none; }`}</style>
+                {Array.from({ length: totalPages }).map((_, pi) => {
+                  const pageDishes = cappedRecommended.slice(pi * PAGE_SIZE, (pi + 1) * PAGE_SIZE).filter(d =>
+                    !q || d.nombre.toLowerCase().includes(q) || d.restaurante.toLowerCase().includes(q)
+                  )
+                  return (
+                    <div key={pi} style={{
+                      minWidth: '100%', scrollSnapAlign: 'start',
+                      display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6,
+                      padding: '0 14px', boxSizing: 'border-box' as any,
+                    }}>
+                      {pageDishes.map(d => (
+                        <div key={d.id} onClick={() => handleTap(d)} style={{
+                          position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                        }}>
+                          {d.fotoUrl
+                            ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
+                          }
+                          <span style={{
+                            position: 'absolute', top: 6, right: 6,
+                            background: '#F4A623', borderRadius: 20,
+                            padding: '4px 8px', lineHeight: 1,
+                            fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em',
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                          }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff" stroke="none">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                            para ti
+                          </span>
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '28px 10px 10px' }}>
+                            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ── 2. Tus elegidos ── */}
+          <div style={{ marginBottom: 12, padding: '0 14px' }}>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
               Tus elegidos
             </p>
           </div>
 
           {liked.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 32 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 28, padding: '0 14px' }}>
               {Array.from({ length: 3 }).map((_, i) => {
                 const d = liked[i]
                 if (d) return (
@@ -440,109 +554,14 @@ export default function DescubrirClient() {
               })}
             </div>
           ) : (
-            <p style={{ fontSize: 13, color: mutedColor, marginBottom: 32 }}>Sin resultados.</p>
+            <p style={{ fontSize: 13, color: mutedColor, marginBottom: 28, padding: '0 14px' }}>Sin resultados.</p>
           )}
 
-          {/* Platos que te podrían gustar */}
-          {allRecommended.length > 0 && (
-            <>
-              <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                    Platos que te podrían gustar
-                  </p>
-                  <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 400, color: mutedColor, opacity: 0.7, letterSpacing: 0, textTransform: 'none' }}>
-                    Basado en tus elegidos
-                  </p>
-                </div>
-                {totalPages > 1 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <button
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
-                      disabled={page === 0}
-                      style={{
-                        width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: page === 0 ? 'transparent' : 'rgba(244,166,35,0.12)',
-                        color: page === 0 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
-                      }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-                    </button>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F4A623', minWidth: 28, textAlign: 'center' }}>
-                      {page + 1}/{totalPages}
-                    </span>
-                    <button
-                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                      disabled={page >= totalPages - 1}
-                      style={{
-                        width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: page >= totalPages - 1 ? 'default' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: page >= totalPages - 1 ? 'transparent' : 'rgba(244,166,35,0.12)',
-                        color: page >= totalPages - 1 ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)') : '#F4A623',
-                      }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-              {filteredRecommended.length > 0 ? (
-                <div
-                  style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}
-                  onTouchStart={e => { swipeTouchX.current = e.touches[0].clientX }}
-                  onTouchEnd={e => {
-                    if (swipeTouchX.current === null) return
-                    const dx = swipeTouchX.current - e.changedTouches[0].clientX
-                    swipeTouchX.current = null
-                    if (Math.abs(dx) < 50) return
-                    if (dx > 0) setPage(p => Math.min(totalPages - 1, p + 1))
-                    else setPage(p => Math.max(0, p - 1))
-                  }}
-                >
-                  {filteredRecommended.map(d => (
-                    <div key={d.id} onClick={() => handleTap(d)} style={{
-                      position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
-                    }}>
-                      {d.fotoUrl
-                        ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
-                      }
-                      <span style={{
-                        position: 'absolute', top: 6, right: 6,
-                        background: '#F4A623', borderRadius: 20,
-                        padding: '4px 8px', lineHeight: 1,
-                        fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em',
-                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                      }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff" stroke="none">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                        </svg>
-                        para ti
-                      </span>
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '28px 10px 10px' }}>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
-                        </p>
-                        <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: 13, color: mutedColor }}>Sin resultados.</p>
-              )}
-            </>
-          )}
-
-          {/* Acciones footer */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24 }}>
+          {/* ── 3. Seguir explorando ── */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '0 14px' }}>
             <a href="/" onClick={(e) => { e.preventDefault(); goHomeKeep() }} style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '10px 20px', borderRadius: 12,
+              padding: '11px 22px', borderRadius: 12,
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
               color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
               textDecoration: 'none', fontSize: 14, whiteSpace: 'nowrap',
@@ -550,7 +569,7 @@ export default function DescubrirClient() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
               </svg>
-              Volver a explorar
+              Seguir explorando
             </a>
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
