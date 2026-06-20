@@ -109,6 +109,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),
         ...(body.weeklyEmailEnabled !== undefined && { weeklyEmailEnabled: body.weeklyEmailEnabled }),
         ...(body.weeklyInsightsEnabled !== undefined && { weeklyInsightsEnabled: body.weeklyInsightsEnabled }),
+        // Google Places fields (super-admin only)
+        ...(body.googlePlaceId !== undefined && { googlePlaceId: body.googlePlaceId || null }),
+        ...(body.googleMapsUrl !== undefined && { googleMapsUrl: body.googleMapsUrl || null }),
+        ...(body.googleRating !== undefined && { googleRating: body.googleRating === null ? null : Number(body.googleRating) }),
+        ...(body.googleRatingCount !== undefined && { googleRatingCount: body.googleRatingCount === null ? null : Number(body.googleRatingCount) }),
+        ...(body.primaryCategory !== undefined && { primaryCategory: body.primaryCategory || null }),
+        ...(body.isShowcase !== undefined && { isShowcase: body.isShowcase }),
+        ...(body.lat !== undefined && { lat: body.lat === null ? null : Number(body.lat) }),
+        ...(body.lng !== undefined && { lng: body.lng === null ? null : Number(body.lng) }),
+        ...(body.cartaProvider !== undefined && { cartaProvider: body.cartaProvider || null }),
+        ...(body.websiteIsOrderUrl !== undefined && { websiteIsOrderUrl: body.websiteIsOrderUrl }),
       };
     } else {
       // Owner: silently filter to allowed fields only
