@@ -93,10 +93,10 @@ function getPedirOnlineUrl(
     return website || DELIVERY_FALLBACK_URLS[cartaProvider] || null
   }
   if (!website) return null
-  // 2. Si el proveedor es carta/menú conocido (Fudo, OlaClick, etc.) → no es pedir online
-  if (cartaProvider && MENU_PROVIDERS.has(cartaProvider)) return null
-  // 3. Fallback: websiteIsOrderUrl marcado por admin, o detección por URL
+  // 2. websiteIsOrderUrl marcado por admin tiene prioridad sobre el cartaProvider
   if (websiteIsOrderUrl) return website
+  // 3. Si el proveedor es carta/menú conocido (Fudo, OlaClick, etc.) → no es pedir online
+  if (cartaProvider && MENU_PROVIDERS.has(cartaProvider)) return null
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
     if (PEDIR_ONLINE_DOMAINS.some(d => host === d || host.endsWith('.' + d))) return website
@@ -137,6 +137,8 @@ function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, 
     }
     return null
   }
+  // isOrderUrl marcado por admin tiene prioridad sobre cartaProvider
+  if (isOrderUrl) return { url: website, type: 'delivery' }
   // Provider-based classification — más fiable que heurísticas de URL
   if (cartaProvider) {
     if (DELIVERY_PROVIDERS.has(cartaProvider)) return { url: website, type: 'delivery' }
@@ -146,7 +148,6 @@ function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, 
     const urlObj = new URL(website)
     const host = urlObj.hostname.replace(/^www\./, '')
     if (NO_BUTTON_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
-    if (isOrderUrl) return { url: website, type: 'delivery' }
     if (
       DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
       DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p))
