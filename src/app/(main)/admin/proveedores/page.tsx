@@ -42,6 +42,8 @@ export default function AdminProveedores() {
   const [search, setSearch] = useState("");
   const [filterProvider, setFilterProvider] = useState("todos");
   const [saving, setSaving] = useState<string | null>(null);
+  const [revalidating, setRevalidating] = useState(false);
+  const [revalidated, setRevalidated] = useState(false);
   const [edits, setEdits] = useState<Record<string, Partial<Local>>>({});
 
   useEffect(() => {
@@ -116,6 +118,17 @@ export default function AdminProveedores() {
     return counts;
   }, [locals]);
 
+  async function revalidateCache() {
+    setRevalidating(true);
+    try {
+      await fetch("/api/admin/revalidate-feed", { cache: "no-store" });
+      setRevalidated(true);
+      setTimeout(() => setRevalidated(false), 3000);
+    } finally {
+      setRevalidating(false);
+    }
+  }
+
   if (loading) return <div style={{ padding: 40, color: "#888" }}>Cargando...</div>;
 
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
@@ -126,9 +139,22 @@ export default function AdminProveedores() {
 
   return (
     <div style={{ padding: "24px 20px", maxWidth: 1400, margin: "0 auto" }}>
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, marginBottom: 6 }}>
-        Proveedores
-      </h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, margin: 0 }}>
+          Proveedores
+        </h1>
+        <button
+          onClick={revalidateCache}
+          disabled={revalidating}
+          style={{
+            padding: "6px 14px", borderRadius: 8, border: "none",
+            background: revalidated ? "#16a34a" : "#0f172a", color: "#fff",
+            fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: revalidating ? 0.6 : 1,
+          }}
+        >
+          {revalidating ? "Actualizando..." : revalidated ? "✓ Cache actualizado" : "Revalidar cache feed"}
+        </button>
+      </div>
       <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
         {locals.length} locales · edita cartaProvider, website, teléfono e Instagram inline
       </p>
