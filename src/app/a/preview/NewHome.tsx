@@ -147,7 +147,9 @@ export default function NewHome({
   })
   const searchInputRef = useRef<HTMLInputElement>(null)
   const floatingInputRef = useRef<HTMLInputElement>(null)
+  const desktopSearchRef = useRef<HTMLInputElement>(null)
   const [showFloatingSuggestions, setShowFloatingSuggestions] = useState(false)
+  const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false)
   const mapGeocoderRef = useRef<((q: string) => void) | null>(null)
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
@@ -1177,28 +1179,74 @@ export default function NewHome({
           </a>
 
           {/* Search bar — centro, ocupa todo el espacio */}
-          <form style={{ flex: 1, position: 'relative', maxWidth: 480, margin: '0 auto' }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); (document.activeElement as HTMLElement)?.blur() }}>
+          <form style={{ flex: 1, position: 'relative', maxWidth: 480, margin: '0 auto' }} onSubmit={e => { e.preventDefault(); executeSearch(searchInput); desktopSearchRef.current?.blur(); setShowDesktopSuggestions(false) }}>
             <input
+              ref={desktopSearchRef}
               className="feed-search-input"
               type="text" value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
+              onFocus={() => { setShowDesktopSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
+              onBlur={() => { setTimeout(() => setShowDesktopSuggestions(false), 150); setSearchFocused(false) }}
               autoComplete="off"
-              placeholder="Buscar en QuieroComer"
+              placeholder="Buscar sushi"
               style={{
-                width: '100%', padding: '9px 34px 9px 16px', borderRadius: 999, fontSize: 17,
+                width: '100%', padding: '9px 34px 9px 16px', fontSize: 17,
+                borderRadius: showDesktopSuggestions && !!(searchInput.trim().length >= 2 ? searchSuggestions?.length : true) ? '20px 20px 0 0' : 999,
                 background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
                 border: isDark ? '1px solid rgba(255,255,255,0.1)' : '2px solid rgba(0,0,0,0.07)',
                 color: isDark ? '#fff' : '#111', outline: 'none', boxSizing: 'border-box',
               }}
             />
             {searchInput && (
-              <button type="button" onClick={() => { setSearchInput(''); executeSearch('') }} style={{
+              <button type="button" onClick={() => { setSearchInput(''); executeSearch(''); setShowDesktopSuggestions(false) }} style={{
                 position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
                 background: 'none', border: 'none', cursor: 'pointer', padding: 2,
                 color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', zIndex: 38,
               }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
+            )}
+            {showDesktopSuggestions && typeof document !== 'undefined' && createPortal(
+              (() => {
+                const suggestions = searchInput.trim().length >= 2 ? searchSuggestions : DEFAULT_SUSHI_SUGGESTIONS
+                if (!suggestions?.length) return null
+                const r = desktopSearchRef.current?.getBoundingClientRect()
+                if (!r) return null
+                return (
+                  <div style={{
+                    position: 'fixed', top: r.bottom - 2, left: r.left, width: r.width, zIndex: 99999,
+                    background: isDark ? 'rgba(40,40,40,1)' : '#fff',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+                    borderTop: 'none',
+                    borderRadius: '0 0 20px 20px', overflow: 'hidden',
+                    boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.12)',
+                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                  }}>
+                    <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)', margin: '0 14px' }} />
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={`${s.type}-${s.text}`}
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => { executeSearch(s.text); setShowDesktopSuggestions(false) }}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+                          color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 15, textAlign: 'left',
+                          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                          borderTop: i > 0 ? `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` : 'none',
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.35 }}>
+                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <span style={{ flex: 1 }}>{s.text}</span>
+                        <span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.32)', fontStyle: 'italic', flexShrink: 0 }}>{s.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                )
+              })(),
+              document.body
             )}
           </form>
 
