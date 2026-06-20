@@ -1219,8 +1219,8 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Wrapper: banner + nav en flujo normal (no fixed) */}
-      <div ref={impactHeaderRef} style={{ position: "relative", zIndex: 40 }}>
+      {/* Wrapper: banner + nav — fixed al tope */}
+      <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40 }}>
         {/* Banner al tope absoluto */}
         {hasBannerActive && !showFixedCatNav && (
           <div style={{ marginTop: 6, marginBottom: 4 }}>
