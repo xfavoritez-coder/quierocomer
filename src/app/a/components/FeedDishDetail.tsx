@@ -638,21 +638,21 @@ function DesktopDishContent({
                 if (!info) return null
                 const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : info.type === 'social' ? `Ver ${info.socialName}` : 'Ver página web'
                 const accent = info.type === 'delivery'
-                  ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
+                  ? (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
                   : info.type === 'menu'
                     ? (isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a')
                     : info.type === 'social'
                       ? (isDark ? 'rgba(192,132,252,0.9)' : '#9333ea')
                       : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
                 const accentBg = info.type === 'delivery'
-                  ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
+                  ? (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
                   : info.type === 'menu'
                     ? (isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)')
                     : info.type === 'social'
                       ? (isDark ? 'rgba(192,132,252,0.12)' : 'rgba(147,51,234,0.08)')
                       : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
                 const accentBorder = info.type === 'delivery'
-                  ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
+                  ? (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.4)')
                   : info.type === 'menu'
                     ? (isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)')
                     : info.type === 'social'
