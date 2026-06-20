@@ -6,27 +6,16 @@ function getSecondaryDishTypes(types: string[], primary: string): string[] {
   return types.filter(t => t !== primary && t !== 'extra' && t !== 'combo')
 }
 
-/**
- * Sufijos de dominio bloqueados: menú-solo, redes sociales, bio-links.
- * Se usa sufijo para cubrir subdominios: menu.fu.do, xxx.ola.click, etc.
- */
-const MENU_ONLY_SUFFIXES = [
-  // Menú digital (no permiten ordenar)
-  'toteat.com', 'toteat.app', 'gourmedia.cl', 'gour.media',
-  'fu.do', 'heyzine.com', 'canva.com', 'treinta.co',
-  'google.com', 'share.google',
-  'qrpro.io', 'micartaqr.cl', 'olaclick.com', 'ola.click',
-  'queresto.com', 'flipsnack.com', 'yumpu.com', 'issuu.com',
-  'gourmetclick.cl', 'lacarte.cl', 'avocaty.io', 'socialreacts.com',
-  'netlify.app', 'tripadvisor.cl', 'tripadvisor.com',
-  // Redes sociales y bio-links
+/** Redes sociales y links inútiles — no se muestra ningún botón */
+const SOCIAL_BLOCKED_SUFFIXES = [
   'instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com',
   'linktr.ee', 'linktree.com', 'atom.bio',
-  // Carta propia QC
+  'tripadvisor.cl', 'tripadvisor.com',
+  'google.com', 'share.google',
   'quierocomer.cl',
 ]
 
-/** Plataformas de pedido / delivery online */
+/** Plataformas de pedido / delivery online → "Pedir online" */
 const DELIVERY_SUFFIXES = [
   'rappi.com', 'rappi.cl',
   'ubereats.com',
@@ -43,18 +32,35 @@ const DELIVERY_SUFFIXES = [
  */
 const DELIVERY_SUBDOMAIN_PREFIXES = ['carta.', 'pedir.', 'pedido.', 'order.', 'menu.mercat.']
 
-type OrderInfo = { url: string; type: 'delivery' | 'website' }
+/** Visores de carta digital → "Ver carta online" */
+const MENU_CARD_SUFFIXES = [
+  'fu.do', 'ola.click', 'olaclick.com',
+  'gour.media', 'gourmedia.cl',
+  'toteat.com', 'toteat.app',
+  'queresto.com',
+  'influye.app',
+  'heyzine.com', 'canva.com', 'issuu.com', 'flipsnack.com', 'yumpu.com',
+  'treinta.co', 'gourmetclick.cl', 'lacarte.cl', 'avocaty.io', 'socialreacts.com',
+  'micartaqr.cl', 'qrpro.io',
+  'netlify.app',
+]
+
+type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' }
 
 function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean): OrderInfo | null {
   if (!website) return null
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
-    if (MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
+    if (SOCIAL_BLOCKED_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
     if (isOrderUrl) return { url: website, type: 'delivery' }
-    const isDelivery =
+    if (
       DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
       DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p))
-    return { url: website, type: isDelivery ? 'delivery' : 'website' }
+    ) return { url: website, type: 'delivery' }
+    if (MENU_CARD_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) {
+      return { url: website, type: 'menu' }
+    }
+    return { url: website, type: 'website' }
   } catch { return null }
 }
 import type { FeedDish } from '../types'
@@ -600,20 +606,26 @@ function DesktopDishContent({
                   </svg>
                 </span>
               </a>
-              {/* Botón Pedir online / Ver página web */}
+              {/* Botón Pedir online / Ver carta online / Ver página web */}
               {(() => {
                 const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
                 if (!info) return null
-                const isDelivery = info.type === 'delivery'
-                const accent = isDelivery
+                const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : 'Ver página web'
+                const accent = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
-                  : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
-                const accentBg = isDelivery
+                  : info.type === 'menu'
+                    ? (isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a')
+                    : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
+                const accentBg = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
-                  : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
-                const accentBorder = isDelivery
+                  : info.type === 'menu'
+                    ? (isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)')
+                    : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
+                const accentBorder = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
-                  : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
+                  : info.type === 'menu'
+                    ? (isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)')
+                    : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
                 return (
                   <a href={info.url} target="_blank" rel="noopener noreferrer"
                     style={{
@@ -622,10 +634,15 @@ function DesktopDishContent({
                       background: accentBg, border: `1.5px solid ${accentBorder}`,
                       borderRadius: 12, textDecoration: 'none',
                     }}>
-                    {isDelivery ? (
+                    {info.type === 'delivery' ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                         <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                      </svg>
+                    ) : info.type === 'menu' ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <path d="M4 6h16M4 10h16M4 14h10"/>
+                        <rect x="2" y="3" width="20" height="18" rx="2"/>
                       </svg>
                     ) : (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -635,7 +652,7 @@ function DesktopDishContent({
                       </svg>
                     )}
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: accent }}>{isDelivery ? 'Pedir online' : 'Ver página web'}</span>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: accent }}>{label}</span>
                       <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(info.url).hostname.replace(/^www\./, '')}</span>
                     </span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.2" strokeLinecap="round">
@@ -951,16 +968,22 @@ function DishSlide({
           {(() => {
             const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
             if (!info) return null
-            const isDelivery = info.type === 'delivery'
-            const accent = isDelivery
+            const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : 'Ver página web'
+            const accent = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
-              : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
-            const accentBg = isDelivery
+              : info.type === 'menu'
+                ? (isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a')
+                : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
+            const accentBg = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
-              : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
-            const accentBorder = isDelivery
+              : info.type === 'menu'
+                ? (isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)')
+                : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
+            const accentBorder = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
-              : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
+              : info.type === 'menu'
+                ? (isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)')
+                : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
             return (
               <a href={info.url} target="_blank" rel="noopener noreferrer"
                 style={{
@@ -969,10 +992,15 @@ function DishSlide({
                   background: accentBg, border: `1.5px solid ${accentBorder}`,
                   textDecoration: 'none', boxSizing: 'border-box',
                 }}>
-                {isDelivery ? (
+                {info.type === 'delivery' ? (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                  </svg>
+                ) : info.type === 'menu' ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M4 6h16M4 10h16M4 14h10"/>
+                    <rect x="2" y="3" width="20" height="18" rx="2"/>
                   </svg>
                 ) : (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -982,7 +1010,7 @@ function DishSlide({
                   </svg>
                 )}
                 <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: accent }}>{isDelivery ? 'Pedir online' : 'Ver página web'}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: accent }}>{label}</span>
                   <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(info.url).hostname.replace(/^www\./, '')}</span>
                 </span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
