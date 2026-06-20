@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 60;
 
-async function urlToBase64(url: string): Promise<string> {
+async function urlToBase64(url: string): Promise<{ data: string; mediaType: "image/webp" | "image/jpeg" | "image/png" }> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
   const buffer = Buffer.from(await res.arrayBuffer());
-  return `data:image/webp;base64,${buffer.toString("base64")}`;
+  const ct = res.headers.get("content-type") ?? "image/webp";
+  const mediaType = ct.includes("jpeg") ? "image/jpeg" : ct.includes("png") ? "image/png" : "image/webp";
+  return { data: buffer.toString("base64"), mediaType };
 }
 
 export async function POST(req: NextRequest) {
@@ -15,31 +17,31 @@ export async function POST(req: NextRequest) {
     const { photos } = await req.json() as { photos: string[] };
     if (!photos?.length) return NextResponse.json({ dishes: [] });
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ dishes: photos.map((_, i) => ({ name: '', description: null, photoIndex: i })) });
     }
 
-    const openai = new OpenAI({ apiKey });
+    const client = new Anthropic({ apiKey });
 
     const results = await Promise.allSettled(
       photos.map(async (url, i) => {
         try {
-          // Convertir a base64 para no depender de que OpenAI pueda fetchear la URL
-          const dataUrl = await urlToBase64(url);
+          const { data, mediaType } = await urlToBase64(url);
 
-          const msg = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+          const msg = await client.messages.create({
+            model: "claude-haiku-4-5-20251001",
             max_tokens: 200,
             messages: [{
               role: "user",
               content: [
-                { type: "image_url", image_url: { url: dataUrl, detail: "low" } },
+                { type: "image", source: { type: "base64", media_type: mediaType, data } },
                 { type: "text", text: '¿Qué plato aparece en esta foto? Responde SOLO con JSON válido: {"name":"nombre del plato en español","description":"descripción breve o null"}' }
               ]
             }]
           });
-          const text = msg.choices[0]?.message?.content ?? "";
+
+          const text = msg.content[0]?.type === "text" ? msg.content[0].text : "";
           const match = text.match(/\{[\s\S]*?\}/);
           if (!match) return { name: '', description: null, photoIndex: i };
           const parsed = JSON.parse(match[0]);
