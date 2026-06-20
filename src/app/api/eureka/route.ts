@@ -152,7 +152,7 @@ export async function POST(req: Request) {
     const candidates = await prisma.$queryRaw<any[]>`
       SELECT
         d.id, d.name, d.description, d.price, d."discountPrice",
-        d.photos, d."dishDiet", d."leafOverride", d."txDishType", d."txIngredient", d."flavorTags",
+        d.photos, d."dishDiet", d."isSpicy", d."leafOverride", d."txDishType", d."txIngredient", d."flavorTags",
         c.name AS "catName", c."normOverride" AS "catNormOverride",
         r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
         r."logoUrl", r.address, r.phone, r.lat, r.lng, r."primaryCategory",
@@ -299,7 +299,7 @@ export async function POST(req: Request) {
         sinLactosa: false,
         sinSoja: false,
         contieneFrutosSecos: false,
-        esPicante: false,
+        esPicante: Boolean(row.isSpicy),
       },
       restauranteId: row.restaurantId,
       restaurante: row.restaurantName,
