@@ -169,7 +169,13 @@ export default function NewHome({
   const silentFetch = useRef(true) // first auto-location fetch is silent (no loading overlay)
   // Server-side search/filter results — null = browse mode (use initial dishes prop)
   const [serverDishes, setServerDishes] = useState<FeedDish[] | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
+  const [isSearching, setIsSearching] = useState(() => {
+    // Si la página carga con ?q= ya activo, mostrar loading desde el primer frame
+    if (typeof window !== 'undefined') {
+      return !!new URLSearchParams(window.location.search).get('q')
+    }
+    return false
+  })
 
   // ─── Eureka / Descubrir ───────────────────────────────────────────────────
   // Initialize from localStorage so returning from /descubrir restores selections
@@ -1853,7 +1859,18 @@ export default function NewHome({
           )}
 
           {/* Feed masonry */}
-          {view !== 'mapa' && feedDishes.length > 0 ? (
+          {view !== 'mapa' && isSearching && searchQuery && !serverDishes ? (
+            /* Skeleton mientras carga búsqueda con q= en URL */
+            <div style={{ display: 'flex', gap: 10, padding: '6px 12px 40px' }}>
+              {(isDesktop ? [0, 1, 2, 3] : [0, 1]).map(col => (
+                <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="skeleton-shimmer" style={{ aspectRatio: col % 2 === 0 ? '3/4' : '4/5', borderRadius: 14 }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : view !== 'mapa' && feedDishes.length > 0 ? (
             <>
               <div style={{ marginTop: -6 }} />
               <div style={{ position: 'relative', paddingBottom: eurekaLiked.length > 0 ? 90 : 0, transition: 'padding-bottom 0.28s cubic-bezier(0.0,0.0,0.2,1)' }}>

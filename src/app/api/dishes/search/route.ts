@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
+import { resolveDishLeaf, isBrandedDrink, isVolumeBeverage, isPackagedProduct, isNonFoodItem } from '@/app/a/lib/feed-queries'
 import { isExcludedCategory, inferMealTime, inferDishType, getParentCategory } from '@/app/a/lib/categories'
 import type { FeedDish } from '@/app/a/types'
 
@@ -134,6 +134,10 @@ export async function GET(req: NextRequest) {
     for (const d of rows) {
       const catName = d.categoryName as string
       if (isExcludedCategory(catName)) continue
+      if (isBrandedDrink(d.name as string)) continue
+      if (isVolumeBeverage(d.name as string)) continue
+      if (isPackagedProduct(d.name as string, d.description as string | null)) continue
+      if (isNonFoodItem(d.name as string, catName)) continue
       // Dedup: showcase usa ID (cada plato es único aunque tenga mismo nombre);
       // restaurantes normales deduplicamos por nombre para eliminar importaciones duplicadas
       const dupKey = d.isShowcase
