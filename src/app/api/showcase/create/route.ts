@@ -57,8 +57,10 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  for (let i = 0; i < dishesData.length; i++) {
-    const d = dishesData[i];
+  // Solo crear platos reales — excluir bebidas y extras/condimentos clasificados por IA
+  const platosData = dishesData.filter((d: any) => d.type !== 'bebida' && d.type !== 'extra');
+  for (let i = 0; i < platosData.length; i++) {
+    const d = platosData[i];
     await prisma.dish.create({
       data: {
         restaurantId: restaurant.id,

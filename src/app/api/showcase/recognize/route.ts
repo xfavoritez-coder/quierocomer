@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ dishes: photos.map((_, i) => ({ name: '', description: null, photoIndex: i })) });
+      return NextResponse.json({ dishes: photos.map((_, i) => ({ name: '', description: null, type: 'plato', photoIndex: i })) });
     }
 
     const client = new Anthropic({ apiKey });
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
               role: "user",
               content: [
                 { type: "image", source: { type: "base64", media_type: mediaType, data } },
-                { type: "text", text: '¿Qué plato aparece en esta foto? Responde SOLO con JSON válido: {"name":"nombre del plato en español","description":"descripción breve o null"}' }
+                { type: "text", text: '¿Qué aparece en esta foto? Responde SOLO con JSON válido: {"name":"nombre en español","description":"descripción breve o null","type":"plato|bebida|extra"}\n- type="plato" si es un plato principal, entrada o postre\n- type="bebida" si es una bebida (agua, jugo, vino, cerveza, trago, etc.)\n- type="extra" si es un condimento, salsa, guarnición suelta o accesorio (ej: salsa soya, pebre, almendras, limón)' }
               ]
             }]
           });
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
           const match = text.match(/\{[\s\S]*?\}/);
           if (!match) return { name: '', description: null, photoIndex: i };
           const parsed = JSON.parse(match[0]);
-          return { name: parsed.name || '', description: parsed.description || null, photoIndex: i };
+          return { name: parsed.name || '', description: parsed.description || null, type: parsed.type || 'plato', photoIndex: i };
         } catch (e: any) {
           console.error(`[showcase/recognize] foto ${i} error:`, e?.message);
           return { name: '', description: null, photoIndex: i };
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       dishes: results.map((r, i) =>
-        r.status === "fulfilled" ? r.value : { name: '', description: null, photoIndex: i }
+        r.status === "fulfilled" ? r.value : { name: '', description: null, type: 'plato', photoIndex: i }
       )
     });
   } catch (e: any) {

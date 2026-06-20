@@ -44,6 +44,27 @@ export function isBrandedDrink(name: string): boolean {
 }
 
 /**
+ * Detecta bebidas alcohólicas y no alcohólicas por nombre genérico.
+ * Cubre vinos, cervezas sin volumen (ya capturadas por isVolumeBeverage), licores, jugos, aguas.
+ * Ej: "Vino Carmen 34", "Cerveza Artesanal", "Jugo Natural", "Agua Saborizada"
+ */
+const NAMED_DRINK_RE = /^(vino\b|cerveza\b|bebida\b|jugo\b|n[eé]ctar\b|agua\b|limonada\b|naranjada\b|chicha\b|champagne\b|prosecco\b|espumante\b|pisco\b|ron\b|vodka\b|whisky\b|whiskey\b|gin\b|tequila\b|mezcal\b|fernet\b|aperol\b|cointreau\b|licor\b|cóctel\b|cocktail\b|mockt?ail\b|sangr[ií]a\b|cava\b|sidra\b|kombuch[ae]\b|infusi[oó]n\b|t[eé]\b|caf[eé]\b)/i
+export function isNamedDrink(name: string): boolean {
+  return NAMED_DRINK_RE.test(name.trim())
+}
+
+/**
+ * Detecta extras, condimentos y guarniciones sueltas que no son platos en sí.
+ * Ej: "Salsa Soya", "Ají Cacho de Cabra", "Mostaza", "Almendras", "Maníes"
+ */
+const CONDIMENT_RE = /^(salsa\b|ají\b|aj[íi]\b|mostaza\b|ketchup\b|mayo[n]?esa\b|vinagre\b|aceite\b|aliño\b|aderezo\b|chimichurri\b|pebre\b|guacamole\b|hummus\b)/i
+const STANDALONE_EXTRA_RE = /^(almendras?|man[íi]es?|man[íi]\b|nueces?\b|pistachos?\b|cas[eé]w\b|anacardos?\b|pasta\s+de\s+man[íi]|granola\b)$/i
+export function isCondimentOrExtra(name: string): boolean {
+  const n = name.trim()
+  return CONDIMENT_RE.test(n) || STANDALONE_EXTRA_RE.test(n)
+}
+
+/**
  * Detecta bebestibles por medida de volumen líquido en el nombre.
  * Ej: "Kunstmann Trigo 330 ml", "Cerveza 473 cc", "Vino 750ml", "Jugo 1 lt"
  * Aplica en feed, buscador y extractor. No aplica a sólidos (grs/kg son alimentos).
@@ -179,12 +200,16 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     if (txTypes.length > 0 && txTypes.every(t => DRINK_ONLY_TYPES.has(t))) continue
     // Excluir bebidas de marca industrial (Sprite Zero, Fanta, etc.) aunque txDishType esté vacío
     if (isBrandedDrink(d.name as string)) continue
+    // Excluir bebidas por nombre genérico (Vino, Cerveza, Jugo, Agua, licores, etc.)
+    if (isNamedDrink(d.name as string)) continue
     // Excluir bebestibles por medida de volumen líquido (330 ml, 473 cc, 750 ml, etc.)
     if (isVolumeBeverage(d.name as string)) continue
     // Excluir productos envasados (gramaje en nombre o "Formato X" en descripción)
     if (isPackagedProduct(d.name as string, d.description as string | null)) continue
     // Excluir ítems no alimenticios (ropa, accesorios, insumos, merchandising)
     if (isNonFoodItem(d.name as string, catName)) continue
+    // Excluir condimentos, salsas y extras sueltos (Salsa Soya, Almendras, Pebre, etc.)
+    if (isCondimentOrExtra(d.name as string)) continue
     // Dedup: skip if same (restaurant, dish name) already added — handles imported duplicates
     const dupKey = `${d.restaurantId}::${(d.name as string).toLowerCase().trim()}`
     if (seenKey.has(dupKey)) continue
@@ -251,7 +276,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
 /** Cached version — shared across all users, revalidates every 5 minutes */
 export const getFeedDishes = unstable_cache(
   _getFeedDishes,
-  ['feed-dishes-v7'],
+  ['feed-dishes-v8'],
   { revalidate: 300, tags: ['feed-dishes'] }, // 5 minutes
 )
 
@@ -280,9 +305,11 @@ export const getCachedCategoryCountMap = unstable_cache(
       const txTypes = Array.isArray(row.txDishType) ? row.txDishType as string[] : []
       if (txTypes.length > 0 && txTypes.every((t: string) => DRINK_ONLY_TYPES.has(t))) continue
       if (isBrandedDrink(row.name)) continue
+      if (isNamedDrink(row.name)) continue
       if (isVolumeBeverage(row.name)) continue
       if (isPackagedProduct(row.name, row.description)) continue
       if (isNonFoodItem(row.name, row.catName)) continue
+      if (isCondimentOrExtra(row.name)) continue
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, row.description, row.catNormOverride)
       const parent = getParentCategory(leaf)
       if (parent) map[parent] = (map[parent] ?? 0) + 1
@@ -311,7 +338,7 @@ export async function getDishesById(ids: string[]): Promise<FeedDish[]> {
   })
 
   return dishes
-    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isBrandedDrink(d.name) && !isVolumeBeverage(d.name) && !isPackagedProduct(d.name, d.description) && !isNonFoodItem(d.name, d.category.name))
+    .filter(d => !isExcludedCategory(d.category.name) && !(d.txDishType?.length > 0 && d.txDishType.every(t => DRINK_ONLY_TYPES.has(t))) && !isBrandedDrink(d.name) && !isNamedDrink(d.name) && !isVolumeBeverage(d.name) && !isPackagedProduct(d.name, d.description) && !isNonFoodItem(d.name, d.category.name) && !isCondimentOrExtra(d.name))
     .map(dish => {
       const categoriaNorm = resolveDishLeaf(dish.name, dish.category.name, dish.leafOverride ?? null, dish.restaurant.primaryCategory ?? null, dish.description ?? null, dish.category.normOverride ?? null)
       const categoriaParent = getParentCategory(categoriaNorm)
