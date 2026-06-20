@@ -185,10 +185,10 @@ export default function ClientesPage() {
               title="Exportar clientes como CSV"
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-                background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-                fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)",
-                flexShrink: 0,
+                padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+                background: "rgba(244,166,35,0.12)", border: "1.5px solid rgba(244,166,35,0.5)",
+                fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#F4A623",
+                flexShrink: 0, boxShadow: "0 0 10px rgba(244,166,35,0.15)",
               }}
             >
               <Download size={14} />

@@ -10,7 +10,7 @@ const FB = "var(--font-body)";
 const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; icon: typeof Tag }>> = {
   promotions: { title: "Ofertas y promociones", desc: "Crea ofertas temporales que aparecen directo en la carta de tus clientes.", icon: Tag },
   announcements: { title: "Anuncios en la carta", desc: "Lo primero que ven tus clientes al abrir la carta. Novedades, eventos, horarios.", icon: Megaphone },
-  stats_basic: { title: "Estadísticas básicas", desc: "Qué platos miran, qué ignoran y a qué hora llega más gente.", icon: BarChart3 },
+  stats_basic: { title: "Estadísticas", desc: "Qué platos miran, qué ignoran y a qué hora llega más gente.", icon: BarChart3 },
   stats_advanced: { title: "Estadísticas avanzadas", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", icon: BarChart3 },
   waiter: { title: "Llamar al garzón", desc: "Tu cliente toca un botón y el garzón lo sabe al instante.", icon: Bell },
   automations: { title: "Cumpleaños automáticos", desc: "Se envían solos, tú no haces nada.", icon: Cake },
