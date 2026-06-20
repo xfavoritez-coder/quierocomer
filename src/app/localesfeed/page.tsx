@@ -1052,7 +1052,7 @@ function TabMapa() {
 
             <button
               title="Agregar como showcase"
-              onClick={() => setShowcaseModal({ mapsUrl: p.mapsUrl, placeId: p.id, name: p.name, address: p.address, lat: p.lat, lng: p.lng })}
+              onClick={() => setShowcaseModal({})}
               style={{ background: 'none', border: 'none', color: '#34d399', fontSize: 15, cursor: 'pointer', padding: 0, textAlign: 'center' }}
             >📸</button>
             <button onClick={() => removePlace(p.id)} style={{ background: 'none', border: 'none', color: '#333', fontSize: 16, cursor: 'pointer', padding: 0, textAlign: 'center' }}>
