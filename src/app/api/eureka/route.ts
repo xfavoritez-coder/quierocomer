@@ -107,7 +107,9 @@ export async function POST(req: Request) {
     } = body
 
     if (!dishIds?.length) return NextResponse.json({ dishes: [] })
-    const allExcluded = [...dishIds, ...excludeIds]
+    // excludeIds = recomendaciones ya mostradas (no repetir)
+    // dishIds (liked) SÍ pueden volver como candidatos — el más afín merece recomendarse
+    const allExcluded = [...excludeIds]
 
     // ── 1. Detalles de los platos liked ──────────────────────────────────────
     const likedRows = await prisma.$queryRaw<any[]>`
