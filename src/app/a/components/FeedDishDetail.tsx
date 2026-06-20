@@ -76,9 +76,18 @@ function getInstagramInfo(ig: string | null | undefined): { url: string; handle:
   return { url: `https://www.instagram.com/${handle}/`, handle: `@${handle}` }
 }
 
-function getPedirOnlineUrl(website: string | null | undefined, cartaProvider?: string | null): string | null {
+function getPedirOnlineUrl(
+  website: string | null | undefined,
+  cartaProvider?: string | null,
+  websiteIsOrderUrl?: boolean,
+): string | null {
   if (!website) return null
-  if (cartaProvider) return PEDIR_ONLINE_PROVIDERS.has(cartaProvider) ? website : null
+  // 1. Si el proveedor es delivery conocido → siempre mostrar
+  if (cartaProvider && PEDIR_ONLINE_PROVIDERS.has(cartaProvider)) return website
+  // 2. Si el proveedor es carta/menú conocido (Fudo, OlaClick, etc.) → no es pedir online
+  if (cartaProvider && MENU_PROVIDERS.has(cartaProvider)) return null
+  // 3. Fallback: websiteIsOrderUrl marcado por admin, o detección por URL
+  if (websiteIsOrderUrl) return website
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
     if (PEDIR_ONLINE_DOMAINS.some(d => host === d || host.endsWith('.' + d))) return website
@@ -680,7 +689,7 @@ function DesktopDishContent({
               </a>
               {/* Pedir online — brand colors por proveedor */}
               {(() => {
-                const pedirUrl = getPedirOnlineUrl(dish.restauranteWebsite, dish.restauranteCartaProvider)
+                const pedirUrl = getPedirOnlineUrl(dish.restauranteWebsite, dish.restauranteCartaProvider, dish.restauranteWebsiteIsOrderUrl)
                 if (!pedirUrl) return null
                 const provider = detectDeliveryProvider(pedirUrl, dish.restauranteCartaProvider)
                 const { color, bg, border } = getPedirOnlineStyle(provider, isDark ?? false)

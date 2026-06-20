@@ -17,6 +17,7 @@ const NAV = [
   { icon: "📬", label: "Informe Semanal", href: "/admin/informe-semanal" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
   { icon: "🏠", label: "QuieroComer", href: "/admin/quierocomer" },
+  { icon: "🔌", label: "Proveedores", href: "/admin/proveedores" },
   { icon: "🍽", label: "Feed B2C", href: "/admin/feed" },
   { icon: "📝", label: "Crear carta", href: "/admin/crear-carta" },
   { icon: "💰", label: "Costos", href: "/admin/costos" },
