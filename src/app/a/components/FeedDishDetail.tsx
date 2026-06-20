@@ -621,7 +621,7 @@ function DesktopDishContent({
               {/* Botón Pedir online / Ver carta online / Ver página web / Ver Instagram… */}
               {(() => {
                 const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
-                if (!info) return null
+                  ?? { url: `https://quierocomer.cl/${dish.restauranteSlug}`, type: 'menu' as const }
                 const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : info.type === 'social' ? `Ver ${info.socialName}` : 'Ver página web'
                 const accent = info.type === 'delivery'
                   ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
@@ -990,7 +990,7 @@ function DishSlide({
           )}
           {(() => {
             const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
-            if (!info) return null
+              ?? { url: `https://quierocomer.cl/${dish.restauranteSlug}`, type: 'menu' as const }
             const label = info.type === 'delivery' ? 'Pedir online' : info.type === 'menu' ? 'Ver carta online' : info.type === 'social' ? `Ver ${info.socialName}` : 'Ver página web'
             const accent = info.type === 'delivery'
               ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
