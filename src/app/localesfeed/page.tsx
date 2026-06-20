@@ -1778,6 +1778,10 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
   const [placeInfo, setPlaceInfo] = useState<ShowcasePlaceInfo | null>(null)
   const [resolveError, setResolveError] = useState<string | null>(null)
 
+  // Links opcionales
+  const [websiteInput, setWebsiteInput] = useState('')
+  const [instagramInput, setInstagramInput] = useState('')
+
   // Step 2
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -1879,6 +1883,8 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
             googleMapsUrl: placeInfo.mapsUrl,
             googleRating: placeInfo.rating,
             googleRatingCount: placeInfo.reviews,
+            website: websiteInput.trim() || null,
+            instagram: instagramInput.trim() || null,
           },
           dishes: dishes.filter(d => d.name.trim()),
         }),
@@ -1949,14 +1955,36 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
                   <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: '#fff' }}>{placeInfo.name}</p>
                   <p style={{ margin: '0 0 4px', fontSize: 13, color: '#888' }}>{placeInfo.address}</p>
                   {placeInfo.rating != null && (
-                    <p style={{ margin: '0 0 0', fontSize: 13, color: '#F4A623' }}>
+                    <p style={{ margin: '0 0 12px', fontSize: 13, color: '#F4A623' }}>
                       ★ {placeInfo.rating.toFixed(1)}
                       {placeInfo.reviews != null && <span style={{ color: '#555' }}> ({placeInfo.reviews} reviews)</span>}
                     </p>
                   )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                    <div>
+                      <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4, fontWeight: 600 }}>Página web (opcional)</label>
+                      <input
+                        type="url"
+                        value={websiteInput}
+                        onChange={e => setWebsiteInput(e.target.value)}
+                        placeholder="https://..."
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4, fontWeight: 600 }}>Instagram (opcional)</label>
+                      <input
+                        type="url"
+                        value={instagramInput}
+                        onChange={e => setInstagramInput(e.target.value)}
+                        placeholder="https://instagram.com/..."
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 13, background: '#0d0d0d', border: '1px solid #333', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
                   <button
                     onClick={() => setStep(2)}
-                    style={{ marginTop: 14, fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 8, background: '#34d399', color: '#000', border: 'none', cursor: 'pointer' }}
+                    style={{ marginTop: 0, fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 8, background: '#34d399', color: '#000', border: 'none', cursor: 'pointer' }}
                   >
                     Continuar con este lugar
                   </button>

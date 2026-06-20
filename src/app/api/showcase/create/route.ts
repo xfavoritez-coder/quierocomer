@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       googleMapsUrl: restaurantData.googleMapsUrl ?? "",
       googleRating: restaurantData.googleRating ?? null,
       googleRatingCount: restaurantData.googleRatingCount ?? null,
+      website: restaurantData.website ?? null,
+      instagram: restaurantData.instagram ?? null,
       isDemo: false,
       isActive: true,
       isShowcase: true,
@@ -66,6 +68,11 @@ export async function POST(req: NextRequest) {
         position: i,
         isActive: true,
         dishDiet: "OMNIVORE",
+        txDishType: [],
+        txIngredient: [],
+        txCuisine: [],
+        txMealSlot: [],
+        txEstilo: [],
       },
     });
   }
