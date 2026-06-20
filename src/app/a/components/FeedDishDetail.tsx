@@ -87,6 +87,28 @@ function getPedirOnlineUrl(website: string | null | undefined, cartaProvider?: s
   return null
 }
 
+function detectDeliveryProvider(website: string, cartaProvider?: string | null): string {
+  if (cartaProvider && PEDIR_ONLINE_PROVIDERS.has(cartaProvider)) return cartaProvider
+  try {
+    const host = new URL(website).hostname.replace(/^www\./, '')
+    if (host === 'rappi.com' || host.endsWith('.rappi.com') || host === 'rappi.cl' || host.endsWith('.rappi.cl')) return 'Rappi'
+    if (host === 'ubereats.com' || host.endsWith('.ubereats.com')) return 'UberEats'
+    if (host === 'getjusto.com' || host.endsWith('.getjusto.com') || host === 'justo.pe' || host === 'justo.cl') return 'Justo'
+    if (host === 'mercat.cl' || host.endsWith('.mercat.cl')) return 'Mercat'
+  } catch {}
+  return 'other'
+}
+
+function getPedirOnlineStyle(provider: string, isDark: boolean): { color: string; bg: string; border: string } {
+  switch (provider) {
+    case 'UberEats': return { color: '#06C167', bg: isDark ? 'rgba(6,193,103,0.12)' : 'rgba(6,193,103,0.08)', border: isDark ? 'rgba(6,193,103,0.45)' : 'rgba(6,193,103,0.4)' }
+    case 'Rappi': return { color: '#FF441B', bg: isDark ? 'rgba(255,68,27,0.12)' : 'rgba(255,68,27,0.08)', border: isDark ? 'rgba(255,68,27,0.45)' : 'rgba(255,68,27,0.4)' }
+    case 'Justo':
+    case 'Mercat': return { color: isDark ? 'rgba(200,200,200,0.85)' : '#444', bg: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', border: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)' }
+    default: return { color: isDark ? 'rgba(96,165,250,0.9)' : '#2563eb', bg: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)', border: isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.4)' }
+  }
+}
+
 type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' | 'social'; socialName?: string }
 
 function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, cartaProvider?: string | null): OrderInfo | null {
@@ -624,13 +646,13 @@ function DesktopDishContent({
                 </div>
               </div>
 
-              {/* Botón Ir a Maps */}
+              {/* Ver en Google Maps */}
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginBottom: 12,
-                  background: isDark ? 'rgba(244,166,35,0.13)' : 'rgba(244,166,35,0.08)',
-                  border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.5)' : 'rgba(244,166,35,0.4)'}`,
+                  background: isDark ? 'rgba(37,99,235,0.13)' : 'rgba(37,99,235,0.08)',
+                  border: `1.5px solid ${isDark ? 'rgba(37,99,235,0.5)' : 'rgba(37,99,235,0.4)'}`,
                   borderTop: 'none',
                   borderRadius: '0 0 12px 12px',
                   textDecoration: 'none',
@@ -640,8 +662,8 @@ function DesktopDishContent({
                   <circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/>
                 </svg>
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00' }}>
-                    Cómo llegar
+                  <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(96,165,250,0.9)' : '#1d4ed8' }}>
+                    Ver en Google Maps
                   </span>
                   {dish.restauranteDireccion && (() => {
                     const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
@@ -650,58 +672,112 @@ function DesktopDishContent({
                   })()}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                  {dist != null && <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(244,166,35,0.7)' : '#c97d00', opacity: 0.85 }}>A {formatDistance(dist)}</span>}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round">
+                  {dist != null && <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(96,165,250,0.7)' : '#1d4ed8', opacity: 0.85 }}>A {formatDistance(dist)}</span>}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(96,165,250,0.8)' : '#1d4ed8'} strokeWidth="2.2" strokeLinecap="round">
                     <path d="M9 18l6-6-6-6"/>
                   </svg>
                 </span>
               </a>
-              {/* Ver carta online en QuieroComer — todos excepto showcase */}
-              {!dish.isShowcase && (
-                <a href={`https://quierocomer.cl/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
-                    background: isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)',
-                    border: `1.5px solid ${isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)'}`,
-                    borderRadius: 12, textDecoration: 'none',
-                  }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M4 6h16M4 10h16M4 14h10"/>
-                    <rect x="2" y="3" width="20" height="18" rx="2"/>
-                  </svg>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a' }}>Ver carta online</span>
-                    <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1 }}>quierocomer.cl</span>
-                  </span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(251,146,60,0.8)' : '#ea6c0a'} strokeWidth="2.2" strokeLinecap="round">
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
-                </a>
-              )}
-              {/* Pedir online — solo Rappi, Justo, UberEats, Mercat */}
+              {/* Pedir online — brand colors por proveedor */}
               {(() => {
                 const pedirUrl = getPedirOnlineUrl(dish.restauranteWebsite, dish.restauranteCartaProvider)
                 if (!pedirUrl) return null
-                const blueAccent = isDark ? 'rgba(96,165,250,0.9)' : '#2563eb'
+                const provider = detectDeliveryProvider(pedirUrl, dish.restauranteCartaProvider)
+                const { color, bg, border } = getPedirOnlineStyle(provider, isDark ?? false)
                 return (
                   <a href={pedirUrl} target="_blank" rel="noopener noreferrer"
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
-                      background: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)',
-                      border: `1.5px solid ${isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.4)'}`,
+                      background: bg,
+                      border: `1.5px solid ${border}`,
                       borderRadius: 12, textDecoration: 'none',
                     }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={blueAccent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                       <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                       <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                     </svg>
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: blueAccent }}>Pedir online</span>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color }}>Pedir online</span>
                       <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(pedirUrl).hostname.replace(/^www\./, '')}</span>
                     </span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={blueAccent} strokeWidth="2.2" strokeLinecap="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </a>
+                )
+              })()}
+              {/* Ver carta online — plataformas externas o web propia */}
+              {(() => {
+                const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider)
+                if (!orderInfo || orderInfo.type === 'delivery' || orderInfo.type === 'social') return null
+                const orange = isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'
+                return (
+                  <a href={orderInfo.url} target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
+                      background: isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)',
+                      border: `1.5px solid ${isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)'}`,
+                      borderRadius: 12, textDecoration: 'none',
+                    }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={orange} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <path d="M4 6h16M4 10h16M4 14h10"/>
+                      <rect x="2" y="3" width="20" height="18" rx="2"/>
+                    </svg>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: orange }}>Ver carta online</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(orderInfo.url).hostname.replace(/^www\./, '')}</span>
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={orange} strokeWidth="2.2" strokeLinecap="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </a>
+                )
+              })()}
+              {/* Ver carta QR — carta de QuieroComer */}
+              {!dish.isShowcase && (
+                <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
+                    background: isDark ? 'rgba(244,166,35,0.13)' : 'rgba(244,166,35,0.08)',
+                    border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.5)' : 'rgba(244,166,35,0.4)'}`,
+                    borderRadius: 12, textDecoration: 'none',
+                  }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDark ? '#F4A623' : '#c97d00'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/>
+                  </svg>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00' }}>Ver carta QR</span>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1 }}>quierocomer.cl</span>
+                  </span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </a>
+              )}
+              {/* Ver Instagram */}
+              {(() => {
+                const ig = getInstagramInfo(dish.restauranteInstagram)
+                if (!ig) return null
+                return (
+                  <a href={ig.url} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
+                    background: isDark ? 'rgba(225,48,108,0.08)' : 'rgba(225,48,108,0.06)',
+                    border: `1.5px solid ${isDark ? 'rgba(225,48,108,0.25)' : 'rgba(225,48,108,0.2)'}`,
+                    borderRadius: 12, textDecoration: 'none',
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                    </svg>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#E1306C' }}>Ver Instagram</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(225,48,108,0.6)' : 'rgba(180,30,80,0.6)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ig.handle}</span>
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(225,48,108,0.4)" strokeWidth="2.2" strokeLinecap="round">
                       <path d="M9 18l6-6-6-6"/>
                     </svg>
                   </a>
@@ -728,31 +804,6 @@ function DesktopDishContent({
                   </svg>
                 </a>
               )}
-              {/* Instagram */}
-              {(() => {
-                const ig = getInstagramInfo(dish.restauranteInstagram)
-                if (!ig) return null
-                return (
-                  <a href={ig.url} target="_blank" rel="noopener noreferrer" style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
-                    background: isDark ? 'rgba(225,48,108,0.08)' : 'rgba(225,48,108,0.06)',
-                    border: `1.5px solid ${isDark ? 'rgba(225,48,108,0.25)' : 'rgba(225,48,108,0.2)'}`,
-                    borderRadius: 12, textDecoration: 'none',
-                  }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                    </svg>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#E1306C' }}>Ver Instagram</span>
-                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(225,48,108,0.6)' : 'rgba(180,30,80,0.6)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ig.handle}</span>
-                    </span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(225,48,108,0.4)" strokeWidth="2.2" strokeLinecap="round">
-                      <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                  </a>
-                )
-              })()}
             </div>
           )
         })()}
@@ -1008,15 +1059,15 @@ function DishSlide({
 
         {/* Botones locales */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32, marginTop: 10 }}>
-          {/* Cómo llegar */}
+          {/* Ver en Google Maps */}
           <a
             href={dish.googleMapsUrl ?? (dish.restauranteLat && dish.restauranteLng ? `https://maps.google.com/?q=${dish.restauranteLat},${dish.restauranteLng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dish.restauranteDireccion ? dish.restauranteDireccion + ' ' : '') + dish.restaurante)}`)}
             target="_blank" rel="noopener noreferrer"
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
-              background: isDark ? 'rgba(244,166,35,0.13)' : 'rgba(244,166,35,0.08)',
-              border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.5)' : 'rgba(244,166,35,0.4)'}`,
+              background: isDark ? 'rgba(37,99,235,0.13)' : 'rgba(37,99,235,0.08)',
+              border: `1.5px solid ${isDark ? 'rgba(37,99,235,0.5)' : 'rgba(37,99,235,0.4)'}`,
               textDecoration: 'none',
             }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ flexShrink: 0 }}>
@@ -1024,7 +1075,7 @@ function DishSlide({
               <circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/>
             </svg>
             <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00', whiteSpace: 'nowrap' }}>Cómo llegar</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? 'rgba(96,165,250,0.9)' : '#1d4ed8', whiteSpace: 'nowrap' }}>Ver en Google Maps</span>
               {dish.restauranteDireccion && (() => {
                 const parts = dish.restauranteDireccion.split(',').map((p: string) => p.trim().replace(/^\d{4,7}\s*/, '')).filter((p: string) => p && !/^\d+$/.test(p) && p !== 'Chile' && p !== 'Región Metropolitana' && p !== 'Region Metropolitana').slice(0, 3)
                 if (parts.length === 3) [parts[1], parts[2]] = [parts[2], parts[1]]
@@ -1032,60 +1083,116 @@ function DishSlide({
               })()}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-              {dist != null && <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(244,166,35,0.7)' : '#c97d00', opacity: 0.85 }}>A {formatDistance(dist)}</span>}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round">
+              {dist != null && <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(96,165,250,0.7)' : '#1d4ed8', opacity: 0.85 }}>A {formatDistance(dist)}</span>}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(96,165,250,0.8)' : '#1d4ed8'} strokeWidth="2.2" strokeLinecap="round">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
             </span>
           </a>
 
-          {/* Ver carta online en QuieroComer — todos excepto showcase */}
-          {!dish.isShowcase && (
-            <a href={`https://quierocomer.cl/qr/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
-                background: isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)',
-                border: `1.5px solid ${isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)'}`,
-                textDecoration: 'none',
-              }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M4 6h16M4 10h16M4 14h10"/>
-                <rect x="2" y="3" width="20" height="18" rx="2"/>
-              </svg>
-              <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a', whiteSpace: 'nowrap' }}>Ver carta online</span>
-                <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>quierocomer.cl</span>
-              </span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(251,146,60,0.8)' : '#ea6c0a'} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
-            </a>
-          )}
-
-          {/* Pedir online — solo Rappi, Justo, UberEats, Mercat */}
+          {/* Pedir online — brand colors por proveedor */}
           {(() => {
             const pedirUrl = getPedirOnlineUrl(dish.restauranteWebsite, dish.restauranteCartaProvider)
             if (!pedirUrl) return null
-            const blueAccent = isDark ? 'rgba(96,165,250,0.9)' : '#2563eb'
+            const provider = detectDeliveryProvider(pedirUrl, dish.restauranteCartaProvider)
+            const { color, bg, border } = getPedirOnlineStyle(provider, isDark ?? false)
             return (
               <a href={pedirUrl} target="_blank" rel="noopener noreferrer"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
-                  background: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)',
-                  border: `1.5px solid ${isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.4)'}`,
+                  background: bg,
+                  border: `1.5px solid ${border}`,
                   textDecoration: 'none',
                 }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={blueAccent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                 </svg>
                 <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: blueAccent, whiteSpace: 'nowrap' }}>Pedir online</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color, whiteSpace: 'nowrap' }}>Pedir online</span>
                   <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new URL(pedirUrl).hostname.replace(/^www\./, '')}</span>
                 </span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={blueAccent} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </a>
+            )
+          })()}
+
+          {/* Ver carta online — plataformas externas o web propia */}
+          {(() => {
+            const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider)
+            if (!orderInfo || orderInfo.type === 'delivery' || orderInfo.type === 'social') return null
+            const orange = isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'
+            return (
+              <a href={orderInfo.url} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
+                  background: isDark ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.08)',
+                  border: `1.5px solid ${isDark ? 'rgba(251,146,60,0.45)' : 'rgba(251,146,60,0.4)'}`,
+                  textDecoration: 'none',
+                }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={orange} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M4 6h16M4 10h16M4 14h10"/>
+                  <rect x="2" y="3" width="20" height="18" rx="2"/>
+                </svg>
+                <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: orange, whiteSpace: 'nowrap' }}>Ver carta online</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new URL(orderInfo.url).hostname.replace(/^www\./, '')}</span>
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={orange} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </a>
+            )
+          })()}
+
+          {/* Ver carta QR — carta de QuieroComer */}
+          {!dish.isShowcase && (
+            <a href={`/${dish.restauranteSlug}`} target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
+                background: isDark ? 'rgba(244,166,35,0.13)' : 'rgba(244,166,35,0.08)',
+                border: `1.5px solid ${isDark ? 'rgba(244,166,35,0.5)' : 'rgba(244,166,35,0.4)'}`,
+                textDecoration: 'none',
+              }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isDark ? '#F4A623' : '#c97d00'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/>
+              </svg>
+              <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00', whiteSpace: 'nowrap' }}>Ver carta QR</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>quierocomer.cl</span>
+              </span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
+          )}
+
+          {/* Ver Instagram */}
+          {(() => {
+            const ig = getInstagramInfo(dish.restauranteInstagram)
+            if (!ig) return null
+            return (
+              <a href={ig.url} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
+                background: isDark ? 'rgba(225,48,108,0.08)' : 'rgba(225,48,108,0.06)',
+                border: `1.5px solid ${isDark ? 'rgba(225,48,108,0.25)' : 'rgba(225,48,108,0.2)'}`,
+                textDecoration: 'none',
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+                <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#E1306C', whiteSpace: 'nowrap' }}>Ver Instagram</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(225,48,108,0.6)' : 'rgba(180,30,80,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ig.handle}</span>
+                </span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(225,48,108,0.4)" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
               </a>
@@ -1113,31 +1220,6 @@ function DishSlide({
               </svg>
             </a>
           )}
-          {/* Instagram */}
-          {(() => {
-            const ig = getInstagramInfo(dish.restauranteInstagram)
-            if (!ig) return null
-            return (
-              <a href={ig.url} target="_blank" rel="noopener noreferrer" style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: '12px 18px', borderRadius: 12, boxSizing: 'border-box',
-                background: isDark ? 'rgba(225,48,108,0.08)' : 'rgba(225,48,108,0.06)',
-                border: `1.5px solid ${isDark ? 'rgba(225,48,108,0.25)' : 'rgba(225,48,108,0.2)'}`,
-                textDecoration: 'none',
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-                <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#E1306C', whiteSpace: 'nowrap' }}>Ver Instagram</span>
-                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(225,48,108,0.6)' : 'rgba(180,30,80,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ig.handle}</span>
-                </span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(225,48,108,0.4)" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-              </a>
-            )
-          })()}
         </div>
 
         {/* Related dishes */}
