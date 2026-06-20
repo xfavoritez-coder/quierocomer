@@ -363,7 +363,7 @@ export default function DescubrirClient() {
                   setStripPage(idx)
                 }
                 return (
-                <>
+                <div style={{ maxWidth: 480, margin: '0 auto', width: '100%' }}>
               <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '0 14px' }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
@@ -443,7 +443,7 @@ export default function DescubrirClient() {
                   </div>
                 ))}
               </div>
-              </>
+              </div>
                 )
               })()}
             </>
