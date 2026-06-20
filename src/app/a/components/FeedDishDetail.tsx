@@ -690,8 +690,8 @@ function DesktopDishContent({
                   textDecoration: 'none',
                 }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ flexShrink: 0 }}>
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#FF2222" stroke="none"/>
-                  <circle cx="12" cy="10" r="3" fill="#FF2222" stroke="#fff" strokeWidth="1.5"/>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="#FF2222" strokeWidth="2"/>
+                  <circle cx="12" cy="10" r="3" fill="none" stroke="#FF2222" strokeWidth="2"/>
                 </svg>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(96,165,250,0.9)' : '#1d4ed8' }}>
@@ -1107,8 +1107,8 @@ function DishSlide({
               textDecoration: 'none',
             }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ flexShrink: 0 }}>
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#FF2222" stroke="none"/>
-              <circle cx="12" cy="10" r="3" fill="#FF2222" stroke="#fff" strokeWidth="1.5"/>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="#FF2222" strokeWidth="2"/>
+              <circle cx="12" cy="10" r="3" fill="none" stroke="#FF2222" strokeWidth="2"/>
             </svg>
             <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
               <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? 'rgba(96,165,250,0.9)' : '#1d4ed8', whiteSpace: 'nowrap' }}>Cómo llegar</span>
