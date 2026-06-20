@@ -11,12 +11,12 @@ const p = new PrismaClient();
 
 const MENU_ONLY_SUFFIXES = [
   "toteat.com", "toteat.app", "gourmedia.cl", "gour.media",
-  "fu.do", "heyzine.com", "canva.com",
-  "drive.google.com", "docs.google.com", "share.google",
+  "fu.do", "heyzine.com", "canva.com", "treinta.co",
+  "google.com", "share.google",
   "qrpro.io", "micartaqr.cl", "olaclick.com", "ola.click",
   "queresto.com", "flipsnack.com", "yumpu.com", "issuu.com",
   "gourmetclick.cl", "lacarte.cl", "avocaty.io", "socialreacts.com",
-  "netlify.app",
+  "netlify.app", "tripadvisor.cl", "tripadvisor.com",
   "instagram.com", "facebook.com", "twitter.com", "tiktok.com",
   "linktr.ee", "linktree.com", "atom.bio",
   "quierocomer.cl",

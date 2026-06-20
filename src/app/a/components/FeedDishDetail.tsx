@@ -7,32 +7,44 @@ function getSecondaryDishTypes(types: string[], primary: string): string[] {
 }
 
 /**
- * Dominios (o sufijos de dominio) que NO son plataformas de pedido online.
- * Se chequea sufijo para cubrir subdominios: menu.fu.do, xxx.ola.click, etc.
+ * Sufijos de dominio bloqueados: menú-solo, redes sociales, bio-links.
+ * Se usa sufijo para cubrir subdominios: menu.fu.do, xxx.ola.click, etc.
  */
 const MENU_ONLY_SUFFIXES = [
-  // Menú digital (no ordenar)
+  // Menú digital (no permiten ordenar)
   'toteat.com', 'toteat.app', 'gourmedia.cl', 'gour.media',
-  'fu.do', 'heyzine.com', 'canva.com',
-  'drive.google.com', 'docs.google.com', 'share.google',
+  'fu.do', 'heyzine.com', 'canva.com', 'treinta.co',
+  'google.com', 'share.google',
   'qrpro.io', 'micartaqr.cl', 'olaclick.com', 'ola.click',
   'queresto.com', 'flipsnack.com', 'yumpu.com', 'issuu.com',
   'gourmetclick.cl', 'lacarte.cl', 'avocaty.io', 'socialreacts.com',
-  'netlify.app',
+  'netlify.app', 'tripadvisor.cl', 'tripadvisor.com',
   // Redes sociales y bio-links
   'instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com',
   'linktr.ee', 'linktree.com', 'atom.bio',
-  // Carta propia QC (no es plataforma de pedido externa)
+  // Carta propia QC
   'quierocomer.cl',
 ]
 
-function getOrderUrl(website: string | null | undefined): string | null {
+/** Plataformas de pedido / delivery online */
+const DELIVERY_SUFFIXES = [
+  'rappi.com', 'rappi.cl',
+  'ubereats.com',
+  'getjusto.com', 'justo.pe', 'justo.cl',
+  'mercat.cl',
+  'pedidosya.com',
+  'wa.me',
+]
+
+type OrderInfo = { url: string; type: 'delivery' | 'website' }
+
+function getOrderInfo(website: string | null | undefined): OrderInfo | null {
   if (!website) return null
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
-    const blocked = MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))
-    if (blocked) return null
-    return website
+    if (MENU_ONLY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
+    const isDelivery = DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s))
+    return { url: website, type: isDelivery ? 'delivery' : 'website' }
   } catch { return null }
 }
 import type { FeedDish } from '../types'
@@ -578,28 +590,45 @@ function DesktopDishContent({
                   </svg>
                 </span>
               </a>
-              {/* Botón Pedir online */}
+              {/* Botón Pedir online / Ver página web */}
               {(() => {
-                const orderUrl = getOrderUrl(dish.restauranteWebsite)
-                if (!orderUrl) return null
+                const info = getOrderInfo(dish.restauranteWebsite)
+                if (!info) return null
+                const isDelivery = info.type === 'delivery'
+                const accent = isDelivery
+                  ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
+                  : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
+                const accentBg = isDelivery
+                  ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
+                  : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
+                const accentBorder = isDelivery
+                  ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
+                  : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
                 return (
-                  <a href={orderUrl} target="_blank" rel="noopener noreferrer"
+                  <a href={info.url} target="_blank" rel="noopener noreferrer"
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       width: '100%', padding: '12px 16px', boxSizing: 'border-box', marginTop: 8,
-                      background: isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)',
-                      border: `1.5px solid ${isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)'}`,
+                      background: accentBg, border: `1.5px solid ${accentBorder}`,
                       borderRadius: 12, textDecoration: 'none',
                     }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.9)' : '#16a34a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                    </svg>
+                    {isDelivery ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M2 12h20"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                      </svg>
+                    )}
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? 'rgba(34,197,94,0.9)' : '#16a34a' }}>Pedir online</span>
-                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(orderUrl).hostname.replace(/^www\./, '')}</span>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: accent }}>{isDelivery ? 'Pedir online' : 'Ver página web'}</span>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(info.url).hostname.replace(/^www\./, '')}</span>
                     </span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.7)' : '#16a34a'} strokeWidth="2.2" strokeLinecap="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.2" strokeLinecap="round">
                       <path d="M9 18l6-6-6-6"/>
                     </svg>
                   </a>
@@ -910,26 +939,43 @@ function DishSlide({
             </a>
           )}
           {(() => {
-            const orderUrl = getOrderUrl(dish.restauranteWebsite)
-            if (!orderUrl) return null
+            const info = getOrderInfo(dish.restauranteWebsite)
+            if (!info) return null
+            const isDelivery = info.type === 'delivery'
+            const accent = isDelivery
+              ? (isDark ? 'rgba(34,197,94,0.9)' : '#16a34a')
+              : (isDark ? 'rgba(96,165,250,0.9)' : '#2563eb')
+            const accentBg = isDelivery
+              ? (isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)')
+              : (isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)')
+            const accentBorder = isDelivery
+              ? (isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)')
+              : (isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.35)')
             return (
-              <a href={orderUrl} target="_blank" rel="noopener noreferrer"
+              <a href={info.url} target="_blank" rel="noopener noreferrer"
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   width: '100%', padding: '12px 18px', borderRadius: 12, marginTop: 2,
-                  background: isDark ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)',
-                  border: `1.5px solid ${isDark ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.4)'}`,
+                  background: accentBg, border: `1.5px solid ${accentBorder}`,
                   textDecoration: 'none', boxSizing: 'border-box',
                 }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.9)' : '#16a34a'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                </svg>
+                {isDelivery ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                )}
                 <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? 'rgba(34,197,94,0.9)' : '#16a34a', whiteSpace: 'nowrap' }}>Pedir online</span>
-                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{new URL(orderUrl).hostname.replace(/^www\./, '')}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: accent }}>{isDelivery ? 'Pedir online' : 'Ver página web'}</span>
+                  <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new URL(info.url).hostname.replace(/^www\./, '')}</span>
                 </span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(34,197,94,0.7)' : '#16a34a'} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
               </a>
