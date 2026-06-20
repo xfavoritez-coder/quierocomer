@@ -60,12 +60,15 @@ type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' | 'social'
 function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean): OrderInfo | null {
   if (!website) return null
   try {
-    const host = new URL(website).hostname.replace(/^www\./, '')
+    const urlObj = new URL(website)
+    const host = urlObj.hostname.replace(/^www\./, '')
+    const pathname = urlObj.pathname
     if (NO_BUTTON_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
     if (isOrderUrl) return { url: website, type: 'delivery' }
     if (
       DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
-      DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p))
+      DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p)) ||
+      pathname === '/pedir' || pathname.startsWith('/pedir/')
     ) return { url: website, type: 'delivery' }
     if (MENU_CARD_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) {
       return { url: website, type: 'menu' }
