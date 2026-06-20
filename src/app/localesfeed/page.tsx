@@ -1844,19 +1844,24 @@ function ShowcaseModal({ onClose }: { onClose: () => void }) {
       if (!upRes.ok) throw new Error(`Upload failed: ${upRes.status}`)
       const { urls } = await upRes.json()
 
-      // 2. Recognize with AI
-      const recRes = await fetch('/api/showcase/recognize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos: urls }),
-      })
-      if (!recRes.ok) throw new Error(`Recognize failed: ${recRes.status}`)
-      const { dishes: recognized } = await recRes.json()
+      // 2. Recognize with AI (si falla igual pasamos al paso 3 con nombres vacíos)
+      let recognized: any[] = []
+      try {
+        const recRes = await fetch('/api/showcase/recognize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photos: urls }),
+        })
+        if (recRes.ok) {
+          const data = await recRes.json()
+          recognized = data.dishes ?? []
+        }
+      } catch {}
 
-      const drafts: ShowcaseDishDraft[] = recognized.map((d: any, i: number) => ({
-        name: d.name ?? 'Plato',
-        description: d.description ?? null,
-        photoUrl: urls[i] ?? '',
+      const drafts: ShowcaseDishDraft[] = urls.map((url, i) => ({
+        name: recognized[i]?.name ?? '',
+        description: recognized[i]?.description ?? null,
+        photoUrl: url,
         photoIndex: i,
       }))
       setDishes(drafts)
