@@ -120,8 +120,14 @@ function getPedirOnlineStyle(provider: string, isDark: boolean): { color: string
 
 type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' | 'social'; socialName?: string }
 
-function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, cartaProvider?: string | null): OrderInfo | null {
-  if (!website) return null
+function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, cartaProvider?: string | null, slug?: string | null): OrderInfo | null {
+  if (!website) {
+    // Fallback: si tiene cartaProvider de carta digital pero sin URL externa, usar la carta en QC
+    if (cartaProvider && MENU_PROVIDERS.has(cartaProvider) && slug) {
+      return { url: `/${slug}`, type: 'menu' }
+    }
+    return null
+  }
   // Provider-based classification — más fiable que heurísticas de URL
   if (cartaProvider) {
     if (DELIVERY_PROVIDERS.has(cartaProvider)) return { url: website, type: 'delivery' }
@@ -718,7 +724,7 @@ function DesktopDishContent({
               })()}
               {/* Ver carta online — plataformas externas o web propia */}
               {(() => {
-                const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider)
+                const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider, dish.restauranteSlug)
                 if (!orderInfo || orderInfo.type === 'delivery' || orderInfo.type === 'social') return null
                 const orange = isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'
                 return (
@@ -1131,7 +1137,7 @@ function DishSlide({
 
           {/* Ver carta online — plataformas externas o web propia */}
           {(() => {
-            const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider)
+            const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider, dish.restauranteSlug)
             if (!orderInfo || orderInfo.type === 'delivery' || orderInfo.type === 'social') return null
             const orange = isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'
             return (
