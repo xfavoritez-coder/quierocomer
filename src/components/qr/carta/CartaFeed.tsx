@@ -73,7 +73,7 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
   const lang = useLang();
   const heroDishes = useMemo(() => {
     const withPhoto = (arr: Dish[]) => arr.filter(d => d.photos?.[0]);
-    const isFree = ((r as any).plan || 'FREE') === 'FREE'
+    const isFree = (((restaurant as any).plan) || 'FREE') === 'FREE'
     if (isFree) {
       const pool = withPhoto(dishes)
       if (pool.length === 0) return dishes.slice(0, 1)
@@ -84,7 +84,7 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
     if (recWithPhoto.length > 0) return recWithPhoto;
     if (recommended.length > 0) return recommended;
     return withPhoto(dishes).slice(0, 3);
-  }, [dishes, r]);
+  }, [dishes, restaurant]);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const touchStartX = useRef(0);

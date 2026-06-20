@@ -178,6 +178,7 @@ export default function FeedDishDetail({
   onDishTap,
   onCategoryClick,
   hideRelated,
+  scopedRestaurantId,
   userLocation,
   isDark,
   savedDishIds,
@@ -191,6 +192,7 @@ export default function FeedDishDetail({
   onDishTap: (dish: FeedDish) => void
   onCategoryClick?: (category: string) => void
   hideRelated?: boolean
+  scopedRestaurantId?: string | null
   userLocation?: { lat: number; lng: number } | null
   isDark?: boolean
   savedDishIds?: Set<string>
@@ -352,6 +354,7 @@ export default function FeedDishDetail({
             }}
             onCategoryClick={onCategoryClick}
             hideRelated={hideRelated}
+            scopedRestaurantId={scopedRestaurantId}
             userLocation={userLocation}
             isDark={isDark}
             initialSaved={savedDishIds?.has(activeDish.id) ?? false}
@@ -431,6 +434,7 @@ export default function FeedDishDetail({
               dishPool={dishPool}
               profile={profile}
               hideRelated={hideRelated}
+              scopedRestaurantId={scopedRestaurantId}
               userLocation={userLocation}
               isDark={isDark}
               initialSaved={savedDishIds?.has(d.id) ?? false}
@@ -448,11 +452,11 @@ export default function FeedDishDetail({
 
 /* ── Desktop: dish content in a two-column card layout ── */
 function DesktopDishContent({
-  dish, allDishes, dishPool, profile, onClose, onSave, onDishTap, onCategoryClick, hideRelated, userLocation, isDark, initialSaved,
+  dish, allDishes, dishPool, profile, onClose, onSave, onDishTap, onCategoryClick, hideRelated, scopedRestaurantId, userLocation, isDark, initialSaved,
 }: {
   dish: FeedDish; allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile;
   onClose: () => void; onSave: (d: FeedDish) => void; onDishTap: (d: FeedDish) => void;
-  onCategoryClick?: (category: string) => void; hideRelated?: boolean;
+  onCategoryClick?: (category: string) => void; hideRelated?: boolean; scopedRestaurantId?: string | null;
   userLocation?: { lat: number; lng: number } | null; isDark?: boolean; initialSaved?: boolean;
 }) {
   const [saved, setSaved] = useState(initialSaved ?? false)
@@ -489,7 +493,11 @@ function DesktopDishContent({
     const rawPool = dishPool && dishPool.length > 0 ? dishPool : allDishes
     const seenPoolIds = new Set<string>()
     const pool = rawPool.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
-    const candidates = pool.filter(d => d.fotoUrl && d.id !== dish.id && d.restauranteId !== dish.restauranteId)
+    const candidates = pool.filter(d => {
+      if (!d.fotoUrl || d.id === dish.id) return false
+      if (scopedRestaurantId) return d.restauranteId === scopedRestaurantId
+      return d.restauranteId !== dish.restauranteId
+    })
     const embRank = new Map<string, number>()
     if (embeddingSimilarIds) {
       embeddingSimilarIds.forEach((id, i) => embRank.set(id, 1 - i / embeddingSimilarIds.length))
@@ -858,12 +866,12 @@ function DesktopDishContent({
 /* ── Mobile: individual dish slide ── */
 function DishSlide({
   dish, index, isActive, onClose, onSave, onDishTap, onCategoryClick,
-  allDishes, dishPool, profile, hideRelated, userLocation, isDark, initialSaved,
+  allDishes, dishPool, profile, hideRelated, scopedRestaurantId, userLocation, isDark, initialSaved,
 }: {
   dish: FeedDish; index: number; isActive: boolean;
   onClose: () => void; onSave: (d: FeedDish) => void; onDishTap: (d: FeedDish) => void;
   onCategoryClick?: (category: string) => void;
-  allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile; hideRelated?: boolean;
+  allDishes: FeedDish[]; dishPool?: FeedDish[]; profile: FeedProfile; hideRelated?: boolean; scopedRestaurantId?: string | null;
   userLocation?: { lat: number; lng: number } | null;
   isDark?: boolean; initialSaved?: boolean;
 }) {
@@ -904,7 +912,11 @@ function DishSlide({
     const rawPool = dishPool && dishPool.length > 0 ? dishPool : allDishes
     const seenPoolIds = new Set<string>()
     const pool = rawPool.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
-    const candidates = pool.filter(d => d.fotoUrl && d.id !== dish.id && d.restauranteId !== dish.restauranteId)
+    const candidates = pool.filter(d => {
+      if (!d.fotoUrl || d.id === dish.id) return false
+      if (scopedRestaurantId) return d.restauranteId === scopedRestaurantId
+      return d.restauranteId !== dish.restauranteId
+    })
     const embRank = new Map<string, number>()
     if (embeddingSimilarIds) {
       embeddingSimilarIds.forEach((id, i) => embRank.set(id, 1 - i / embeddingSimilarIds.length))

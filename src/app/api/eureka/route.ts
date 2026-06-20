@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
 
@@ -94,6 +95,7 @@ export async function POST(req: Request) {
       lng,
       maxKm = 15,
       diet,
+      restaurantId,
     }: {
       dishIds: string[]
       excludeIds?: string[]
@@ -101,6 +103,7 @@ export async function POST(req: Request) {
       lng?: number
       maxKm?: number
       diet?: string
+      restaurantId?: string
     } = body
 
     if (!dishIds?.length) return NextResponse.json({ dishes: [] })
@@ -172,10 +175,7 @@ export async function POST(req: Request) {
         AND r."isDemo" = false
         AND r.lat IS NOT NULL AND r.lng IS NOT NULL
         AND d.id != ALL(${allExcluded})
-        AND (
-          d."txDishType" && ${txArray.length > 0 ? txArray : ['']}
-          OR d."txIngredient" && ${ingArray.length > 0 ? ingArray : ['']}
-        )
+        ${restaurantId ? Prisma.sql`AND r.id = ${restaurantId}` : Prisma.sql`AND (d."txDishType" && ${txArray.length > 0 ? txArray : ['']} OR d."txIngredient" && ${ingArray.length > 0 ? ingArray : ['']})`}
       ORDER BY COALESCE(fs."popularityScore", 0) DESC
       LIMIT 500
     `

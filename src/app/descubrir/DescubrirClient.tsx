@@ -117,12 +117,15 @@ export default function DescubrirClient() {
     } catch {}
   }, [])
 
+  const [scopedRestaurantId, setScopedRestaurantId] = useState<string | null>(null)
+
   // Fetch recommendations
   const fetchRecommendations = useCallback(async (
     dishIds: string[],
     loc: { lat?: number; lng?: number },
     f: FilterBarFilters,
     isRefetch = false,
+    restaurantId?: string | null,
   ) => {
     if (!dishIds.length) return
     if (isRefetch) setRefetching(true)
@@ -132,7 +135,7 @@ export default function DescubrirClient() {
       const res = await fetch('/api/eureka', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dishIds, lat: loc.lat, lng: loc.lng, maxKm, diet }),
+        body: JSON.stringify({ dishIds, lat: loc.lat, lng: loc.lng, maxKm, diet, restaurantId: restaurantId ?? undefined }),
       })
       const data = await res.json()
       setAllRecommended(data.dishes ?? [])
@@ -164,7 +167,9 @@ export default function DescubrirClient() {
           nearby: savedFilters.nearby ?? false, popular: false,
         }
 
-        await fetchRecommendations(likedDishes.map(d => d.id), loc, initFilters)
+        const scoped = localStorage.getItem('qc_eureka_scoped_restaurant') ?? null
+        if (scoped) setScopedRestaurantId(scoped)
+        await fetchRecommendations(likedDishes.map(d => d.id), loc, initFilters, false, scoped)
       } catch {}
       setLoading(false)
       initialLoadDone.current = true

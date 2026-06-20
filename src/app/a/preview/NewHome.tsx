@@ -228,6 +228,18 @@ export default function NewHome({
   const handleEurekaDescubrir = () => {
     if (eurekaLiked.length < eurekaMax) return
     try { localStorage.setItem('qc_eureka_liked', JSON.stringify(eurekaLiked)) } catch {}
+    // Si venimos de q= a un local, scopear Descubrir a ese restaurante
+    if (searchQuery) {
+      const uniqueRestaurants = new Set(eurekaLiked.map(d => d.restauranteId))
+      if (uniqueRestaurants.size === 1) {
+        const restauranteId = eurekaLiked[0].restauranteId
+        try { localStorage.setItem('qc_eureka_scoped_restaurant', restauranteId) } catch {}
+      } else {
+        try { localStorage.removeItem('qc_eureka_scoped_restaurant') } catch {}
+      }
+    } else {
+      try { localStorage.removeItem('qc_eureka_scoped_restaurant') } catch {}
+    }
     window.location.href = '/descubrir'
   }
 
@@ -1024,8 +1036,12 @@ export default function NewHome({
 
               <div style={{ padding: '16px 24px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-                {/* Logo */}
-                <img src="/logo.png" alt="QuieroComer" style={{ height: 40, marginBottom: 14, opacity: 0.92 }} />
+                {/* Logo + brand */}
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', margin: '0 0 8px' }}>Bienvenido a</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <img src="/logo.png" alt="QuieroComer" style={{ height: 36, opacity: 0.92 }} />
+                  <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111', letterSpacing: '-0.4px' }}>QuieroComer</span>
+                </div>
 
                 {/* Headline */}
                 <h2 style={{
@@ -1096,7 +1112,7 @@ export default function NewHome({
                 })()}
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)', textAlign: 'center', margin: '18px 0 20px', lineHeight: 1.5 }}>
-                  Junta 5 antojos y descubre qué y dónde comer
+                  Junta 3 antojos y descubre qué y dónde comer
                 </p>
 
                 {/* CTA */}
@@ -1936,6 +1952,7 @@ export default function NewHome({
           dishPool={dishes}
           profile={profile}
           hideRelated={hideRelated}
+          scopedRestaurantId={searchQuery ? selectedDish.restauranteId : null}
           onClose={() => {
             setSelectedDish(null)
             const back = searchQuery ? `/?q=${encodeURIComponent(searchQuery)}` : '/'

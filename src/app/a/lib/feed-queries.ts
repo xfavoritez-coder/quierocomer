@@ -153,6 +153,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
     LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
     WHERE (ranked.rn <= ${MAX_POPULAR} OR ranked.rn_type = 1)
       AND ranked.rn_total <= ${MAX_TOTAL}
+    ORDER BY COALESCE(fs."popularityScore", 0) DESC
   `
 
   const dishes = rows
@@ -238,7 +239,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
 /** Cached version — shared across all users, revalidates every 5 minutes */
 export const getFeedDishes = unstable_cache(
   _getFeedDishes,
-  ['feed-dishes-v5'],
+  ['feed-dishes-v6'],
   { revalidate: 300, tags: ['feed-dishes'] }, // 5 minutes
 )
 
