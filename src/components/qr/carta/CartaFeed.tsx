@@ -381,11 +381,15 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
    MAIN COMPONENT
    ═══════════════════════════════════════════ */
 export default function CartaFeed({
-  restaurant, categories, dishes, promotions, ratingMap, reviews,
+  restaurant, categories, dishes: rawDishes, promotions, ratingMap, reviews,
   tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter,
   marketingPromos, timeOfDay: timeOfDayProp, weather: weatherProp,
   popularDishIds: popularDishIdsProp, announcements,
 }: Props) {
+  const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+  const dishes = isFree
+    ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
+    : rawDishes
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);

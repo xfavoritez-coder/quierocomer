@@ -34,12 +34,16 @@ interface CartaProps {
 export default function CartaBasic({
   restaurant,
   categories,
-  dishes,
+  dishes: rawDishes,
   ratingMap,
   reviews,
   tableId,
   isQrScan,
 }: CartaProps) {
+  const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+  const dishes = isFree
+    ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
+    : rawDishes
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);

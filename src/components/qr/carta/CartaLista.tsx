@@ -80,7 +80,7 @@ interface Props {
 export default function CartaLista({
   restaurant,
   categories,
-  dishes,
+  dishes: rawDishes,
   promotions,
   ratingMap,
   reviews,
@@ -96,6 +96,10 @@ export default function CartaLista({
   popularDishIds: popularDishIdsProp,
   announcements,
 }: Props) {
+  const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+  const dishes = isFree
+    ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
+    : rawDishes
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);

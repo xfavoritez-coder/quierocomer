@@ -31,12 +31,13 @@ interface Props {
   onPhotoClick?: (url: string) => void;
   activeMenuGroupId?: string | null;
   menuGroups?: { id: string; name: string; categories: { id: string }[] }[];
+  canHighlight?: boolean;
 }
 
-function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibility, onPhotoClick, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; onToggleVisibility?: (dishId: string, isActive: boolean) => void; onPhotoClick?: (url: string) => void; categories: Category[]; currentCatId: string }) {
+function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibility, onPhotoClick, categories, currentCatId, canHighlight }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; onToggleVisibility?: (dishId: string, isActive: boolean) => void; onPhotoClick?: (url: string) => void; categories: Category[]; currentCatId: string; canHighlight?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dish.id });
   const [moving, setMoving] = useState(false);
-  const isFeatured = dish.tags?.includes("RECOMMENDED") || false;
+  const isFeatured = (dish.tags?.includes("RECOMMENDED") || false) && canHighlight !== false;
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}>
@@ -78,7 +79,7 @@ const iconBtnStyle: React.CSSProperties = {
   alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
 };
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange, menuGroupLabel, menuGroupOptions, onAssignMenuGroup }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange, menuGroupLabel, menuGroupOptions, onAssignMenuGroup, canHighlight }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
@@ -96,6 +97,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   menuGroupLabel?: string | null;
   menuGroupOptions?: { id: string; name: string }[];
   onAssignMenuGroup?: (categoryId: string, menuGroupId: string | null) => void;
+  canHighlight?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
   const [expanded, setExpanded] = useState(false);
@@ -331,7 +333,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
                 <div style={{ paddingTop: 8 }}>
                   {dishes.map(d => (
-                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} onToggleFeatured={onToggleFeatured} onToggleVisibility={onToggleVisibility} onPhotoClick={onPhotoClick} categories={allCategories} currentCatId={category.id} />
+                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} onToggleFeatured={onToggleFeatured} onToggleVisibility={onToggleVisibility} onPhotoClick={onPhotoClick} categories={allCategories} currentCatId={category.id} canHighlight={canHighlight} />
                   ))}
                 </div>
               </SortableContext>
@@ -352,7 +354,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, activeMenuGroupId, menuGroups }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, activeMenuGroupId, menuGroups, canHighlight }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
@@ -545,6 +547,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onTypeChange={changeDishType}
               menuGroupLabel={menuGroups?.length ? menuGroups.find(g => g.categories.some(c => c.id === cat.id))?.name || null : null}
               menuGroupOptions={menuGroups || undefined}
+              canHighlight={canHighlight}
               onAssignMenuGroup={menuGroups?.length ? async (categoryId, menuGroupId) => {
                 // Remove from current group
                 for (const g of menuGroups!) {
