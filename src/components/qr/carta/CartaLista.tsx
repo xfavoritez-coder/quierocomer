@@ -137,6 +137,12 @@ export default function CartaLista({
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
 
   const heroDishes = useMemo(() => {
+    const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+    if (isFree) {
+      const pool = dishes.filter(d => d.photos?.[0])
+      if (pool.length === 0) return dishes.slice(0, 1)
+      return [pool[Math.floor(Date.now() / 86400000) % pool.length]]
+    }
     // When viewing in non-Spanish lang, prioritize translated dishes
     const preferTranslated = lang !== "es";
     const sortPriority = (arr: typeof dishes) => [...arr].sort((a, b) => {
@@ -157,7 +163,7 @@ export default function CartaLista({
     const anyWithPhoto = sortPriority(withPhoto(dishes)).slice(0, 3);
     if (anyWithPhoto.length > 0) return anyWithPhoto;
     return sortPriority(dishes).slice(0, 3);
-  }, [dishes, popularDishIds, lang]);
+  }, [dishes, popularDishIds, lang, restaurant]);
 
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);

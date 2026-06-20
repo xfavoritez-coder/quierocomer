@@ -1041,6 +1041,12 @@ export default function CartaImpact({
 
   /* ─── Hero dishes ─── */
   const heroDishes = useMemo(() => {
+    const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+    if (isFree) {
+      const pool = dishes.filter(d => d.photos?.[0])
+      if (pool.length === 0) return dishes.slice(0, 1)
+      return [pool[Math.floor(Date.now() / 86400000) % pool.length]]
+    }
     // When viewing in non-Spanish lang, prefer dishes that have translations
     const preferTranslated = lang !== "es";
     const isTranslated = (d: any) => !preferTranslated || d._hasTranslation !== false;
@@ -1069,7 +1075,7 @@ export default function CartaImpact({
     // Fallback: any dishes with photos, or just first dishes if none have photos
     const anyWithPhoto = withPhoto(dishes);
     return (anyWithPhoto.length > 0 ? anyWithPhoto : dishes).slice(0, 4);
-  }, [dishes, popularDishIds, lang]);
+  }, [dishes, popularDishIds, lang, restaurant]);
 
   /* ─── Sorted dishes ─── */
   const sortedDishes = useMemo(() => {

@@ -48,10 +48,16 @@ export default function CartaBasic({
 
   const heroDishes = useMemo(() => {
     const withPhoto = (arr: Dish[]) => arr.filter(d => d.photos?.[0]);
+    const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+    if (isFree) {
+      const pool = withPhoto(dishes)
+      if (pool.length === 0) return dishes.slice(0, 1)
+      return [pool[Math.floor(Date.now() / 86400000) % pool.length]]
+    }
     const rec = withPhoto(dishes.filter(d => d.tags?.includes("RECOMMENDED")));
     if (rec.length > 0) return rec;
     return withPhoto(dishes).slice(0, 3);
-  }, [dishes]);
+  }, [dishes, restaurant]);
 
   // IntersectionObserver-based active category detection
   useEffect(() => {

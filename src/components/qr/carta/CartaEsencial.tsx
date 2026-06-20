@@ -367,11 +367,17 @@ export default function CartaEsencial({
 
   /* ─── hero rotation ─── */
   const heroDishes = useMemo(() => {
+    const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
+    if (isFree) {
+      const pool = dishes.filter(d => d.photos?.[0])
+      if (pool.length === 0) return dishes.slice(0, 1)
+      return [pool[Math.floor(Date.now() / 86400000) % pool.length]]
+    }
     const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
     const pop = dishes.filter(d => popularDishIds.has(d.id) && !rec.some(r => r.id === d.id));
     const pool = [...rec, ...pop];
     return pool.length > 0 ? pool.slice(0, 5) : dishes.slice(0, 3);
-  }, [dishes, popularDishIds]);
+  }, [dishes, popularDishIds, restaurant]);
   const [heroIdx, setHeroIdx] = useState(0);
   useEffect(() => {
     if (heroDishes.length <= 1) return;
