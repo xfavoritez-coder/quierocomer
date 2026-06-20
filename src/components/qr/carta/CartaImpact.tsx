@@ -1219,16 +1219,8 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Wrapper: banner + nav — fixed al tope */}
+      {/* Wrapper: nav + banner — fixed al tope */}
       <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40 }}>
-        {/* Banner al tope absoluto */}
-        {hasBannerActive && !showFixedCatNav && (
-          <div style={{ marginTop: 6, marginBottom: 4 }}>
-            {announcements && announcements.length > 0
-              ? <AnnouncementBanner announcements={announcements} />
-              : <HappyHourBanner happyHours={happyHours || []} />}
-          </div>
-        )}
 
       {/* Nav: logo + botones */}
       <header style={{
@@ -1341,6 +1333,15 @@ export default function CartaImpact({
         </div>
       )}
       </header>
+
+        {/* Banner — debajo del nav, encima del hero */}
+        {hasBannerActive && !showFixedCatNav && (
+          <div style={{ padding: "0 12px 6px" }}>
+            {announcements && announcements.length > 0
+              ? <AnnouncementBanner announcements={announcements} />
+              : <HappyHourBanner happyHours={happyHours || []} />}
+          </div>
+        )}
       </div>{/* end fixed wrapper */}
 
       {/* Search overlay */}
