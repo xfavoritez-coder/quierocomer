@@ -55,20 +55,28 @@ const MENU_CARD_SUFFIXES = [
   'netlify.app',
 ]
 
+/** Proveedores de delivery/pedido online → "Pedir online" */
+const DELIVERY_PROVIDERS = new Set(['Justo', 'Rappi', 'UberEats', 'PedidosYa', 'Mercat'])
+/** Proveedores que muestran carta digital → "Ver carta online" */
+const MENU_PROVIDERS = new Set(['Fudo', 'OlaClick', 'Gourmedia', 'Queresto', 'Toteat', 'InfluyeApp'])
+
 type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' | 'social'; socialName?: string }
 
-function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean): OrderInfo | null {
+function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, cartaProvider?: string | null): OrderInfo | null {
   if (!website) return null
+  // Provider-based classification — más fiable que heurísticas de URL
+  if (cartaProvider) {
+    if (DELIVERY_PROVIDERS.has(cartaProvider)) return { url: website, type: 'delivery' }
+    if (MENU_PROVIDERS.has(cartaProvider)) return { url: website, type: 'menu' }
+  }
   try {
     const urlObj = new URL(website)
     const host = urlObj.hostname.replace(/^www\./, '')
-    const pathname = urlObj.pathname
     if (NO_BUTTON_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) return null
     if (isOrderUrl) return { url: website, type: 'delivery' }
     if (
       DELIVERY_SUFFIXES.some(s => host === s || host.endsWith('.' + s)) ||
-      DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p)) ||
-      pathname === '/pedir' || pathname.startsWith('/pedir/')
+      DELIVERY_SUBDOMAIN_PREFIXES.some(p => host.startsWith(p))
     ) return { url: website, type: 'delivery' }
     if (MENU_CARD_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) {
       return { url: website, type: 'menu' }
@@ -623,7 +631,7 @@ function DesktopDishContent({
               </a>
               {/* Botón Pedir online / Ver carta online / Ver página web / Ver Instagram… */}
               {(() => {
-                const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
+                const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider)
                   ?? (dish.restauranteInstagram ? { url: dish.restauranteInstagram, type: 'social' as const, socialName: 'Instagram' }
                   : dish.isShowcase ? null
                   : { url: `https://quierocomer.cl/qr/${dish.restauranteSlug}`, type: 'menu' as const })
@@ -995,7 +1003,7 @@ function DishSlide({
             </a>
           )}
           {(() => {
-            const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl)
+            const info = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider)
               ?? (dish.restauranteInstagram ? { url: dish.restauranteInstagram, type: 'social' as const, socialName: 'Instagram' }
                   : dish.isShowcase ? null
                   : { url: `https://quierocomer.cl/qr/${dish.restauranteSlug}`, type: 'menu' as const })

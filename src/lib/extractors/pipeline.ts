@@ -1018,7 +1018,7 @@ export async function importFromProspecto(params: {
     await prisma.category.deleteMany({ where: { restaurantId: existing.id } })
     await prisma.restaurant.update({
       where: { id: existing.id },
-      data: { name: cleanedName, logoUrl: extraction.logoUrl, website: params.cartaUrl, websiteIsOrderUrl: isOrderingProvider, isActive: true, isDemo: false, menuImported: true },
+      data: { name: cleanedName, logoUrl: extraction.logoUrl, website: params.cartaUrl, websiteIsOrderUrl: isOrderingProvider, cartaProvider: params.providerName ?? null, isActive: true, isDemo: false, menuImported: true },
     })
   }
 
@@ -1032,6 +1032,7 @@ export async function importFromProspecto(params: {
           lng: params.lng ?? null,
           website: params.cartaUrl,
           websiteIsOrderUrl: isOrderingProvider,
+          cartaProvider: params.providerName ?? null,
           logoUrl: extraction.logoUrl ?? null,
           cartaTheme: "PREMIUM",
           cartaColorMode: "DARK",

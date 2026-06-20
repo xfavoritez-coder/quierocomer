@@ -285,6 +285,7 @@ model Restaurant {
   scheduleJson               Json?
   website                    String?
   websiteIsOrderUrl          Boolean                  @default(false)
+  cartaProvider              String?
   whatsapp                   String?
   qrToken                    String?                  @unique
   allPhotosReferential       Boolean                  @default(false)
