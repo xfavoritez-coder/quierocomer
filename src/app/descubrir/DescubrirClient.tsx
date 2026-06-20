@@ -381,14 +381,11 @@ export default function DescubrirClient() {
             <>
               <div ref={recommendedRef} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10, padding: '0 14px' }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor, display: 'flex', alignItems: 'center', gap: 5 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                     </svg>
                     Platos que te podrían gustar
-                  </p>
-                  <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 400, color: mutedColor, opacity: 0.7, letterSpacing: 0, textTransform: 'none' }}>
-                    Basado en tus elegidos
                   </p>
                 </div>
                 {totalPages > 1 && (
@@ -495,7 +492,7 @@ export default function DescubrirClient() {
 
           {/* ── 2. Tus elegidos ── */}
           <div style={{ marginBottom: 12, padding: '0 14px' }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: mutedColor }}>
               Tus elegidos
             </p>
           </div>
