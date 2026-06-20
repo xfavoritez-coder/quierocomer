@@ -49,6 +49,7 @@ export default function PublicarLocalView({
     if (!nombreLocal.trim()) { setError('Ingresa el nombre de tu local.'); return }
     if (!ciudad.trim()) { setError('Ingresa tu ciudad.'); return }
     if (!email.includes('@')) { setError('Ingresa un email válido.'); return }
+    if (!whatsapp.trim()) { setError('Ingresa tu número de WhatsApp.'); return }
     setLoading(true)
     try {
       const res = await fetch('/api/feed/publicar-local', {
@@ -165,7 +166,7 @@ export default function PublicarLocalView({
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>WhatsApp</label>
+              <label style={labelStyle}>WhatsApp <span style={{ color: '#e53e3e' }}>*</span></label>
               <input
                 type="tel"
                 value={whatsapp}
