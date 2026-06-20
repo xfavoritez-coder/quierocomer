@@ -151,7 +151,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const restaurant = await prisma.restaurant.update({ where: { id }, data });
     // Invalidar cache del feed si cambiaron campos visibles al usuario
     const feedFields = ['name','phone','website','websiteIsOrderUrl','cartaProvider','instagram','googleMapsUrl','address','logoUrl','isActive'];
-    if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes');
+    if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes', { expire: 0 });
     return NextResponse.json(restaurant);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
