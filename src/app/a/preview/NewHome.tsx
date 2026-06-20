@@ -732,6 +732,7 @@ export default function NewHome({
 
   const isFiltered = !!(
     searchQuery || activeCategory || filterDiet !== 'all' || filterMeal !== 'all'
+    || quickNearby || locationName || (userLocation && filterMaxKm < 30)
   )
   const displayDishCount = isFiltered ? feedDishes.length : (totalDishCount || feedDishes.length)
 
