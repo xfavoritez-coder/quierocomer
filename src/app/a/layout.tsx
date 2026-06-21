@@ -23,10 +23,10 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'QuieroComer - Descubre qué y dónde comer',
+  title: 'QuieroComer - Descubre qué comer.',
   description: 'Explora platos reales de restaurantes cerca de ti. Encuentra tu próximo antojo.',
   openGraph: {
-    title: 'QuieroComer - Descubre qué y dónde comer',
+    title: 'QuieroComer - Descubre qué comer.',
     description: 'Explora platos reales de restaurantes cerca de ti.',
   },
 }

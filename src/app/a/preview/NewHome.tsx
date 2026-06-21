@@ -1060,16 +1060,8 @@ export default function NewHome({
                   <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111', letterSpacing: '-0.4px' }}>QuieroComer</span>
                 </div>
 
-                {/* Headline */}
-                <h2 style={{
-                  fontFamily: 'var(--font-feed-display), serif',
-                  fontSize: 23, fontWeight: 800, lineHeight: 1.2, textAlign: 'center',
-                  color: isDark ? '#fff' : '#111', margin: '0 0 7px',
-                }}>
-                  Descubre qué y dónde comer
-                </h2>
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.68)', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.55 }}>
-                  Desliza las fotos <span style={{ color: '#F4A623' }}>hacia la derecha si te dan antojo</span> o hacia la izquierda si no
+                  Desliza hacia la derecha si el plato se te antoja. Y hacia la izquierda si no te apetece.
                 </p>
 
                 {/* Card stack animation */}
@@ -1129,7 +1121,7 @@ export default function NewHome({
                 })()}
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)', textAlign: 'center', margin: '18px 0 20px', lineHeight: 1.5 }}>
-                  Junta 3 antojos y descubre qué y dónde comer
+                  Junta 3 antojos y descubrí qué comer
                 </p>
 
                 {/* CTA */}
