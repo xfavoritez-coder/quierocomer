@@ -1121,7 +1121,7 @@ export default function NewHome({
                 })()}
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)', textAlign: 'center', margin: '18px 0 20px', lineHeight: 1.5 }}>
-                  Junta 3 antojos y descubrí qué comer
+                  Junta 3 antojos y descubre qué comer
                 </p>
 
                 {/* CTA */}
