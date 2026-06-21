@@ -123,10 +123,10 @@ export async function POST(req: Request) {
     `
 
     // ── 2. Perfil de preferencias: frecuencia por categoría + txDishType ─────
-    // Peso decreciente: primera selección = n, segunda = n-1, ..., última = 1
+    // Peso igual para todas las selecciones
     const positionWeight: Record<string, number> = {}
-    dishIds.forEach((id: string, idx: number) => {
-      positionWeight[id] = dishIds.length - idx
+    dishIds.forEach((id: string) => {
+      positionWeight[id] = 1
     })
 
     // catFreq: suma de pesos de los liked por cada categoría
