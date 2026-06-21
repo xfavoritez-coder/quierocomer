@@ -87,6 +87,7 @@ export default function DescubrirClient() {
   const recommendedRef = useRef<HTMLDivElement>(null)
   const likedIdsRef = useRef<string[]>([])
   const initialLoadDone = useRef(false)
+  const fallbackDone = useRef(false)
   const stripRef = useRef<HTMLDivElement>(null)
   const [stripPage, setStripPage] = useState(0)
 
@@ -174,10 +175,37 @@ export default function DescubrirClient() {
     load()
   }, [fetchRecommendations])
 
+  // Fallback cuando Eureka no encontró resultados con location: busca sin restricción geográfica
+  useEffect(() => {
+    if (loading) return
+    if (allRecommended.length > 0) return
+    if (liked.length === 0) return
+    if (fallbackDone.current) return
+    fallbackDone.current = true
+
+    const ids = liked.map(d => d.id)
+    fetch('/api/eureka', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dishIds: ids }),
+    })
+      .then(r => r.ok ? r.json() : { dishes: [] })
+      .then(({ dishes }: { dishes: FeedDish[] }) => {
+        const results: FeedDish[] = []
+        if (dishes.length > 0) results.push(dishes[0])
+        // Agregar uno de los platos elegidos (diferente al primero si ya está)
+        const extra = liked.find(d => d.id !== results[0]?.id) ?? liked[0]
+        if (extra) results.push(extra)
+        if (results.length > 0) setAllRecommended(results)
+      })
+      .catch(() => {})
+  }, [loading, allRecommended.length, liked])
+
   // Re-fetch when filters change (after initial load)
   useEffect(() => {
     if (!initialLoadDone.current) return
     if (!likedIdsRef.current.length) return
+    fallbackDone.current = false
     const loc = userLocation ?? {}
     fetchRecommendations(likedIdsRef.current, loc, filters, true)
     try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filters.diet, maxKm: filters.maxKm, nearby: filters.nearby })) } catch {}
@@ -400,7 +428,7 @@ export default function DescubrirClient() {
               <div ref={stripRef} style={{
                 display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory',
                 scrollbarWidth: 'none', msOverflowStyle: 'none' as any,
-                gap: 8, paddingLeft: 14, paddingRight: 14,
+                gap: 8, paddingLeft: '12%', paddingRight: '12%',
                 marginBottom: 28,
               }} onScroll={e => {
                 const el = e.currentTarget
@@ -414,7 +442,7 @@ export default function DescubrirClient() {
                     position: 'relative', flexShrink: 0,
                     width: '76%', aspectRatio: '1',
                     borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
-                    scrollSnapAlign: 'start',
+                    scrollSnapAlign: 'center',
                   }}>
                     {d.fotoUrl
                       ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />

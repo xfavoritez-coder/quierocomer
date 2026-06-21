@@ -133,11 +133,35 @@ export default function MapaLeaflet({ restaurantes, prospectos, drawMode, onPoin
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
+    // Read initial position from URL hash (#lat,lng,zoom)
+    let initCenter: [number, number] = [-33.45, -70.65]
+    let initZoom = 11
+    try {
+      const hash = window.location.hash.slice(1)
+      const parts = hash.split(',')
+      if (parts.length === 3) {
+        const hLat = parseFloat(parts[0])
+        const hLng = parseFloat(parts[1])
+        const hZoom = parseInt(parts[2])
+        if (!isNaN(hLat) && !isNaN(hLng) && !isNaN(hZoom)) {
+          initCenter = [hLat, hLng]
+          initZoom = hZoom
+        }
+      }
+    } catch {}
+
     const map = L.map(containerRef.current, {
-      center: [-33.45, -70.65],
-      zoom: 11,
+      center: initCenter,
+      zoom: initZoom,
     })
     mapRef.current = map
+
+    // Persist map position to URL hash on move/zoom
+    map.on('moveend', () => {
+      const c = map.getCenter()
+      const z = map.getZoom()
+      window.history.replaceState(null, '', `#${c.lat.toFixed(5)},${c.lng.toFixed(5)},${z}`)
+    })
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
