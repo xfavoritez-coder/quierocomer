@@ -413,6 +413,70 @@ export async function getSimilarDishIds(dishId: string): Promise<string[]> {
   }
 }
 
+// ─── Fetch FeedDish objects by IDs (used for related dish pool) ───────────────
+export async function getDishesByIds(ids: string[]): Promise<import('../types').FeedDish[]> {
+  if (!ids.length) return []
+  try {
+    const { resolveDishLeaf } = await import('./feed-queries')
+    const { inferMealTime, inferDishType, getParentCategory } = await import('./categories')
+    const rows = await prisma.$queryRawUnsafe<any[]>(`
+      SELECT
+        d.id, d.name, d.description, d.price, d."discountPrice",
+        d.photos, d."dishDiet", d."isSpicy", d."isGlutenFree", d."isLactoseFree",
+        d."isSoyFree", d."containsNuts", d."flavorTags", d."isHero", d.tags, d."leafOverride", d."createdAt", d."txDishType", d."txIngredient",
+        c.name AS "categoryName", c."dishType", c."cuisineTag", c."normOverride" AS "catNormOverride",
+        r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
+        r."logoUrl", r.address, r.phone, r.lat, r.lng, r."primaryCategory", r."isShowcase",
+        r."googleRating", r."googleRatingCount", r."googleMapsUrl", r."googlePlaceId", r.website, r."websiteIsOrderUrl", r."cartaProvider", r.instagram,
+        fs."avgRating", fs."ratingCount", fs."commentCount", fs."popularityScore"
+      FROM "Dish" d
+      JOIN "Category" c ON c.id = d."categoryId"
+      JOIN "Restaurant" r ON r.id = d."restaurantId"
+      LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
+      WHERE d.id = ANY($1::text[])
+        AND d."isActive" = true AND d."deletedAt" IS NULL
+        AND d."hiddenFromFeed" = false AND array_length(d.photos, 1) > 0
+        AND r."isActive" = true AND r."isDemo" = false
+    `, ids)
+    return rows.map(d => {
+      const catName = d.categoryName as string
+      const photos = Array.isArray(d.photos) ? d.photos : []
+      const categoriaNorm = resolveDishLeaf(d.name, catName, d.leafOverride ?? null, d.primaryCategory ?? null, d.description ?? null, d.catNormOverride ?? null)
+      return {
+        id: d.id, nombre: d.name, descripcion: d.description,
+        precio: Number(d.price ?? 0), precioDescuento: d.discountPrice != null ? Number(d.discountPrice) : null,
+        fotoUrl: photos[0] ?? null, categoria: catName, categoriaNorm,
+        categoriaParent: getParentCategory(categoriaNorm),
+        categoriaTipo: inferDishType(categoriaNorm, d.dishType),
+        sabores: Array.isArray(d.flavorTags) ? d.flavorTags : [],
+        txDishType: Array.isArray(d.txDishType) ? d.txDishType : [],
+        txIngredient: Array.isArray(d.txIngredient) ? d.txIngredient : [],
+        dieta: { tipo: d.dishDiet, sinGluten: d.isGlutenFree, sinLactosa: d.isLactoseFree, sinSoja: d.isSoyFree, contieneFrutosSecos: d.containsNuts, esPicante: d.isSpicy },
+        restauranteId: d.restaurantId, restaurante: d.restaurantName, restauranteSlug: d.restaurantSlug,
+        restauranteLogo: d.logoUrl, restauranteDireccion: d.address, restaurantePhone: d.phone ?? null,
+        restaurantePlaceId: d.googlePlaceId ?? null,
+        restauranteLat: d.lat != null ? Number(d.lat) : null, restauranteLng: d.lng != null ? Number(d.lng) : null,
+        isShowcase: Boolean(d.isShowcase ?? false),
+        enOferta: d.discountPrice != null && d.price != null && Number(d.discountPrice) < Number(d.price),
+        mealTime: inferMealTime(categoriaNorm),
+        tags: Array.isArray(d.tags) ? d.tags : [], isHero: d.isHero,
+        googleRating: d.googleRating != null ? Number(d.googleRating) : null,
+        googleRatingCount: d.googleRatingCount != null ? Number(d.googleRatingCount) : null,
+        googleMapsUrl: d.googleMapsUrl ?? null,
+        restauranteWebsite: d.website ?? null, restauranteWebsiteIsOrderUrl: Boolean(d.websiteIsOrderUrl ?? false),
+        restauranteCartaProvider: d.cartaProvider ?? null, restauranteInstagram: d.instagram ?? null,
+        avgRating: d.avgRating != null ? Number(d.avgRating) : null,
+        ratingCount: Number(d.ratingCount ?? 0), commentCount: Number(d.commentCount ?? 0),
+        popularityScore: Number(d.popularityScore ?? 0),
+        cuisineTag: d.cuisineTag ?? null, createdAt: d.createdAt ? new Date(d.createdAt).toISOString() : null,
+      } as import('../types').FeedDish
+    })
+  } catch (e) {
+    console.error('[Feed] getDishesByIds error:', e)
+    return []
+  }
+}
+
 // ─── Get fresh profile data ───────────────────────────────────────
 export async function getProfileData(): Promise<{
   categoryScores: Record<string, number>

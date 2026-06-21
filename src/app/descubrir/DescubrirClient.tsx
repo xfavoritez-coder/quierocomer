@@ -92,6 +92,7 @@ export default function DescubrirClient() {
   const [stripPage, setStripPage] = useState(0)
   const [isFallbackGlobal, setIsFallbackGlobal] = useState(false)
   const swipeTouchX = useRef(0)
+  const [slideDir, setSlideDir] = useState<'left' | 'right'>('left')
 
   // Init: read location + filters from localStorage
   useEffect(() => {
@@ -393,7 +394,9 @@ export default function DescubrirClient() {
                 )
                 const totalCards = visibleDishes.length
                 const scrollToCard = (idx: number) => {
-                  setStripPage(Math.max(0, Math.min(idx, totalCards - 1)))
+                  const next = Math.max(0, Math.min(idx, totalCards - 1))
+                  setSlideDir(next > stripPage ? 'left' : 'right')
+                  setStripPage(next)
                 }
                 return (
                 <div style={{ maxWidth: 480, margin: '0 auto', width: '100%' }}>
@@ -437,8 +440,9 @@ export default function DescubrirClient() {
                 const d = visibleDishes[Math.min(stripPage, visibleDishes.length - 1)]
                 if (!d) return null
                 return (
-                  <div style={{ padding: '0 14px', marginBottom: 28 }}>
+                  <div style={{ padding: '0 14px', marginBottom: 28, overflow: 'hidden' }}>
                     <div
+                      key={stripPage}
                       onTouchStart={e => { swipeTouchX.current = e.touches[0].clientX }}
                       onTouchEnd={e => {
                         const diff = swipeTouchX.current - e.changedTouches[0].clientX
@@ -452,6 +456,7 @@ export default function DescubrirClient() {
                       style={{
                         position: 'relative', width: '100%', aspectRatio: '1',
                         borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
+                        animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both`,
                       }}>
                       {d.fotoUrl
                         ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -566,7 +571,11 @@ export default function DescubrirClient() {
               Seguir explorando
             </a>
           </div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <style>{`
+            @keyframes spin { to { transform: rotate(360deg); } }
+            @keyframes slideInRight { from { transform: translateX(100%); opacity: 0.6; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes slideInLeft  { from { transform: translateX(-100%); opacity: 0.6; } to { transform: translateX(0); opacity: 1; } }
+          `}</style>
         </div>
       )}
 

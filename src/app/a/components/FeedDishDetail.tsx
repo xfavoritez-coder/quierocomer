@@ -164,7 +164,7 @@ import type { FeedDish } from '../types'
 import { getCategoryGradient, isValidQcCategory, DISH_TYPE_PRIORITY, getPrimaryDishType } from '../lib/categories'
 import { extractKeywords } from '../lib/keywords'
 import type { FeedProfile } from '../lib/scoring'
-import { getSimilarDishIds } from '../lib/feed-actions'
+import { getSimilarDishIds, getDishesByIds } from '../lib/feed-actions'
 import { distanceKm, formatDistance } from '../lib/geo'
 import DishCard from './DishCard'
 import { VeganIcon, VegetarianIcon, SpicyIcon } from './DietIcons'
@@ -482,18 +482,23 @@ function DesktopDishContent({
 
   // Related dishes
   const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
+  const [embeddingDishPool, setEmbeddingDishPool] = useState<FeedDish[]>([])
   useEffect(() => {
     if (hideRelated) return
     getSimilarDishIds(dish.id).then(ids => {
-      if (ids.length > 0) setEmbeddingSimilarIds(ids)
+      if (ids.length > 0) {
+        setEmbeddingSimilarIds(ids)
+        getDishesByIds(ids).then(dishes => setEmbeddingDishPool(dishes)).catch(() => {})
+      }
     }).catch(() => {})
   }, [dish.id, hideRelated])
 
   const relatedDishes = useMemo(() => {
     if (hideRelated) return []
-    const rawPool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const basePool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const combined = [...basePool, ...embeddingDishPool]
     const seenPoolIds = new Set<string>()
-    const pool = rawPool.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
+    const pool = combined.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
     const candidates = pool.filter(d => {
       if (!d.fotoUrl || d.id === dish.id) return false
       if (scopedRestaurantId) return d.restauranteId === scopedRestaurantId
@@ -542,7 +547,7 @@ function DesktopDishContent({
       if (result.length >= 12) break
     }
     return result
-  }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
+  }, [dish, allDishes, dishPool, embeddingDishPool, embeddingSimilarIds, hideRelated, userLocation])
 
   return (
     <>
@@ -901,18 +906,23 @@ function DishSlide({
 
   // Related dishes
   const [embeddingSimilarIds, setEmbeddingSimilarIds] = useState<string[] | null>(null)
+  const [embeddingDishPool, setEmbeddingDishPool] = useState<FeedDish[]>([])
   useEffect(() => {
     if (!isActive || hideRelated) return
     getSimilarDishIds(dish.id).then(ids => {
-      if (ids.length > 0) setEmbeddingSimilarIds(ids)
+      if (ids.length > 0) {
+        setEmbeddingSimilarIds(ids)
+        getDishesByIds(ids).then(dishes => setEmbeddingDishPool(dishes)).catch(() => {})
+      }
     }).catch(() => {})
   }, [dish.id, isActive, hideRelated])
 
   const relatedDishes = useMemo(() => {
     if (hideRelated) return []
-    const rawPool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const basePool = dishPool && dishPool.length > 0 ? dishPool : allDishes
+    const combined = [...basePool, ...embeddingDishPool]
     const seenPoolIds = new Set<string>()
-    const pool = rawPool.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
+    const pool = combined.filter(d => { if (seenPoolIds.has(d.id)) return false; seenPoolIds.add(d.id); return true })
     const candidates = pool.filter(d => {
       if (!d.fotoUrl || d.id === dish.id) return false
       if (scopedRestaurantId) return d.restauranteId === scopedRestaurantId
@@ -963,7 +973,7 @@ function DishSlide({
       if (result.length >= 20) break
     }
     return result
-  }, [dish, allDishes, dishPool, embeddingSimilarIds, hideRelated, userLocation])
+  }, [dish, allDishes, dishPool, embeddingDishPool, embeddingSimilarIds, hideRelated, userLocation])
 
   // Infinite scroll for related dishes inside slide
   useEffect(() => {
