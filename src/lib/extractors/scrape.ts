@@ -397,14 +397,57 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
       ]);
 
       // Extract CDN photo URLs from raw HTML
-      const photoUrls = [...new Set(
+      let photoUrls = [...new Set(
         (rawHtml.match(/gourmedia-content\.b-cdn\.net\/wp-content\/uploads\/[^\s"'\\]+\.webp/gi) || [])
           .map((u: string) => "https://" + u.replace(/\\\//g, "/"))
       )];
-      console.log(`[Scraper] Gourmedia: ${jinaContent.length} chars Jina | ${photoUrls.length} CDN photos from raw HTML`);
+
+      // Detect Gourmedia landing page (path = /slug/ with no sub-path).
+      // Landing pages have no dishes — auto-discover food sub-pages like /slug/cocina/, /slug/menu-almuerzo/
+      const pathSegments = new URL(menuUrl).pathname.replace(/^\/|\/$/g, "").split("/").filter(Boolean);
+      let finalJinaContent = jinaContent;
+      if (pathSegments.length === 1 && rawHtml.length > 1000) {
+        const basePath = "/" + pathSegments[0] + "/";
+        const FOOD_RE = /cocina|comida|comer|cena|almuerzo|desayuno|platos|carta|menu-almuerzo|para-comer|almuerzo-cena|desayuno-almuerzo/i;
+        const SKIP_RE = /\/bar\/|\/barra\/|cerveza|vino|bebida|trago|merch|galeria|reserva|evento|giftcard|tabaq|novedad/i;
+        const subUrls = [...new Set(
+          (rawHtml.match(/href="(https:\/\/gour\.media[^"]+)"/g) || [])
+            .map(m => m.slice(6, -1))
+            .filter(url => {
+              try {
+                const path = new URL(url).pathname;
+                return path.startsWith(basePath) && path.length > basePath.length && FOOD_RE.test(path) && !SKIP_RE.test(path);
+              } catch { return false; }
+            })
+        )].slice(0, 4);
+
+        if (subUrls.length > 0) {
+          console.log(`[Scraper] Gourmedia landing page → ${subUrls.length} food sub-pages: ${subUrls.join(", ")}`);
+          const subResults = await Promise.allSettled(
+            subUrls.map(url => Promise.all([
+              fetchPage(url, true).catch(() => ""),
+              fetchWithTimeout(url, 10000).catch(() => ""),
+            ]))
+          );
+          const sections: string[] = [];
+          for (let i = 0; i < subResults.length; i++) {
+            const r = subResults[i];
+            if (r.status !== "fulfilled") continue;
+            const [subJina, subHtml] = r.value;
+            const sectionName = (subUrls[i].split("/").filter(Boolean).pop() || "").toUpperCase();
+            sections.push(`\n\n[SECCIÓN ${sectionName}: ${subUrls[i]}]\n${subJina}`);
+            const subPhotos = (subHtml.match(/gourmedia-content\.b-cdn\.net\/wp-content\/uploads\/[^\s"'\\]+\.webp/gi) || [])
+              .map((u: string) => "https://" + u.replace(/\\\//g, "/"));
+            photoUrls = [...new Set([...photoUrls, ...subPhotos])];
+          }
+          if (sections.length > 0) finalJinaContent = sections.join("");
+        }
+      }
+
+      console.log(`[Scraper] Gourmedia: ${finalJinaContent.length} chars Jina | ${photoUrls.length} CDN photos from raw HTML`);
 
       // Append photo URLs to content so Claude can match them to dishes
-      let combined = jinaContent;
+      let combined = finalJinaContent;
       if (photoUrls.length > 0) {
         combined += "\n\n[DISH PHOTOS FROM PAGE DATA]\n" + photoUrls.map((url, i) => `Photo ${i + 1}: ${url}`).join("\n");
       }
