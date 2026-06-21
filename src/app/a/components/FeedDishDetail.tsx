@@ -1129,7 +1129,7 @@ function DishSlide({
 
           {/* Pedir online — brand colors por proveedor */}
           {(() => {
-            const pedirUrl = getPedirOnlineUrl(dish.restauranteWebsite, dish.restauranteCartaProvider)
+            const pedirUrl = getPedirOnlineUrl(dish.restauranteWebsite, dish.restauranteCartaProvider, dish.restauranteWebsiteIsOrderUrl)
             if (!pedirUrl) return null
             const provider = detectDeliveryProvider(pedirUrl, dish.restauranteCartaProvider)
             const { color, bg, border } = getPedirOnlineStyle(provider, isDark ?? false)
