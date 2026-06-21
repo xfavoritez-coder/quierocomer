@@ -384,11 +384,7 @@ export default function DescubrirClient() {
                 )
                 const totalCards = visibleDishes.length
                 const scrollToCard = (idx: number) => {
-                  const el = stripRef.current
-                  if (!el) return
-                  const cardWidth = el.offsetWidth * 0.76 + 8
-                  el.scrollTo({ left: idx * cardWidth, behavior: 'smooth' })
-                  setStripPage(idx)
+                  setStripPage(Math.max(0, Math.min(idx, totalCards - 1)))
                 }
                 return (
                 <div style={{ maxWidth: 480, margin: '0 auto', width: '100%' }}>
@@ -424,53 +420,44 @@ export default function DescubrirClient() {
                 )}
               </div>
 
-              {/* Strip horizontal 1×1 — máx 4 fotos, scroll snap */}
-              <div ref={stripRef} style={{
-                display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory',
-                scrollbarWidth: 'none', msOverflowStyle: 'none' as any,
-                gap: 8, paddingLeft: '12%', paddingRight: '12%',
-                marginBottom: 28,
-              }} onScroll={e => {
-                const el = e.currentTarget
-                const cardWidth = el.offsetWidth * 0.76 + 8
-                const newPage = Math.round(el.scrollLeft / cardWidth)
-                if (newPage !== stripPage) setStripPage(newPage)
-              }}>
-                <style>{`.descubrir-strip::-webkit-scrollbar { display: none; }`}</style>
-                {visibleDishes.map(d => (
-                  <div key={d.id} onClick={() => handleTap(d)} style={{
-                    position: 'relative', flexShrink: 0,
-                    width: '76%', aspectRatio: '1',
-                    borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
-                    scrollSnapAlign: 'center',
-                  }}>
-                    {d.fotoUrl
-                      ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
-                    }
-                    <span style={{
-                      position: 'absolute', top: 8, right: 8,
-                      background: '#F4A623', borderRadius: 20,
-                      padding: '5px 9px', lineHeight: 1,
-                      fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em',
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
+              {/* Tarjeta única centrada — 1 a la vez, navegación por botones */}
+              {(() => {
+                const d = visibleDishes[Math.min(stripPage, visibleDishes.length - 1)]
+                if (!d) return null
+                return (
+                  <div style={{ padding: '0 14px', marginBottom: 28 }}>
+                    <div onClick={() => handleTap(d)} style={{
+                      position: 'relative', width: '100%', aspectRatio: '1',
+                      borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
                     }}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff" stroke="none">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                      </svg>
-                      para ti
-                    </span>
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', padding: '36px 14px 14px', textAlign: 'center' }}>
-                      <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
-                      </p>
-                      <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}
-                      </p>
+                      {d.fotoUrl
+                        ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
+                      }
+                      <span style={{
+                        position: 'absolute', top: 8, right: 8,
+                        background: '#F4A623', borderRadius: 20,
+                        padding: '5px 9px', lineHeight: 1,
+                        fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em',
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                      }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff" stroke="none">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        para ti
+                      </span>
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)', padding: '36px 14px 14px', textAlign: 'center' }}>
+                        <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
+                        </p>
+                        <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                )
+              })()}
               </div>
                 )
               })()}
