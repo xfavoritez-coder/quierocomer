@@ -123,7 +123,7 @@ function getPedirOnlineStyle(provider: string, isDark: boolean): { color: string
     case 'Rappi': return { color: '#FF441B', bg: isDark ? 'rgba(255,68,27,0.12)' : 'rgba(255,68,27,0.08)', border: isDark ? 'rgba(255,68,27,0.45)' : 'rgba(255,68,27,0.4)' }
     case 'Justo':
     case 'Mercat': return { color: isDark ? 'rgba(200,200,200,0.85)' : '#444', bg: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', border: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)' }
-    default: return { color: isDark ? 'rgba(96,165,250,0.9)' : '#2563eb', bg: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)', border: isDark ? 'rgba(59,130,246,0.45)' : 'rgba(59,130,246,0.4)' }
+    default: return { color: isDark ? 'rgba(200,200,200,0.85)' : '#444', bg: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', border: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)' }
   }
 }
 
