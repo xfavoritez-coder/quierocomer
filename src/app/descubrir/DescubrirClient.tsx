@@ -90,6 +90,8 @@ export default function DescubrirClient() {
   const fallbackDone = useRef(false)
   const stripRef = useRef<HTMLDivElement>(null)
   const [stripPage, setStripPage] = useState(0)
+  const [isFallbackGlobal, setIsFallbackGlobal] = useState(false)
+  const swipeTouchX = useRef(0)
 
   // Init: read location + filters from localStorage
   useEffect(() => {
@@ -183,6 +185,10 @@ export default function DescubrirClient() {
     if (fallbackDone.current) return
     fallbackDone.current = true
 
+    // Si el usuario tiene filtro de distancia estricto activo, no mostrar resultados lejanos
+    const hasStrictLocation = userLocation && (filters.nearby || filters.maxKm <= 10)
+    if (hasStrictLocation) return
+
     const ids = liked.map(d => d.id)
     fetch('/api/eureka', {
       method: 'POST',
@@ -196,10 +202,13 @@ export default function DescubrirClient() {
         // Agregar uno de los platos elegidos (diferente al primero si ya está)
         const extra = liked.find(d => d.id !== results[0]?.id) ?? liked[0]
         if (extra) results.push(extra)
-        if (results.length > 0) setAllRecommended(results)
+        if (results.length > 0) {
+          if (userLocation) setIsFallbackGlobal(true)
+          setAllRecommended(results)
+        }
       })
       .catch(() => {})
-  }, [loading, allRecommended.length, liked])
+  }, [loading, allRecommended.length, liked, userLocation, filters.nearby, filters.maxKm])
 
   // Re-fetch when filters change (after initial load)
   useEffect(() => {
@@ -394,6 +403,9 @@ export default function DescubrirClient() {
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                   Te podrían gustar
+                  {isFallbackGlobal && (
+                    <span style={{ fontSize: 10, fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', marginLeft: 4 }}>· de toda la red</span>
+                  )}
                 </p>
                 {totalCards > 1 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -426,10 +438,21 @@ export default function DescubrirClient() {
                 if (!d) return null
                 return (
                   <div style={{ padding: '0 14px', marginBottom: 28 }}>
-                    <div onClick={() => handleTap(d)} style={{
-                      position: 'relative', width: '100%', aspectRatio: '1',
-                      borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
-                    }}>
+                    <div
+                      onTouchStart={e => { swipeTouchX.current = e.touches[0].clientX }}
+                      onTouchEnd={e => {
+                        const diff = swipeTouchX.current - e.changedTouches[0].clientX
+                        if (Math.abs(diff) > 40) {
+                          e.preventDefault()
+                          scrollToCard(diff > 0 ? stripPage + 1 : stripPage - 1)
+                        }
+                        // Si no es swipe, deja que onClick maneje el tap
+                      }}
+                      onClick={() => handleTap(d)}
+                      style={{
+                        position: 'relative', width: '100%', aspectRatio: '1',
+                        borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
+                      }}>
                       {d.fotoUrl
                         ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
