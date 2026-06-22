@@ -994,6 +994,11 @@ export default function NewHome({
     nearby: quickNearby, popular: quickPopular,
   }
   function handleFiltersChange(f: FilterBarFilters) {
+    // Si el usuario movió el slider de distancia pero no tiene ubicación → pedir ubicación
+    if (f.maxKm !== filterMaxKm && !userLocation) {
+      setLocationModalOpen(true)
+      return
+    }
     if (f.maxKm !== filterMaxKm) userSetMaxKm.current = true
     setFilterDiet(f.diet); setFilterMaxKm(f.maxKm); setFilterSort(f.sort)
     setFilterMeal(f.meal); setFilterMealDisplay(f.mealDisplay)
