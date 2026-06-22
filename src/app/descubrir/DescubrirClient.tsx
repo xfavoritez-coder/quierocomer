@@ -191,10 +191,11 @@ export default function DescubrirClient() {
     if (hasStrictLocation) return
 
     const ids = liked.map(d => d.id)
+    const dietFallback = filters.diet !== 'all' ? filters.diet : undefined
     fetch('/api/eureka', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dishIds: ids }),
+      body: JSON.stringify({ dishIds: ids, diet: dietFallback }),
     })
       .then(r => r.ok ? r.json() : { dishes: [] })
       .then(({ dishes }: { dishes: FeedDish[] }) => {
@@ -209,7 +210,7 @@ export default function DescubrirClient() {
         }
       })
       .catch(() => {})
-  }, [loading, allRecommended.length, liked, userLocation, filters.nearby, filters.maxKm])
+  }, [loading, allRecommended.length, liked, userLocation, filters.nearby, filters.maxKm, filters.diet])
 
   // Re-fetch when filters change (after initial load)
   useEffect(() => {

@@ -573,7 +573,7 @@ function DesktopDishContent({
       <div style={{ padding: '22px 24px 28px' }}>
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, overflow: 'hidden' }}>
             <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flex: 1 }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -581,8 +581,16 @@ function DesktopDishContent({
               }
               <span style={{ fontSize: 17, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
+            {dish.googleRating != null && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, fontSize: 13, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none" style={{ flexShrink: 0 }}>
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                {dish.googleRating.toFixed(1)}
+              </span>
+            )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0, marginLeft: 8 }}>
             <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',
@@ -664,7 +672,17 @@ function DesktopDishContent({
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0 }}>{dish.restaurante}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'nowrap' }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? '#fff' : '#111', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: '1 1 auto' }}>{dish.restaurante}</p>
+                    {dish.googleRating != null && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, fontSize: 13, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        {dish.googleRating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
                   {dish.restauranteDireccion && (
                     <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {(() => {
@@ -1039,7 +1057,7 @@ function DishSlide({
       <div style={{ padding: '16px 20px 20px' }}>
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, overflow: 'hidden' }}>
             <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flex: 1 }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -1047,8 +1065,16 @@ function DishSlide({
               }
               <span style={{ fontSize: 17, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
+            {dish.googleRating != null && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, fontSize: 13, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none" style={{ flexShrink: 0 }}>
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                {dish.googleRating.toFixed(1)}
+              </span>
+            )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0, marginLeft: 8 }}>
             <button onClick={() => { setSaved(!saved); onSave(dish) }} style={{
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '5px 12px 5px 9px', borderRadius: 20, cursor: 'pointer',

@@ -287,6 +287,10 @@ export async function POST(req: Request) {
         if (!types.some(t => familyExpanded.has(t))) continue
         // Excluir postres/dulces si el usuario no eligió ninguno
         if (!userWantsDulce && types.some(t => DULCE_TX_TYPES.has(t))) continue
+        // Respetar el filtro de distancia también en el fallback
+        if (lat != null && lng != null && row.lat != null && row.lng != null) {
+          if (haversineKm(lat, lng, Number(row.lat), Number(row.lng)) > maxKm) continue
+        }
         const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
         if ((catCount[leaf] ?? 0) >= 4) continue
         catCount[leaf] = (catCount[leaf] ?? 0) + 1
