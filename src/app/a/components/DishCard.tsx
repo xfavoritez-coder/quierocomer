@@ -149,8 +149,8 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
             {dish.googleRating != null && (
               <>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 500, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="rgba(255,200,50,0.8)" stroke="none">
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 500, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,200,50,0.8)" stroke="none">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                   {dish.googleRating.toFixed(1)}

@@ -466,6 +466,7 @@ function DesktopDishContent({
   const [showDietTooltip, setShowDietTooltip] = useState(false)
   const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
+  const [showRatingTooltip, setShowRatingTooltip] = useState(false)
   const [resolvedPhone, setResolvedPhone] = useState<string | null>(dish.restaurantePhone ?? null)
 
   useEffect(() => {
@@ -573,20 +574,40 @@ function DesktopDishContent({
       <div style={{ padding: '22px 24px 28px' }}>
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden' }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
               }
-              <span style={{ fontSize: 17, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
+              <span style={{ fontSize: 18, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
             {dish.googleRating != null && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, fontSize: 13, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none" style={{ flexShrink: 0 }}>
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                {dish.googleRating.toFixed(1)}
+              <span style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowRatingTooltip(v => !v) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none" style={{ flexShrink: 0 }}>
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  {dish.googleRating.toFixed(1)}
+                </button>
+                {showRatingTooltip && dish.googleRatingCount != null && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); setShowRatingTooltip(false) }}
+                    style={{
+                      position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+                      background: isDark ? '#2a2a2a' : '#fff',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                      borderRadius: 10, padding: '7px 12px',
+                      fontSize: 12, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                      whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 20,
+                    }}
+                  >
+                    Basado en {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -905,6 +926,7 @@ function DishSlide({
   const [showDietTooltip, setShowDietTooltip] = useState(false)
   const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
+  const [showRatingTooltip, setShowRatingTooltip] = useState(false)
   const [resolvedPhone, setResolvedPhone] = useState<string | null>(dish.restaurantePhone ?? null)
 
   useEffect(() => {
@@ -1057,20 +1079,40 @@ function DishSlide({
       <div style={{ padding: '16px 20px 20px' }}>
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+            <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden' }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 : <div style={{ width: 17, height: 17, borderRadius: '50%', background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', flexShrink: 0 }}>{dish.restaurante.charAt(0)}</div>
               }
-              <span style={{ fontSize: 17, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
+              <span style={{ fontSize: 18, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
             {dish.googleRating != null && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, fontSize: 13, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none" style={{ flexShrink: 0 }}>
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                {dish.googleRating.toFixed(1)}
+              <span style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowRatingTooltip(v => !v) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="rgba(251,191,36,0.9)" stroke="none" style={{ flexShrink: 0 }}>
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  {dish.googleRating.toFixed(1)}
+                </button>
+                {showRatingTooltip && dish.googleRatingCount != null && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); setShowRatingTooltip(false) }}
+                    style={{
+                      position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+                      background: isDark ? '#2a2a2a' : '#fff',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                      borderRadius: 10, padding: '7px 12px',
+                      fontSize: 12, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                      whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 20,
+                    }}
+                  >
+                    Basado en {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
+                  </span>
+                )}
               </span>
             )}
           </div>
