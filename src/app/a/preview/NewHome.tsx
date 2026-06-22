@@ -758,12 +758,12 @@ export default function NewHome({
           const popBase = Math.min((d.popularityScore ?? 0) / 100, 1) * 0.3
           if (vectorRank) {
             const vScore = vectorRank.get(d.id) ?? 0
-            const catRaw = categoryScores[d.categoriaNorm] ?? 0
+            const catRaw = profile.categoryScores[d.categoriaNorm] ?? 0
             const catNorm = catRaw > 0 ? Math.min(Math.log2(catRaw + 1) / 6, 1) : 0
             score = vScore * 0.6 + catNorm * 0.4 + popBase
           } else {
             score += popBase
-            score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
+            score += Math.min((profile.categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
           }
           // Ruido determinístico por sesión: misma calidad de platos, orden distinto cada visita
           score += seededRandom(shuffleSeed, d.id) * 0.18
@@ -793,7 +793,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [serverDishes, dishes, activeCategory, categoryScores, keywordScores, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
+  }, [serverDishes, dishes, activeCategory, profile, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
 
   const isFiltered = !!(
     searchQuery || activeCategory || filterDiet !== 'all' || filterMeal !== 'all'
@@ -966,7 +966,14 @@ export default function NewHome({
         if (prev.length >= eurekaMaxRef.current || prev.some(d => d.id === dish.id)) return prev
         return [...prev, dish]
       })
-
+      // Actualizar categoryScores en vivo para que el feed re-sortee inmediatamente
+      setLiveProfile(prev => {
+        const base = prev ?? { ...createEmptyProfile(), categoryScores: { ...categoryScores }, keywordScores: { ...keywordScores } }
+        const scores = { ...(base.categoryScores ?? {}) }
+        scores[dish.categoriaNorm] = (scores[dish.categoriaNorm] ?? 0) + 12
+        return { ...base, categoryScores: scores }
+      })
+      trackInteraction(dish.id, 'ANTOJO', dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
     } else {
       setSwipeDislikeFreq(prev => {
         const next = { ...prev }
@@ -974,7 +981,7 @@ export default function NewHome({
         return next
       })
     }
-  }, [])
+  }, [categoryScores, keywordScores])
 
 
   // Count of filters the user explicitly changed (shown as badge on "Más filtros" pill)
