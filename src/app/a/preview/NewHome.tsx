@@ -315,9 +315,8 @@ export default function NewHome({
     return () => clearInterval(interval)
   }, [showOnboarding])
 
-  // Stable seed on server (avoids hydration mismatch), randomized after mount
-  const [shuffleSeed, setShuffleSeed] = useState(() => Math.random())
-  useEffect(() => { setShuffleSeed(Math.random()) }, [])
+  // Random per client mount — stable for the whole session (no re-shuffle after hydration)
+  const [shuffleSeed, setShuffleSeed] = useState(() => typeof window === 'undefined' ? 0 : Math.random())
 
   // Profile for DishModal — refreshable
   const [liveProfile, setLiveProfile] = useState<FeedProfile | null>(null)
@@ -397,14 +396,15 @@ export default function NewHome({
 
   // Location: load saved first, then ask GPS if none saved
   useEffect(() => {
-    // Restore saved location from localStorage
+    // Restore saved location from localStorage — silently, without enabling the nearby filter.
+    // quickNearby only activates when the user explicitly taps the pill.
     try {
       const saved = localStorage.getItem('qc_location')
       if (saved) {
         const { lat, lng, label } = JSON.parse(saved)
         setUserLocation({ lat, lng })
         setGpsLabel(label)
-        setQuickNearby(true)
+        // No setQuickNearby(true) — avoid re-sorting dishes on initial load
         return // don't auto-request GPS if we have a saved location
       }
     } catch {}
@@ -429,8 +429,8 @@ export default function NewHome({
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
       setUserLocation(loc)
       setLocationName(null)
-      setQuickNearby(true)
-      // No auto-cambiar filterMaxKm: evita re-fetch al servidor y reordenamiento visual brusco
+      // No setQuickNearby(true) — la ubicación se guarda silenciosamente para uso
+      // cuando el usuario active el filtro "cerca de ti" explícitamente.
       const label = await reverseGeocode(loc.lat, loc.lng) || 'Cerca de ti'
       setGpsLabel(label)
       try { localStorage.setItem('qc_location', JSON.stringify({ lat: loc.lat, lng: loc.lng, label })) } catch {}
@@ -627,11 +627,12 @@ export default function NewHome({
     }
   }, [])
 
-  // Determine if any filter requires a server fetch
+  // Determine if any filter requires a server fetch.
+  // userLocation auto-detectada NO cuenta: solo reordena client-side los platos ya cargados.
+  // El servidor se consulta solo cuando el usuario activa un filtro explícito.
   const needsServerFetch = !!(
     searchQuery || activeCategory || filterDiet !== 'all' ||
-    locationName ||
-    (filterMaxKm < 30 && userLocation) || quickPopular
+    locationName || quickPopular
   )
 
   useEffect(() => {
@@ -639,9 +640,6 @@ export default function NewHome({
       setServerDishes(null)
       return
     }
-    // Debounce for search typing; immediate for other filters
-    // searchQuery solo cambia al hacer Enter o click en sugerencia (no al tipear),
-    // así que no necesita debounce — se lanza inmediatamente
     const delay = 0
     if (searchFetchRef.current) clearTimeout(searchFetchRef.current)
     searchFetchRef.current = setTimeout(() => {
@@ -649,7 +647,6 @@ export default function NewHome({
         q: searchQuery,
         categoryPill: activeCategory,
         diet: filterDiet,
-        // Si hay búsqueda activa, ignorar filtro de distancia — el usuario busca algo específico
         maxKm: searchQuery ? undefined : filterMaxKm,
         locationName,
         lat: userLocation?.lat,
@@ -657,7 +654,9 @@ export default function NewHome({
       })
     }, delay)
     return () => { if (searchFetchRef.current) clearTimeout(searchFetchRef.current) }
-  }, [searchQuery, activeCategory, filterDiet, filterMeal, filterMaxKm, locationName, userLocation, quickPopular, needsServerFetch, fetchServerDishes])
+    // userLocation excluida a propósito: la ubicación auto-detectada no dispara re-fetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, activeCategory, filterDiet, filterMeal, filterMaxKm, locationName, quickPopular, needsServerFetch, fetchServerDishes])
 
   // Persistir filtros activos para /descubrir
   useEffect(() => {
@@ -682,9 +681,9 @@ export default function NewHome({
     // Meal filter — solo se aplica si el usuario lo eligió explícitamente (default = 'all')
     if (filterMeal !== 'all') filtered = filtered.filter(d => d.mealTime === filterMeal)
 
-    // Distance filter + sort — client-side with precise formula
-    // Si hay búsqueda activa, ignorar distancia — el usuario busca algo específico
-    if (userLocation && !searchQuery) {
+    // Distance filter + sort — solo cuando el usuario activó explícitamente "cerca de ti"
+    // (quickNearby). La ubicación auto-detectada no filtra ni reordena sola.
+    if (userLocation && quickNearby && !searchQuery) {
       const maxDist = filterMaxKm
       const noiseScale = Math.max(0.5, maxDist * 0.25)
       const withDist = filtered
