@@ -1112,7 +1112,7 @@ export default function NewHome({
                 <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)', margin: '0 0 8px' }}>Bienvenido a</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <img src="/logo.png" alt="QuieroComer" style={{ height: 36, opacity: 0.92 }} />
-                  <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111', letterSpacing: '-0.4px' }}>QuieroComer</span>
+                  <span style={{ fontFamily: 'var(--font-feed-display), serif', fontSize: 22, fontWeight: 800, color: isDark ? '#fff' : '#111', letterSpacing: '-0.4px' }}>QuieroComer.cl</span>
                 </div>
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.68)', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.55 }}>
