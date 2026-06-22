@@ -583,7 +583,7 @@ function DesktopDishContent({
               <span style={{ fontSize: 18, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
             {dish.googleRating != null && (
-              <span style={{ position: 'relative', flexShrink: 0 }}>
+              <span style={{ position: 'relative', flexShrink: 0, zIndex: 999 }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowRatingTooltip(v => !v) }}
                   style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}
@@ -602,7 +602,7 @@ function DesktopDishContent({
                       border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
                       borderRadius: 10, padding: '7px 12px',
                       fontSize: 12, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
-                      whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 20,
+                      whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 1000,
                     }}
                   >
                     Basado en {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
@@ -1088,7 +1088,7 @@ function DishSlide({
               <span style={{ fontSize: 18, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-feed-display), serif' }}>{dish.restaurante}</span>
             </a>
             {dish.googleRating != null && (
-              <span style={{ position: 'relative', flexShrink: 0 }}>
+              <span style={{ position: 'relative', flexShrink: 0, zIndex: 999 }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowRatingTooltip(v => !v) }}
                   style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.38)' }}
@@ -1107,7 +1107,7 @@ function DishSlide({
                       border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
                       borderRadius: 10, padding: '7px 12px',
                       fontSize: 12, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
-                      whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 20,
+                      whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 1000,
                     }}
                   >
                     Basado en {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
