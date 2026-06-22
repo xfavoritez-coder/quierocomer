@@ -79,7 +79,10 @@ export function isCondimentOrExtra(name: string): boolean {
  * Aplica en feed, buscador y extractor. No aplica a sólidos (grs/kg son alimentos).
  */
 const VOLUME_BEVERAGE_RE = /\b\d+\s*(ml|cl|cc|oz|lt)\b/i
+// Palabras que indican comida sólida aunque tengan volumen en el nombre (ej: "Bowl 350ml", "Açaí 470ml")
+const VOLUME_FOOD_EXCEPTION_RE = /\b(bowl|bol\b|a[cç]a[ií]|poke|smoothie\s+bowl|granola|parfait)\b/i
 export function isVolumeBeverage(name: string): boolean {
+  if (VOLUME_FOOD_EXCEPTION_RE.test(name)) return false
   return VOLUME_BEVERAGE_RE.test(name)
 }
 
