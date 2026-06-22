@@ -140,7 +140,8 @@ async function searchViaMeilisearch(params: {
     dishes = dishes.filter(fd => fd.mealTime === meal)
   }
 
-  return dishes
+  // Cap response to avoid oversized payloads — the client shuffles and paginates anyway
+  return dishes.slice(0, 2500)
 }
 
 // ── Postgres fallback path ──────────────────────────────────────────────────────
