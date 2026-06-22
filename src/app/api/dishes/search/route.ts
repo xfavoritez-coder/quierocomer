@@ -31,14 +31,16 @@ async function searchViaMeilisearch(params: {
   if (diet === 'VEGAN') filters.push("dishDiet = 'VEGAN'")
   else if (diet === 'VEGETARIAN') filters.push("dishDiet IN ['VEGAN', 'VEGETARIAN']")
 
-  // Geo filter (only when explicitly near + has coordinates)
-  const hasGeo = lat !== null && lng !== null && maxKm < 30
+  // Geo filter: siempre que haya coordenadas. Si el usuario no activó "cerca de ti",
+  // el frontend no envía lat/lng y este filtro no aplica.
+  const hasGeo = lat !== null && lng !== null
   if (hasGeo) {
     filters.push(`_geoRadius(${lat}, ${lng}, ${Math.round(maxKm * 1000)})`)
   }
 
-  // City filter (when no text query and locationName set)
-  if (locationName && !q) {
+  // City filter solo cuando hay nombre de ciudad pero NO coordenadas GPS.
+  // Si hay lat/lng, el filtro de distancia (geo) ya maneja la ubicación.
+  if (locationName && !q && lat === null) {
     const city = locationName.split(',')[0].trim()
     filters.push(`restaurantCity = '${city.replace(/'/g, "\\'")}'`)
   }
@@ -197,7 +199,7 @@ async function searchViaDB(params: {
   if (diet === 'VEGAN') conditions.push(Prisma.sql`d."dishDiet" = 'VEGAN'`)
   else if (diet === 'VEGETARIAN') conditions.push(Prisma.sql`d."dishDiet" IN ('VEGAN', 'VEGETARIAN')`)
 
-  const hasLocationFilter = lat !== null && lng !== null && maxKm < 30
+  const hasLocationFilter = lat !== null && lng !== null
   const qLikeForName = q ? `%${q}%` : null
   const qNormForName = q ? normStr(q) : null
   const qNormLikeForName = qNormForName ? `%${qNormForName}%` : null
@@ -218,7 +220,7 @@ async function searchViaDB(params: {
     }
   }
 
-  if (locationName && !q) {
+  if (locationName && !q && lat === null) {
     const locLike = `%${locationName}%`
     conditions.push(Prisma.sql`r.address ILIKE ${locLike}`)
   }
