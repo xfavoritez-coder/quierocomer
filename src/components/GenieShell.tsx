@@ -6,7 +6,6 @@ import Link from "next/link";
 const NAV = [
   { icon: "🔍", label: "Descubrir", href: "/" },
   { icon: "🍽", label: "Explorar", href: "/explorar" },
-  { icon: "👥", label: "Grupo", href: "/grupo" },
   { icon: "👤", label: "Perfil", href: "/perfil" },
 ];
 

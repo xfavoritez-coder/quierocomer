@@ -407,13 +407,6 @@ export default function GeniePage() {
     });
     setSavingOb(false);
     localStorage.setItem("genieOnboardingDone", "true");
-    // Check if there's a pending group redirect
-    const returnGroup = localStorage.getItem("genieReturnToGroup");
-    if (returnGroup) {
-      localStorage.removeItem("genieReturnToGroup");
-      router.push(`/grupo/${returnGroup}`);
-      return;
-    }
     setPhase("hunger");
     requestGeo();
   };

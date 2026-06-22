@@ -188,40 +188,6 @@ model UserTasteProfile {
   fitnessUpdatedAt    DateTime?
 }
 
-model GroupSession {
-  id             String        @id @default(cuid())
-  code           String        @unique
-  createdAt      DateTime      @default(now())
-  expiresAt      DateTime
-  creatorId      String?
-  creatorSession String?
-  groupType      GroupType
-  totalMembers   Int
-  estado         GroupStatus   @default(WAITING)
-  resultLocalId  String?
-  members        GroupMember[]
-
-  @@index([code])
-}
-
-model GroupMember {
-  id                String       @id @default(cuid())
-  groupId           String
-  userId            String?
-  sessionId         String
-  nombre            String       @default("Invitado")
-  estado            MemberStatus @default(WAITING)
-  selectedDishes    String[]
-  ctxHunger         String?
-  ctxBudget         Int?
-  recommendedDishId String?
-  joinedAt          DateTime     @default(now())
-  readyAt           DateTime?
-  group             GroupSession @relation(fields: [groupId], references: [id])
-
-  @@unique([groupId, sessionId])
-  @@index([groupId])
-}
 
 model RestaurantOwner {
   id                 String             @id @default(cuid())
@@ -1809,26 +1775,6 @@ enum RiskProfile {
   EXPLORER
 }
 
-enum GroupType {
-  PAREJA
-  AMIGOS
-  FAMILIA
-}
-
-enum GroupStatus {
-  WAITING
-  SELECTING
-  CALCULATING
-  READY
-  EXPIRED
-}
-
-enum MemberStatus {
-  WAITING
-  SELECTING
-  READY
-  RECALCULATING
-}
 
 enum RestaurantPlan {
   FREE
