@@ -118,6 +118,12 @@ function bindActivityListeners() {
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       hiddenAt = Date.now();
+      // If user interacted but DB session not created yet (still in 3s delay),
+      // create it now with keepalive so it survives page close
+      if (hadUserInteraction && session && !session.dbSessionId && !session.closed && !creatingDbSession) {
+        if (dbSessionDelay) { clearTimeout(dbSessionDelay); dbSessionDelay = null; }
+        ensureDbSession();
+      }
       // Send preventive final-like heartbeat via sendBeacon — if the user never comes
       // back (kills app, battery dies), this ensures data is saved
       if (session?.dbSessionId) {
@@ -281,6 +287,7 @@ function ensureDbSession() {
   fetch("/api/qr/sessions/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    keepalive: true, // ensures the request completes even if the page is closed/hidden
     body: JSON.stringify({
       guestId: getGuestId(),
       restaurantId: currentSession.restaurantId,
