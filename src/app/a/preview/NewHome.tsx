@@ -628,11 +628,12 @@ export default function NewHome({
   }, [])
 
   // Determine if any filter requires a server fetch.
-  // userLocation auto-detectada NO cuenta: solo reordena client-side los platos ya cargados.
-  // El servidor se consulta solo cuando el usuario activa un filtro explícito.
+  // userLocation auto-detectada NO cuenta (no hay quickNearby sin acción explícita).
+  // El servidor se consulta cuando el usuario activa un filtro explícito.
   const needsServerFetch = !!(
     searchQuery || activeCategory || filterDiet !== 'all' ||
-    locationName || quickPopular
+    locationName || quickPopular ||
+    (quickNearby && !!userLocation) // solo cuando usuario activó "cerca de ti"
   )
 
   useEffect(() => {
