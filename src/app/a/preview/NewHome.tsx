@@ -982,6 +982,18 @@ export default function NewHome({
     window.scrollTo(0, 0)
   }
 
+  // Logo / "Inicio" click: keeps active filters, only reshuffles + clears search
+  function reshuffleFeed() {
+    setView('feed')
+    setActiveCategory(null)
+    setSearchQuery('')
+    setSearchInput('')
+    setServerDishes(null)
+    setShuffleSeed(Math.random())
+    window.history.replaceState(null, '', '/')
+    window.scrollTo(0, 0)
+  }
+
   return (
     <div style={{ minHeight: '100dvh', background: isDark ? '#0e0e0e' : '#f5f4f1', color: isDark ? '#fff' : '#111' }}>
 
@@ -1211,7 +1223,7 @@ export default function NewHome({
           display: 'flex', alignItems: 'center',
         }}><div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px' }}>
           {/* Logo */}
-          <a href="/" onClick={e => { e.preventDefault(); resetFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <a href="/" onClick={e => { e.preventDefault(); reshuffleFeed() }} style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <img src="/logo.png" alt="QuieroComer" style={{ height: 36, width: 'auto' }} />
           </a>
 
@@ -1340,7 +1352,7 @@ export default function NewHome({
                   display: 'flex', flexDirection: 'column',
                 }}>
                   {/* Inicio */}
-                  <button onClick={() => { resetFeed(); setDesktopMenuOpen(false) }} style={{
+                  <button onClick={() => { reshuffleFeed(); setDesktopMenuOpen(false) }} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '11px 18px', background: 'none', border: 'none', cursor: 'pointer',
                     color: isDark ? 'rgba(255,255,255,0.85)' : '#111', fontSize: 14, textAlign: 'left', width: '100%',
@@ -1427,7 +1439,7 @@ export default function NewHome({
           onSearchChange={setSearchInput}
           onSearchClear={() => { setSearchInput(''); executeSearch(''); setShowSuggestions(false) }}
           onSearchSubmit={() => { executeSearch(searchInput); searchInputRef.current?.blur(); setShowSuggestions(false) }}
-          onLogoClick={resetFeed}
+          onLogoClick={reshuffleFeed}
           onMenuOpen={() => setMenuOpen(true)}
           onSearchFocus={() => { setShowSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
           onSearchBlur={() => { setTimeout(() => setShowSuggestions(false), 150); setSearchFocused(false) }}
@@ -1560,7 +1572,7 @@ export default function NewHome({
             onSearchChange={setSearchInput}
             onSearchClear={() => { setSearchInput(''); executeSearch(''); setShowFloatingSuggestions(false) }}
             onSearchSubmit={() => { executeSearch(searchInput); floatingInputRef.current?.blur(); setShowFloatingSuggestions(false) }}
-            onLogoClick={resetFeed}
+            onLogoClick={reshuffleFeed}
             onMenuOpen={() => setMenuOpen(true)}
             onSearchFocus={() => { setShowFloatingSuggestions(true); setSearchFocused(true); searchTouched.current = true }}
             onSearchBlur={() => { setTimeout(() => setShowFloatingSuggestions(false), 150); setSearchFocused(false) }}
