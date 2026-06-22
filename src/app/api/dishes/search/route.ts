@@ -49,7 +49,7 @@ async function searchViaMeilisearch(params: {
   const result = await client.index('dishes').search<MeiliDish>(q || '', {
     filter: filters.join(' AND '),
     sort: ['isHero:desc', 'popularityScore:desc', 'createdAtTs:desc'],
-    limit: 2000,
+    limit: 5000,
     attributesToRetrieve: [
       'id', 'name', 'description', 'price', 'discountPrice', 'photos',
       'dishDiet', 'isSpicy', 'isGlutenFree', 'isLactoseFree', 'isSoyFree',
