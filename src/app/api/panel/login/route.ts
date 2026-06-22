@@ -46,7 +46,21 @@ export async function POST(req: NextRequest) {
 
     if (owner) {
       const valid = await bcrypt.compare(password, owner.passwordHash);
-      if (!valid) return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+      if (!valid) {
+        // Password didn't match owner — still try as a team member (same email, different password)
+        const memberAlt = await prisma.teamMember.findFirst({
+          where: { email: { equals: email, mode: "insensitive" }, passwordHash: { not: null }, status: "ACTIVE" },
+          include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
+        });
+        if (memberAlt?.passwordHash && await bcrypt.compare(password, memberAlt.passwordHash)) {
+          await prisma.teamMember.update({ where: { id: memberAlt.id }, data: { lastLoginAt: new Date() } });
+          const token = crypto.randomUUID();
+          const response = NextResponse.json({ ok: true, role: memberAlt.role, name: memberAlt.name, restaurants: [memberAlt.restaurant], mustChangePassword: false });
+          setPanelCookies(response, token, memberAlt.role, `tm_${memberAlt.id}`);
+          return response;
+        }
+        return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+      }
 
       if (owner.status === "SUSPENDED") return NextResponse.json({ error: "Cuenta suspendida. Contacta al administrador." }, { status: 403 });
       if (owner.status === "PENDING") return NextResponse.json({ error: "Cuenta pendiente de aprobación." }, { status: 403 });
