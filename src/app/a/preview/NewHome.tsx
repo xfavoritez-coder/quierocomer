@@ -154,15 +154,29 @@ export default function NewHome({
   const [filterMeal, setFilterMeal] = useState<'all' | 'desayuno' | 'almuerzo_cena'>('all')
   const [filterMealDisplay, setFilterMealDisplay] = useState<'all' | 'desayuno' | 'almuerzo' | 'cena'>('all')
   const [filterSort, setFilterSort] = useState<'default' | 'recent' | 'price-asc' | 'price-desc'>('default')
-  const [quickNearby, setQuickNearby] = useState(false)
+  const [quickNearby, setQuickNearby] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('nearby') === '1'
+  })
   const [locationPromptDismissed, setLocationPromptDismissed] = useState(() => {
     try { return !!localStorage.getItem('qc_loc_prompt_hidden') } catch { return false }
   })
   const [locationPromptFading, setLocationPromptFading] = useState(false)
   const [locationTooltipReady, setLocationTooltipReady] = useState(false)
-  const [quickPopular, setQuickPopular] = useState(false)
-  const [filterMaxKm, setFilterMaxKm] = useState(5)
-  const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>('all')
+  const [quickPopular, setQuickPopular] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('popular') === '1'
+  })
+  const [filterMaxKm, setFilterMaxKm] = useState(() => {
+    if (typeof window === 'undefined') return 5
+    const km = parseInt(new URLSearchParams(window.location.search).get('maxKm') ?? '')
+    return isNaN(km) ? 5 : km
+  })
+  const [filterDiet, setFilterDiet] = useState<'all' | 'VEGAN' | 'VEGETARIAN'>(() => {
+    if (typeof window === 'undefined') return 'all'
+    const d = new URLSearchParams(window.location.search).get('diet')
+    return (d === 'VEGAN' || d === 'VEGETARIAN') ? d : 'all'
+  })
   const [savedDishIds, setSavedDishIds] = useState<Set<string>>(new Set())
   // Track if user explicitly changed filterMaxKm from the modal (vs auto-set by GPS)
   const userSetMaxKm = useRef(false)
@@ -671,6 +685,17 @@ export default function NewHome({
   useEffect(() => {
     try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filterDiet, maxKm: filterMaxKm, nearby: quickNearby })) } catch {}
   }, [filterDiet, filterMaxKm, quickNearby])
+
+  // Sincronizar filtros compartibles en la URL
+  useEffect(() => {
+    const current = new URLSearchParams(window.location.search)
+    if (quickPopular) current.set('popular', '1'); else current.delete('popular')
+    if (filterDiet !== 'all') current.set('diet', filterDiet); else current.delete('diet')
+    if (quickNearby) current.set('nearby', '1'); else current.delete('nearby')
+    if (quickNearby && filterMaxKm !== 5) current.set('maxKm', String(filterMaxKm)); else current.delete('maxKm')
+    const qs = current.toString()
+    window.history.replaceState(null, '', qs ? `/?${qs}` : '/')
+  }, [quickPopular, filterDiet, quickNearby, filterMaxKm])
 
   // Feed dishes — search results como base, luego aplica todos los filtros encima
   const feedDishes = useMemo(() => {
