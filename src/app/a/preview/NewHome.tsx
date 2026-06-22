@@ -279,10 +279,11 @@ export default function NewHome({
   }
   useEffect(() => {
     if (locationPromptDismissed) return
+    if (!locationTooltipReady) return  // no adjuntar hasta que el tooltip sea visible
     const onScroll = () => dismissLocationPrompt()
     window.addEventListener('scroll', onScroll, { once: true, passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [locationPromptDismissed])
+  }, [locationPromptDismissed, locationTooltipReady])
   // ─── Onboarding — show once per user ─────────────────────────────────────
   useEffect(() => {
     try {
@@ -315,7 +316,7 @@ export default function NewHome({
   }, [showOnboarding])
 
   // Stable seed on server (avoids hydration mismatch), randomized after mount
-  const [shuffleSeed, setShuffleSeed] = useState(1)
+  const [shuffleSeed, setShuffleSeed] = useState(() => Math.random())
   useEffect(() => { setShuffleSeed(Math.random()) }, [])
 
   // Profile for DishModal — refreshable
@@ -731,6 +732,8 @@ export default function NewHome({
             score += popBase
             score += Math.min((categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
           }
+          // Ruido determinístico por sesión: misma calidad de platos, orden distinto cada visita
+          score += seededRandom(shuffleSeed, d.id) * 0.18
           return { dish: d, score }
         })
         .sort((a, b) => b.score - a.score)
@@ -1061,7 +1064,7 @@ export default function NewHome({
                 </div>
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.68)', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.55 }}>
-                  Desliza hacia la derecha si el plato se te antoja. Y hacia la izquierda si no te apetece.
+                  Desliza hacia la derecha si se te antoja y hacia la izquierda si no.
                 </p>
 
                 {/* Card stack animation */}
