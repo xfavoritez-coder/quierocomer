@@ -672,8 +672,8 @@ export default function NewHome({
         diet: filterDiet,
         maxKm: quickNearby ? filterMaxKm : (searchQuery ? undefined : filterMaxKm),
         locationName,
-        lat: userLocation?.lat,
-        lng: userLocation?.lng,
+        lat: quickNearby ? userLocation?.lat : undefined,
+        lng: quickNearby ? userLocation?.lng : undefined,
       })
     }, delay)
     return () => { if (searchFetchRef.current) clearTimeout(searchFetchRef.current) }
@@ -797,7 +797,7 @@ export default function NewHome({
 
   const isFiltered = !!(
     searchQuery || activeCategory || filterDiet !== 'all' || filterMeal !== 'all'
-    || quickNearby || locationName || (userLocation && filterMaxKm < 30)
+    || quickNearby || locationName
   )
   const displayDishCount = isFiltered ? feedDishes.length : (totalDishCount || feedDishes.length)
 
