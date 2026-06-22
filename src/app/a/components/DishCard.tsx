@@ -154,6 +154,14 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                   {dish.googleRating.toFixed(1)}
+                  {dish.googleRatingCount != null && (
+                    <>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="rgba(255,255,255,0.28)" stroke="none" style={{ marginLeft: 1 }}>
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                      </svg>
+                      <span style={{ fontSize: 11 }}>{dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(dish.googleRatingCount >= 10000 ? 0 : 1)}k` : dish.googleRatingCount}</span>
+                    </>
+                  )}
                 </span>
               </>
             )}

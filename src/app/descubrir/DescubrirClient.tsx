@@ -541,6 +541,14 @@ export default function DescubrirClient() {
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                               </svg>
                               {d.googleRating.toFixed(1)}
+                              {d.googleRatingCount != null && (
+                                <>
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)" stroke="none" style={{ marginLeft: 1 }}>
+                                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                                  </svg>
+                                  <span style={{ fontSize: 11 }}>{d.googleRatingCount >= 1000 ? `${(d.googleRatingCount / 1000).toFixed(d.googleRatingCount >= 10000 ? 0 : 1)}k` : d.googleRatingCount}</span>
+                                </>
+                              )}
                             </span>
                           )}
                         </p>
@@ -586,6 +594,14 @@ export default function DescubrirClient() {
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                               </svg>
                               {d.googleRating.toFixed(1)}
+                              {d.googleRatingCount != null && (
+                                <>
+                                  <svg width="7" height="7" viewBox="0 0 24 24" fill="rgba(255,255,255,0.28)" stroke="none" style={{ marginLeft: 1 }}>
+                                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                                  </svg>
+                                  <span style={{ fontSize: 10 }}>{d.googleRatingCount >= 1000 ? `${(d.googleRatingCount / 1000).toFixed(d.googleRatingCount >= 10000 ? 0 : 1)}k` : d.googleRatingCount}</span>
+                                </>
+                              )}
                             </span>
                           )}
                         </p>

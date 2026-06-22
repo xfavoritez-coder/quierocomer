@@ -404,7 +404,15 @@ export default function NewHome({
         const { lat, lng, label } = JSON.parse(saved)
         setUserLocation({ lat, lng })
         setGpsLabel(label)
-        // No setQuickNearby(true) — avoid re-sorting dishes on initial load
+        // Restaurar filtros guardados (nearby, maxKm) para que el feed respete el radio elegido
+        try {
+          const savedFilters = localStorage.getItem('qc_active_filters')
+          if (savedFilters) {
+            const { nearby, maxKm } = JSON.parse(savedFilters)
+            if (nearby) setQuickNearby(true)
+            if (maxKm != null) setFilterMaxKm(maxKm)
+          }
+        } catch {}
         return // don't auto-request GPS if we have a saved location
       }
     } catch {}

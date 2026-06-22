@@ -467,6 +467,11 @@ function DesktopDishContent({
   const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
   const [showRatingTooltip, setShowRatingTooltip] = useState(false)
+  useEffect(() => {
+    if (!showRatingTooltip) return
+    const t = setTimeout(() => setShowRatingTooltip(false), 2500)
+    return () => clearTimeout(t)
+  }, [showRatingTooltip])
   const [resolvedPhone, setResolvedPhone] = useState<string | null>(dish.restaurantePhone ?? null)
 
   useEffect(() => {
@@ -603,9 +608,13 @@ function DesktopDishContent({
                       borderRadius: 10, padding: '7px 12px',
                       fontSize: 12, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                       whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 1000,
+                      display: 'flex', alignItems: 'center', gap: 5,
                     }}
                   >
-                    Basado en {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0, opacity: 0.6 }}>
+                      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
                   </span>
                 )}
               </span>
@@ -927,6 +936,11 @@ function DishSlide({
   const [showSpicyTooltip, setShowSpicyTooltip] = useState(false)
   const [showPriceTooltip, setShowPriceTooltip] = useState(false)
   const [showRatingTooltip, setShowRatingTooltip] = useState(false)
+  useEffect(() => {
+    if (!showRatingTooltip) return
+    const t = setTimeout(() => setShowRatingTooltip(false), 2500)
+    return () => clearTimeout(t)
+  }, [showRatingTooltip])
   const [resolvedPhone, setResolvedPhone] = useState<string | null>(dish.restaurantePhone ?? null)
 
   useEffect(() => {
@@ -1108,9 +1122,13 @@ function DishSlide({
                       borderRadius: 10, padding: '7px 12px',
                       fontSize: 12, fontWeight: 500, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                       whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', zIndex: 1000,
+                      display: 'flex', alignItems: 'center', gap: 5,
                     }}
                   >
-                    Basado en {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0, opacity: 0.6 }}>
+                      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    {dish.googleRatingCount.toLocaleString('es-CL')} reseñas
                   </span>
                 )}
               </span>
