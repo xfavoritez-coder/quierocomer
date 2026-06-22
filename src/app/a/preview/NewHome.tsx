@@ -1815,6 +1815,7 @@ export default function NewHome({
                   setUserLocation({ lat, lng })
                   setGpsLabel(label)
                   setLocationName(null)
+                  setQuickNearby(true)
                   setFilterMaxKm(5)
                   setShuffleSeed(Math.random())
                   setLocationModalOpen(false)
