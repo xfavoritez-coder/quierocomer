@@ -25,7 +25,7 @@ export default function WelcomeTutorial({ onDismiss }: { onDismiss: () => void }
             fontFamily: 'var(--font-feed-display), serif',
             fontSize: 26, fontWeight: 700, color: '#fff', margin: '0 0 10px',
           }}>
-            Bienvenido a QuieroComer
+            Bienvenido a QuieroComer.cl
           </h1>
 
           <p style={{
