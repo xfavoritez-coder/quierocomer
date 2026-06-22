@@ -58,6 +58,11 @@ export async function POST(req: NextRequest) {
     )
     const classified = Object.keys(taxonomy).length
 
+    // Sync updated dishes to Meilisearch (fire-and-forget)
+    import('@/lib/meilisearch').then(({ syncRestaurantToMeilisearch }) => {
+      syncRestaurantToMeilisearch(restaurant.id).catch(() => {})
+    }).catch(() => {})
+
     return NextResponse.json({ classified, total: dishes.length })
   } catch (e: any) {
     console.error('[taxonomy route]', e)

@@ -34,6 +34,7 @@
     "libphonenumber-js": "^1.13.1",
     "lucide-react": "^1.8.0",
     "mammoth": "^1.12.0",
+    "meilisearch": "^0.58.0",
     "mercadopago": "^2.12.1",
     "next": "16.2.1",
     "openai": "^6.43.0",

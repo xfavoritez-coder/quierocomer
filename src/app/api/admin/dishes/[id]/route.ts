@@ -4,6 +4,7 @@ import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/a
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
+import { syncDishToMeilisearch } from "@/lib/meilisearch";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -114,6 +115,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes });
 
     revalidateQrCache();
+    syncDishToMeilisearch(id).catch(() => {});
     return NextResponse.json(dish);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
@@ -138,6 +140,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const deleted = await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() }, select: { name: true } });
     logActivity(existing.restaurantId, "dish_delete", { dishId: id, dishName: deleted.name });
     revalidateQrCache();
+    syncDishToMeilisearch(id).catch(() => {}); // updates isEligibleForFeed → false
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);

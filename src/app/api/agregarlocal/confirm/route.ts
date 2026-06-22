@@ -219,6 +219,11 @@ export async function POST(request: Request) {
       }).catch(() => {});
     }
 
+    // Sync new restaurant's dishes to Meilisearch (fire-and-forget)
+    import('@/lib/meilisearch').then(({ syncRestaurantToMeilisearch }) => {
+      syncRestaurantToMeilisearch(restaurant.id).catch(() => {})
+    }).catch(() => {})
+
     return NextResponse.json({
       ok: true,
       dishIds: createdDishes.map(d => d.id),

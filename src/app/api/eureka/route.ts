@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { resolveDishLeaf } from '@/app/a/lib/feed-queries'
+import { getMeiliClient, isMeiliConfigured } from '@/lib/meilisearch'
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -85,6 +86,128 @@ const DULCE_TX_TYPES = new Set([
   'cinnamon roll', 'croissant dulce', 'danish', 'baklava', 'arroz con leche',
 ])
 
+// ── Candidate fetchers ─────────────────────────────────────────────────────────
+
+async function getEurekaCandidatesFromMeili(p: {
+  txArray: string[]
+  ingArray: string[]
+  likedCatNames: string[]
+  restaurantId?: string
+  lat?: number; lng?: number; maxKm?: number
+}): Promise<any[]> {
+  const { txArray, ingArray, likedCatNames, restaurantId, lat, lng, maxKm = 15 } = p
+  const filters: string[] = ['isEligibleForFeed = true']
+
+  if (restaurantId) {
+    filters.push(`restaurantId = '${restaurantId}'`)
+  } else if (txArray.length > 0 || ingArray.length > 0) {
+    const parts: string[] = []
+    if (txArray.length > 0) {
+      parts.push(`txDishType IN [${txArray.map(t => `'${t.replace(/'/g, "\\'")}'`).join(', ')}]`)
+    }
+    if (ingArray.length > 0) {
+      parts.push(`txIngredient IN [${ingArray.map(i => `'${i.replace(/'/g, "\\'")}'`).join(', ')}]`)
+    }
+    filters.push(`(${parts.join(' OR ')})`)
+  } else if (likedCatNames.length > 0) {
+    filters.push(`categoryName IN [${likedCatNames.map(n => `'${n.replace(/'/g, "\\'")}'`).join(', ')}]`)
+  }
+
+  if (lat != null && lng != null) {
+    filters.push(`_geoRadius(${lat}, ${lng}, ${Math.round(maxKm * 1000)})`)
+  }
+
+  const client = getMeiliClient()
+  const result = await client.index('dishes').search('', {
+    filter: filters.join(' AND '),
+    sort: ['popularityScore:desc'],
+    limit: 500,
+  })
+
+  // Map Meilisearch doc shape → the row shape the scoring code expects
+  return result.hits.map((d: any) => ({
+    id: d.id,
+    name: d.name,
+    description: d.description ?? null,
+    price: d.price,
+    discountPrice: d.discountPrice ?? null,
+    photos: d.photos ?? [],
+    dishDiet: d.dishDiet,
+    isSpicy: d.isSpicy,
+    leafOverride: d.leafOverride ?? null,
+    txDishType: d.txDishType ?? [],
+    txIngredient: d.txIngredient ?? [],
+    flavorTags: d.flavorTags ?? [],
+    catName: d.categoryName,
+    catNormOverride: d.catNormOverride ?? null,
+    restaurantId: d.restaurantId,
+    restaurantName: d.restaurantName,
+    restaurantSlug: d.restaurantSlug,
+    logoUrl: d.logoUrl ?? null,
+    address: d.address ?? null,
+    phone: d.phone ?? null,
+    website: d.website ?? null,
+    websiteIsOrderUrl: d.websiteIsOrderUrl,
+    cartaProvider: d.cartaProvider ?? null,
+    instagram: d.instagram ?? null,
+    googlePlaceId: d.googlePlaceId ?? null,
+    lat: d._geo?.lat ?? null,
+    lng: d._geo?.lng ?? null,
+    primaryCategory: d.primaryCategory ?? null,
+    googleMapsUrl: d.googleMapsUrl ?? null,
+    googleRating: d.googleRating ?? null,
+    googleRatingCount: d.googleRatingCount ?? null,
+    isShowcase: d.isShowcase,
+    popularityScore: d.popularityScore ?? 0,
+  }))
+}
+
+async function getEurekaCandidatesFromDB(p: {
+  txArray: string[]
+  ingArray: string[]
+  likedCatNames: string[]
+  restaurantId?: string
+  allExcluded: string[]
+  lat?: number; lng?: number; maxKm?: number
+}): Promise<any[]> {
+  const { txArray, ingArray, likedCatNames, restaurantId, allExcluded } = p
+  return prisma.$queryRaw<any[]>`
+    SELECT
+      d.id, d.name, d.description, d.price, d."discountPrice",
+      d.photos, d."dishDiet", d."isSpicy", d."leafOverride", d."txDishType", d."txIngredient", d."flavorTags",
+      c.name AS "catName", c."normOverride" AS "catNormOverride",
+      r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
+      r."logoUrl", r.address, r.phone, r.website, r."websiteIsOrderUrl", r."cartaProvider", r.instagram, r."googlePlaceId",
+      r.lat, r.lng, r."primaryCategory",
+      r."googleMapsUrl", r."googleRating", r."googleRatingCount", r."isShowcase",
+      COALESCE(fs."popularityScore", 0) AS "popularityScore"
+    FROM "Dish" d
+    JOIN "Category" c ON c.id = d."categoryId"
+    JOIN "Restaurant" r ON r.id = d."restaurantId"
+    LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
+    WHERE d."isActive" = true
+      AND d."deletedAt" IS NULL
+      AND d."hiddenFromFeed" = false
+      AND array_length(d.photos, 1) > 0
+      AND d.price > 0
+      AND c."dishType" != 'drink'
+      AND r."isActive" = true
+      AND r."isDemo" = false
+      AND r.lat IS NOT NULL AND r.lng IS NOT NULL
+      AND d.id != ALL(${allExcluded})
+      ${restaurantId
+        ? Prisma.sql`AND r.id = ${restaurantId}`
+        : (txArray.length > 0 || ingArray.length > 0)
+          ? Prisma.sql`AND (d."txDishType" && ${txArray.length > 0 ? txArray : ['']} OR d."txIngredient" && ${ingArray.length > 0 ? ingArray : ['']})`
+          : Prisma.sql`AND c.name = ANY(${likedCatNames})`
+      }
+    ORDER BY COALESCE(fs."popularityScore", 0) DESC
+    LIMIT 500
+  `
+}
+
+// ── Route handler ──────────────────────────────────────────────────────────────
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -163,39 +286,27 @@ export async function POST(req: Request) {
     // ── 4. Buscar candidatos ──────────────────────────────────────────────────
     const likedCatNames = [...new Set(likedRows.map((r: any) => r.catName as string))]
 
-    const candidates = await prisma.$queryRaw<any[]>`
-      SELECT
-        d.id, d.name, d.description, d.price, d."discountPrice",
-        d.photos, d."dishDiet", d."isSpicy", d."leafOverride", d."txDishType", d."txIngredient", d."flavorTags",
-        c.name AS "catName", c."normOverride" AS "catNormOverride",
-        r.id AS "restaurantId", r.name AS "restaurantName", r.slug AS "restaurantSlug",
-        r."logoUrl", r.address, r.phone, r.website, r."websiteIsOrderUrl", r."cartaProvider", r.instagram, r."googlePlaceId",
-        r.lat, r.lng, r."primaryCategory",
-        r."googleMapsUrl", r."googleRating", r."googleRatingCount", r."isShowcase",
-        COALESCE(fs."popularityScore", 0) AS "popularityScore"
-      FROM "Dish" d
-      JOIN "Category" c ON c.id = d."categoryId"
-      JOIN "Restaurant" r ON r.id = d."restaurantId"
-      LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
-      WHERE d."isActive" = true
-        AND d."deletedAt" IS NULL
-        AND d."hiddenFromFeed" = false
-        AND array_length(d.photos, 1) > 0
-        AND d.price > 0
-        AND c."dishType" != 'drink'
-        AND r."isActive" = true
-        AND r."isDemo" = false
-        AND r.lat IS NOT NULL AND r.lng IS NOT NULL
-        AND d.id != ALL(${allExcluded})
-        ${restaurantId
-          ? Prisma.sql`AND r.id = ${restaurantId}`
-          : (txArray.length > 0 || ingArray.length > 0)
-            ? Prisma.sql`AND (d."txDishType" && ${txArray.length > 0 ? txArray : ['']} OR d."txIngredient" && ${ingArray.length > 0 ? ingArray : ['']})`
-            : Prisma.sql`AND c.name = ANY(${likedCatNames})`
-        }
-      ORDER BY COALESCE(fs."popularityScore", 0) DESC
-      LIMIT 500
-    `
+    let candidates: any[]
+
+    if (isMeiliConfigured()) {
+      try {
+        candidates = await getEurekaCandidatesFromMeili({
+          txArray, ingArray, likedCatNames, restaurantId,
+          lat, lng, maxKm,
+        })
+      } catch (meiliErr) {
+        console.error('[eureka] Meilisearch error, falling back to DB:', meiliErr)
+        candidates = await getEurekaCandidatesFromDB({
+          txArray, ingArray, likedCatNames, restaurantId, allExcluded,
+          lat, lng, maxKm,
+        })
+      }
+    } else {
+      candidates = await getEurekaCandidatesFromDB({
+        txArray, ingArray, likedCatNames, restaurantId, allExcluded,
+        lat, lng, maxKm,
+      })
+    }
 
     // ── 5. Clasificar candidatos por categoría y filtrar ─────────────────────
     type Candidate = { row: any; leaf: string; score: number }

@@ -178,6 +178,11 @@ export async function POST(req: NextRequest) {
     });
   }).catch(() => {});
 
+  // Sync imported dishes to Meilisearch (fire-and-forget)
+  import("@/lib/meilisearch").then(({ syncRestaurantToMeilisearch }) => {
+    syncRestaurantToMeilisearch(restaurantId).catch(() => {});
+  }).catch(() => {});
+
   return NextResponse.json({
     ok: true,
     dishes: totalDishes,

@@ -5,6 +5,7 @@ import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
+import { syncDishToMeilisearch } from "@/lib/meilisearch";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -138,6 +139,7 @@ export async function POST(req: NextRequest) {
 
     logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
     revalidateQrCache();
+    syncDishToMeilisearch(dish.id).catch(() => {});
     return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult });
   } catch (e) {
     console.error("[Admin dishes POST]", e);
