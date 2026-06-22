@@ -228,7 +228,10 @@ export default function CartaRouter(props: Props) {
 
   const readyKey = readyKeyRef.current;
   const activeHH = getActiveHappyHour(props.happyHours || []);
-  const hhDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
+  const hhDishes = useMemo(
+    () => activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes,
+    [props.dishes, activeHH],
+  );
 
   // Inject promo discountPrice for dishes in active marketing promotions
   const pricedDishes = useMemo(() => {
@@ -252,12 +255,12 @@ export default function CartaRouter(props: Props) {
   }, [hhDishes, props.marketingPromos]);
 
   // Apply demo genio reorder: push vegan dishes to top
-  const orderedDishes = (() => {
+  const orderedDishes = useMemo(() => {
     if (!demoGenio) return pricedDishes;
     const vegan = pricedDishes.filter((d: any) => d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN");
     const rest = pricedDishes.filter((d: any) => d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN");
     return [...vegan, ...rest];
-  })();
+  }, [demoGenio, pricedDishes]);
 
   const plan = (props.restaurant as any).plan || "FREE";
   const showViewSelector = canAccess(plan, "view_selector");
@@ -270,7 +273,8 @@ export default function CartaRouter(props: Props) {
     return view;
   })();
 
-  const sharedProps = { ...props, dishes: orderedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current, showViewSelector };
+  const onProfileOpen = useCallback(() => setProfileOpen(true), []);
+  const sharedProps = { ...props, dishes: orderedDishes, qrUser, onProfileOpen, onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current, showViewSelector };
 
   return (
     <LangProvider value={effectiveLang}>

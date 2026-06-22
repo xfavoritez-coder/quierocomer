@@ -759,9 +759,12 @@ export default function CartaImpact({
   activeMenuSlug,
 }: CartaProps) {
   const isFree = ((restaurant as any).plan || 'FREE') === 'FREE'
-  const dishes = isFree
-    ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
-    : rawDishes
+  const dishes = useMemo(
+    () => isFree
+      ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
+      : rawDishes,
+    [isFree, rawDishes],
+  )
   const lang = useLang();
   const router = useRouter();
   const pathname = usePathname();
