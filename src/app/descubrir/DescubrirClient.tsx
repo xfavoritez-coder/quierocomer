@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { slugify } from '@/lib/slugify'
 import type { FeedDish } from '../a/types'
 import FeedDishDetail from '../a/components/FeedDishDetail'
@@ -91,7 +91,10 @@ export default function DescubrirClient() {
   const stripRef = useRef<HTMLDivElement>(null)
   const [stripPage, setStripPage] = useState(0)
   const [isFallbackGlobal, setIsFallbackGlobal] = useState(false)
-  const swipeTouchX = useRef(0)
+  const swipeCardRef = useRef<HTMLDivElement>(null)
+  const swipeDragStartX = useRef(0)
+  const swipeDragging = useRef(false)
+  const swipeIsFirstRender = useRef(true)
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('left')
 
   // Init: read location + filters from localStorage
@@ -221,6 +224,33 @@ export default function DescubrirClient() {
     fetchRecommendations(likedIdsRef.current, loc, filters, true)
     try { localStorage.setItem('qc_active_filters', JSON.stringify({ diet: filters.diet, maxKm: filters.maxKm, nearby: filters.nearby })) } catch {}
   }, [filters, fetchRecommendations, userLocation])
+
+  // Animación de entrada nativa cuando cambia la card visible
+  useLayoutEffect(() => {
+    if (swipeIsFirstRender.current) {
+      swipeIsFirstRender.current = false
+      return
+    }
+    if (!swipeCardRef.current) return
+    const el = swipeCardRef.current
+    const vw = el.offsetWidth || 360
+    el.style.transition = 'none'
+    el.style.opacity = '0'
+    el.style.transform = `translateX(${slideDir === 'left' ? vw : -vw}px)`
+  }, [stripPage, slideDir])
+
+  useEffect(() => {
+    if (!swipeCardRef.current) return
+    const el = swipeCardRef.current
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!swipeCardRef.current) return
+        el.style.transition = 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.22s ease'
+        el.style.opacity = '1'
+        el.style.transform = 'translateX(0)'
+      })
+    })
+  }, [stripPage, slideDir])
 
   const q = search.toLowerCase()
   const cappedRecommended = (() => {
@@ -396,6 +426,7 @@ export default function DescubrirClient() {
                 const totalCards = visibleDishes.length
                 const scrollToCard = (idx: number) => {
                   const next = Math.max(0, Math.min(idx, totalCards - 1))
+                  if (next === stripPage) return
                   setSlideDir(next > stripPage ? 'left' : 'right')
                   setStripPage(next)
                 }
@@ -443,21 +474,42 @@ export default function DescubrirClient() {
                 return (
                   <div style={{ padding: '0 14px', marginBottom: 28, overflow: 'hidden' }}>
                     <div
-                      key={stripPage}
-                      onTouchStart={e => { swipeTouchX.current = e.touches[0].clientX }}
+                      ref={swipeCardRef}
+                      onTouchStart={e => {
+                        swipeDragStartX.current = e.touches[0].clientX
+                        swipeDragging.current = true
+                        if (swipeCardRef.current) swipeCardRef.current.style.transition = 'none'
+                      }}
+                      onTouchMove={e => {
+                        if (!swipeDragging.current || !swipeCardRef.current) return
+                        const delta = e.touches[0].clientX - swipeDragStartX.current
+                        const blocked = (delta > 0 && stripPage === 0) || (delta < 0 && stripPage >= totalCards - 1)
+                        swipeCardRef.current.style.transform = `translateX(${blocked ? delta * 0.2 : delta}px)`
+                      }}
                       onTouchEnd={e => {
-                        const diff = swipeTouchX.current - e.changedTouches[0].clientX
-                        if (Math.abs(diff) > 40) {
-                          e.preventDefault()
-                          scrollToCard(diff > 0 ? stripPage + 1 : stripPage - 1)
+                        if (!swipeDragging.current || !swipeCardRef.current) return
+                        swipeDragging.current = false
+                        const delta = e.changedTouches[0].clientX - swipeDragStartX.current
+                        const card = swipeCardRef.current
+                        const goNext = delta < -55 && stripPage < totalCards - 1
+                        const goPrev = delta > 55 && stripPage > 0
+                        if (goNext || goPrev) {
+                          const vw = card.offsetWidth
+                          card.style.transition = 'transform 0.22s ease, opacity 0.15s ease'
+                          card.style.opacity = '0'
+                          card.style.transform = `translateX(${goNext ? -vw : vw}px)`
+                          setTimeout(() => scrollToCard(goNext ? stripPage + 1 : stripPage - 1), 180)
+                        } else {
+                          card.style.transition = 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                          card.style.transform = 'translateX(0)'
+                          if (Math.abs(delta) < 10) { e.preventDefault(); handleTap(d) }
                         }
-                        // Si no es swipe, deja que onClick maneje el tap
                       }}
                       onClick={() => handleTap(d)}
                       style={{
                         position: 'relative', width: '100%', aspectRatio: '1',
                         borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
-                        animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both`,
+                        touchAction: 'pan-y',
                       }}>
                       {d.fotoUrl
                         ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -479,8 +531,18 @@ export default function DescubrirClient() {
                         <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} />
                         </p>
-                        <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}
+                        <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {userLocation ? (distanceLabel(userLocation.lat, userLocation.lng, d.restauranteLat, d.restauranteLng) ?? d.restaurante) : d.restaurante}
+                          </span>
+                          {d.googleRating != null && (
+                            <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="rgba(255,200,50,0.8)" stroke="none">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                              </svg>
+                              {d.googleRating.toFixed(1)}
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -516,7 +578,17 @@ export default function DescubrirClient() {
                       }
                       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)', padding: '24px 8px 8px' }}>
                         <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nombre}<DietTag dieta={d.dieta} sabores={d.sabores} /></p>
-                        <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.restaurante}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.restaurante}</span>
+                          {d.googleRating != null && (
+                            <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="rgba(255,200,50,0.75)" stroke="none">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                              </svg>
+                              {d.googleRating.toFixed(1)}
+                            </span>
+                          )}
+                        </p>
                       </div>
                     </div>
                     <button

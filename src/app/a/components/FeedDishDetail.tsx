@@ -574,7 +574,7 @@ function DesktopDishContent({
       <div style={{ padding: '22px 24px 28px' }}>
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'visible' }}>
             <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden' }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -643,11 +643,11 @@ function DesktopDishContent({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             {dish.enOferta && dish.precioDescuento != null ? (
               <>
-                <span style={{ fontSize: 21, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
-                <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+                <span style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
               </>
             ) : (
-              <span style={{ fontSize: 20, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 19, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
             <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
               <span onClick={() => setShowPriceTooltip(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
@@ -1079,7 +1079,7 @@ function DishSlide({
       <div style={{ padding: '16px 20px 20px' }}>
         {/* Local + corazón — misma fila */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'visible' }}>
             <a href={`/?q=${encodeURIComponent(dish.restaurante)}`} style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', minWidth: 0, overflow: 'hidden' }}>
               {dish.restauranteLogo && !logoError
                 ? <img src={dish.restauranteLogo} alt="" onError={() => setLogoError(true)} style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -1148,11 +1148,11 @@ function DishSlide({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             {dish.enOferta && dish.precioDescuento != null ? (
               <>
-                <span style={{ fontSize: 19, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
-                <span style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#4ade80' }}>${dish.precioDescuento.toLocaleString('es-CL')}</span>
+                <span style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through' }}>${dish.precio.toLocaleString('es-CL')}</span>
               </>
             ) : (
-              <span style={{ fontSize: 18, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)' }}>${dish.precio.toLocaleString('es-CL')}</span>
+              <span style={{ fontSize: 17, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)' }}>${dish.precio.toLocaleString('es-CL')}</span>
             )}
             <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
               <span onClick={() => setShowPriceTooltip(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 15, height: 15, borderRadius: '50%', border: `1px solid ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'}`, fontSize: 9, fontWeight: 700, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', cursor: 'pointer', lineHeight: 1 }}>i</span>
