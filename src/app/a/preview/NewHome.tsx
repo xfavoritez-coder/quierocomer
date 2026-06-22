@@ -656,7 +656,7 @@ export default function NewHome({
         q: searchQuery,
         categoryPill: activeCategory,
         diet: filterDiet,
-        maxKm: searchQuery ? undefined : filterMaxKm,
+        maxKm: quickNearby ? filterMaxKm : (searchQuery ? undefined : filterMaxKm),
         locationName,
         lat: userLocation?.lat,
         lng: userLocation?.lng,
@@ -692,7 +692,7 @@ export default function NewHome({
 
     // Distance filter + sort — solo cuando el usuario activó explícitamente "cerca de ti"
     // (quickNearby). La ubicación auto-detectada no filtra ni reordena sola.
-    if (userLocation && quickNearby && !searchQuery) {
+    if (userLocation && quickNearby) {
       const maxDist = filterMaxKm
       const noiseScale = Math.max(0.5, maxDist * 0.25)
       const withDist = filtered

@@ -131,25 +131,18 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-            {!dish.isShowcase && (
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 600, flexShrink: 0 }}>
-                {dish.enOferta && dish.precioDescuento != null
-                  ? `$${dish.precioDescuento.toLocaleString('es-CL')}`
-                  : dish.precio > 0 ? `$${dish.precio.toLocaleString('es-CL')}` : ''}
-              </span>
-            )}
             {userLocation && dish.restauranteLat && dish.restauranteLng && (
               <>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontWeight: 500, flexShrink: 0 }}>
                   {formatDistance(distanceKm(userLocation.lat, userLocation.lng, dish.restauranteLat, dish.restauranteLng))}
                 </span>
               </>
             )}
             {dish.googleRating != null && (
               <>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 500, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', flexShrink: 0, lineHeight: 1 }}>·</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontWeight: 500, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,200,50,0.8)" stroke="none">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
@@ -159,7 +152,7 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
                       <svg width="9" height="9" viewBox="0 0 24 24" fill="rgba(255,255,255,0.65)" stroke="none" style={{ marginLeft: 1 }}>
                         <path d="M12 3C6.5 3 2 6.58 2 11c0 2.5 1.25 4.73 3.2 6.2L3 21l4.3-1.8c1.5.5 3.1.8 4.7.8 5.5 0 10-3.58 10-8S17.5 3 12 3z"/>
                       </svg>
-                      <span style={{ fontSize: 11 }}>{dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(dish.googleRatingCount >= 10000 ? 0 : 1)}k` : dish.googleRatingCount}</span>
+                      <span style={{ fontSize: 12 }}>{dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(dish.googleRatingCount >= 10000 ? 0 : 1)}k` : dish.googleRatingCount}</span>
                     </>
                   )}
                 </span>
