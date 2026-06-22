@@ -152,7 +152,7 @@ const gradient = getCategoryGradient(dish.categoriaNorm)
                       <svg width="9" height="9" viewBox="0 0 24 24" fill="rgba(255,255,255,0.65)" stroke="none" style={{ marginLeft: 1 }}>
                         <path d="M12 3C6.5 3 2 6.58 2 11c0 2.5 1.25 4.73 3.2 6.2L3 21l4.3-1.8c1.5.5 3.1.8 4.7.8 5.5 0 10-3.58 10-8S17.5 3 12 3z"/>
                       </svg>
-                      <span style={{ fontSize: 12 }}>{dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(dish.googleRatingCount >= 10000 ? 0 : 1)}k` : dish.googleRatingCount}</span>
+                      <span style={{ fontSize: 13 }}>{dish.googleRatingCount >= 1000 ? `${(dish.googleRatingCount / 1000).toFixed(dish.googleRatingCount >= 10000 ? 0 : 1)}k` : dish.googleRatingCount}</span>
                     </>
                   )}
                 </span>
