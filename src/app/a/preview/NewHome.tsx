@@ -243,6 +243,17 @@ export default function NewHome({
     } catch {}
   }, [eurekaLiked])
 
+  // Persist eurekaDisliked to localStorage
+  useEffect(() => {
+    try {
+      if (eurekaDisliked.length === 0) {
+        localStorage.removeItem('qc_eureka_disliked')
+      } else {
+        localStorage.setItem('qc_eureka_disliked', JSON.stringify(eurekaDisliked))
+      }
+    } catch {}
+  }, [eurekaDisliked])
+
   // Show milestone modal on first reach of eurekaMax; reset ref when cleared so it can trigger again
   useEffect(() => {
     if (eurekaLiked.length < eurekaMax) {
@@ -986,6 +997,11 @@ export default function NewHome({
         for (const d of dims) next[d] = (next[d] ?? 0) + 1
         return next
       })
+      // Eureka: registrar dislike para enviar al API
+      setEurekaDisliked(prev => {
+        if (prev.some(d => d.id === dish.id)) return prev
+        return [...prev, dish]
+      })
     }
   }, [categoryScores, keywordScores])
 
@@ -1197,7 +1213,7 @@ export default function NewHome({
                 })()}
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)', textAlign: 'center', margin: '18px 0 20px', lineHeight: 1.5 }}>
-                  Junta 3 antojos y descubre qué comer
+                  Junta 5 antojos y descubre qué comer
                 </p>
 
                 {/* CTA */}
@@ -1749,10 +1765,10 @@ export default function NewHome({
               {Array.from({ length: eurekaMax }).map((_, i) => {
                 const dish = eurekaLiked[i]
                 return dish ? (
-                  <div key={dish.id} style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+                  <div key={dish.id} style={{ position: 'relative', width: 48, height: 48, flexShrink: 0 }}>
                     <div
                       onClick={() => setSelectedDish(dish)}
-                      style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
+                      style={{ width: 48, height: 48, borderRadius: 12, overflow: 'hidden', border: '2px solid #F4A623', cursor: 'pointer' }}
                     >
                       {dish.fotoUrl && <img src={dish.fotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
@@ -1773,7 +1789,7 @@ export default function NewHome({
                   </div>
                 ) : (
                   <div key={i} style={{
-                    width: 64, height: 64, flexShrink: 0, borderRadius: 14,
+                    width: 48, height: 48, flexShrink: 0, borderRadius: 12,
                     border: `2px dashed ${isDark ? 'rgba(244,166,35,0.3)' : 'rgba(244,166,35,0.4)'}`,
                     background: isDark ? 'rgba(244,166,35,0.05)' : 'rgba(244,166,35,0.07)',
                   }} />
@@ -2208,10 +2224,10 @@ export default function NewHome({
               </p>
 
               {/* Dish thumbnails */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
                 {eurekaLiked.slice(0, eurekaMax).map((d, i) => (
                   <div key={d.id} style={{
-                    width: 72, height: 72, borderRadius: 14, overflow: 'hidden',
+                    width: 56, height: 56, borderRadius: 12, overflow: 'hidden',
                     flexShrink: 0,
                     boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
                     border: `2px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,

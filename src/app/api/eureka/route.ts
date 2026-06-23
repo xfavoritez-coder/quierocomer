@@ -213,6 +213,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     const {
       dishIds,
+      dislikedIds = [],
       excludeIds = [],
       lat,
       lng,
@@ -221,6 +222,7 @@ export async function POST(req: Request) {
       restaurantId,
     }: {
       dishIds: string[]
+      dislikedIds?: string[]
       excludeIds?: string[]
       lat?: number
       lng?: number
@@ -273,6 +275,27 @@ export async function POST(req: Request) {
     const cats = Object.keys(catFreq)
     const txArray = [...allTxTypes]
     const ingArray = [...allIngs]
+
+    // ── 2b. Perfil de dislikes: tipos y categorías que el usuario rechazó ────
+    const dislikedTypeFreq: Record<string, number> = {}
+    const dislikedCatFreq: Record<string, number> = {}
+    if (dislikedIds.length > 0) {
+      const dislikedRows = await prisma.$queryRaw<any[]>`
+        SELECT d."txDishType", c.name AS "catName", c."normOverride" AS "catNormOverride",
+               d."leafOverride", d.name, r."primaryCategory"
+        FROM "Dish" d
+        JOIN "Category" c ON c.id = d."categoryId"
+        JOIN "Restaurant" r ON r.id = d."restaurantId"
+        WHERE d.id = ANY(${dislikedIds})
+      `
+      for (const row of dislikedRows) {
+        const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
+        dislikedCatFreq[leaf] = (dislikedCatFreq[leaf] ?? 0) + 1
+        if (Array.isArray(row.txDishType)) {
+          for (const t of row.txDishType) dislikedTypeFreq[t] = (dislikedTypeFreq[t] ?? 0) + 1
+        }
+      }
+    }
 
     // ── 3. Asignar slots proporcionales a cada categoría ──────────────────────
     // round proporcional con redistribución de restos (Largest Remainder Method)
@@ -337,21 +360,37 @@ export async function POST(req: Request) {
       score += types.filter(t => catTx.has(t)).length * 3
       score += ings.filter(i => catIng.has(i)).length * 2
 
+      // Penalización por dislikes: tipos rechazados bajan el score
+      for (const t of types) {
+        const disCount = dislikedTypeFreq[t] ?? 0
+        if (disCount >= 2) score -= 6  // fuerte rechazo
+        else if (disCount === 1) score -= 3
+      }
+      // Penalización por categoría rechazada
+      const catDisCount = dislikedCatFreq[leaf] ?? 0
+      if (catDisCount >= 2) score -= 4
+
       if (!byCat[leaf]) byCat[leaf] = []
       byCat[leaf].push({ row, leaf, score })
     }
 
-    // ── 6. Selección proporcional ─────────────────────────────────────────────
+    // ── 6. Selección proporcional (max 2 platos por restaurante) ───────────────
+    const MAX_PER_RESTAURANT = restaurantId ? 999 : 2
     const selected: Candidate[] = []
     const usedIds = new Set<string>()
+    const restaurantCount: Record<string, number> = {}
 
     for (const cat of cats) {
       const n = slots[cat] ?? 0
       if (n === 0) continue
       const pool = (byCat[cat] ?? []).sort((a, b) => b.score - a.score)
-      for (const c of pool.slice(0, n)) {
+      for (const c of pool) {
+        if (selected.filter(s => s.leaf === cat).length >= n) break
+        const rId = c.row.restaurantId as string
+        if ((restaurantCount[rId] ?? 0) >= MAX_PER_RESTAURANT) continue
         selected.push(c)
         usedIds.add(c.row.id)
+        restaurantCount[rId] = (restaurantCount[rId] ?? 0) + 1
       }
     }
 
@@ -363,10 +402,12 @@ export async function POST(req: Request) {
         const pool = (byCat[cat] ?? []).sort((a, b) => b.score - a.score)
         for (const c of pool) {
           if (selected.length >= TARGET) break
-          if (!usedIds.has(c.row.id)) {
-            selected.push(c)
-            usedIds.add(c.row.id)
-          }
+          if (usedIds.has(c.row.id)) continue
+          const rId = c.row.restaurantId as string
+          if ((restaurantCount[rId] ?? 0) >= MAX_PER_RESTAURANT) continue
+          selected.push(c)
+          usedIds.add(c.row.id)
+          restaurantCount[rId] = (restaurantCount[rId] ?? 0) + 1
         }
       }
     }
@@ -390,23 +431,32 @@ export async function POST(req: Request) {
       const catCount: Record<string, number> = {}
       for (const s of selected) catCount[s.leaf] = (catCount[s.leaf] ?? 0) + 1
 
+      // Excluir tipos fuertemente rechazados del fallback
+      const hardDisliked = new Set(Object.entries(dislikedTypeFreq).filter(([, c]) => c >= 2).map(([t]) => t))
+
       for (const row of candidates) {
         if (selected.length >= TARGET) break
         if (usedIds.has(row.id)) continue
         const types: string[] = Array.isArray(row.txDishType) ? row.txDishType : []
         // Debe pertenecer a la familia expandida
         if (!types.some(t => familyExpanded.has(t))) continue
+        // Excluir tipos fuertemente rechazados
+        if (types.some(t => hardDisliked.has(t))) continue
         // Excluir postres/dulces si el usuario no eligió ninguno
         if (!userWantsDulce && types.some(t => DULCE_TX_TYPES.has(t))) continue
         // Respetar el filtro de distancia también en el fallback
         if (lat != null && lng != null && row.lat != null && row.lng != null) {
           if (haversineKm(lat, lng, Number(row.lat), Number(row.lng)) > maxKm) continue
         }
+        // Diversificación por restaurante
+        const rId = row.restaurantId as string
+        if ((restaurantCount[rId] ?? 0) >= MAX_PER_RESTAURANT) continue
         const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
         if ((catCount[leaf] ?? 0) >= 4) continue
         catCount[leaf] = (catCount[leaf] ?? 0) + 1
         selected.push({ row, leaf, score: 0 })
         usedIds.add(row.id)
+        restaurantCount[rId] = (restaurantCount[rId] ?? 0) + 1
       }
     }
 

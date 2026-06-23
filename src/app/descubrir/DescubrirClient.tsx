@@ -131,6 +131,7 @@ export default function DescubrirClient() {
     f: FilterBarFilters,
     isRefetch = false,
     restaurantId?: string | null,
+    dislikedIds?: string[],
   ) => {
     if (!dishIds.length) return
     if (isRefetch) setRefetching(true)
@@ -140,7 +141,7 @@ export default function DescubrirClient() {
       const res = await fetch('/api/eureka', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dishIds, lat: loc.lat, lng: loc.lng, maxKm, diet, restaurantId: restaurantId ?? undefined }),
+        body: JSON.stringify({ dishIds, dislikedIds: dislikedIds ?? [], lat: loc.lat, lng: loc.lng, maxKm, diet, restaurantId: restaurantId ?? undefined }),
       })
       const data = await res.json()
       setAllRecommended(data.dishes ?? [])
@@ -173,7 +174,15 @@ export default function DescubrirClient() {
 
         const scoped = localStorage.getItem('qc_eureka_scoped_restaurant') ?? null
         if (scoped) setScopedRestaurantId(scoped)
-        await fetchRecommendations(likedDishes.map(d => d.id), loc, initFilters, false, scoped)
+
+        // Leer dislikes para enviar al API
+        let dislikedIds: string[] = []
+        try {
+          const disRaw = localStorage.getItem('qc_eureka_disliked')
+          if (disRaw) dislikedIds = (JSON.parse(disRaw) as FeedDish[]).map(d => d.id)
+        } catch {}
+
+        await fetchRecommendations(likedDishes.map(d => d.id), loc, initFilters, false, scoped, dislikedIds)
       } catch {}
       setLoading(false)
       initialLoadDone.current = true
@@ -254,7 +263,7 @@ export default function DescubrirClient() {
 
   const q = search.toLowerCase()
   const cappedRecommended = (() => {
-    const results = allRecommended.slice(0, 4)
+    const results = allRecommended.slice(0, 10)
     if (filters.nearby && userLocation) {
       return [...results].sort((a, b) => {
         const da = a.restauranteLat != null && a.restauranteLng != null ? distKm(userLocation.lat, userLocation.lng, a.restauranteLat, a.restauranteLng) : Infinity
@@ -385,7 +394,7 @@ export default function DescubrirClient() {
           <p style={{ fontSize: 40, margin: '0 0 16px' }}>🍽️</p>
           <p style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px' }}>Sin selecciones aún</p>
           <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)', margin: '0 0 24px' }}>
-            Vuelve al feed, desliza 6 platos que te gusten y presiona Descubrir ✨
+            Vuelve al feed, desliza 5 platos que te gusten y presiona Descubrir ✨
           </p>
           <a href="/" onClick={(e) => { e.preventDefault(); goHome() }} style={{
             display: 'inline-block', padding: '12px 24px', borderRadius: 14,
@@ -571,8 +580,8 @@ export default function DescubrirClient() {
           </div>
 
           {liked.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 28, padding: '0 14px' }}>
-              {Array.from({ length: 3 }).map((_, i) => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5, marginBottom: 28, padding: '0 14px' }}>
+              {Array.from({ length: 5 }).map((_, i) => {
                 const d = liked[i]
                 if (d) return (
                   <div key={d.id} style={{ position: 'relative', aspectRatio: '1' }}>
