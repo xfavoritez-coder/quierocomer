@@ -481,9 +481,17 @@ export default function DescubrirClient() {
               {(() => {
                 const d = visibleDishes[Math.min(stripPage, visibleDishes.length - 1)]
                 if (!d) return null
+                // Precargar imágenes adyacentes
+                const preloadIdxs = [stripPage - 1, stripPage + 1, stripPage + 2].filter(i => i >= 0 && i < totalCards)
                 return (
                   <div style={{ padding: '0 14px', marginBottom: 28, overflow: 'hidden' }}>
+                    {/* Preload next/prev images */}
+                    {preloadIdxs.map(i => {
+                      const url = visibleDishes[i]?.fotoUrl
+                      return url ? <link key={i} rel="preload" as="image" href={url} /> : null
+                    })}
                     <div
+                      key={d.id}
                       ref={swipeCardRef}
                       onTouchStart={e => {
                         swipeDragStartX.current = e.touches[0].clientX
@@ -527,7 +535,7 @@ export default function DescubrirClient() {
                         touchAction: 'pan-y',
                       }}>
                       {d.fotoUrl
-                        ? <img src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        ? <img key={d.fotoUrl} src={d.fotoUrl} alt={d.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         : <div style={{ width: '100%', height: '100%', background: isDark ? '#1e1e1e' : '#e8e8e8' }} />
                       }
                       <span style={{
