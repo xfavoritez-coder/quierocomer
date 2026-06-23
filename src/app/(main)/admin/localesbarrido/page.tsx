@@ -12,6 +12,9 @@ interface Row {
   website: string | null;
   cartaProvider: string | null;
   websiteIsOrderUrl: boolean;
+  isActive: boolean;
+  isDemo: boolean;
+  _count: { dishes: number };
 }
 
 interface RowState {
@@ -35,7 +38,9 @@ export default function LocalesBarrido() {
       .then(r => r.json())
       .then((data: { restaurants?: Row[] } | Row[]) => {
         const list: Row[] = Array.isArray(data) ? data : [];
-        const sorted = list.sort((a, b) => a.name.localeCompare(b.name, "es"));
+        const sorted = list
+          .filter(r => r.isActive && !r.isDemo && r._count.dishes > 0)
+          .sort((a, b) => a.name.localeCompare(b.name, "es"));
         setRows(sorted);
         const init: Record<string, RowState> = {};
         sorted.forEach(r => {
