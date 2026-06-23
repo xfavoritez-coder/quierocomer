@@ -781,6 +781,9 @@ export default function NewHome({
       const vectorRank = effectiveVectorIds.length > 0 && !activeCategory
         ? new Map(effectiveVectorIds.map((id, i) => [id, 1 - i / effectiveVectorIds.length]))
         : undefined
+      // Meal-time boost: entre 8-12h los platos de desayuno suben, el resto baja
+      const hour = new Date().getHours()
+      const isBreakfastTime = hour >= 8 && hour < 12
       combined = filtered
         .map(d => {
           let score = 0
@@ -793,6 +796,10 @@ export default function NewHome({
           } else {
             score += popBase
             score += Math.min((profile.categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
+          }
+          // Boost por horario: 8-12h → desayuno +2, resto penalizado
+          if (isBreakfastTime) {
+            score += d.mealTime === 'desayuno' ? 2 : -0.5
           }
           // Ruido determinístico por sesión: misma calidad de platos, orden distinto cada visita
           score += seededRandom(shuffleSeed, d.id) * 0.18
