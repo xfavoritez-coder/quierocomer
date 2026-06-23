@@ -410,20 +410,18 @@ export default function NewHome({
 
   // Location: load saved first, then ask GPS if none saved
   useEffect(() => {
-    // Restore saved location from localStorage — silently, without enabling the nearby filter.
-    // quickNearby only activates when the user explicitly taps the pill.
+    // Restore saved location from localStorage — always activate quickNearby when location exists.
     try {
       const saved = localStorage.getItem('qc_location')
       if (saved) {
         const { lat, lng, label } = JSON.parse(saved)
         setUserLocation({ lat, lng })
         setGpsLabel(label)
-        // Restaurar filtros guardados (nearby, maxKm) para que el feed respete el radio elegido
+        setQuickNearby(true) // si guardó una dirección, siempre activar "cerca de ti"
         try {
           const savedFilters = localStorage.getItem('qc_active_filters')
           if (savedFilters) {
-            const { nearby, maxKm } = JSON.parse(savedFilters)
-            if (nearby) setQuickNearby(true)
+            const { maxKm } = JSON.parse(savedFilters)
             if (maxKm != null) setFilterMaxKm(maxKm)
           }
         } catch {}

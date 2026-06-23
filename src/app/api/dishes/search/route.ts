@@ -46,9 +46,11 @@ async function searchViaMeilisearch(params: {
   }
 
   const client = getMeiliClient()
-  const result = await client.index('dishes').search<MeiliDish>(q || '', {
-    filter: filters.join(' AND '),
-    sort: ['isHero:desc', 'popularityScore:desc', 'createdAtTs:desc'],
+  const searchOpts = {
+    sort: ['isHero:desc', 'popularityScore:desc', 'createdAtTs:desc'] as string[],
+    // 'all' = todos los tokens deben aparecer — evita que "Horus Vegan" matchee
+    // cualquier plato con solo "vegan" en descripción de otro restaurante
+    matchingStrategy: (q ? 'all' : 'last') as 'all' | 'last',
     limit: 5000,
     attributesToRetrieve: [
       'id', 'name', 'description', 'price', 'discountPrice', 'photos',
@@ -62,7 +64,21 @@ async function searchViaMeilisearch(params: {
       'primaryCategory', 'avgRating', 'ratingCount', 'commentCount', 'popularityScore',
       '_geo',
     ],
+  }
+
+  let result = await client.index('dishes').search<MeiliDish>(q || '', {
+    filter: filters.join(' AND '),
+    ...searchOpts,
   })
+
+  // Si hay query de texto y no hay resultados, reintentar sin filtros de dieta/distancia.
+  // Permite buscar "Empanadazo" aunque el filtro veggie esté activo o el local esté lejos.
+  if (q && result.hits.length === 0) {
+    result = await client.index('dishes').search<MeiliDish>(q, {
+      filter: 'isEligibleForFeed = true',
+      ...searchOpts,
+    })
+  }
 
   const seenKey = new Set<string>()
   let dishes: FeedDish[] = []
