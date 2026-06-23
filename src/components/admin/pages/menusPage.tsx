@@ -658,16 +658,18 @@ export default function AdminMenus() {
     const newActive = !dish.isActive;
     // Optimistic update
     setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: newActive } : d));
-    if (selectedDish?.id === dish.id) setSelectedDish({ ...selectedDish, isActive: newActive });
+    if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, isActive: newActive } : prev);
     try {
       const res = await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: newActive }) });
       if (!res.ok) {
         // Revert on error
         setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: dish.isActive } : d));
+        if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, isActive: dish.isActive } : prev);
         console.error("Toggle failed:", await res.text());
       }
     } catch (e) {
       setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: dish.isActive } : d));
+      if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, isActive: dish.isActive } : prev);
       console.error("Toggle error:", e);
     }
   };

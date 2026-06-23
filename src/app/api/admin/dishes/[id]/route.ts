@@ -114,7 +114,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const changes = Object.keys(body).filter(k => k !== "restaurantId");
     logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes });
 
-    revalidateQrCache();
+    try { revalidateQrCache(); } catch {}
     syncDishToMeilisearch(id).catch(() => {});
     return NextResponse.json(dish);
   } catch (e: any) {
@@ -139,7 +139,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     // Soft delete: mark as inactive + set deletedAt
     const deleted = await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() }, select: { name: true } });
     logActivity(existing.restaurantId, "dish_delete", { dishId: id, dishName: deleted.name });
-    revalidateQrCache();
+    try { revalidateQrCache(); } catch {}
     syncDishToMeilisearch(id).catch(() => {}); // updates isEligibleForFeed → false
     return NextResponse.json({ ok: true });
   } catch (e: any) {
