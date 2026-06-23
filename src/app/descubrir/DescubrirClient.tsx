@@ -491,7 +491,6 @@ export default function DescubrirClient() {
                       return url ? <link key={i} rel="preload" as="image" href={url} /> : null
                     })}
                     <div
-                      key={d.id}
                       ref={swipeCardRef}
                       onTouchStart={e => {
                         swipeDragStartX.current = e.touches[0].clientX
