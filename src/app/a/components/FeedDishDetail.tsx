@@ -88,6 +88,7 @@ function getPedirOnlineUrl(
   cartaProvider?: string | null,
   websiteIsOrderUrl?: boolean,
 ): string | null {
+  cartaProvider = normalizeProvider(cartaProvider)
   // 1. Si el proveedor es delivery conocido → usar su URL o fallback a la plataforma
   if (cartaProvider && PEDIR_ONLINE_PROVIDERS.has(cartaProvider)) {
     return website || DELIVERY_FALLBACK_URLS[cartaProvider] || null
@@ -106,6 +107,7 @@ function getPedirOnlineUrl(
 }
 
 function detectDeliveryProvider(website: string, cartaProvider?: string | null): string {
+  cartaProvider = normalizeProvider(cartaProvider)
   if (cartaProvider && PEDIR_ONLINE_PROVIDERS.has(cartaProvider)) return cartaProvider
   try {
     const host = new URL(website).hostname.replace(/^www\./, '')
@@ -129,7 +131,15 @@ function getPedirOnlineStyle(provider: string, isDark: boolean): { color: string
 
 type OrderInfo = { url: string; type: 'delivery' | 'menu' | 'website' | 'social'; socialName?: string }
 
+const ALL_KNOWN_PROVIDERS = ['Justo', 'Rappi', 'UberEats', 'Mercat', 'Fudo', 'OlaClick', 'Gourmedia', 'Queresto', 'Toteat', 'InfluyeApp']
+function normalizeProvider(p?: string | null): string | null {
+  if (!p) return null
+  const lower = p.toLowerCase()
+  return ALL_KNOWN_PROVIDERS.find(k => k.toLowerCase() === lower) ?? p
+}
+
 function getOrderInfo(website: string | null | undefined, isOrderUrl?: boolean, cartaProvider?: string | null, slug?: string | null): OrderInfo | null {
+  cartaProvider = normalizeProvider(cartaProvider)
   if (!website) {
     // Fallback: si tiene cartaProvider de carta digital pero sin URL externa, usar la carta en QC
     if (cartaProvider && MENU_PROVIDERS.has(cartaProvider) && slug) {
