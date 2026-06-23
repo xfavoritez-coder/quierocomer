@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isSuperAdmin, checkAdminAuth, authErrorResponse } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 
 const PROVIDER_PATTERNS: [RegExp, string][] = [
   [/getjusto\.com|justo\.cl|justo\.pe|\/pedir/i, "Justo"],
@@ -19,9 +19,9 @@ function detectProvider(url: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await checkAdminAuth(req);
-  if ("error" in auth) return authErrorResponse(auth.error);
-  if (!isSuperAdmin(auth.user.email)) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+  if (!isSuperAdmin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
