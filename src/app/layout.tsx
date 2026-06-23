@@ -11,6 +11,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <head>
         <link rel="icon" href="/logo.png" type="image/png" />
+        <link rel="alternate" hrefLang="es" href="https://quierocomer.cl" />
+        <link rel="alternate" hrefLang="es-CL" href="https://quierocomer.cl" />
+        <link rel="alternate" hrefLang="x-default" href="https://quierocomer.cl" />
         <link rel="preconnect" href="https://awbeyxfqtrdfhengabmw.supabase.co" />
         <link rel="preconnect" href="https://cdn.bistrify.app" />
         <link rel="dns-prefetch" href="https://cdn.mer-cat.com" />

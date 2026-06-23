@@ -11,6 +11,30 @@ export const revalidate = 3600
 type Props = { params: Promise<{ restaurantSlug: string }> }
 
 // ---------------------------------------------------------------------------
+// Category slug map
+// ---------------------------------------------------------------------------
+
+const CATEGORY_SLUGS: Record<string, string> = {
+  'sushi': 'Sushi',
+  'pizza': 'Pizza',
+  'burger': 'Burger',
+  'ramen': 'Ramen',
+  'pasta': 'Pasta',
+  'tacos': 'Tacos',
+  'empanadas': 'Empanadas',
+  'mariscos': 'Mariscos',
+  'pollo': 'Pollo',
+  'vegano': 'Vegano',
+  'vegetariano': 'Vegetariano',
+  'helados': 'Helados',
+  'cafe': 'Café',
+  'postres': 'Postres',
+  'ensaladas': 'Ensaladas',
+  'sandwiches': 'Sándwiches',
+  'churrascos': 'Churrascos',
+}
+
+// ---------------------------------------------------------------------------
 // Data helpers
 // ---------------------------------------------------------------------------
 
@@ -51,6 +75,33 @@ async function getCommuneRestaurants(communeSlug: string) {
   })
 }
 
+async function getGlobalCategoryDishes(category: string, categoryLabel: string) {
+  return prisma.dish.findMany({
+    where: {
+      isActive: true,
+      hiddenFromFeed: false,
+      deletedAt: null,
+      OR: [
+        { txCuisine: { has: category } },
+        { txDishType: { has: category } },
+        { txCuisine: { has: categoryLabel } },
+        { txDishType: { has: categoryLabel } },
+      ],
+      restaurant: { isActive: true, isDemo: false },
+    },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      photos: true,
+      dishDiet: true,
+      restaurant: { select: { name: true, slug: true, commune: true } },
+    },
+    orderBy: { position: 'asc' },
+    take: 100,
+  })
+}
+
 // ---------------------------------------------------------------------------
 // generateStaticParams
 // ---------------------------------------------------------------------------
@@ -61,9 +112,14 @@ export async function generateStaticParams() {
     select: { communeSlug: true },
     distinct: ['communeSlug'],
   })
-  return rows
+  const communeParams = rows
     .filter(r => r.communeSlug)
     .map(r => ({ restaurantSlug: r.communeSlug as string }))
+
+  // Global category pages
+  const categoryParams = Object.keys(CATEGORY_SLUGS).map(cat => ({ restaurantSlug: cat }))
+
+  return [...communeParams, ...categoryParams]
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +128,27 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { restaurantSlug } = await params
+
+  // Check if slug is a global category
+  if (CATEGORY_SLUGS[restaurantSlug]) {
+    const categoryLabel = CATEGORY_SLUGS[restaurantSlug]
+    const title = `${categoryLabel} en Chile · QuieroComer.cl`
+    const description = `Los mejores platos de ${categoryLabel.toLowerCase()} en restaurantes de Chile. Fotos reales, precios actualizados.`
+    return {
+      title,
+      description,
+      alternates: { canonical: `${BASE}/${restaurantSlug}` },
+      openGraph: {
+        title,
+        description,
+        url: `${BASE}/${restaurantSlug}`,
+        type: 'website',
+        images: [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
+      },
+      twitter: { card: 'summary_large_image', title, description },
+    }
+  }
+
   const match = await getCommuneBySlug(restaurantSlug)
   if (!match) return { title: 'QuieroComer' }
 
@@ -83,8 +160,108 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `${BASE}/${restaurantSlug}` },
-    openGraph: { title, description, url: `${BASE}/${restaurantSlug}` },
+    openGraph: {
+      title,
+      description,
+      url: `${BASE}/${restaurantSlug}`,
+      type: 'website',
+      images: [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
+    },
+    twitter: { card: 'summary_large_image', title, description },
   }
+}
+
+// ---------------------------------------------------------------------------
+// GlobalCategoryPage component
+// ---------------------------------------------------------------------------
+
+async function GlobalCategoryPage({ categorySlug }: { categorySlug: string }) {
+  const categoryLabel = CATEGORY_SLUGS[categorySlug]!
+  const dishes = await getGlobalCategoryDishes(categorySlug, categoryLabel)
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `${categoryLabel} en Chile`,
+    description: `Los mejores platos de ${categoryLabel.toLowerCase()} en restaurantes de Chile`,
+    numberOfItems: dishes.length,
+    itemListElement: dishes.slice(0, 20).map((d, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: d.name,
+      url: `${BASE}/${d.restaurant.slug}/${slugify(d.name)}`,
+    })),
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <main className="min-h-screen bg-white dark:bg-zinc-950">
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-zinc-900 dark:to-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="max-w-5xl mx-auto px-4 py-10">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
+              <Link href="/" className="hover:underline">QuieroComer.cl</Link>
+              {' › '}{categoryLabel}
+            </p>
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
+              {categoryLabel} en Chile
+            </h1>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-300">
+              {dishes.length} plato{dishes.length !== 1 ? 's' : ''} encontrado{dishes.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          {dishes.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {dishes.map((dish, idx) => (
+                <Link
+                  key={dish.id}
+                  href={`/${dish.restaurant.slug}/${slugify(dish.name)}`}
+                  className="group rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 hover:shadow-md transition-shadow bg-white dark:bg-zinc-900"
+                >
+                  <div className="aspect-square bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
+                    {dish.photos[0] ? (
+                      <Image
+                        src={dish.photos[0]}
+                        alt={dish.name}
+                        fill
+                        priority={idx === 0}
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl text-zinc-300">🍽</div>
+                    )}
+                    {dish.dishDiet === 'VEGAN' && (
+                      <span className="absolute top-1.5 left-1.5 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full font-medium">V</span>
+                    )}
+                    {dish.dishDiet === 'VEGETARIAN' && (
+                      <span className="absolute top-1.5 left-1.5 text-xs bg-lime-600 text-white px-1.5 py-0.5 rounded-full font-medium">Veg</span>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 line-clamp-2 leading-snug">{dish.name}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">{dish.restaurant.name}</p>
+                    {dish.restaurant.commune && (
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{dish.restaurant.commune}</p>
+                    )}
+                    <p className="text-sm font-semibold text-orange-600 dark:text-orange-400 mt-1">
+                      ${dish.price.toLocaleString('es-CL')}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-zinc-500 dark:text-zinc-400">
+              Aún no hay platos de {categoryLabel.toLowerCase()} cargados.
+            </p>
+          )}
+        </div>
+      </main>
+    </>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +270,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CommuneOrNotFoundPage({ params }: Props) {
   const { restaurantSlug } = await params
+
+  // Check if slug is a global category
+  if (CATEGORY_SLUGS[restaurantSlug]) {
+    return <GlobalCategoryPage categorySlug={restaurantSlug} />
+  }
+
   const match = await getCommuneBySlug(restaurantSlug)
   if (!match) notFound()
 
@@ -184,7 +367,7 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
                 Platos destacados en {commune}
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {dishes.map(dish => (
+                {dishes.map((dish, idx) => (
                   <Link
                     key={dish.id}
                     href={`/${dish.restaurant.slug}/${slugify(dish.name)}`}
@@ -196,6 +379,7 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
                           src={dish.photos[0]}
                           alt={dish.name}
                           fill
+                          priority={idx === 0}
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                         />

@@ -16,6 +16,28 @@ const BASE = 'https://quierocomer.cl'
 type Props = { params: Promise<{ restaurantSlug: string; dishSlug: string }> }
 
 // ---------------------------------------------------------------------------
+// Category slug map
+// ---------------------------------------------------------------------------
+
+const CATEGORY_SLUGS: Record<string, string> = {
+  'sushi': 'Sushi',
+  'pizza': 'Pizza',
+  'burger': 'Burger',
+  'ramen': 'Ramen',
+  'pasta': 'Pasta',
+  'tacos': 'Tacos',
+  'empanadas': 'Empanadas',
+  'mariscos': 'Mariscos',
+  'pollo': 'Pollo',
+  'helados': 'Helados',
+  'cafe': 'Café',
+  'postres': 'Postres',
+  'ensaladas': 'Ensaladas',
+  'sandwiches': 'Sándwiches',
+  'churrascos': 'Churrascos',
+}
+
+// ---------------------------------------------------------------------------
 // Commune detection helpers
 // ---------------------------------------------------------------------------
 
@@ -44,6 +66,29 @@ const restaurantInCommuneCache = unstable_cache(
   ['restaurant-in-commune'],
   { revalidate: 3600 }
 )
+
+async function getCommuneDishesByCategory(communeSlug: string, categorySlug: string, categoryLabel: string) {
+  return prisma.dish.findMany({
+    where: {
+      isActive: true,
+      hiddenFromFeed: false,
+      deletedAt: null,
+      OR: [
+        { txCuisine: { has: categorySlug } },
+        { txDishType: { has: categorySlug } },
+        { txCuisine: { has: categoryLabel } },
+        { txDishType: { has: categoryLabel } },
+      ],
+      restaurant: { communeSlug, isActive: true, isDemo: false },
+    },
+    select: {
+      id: true, name: true, price: true, photos: true, dishDiet: true,
+      restaurant: { select: { name: true, slug: true } },
+    },
+    orderBy: { position: 'asc' },
+    take: 80,
+  })
+}
 
 async function getCommuneDishesFiltered(communeSlug: string, dietFilter?: 'VEGAN' | 'VEGETARIAN') {
   return prisma.dish.findMany({
@@ -136,16 +181,32 @@ async function VeganCommunePage({ communeSlug, commune }: { communeSlug: string;
   const dishes = await getCommuneDishesFiltered(communeSlug, 'VEGAN')
 
   const title = `Opciones veganas en ${commune} — QuieroComer`
-  const jsonLd = {
+  const itemListLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: title,
     numberOfItems: dishes.length,
+    itemListElement: dishes.slice(0, 20).map((d, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: d.name,
+      url: `${BASE}/${d.restaurant.slug}/${slugify(d.name)}`,
+    })),
+  }
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'QuieroComer.cl', item: BASE },
+      { '@type': 'ListItem', position: 2, name: commune, item: `${BASE}/${communeSlug}` },
+      { '@type': 'ListItem', position: 3, name: 'Vegano', item: `${BASE}/${communeSlug}/vegano` },
+    ],
   }
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <main className="min-h-screen bg-white dark:bg-zinc-950">
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-zinc-900 dark:to-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
           <div className="max-w-5xl mx-auto px-4 py-10">
@@ -174,16 +235,32 @@ async function VegetarianCommunePage({ communeSlug, commune }: { communeSlug: st
   const dishes = await getCommuneDishesFiltered(communeSlug, 'VEGETARIAN')
 
   const title = `Opciones vegetarianas en ${commune} — QuieroComer`
-  const jsonLd = {
+  const itemListLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: title,
     numberOfItems: dishes.length,
+    itemListElement: dishes.slice(0, 20).map((d, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: d.name,
+      url: `${BASE}/${d.restaurant.slug}/${slugify(d.name)}`,
+    })),
+  }
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'QuieroComer.cl', item: BASE },
+      { '@type': 'ListItem', position: 2, name: commune, item: `${BASE}/${communeSlug}` },
+      { '@type': 'ListItem', position: 3, name: 'Vegetariano', item: `${BASE}/${communeSlug}/vegetariano` },
+    ],
   }
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <main className="min-h-screen bg-white dark:bg-zinc-950">
         <div className="bg-gradient-to-br from-lime-50 to-green-50 dark:from-zinc-900 dark:to-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
           <div className="max-w-5xl mx-auto px-4 py-10">
@@ -208,6 +285,68 @@ async function VegetarianCommunePage({ communeSlug, commune }: { communeSlug: st
   )
 }
 
+async function CategoryCommunePage({
+  communeSlug,
+  commune,
+  categorySlug,
+}: {
+  communeSlug: string
+  commune: string
+  categorySlug: string
+}) {
+  const categoryLabel = CATEGORY_SLUGS[categorySlug]!
+  const dishes = await getCommuneDishesByCategory(communeSlug, categorySlug, categoryLabel)
+
+  const itemListLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `${categoryLabel} en ${commune}`,
+    numberOfItems: dishes.length,
+    itemListElement: dishes.slice(0, 20).map((d, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: d.name,
+      url: `${BASE}/${d.restaurant.slug}/${slugify(d.name)}`,
+    })),
+  }
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'QuieroComer.cl', item: BASE },
+      { '@type': 'ListItem', position: 2, name: commune, item: `${BASE}/${communeSlug}` },
+      { '@type': 'ListItem', position: 3, name: categoryLabel, item: `${BASE}/${communeSlug}/${categorySlug}` },
+    ],
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <main className="min-h-screen bg-white dark:bg-zinc-950">
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-zinc-900 dark:to-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="max-w-5xl mx-auto px-4 py-10">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
+              <Link href="/" className="hover:underline">QuieroComer.cl</Link>
+              {' › '}<Link href={`/${communeSlug}`} className="hover:underline">{commune}</Link>
+              {' › '}{categoryLabel}
+            </p>
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
+              {categoryLabel} en {commune}
+            </h1>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-300">
+              {dishes.length} plato{dishes.length !== 1 ? 's' : ''} encontrado{dishes.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <DishGrid dishes={dishes} label={`${categoryLabel} en ${commune}:`} />
+        </div>
+      </main>
+    </>
+  )
+}
+
 async function RestaurantInCommunePage({
   restaurant,
   commune,
@@ -219,18 +358,33 @@ async function RestaurantInCommunePage({
 }) {
   const dishes = await getRestaurantDishes(restaurant.slug)
 
-  const jsonLd = {
+  const restaurantLd = {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     name: restaurant.name,
-    address: restaurant.address ?? undefined,
+    url: `${BASE}/${communeSlug}/${restaurant.slug}`,
+    address: restaurant.address
+      ? { '@type': 'PostalAddress', streetAddress: restaurant.address, addressLocality: commune, addressCountry: 'CL' }
+      : undefined,
     ...(restaurant.logoUrl ? { image: restaurant.logoUrl } : {}),
-    ...(restaurant.googleRating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: restaurant.googleRating, reviewCount: restaurant.googleRatingCount ?? 1 } } : {}),
+    ...(restaurant.googleRating
+      ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: restaurant.googleRating, reviewCount: restaurant.googleRatingCount ?? 1 } }
+      : {}),
+  }
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'QuieroComer.cl', item: BASE },
+      { '@type': 'ListItem', position: 2, name: commune, item: `${BASE}/${communeSlug}` },
+      { '@type': 'ListItem', position: 3, name: restaurant.name, item: `${BASE}/${communeSlug}/${restaurant.slug}` },
+    ],
   }
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <main className="min-h-screen bg-white dark:bg-zinc-950">
         <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-zinc-900 dark:to-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
           <div className="max-w-5xl mx-auto px-4 py-10">
@@ -379,11 +533,15 @@ export async function generateStaticParams() {
     params.push({ restaurantSlug: r.communeSlug, dishSlug: r.slug })
   }
 
-  // Vegan/vegetarian pages for each commune
+  // Vegan/vegetarian + category pages for each commune
   const communes = [...new Set(communeRestaurantRows.map(r => r.communeSlug).filter(Boolean))]
   for (const c of communes) {
     params.push({ restaurantSlug: c as string, dishSlug: 'vegano' })
     params.push({ restaurantSlug: c as string, dishSlug: 'vegetariano' })
+    // Category pages
+    for (const cat of Object.keys(CATEGORY_SLUGS)) {
+      params.push({ restaurantSlug: c as string, dishSlug: cat })
+    }
   }
 
   return params
@@ -417,6 +575,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
 
+    // Check if dishSlug is a category
+    if (CATEGORY_SLUGS[dishSlug]) {
+      const categoryLabel = CATEGORY_SLUGS[dishSlug]
+      const title = `${categoryLabel} en ${communeName} · QuieroComer.cl`
+      const description = `Los mejores platos de ${categoryLabel.toLowerCase()} en restaurantes de ${communeName}. Fotos reales y precios actualizados.`
+      return {
+        title,
+        description,
+        alternates: { canonical: `${BASE}/${restaurantSlug}/${dishSlug}` },
+        openGraph: {
+          title,
+          description,
+          url: `${BASE}/${restaurantSlug}/${dishSlug}`,
+          type: 'website',
+          images: [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
+        },
+        twitter: { card: 'summary_large_image', title, description },
+      }
+    }
+
     // Check if dishSlug is a restaurant in this commune
     const restaurant = await restaurantInCommuneCache(restaurantSlug, dishSlug)
     if (restaurant) {
@@ -429,8 +607,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         openGraph: {
           title,
           description,
-          ...(restaurant.logoUrl ? { images: [{ url: restaurant.logoUrl }] } : {}),
+          url: `${BASE}/${restaurantSlug}/${dishSlug}`,
+          type: 'website',
+          images: restaurant.logoUrl
+            ? [{ url: restaurant.logoUrl, width: 400, height: 400 }]
+            : [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
         },
+        twitter: { card: 'summary_large_image', title, description },
       }
     }
 
@@ -474,6 +657,11 @@ export default async function DishSlugPage({ params }: Props) {
     }
     if (lowerDish === 'vegetariano' || lowerDish === 'vegetariana') {
       return <VegetarianCommunePage communeSlug={communeSlug} commune={commune} />
+    }
+
+    // Check if dishSlug is a category
+    if (CATEGORY_SLUGS[dishSlug]) {
+      return <CategoryCommunePage communeSlug={communeSlug} commune={commune} categorySlug={dishSlug} />
     }
 
     const restaurant = await restaurantInCommuneCache(communeSlug, dishSlug)

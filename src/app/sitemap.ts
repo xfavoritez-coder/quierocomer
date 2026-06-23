@@ -4,6 +4,11 @@ import { slugify } from '@/lib/slugify'
 
 const BASE = 'https://quierocomer.cl'
 
+const CATEGORY_SLUGS = [
+  'sushi', 'pizza', 'burger', 'ramen', 'pasta', 'tacos',
+  'empanadas', 'mariscos', 'pollo', 'vegano', 'vegetariano',
+]
+
 // Cached 24h — Google doesn't need real-time sitemaps
 export const revalidate = 86400
 
@@ -32,12 +37,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   ])
 
+  const now = new Date()
+
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, changeFrequency: 'daily', priority: 1.0 },
-    { url: `${BASE}/planes`, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE}/funciones`, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE}/descubrir`, changeFrequency: 'weekly', priority: 0.5 },
+    { url: BASE, changeFrequency: 'daily', priority: 1.0, lastModified: now },
+    { url: `${BASE}/planes`, changeFrequency: 'monthly', priority: 0.7, lastModified: now },
+    { url: `${BASE}/funciones`, changeFrequency: 'monthly', priority: 0.6, lastModified: now },
+    { url: `${BASE}/descubrir`, changeFrequency: 'weekly', priority: 0.5, lastModified: now },
   ]
+
+  // Global category pages
+  const globalCategoryPages: MetadataRoute.Sitemap = CATEGORY_SLUGS.map(cat => ({
+    url: `${BASE}/${cat}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
 
   const restaurantPages: MetadataRoute.Sitemap = restaurants.map(r => ({
     url: `${BASE}/qr/${r.slug}`,
@@ -77,6 +92,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     },
+    // Category pages per commune
+    ...CATEGORY_SLUGS.map(cat => ({
+      url: `${BASE}/${r.communeSlug}/${cat}`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })),
   ])
 
   // Commune → restaurant pages
@@ -89,6 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
+    ...globalCategoryPages,
     ...restaurantPages,
     ...communePages,
     ...communeRestaurantPages,

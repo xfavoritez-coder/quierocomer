@@ -197,19 +197,27 @@ export default function NewHome({
     if (typeof window === 'undefined') return []
     try {
       const raw = localStorage.getItem('qc_eureka_liked')
-      if (raw) return (JSON.parse(raw) as FeedDish[]).slice(0, 3)
+      if (raw) return (JSON.parse(raw) as FeedDish[]).slice(0, 5)
     } catch {}
     return []
   })
-  const eurekaMax = 3
-  const eurekaMaxRef = useRef(3)
+  const eurekaMax = 5
+  const eurekaMaxRef = useRef(5)
+  const [eurekaDisliked, setEurekaDisliked] = useState<FeedDish[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem('qc_eureka_disliked')
+      if (raw) return JSON.parse(raw) as FeedDish[]
+    } catch {}
+    return []
+  })
   const [showEurekaModal, setShowEurekaModal] = useState(false)
-  // Pre-init to true when restoring 3 dishes — prevents modal re-trigger on return from /descubrir
+  // Pre-init to true when restoring 5 dishes — prevents modal re-trigger on return from /descubrir
   const [_eurekaAlreadyShown] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
     try {
       const raw = localStorage.getItem('qc_eureka_liked')
-      return !!raw && JSON.parse(raw).length >= 3
+      return !!raw && JSON.parse(raw).length >= 5
     } catch { return false }
   })
   const eurekaModalShownRef = useRef(_eurekaAlreadyShown)
