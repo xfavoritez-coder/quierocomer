@@ -797,6 +797,7 @@ function DesktopDishContent({
               {(() => {
                 const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider, dish.restauranteSlug)
                 if (!orderInfo || orderInfo.type === 'delivery' || orderInfo.type === 'social') return null
+                if (orderInfo.url.startsWith('/qr/')) return null // Ya cubierto por "Ver carta QR"
                 const orange = isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'
                 return (
                   <a href={orderInfo.url} target="_blank" rel="noopener noreferrer"
@@ -1257,6 +1258,7 @@ function DishSlide({
           {(() => {
             const orderInfo = getOrderInfo(dish.restauranteWebsite, dish.restauranteWebsiteIsOrderUrl, dish.restauranteCartaProvider, dish.restauranteSlug)
             if (!orderInfo || orderInfo.type === 'delivery' || orderInfo.type === 'social') return null
+            if (orderInfo.url.startsWith('/qr/')) return null // Ya cubierto por "Ver carta QR"
             const orange = isDark ? 'rgba(251,146,60,0.9)' : '#ea6c0a'
             return (
               <a href={orderInfo.url} target="_blank" rel="noopener noreferrer"
