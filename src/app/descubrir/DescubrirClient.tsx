@@ -93,6 +93,7 @@ export default function DescubrirClient() {
   const [isFallbackGlobal, setIsFallbackGlobal] = useState(false)
   const swipeCardRef = useRef<HTMLDivElement>(null)
   const swipeDragStartX = useRef(0)
+  const swipeDragStartY = useRef(0)
   const swipeDragging = useRef(false)
   const swipeIsFirstRender = useRef(true)
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('left')
@@ -486,6 +487,7 @@ export default function DescubrirClient() {
                       ref={swipeCardRef}
                       onTouchStart={e => {
                         swipeDragStartX.current = e.touches[0].clientX
+                        swipeDragStartY.current = e.touches[0].clientY
                         swipeDragging.current = true
                         if (swipeCardRef.current) swipeCardRef.current.style.transition = 'none'
                       }}
@@ -511,7 +513,8 @@ export default function DescubrirClient() {
                         } else {
                           card.style.transition = 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
                           card.style.transform = 'translateX(0)'
-                          if (Math.abs(delta) < 10) { e.preventDefault(); handleTap(d) }
+                          const deltaY = Math.abs(e.changedTouches[0].clientY - swipeDragStartY.current)
+                          if (Math.abs(delta) < 10 && deltaY < 15) { e.preventDefault(); handleTap(d) }
                         }
                       }}
                       onClick={() => handleTap(d)}

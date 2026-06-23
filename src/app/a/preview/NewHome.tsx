@@ -348,6 +348,9 @@ export default function NewHome({
     return () => clearInterval(interval)
   }, [showOnboarding])
 
+  // Vector-scored dish IDs loaded client-side for personalization
+  const [liveVectorIds, setLiveVectorIds] = useState<string[]>(vectorScoredIds)
+
   // Random per client mount — stable for the whole session (no re-shuffle after hydration)
   const [shuffleSeed, setShuffleSeed] = useState(() => typeof window === 'undefined' ? 0 : Math.random())
 
@@ -380,9 +383,9 @@ export default function NewHome({
     ).catch(() => {})
   }, [])
 
-  // Load personalized scores on mount (no longer done in SSR to keep page cacheable/fast)
+  // Load personalized scores + vector feed on mount (no longer done in SSR to keep page cacheable/fast)
   useEffect(() => {
-    import('../lib/feed-actions').then(({ getProfileData }) =>
+    import('../lib/feed-actions').then(({ getProfileData, getVectorFeed }) => {
       getProfileData().then(data => {
         if (!data) return
         // Only apply if user has actual preferences (avoid unnecessary re-render for new users)
@@ -397,8 +400,14 @@ export default function NewHome({
           p.totalInteractions = data.totalInteractions
           return p
         })
+        // Load vector-scored feed for personalized ordering (only if user has enough interactions)
+        if (data.totalInteractions >= 8 && data.tasteData?.hasGustoVector) {
+          getVectorFeed().then(ids => {
+            if (ids.length > 0) setLiveVectorIds(ids)
+          }).catch(() => {})
+        }
       })
-    ).catch(() => {})
+    }).catch(() => {})
   }, [])
 
   // Load profile data from server when entering perfil view
@@ -766,8 +775,9 @@ export default function NewHome({
       combined = [...filtered].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
     } else {
       // Default: vector rank + category/keyword scoring
-      const vectorRank = vectorScoredIds.length > 0 && !activeCategory
-        ? new Map(vectorScoredIds.map((id, i) => [id, 1 - i / vectorScoredIds.length]))
+      const effectiveVectorIds = liveVectorIds.length > 0 ? liveVectorIds : vectorScoredIds
+      const vectorRank = effectiveVectorIds.length > 0 && !activeCategory
+        ? new Map(effectiveVectorIds.map((id, i) => [id, 1 - i / effectiveVectorIds.length]))
         : undefined
       combined = filtered
         .map(d => {
@@ -810,7 +820,7 @@ export default function NewHome({
       final.push(rem.shift()!)
     }
     return final
-  }, [serverDishes, dishes, activeCategory, profile, vectorScoredIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
+  }, [serverDishes, dishes, activeCategory, profile, vectorScoredIds, liveVectorIds, userLocation, filterMeal, filterSort, quickNearby, quickPopular, filterDiet, filterMaxKm, shuffleSeed])
 
   const isFiltered = !!(
     searchQuery || activeCategory || filterDiet !== 'all' || filterMeal !== 'all'
@@ -1002,6 +1012,14 @@ export default function NewHome({
         if (prev.some(d => d.id === dish.id)) return prev
         return [...prev, dish]
       })
+      // Actualizar categoryScores en vivo para que el feed re-sortee (penalizar categoría)
+      setLiveProfile(prev => {
+        const base = prev ?? { ...createEmptyProfile(), categoryScores: { ...categoryScores }, keywordScores: { ...keywordScores } }
+        const scores = { ...(base.categoryScores ?? {}) }
+        scores[dish.categoriaNorm] = (scores[dish.categoriaNorm] ?? 0) - 9
+        return { ...base, categoryScores: scores }
+      })
+      trackInteraction(dish.id, 'PASS', dish.categoriaNorm, dish.precioDescuento ?? dish.precio).catch(() => {})
     }
   }, [categoryScores, keywordScores])
 

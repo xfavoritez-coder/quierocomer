@@ -70,7 +70,7 @@ export default function ViewSelectorCompact({ restaurantId, plan, defaultView }:
         onClick={handleToggle}
         aria-label="Cambiar vista"
         style={{
-          width: 42, height: 42, borderRadius: "50%",
+          width: 39, height: 39, borderRadius: "50%",
           background: "var(--carta-search-bg)",
           display: "flex", alignItems: "center", justifyContent: "center",
           border: "none", cursor: "pointer", position: "relative", zIndex: 10,

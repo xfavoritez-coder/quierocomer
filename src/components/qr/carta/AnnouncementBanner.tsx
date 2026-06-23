@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
 
 interface Announcement {
   id: string;
@@ -16,7 +15,6 @@ interface Props {
 const LINE_CLAMP = 2;
 
 export default function AnnouncementBanner({ announcements }: Props) {
-  const [dismissed, setDismissed] = useState(false);
   const [current, setCurrent] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
@@ -25,11 +23,11 @@ export default function AnnouncementBanner({ announcements }: Props) {
     const timer = setInterval(() => {
       setCurrent((c) => (c + 1) % announcements.length);
       setExpanded(false);
-    }, 5000);
+    }, 7000);
     return () => clearInterval(timer);
   }, [announcements.length]);
 
-  if (dismissed || announcements.length === 0) return null;
+  if (announcements.length === 0) return null;
 
   const ann = announcements[current];
   // Estimate if text needs clamping: ~45 chars per line at this font size
@@ -67,7 +65,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
           overflow: "hidden",
         }}
       >
-        <div style={{ padding: "13px 40px 13px 16px", textAlign: "center" }}>
+        <div style={{ padding: "13px 16px", textAlign: "center" }}>
           {ann.linkUrl && !needsClamp ? (
             <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
               {textNode}
@@ -103,20 +101,6 @@ export default function AnnouncementBanner({ announcements }: Props) {
           )}
         </div>
 
-        <button
-          onClick={() => setDismissed(true)}
-          style={{
-            position: "absolute", top: "50%", right: 10,
-            transform: "translateY(-50%)",
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "50%", width: 24, height: 24,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", padding: 0,
-          }}
-        >
-          <X size={12} color="rgba(255,255,255,0.5)" />
-        </button>
       </div>
     </div>
   );
