@@ -21,6 +21,7 @@ type Props = {
   activeFilterCount?: number
   onLocationClick: () => void
   onFiltersChange: (f: FilterBarFilters) => void
+  onResetFilters?: () => void
   // Optional features
   showMapButton?: boolean
   isMapActive?: boolean
@@ -40,6 +41,7 @@ export default function FeedFilterBar({
   activeFilterCount = 0,
   onLocationClick,
   onFiltersChange,
+  onResetFilters,
   showMapButton = false,
   isMapActive = false,
   onMapToggle,
@@ -104,14 +106,13 @@ export default function FeedFilterBar({
   }
 
   function resetFilters() {
-    const reset: FilterBarFilters = {
-      diet: 'all', maxKm: 5, sort: 'default',
-      meal: 'all', mealDisplay: 'all',
-      nearby: false, popular: false,
-    }
     setDraftDiet('all'); setDraftMaxKm(5); setDraftSort('default')
     setDraftMeal('all'); setDraftMealDisplay('all')
-    onFiltersChange(reset)
+    if (onResetFilters) {
+      onResetFilters()
+    } else {
+      onFiltersChange({ diet: 'all', maxKm: 5, sort: 'default', meal: 'all', mealDisplay: 'all', nearby: false, popular: false })
+    }
     setFilterOpen(false)
   }
 

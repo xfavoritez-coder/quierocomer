@@ -994,8 +994,8 @@ export default function NewHome({
     nearby: quickNearby, popular: quickPopular,
   }
   function handleFiltersChange(f: FilterBarFilters) {
-    // Si el usuario movió el slider de distancia pero no tiene ubicación → pedir ubicación
-    if (f.maxKm !== filterMaxKm && !userLocation) {
+    // Si el usuario aumentó el slider de distancia pero no tiene ubicación → pedir ubicación
+    if (f.maxKm > filterMaxKm && !userLocation) {
       setLocationModalOpen(true)
       return
     }
@@ -1004,6 +1004,16 @@ export default function NewHome({
     setFilterMeal(f.meal); setFilterMealDisplay(f.mealDisplay)
     setQuickNearby(f.nearby); setQuickPopular(f.popular)
     setShuffleSeed(Math.random())
+  }
+
+  // Reset de filtros: limpia todo EXCEPTO el search query activo
+  function handleResetFilters() {
+    userSetMaxKm.current = false
+    setFilterDiet('all'); setFilterMaxKm(5); setFilterSort('default')
+    setFilterMeal('all'); setFilterMealDisplay('all')
+    setQuickNearby(false); setQuickPopular(false)
+    setShuffleSeed(Math.random())
+    // searchQuery se preserva a propósito
   }
 
   function resetFeed() {
@@ -1565,6 +1575,7 @@ export default function NewHome({
             activeFilterCount={activeFilterCount}
             onLocationClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }}
             onFiltersChange={handleFiltersChange}
+                  onResetFilters={handleResetFilters}
             showLocationRow={false}
           />
         )}
@@ -1694,6 +1705,7 @@ export default function NewHome({
             activeFilterCount={activeFilterCount}
             onLocationClick={() => { dismissLocationPrompt(); setLocationModalOpen(true) }}
             onFiltersChange={handleFiltersChange}
+                  onResetFilters={handleResetFilters}
             showLocationRow={false}
           />
         </div>
@@ -1903,6 +1915,7 @@ export default function NewHome({
                   activeFilterCount={activeFilterCount}
                   onLocationClick={() => setLocationModalOpen(true)}
                   onFiltersChange={handleFiltersChange}
+                  onResetFilters={handleResetFilters}
                   showLocationRow={false}
                 />
               )}
