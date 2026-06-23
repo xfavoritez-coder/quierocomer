@@ -8,7 +8,7 @@ const BASE = 'https://quierocomer.cl'
 export const revalidate = 86400
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [restaurants, dishes] = await Promise.all([
+  const [restaurants, dishes, communeRestaurants] = await Promise.all([
     prisma.restaurant.findMany({
       where: { isActive: true, isDemo: false },
       select: { slug: true, updatedAt: true },
@@ -23,6 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
       orderBy: { updatedAt: 'desc' },
       take: 45000,
+    }),
+    // Restaurants with communes for SEO pages
+    prisma.restaurant.findMany({
+      where: { communeSlug: { not: null }, isActive: true, isDemo: false },
+      select: { slug: true, communeSlug: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
     }),
   ])
 
@@ -47,5 +53,45 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticPages, ...restaurantPages, ...dishPages]
+  // SEO commune pages
+  const distinctCommunes = [
+    ...new Map(communeRestaurants.map(r => [r.communeSlug, r])).values(),
+  ]
+
+  const communePages: MetadataRoute.Sitemap = distinctCommunes.flatMap(r => [
+    {
+      url: `${BASE}/${r.communeSlug}`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${BASE}/${r.communeSlug}/vegano`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${BASE}/${r.communeSlug}/vegetariano`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+  ])
+
+  // Commune → restaurant pages
+  const communeRestaurantPages: MetadataRoute.Sitemap = communeRestaurants.map(r => ({
+    url: `${BASE}/${r.communeSlug}/${r.slug}`,
+    lastModified: r.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+
+  return [
+    ...staticPages,
+    ...restaurantPages,
+    ...communePages,
+    ...communeRestaurantPages,
+    ...dishPages,
+  ]
 }

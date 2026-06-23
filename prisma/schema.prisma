@@ -350,7 +350,11 @@ model Restaurant {
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
 
+  commune      String?
+  communeSlug  String?
+
   @@index([ownerId])
+  @@index([communeSlug])
 }
 
 model MenuGroup {
