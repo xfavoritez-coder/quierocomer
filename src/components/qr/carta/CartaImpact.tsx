@@ -859,11 +859,15 @@ export default function CartaImpact({
     return () => el.removeEventListener("scroll", onScroll);
   }, [showFixedCatNav]);
   useEffect(() => {
+    let shown = false;
     const check = () => {
       const el = menuAnchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setShowFixedCatNav(rect.top < 60);
+      // Histéresis: mostrar cuando sube de 60, ocultar solo cuando baja de 110
+      // Evita el parpadeo cuando el cambio de altura del header empuja el contenido
+      if (!shown && rect.top < 60) { shown = true; setShowFixedCatNav(true); }
+      else if (shown && rect.top > 110) { shown = false; setShowFixedCatNav(false); }
     };
     window.addEventListener("scroll", check, { passive: true });
     return () => window.removeEventListener("scroll", check);
