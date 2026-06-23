@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import bcrypt from "bcryptjs";
+import { extractCommune } from "@/lib/communeUtils";
 import { extractJusto } from "./justo";
 import { extractGetagil } from "./getagil";
 import { extractRappi } from "./rappi";
@@ -1022,6 +1023,7 @@ export async function importFromProspecto(params: {
     })
   }
 
+  const prospectoCommune = params.address ? extractCommune(params.address) : null
   const restaurant = existing
     ?? await prisma.restaurant.create({
         data: {
@@ -1043,6 +1045,8 @@ export async function importFromProspecto(params: {
           menuImported: true,
           plan: "PREMIUM",
           qrActivatedAt: new Date(),
+          commune: prospectoCommune?.commune ?? null,
+          communeSlug: prospectoCommune?.communeSlug ?? null,
         },
       })
 

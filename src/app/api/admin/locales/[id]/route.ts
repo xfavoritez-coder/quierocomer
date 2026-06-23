@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
 import crypto from "crypto";
+import { extractCommune } from "@/lib/communeUtils";
 
 const OWNER_EDITABLE_FIELDS = [
   "name", "description", "logoUrl", "bannerUrl",
@@ -146,6 +147,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           }
         }
       }
+    }
+
+    // Auto-fill commune fields whenever address is being updated
+    if (data.address !== undefined) {
+      const communeData = data.address ? extractCommune(data.address) : null
+      data.commune = communeData?.commune ?? null
+      data.communeSlug = communeData?.communeSlug ?? null
     }
 
     const restaurant = await prisma.restaurant.update({ where: { id }, data });

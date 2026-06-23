@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
+import { extractCommune } from "@/lib/communeUtils";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     const existing = await prisma.restaurant.findUnique({ where: { slug } });
     if (existing) return NextResponse.json({ error: "Slug ya existe" }, { status: 400 });
 
+    const communeData = address ? extractCommune(address) : null
     const restaurant = await prisma.restaurant.create({
       data: {
         name, slug, description: description || null,
@@ -40,6 +42,8 @@ export async function POST(req: NextRequest) {
         qrActivatedAt: new Date(),
         qrToken: randomBytes(8).toString("base64url"),
         ownerId: ownerId || null,
+        commune: communeData?.commune ?? null,
+        communeSlug: communeData?.communeSlug ?? null,
       },
       select: { id: true, name: true, slug: true, createdAt: true },
     });

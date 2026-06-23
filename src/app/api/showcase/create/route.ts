@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { extractCommune } from "@/lib/communeUtils";
 
 function slugify(name: string): string {
   return name
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
     slug = `${baseSlug}-${attempt}`;
   }
 
+  const communeData = restaurantData.address ? extractCommune(restaurantData.address) : null
   const restaurant = await prisma.restaurant.create({
     data: {
       name: restaurantData.name,
@@ -44,6 +46,8 @@ export async function POST(req: NextRequest) {
       isShowcase: true,
       plan: "FREE",
       cartaTheme: "BASIC",
+      commune: communeData?.commune ?? null,
+      communeSlug: communeData?.communeSlug ?? null,
     },
   });
 
