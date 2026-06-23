@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true }, orderBy: { createdAt: 'asc' } } },
     });
 
     if (!owner) {

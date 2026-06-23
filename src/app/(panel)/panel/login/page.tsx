@@ -118,6 +118,8 @@ export default function PanelLogin() {
       }
       if (remember) localStorage.setItem("qc_panel_remember", "1");
       else { localStorage.removeItem("qc_panel_remember"); sessionStorage.setItem("panel_session", "1"); }
+      // Clear previously selected restaurant so fresh login picks the right one
+      localStorage.removeItem("admin_selected_restaurant");
       // Store name for welcome toast
       sessionStorage.setItem("panel_welcome", data.name || "");
       // Full page navigation ensures cookies are available for middleware
