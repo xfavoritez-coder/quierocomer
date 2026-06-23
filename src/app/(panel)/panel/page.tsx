@@ -138,18 +138,33 @@ export default function PanelDashboard() {
     }
 
     setLoading(true);
+    const rid = selectedRestaurantId;
+    // Fetch each API independently so a single failure doesn't blank the whole page
+    const safeFetch = (url: string) => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
     Promise.all([
-      fetch(`/api/admin/dashboard?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
-      fetch(`/api/admin/insights?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
-      fetch(`/api/admin/locales/${selectedRestaurantId}`).then(r => r.json()),
+      safeFetch(`/api/admin/dashboard?restaurantId=${rid}`),
+      safeFetch(`/api/admin/insights?restaurantId=${rid}`),
+      safeFetch(`/api/admin/locales/${rid}`),
     ]).then(([d, i, settings]) => {
-      if (!d.error) setData(d);
-      setInsights(i.insights || []);
-      setInsightsEnabled(settings.weeklyInsightsEnabled !== false);
-      setRestSettings(settings);
-      setCartaReviewed(localStorage.getItem(`qc_carta_reviewed_${selectedRestaurantId}`) === "1");
-      setQrGenerated(localStorage.getItem(`qc_qr_generated_${selectedRestaurantId}`) === "1");
-    }).catch(() => {}).finally(() => setLoading(false));
+      if (d && !d.error) setData(d);
+      else {
+        // Provide minimal empty data so the page renders instead of "Sin datos disponibles"
+        setData({
+          visitsThisWeek: 0, visitsDelta: null, avgSessionDuration: 0, genioUsedThisWeek: 0,
+          topDishesViewed: [], topSearches: [], starDish: null,
+          todayScans: 0, todayWaiterCalls: 0, todayWaiterPending: 0,
+          lastScanAt: null, todayUniqueVisitors: 0, todayBirthdays: 0,
+          weekBirthdays: 0, genioToday: 0, todayAvgDuration: 0,
+        });
+      }
+      setInsights(i?.insights || []);
+      if (settings && !settings.error) {
+        setInsightsEnabled(settings.weeklyInsightsEnabled !== false);
+        setRestSettings(settings);
+      }
+      setCartaReviewed(localStorage.getItem(`qc_carta_reviewed_${rid}`) === "1");
+      setQrGenerated(localStorage.getItem(`qc_qr_generated_${rid}`) === "1");
+    }).finally(() => setLoading(false));
   }, [sessionLoading, selectedRestaurantId, isDemo]);
 
   if (loading || sessionLoading) return (

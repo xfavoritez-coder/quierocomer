@@ -694,44 +694,62 @@ export default function AdminMenus() {
     const ids = Array.from(bulkSelected);
     if (bulkAction === "delete" && !confirm(`¿Eliminar ${ids.length} producto${ids.length > 1 ? "s" : ""}?`)) return;
     setBulkProcessing(true);
+    const succeeded = new Set<string>();
+    const failed: string[] = [];
     try {
-      const dishById = Object.fromEntries(dishes.map(d => [d.id, d]));
       for (const id of ids) {
-        if (bulkAction === "delete") {
-          await fetch(`/api/admin/dishes/${id}`, { method: "DELETE" });
-        } else if (bulkAction === "hide") {
-          await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: false }) });
-        } else if (bulkAction === "show") {
-          await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: true }) });
-        } else if (bulkAction === "diet" && bulkActionValue) {
-          await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishDiet: bulkActionValue }) });
-        } else if (bulkAction === "category" && bulkActionValue) {
-          await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoryId: bulkActionValue }) });
-        } else if ((bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && bulkActionValue) {
-          const isAdd = bulkAction === "addCharacteristic";
-          await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [bulkActionValue]: isAdd }) });
+        let res: Response | null = null;
+        try {
+          if (bulkAction === "delete") {
+            res = await fetch(`/api/admin/dishes/${id}`, { method: "DELETE" });
+          } else if (bulkAction === "hide") {
+            res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: false }) });
+          } else if (bulkAction === "show") {
+            res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: true }) });
+          } else if (bulkAction === "diet" && bulkActionValue) {
+            res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishDiet: bulkActionValue }) });
+          } else if (bulkAction === "category" && bulkActionValue) {
+            res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoryId: bulkActionValue }) });
+          } else if ((bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && bulkActionValue) {
+            const isAdd = bulkAction === "addCharacteristic";
+            res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [bulkActionValue]: isAdd }) });
+          }
+          if (res && res.ok) succeeded.add(id);
+          else failed.push(id);
+        } catch {
+          failed.push(id);
         }
       }
-      // Update local state
-      if (bulkAction === "delete") {
-        setDishes(prev => prev.filter(d => !bulkSelected.has(d.id)));
-      } else if (bulkAction === "hide") {
-        setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, isActive: false } : d));
-      } else if (bulkAction === "show") {
-        setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, isActive: true } : d));
-      } else if (bulkAction === "diet" && bulkActionValue) {
-        setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, dishDiet: bulkActionValue } : d));
-      } else if (bulkAction === "category" && bulkActionValue) {
-        const cat = categories.find(c => c.id === bulkActionValue);
-        setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, categoryId: bulkActionValue, category: { id: bulkActionValue, name: cat?.name || "" } } : d));
-      } else if ((bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && bulkActionValue) {
-        const isAdd = bulkAction === "addCharacteristic";
-        setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, [bulkActionValue]: isAdd } : d));
+      // Update local state only for dishes that succeeded
+      const target = succeeded.size > 0 ? succeeded : null;
+      if (target) {
+        if (bulkAction === "delete") {
+          setDishes(prev => prev.filter(d => !target.has(d.id)));
+        } else if (bulkAction === "hide") {
+          setDishes(prev => prev.map(d => target.has(d.id) ? { ...d, isActive: false } : d));
+        } else if (bulkAction === "show") {
+          setDishes(prev => prev.map(d => target.has(d.id) ? { ...d, isActive: true } : d));
+        } else if (bulkAction === "diet" && bulkActionValue) {
+          setDishes(prev => prev.map(d => target.has(d.id) ? { ...d, dishDiet: bulkActionValue } : d));
+        } else if (bulkAction === "category" && bulkActionValue) {
+          const cat = categories.find(c => c.id === bulkActionValue);
+          setDishes(prev => prev.map(d => target.has(d.id) ? { ...d, categoryId: bulkActionValue, category: { id: bulkActionValue, name: cat?.name || "" } } : d));
+        } else if ((bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && bulkActionValue) {
+          const isAdd = bulkAction === "addCharacteristic";
+          setDishes(prev => prev.map(d => target.has(d.id) ? { ...d, [bulkActionValue]: isAdd } : d));
+        }
       }
-      setBulkSelected(new Set());
-      setBulkAction("");
-      setBulkActionValue("");
-    } catch { }
+      if (failed.length > 0 && succeeded.size > 0) {
+        alert(`${succeeded.size} producto${succeeded.size > 1 ? "s" : ""} actualizado${succeeded.size > 1 ? "s" : ""}, ${failed.length} fallaron. Intenta de nuevo.`);
+      } else if (failed.length > 0 && succeeded.size === 0) {
+        alert("No se pudieron actualizar los productos. Recarga la página e intenta de nuevo.");
+      }
+      setBulkSelected(new Set(failed));
+      setBulkAction(failed.length > 0 ? bulkAction : "");
+      setBulkActionValue(failed.length > 0 ? bulkActionValue : "");
+    } catch {
+      alert("Error de conexión. Recarga la página e intenta de nuevo.");
+    }
     setBulkProcessing(false);
   };
 

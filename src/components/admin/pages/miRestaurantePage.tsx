@@ -269,6 +269,39 @@ export default function MiRestaurantePage() {
         );
       })()}
 
+      {/* ── Código QR ── */}
+      {selectedRestaurant?.slug && (
+        <div style={{
+          background: "linear-gradient(135deg, rgba(244,166,35,.08), rgba(244,166,35,.03))",
+          border: "1px solid rgba(244,166,35,.2)",
+          borderRadius: 16, padding: "18px 20px", marginBottom: 16,
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: "rgba(244,166,35,.12)", display: "grid", placeItems: "center",
+          }}>
+            <QrCode size={22} color={GOLD} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>Código QR</p>
+            <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>
+              Genera e imprime tu QR para que tus clientes escaneen y vean tu carta
+            </p>
+          </div>
+          <button
+            onClick={() => setQrModalOpen(true)}
+            style={{
+              padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+              background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.75rem", fontWeight: 700,
+              flexShrink: 0, whiteSpace: "nowrap",
+            }}
+          >
+            Generar QR
+          </button>
+        </div>
+      )}
+
       {/* ── Info básica ── */}
       <Card title="Información básica" icon={Camera}>
         {/* Logo */}
