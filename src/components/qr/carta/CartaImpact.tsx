@@ -1305,8 +1305,14 @@ export default function CartaImpact({
       )}
 
 
-      {/* Fixed category nav — appears when menu section reaches header */}
-      {showFixedCatNav && (
+      {/* Fixed category nav — slides in when menu section reaches header */}
+      <div style={{
+        overflow: "hidden",
+        maxHeight: showFixedCatNav ? 50 : 0,
+        opacity: showFixedCatNav ? 1 : 0,
+        transition: "max-height 0.25s ease, opacity 0.2s ease",
+        willChange: "max-height, opacity",
+      }}>
         <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4 }}>
           <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
             <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
@@ -1344,7 +1350,7 @@ export default function CartaImpact({
             <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
         </div>
-      )}
+      </div>
       </header>
 
       </div>{/* end fixed wrapper */}
