@@ -501,14 +501,15 @@ const findDishCached = unstable_cache(
 
 export async function generateStaticParams() {
   const [dishRows, communeRestaurantRows] = await Promise.all([
-    // Existing: restaurantSlug + dishSlug from real dishes
+    // Top dishes only — rest generated on-demand via ISR
     prisma.dish.findMany({
       where: { isActive: true, hiddenFromFeed: false, deletedAt: null },
       select: {
         name: true,
         restaurant: { select: { slug: true } },
       },
-      take: 40000,
+      orderBy: { createdAt: "desc" },
+      take: 500,
     }),
     // New: communeSlug + restaurantSlug combos
     prisma.restaurant.findMany({
