@@ -29,7 +29,7 @@ import { trackSearchPerformed, track } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
-import PromoCompact from "./PromoCompact";
+import PromoCarousel from "../capture/PromoCarousel";
 import EmailTypoHint from "../capture/EmailTypoHint";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import { useLang } from "@/contexts/LangContext";
@@ -317,8 +317,11 @@ export default function CartaPremium({
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
-    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json())
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 5000);
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`, { signal: abort.signal }).then(r => r.json())
       .then((d) => {
+        clearTimeout(timer);
         if (!d.profile) { setPersonalizing(false); return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
@@ -330,7 +333,7 @@ export default function CartaPremium({
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
-      .catch(() => setPersonalizing(false));
+      .catch(() => { clearTimeout(timer); setPersonalizing(false); });
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {
@@ -548,7 +551,7 @@ export default function CartaPremium({
         {/* Ofertas section */}
         {hasPromos && (
           <div id="cat-promos" style={{ paddingTop: 18 }}>
-            <PromoCompact promos={marketingPromos || []} onViewDish={(dishId) => {
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
               const dish = dishes.find(d => d.id === dishId);
               if (dish) setSelectedDish(dish);
             }} />

@@ -16,11 +16,12 @@ interface Promo {
 interface Props {
   promos: Promo[];
   onViewDish?: (dishId: string) => void;
+  onViewPromo?: (promo: Promo) => void;
 }
 
 const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
 
-export default function PromoCompact({ promos, onViewDish }: Props) {
+export default function PromoCompact({ promos, onViewDish, onViewPromo }: Props) {
   if (!promos || promos.length === 0) return null;
 
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
@@ -45,7 +46,10 @@ export default function PromoCompact({ promos, onViewDish }: Props) {
         return (
           <button
             key={p.id}
-            onClick={() => { if (dish && onViewDish) onViewDish(dish.id); }}
+            onClick={() => {
+              if (onViewPromo) { onViewPromo(p); return; }
+              if (dish && onViewDish) onViewDish(dish.id);
+            }}
             style={{
               minWidth: 280, width: 280, height: 150, borderRadius: 18, overflow: "hidden", position: "relative",
               background: "#111", display: "flex", border: "none", cursor: "pointer", textAlign: "left",
