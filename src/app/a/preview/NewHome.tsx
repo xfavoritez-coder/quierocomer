@@ -781,9 +781,6 @@ export default function NewHome({
       const vectorRank = effectiveVectorIds.length > 0 && !activeCategory
         ? new Map(effectiveVectorIds.map((id, i) => [id, 1 - i / effectiveVectorIds.length]))
         : undefined
-      // Meal-time boost: entre 8-12h los platos de desayuno suben, el resto baja
-      const hour = new Date().getHours()
-      const isBreakfastTime = hour >= 8 && hour < 12
       combined = filtered
         .map(d => {
           let score = 0
@@ -797,16 +794,35 @@ export default function NewHome({
             score += popBase
             score += Math.min((profile.categoryScores[d.categoriaNorm] ?? 0) * 0.2, 8)
           }
-          // Boost por horario: 8-12h → desayuno +2, resto penalizado
-          if (isBreakfastTime) {
-            score += d.mealTime === 'desayuno' ? 2 : -0.5
-          }
           // Ruido determinístico por sesión: misma calidad de platos, orden distinto cada visita
           score += seededRandom(shuffleSeed, d.id) * 0.18
           return { dish: d, score }
         })
         .sort((a, b) => b.score - a.score)
         .map(s => s.dish)
+    }
+
+    // Breakfast boost: entre 8-12h, intercalar para que ~80% de las primeras 20 cards sean desayuno
+    const hour = new Date().getHours()
+    const isBreakfastWindow = hour >= 8 && hour < 12
+    if (isBreakfastWindow && filterMeal === 'all' && !activeCategory) {
+      const breakfast = combined.filter(d => d.mealTime === 'desayuno')
+      const rest = combined.filter(d => d.mealTime !== 'desayuno')
+      if (breakfast.length >= 4) {
+        const boosted: FeedDish[] = []
+        let bi = 0, ri = 0
+        // Primeras 20 posiciones: 4 desayunos por cada 1 no-desayuno (80/20)
+        while (boosted.length < 20 && (bi < breakfast.length || ri < rest.length)) {
+          // 4 desayunos
+          for (let k = 0; k < 4 && bi < breakfast.length; k++) boosted.push(breakfast[bi++])
+          // 1 no-desayuno
+          if (ri < rest.length) boosted.push(rest[ri++])
+        }
+        // Resto: lo que quede de ambos arrays, manteniendo orden original
+        while (bi < breakfast.length) boosted.push(breakfast[bi++])
+        while (ri < rest.length) boosted.push(rest[ri++])
+        combined = boosted
+      }
     }
 
     // Max 3 consecutive same category + max 2 consecutive same restaurant
