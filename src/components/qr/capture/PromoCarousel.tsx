@@ -67,7 +67,7 @@ function trackPromo(restaurantId: string, eventType: string, dishId?: string, pr
   }).catch(() => {});
 }
 
-export default function PromoCarousel({ restaurantId, onViewDish, initialPromos, compact, large }: Props & { compact?: boolean; large?: boolean }) {
+export default function PromoCarousel({ restaurantId, onViewDish, initialPromos, compact, large, hideCards, externalOpenPromo, onClosePromo }: Props & { compact?: boolean; large?: boolean; hideCards?: boolean; externalOpenPromo?: any | null; onClosePromo?: () => void }) {
   const [promos, setPromos] = useState<Promo[]>(initialPromos || []);
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -116,6 +116,12 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
       .then(d => { if (d.promos?.length) setPromos(d.promos); })
       .catch(() => {});
   }, [restaurantId, initialPromos]);
+
+  // External control: open modal from parent
+  useEffect(() => {
+    if (externalOpenPromo) openPromo(externalOpenPromo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalOpenPromo]);
 
   // Intersection observer for PROMO_VIEWED
   useEffect(() => {
@@ -249,6 +255,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
   const closeModal = () => {
     setImageFullscreen(false);
     setModalVisible(false);
+    onClosePromo?.();
     setTimeout(() => {
       setSelectedPromo(null);
       document.body.style.position = "";
@@ -274,11 +281,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
     }
   };
 
-  if (!promos.length) return null;
+  if (!promos.length && !externalOpenPromo) return null;
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: compact ? "0 0 0" : "0 20px 0" }}>
+      {!hideCards && <div className="font-[family-name:var(--font-dm)]" style={{ padding: compact ? "0 0 0" : "0 20px 0" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -426,7 +433,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
             ))}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Promo Detail Modal */}
       {selectedPromo && (() => {
