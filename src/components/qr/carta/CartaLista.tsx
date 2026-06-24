@@ -8,7 +8,7 @@ import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/g
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import { getGuestId } from "@/lib/guestId";
-import PromoCompact from "./PromoCompact";
+import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
 import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
@@ -514,7 +514,7 @@ export default function CartaLista({
       {/* OFERTAS section */}
       {hasPromos && (
         <section id="lista-cat-promos" style={{ padding: "18px 0 0" }}>
-          <PromoCompact promos={marketingPromos || []} onViewDish={(dishId) => {
+          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);
           }} />

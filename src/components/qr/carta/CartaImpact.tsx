@@ -1012,8 +1012,11 @@ export default function CartaImpact({
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
-    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 5000);
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`, { signal: abort.signal }).then((r) => r.json())
       .then((d) => {
+        clearTimeout(timer);
         if (!d.profile) { setPersonalizing(false); return; }
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);
@@ -1024,7 +1027,7 @@ export default function CartaImpact({
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
-      .catch(() => setPersonalizing(false));
+      .catch(() => { clearTimeout(timer); setPersonalizing(false); });
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   // Track RECOMMENDATION_SHOWN
@@ -1444,109 +1447,15 @@ export default function CartaImpact({
             letterSpacing: "0.8px", margin: "0 0 14px", lineHeight: 0.9,
             color: "var(--impact-section-title)",
           }}>{t(lang, "impactOffers" as any)}</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {(marketingPromos || []).map((p: any) => {
-              const dish = p.dishes?.[0];
-              const photo = p.imageUrl || dish?.photos?.[0];
-              const words = p.name.split(" ");
-              const firstWords = words.slice(0, -1).join(" ");
-              const lastWord = words[words.length - 1];
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    if (dish) setSelectedDish(dishes.find(d => d.id === dish.id) || null);
-                  }}
-                  style={{
-                    width: "100%", height: 220, borderRadius: 26, overflow: "hidden", position: "relative",
-                    background: "#111", border: "none",
-                    boxShadow: "0 6px 24px rgba(0,0,0,0.2)",
-                    cursor: "pointer", textAlign: "left",
-                  }}
-                >
-                  {/* Foto fondo con overlay */}
-                  {photo && (
-                    <div style={{ position: "absolute", inset: 0, transform: "scale(1.04)" }}>
-                      <img src={photo} alt={p.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center right" }} />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 43%, rgba(0,0,0,0.12) 100%), linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 58%)" }} />
-                    </div>
-                  )}
-                  {/* Badge día */}
-                  {(() => {
-                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
-                    const label = p.daysOfWeek?.length ? `Hoy ${DAY_NAMES[todayDow].charAt(0) + DAY_NAMES[todayDow].slice(1).toLowerCase()}` : "Oferta";
-                    return (
-                      <span style={{
-                        position: "absolute", top: 15, right: 15, zIndex: 2,
-                        fontSize: 11, fontWeight: 900, color: "white",
-                        background: "var(--carta-accent)", padding: "9px 13px",
-                        borderRadius: 999, letterSpacing: "0.6px", textTransform: "uppercase",
-                      }}>{label}</span>
-                    );
-                  })()}
-                  {/* Contenido abajo izquierda */}
-                  <div style={{ position: "absolute", left: 18, right: 18, bottom: 30, zIndex: 2, maxWidth: 200 }}>
-                    <h3 style={{
-                      margin: "0 0 14px", fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif",
-                      fontSize: 36, lineHeight: 0.85, letterSpacing: "0.5px",
-                      textShadow: "0 6px 28px rgba(0,0,0,0.9)", color: "white",
-                      overflow: "hidden", textOverflow: "ellipsis",
-                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any,
-                    }}>
-                      <span style={{ color: "var(--carta-accent)" }}>{words[0]}</span>{words.length > 1 ? " " + words.slice(1).join(" ") : ""}
-                    </h3>
-                    {(() => {
-                      const desc = p.description
-                        || (p.dishes?.length > 1 ? p.dishes.map((d: any) => d.name).join(" + ") : null)
-                        || dish?.description;
-                      if (!desc) return null;
-                      return (
-                        <p style={{
-                          margin: "0 0 12px", color: "var(--impact-offer-desc, #b0a89e)", fontSize: 14, lineHeight: 1.42,
-                          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
-                        }}>{desc}</p>
-                      );
-                    })()}
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-                      {p.promoPrice && (
-                        <span style={{ color: "var(--carta-accent)", fontSize: 19, fontWeight: 900, letterSpacing: "-0.5px" }}>
-                          ${p.promoPrice.toLocaleString("es-CL")}
-                        </span>
-                      )}
-                      {p.originalPrice && p.promoPrice && (
-                        <del style={{ color: "#888", fontSize: 15, fontWeight: 800 }}>
-                          ${p.originalPrice.toLocaleString("es-CL")}
-                        </del>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} large onViewDish={(dishId) => {
+            const dish = dishes.find(d => d.id === dishId);
+            if (dish) setSelectedDish(dish);
+          }} />
         </section>
       )}
 
 
-      {/* Personalizing overlay — hidden during demo onboarding, fades out */}
-      {!(restaurant as any).isDemo && (
-        <div
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            background: "color-mix(in srgb, var(--carta-bg, #030303) 92%, transparent)",
-            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-            opacity: personalizing && Date.now() - mountedAt.current > 500 ? 1 : 0,
-            pointerEvents: personalizing ? "auto" : "none",
-            transition: "opacity 0.25s ease",
-          }}
-        >
-          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "var(--carta-text)", fontWeight: 500 }}>Actualizando carta...</span>
-        </div>
-      )}
+      {/* Personalización ocurre en background sin bloquear la UI */}
 
       {/* ═══════ MENÚ ═══════ */}
       <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 1 }}>
