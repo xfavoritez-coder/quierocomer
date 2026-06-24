@@ -8,7 +8,7 @@ import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/g
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import { getGuestId } from "@/lib/guestId";
-import PromoCarousel from "../capture/PromoCarousel";
+import PromoCompact from "./PromoCompact";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
 import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
@@ -257,6 +257,7 @@ export default function CartaLista({
   }, []);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [dishFromHero, setDishFromHero] = useState(false);
+  const [selectedPromo, setSelectedPromo] = useState<any>(null);
 
   const [genioOpen, setGenioOpen] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);
@@ -514,10 +515,7 @@ export default function CartaLista({
       {/* OFERTAS section */}
       {hasPromos && (
         <section id="lista-cat-promos" style={{ padding: "18px 0 0" }}>
-          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
-            const dish = dishes.find(d => d.id === dishId);
-            if (dish) setSelectedDish(dish);
-          }} />
+          <PromoCompact promos={marketingPromos || []} onViewPromo={(promo) => setSelectedPromo(promo)} />
         </section>
       )}
 
@@ -680,6 +678,113 @@ export default function CartaLista({
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
       `}</style>
+
+      {/* Promo detail modal */}
+      {selectedPromo && (() => {
+        const p = selectedPromo;
+        const photo = p.imageUrl || p.dishes?.[0]?.photos?.[0];
+        const hasDishes = p.dishes?.length > 0;
+        return (
+          <div
+            className="fixed inset-0 flex items-end justify-center font-[family-name:var(--font-dm)]"
+            style={{ zIndex: 200, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            onClick={() => setSelectedPromo(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "var(--carta-surface, #fff)", borderRadius: "20px 20px 0 0",
+                width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto",
+                animation: "listaPromoSlideUp 0.35s cubic-bezier(0.16,1,0.3,1)",
+              }}
+            >
+              <style>{`@keyframes listaPromoSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+              <button onClick={() => setSelectedPromo(null)} style={{
+                position: "sticky", top: 8, float: "right", marginRight: 12, marginTop: 8,
+                background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%",
+                width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", zIndex: 5, color: "white", fontSize: 18,
+              }}>✕</button>
+              {photo && (
+                <div style={{ width: "100%", height: 220, overflow: "hidden", background: "var(--carta-card-bg, #f0f0f0)" }}>
+                  <img src={photo} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              )}
+              <div style={{ padding: "20px 20px 28px" }}>
+                {p.daysOfWeek?.length > 0 && (
+                  <span style={{
+                    display: "inline-block", fontSize: 11, fontWeight: 800,
+                    color: "white", background: "var(--carta-accent, #F4A623)",
+                    padding: "4px 12px", borderRadius: 50, marginBottom: 10, letterSpacing: "0.05em",
+                  }}>
+                    {p.daysOfWeek.map((d: number) => ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][d]).join(", ")}
+                  </span>
+                )}
+                <h2 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 800, color: "var(--carta-text, #111)" }}>{p.name}</h2>
+                {p.description && (
+                  <p style={{ margin: "0 0 14px", fontSize: 15, color: "var(--carta-text-secondary, #666)", lineHeight: 1.5 }}>{p.description}</p>
+                )}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 16 }}>
+                  {p.promoPrice != null && (
+                    <span style={{ fontSize: 24, fontWeight: 900, color: "var(--carta-accent, #F4A623)" }}>
+                      ${p.promoPrice.toLocaleString("es-CL")}
+                    </span>
+                  )}
+                  {p.originalPrice != null && p.promoPrice != null && (
+                    <del style={{ fontSize: 16, color: "var(--carta-text-secondary, #999)" }}>
+                      ${p.originalPrice.toLocaleString("es-CL")}
+                    </del>
+                  )}
+                  {p.discountPct != null && p.discountPct > 0 && (
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#16a34a", background: "#dcfce7", padding: "2px 8px", borderRadius: 8 }}>
+                      -{p.discountPct}%
+                    </span>
+                  )}
+                </div>
+                {hasDishes && (
+                  <div>
+                    <h4 style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700, color: "var(--carta-text-secondary, #888)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Incluye</h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {p.dishes.map((d: any) => (
+                        <button
+                          key={d.id}
+                          onClick={() => {
+                            const fullDish = dishes.find(dd => dd.id === d.id);
+                            if (fullDish) { setSelectedPromo(null); setTimeout(() => setSelectedDish(fullDish), 150); }
+                          }}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 10,
+                            background: "var(--carta-card-bg, #f5f5f5)", borderRadius: 12,
+                            padding: 10, border: "none", cursor: "pointer", textAlign: "left", width: "100%",
+                          }}
+                        >
+                          {d.photos?.[0] && (
+                            <img src={d.photos[0]} alt={d.name} style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--carta-text, #111)" }}>{d.name}</span>
+                            {d.price > 0 && (
+                              <span style={{ display: "block", fontSize: 13, color: "var(--carta-text-secondary, #888)" }}>
+                                ${d.price.toLocaleString("es-CL")}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 18, color: "var(--carta-text-secondary, #ccc)" }}>›</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {p.validUntil && (
+                  <p style={{ margin: "14px 0 0", fontSize: 12, color: "var(--carta-text-secondary, #999)" }}>
+                    Válido hasta {new Date(p.validUntil).toLocaleDateString("es-CL", { day: "numeric", month: "long" })}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} logoUrl={restaurant.logoUrl} />}
 
