@@ -102,8 +102,26 @@ export default async function CartaPage({
   const isMultiMenu = (restaurant as any).multiMenuEnabled && menuGroups.length >= 2;
   const showMultiMenuLanding = isMultiMenu && !menuSlug;
 
+  // Filter categories by schedule (days + time range)
+  const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+  const currentDay = chileNow.getDay(); // 0=dom, 1=lun, ...
+  const currentTime = `${String(chileNow.getHours()).padStart(2, "0")}:${String(chileNow.getMinutes()).padStart(2, "0")}`;
+
+  const filteredCategories = scheduled.categories.filter((cat: any) => {
+    // No schedule = always visible
+    if (!cat.scheduleDays || cat.scheduleDays.length === 0) return true;
+    // Check day
+    if (!cat.scheduleDays.includes(currentDay)) return false;
+    // Check time range if set
+    if (cat.scheduleStart && currentTime < cat.scheduleStart) return false;
+    if (cat.scheduleEnd && currentTime > cat.scheduleEnd) return false;
+    return true;
+  });
+
+  const visibleCatIds = new Set(filteredCategories.map((c: any) => c.id));
+
   // Filter categories/dishes by selected menu group
-  let { dishes, categories } = scheduled;
+  let { dishes, categories } = { dishes: scheduled.dishes.filter((d: any) => visibleCatIds.has(d.categoryId)), categories: filteredCategories };
   let activeMenuGroup: { slug: string; name: string } | null = null;
 
   if (isMultiMenu && menuSlug) {

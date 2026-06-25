@@ -11,7 +11,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
 interface Dish { id: string; name: string; photos: string[]; price: number; discountPrice?: number | null; position: number; isActive?: boolean; tags?: string[]; isHero?: boolean; }
-interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
+interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; scheduleDays?: number[]; scheduleStart?: string | null; scheduleEnd?: string | null; }
 const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
   food: { label: "Platos de fondo", emoji: "🍽️" },
   entry: { label: "Entradas", emoji: "🥗" },
@@ -79,7 +79,9 @@ const iconBtnStyle: React.CSSProperties = {
   alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
 };
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange, menuGroupLabel, menuGroupOptions, onAssignMenuGroup, canHighlight }: {
+const DAY_LABELS = ["D", "L", "M", "Mi", "J", "V", "S"];
+
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onPhotoClick, onAddDish, onRename, onToggle, onDelete, onTypeChange, onScheduleChange, menuGroupLabel, menuGroupOptions, onAssignMenuGroup, canHighlight }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
@@ -94,6 +96,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
   onTypeChange: (id: string, dishType: string) => void;
+  onScheduleChange: (id: string, scheduleDays: number[], scheduleStart: string | null, scheduleEnd: string | null) => void;
   menuGroupLabel?: string | null;
   menuGroupOptions?: { id: string; name: string }[];
   onAssignMenuGroup?: (categoryId: string, menuGroupId: string | null) => void;
@@ -105,6 +108,10 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   const [editName, setEditName] = useState(category.name);
   const [menuOpen, setMenuOpen] = useState(false);
   const [changingType, setChangingType] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [schDays, setSchDays] = useState<number[]>(category.scheduleDays || []);
+  const [schStart, setSchStart] = useState(category.scheduleStart || "");
+  const [schEnd, setSchEnd] = useState(category.scheduleEnd || "");
   const menuRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -196,6 +203,11 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   Toda oculta
                 </span>
               )}
+              {category.scheduleDays && category.scheduleDays.length > 0 && (
+                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#2563eb", background: "rgba(37,99,235,0.08)", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
+                  🕐 {category.scheduleDays.map(d => DAY_LABELS[d]).join("-")}{category.scheduleStart ? ` ${category.scheduleStart}` : ""}{category.scheduleEnd ? `-${category.scheduleEnd}` : ""}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -273,6 +285,12 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   >
                     Cambiar tipo
                   </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); setShowSchedule(!showSchedule); }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "var(--adm-text)", cursor: "pointer", borderTop: "0.5px solid var(--adm-card-border)" }}
+                  >
+                    🕐 Horario
+                  </button>
                   {menuGroupOptions && menuGroupOptions.length > 0 && onAssignMenuGroup && (
                     <div style={{ borderTop: "0.5px solid var(--adm-card-border)", padding: "6px 14px" }}>
                       <span style={{ fontFamily: F, fontSize: 10, fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Menú</span>
@@ -324,6 +342,66 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
           </div>
         )}
       </div>
+
+      {/* Schedule editor */}
+      {showSchedule && (
+        <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "0.5px solid var(--adm-card-border)", borderTop: "none", borderRadius: expanded ? 0 : "0 0 12px 12px" }}>
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "0 0 10px", fontWeight: 600 }}>Mostrar esta categoría solo en:</p>
+          {/* Day selector */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+            {DAY_LABELS.map((label, i) => {
+              const active = schDays.includes(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSchDays(prev => active ? prev.filter(d => d !== i) : [...prev, i].sort())}
+                  style={{
+                    width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer",
+                    background: active ? "#2563eb" : "var(--adm-input)",
+                    color: active ? "#fff" : "var(--adm-text3)",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {/* Time range */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+            <input type="time" value={schStart} onChange={e => setSchStart(e.target.value)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input)", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }} />
+            <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>a</span>
+            <input type="time" value={schEnd} onChange={e => setSchEnd(e.target.value)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input)", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }} />
+          </div>
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => {
+                onScheduleChange(category.id, schDays, schStart || null, schEnd || null);
+                setShowSchedule(false);
+              }}
+              style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: "#2563eb", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 600, cursor: "pointer" }}
+            >
+              Guardar
+            </button>
+            {(schDays.length > 0 || schStart || schEnd) && (
+              <button
+                onClick={() => {
+                  setSchDays([]);
+                  setSchStart("");
+                  setSchEnd("");
+                  onScheduleChange(category.id, [], null, null);
+                  setShowSchedule(false);
+                }}
+                style={{ padding: "7px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.74rem", fontWeight: 500, cursor: "pointer" }}
+              >
+                Quitar horario
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Expanded: dish list with drag */}
       {expanded && (
@@ -447,6 +525,11 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
     setCategories(prev => prev.map(c => c.id === id ? { ...c, dishType } : c));
   };
 
+  const scheduleCategory = async (id: string, scheduleDays: number[], scheduleStart: string | null, scheduleEnd: string | null) => {
+    await fetch("/api/admin/categories", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, scheduleDays, scheduleStart, scheduleEnd }) });
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, scheduleDays, scheduleStart, scheduleEnd } : c));
+  };
+
   const deleteCategory = async (id: string) => {
     const catDishes = allDishes.filter(d => d.categoryId === id);
     const otherCats = categories.filter(c => c.id !== id);
@@ -545,6 +628,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onToggle={toggleCategory}
               onDelete={deleteCategory}
               onTypeChange={changeDishType}
+              onScheduleChange={scheduleCategory}
               menuGroupLabel={menuGroups?.length ? menuGroups.find(g => g.categories.some(c => c.id === cat.id))?.name || null : null}
               menuGroupOptions={menuGroups || undefined}
               canHighlight={canHighlight}

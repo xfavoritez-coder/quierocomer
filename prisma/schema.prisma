@@ -479,18 +479,21 @@ model Announcement {
 }
 
 model Category {
-  id           String                @id @default(cuid())
-  restaurantId String
-  name         String
-  description  String?
-  position     Int
-  isActive     Boolean               @default(true)
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
-  dishType     String                @default("food")
-  menuGroupId  String?
-  normOverride String?
-  cuisineTag   String?
+  id            String                @id @default(cuid())
+  restaurantId  String
+  name          String
+  description   String?
+  position      Int
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  dishType      String                @default("food")
+  menuGroupId   String?
+  normOverride  String?
+  cuisineTag    String?
+  scheduleDays  Int[]
+  scheduleStart String?
+  scheduleEnd   String?
   menuGroup    MenuGroup?            @relation(fields: [menuGroupId], references: [id])
   restaurant   Restaurant            @relation(fields: [restaurantId], references: [id])
   translations CategoryTranslation[]

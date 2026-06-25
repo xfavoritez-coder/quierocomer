@@ -87,7 +87,7 @@ export async function PUT(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { id, name, description, position, isActive, dishType } = await req.json();
+    const { id, name, description, position, isActive, dishType, scheduleDays, scheduleStart, scheduleEnd } = await req.json();
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
 
     const existing = await prisma.category.findUnique({ where: { id }, select: { restaurantId: true } });
@@ -101,6 +101,9 @@ export async function PUT(req: NextRequest) {
     if (position !== undefined) data.position = position;
     if (isActive !== undefined) data.isActive = isActive;
     if (dishType !== undefined) data.dishType = dishType;
+    if (scheduleDays !== undefined) data.scheduleDays = Array.isArray(scheduleDays) ? scheduleDays : [];
+    if (scheduleStart !== undefined) data.scheduleStart = scheduleStart || null;
+    if (scheduleEnd !== undefined) data.scheduleEnd = scheduleEnd || null;
 
     const updated = await prisma.category.update({ where: { id }, data });
 
