@@ -1444,26 +1444,26 @@ export default function AdminMenus() {
             color: menuTab === tab.key ? "var(--adm-text)" : "var(--adm-text2)",
           }}>{tab.label}</button>
         ))}
-        {activeRestaurant?.slug && (
-          <>
-            <div style={{ flex: 1 }} />
-            <a
-              href={`/qr/${activeRestaurant.slug}/carta`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                padding: "7px 14px", borderRadius: 999, border: "1px solid var(--adm-card-border)",
-                background: "transparent", color: "var(--adm-text2)", cursor: "pointer",
-                fontFamily: F, fontSize: "12px", fontWeight: 600, textDecoration: "none",
-                whiteSpace: "nowrap", flexShrink: 0,
-              }}
-            >
-              🖨️ Carta imprimible
-            </a>
-          </>
-        )}
       </div>
+
+      {/* Botón carta imprimible */}
+      {activeRestaurant?.slug && (
+        <div style={{ marginBottom: 16, marginTop: -8 }}>
+          <a
+            href={`/qr/${activeRestaurant.slug}/carta`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "9px 18px", borderRadius: 10, border: "1px solid var(--adm-card-border)",
+              background: "var(--adm-card)", color: "var(--adm-text)", cursor: "pointer",
+              fontFamily: F, fontSize: "13px", fontWeight: 600, textDecoration: "none",
+            }}
+          >
+            🖨️ Exportar carta física
+          </a>
+        </div>
+      )}
 
       {/* Multi-menu group selector */}
       {isMultiMenu && (menuTab === "productos" || menuTab === "categorias") && (
