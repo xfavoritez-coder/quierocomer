@@ -4,7 +4,6 @@ export default function DaciaPage() {
       <video
         src="/video.mov"
         autoPlay
-        loop
         muted
         playsInline
         controls
