@@ -826,7 +826,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Send simple "carta lista" email (just a link to the carta, no credentials)
     // The full welcome email with panel credentials is sent when the owner enters their panel.
-    if (lead.email && translationOk) {
+    if (lead.email) {
       try {
         const { sendAdminEmail, cartaListaSimpleEmailHtml } = await import("@/lib/email/sendAdminEmail");
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
@@ -851,7 +851,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     }
 
     // Send WhatsApp alongside email
-    if (lead.whatsapp && translationOk) {
+    if (lead.whatsapp) {
       try {
         const { sendWhatsApp, buildCartaReadyMessage } = await import("@/lib/whatsapp");
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
