@@ -1347,7 +1347,8 @@ export default function CartaImpact({
           </div>
         </div>
       </div>
-      {/* Announcement banner inside fixed header */}
+      </header>
+      {/* Announcement banner inside fixed wrapper, outside header padding */}
       {hasBannerActive && (
         <div style={{ padding: "0 14px 6px" }}>
           {announcements && announcements.length > 0
@@ -1355,7 +1356,6 @@ export default function CartaImpact({
             : <HappyHourBanner happyHours={happyHours || []} />}
         </div>
       )}
-      </header>
 
       </div>{/* end fixed wrapper */}
 

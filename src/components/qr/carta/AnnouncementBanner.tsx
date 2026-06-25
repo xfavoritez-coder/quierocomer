@@ -75,7 +75,7 @@ export default function AnnouncementBanner({ announcements, variant = "solid", a
   if (isGlass) {
     return (
       <div style={{
-        borderRadius: 20,
+        borderRadius: 16,
         border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 60%, transparent)",
         background: "rgba(8,8,8,0.32)",
         backdropFilter: "blur(12px)",
