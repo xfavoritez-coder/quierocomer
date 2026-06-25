@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 interface Announcement {
   id: string;
@@ -13,28 +13,24 @@ interface Props {
   /** "solid" = full-width ribbon with accent color (lista/premium/feed).
    *  "glass" = original dark blur card (impact view). */
   variant?: "solid" | "glass";
+  /** Hex accent color — used to determine text contrast. */
+  accentColor?: string | null;
 }
 
-/** Returns true when the accent color is light enough to need dark text. */
-function isLightColor(el: HTMLElement): boolean {
-  const accent = getComputedStyle(el).getPropertyValue("--carta-accent").trim();
-  if (!accent) return false;
-  // Parse hex
-  const hex = accent.replace("#", "");
-  if (hex.length < 6) return false;
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  // Relative luminance
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.6;
+/** Returns true when the color is light enough to need dark text. */
+function isLight(hex: string | null | undefined): boolean {
+  if (!hex) return false;
+  const h = hex.replace("#", "");
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55;
 }
 
-export default function AnnouncementBanner({ announcements, variant = "solid" }: Props) {
+export default function AnnouncementBanner({ announcements, variant = "solid", accentColor }: Props) {
   const [current, setCurrent] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const [darkText, setDarkText] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (announcements.length <= 1) return;
@@ -45,20 +41,15 @@ export default function AnnouncementBanner({ announcements, variant = "solid" }:
     return () => clearInterval(timer);
   }, [announcements.length]);
 
-  // Detect if accent color is light → use dark text
-  useEffect(() => {
-    if (variant === "glass" || !ref.current) return;
-    setDarkText(isLightColor(ref.current));
-  }, [variant]);
-
   if (announcements.length === 0) return null;
 
   const ann = announcements[current];
   const needsClamp = ann.text.length > 90;
   const isGlass = variant === "glass";
+  const darkText = !isGlass && isLight(accentColor);
 
   const textColor = isGlass ? "#fff" : darkText ? "#1a1a1a" : "#fff";
-  const subtleColor = isGlass ? "rgba(255,255,255,0.6)" : darkText ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.7)";
+  const subtleColor = isGlass ? "rgba(255,255,255,0.6)" : darkText ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.7)";
 
   const textNode = (
     <span
@@ -128,7 +119,7 @@ export default function AnnouncementBanner({ announcements, variant = "solid" }:
 
   // ── Solid variant — full-width ribbon ──
   return (
-    <div ref={ref} style={{
+    <div style={{
       background: "var(--carta-accent, #F4A623)",
       padding: "9px 20px",
       textAlign: "center",

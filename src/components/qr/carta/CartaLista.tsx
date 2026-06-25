@@ -496,7 +496,7 @@ export default function CartaLista({
       </div>
 
       {/* Announcement banner — below nav */}
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />}
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (

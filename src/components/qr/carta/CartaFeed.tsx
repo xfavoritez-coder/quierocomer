@@ -649,7 +649,7 @@ export default function CartaFeed({
       </div>
 
       {/* ═══ ANNOUNCEMENTS ═══ */}
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />}
 
       {/* ═══ EMPTY SEARCH ═══ */}
       {query && grouped.every(g => g.dishes.length === 0) && (

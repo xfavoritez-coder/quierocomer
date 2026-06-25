@@ -533,7 +533,7 @@ export default function CartaPremium({
       )}
 
       {/* Announcement banner — below nav */}
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />}
 
       {/* Personalización ocurre en background sin bloquear la UI */}
 
