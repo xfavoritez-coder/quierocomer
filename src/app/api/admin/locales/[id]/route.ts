@@ -19,7 +19,6 @@ const OWNER_EDITABLE_FIELDS = [
   "weeklyEmailEnabled",
   "weeklyInsightsEnabled",
   "genioFabEnabled",
-  "ownerBannerEnabled",
   "multiMenuEnabled",
   "mpPayerEmail",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
@@ -107,7 +106,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.toteatApiToken !== undefined && { toteatApiToken: body.toteatApiToken || null }),
         ...(body.isDemo !== undefined && { isDemo: body.isDemo }),
         ...(body.genioFabEnabled !== undefined && { genioFabEnabled: body.genioFabEnabled }),
-        ...(body.ownerBannerEnabled !== undefined && { ownerBannerEnabled: body.ownerBannerEnabled }),
         ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),
         ...(body.weeklyEmailEnabled !== undefined && { weeklyEmailEnabled: body.weeklyEmailEnabled }),
         ...(body.weeklyInsightsEnabled !== undefined && { weeklyInsightsEnabled: body.weeklyInsightsEnabled }),
@@ -161,7 +159,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const feedFields = ['name','phone','website','websiteIsOrderUrl','cartaProvider','instagram','googleMapsUrl','address','logoUrl','isActive'];
     if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes', { expire: 0 });
     // Invalidar cache QR si cambiaron ajustes de la carta
-    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','ownerBannerEnabled','multiMenuEnabled','bannerUrl','logoUrl','name','description'];
+    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','multiMenuEnabled','bannerUrl','logoUrl','name','description'];
     if (qrFields.some(f => data[f] !== undefined)) {
       revalidateTag(`qr-restaurant-${restaurant.slug}`, { expire: 0 });
     }

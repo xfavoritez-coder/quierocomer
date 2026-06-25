@@ -15,7 +15,6 @@ import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
-import OwnerBanner from "@/components/qr/carta/OwnerBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
 import DemoFirstViewModal from "@/components/qr/carta/DemoFirstViewModal";
 import DemoViewToast from "@/components/qr/carta/DemoViewToast";
@@ -298,7 +297,6 @@ export default async function CartaPage({
       )}
       {!(restaurant as any).isDemo && !isShowcase && (
         <>
-          <OwnerBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} />
           {topDishesResult.totalSalesToday === 0 && (restaurant as any).owner && (
             <DemoFirstViewModal restaurantSlug={slug} restaurantName={restaurant.name} />
           )}
