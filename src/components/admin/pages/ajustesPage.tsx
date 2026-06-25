@@ -319,7 +319,7 @@ export default function AjustesPage() {
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Palette size={16} color="var(--adm-text3)" /> Diseño</h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>Color de tu carta: precios, botones y detalles</p>
         {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible desde el plan Gold →</button>}
-        <div style={{ display: "flex", gap: 12, pointerEvents: hasDesign ? "auto" : "none", overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, pointerEvents: hasDesign ? "auto" : "none" }}>
           {ACCENT_OPTIONS.map((opt) => {
             const isActive = (data.cartaAccentColor || null) === opt.value;
             return (
@@ -327,17 +327,18 @@ export default function AjustesPage() {
                 key={opt.label}
                 onClick={() => save({ cartaAccentColor: opt.value })}
                 style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                  background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0,
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                  background: isActive ? "var(--adm-hover)" : "none", border: "none", cursor: "pointer",
+                  padding: "8px 4px", borderRadius: 12, transition: "all 0.2s",
                 }}
               >
                 <div style={{
-                  width: 36, height: 36, borderRadius: "50%", background: opt.color,
+                  width: 40, height: 40, borderRadius: "50%", background: opt.color,
                   border: isActive ? "3px solid var(--adm-text)" : "3px solid transparent",
                   boxShadow: isActive ? `0 0 0 2px ${opt.color}40` : "none",
                   transition: "all 0.2s",
                 }} />
-                <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{opt.label}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{opt.label}</span>
               </button>
             );
           })}
@@ -346,11 +347,11 @@ export default function AjustesPage() {
             const customActive = data.cartaAccentColor && !ACCENT_OPTIONS.some(o => o.value === data.cartaAccentColor);
             const displayColor = customDirty ? customColor : (customActive ? data.cartaAccentColor! : customColor);
             return (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 4, flexShrink: 0 }}>
-                <label style={{ width: 36, height: 36, borderRadius: "50%", background: customActive || customDirty ? displayColor : "linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#9b59b6)", border: (customActive || customDirty) ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: (customActive || customDirty) ? `0 0 0 2px ${displayColor}40` : "none", transition: "all 0.2s", cursor: "pointer", display: "block", overflow: "hidden", position: "relative" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "8px 4px", borderRadius: 12, background: (customActive || customDirty) ? "var(--adm-hover)" : "none", transition: "all 0.2s" }}>
+                <label style={{ width: 40, height: 40, borderRadius: "50%", background: customActive || customDirty ? displayColor : "linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#9b59b6)", border: (customActive || customDirty) ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: (customActive || customDirty) ? `0 0 0 2px ${displayColor}40` : "none", transition: "all 0.2s", cursor: "pointer", display: "block", overflow: "hidden", position: "relative" }}>
                   <input type="color" value={displayColor} onChange={(e) => { setPersonalizadoColor(e.target.value); setPersonalizadoDirty(true); }} style={{ opacity: 0, position: "absolute", inset: 0, width: "100%", height: "100%", cursor: "pointer" }} />
                 </label>
-                <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: (customActive || customDirty) ? 700 : 500, color: (customActive || customDirty) ? "var(--adm-text)" : "var(--adm-text3)" }}>Personalizado</span>
+                <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: (customActive || customDirty) ? 700 : 500, color: (customActive || customDirty) ? "var(--adm-text)" : "var(--adm-text3)" }}>Custom</span>
               </div>
             );
           })()}
