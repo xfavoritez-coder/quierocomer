@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
-import { useEffect, useRef } from "react";
 
-type Template = "clasico" | "moderno" | "rustico";
+type Template = "magazine" | "bistro" | "minimal";
 
 interface Dish {
   id: string;
@@ -52,255 +51,296 @@ interface Props {
   initialTemplate: Template;
 }
 
-function QRCodeCanvas({ url }: { url: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+function QRCanvas({ url, size = 100 }: { url: string; size?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, url, { width: 120, margin: 1, color: { dark: "#000", light: "#fff" } });
-    }
-  }, [url]);
-  return <canvas ref={canvasRef} />;
+    if (ref.current) QRCode.toCanvas(ref.current, url, { width: size, margin: 1, color: { dark: "#000", light: "#fff" } });
+  }, [url, size]);
+  return <canvas ref={ref} />;
 }
 
-function formatPrice(n: number) {
-  return `$${n.toLocaleString("es-CL")}`;
+function fmt(n: number) { return `$${n.toLocaleString("es-CL")}`; }
+
+function ContactLine({ restaurant }: { restaurant: Restaurant }) {
+  const parts = [restaurant.phone, restaurant.instagram && `@${restaurant.instagram}`, restaurant.website].filter(Boolean);
+  if (!parts.length) return null;
+  return <p style={{ fontSize: 11, color: "#999", margin: 0 }}>{parts.join(" · ")}</p>;
 }
 
-function DishDietIcon({ diet, isSpicy }: { diet: string | null; isSpicy: boolean | null }) {
+// ═══════════════════════════════════════════════════════════════
+// MAGAZINE — foto grande, nombre sobre imagen, precio badge
+// ═══════════════════════════════════════════════════════════════
+function TemplateMagazine({ restaurant, sections, promotions, qrUrl }: Omit<Props, "initialTemplate">) {
   return (
-    <>
-      {diet === "VEGAN" && <span title="Vegano" style={{ fontSize: "0.7em" }}> (V)</span>}
-      {diet === "VEGETARIAN" && <span title="Vegetariano" style={{ fontSize: "0.7em" }}> (Veg)</span>}
-      {isSpicy && <span title="Picante" style={{ fontSize: "0.7em" }}> *</span>}
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════
-// TEMPLATE: CLASICO
-// ═══════════════════════════════════════════════
-function TemplateClasico({ restaurant, sections, promotions, qrUrl }: Omit<Props, "initialTemplate">) {
-  return (
-    <div className="carta-print" style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", color: "#1a1a1a", maxWidth: 800, margin: "0 auto", padding: "48px 56px" }}>
+    <div className="carta-print" style={{ fontFamily: "'Inter', sans-serif", color: "#111", maxWidth: 850, margin: "0 auto", padding: "40px 36px" }}>
       {/* Header */}
-      <header style={{ textAlign: "center", marginBottom: 40, borderBottom: "2px solid #1a1a1a", paddingBottom: 28 }}>
-        {restaurant.logoUrl && (
-          <img src={restaurant.logoUrl} alt="" style={{ height: 64, marginBottom: 12, objectFit: "contain" }} />
-        )}
-        <h1 style={{ fontSize: 36, fontWeight: 500, letterSpacing: 4, textTransform: "uppercase", margin: "0 0 6px" }}>{restaurant.name}</h1>
-        {restaurant.address && <p style={{ fontSize: 13, color: "#666", margin: 0, fontFamily: "'Inter', sans-serif" }}>{restaurant.address}</p>}
-      </header>
-
-      {/* Promos */}
-      {promotions.length > 0 && (
-        <section style={{ marginBottom: 32, border: "1px solid #ddd", borderRadius: 4, padding: "16px 20px" }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 12px", fontFamily: "'Inter', sans-serif" }}>Ofertas</h2>
-          {promotions.map(p => (
-            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-              <span style={{ fontSize: 15, fontWeight: 600 }}>{p.name}</span>
-              <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                {p.promoPrice != null && <span style={{ fontSize: 15, fontWeight: 700 }}>{formatPrice(p.promoPrice)}</span>}
-                {p.originalPrice != null && p.promoPrice != null && <del style={{ fontSize: 12, color: "#999" }}>{formatPrice(p.originalPrice)}</del>}
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* Categories */}
-      {sections.map(sec => (
-        <section key={sec.id} style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 500, fontStyle: "italic", borderBottom: "1px solid #ccc", paddingBottom: 6, marginBottom: 14 }}>{sec.name}</h2>
-          {sec.dishes.map(d => (
-            <div key={d.id} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: 15, fontWeight: 600 }}>
-                  {d.tags?.includes("RECOMMENDED") && <span style={{ color: restaurant.accent }}>★ </span>}
-                  {d.name}
-                  <DishDietIcon diet={d.dishDiet} isSpicy={d.isSpicy} />
-                </span>
-                <span style={{ flexShrink: 0, borderBottom: "1px dotted #ccc", flex: 1, margin: "0 8px", minWidth: 20 }} />
-                <span style={{ fontSize: 15, fontWeight: 600, flexShrink: 0 }}>
-                  {d.discountPrice ? (
-                    <><span style={{ color: restaurant.accent }}>{formatPrice(Math.min(d.price, d.discountPrice))}</span> <del style={{ fontSize: 12, color: "#999" }}>{formatPrice(Math.max(d.price, d.discountPrice))}</del></>
-                  ) : formatPrice(d.price)}
-                </span>
-              </div>
-              {d.description && <p style={{ fontSize: 12, color: "#777", margin: "2px 0 0", fontFamily: "'Inter', sans-serif", lineHeight: 1.4 }}>{d.description}</p>}
-            </div>
-          ))}
-        </section>
-      ))}
-
-      {/* Footer */}
-      <footer style={{ textAlign: "center", marginTop: 40, paddingTop: 24, borderTop: "2px solid #1a1a1a" }}>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20 }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, paddingBottom: 16, borderBottom: `3px solid ${restaurant.accent}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 48, objectFit: "contain" }} />}
           <div>
-            <p style={{ fontSize: 11, color: "#888", margin: "0 0 4px", fontFamily: "'Inter', sans-serif", letterSpacing: 2, textTransform: "uppercase" }}>Carta digital</p>
-            <QRCodeCanvas url={qrUrl} />
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>{restaurant.name}</h1>
+            {restaurant.address && <p style={{ fontSize: 11, color: "#888", margin: "2px 0 0" }}>{restaurant.address}</p>}
           </div>
         </div>
-        <div style={{ marginTop: 12, fontSize: 11, color: "#999", fontFamily: "'Inter', sans-serif" }}>
-          {[restaurant.phone, restaurant.instagram && `@${restaurant.instagram}`, restaurant.website].filter(Boolean).join(" · ")}
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════
-// TEMPLATE: MODERNO
-// ═══════════════════════════════════════════════
-function TemplateModerno({ restaurant, sections, promotions, qrUrl }: Omit<Props, "initialTemplate">) {
-  return (
-    <div className="carta-print" style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif", color: "#111", maxWidth: 800, margin: "0 auto", padding: "40px 48px" }}>
-      {/* Header */}
-      <header style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 36, paddingBottom: 20, borderBottom: `3px solid ${restaurant.accent}` }}>
-        {restaurant.logoUrl && (
-          <img src={restaurant.logoUrl} alt="" style={{ height: 52, objectFit: "contain" }} />
-        )}
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>{restaurant.name}</h1>
-          {restaurant.address && <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>{restaurant.address}</p>}
+        <div style={{ textAlign: "right" }}>
+          <QRCanvas url={qrUrl} size={64} />
+          <p style={{ fontSize: 8, color: "#bbb", margin: "2px 0 0", letterSpacing: 1 }}>CARTA DIGITAL</p>
         </div>
       </header>
 
-      {/* Promos */}
+      {/* Promos banner */}
       {promotions.length > 0 && (
-        <section style={{ marginBottom: 28, background: "#f8f8f8", borderRadius: 8, padding: "14px 18px", borderLeft: `4px solid ${restaurant.accent}` }}>
-          <h2 style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: restaurant.accent, margin: "0 0 10px" }}>Ofertas</h2>
+        <div style={{ display: "flex", gap: 10, marginBottom: 28, flexWrap: "wrap" }}>
           {promotions.map(p => (
-            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</span>
-              <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
-                {p.promoPrice != null && <span style={{ fontSize: 13, fontWeight: 800, color: restaurant.accent }}>{formatPrice(p.promoPrice)}</span>}
-                {p.originalPrice != null && p.promoPrice != null && <del style={{ fontSize: 11, color: "#bbb" }}>{formatPrice(p.originalPrice)}</del>}
-              </div>
+            <div key={p.id} style={{ flex: "1 1 200px", background: restaurant.accent, borderRadius: 10, padding: "12px 16px", color: "#fff" }}>
+              <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", opacity: 0.7 }}>OFERTA</p>
+              <p style={{ fontSize: 16, fontWeight: 700, margin: "0 0 2px" }}>{p.name}</p>
+              {p.promoPrice != null && (
+                <p style={{ fontSize: 20, fontWeight: 900, margin: 0 }}>
+                  {fmt(p.promoPrice)}
+                  {p.originalPrice != null && <del style={{ fontSize: 13, marginLeft: 8, opacity: 0.5 }}>{fmt(p.originalPrice)}</del>}
+                </p>
+              )}
             </div>
           ))}
-        </section>
+        </div>
       )}
 
-      {/* Two-column layout */}
-      <div style={{ columnCount: 2, columnGap: 32 }}>
-        {sections.map(sec => (
-          <section key={sec.id} style={{ breakInside: "avoid", marginBottom: 24 }}>
-            <h2 style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: restaurant.accent, margin: "0 0 10px", paddingBottom: 4, borderBottom: "1px solid #eee" }}>{sec.name}</h2>
-            {sec.dishes.map(d => (
-              <div key={d.id} style={{ marginBottom: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>
-                    {d.tags?.includes("RECOMMENDED") && <span style={{ color: restaurant.accent }}>★ </span>}
-                    {d.name}
-                    <DishDietIcon diet={d.dishDiet} isSpicy={d.isSpicy} />
-                  </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, flexShrink: 0, marginLeft: 8 }}>
-                    {d.discountPrice ? (
-                      <><span style={{ color: restaurant.accent }}>{formatPrice(Math.min(d.price, d.discountPrice))}</span></>
-                    ) : formatPrice(d.price)}
-                  </span>
-                </div>
-                {d.description && <p style={{ fontSize: 10.5, color: "#999", margin: "1px 0 0", lineHeight: 1.3 }}>{d.description}</p>}
+      {/* Sections */}
+      {sections.map(sec => {
+        const withPhoto = sec.dishes.filter(d => d.photos?.[0]);
+        const withoutPhoto = sec.dishes.filter(d => !d.photos?.[0]);
+        return (
+          <section key={sec.id} style={{ marginBottom: 32, breakInside: "avoid" }}>
+            <h2 style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: restaurant.accent, margin: "0 0 14px", paddingBottom: 6, borderBottom: `1px solid ${restaurant.accent}30` }}>{sec.name}</h2>
+            {/* Photo grid */}
+            {withPhoto.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: withoutPhoto.length ? 14 : 0 }}>
+                {withPhoto.map(d => (
+                  <div key={d.id} style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "4/3" }}>
+                    <img src={d.photos[0]} alt={d.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)" }} />
+                    {d.tags?.includes("RECOMMENDED") && (
+                      <span style={{ position: "absolute", top: 6, left: 6, background: restaurant.accent, color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4 }}>★ DESTACADO</span>
+                    )}
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 10px" }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#fff", margin: "0 0 2px", lineHeight: 1.2 }}>{d.name}</p>
+                      <p style={{ fontSize: 13, fontWeight: 800, color: restaurant.accent, margin: 0 }}>
+                        {d.discountPrice ? fmt(Math.min(d.price, d.discountPrice)) : fmt(d.price)}
+                        {d.discountPrice && <del style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginLeft: 4 }}>{fmt(Math.max(d.price, d.discountPrice))}</del>}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            {/* Text list for dishes without photos */}
+            {withoutPhoto.length > 0 && (
+              <div style={{ columnCount: 2, columnGap: 24 }}>
+                {withoutPhoto.map(d => (
+                  <div key={d.id} style={{ marginBottom: 6, breakInside: "avoid" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>
+                        {d.tags?.includes("RECOMMENDED") && <span style={{ color: restaurant.accent }}>★ </span>}
+                        {d.name}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, flexShrink: 0, marginLeft: 6 }}>{fmt(d.price)}</span>
+                    </div>
+                    {d.description && <p style={{ fontSize: 10, color: "#999", margin: "1px 0 0", lineHeight: 1.3 }}>{d.description}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
-        ))}
-      </div>
+        );
+      })}
 
       {/* Footer */}
-      <footer style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 32, paddingTop: 16, borderTop: `2px solid ${restaurant.accent}` }}>
-        <div style={{ fontSize: 11, color: "#999" }}>
-          {[restaurant.phone, restaurant.instagram && `@${restaurant.instagram}`, restaurant.website].filter(Boolean).map((t, i) => (
-            <span key={i}>{i > 0 && " · "}{t}</span>
-          ))}
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <QRCodeCanvas url={qrUrl} />
-          <p style={{ fontSize: 9, color: "#bbb", margin: "4px 0 0", letterSpacing: 1 }}>CARTA DIGITAL</p>
-        </div>
+      <footer style={{ textAlign: "center", paddingTop: 16, borderTop: `2px solid ${restaurant.accent}`, marginTop: 20 }}>
+        <ContactLine restaurant={restaurant} />
       </footer>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════
-// TEMPLATE: RUSTICO
-// ═══════════════════════════════════════════════
-function TemplateRustico({ restaurant, sections, promotions, qrUrl }: Omit<Props, "initialTemplate">) {
-  const warm = "#5C4033";
+// ═══════════════════════════════════════════════════════════════
+// BISTRO — cards con foto cuadrada arriba, info abajo, fondo crema
+// ═══════════════════════════════════════════════════════════════
+function TemplateBistro({ restaurant, sections, promotions, qrUrl }: Omit<Props, "initialTemplate">) {
   return (
-    <div className="carta-print" style={{ fontFamily: "'Playfair Display', 'Georgia', serif", color: warm, maxWidth: 800, margin: "0 auto", padding: "48px 56px", background: "#FFFDF8" }}>
+    <div className="carta-print" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: "#3E2B1C", maxWidth: 850, margin: "0 auto", padding: "44px 40px", background: "#FBF8F3" }}>
       {/* Header */}
       <header style={{ textAlign: "center", marginBottom: 36 }}>
-        {restaurant.logoUrl && (
-          <img src={restaurant.logoUrl} alt="" style={{ height: 56, marginBottom: 10, objectFit: "contain" }} />
-        )}
-        <h1 style={{ fontSize: 34, fontWeight: 700, margin: "0 0 4px", fontStyle: "italic" }}>{restaurant.name}</h1>
-        <div style={{ width: 60, height: 2, background: warm, margin: "8px auto 10px", opacity: 0.4 }} />
+        {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 56, marginBottom: 8, objectFit: "contain" }} />}
+        <h1 style={{ fontSize: 34, fontWeight: 600, margin: "0 0 4px", fontStyle: "italic" }}>{restaurant.name}</h1>
+        <div style={{ width: 50, height: 2, background: "#3E2B1C", margin: "8px auto", opacity: 0.3 }} />
         {restaurant.address && <p style={{ fontSize: 12, color: "#9B8E7A", margin: 0, fontFamily: "'Inter', sans-serif" }}>{restaurant.address}</p>}
       </header>
 
       {/* Promos */}
       {promotions.length > 0 && (
-        <section style={{ marginBottom: 28, textAlign: "center", padding: "14px 0", borderTop: `1px solid ${warm}33`, borderBottom: `1px solid ${warm}33` }}>
-          <h2 style={{ fontSize: 12, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase", margin: "0 0 10px", fontFamily: "'Inter', sans-serif", color: "#9B8E7A" }}>Ofertas del momento</h2>
+        <div style={{ textAlign: "center", marginBottom: 28, padding: "14px 0", borderTop: "1px solid #E8DDC8", borderBottom: "1px solid #E8DDC8" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#9B8E7A", margin: "0 0 8px", fontFamily: "'Inter', sans-serif" }}>Ofertas</p>
           {promotions.map(p => (
-            <div key={p.id} style={{ marginBottom: 4 }}>
-              <span style={{ fontSize: 15, fontWeight: 600 }}>{p.name}</span>
-              {p.promoPrice != null && <span style={{ marginLeft: 8, fontWeight: 700 }}>{formatPrice(p.promoPrice)}</span>}
-              {p.originalPrice != null && p.promoPrice != null && <del style={{ marginLeft: 6, fontSize: 12, color: "#ccc" }}>{formatPrice(p.originalPrice)}</del>}
-            </div>
+            <p key={p.id} style={{ fontSize: 16, margin: "4px 0" }}>
+              <strong>{p.name}</strong>
+              {p.promoPrice != null && <span style={{ marginLeft: 10, fontWeight: 700 }}>{fmt(p.promoPrice)}</span>}
+              {p.originalPrice != null && p.promoPrice != null && <del style={{ marginLeft: 6, color: "#ccc", fontSize: 13 }}>{fmt(p.originalPrice)}</del>}
+            </p>
           ))}
-        </section>
+        </div>
       )}
 
-      {/* Categories */}
+      {/* Sections */}
       {sections.map(sec => (
-        <section key={sec.id} style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, fontStyle: "italic", textAlign: "center", margin: "0 0 4px" }}>{sec.name}</h2>
-          <div style={{ width: 40, height: 1, background: warm, margin: "0 auto 14px", opacity: 0.3 }} />
-          {sec.dishes.map(d => (
-            <div key={d.id} style={{ marginBottom: 10, textAlign: "center" }}>
-              <div>
-                <span style={{ fontSize: 15, fontWeight: 600 }}>
-                  {d.tags?.includes("RECOMMENDED") && <span>★ </span>}
-                  {d.name}
-                  <DishDietIcon diet={d.dishDiet} isSpicy={d.isSpicy} />
-                </span>
-                <span style={{ margin: "0 8px", color: "#ccc" }}>·</span>
-                <span style={{ fontSize: 15, fontWeight: 700 }}>
-                  {d.discountPrice ? formatPrice(Math.min(d.price, d.discountPrice)) : formatPrice(d.price)}
-                </span>
+        <section key={sec.id} style={{ marginBottom: 32, breakInside: "avoid" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 600, fontStyle: "italic", textAlign: "center", margin: "0 0 4px" }}>{sec.name}</h2>
+          <div style={{ width: 30, height: 1, background: "#3E2B1C", margin: "0 auto 16px", opacity: 0.25 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+            {sec.dishes.map(d => (
+              <div key={d.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", breakInside: "avoid" }}>
+                {d.photos?.[0] ? (
+                  <div style={{ aspectRatio: "1", overflow: "hidden", position: "relative" }}>
+                    <img src={d.photos[0]} alt={d.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    {d.tags?.includes("RECOMMENDED") && (
+                      <span style={{ position: "absolute", top: 6, left: 6, background: "#3E2B1C", color: "#FBF8F3", fontSize: 8, fontWeight: 800, padding: "2px 6px", borderRadius: 3, letterSpacing: 0.5 }}>★</span>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ aspectRatio: "1", background: "#F3EDE4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "#D4C9B8" }}>🍽️</div>
+                )}
+                <div style={{ padding: "10px 10px 12px" }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 3px", lineHeight: 1.2 }}>{d.name}</p>
+                  {d.description && <p style={{ fontSize: 10, color: "#9B8E7A", margin: "0 0 6px", lineHeight: 1.3, fontFamily: "'Inter', sans-serif" }}>{d.description}</p>}
+                  <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>
+                    {d.discountPrice ? (
+                      <><span style={{ color: "#B85C38" }}>{fmt(Math.min(d.price, d.discountPrice))}</span> <del style={{ fontSize: 11, color: "#ccc" }}>{fmt(Math.max(d.price, d.discountPrice))}</del></>
+                    ) : fmt(d.price)}
+                  </p>
+                </div>
               </div>
-              {d.description && <p style={{ fontSize: 11, color: "#9B8E7A", margin: "2px 0 0", fontFamily: "'Inter', sans-serif", fontStyle: "italic" }}>{d.description}</p>}
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
       ))}
 
       {/* Footer */}
-      <footer style={{ textAlign: "center", marginTop: 36, paddingTop: 20, borderTop: `1px solid ${warm}33` }}>
-        <QRCodeCanvas url={qrUrl} />
-        <p style={{ fontSize: 10, color: "#9B8E7A", margin: "6px 0 0", fontFamily: "'Inter', sans-serif", letterSpacing: 2 }}>ESCANEA PARA VER LA CARTA DIGITAL</p>
-        <p style={{ fontSize: 11, color: "#ccc", marginTop: 8, fontFamily: "'Inter', sans-serif" }}>
-          {[restaurant.phone, restaurant.instagram && `@${restaurant.instagram}`].filter(Boolean).join(" · ")}
-        </p>
+      <footer style={{ textAlign: "center", marginTop: 28, paddingTop: 20, borderTop: "1px solid #E8DDC8" }}>
+        <QRCanvas url={qrUrl} size={90} />
+        <p style={{ fontSize: 9, color: "#9B8E7A", margin: "4px 0 0", letterSpacing: 2, fontFamily: "'Inter', sans-serif" }}>ESCANEA PARA VER LA CARTA DIGITAL</p>
+        <div style={{ marginTop: 8 }}><ContactLine restaurant={restaurant} /></div>
       </footer>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// MINIMAL — destacados con foto grande, resto en lista compacta
+// ═══════════════════════════════════════════════════════════════
+function TemplateMinimal({ restaurant, sections, promotions, qrUrl }: Omit<Props, "initialTemplate">) {
+  const allDishes = sections.flatMap(s => s.dishes);
+  const featured = allDishes.filter(d => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
+  return (
+    <div className="carta-print" style={{ fontFamily: "'Inter', sans-serif", color: "#1a1a1a", maxWidth: 850, margin: "0 auto", padding: "40px 44px" }}>
+      {/* Header */}
+      <header style={{ marginBottom: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 40, objectFit: "contain" }} />}
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{restaurant.name}</h1>
+        </div>
+        {restaurant.address && <p style={{ fontSize: 11, color: "#999", margin: 0 }}>{restaurant.address}</p>}
+      </header>
+
+      {/* Featured dishes — hero cards */}
+      {featured.length > 0 && (
+        <section style={{ marginBottom: 28 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: restaurant.accent, margin: "0 0 12px" }}>DESTACADOS</p>
+          <div style={{ display: "grid", gridTemplateColumns: featured.length === 1 ? "1fr" : "repeat(2, 1fr)", gap: 12 }}>
+            {featured.map(d => (
+              <div key={d.id} style={{ position: "relative", borderRadius: 12, overflow: "hidden", aspectRatio: "16/9" }}>
+                <img src={d.photos[0]} alt={d.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)" }} />
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                  <div>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: "0 0 2px" }}>{d.name}</p>
+                    {d.description && <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: 0, lineHeight: 1.3 }}>{d.description}</p>}
+                  </div>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: restaurant.accent, flexShrink: 0, marginLeft: 12 }}>
+                    {d.discountPrice ? fmt(Math.min(d.price, d.discountPrice)) : fmt(d.price)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Promos */}
+      {promotions.length > 0 && (
+        <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+          {promotions.map(p => (
+            <div key={p.id} style={{ flex: 1, background: "#f5f5f5", borderRadius: 8, padding: "10px 14px", borderLeft: `3px solid ${restaurant.accent}` }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: restaurant.accent, margin: "0 0 2px", letterSpacing: 1 }}>OFERTA</p>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{p.name}</p>
+              {p.promoPrice != null && <p style={{ fontSize: 15, fontWeight: 800, margin: "2px 0 0" }}>{fmt(p.promoPrice)}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Sections — compact list, two columns */}
+      <div style={{ columnCount: 2, columnGap: 32 }}>
+        {sections.map(sec => (
+          <section key={sec.id} style={{ breakInside: "avoid", marginBottom: 22 }}>
+            <h2 style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: restaurant.accent, margin: "0 0 8px", paddingBottom: 4, borderBottom: "1px solid #eee" }}>{sec.name}</h2>
+            {sec.dishes.map(d => {
+              const isFeatured = d.tags?.includes("RECOMMENDED");
+              return (
+                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  {d.photos?.[0] && (
+                    <img src={d.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span style={{ fontSize: 12, fontWeight: isFeatured ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {isFeatured && <span style={{ color: restaurant.accent }}>★ </span>}
+                        {d.name}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 700, flexShrink: 0, marginLeft: 6 }}>
+                        {d.discountPrice ? fmt(Math.min(d.price, d.discountPrice)) : fmt(d.price)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <footer style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, paddingTop: 14, borderTop: "2px solid #eee" }}>
+        <ContactLine restaurant={restaurant} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <p style={{ fontSize: 9, color: "#bbb", margin: 0, letterSpacing: 1 }}>CARTA<br />DIGITAL</p>
+          <QRCanvas url={qrUrl} size={56} />
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════
 export default function CartaImprimible({ restaurant, sections, promotions, qrUrl, initialTemplate }: Props) {
   const [template, setTemplate] = useState<Template>(initialTemplate);
 
-  const templateNames: Record<Template, string> = {
-    clasico: "Elegante",
-    moderno: "Moderno",
-    rustico: "Acogedor",
-  };
+  const templates: { key: Template; label: string; desc: string }[] = [
+    { key: "magazine", label: "Magazine", desc: "Fotos grandes, grid visual" },
+    { key: "bistro", label: "Bistro", desc: "Cards con foto, fondo crema" },
+    { key: "minimal", label: "Minimal", desc: "Destacados hero + lista" },
+  ];
 
   const sharedProps = { restaurant, sections, promotions, qrUrl };
 
@@ -309,45 +349,43 @@ export default function CartaImprimible({ restaurant, sections, promotions, qrUr
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { margin: 0; padding: 0; }
-          .carta-print { padding: 32px 40px !important; }
+          body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .carta-print { margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
         }
         @media screen {
           body { background: #e5e5e5 !important; }
-          .carta-print { background: white; box-shadow: 0 4px 24px rgba(0,0,0,0.15); border-radius: 4px; margin-top: 80px !important; margin-bottom: 40px !important; }
+          .carta-print { box-shadow: 0 4px 24px rgba(0,0,0,0.15); border-radius: 4px; margin-top: 80px !important; margin-bottom: 40px !important; }
         }
-        @page { margin: 12mm; }
+        @page { margin: 10mm; }
       `}</style>
 
       {/* Toolbar */}
       <div className="no-print" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        background: "#1a1a1a", padding: "12px 20px",
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+        background: "#1a1a1a", padding: "10px 16px",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
       }}>
-        <span style={{ color: "#999", fontSize: 13, fontWeight: 600, marginRight: 8 }}>Plantilla:</span>
-        {(Object.keys(templateNames) as Template[]).map(t => (
+        {templates.map(t => (
           <button
-            key={t}
-            onClick={() => setTemplate(t)}
+            key={t.key}
+            onClick={() => setTemplate(t.key)}
             style={{
-              padding: "7px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: 600,
-              background: template === t ? restaurant.accent : "rgba(255,255,255,0.08)",
-              color: template === t ? "#fff" : "#aaa",
-              transition: "all 0.15s",
+              padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontSize: 12, fontWeight: 600,
+              background: template === t.key ? restaurant.accent : "rgba(255,255,255,0.08)",
+              color: template === t.key ? "#fff" : "#aaa",
             }}
           >
-            {templateNames[t]}
+            {t.label}
           </button>
         ))}
-        <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", margin: "0 8px" }} />
+        <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", margin: "0 4px" }} />
         <button
           onClick={() => window.print()}
           style={{
-            padding: "8px 20px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontSize: 13, fontWeight: 700,
+            padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
+            fontSize: 12, fontWeight: 700,
             background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#1a1a1a",
           }}
         >
@@ -355,10 +393,9 @@ export default function CartaImprimible({ restaurant, sections, promotions, qrUr
         </button>
       </div>
 
-      {/* Template */}
-      {template === "clasico" && <TemplateClasico {...sharedProps} />}
-      {template === "moderno" && <TemplateModerno {...sharedProps} />}
-      {template === "rustico" && <TemplateRustico {...sharedProps} />}
+      {template === "magazine" && <TemplateMagazine {...sharedProps} />}
+      {template === "bistro" && <TemplateBistro {...sharedProps} />}
+      {template === "minimal" && <TemplateMinimal {...sharedProps} />}
     </>
   );
 }

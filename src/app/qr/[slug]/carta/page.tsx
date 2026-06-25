@@ -73,7 +73,7 @@ export default async function CartaImprimiblePage({ params, searchParams }: { pa
       sections={sections}
       promotions={promotions}
       qrUrl={qrUrl}
-      initialTemplate={(template as any) || "clasico"}
+      initialTemplate={(template as any) || "magazine"}
     />
   );
 }
