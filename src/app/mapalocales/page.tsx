@@ -5,7 +5,7 @@ export const metadata = {
   title: 'Mapa de locales — QuieroComer',
 }
 
-export const revalidate = 0
+export const revalidate = 3600 // 1 hora — locales no cambian frecuentemente
 
 export type RestauranteMapaData = {
   id: string

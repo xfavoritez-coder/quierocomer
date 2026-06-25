@@ -17,7 +17,7 @@ export const metadata = {
 
 // ISR: página cacheada 5 minutos en CDN, sin esperar DB de usuario en SSR
 // Los scores personalizados se cargan client-side en NewHome (sin bloquear el primer paint)
-export const revalidate = 300
+export const revalidate = 900 // 15 min — reduce ISR writes en Vercel
 
 export default async function HomePage() {
   const [dishes, categoryCountMap] = await Promise.all([
