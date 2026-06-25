@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, X, User, Sparkles } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
@@ -24,7 +24,6 @@ import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
-import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
@@ -33,13 +32,11 @@ import ViewSelectorCompact from "./ViewSelectorCompact";
 import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
-import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
-import { canAccess, effectivePlan } from "@/lib/plans";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import WaiterButton from "../garzon/WaiterButton";
@@ -188,7 +185,6 @@ export default function CartaLista({
     return result.hasPersonalization ? result.map : null;
   });
   const [profileTrigger, setProfileTrigger] = useState(0);
-  const [personalizing, setPersonalizing] = useState(false);
   const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
 
   useEffect(() => { onReady?.(); }, [readyKey]);

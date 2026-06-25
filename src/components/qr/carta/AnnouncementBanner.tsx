@@ -74,17 +74,17 @@ export default function AnnouncementBanner({ announcements, variant = "solid", a
   // ── Glass variant (Impact view — unchanged) ──
   if (isGlass) {
     return (
-      <div style={{ padding: "calc(8px + env(safe-area-inset-top)) 12px 0", position: "relative", zIndex: 15 }}>
-        <div style={{
-          borderRadius: 16,
-          border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)",
-          background: "rgba(8,8,8,0.28)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          overflow: "hidden",
-          padding: "13px 16px",
-          textAlign: "center",
-        }}>
+      <div style={{
+        borderRadius: 20,
+        border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 60%, transparent)",
+        background: "rgba(8,8,8,0.32)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        overflow: "hidden",
+        padding: "12px 16px",
+        textAlign: "center",
+        boxShadow: "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 25%, transparent), inset 0 0 12px rgba(255,255,255,0.03)",
+      }}>
           {ann.linkUrl && !needsClamp ? (
             <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
               {textNode}
@@ -112,7 +112,6 @@ export default function AnnouncementBanner({ announcements, variant = "solid", a
               ))}
             </div>
           )}
-        </div>
       </div>
     );
   }

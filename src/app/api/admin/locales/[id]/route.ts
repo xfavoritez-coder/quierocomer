@@ -17,7 +17,6 @@ const OWNER_EDITABLE_FIELDS = [
   "allPhotosReferential",
   "defaultView",
   "weeklyEmailEnabled",
-  "weeklyInsightsEnabled",
   "genioFabEnabled",
   "multiMenuEnabled",
   "mpPayerEmail",
@@ -108,7 +107,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.genioFabEnabled !== undefined && { genioFabEnabled: body.genioFabEnabled }),
         ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),
         ...(body.weeklyEmailEnabled !== undefined && { weeklyEmailEnabled: body.weeklyEmailEnabled }),
-        ...(body.weeklyInsightsEnabled !== undefined && { weeklyInsightsEnabled: body.weeklyInsightsEnabled }),
         // Google Places fields (super-admin only)
         ...(body.googlePlaceId !== undefined && { googlePlaceId: body.googlePlaceId || null }),
         ...(body.googleMapsUrl !== undefined && { googleMapsUrl: body.googleMapsUrl || null }),

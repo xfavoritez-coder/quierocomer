@@ -46,10 +46,6 @@ const DEMO_DATA: DashData = {
   weekRestrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
 };
 
-const DEMO_INSIGHTS = [
-  { id: "3", type: "opportunity", title: "Destaca Pizza Margherita", body: "Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 1 },
-];
-
 interface DashData {
   visitsThisWeek: number; visitsDelta: number | null;
   avgSessionDuration: number; genioUsedThisWeek: number;
@@ -64,8 +60,6 @@ interface DashData {
   weekDietDistribution?: { type: string; count: number }[];
   weekRestrictionsList?: { name: string; count: number }[];
 }
-
-interface Insight { id: string; type: string; title: string; body: string; priority: number; }
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return "Sin escaneos aún";
@@ -88,8 +82,6 @@ export default function PanelDashboard() {
   const { restaurants, loading: sessionLoading, selectedRestaurantId, name: ownerName } = useAdminSession();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [insightsEnabled, setInsightsEnabled] = useState(true);
   const [restSettings, setRestSettings] = useState<any>(null);
   const [cartaReviewed, setCartaReviewed] = useState(true);
   const [qrGenerated, setQrGenerated] = useState(true);
@@ -123,17 +115,12 @@ export default function PanelDashboard() {
             const fakeCounts = [42, 35, 28, 22, 18];
             const dishes = d.dishes.slice(0, 5).map((dd: any, i: number) => ({ name: dd.name, count: fakeCounts[i], photo: dd.photo }));
             setData({ ...DEMO_DATA, topDishesViewed: dishes, starDish: { name: dishes[0].name, count: dishes[0].count, photo: dishes[0].photo } });
-            setInsights([
-              { id: "3", type: "opportunity", title: `Destaca ${dishes[0].name}`, body: "Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 1 },
-            ]);
           } else {
             setData(DEMO_DATA);
-            setInsights(DEMO_INSIGHTS);
           }
         })
-        .catch(() => { setData(DEMO_DATA); setInsights(DEMO_INSIGHTS); })
+        .catch(() => { setData(DEMO_DATA); })
         .finally(() => setLoading(false));
-      setInsightsEnabled(true);
       return;
     }
 
@@ -143,9 +130,8 @@ export default function PanelDashboard() {
     const safeFetch = (url: string) => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
     Promise.all([
       safeFetch(`/api/admin/dashboard?restaurantId=${rid}`),
-      safeFetch(`/api/admin/insights?restaurantId=${rid}`),
       safeFetch(`/api/admin/locales/${rid}`),
-    ]).then(([d, i, settings]) => {
+    ]).then(([d, settings]) => {
       if (d && !d.error) setData(d);
       else {
         // Provide minimal empty data so the page renders instead of "Sin datos disponibles"
@@ -157,9 +143,7 @@ export default function PanelDashboard() {
           weekBirthdays: 0, genioToday: 0, todayAvgDuration: 0,
         });
       }
-      setInsights(i?.insights || []);
       if (settings && !settings.error) {
-        setInsightsEnabled(settings.weeklyInsightsEnabled !== false);
         setRestSettings(settings);
       }
       setCartaReviewed(localStorage.getItem(`qc_carta_reviewed_${rid}`) === "1");
@@ -433,29 +417,6 @@ export default function PanelDashboard() {
         </div>
       )}
 
-
-      {/* ═══ Consejo de la semana ═══ */}
-      {insights.length > 0 && insightsEnabled && (
-        <div style={{ marginBottom: 14 }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>🧞 Consejo de la semana</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {insights.slice(0, 1).map(ins => {
-              const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
-              return (
-                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
-                    <div>
-                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: "0 0 4px" }}>{ins.title}</p>
-                      <p style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{ins.body}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       </PlanGate>
 

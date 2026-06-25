@@ -9,7 +9,6 @@ import GenioOnboarding from "../genio/GenioOnboarding";
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import WaiterButton from "../garzon/WaiterButton";
-import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
 import ViewSelectorCompact from "./ViewSelectorCompact";
@@ -1368,9 +1367,9 @@ export default function CartaImpact({
 
       {/* Banner — flujo normal, debajo del nav, encima del hero */}
       {hasBannerActive && (
-        <div style={{ padding: "4px 12px 8px", position: "relative", zIndex: 1 }}>
+        <div style={{ padding: "4px 14px 8px", position: "relative", zIndex: 1 }}>
           {announcements && announcements.length > 0
-            ? <AnnouncementBanner announcements={announcements} variant="glass" />
+            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
             : <HappyHourBanner happyHours={happyHours || []} />}
         </div>
       )}

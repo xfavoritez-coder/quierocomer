@@ -11,12 +11,8 @@ import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { Sparkles, Search, X } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
-import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
-import ProfileDrawer from "../auth/ProfileDrawer";
-import ViewSelector from "./ViewSelector";
-import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
 import { useClientAvoidsSpicy } from "./SpicyStamp";
@@ -247,7 +243,6 @@ export default function CartaPremium({
     return result.hasPersonalization ? result.map : null;
   });
   const [profileTrigger, setProfileTrigger] = useState(0);
-  const [personalizing, setPersonalizing] = useState(false);
   const mountedAt = useRef(Date.now());
   const recShownRef = useRef(new Set<string>());
 
@@ -318,13 +313,12 @@ export default function CartaPremium({
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
-    setPersonalizing(true);
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), 5000);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`, { signal: abort.signal }).then(r => r.json())
       .then((d) => {
         clearTimeout(timer);
-        if (!d.profile) { setPersonalizing(false); return; }
+        if (!d.profile) return;
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);
@@ -333,9 +327,8 @@ export default function CartaPremium({
         }
         const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, d.profile, scoringCtx);
         if (result.hasPersonalization) setPMap(result.map);
-        setPersonalizing(false);
       })
-      .catch(() => { clearTimeout(timer); setPersonalizing(false); });
+      .catch(() => { clearTimeout(timer); });
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {

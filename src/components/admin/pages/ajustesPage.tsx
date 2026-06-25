@@ -25,7 +25,6 @@ interface SettingsData {
   birthdayPerk: string | null;
   defaultView: string | null;
   weeklyEmailEnabled: boolean;
-  weeklyInsightsEnabled: boolean;
   showCategoryLobby: boolean;
   genioFabEnabled: boolean;
 }

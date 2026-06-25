@@ -18,7 +18,6 @@ import DemoBanner from "@/components/qr/carta/DemoBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
 import DemoFirstViewModal from "@/components/qr/carta/DemoFirstViewModal";
 import DemoViewToast from "@/components/qr/carta/DemoViewToast";
-import DemoBirthdayBanner from "@/components/qr/carta/DemoBirthdayBanner";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
 import MultiMenuLanding from "@/components/qr/carta/MultiMenuLanding";
 import { prisma } from "@/lib/prisma";
