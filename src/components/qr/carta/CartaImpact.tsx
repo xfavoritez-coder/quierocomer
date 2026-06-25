@@ -1313,7 +1313,7 @@ export default function CartaImpact({
       }}>
         <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4 }}>
           <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
-            <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+            <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", maskImage: "linear-gradient(to right, transparent, black 16px, black calc(100% - 20px), transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 16px, black calc(100% - 20px), transparent)" }}>
               {allChipCats.map((cat) => {
                 const isActive = cat.id === activeCategory;
                 return (
@@ -1341,7 +1341,6 @@ export default function CartaImpact({
                 );
               })}
             </div>
-            {/* Fade edges removed — looked too opaque against the translucent header */}
           </div>
           <div style={{ paddingBottom: 10 }}>
             <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
