@@ -31,11 +31,11 @@ export async function POST(req: NextRequest) {
 
   if (!lead) return NextResponse.json({ error: "Lead no encontrado" }, { status: 404 });
 
-  // Find the restaurant by slug or lead's restaurantId
+  // Find the restaurant by generated slug or local name
   let restaurant;
-  if (lead.restaurantId) {
-    restaurant = await prisma.restaurant.findUnique({
-      where: { id: lead.restaurantId },
+  if (lead.generatedSlug) {
+    restaurant = await prisma.restaurant.findFirst({
+      where: { slug: lead.generatedSlug },
       select: { id: true, name: true, slug: true, logoUrl: true },
     });
   }
