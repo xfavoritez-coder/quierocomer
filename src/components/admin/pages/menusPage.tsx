@@ -1446,24 +1446,6 @@ export default function AdminMenus() {
         ))}
       </div>
 
-      {/* Botón carta imprimible */}
-      {activeRestaurant?.slug && (
-        <div style={{ marginBottom: 16, marginTop: -8 }}>
-          <a
-            href={`/qr/${activeRestaurant.slug}/carta`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "9px 18px", borderRadius: 10, border: "1px solid var(--adm-card-border)",
-              background: "var(--adm-card)", color: "var(--adm-text)", cursor: "pointer",
-              fontFamily: F, fontSize: "13px", fontWeight: 600, textDecoration: "none",
-            }}
-          >
-            🖨️ Exportar carta física
-          </a>
-        </div>
-      )}
 
       {/* Multi-menu group selector */}
       {isMultiMenu && (menuTab === "productos" || menuTab === "categorias") && (
