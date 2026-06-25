@@ -1370,7 +1370,7 @@ export default function CartaImpact({
       {hasBannerActive && (
         <div style={{ padding: "4px 12px 8px", position: "relative", zIndex: 1 }}>
           {announcements && announcements.length > 0
-            ? <AnnouncementBanner announcements={announcements} />
+            ? <AnnouncementBanner announcements={announcements} variant="glass" />
             : <HappyHourBanner happyHours={happyHours || []} />}
         </div>
       )}
