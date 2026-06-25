@@ -1429,7 +1429,7 @@ export default function AdminMenus() {
       </div>
 
       {/* Tabs — pill style */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" as any }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" as any, alignItems: "center" }}>
         {([
           { key: "productos" as const, label: "Productos" },
           { key: "categorias" as const, label: "Categorías" },
@@ -1444,6 +1444,25 @@ export default function AdminMenus() {
             color: menuTab === tab.key ? "var(--adm-text)" : "var(--adm-text2)",
           }}>{tab.label}</button>
         ))}
+        {activeRestaurant?.slug && (
+          <>
+            <div style={{ flex: 1 }} />
+            <a
+              href={`/qr/${activeRestaurant.slug}/carta`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "7px 14px", borderRadius: 999, border: "1px solid var(--adm-card-border)",
+                background: "transparent", color: "var(--adm-text2)", cursor: "pointer",
+                fontFamily: F, fontSize: "12px", fontWeight: 600, textDecoration: "none",
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              🖨️ Carta imprimible
+            </a>
+          </>
+        )}
       </div>
 
       {/* Multi-menu group selector */}
