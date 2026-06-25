@@ -380,7 +380,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               ))}
             </div>
           </div>
-          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, maxWidth: 1100, margin: "0 auto" }}>
+          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, maxWidth: 900, margin: "0 auto" }}>
             {/* GRATIS */}
             <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 24 }}>
               <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gratis</p>
@@ -390,35 +390,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
                 {PLAN_TAGLINES.FREE && <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.FREE}</p>}
                 {PLAN_FEATURES_DISPLAY.FREE.map((f) => (
-                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
-                ))}
-              </div>
-            </div>
-            {/* SILVER */}
-            <div style={{ background: "linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)", border: "1.5px solid #cbd5e1", borderRadius: 16, padding: 24 }}>
-              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#475569", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Silver</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 32, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>
-                  ${(billingMode === "anual" ? planAnnualNetMonthly("SILVER") : planNetAmount("SILVER")).toLocaleString("es-CL")}
-                </span>
-                <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>/mes</span>
-                <span style={{ fontSize: 11, color: "#bbb", fontWeight: 400, marginLeft: 2 }}>neto</span>
-              </div>
-              {billingMode === "anual" && (
-                <>
-                  <p style={{ fontSize: 11, color: "#999", margin: "2px 0 0" }}>${planAnnualNetTotal("SILVER").toLocaleString("es-CL")} anual</p>
-                  <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, color: "#16a34a", background: "#dcfce7", padding: "2px 8px", borderRadius: 999, margin: "4px 0" }}>Ahorras ${(planNetAmount("SILVER") * 12 - planAnnualNetTotal("SILVER")).toLocaleString("es-CL")}/año</span>
-                </>
-              )}
-              {billingMode === "mensual" ? (
-                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Elegir Silver</a>
-              ) : (
-                <a href={annualWhatsappUrl("Silver")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#475569", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
-              )}
-              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                {PLAN_TAGLINES.SILVER && <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.SILVER}</p>}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
-                {PLAN_FEATURES_DISPLAY.SILVER.map((f) => (
                   <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
@@ -447,7 +418,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               )}
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
                 {PLAN_TAGLINES.GOLD && <p style={{ fontFamily: F, fontSize: 12, color: "#888", margin: "0 0 4px", lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Silver</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
                 {PLAN_FEATURES_DISPLAY.GOLD.map((f) => (
                   <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}

@@ -129,28 +129,18 @@ export default function PlanesClient() {
             <button className="qc-plan-btn" onClick={() => openModal("FREE")}>Comenzar gratis</button>
           </article>
 
-          <article className="qc-plan qc-silver">
-            <h3>Silver</h3>
-            <div className="qc-plan-price">$14.900<small>/mes + IVA</small></div>
-            <div className="qc-checks">
-              <div>✓ Todo lo del plan Gratis</div>
-              <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
-              <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema que mejor represente tu local</span></span></div>
-              <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que mas te conviene vender</span></span></div>
-              <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
-            </div>
-            <button className="qc-plan-btn" onClick={() => openModal("SILVER")}>Elegir Silver</button>
-          </article>
-
           <article className="qc-plan qc-featured">
             <h3>Gold</h3>
             <div className="qc-plan-price">$29.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
-              <div>✓ Todo lo del plan Silver</div>
+              <div>✓ Todo lo del plan Gratis</div>
+              <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
+              <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema claro u oscuro que mejor represente tu local</span></span></div>
+              <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que más te conviene vender</span></span></div>
+              <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
               <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
               <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
-              <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("GOLD")}>Elegir Gold</button>
           </article>
@@ -162,6 +152,7 @@ export default function PlanesClient() {
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
+              <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
               <div>✓ Llamar al garzón <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzón recibe la notificación push</span></span></div>
               <div>✓ Ver clientes ilimitados <span className="qc-tip">i<span className="qc-tip-text">Sin límite de clientes registrados. Ve correos, preferencias y más</span></span></div>
@@ -188,7 +179,7 @@ export default function PlanesClient() {
 
             <div style={{ textAlign: "center", marginBottom: 20 }}>
               <div style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: "#E8A33D", fontWeight: 700, marginBottom: 8 }}>
-                {modalPlan === "FREE" ? "Plan Gratis" : modalPlan === "SILVER" ? "Plan Silver" : modalPlan === "GOLD" ? "Plan Gold" : "Plan Premium"}
+                {modalPlan === "FREE" ? "Plan Gratis" : modalPlan === "GOLD" ? "Plan Gold" : "Plan Premium"}
               </div>
               <h2 style={{ fontFamily: "Georgia,serif", fontSize: 24, fontWeight: 400, color: "#E8DDC8", margin: 0 }}>Crea tu cuenta</h2>
               <p style={{ fontSize: 13, color: "#9B8E7A", marginTop: 6 }}>En 30 segundos tienes tu carta lista para agregar tus platos.</p>
@@ -276,10 +267,8 @@ body{background:#0A0908!important;color:#E8DDC8!important;font-family:'Inter',sa
 .pl-hero-wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 20px;text-align:center;display:flex;flex-direction:column;align-items:center}
 @media(min-width:700px){.pl-mobile-br{display:none}}
 @media(max-width:699px){.pl-hero-wrap{text-align:left;align-items:flex-start}}
-@media(min-width:768px){.qc-plans{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:768px){.qc-plans{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:960px) and (min-width:768px){.qc-plans{grid-template-columns:repeat(2,1fr)}}
-.qc-plan.qc-silver{border-color:rgba(148,163,184,.3)}
-.qc-plan.qc-silver h3{color:#94a3b8}
 .qc-plan.qc-premium{border-color:rgba(196,181,253,.4);background:rgba(124,58,237,.06)}
 .qc-plan.qc-premium h3{color:#a78bfa}
 .qc-plan.qc-premium .qc-plan-price{color:#a78bfa}

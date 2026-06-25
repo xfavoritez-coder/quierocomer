@@ -236,7 +236,7 @@ function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
     }}>
       <span style={{ fontSize: 18 }}>🎁</span>
       <span style={{ flex: 1 }}>
-        Mejora tu carta con <strong>Silver desde $14.900/mes</strong> y desbloquea estadísticas, ofertas, vistas y más.
+        Mejora tu carta con <strong>Gold desde $29.900/mes</strong> y desbloquea estadísticas, ofertas, vistas y más.
       </span>
       <button onClick={handleClick} style={{
         padding: "6px 14px", border: "none", borderRadius: 999,
@@ -256,8 +256,8 @@ function formatDateCL(d: string | null) {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 }
 
-function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "SILVER" | "GOLD" | "PREMIUM"; onClose: () => void }) {
-  const ALL_TABS = ["FREE", "SILVER", "GOLD", "PREMIUM"] as const;
+function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; onClose: () => void }) {
+  const ALL_TABS = ["FREE", "GOLD", "PREMIUM"] as const;
   type TabKey = typeof ALL_TABS[number];
   const defaultTab: TabKey = initialTab
     ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab) as TabKey
@@ -302,7 +302,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
         setTimeout(() => window.location.reload(), 1200);
         return;
       }
-      // Silver/Gold: go through MercadoPago
+      // Gold/Premium (paid): go through MercadoPago
       const res = await fetch("/api/billing/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -361,10 +361,10 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)", position: "sticky", top: 0, background: "var(--adm-bg, #fff)", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
           {ALL_TABS.map(t => {
-            const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : t === "SILVER" ? "#475569" : "#22c55e";
-            const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : t === "SILVER" ? "#94a3b8" : "#22c55e";
-            const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : t === "SILVER" ? "#F1F5F9" : "#F0FDF4";
-            const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : t === "SILVER" ? "🥈" : "🆓";
+            const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : "#22c55e";
+            const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : "#22c55e";
+            const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : "#F0FDF4";
+            const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🆓";
             const tabLabel = t === "FREE" ? "Gratis" : t.charAt(0) + t.slice(1).toLowerCase();
             return (
               <button key={t} onClick={() => { setTab(t); setConfirmTab(null); }} style={{

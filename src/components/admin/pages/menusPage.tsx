@@ -1015,7 +1015,7 @@ export default function AdminMenus() {
                 <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#fbbf24", margin: "0 0 6px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 6, display: "inline-block" }}>Máx. {MAX_RECOMMENDED} recomendados alcanzado</p>
               )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {TAG_OPTIONS.filter(t => t.value !== "RECOMMENDED" || canHighlight).map(t => {
+                {TAG_OPTIONS.map(t => {
                   const active = eTags.includes(t.value);
                   const atLimit = t.value === "RECOMMENDED" && !active && recCount >= MAX_RECOMMENDED;
                   return (
@@ -1839,8 +1839,8 @@ export default function AdminMenus() {
                   ) : (
                     <div onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ width: 56, height: 56, borderRadius: 8, background: "var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "var(--adm-text3)", cursor: "pointer" }}>🍽️</div>
                   )}
-                  {/* Badge destacado en la foto — solo para planes pagados */}
-                  {isRec && canHighlight && (
+                  {/* Badge destacado en la foto */}
+                  {isRec && (
                     <span title="Plato destacado" style={{ position: "absolute", top: -4, left: -4, width: 26, height: 26, borderRadius: "50%", background: "#F4A623", color: "white", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(244,166,35,0.4)", fontSize: "0.85rem", fontWeight: 700 }}>★</span>
                   )}
                 </div>
@@ -1875,9 +1875,12 @@ export default function AdminMenus() {
                 </div>
                 {/* Actions */}
                 <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 2, flexShrink: 0, alignItems: "center" }}>
-                  {/* Star — oculto para plan FREE */}
-                  {canHighlight && (
+                  {/* Star — visible siempre, abre modal de planes si no tiene acceso */}
                   <button onClick={async () => {
+                    if (!canHighlight) {
+                      window.dispatchEvent(new CustomEvent("show-plan-modal"));
+                      return;
+                    }
                     const wasRec = d.tags?.includes("RECOMMENDED");
                     if (!wasRec) {
                       const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
@@ -1889,7 +1892,6 @@ export default function AdminMenus() {
                   }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Star size={16} fill={isRec ? "#EF9F27" : "none"} color={isRec ? "#EF9F27" : "#888"} />
                   </button>
-                  )}
                   {/* Eye */}
                   <button onClick={() => toggleDishActive(d)} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {d.isActive ? <Eye size={16} color="#888" /> : <EyeOff size={16} color="#C5C0B5" />}

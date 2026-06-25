@@ -107,15 +107,18 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "view_gallery", "view_feed", "view_space", "view_selector",
       "highlight_dishes", "promotions", "announcements",
       "stats_basic",
-      "multilang", "suggestions",
+      "multilang",
     ]),
     featureDisplay: [
+      { text: "3 vistas de carta", tip: "Galería, Lista e Impact. Elige la que mejor represente tu local." },
+      { text: "Dark / Light mode", tip: "Elige el tema claro u oscuro que mejor represente tu local." },
+      { text: "Destacar platos estrella", tip: "Resalta visualmente los platos que más te conviene vender." },
+      { text: "Ofertas y promociones", tip: "Crea ofertas temporales visibles en la carta." },
       { text: "Estadísticas básicas", tip: "Visitas, platos más vistos y duración promedio." },
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente." },
-      { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
     ],
-    inheritsFrom: "Todo lo del plan Silver",
+    inheritsFrom: "Todo lo del plan Gratis",
     isFeatured: true,
     ctaText: "Elegir Gold",
     flowPlanId: "qc_gold_monthly",
@@ -138,6 +141,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "toteat_integration", "live_dashboard", "multi_menu",
     ]),
     featureDisplay: [
+      { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
       { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación push." },
       { text: "Ver clientes ilimitados", tip: "Sin límite de clientes registrados. Ve correos, preferencias y más." },
@@ -152,8 +156,11 @@ export const PLANS: Record<PlanKey, PlanDef> = {
 
 // --- Helpers ---
 
-export const PLAN_ORDER: PlanKey[] = ["FREE", "SILVER", "GOLD", "PREMIUM"];
-export const PAID_PLANS: PlanKey[] = ["SILVER", "GOLD", "PREMIUM"];
+/** Visible plan order (SILVER is legacy, hidden from UI but still works for existing subscribers) */
+export const PLAN_ORDER: PlanKey[] = ["FREE", "GOLD", "PREMIUM"];
+export const PAID_PLANS: PlanKey[] = ["GOLD", "PREMIUM"];
+/** Full plan order including legacy plans — use only for internal logic */
+export const ALL_PLAN_ORDER: PlanKey[] = ["FREE", "SILVER", "GOLD", "PREMIUM"];
 
 export const IVA_RATE = 0.19;
 export const TRIAL_DAYS = 14;

@@ -12,7 +12,7 @@ const PLAN_CSS = `
 .pm-toggle-label{position:relative;display:inline-block;width:48px;height:26px;cursor:pointer}
 .pm-toggle-input{opacity:0;width:0;height:0}
 .pm-toggle-track{position:absolute;inset:0;background:#3A342D;border-radius:26px;transition:.3s}
-.pm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.pm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .pm-card{background:#0A0908;border:1px solid #3A342D;padding:24px 20px;display:flex;flex-direction:column;position:relative}
 .pm-featured{border-color:#E8A33D;box-shadow:0 0 70px rgba(232,163,61,.08)}
 .pm-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#E8A33D;color:#0A0908;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px}
