@@ -174,8 +174,8 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
 
       {/* NAV */}
       <nav>
-        <a href="/" className="logo" style={{ textDecoration: "none" }}>
-          <img src="/landing/logo.png" alt="" className="lamp-icon" />
+        <a href="/qr/" className="logo" style={{ textDecoration: "none" }}>
+          <img src="/logo.png" alt="" className="lamp-icon" />
           QuieroComer
         </a>
         <NavHamburger />
