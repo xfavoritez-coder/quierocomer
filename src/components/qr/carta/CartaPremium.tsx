@@ -525,8 +525,12 @@ export default function CartaPremium({
         />
       )}
 
-      {/* Announcement banner — below nav */}
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />}
+      {/* Announcement banner — sticky below category nav */}
+      {announcements && announcements.length > 0 && (
+        <div style={{ position: "sticky", top: 44, zIndex: 39 }}>
+          <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
+        </div>
+      )}
 
       {/* Personalización ocurre en background sin bloquear la UI */}
 

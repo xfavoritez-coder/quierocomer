@@ -419,8 +419,6 @@ export default function CartaLista({
               style={{
                 flex: 1, height: "100%", paddingLeft: 12, paddingRight: 28, gap: 20,
                 scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch",
-                maskImage: "linear-gradient(to right, black 0%, black calc(100% - 28px), transparent 100%)",
-                WebkitMaskImage: "linear-gradient(to right, black 0%, black calc(100% - 28px), transparent 100%)",
               }}
             >
               {hasPromos && (() => {
@@ -491,8 +489,12 @@ export default function CartaLista({
         )}
       </div>
 
-      {/* Announcement banner — below nav */}
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />}
+      {/* Announcement banner — sticky below category nav */}
+      {announcements && announcements.length > 0 && (
+        <div style={{ position: "sticky", top: 44, zIndex: 39 }}>
+          <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
+        </div>
+      )}
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (

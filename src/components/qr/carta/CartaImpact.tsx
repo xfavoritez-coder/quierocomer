@@ -837,7 +837,6 @@ export default function CartaImpact({
   const fixedActiveChipRef = useRef<HTMLButtonElement>(null);
   const impactHeaderRef = useRef<HTMLDivElement>(null);
   const [impactHeaderH, setImpactHeaderH] = useState(65);
-  const [fixedChipsScrolled, setFixedChipsScrolled] = useState(false);
 
   // Auto-scroll fixed nav to active chip
   useEffect(() => {
@@ -849,14 +848,6 @@ export default function CartaImpact({
     }
   }, [activeCategory, showFixedCatNav]);
 
-  // Track fixed chips scroll for left fade
-  useEffect(() => {
-    const el = fixedChipsRef.current;
-    if (!el) return;
-    const onScroll = () => setFixedChipsScrolled(el.scrollLeft > 10);
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [showFixedCatNav]);
   useEffect(() => {
     let shown = false;
     const check = () => {
@@ -1350,29 +1341,27 @@ export default function CartaImpact({
                 );
               })}
             </div>
-            {fixedChipsScrolled && <div style={{ position: "absolute", top: 0, left: 0, bottom: 10, width: 24, background: "linear-gradient(to left, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />}
-            <div style={{ position: "absolute", top: 0, right: 0, bottom: 10, width: 24, background: "linear-gradient(to right, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />
+            {/* Fade edges removed — looked too opaque against the translucent header */}
           </div>
           <div style={{ paddingBottom: 10 }}>
             <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
         </div>
       </div>
+      {/* Announcement banner inside fixed header */}
+      {hasBannerActive && (
+        <div style={{ padding: "0 14px 6px" }}>
+          {announcements && announcements.length > 0
+            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
+            : <HappyHourBanner happyHours={happyHours || []} />}
+        </div>
+      )}
       </header>
 
       </div>{/* end fixed wrapper */}
 
       {/* Spacer: reserva el espacio del nav fixed para que el contenido no quede debajo */}
       <div style={{ height: impactHeaderH }} />
-
-      {/* Banner — flujo normal, debajo del nav, encima del hero */}
-      {hasBannerActive && (
-        <div style={{ padding: "4px 14px 8px", position: "relative", zIndex: 1 }}>
-          {announcements && announcements.length > 0
-            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
-            : <HappyHourBanner happyHours={happyHours || []} />}
-        </div>
-      )}
 
       {/* Search overlay */}
       {searchOpen && (

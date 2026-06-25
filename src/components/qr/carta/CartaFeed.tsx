@@ -645,8 +645,12 @@ export default function CartaFeed({
         </div>
       </div>
 
-      {/* ═══ ANNOUNCEMENTS ═══ */}
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />}
+      {/* ═══ ANNOUNCEMENTS — sticky below category nav ═══ */}
+      {announcements && announcements.length > 0 && (
+        <div style={{ position: "sticky", top: 44, zIndex: 39 }}>
+          <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
+        </div>
+      )}
 
       {/* ═══ EMPTY SEARCH ═══ */}
       {query && grouped.every(g => g.dishes.length === 0) && (
