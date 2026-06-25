@@ -35,7 +35,7 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   useEffect(() => {
-    fetch("/api/admin/soporte")
+    fetch("/api/admin/soporte?countOnly=1")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.unread) setUnreadSupport(d.unread); })
       .catch(() => {});

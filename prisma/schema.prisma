@@ -801,6 +801,7 @@ model StatEvent {
   @@index([dbSessionId])
   @@index([genioSessionId])
   @@index([eventType, createdAt])
+  @@index([restaurantId, eventType, createdAt])
 }
 
 model RestaurantPromotion {
@@ -951,6 +952,7 @@ model Session {
   @@index([qrUserId])
   @@index([restaurantId])
   @@index([startedAt])
+  @@index([restaurantId, startedAt])
 }
 
 model QRUser {

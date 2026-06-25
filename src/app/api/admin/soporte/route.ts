@@ -71,6 +71,13 @@ export async function GET(req: NextRequest) {
   if (authErr) return authErr;
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
+  // If only badge count is needed (sidebar polling), return early with just the count
+  const onlyCount = req.nextUrl.searchParams.get("countOnly") === "1";
+  if (onlyCount) {
+    const unread = await prisma.supportMessage.count({ where: { read: false } });
+    return NextResponse.json({ unread });
+  }
+
   const messages = await prisma.supportMessage.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
