@@ -249,6 +249,10 @@ const ACTION_LABELS: Record<string, { icon: string; label: string; color: string
   announcement_create: { icon: "📢", label: "Creó anuncio", color: "#22c55e" },
   category_delete: { icon: "🗑️", label: "Eliminó categoría", color: "#ef4444" },
   panel_visit: { icon: "👁️", label: "Visitó sección", color: "#6366f1" },
+  plan_modal_opened: { icon: "💳", label: "Abrió modal de planes", color: "#F4A623" },
+  plan_tab_viewed: { icon: "👀", label: "Vio plan", color: "#F4A623" },
+  plan_subscribe_clicked: { icon: "🚀", label: "Intentó suscribirse", color: "#22c55e" },
+  plan_page_visited: { icon: "📋", label: "Visitó suscripción", color: "#6366f1" },
 };
 
 interface Activity {

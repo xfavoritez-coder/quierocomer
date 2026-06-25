@@ -88,6 +88,10 @@ const ACTION_LABELS: Record<string, string> = {
   nurturing_carta_no_revisada: "WA Camila: carta no revisada",
   nurturing_vio_no_activo: "WA Camila: vio, no activó",
   nurturing_no_volvio: "WA Camila: no volvió",
+  plan_modal_opened: "Abrió modal de planes",
+  plan_tab_viewed: "Vio plan",
+  plan_subscribe_clicked: "Intentó suscribirse",
+  plan_page_visited: "Visitó suscripción",
 };
 
 export default function LifecyclePage() {

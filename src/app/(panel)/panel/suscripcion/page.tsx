@@ -88,6 +88,8 @@ export default function SuscripcionPage() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { setStatus(d); setLoading(false); })
       .catch(() => setLoading(false));
+    // Track page visit
+    fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, action: "plan_page_visited" }) }).catch(() => {});
   }, [selectedRestaurantId]);
 
   const handleUpgrade = () => {

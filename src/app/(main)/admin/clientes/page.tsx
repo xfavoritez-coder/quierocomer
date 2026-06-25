@@ -91,6 +91,10 @@ const ACTION_LABELS: Record<string, string> = {
   nurturing_carta_no_revisada: "WA Camila: no revisaste tu carta",
   nurturing_vio_no_activo: "WA Camila: viste carta, no activaste",
   nurturing_no_volvio: "WA Camila: activaste, no volviste",
+  plan_modal_opened: "Abrio modal de planes",
+  plan_tab_viewed: "Vio plan",
+  plan_subscribe_clicked: "Intento suscribirse",
+  plan_page_visited: "Visito suscripcion",
 };
 
 export default function ClientesPage() {

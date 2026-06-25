@@ -284,6 +284,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
   const handleSubscribe = async () => {
     if (!restaurantId || submitting) return;
     setSubmitting(true);
+    fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, action: "plan_subscribe_clicked", details: { plan: tab, currentPlan: plan } }) }).catch(() => {});
     try {
       // Premium: activate 14-day trial directly (no MercadoPago) — only if trial not used
       if (tab === "PREMIUM" && !trialUsed) {
@@ -367,7 +368,10 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
             const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🆓";
             const tabLabel = t === "FREE" ? "Gratis" : t.charAt(0) + t.slice(1).toLowerCase();
             return (
-              <button key={t} onClick={() => { setTab(t); setConfirmTab(null); }} style={{
+              <button key={t} onClick={() => {
+                setTab(t); setConfirmTab(null);
+                if (restaurantId) fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, action: "plan_tab_viewed", details: { plan: t } }) }).catch(() => {});
+              }} style={{
                 flex: 1, padding: "14px 0", border: "none", cursor: "pointer",
                 fontFamily: FD, fontSize: "0.75rem", fontWeight: 700, background: "transparent",
                 color: tab === t ? tabColor : "#ccc",
@@ -651,10 +655,14 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         setPlanModalInitialTab(undefined);
       }
       setPlanModalOpen(true);
+      // Track plan modal opened
+      if (selectedRestEarly?.id) {
+        fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestEarly.id, action: "plan_modal_opened", details: { source: detail?.source || "unknown", initialTab: detail?.initialTab || null } }) }).catch(() => {});
+      }
     };
     window.addEventListener("show-plan-modal", handler);
     return () => window.removeEventListener("show-plan-modal", handler);
-  }, []);
+  }, [selectedRestEarly?.id]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
