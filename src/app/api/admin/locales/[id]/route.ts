@@ -160,6 +160,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     // Invalidar cache del feed si cambiaron campos visibles al usuario
     const feedFields = ['name','phone','website','websiteIsOrderUrl','cartaProvider','instagram','googleMapsUrl','address','logoUrl','isActive'];
     if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes', { expire: 0 });
+    // Invalidar cache QR si cambiaron ajustes de la carta
+    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','ownerBannerEnabled','multiMenuEnabled','bannerUrl','logoUrl','name','description'];
+    if (qrFields.some(f => data[f] !== undefined)) {
+      revalidateTag(`qr-restaurant-${restaurant.slug}`);
+    }
     return NextResponse.json(restaurant);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
