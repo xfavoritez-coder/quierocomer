@@ -1559,7 +1559,7 @@ export default function AdminMenus() {
       </div>
       {/* Filters — all in one horizontal scroll */}
       <div style={{ position: "relative", marginBottom: creatingDish ? 10 : 16 }}>
-        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24, flexWrap: "wrap" }}>
+        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24, flexWrap: "nowrap" }}>
           <div style={{ position: "relative", flexShrink: 0 }}>
             <select
               value={dietFilter}
