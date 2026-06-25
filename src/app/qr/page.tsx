@@ -13,6 +13,8 @@ const FALLBACK_COLORS: Record<string, string> = {
   "krua-thai": "#e65100",
 };
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "QuieroComer | La carta inteligente que vende más por ti",
   description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",

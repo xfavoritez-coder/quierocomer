@@ -3,6 +3,8 @@ import SubirCartaClient from "./SubirCartaClient";
 import { getExperimentVariantsWithStats } from "@/lib/ab/getExperimentStats";
 import { pickByThompsonSampling } from "@/lib/ab/sampling";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Subir mi carta · QuieroComer",
   description: "Sube tu carta física, PDF o link QR y nuestra IA la transforma en una Carta Viva.",
