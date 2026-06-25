@@ -1350,7 +1350,7 @@ export default function CartaImpact({
       </header>
       {/* Announcement banner inside fixed wrapper, outside header padding */}
       {hasBannerActive && (
-        <div style={{ padding: "0 14px 6px" }}>
+        <div style={{ padding: "0 14px 10px" }}>
           {announcements && announcements.length > 0
             ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
             : <HappyHourBanner happyHours={happyHours || []} />}
