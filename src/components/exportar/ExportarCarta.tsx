@@ -121,26 +121,43 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       el.style.maxWidth = "794px";
       el.style.transform = "none";
 
-      // Pre-convert all images to base64 to avoid CORS issues
+      // Pre-convert all images to base64 via canvas (bypasses CORS if already rendered)
       const imgs = el.querySelectorAll("img");
       const origSrcs: { img: HTMLImageElement; src: string }[] = [];
-      await Promise.all(Array.from(imgs).map(async (img) => {
-        if (!img.src || img.src.startsWith("data:")) return;
+      for (const img of Array.from(imgs)) {
+        if (!img.src || img.src.startsWith("data:") || !img.naturalWidth) continue;
         try {
-          const res = await fetch(img.src);
-          const blob = await res.blob();
-          const dataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          });
-          origSrcs.push({ img, src: img.src });
-          img.src = dataUrl;
+          // Method 1: draw to canvas (works if image is already loaded and rendered)
+          const c = document.createElement("canvas");
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          const ctx = c.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const dataUrl = c.toDataURL("image/jpeg", 0.8);
+            if (dataUrl.length > 100) {
+              origSrcs.push({ img, src: img.src });
+              img.src = dataUrl;
+              continue;
+            }
+          }
         } catch {}
-      }));
-
-      // Wait for images to settle
-      await new Promise(r => setTimeout(r, 200));
+        // Method 2: fetch with no-cors proxy fallback
+        try {
+          const res = await fetch(`/api/proxy-image?url=${encodeURIComponent(img.src)}`);
+          if (res.ok) {
+            const blob = await res.blob();
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            origSrcs.push({ img, src: img.src });
+            img.src = dataUrl;
+          }
+        } catch {}
+      }
+      await new Promise(r => setTimeout(r, 100));
 
       // Capture the rendered element as canvas
       const canvas = await html2canvas(el, {
