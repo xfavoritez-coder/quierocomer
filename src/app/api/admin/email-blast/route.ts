@@ -17,8 +17,8 @@ function buildExportarCartaEmailHtml({ ownerName }: { ownerName: string }) {
 <tr><td align="center" style="padding:32px 16px;">
 <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
 
-  <!-- Logo + name inline -->
-  <tr><td style="padding-bottom:24px;">
+  <!-- Logo + name centered -->
+  <tr><td align="center" style="padding-bottom:24px;">
     <table cellpadding="0" cellspacing="0" border="0"><tr>
       <td style="vertical-align:middle;padding-right:10px;">
         <img src="${BASE}/logo.png" alt="QC" width="32" height="32" style="width:32px;height:32px;border-radius:8px;" />

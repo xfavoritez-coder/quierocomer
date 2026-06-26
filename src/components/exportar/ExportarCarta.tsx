@@ -50,6 +50,7 @@ interface Props {
   restaurant: Restaurant;
   categories: Category[];
   dishes: Dish[];
+  isPaid?: boolean;
 }
 
 function formatPrice(price: number): string {
@@ -69,7 +70,7 @@ const TEMAS: { key: Tema; label: string; color: string }[] = [
   { key: "piedra", label: "Piedra", color: "#8a7e72" },
 ];
 
-export default function ExportarCarta({ restaurant, categories, dishes }: Props) {
+export default function ExportarCarta({ restaurant, categories, dishes, isPaid = false }: Props) {
   const [tema, setTema] = useState<Tema>("carbon");
   const [incluirFotos, setIncluirFotos] = useState(false);
 
@@ -93,6 +94,10 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
   const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : tema === "medit" ? TemaMedit : TemaPiedra;
   const [downloading, setDownloading] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const isTrial = !isPaid;
+  // Trial: only show first 2 sections, rest are locked
+  const visibleSections = isTrial ? sections.slice(0, 2) : sections;
+  const lockedSections = isTrial ? sections.slice(2) : [];
 
   // Track page visit
   useEffect(() => {
@@ -228,16 +233,22 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
           </button>
 
           {/* Download PDF button */}
-          <button onClick={handleDownload} disabled={downloading} style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "9px 18px", borderRadius: 10, cursor: downloading ? "wait" : "pointer",
-            background: GOLD, border: "none",
-            fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
-            color: "#0a0a0a",
-            opacity: downloading ? 0.7 : 1,
-          }}>
+          <button
+            onClick={isTrial
+              ? () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))
+              : handleDownload
+            }
+            disabled={downloading}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "9px 18px", borderRadius: 10, cursor: downloading ? "wait" : "pointer",
+              background: isTrial ? "var(--adm-input)" : GOLD, border: isTrial ? "1px solid var(--adm-input-border)" : "none",
+              fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+              color: isTrial ? "var(--adm-text3)" : "#0a0a0a",
+              opacity: downloading ? 0.7 : 1,
+            }}>
             {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            {downloading ? "Generando..." : "Descargar PDF"}
+            {isTrial ? "Premium requerido" : downloading ? "Generando..." : "Descargar PDF"}
           </button>
         </div>
       </div>
@@ -257,7 +268,7 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
       `}</style>
 
       {/* The printable sheet */}
-      <div className="exportar-sheet-wrapper" style={{ overflow: "hidden", borderRadius: 8 }}>
+      <div className="exportar-sheet-wrapper" style={{ overflow: "hidden", borderRadius: 8, position: "relative" }}>
       <div ref={sheetRef} className="exportar-sheet" style={{
         boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
         overflow: "hidden",
@@ -265,10 +276,53 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
       }}>
         <TemaComponent
           restaurant={restaurant}
-          sections={sections}
+          sections={visibleSections}
           incluirFotos={incluirFotos}
         />
       </div>
+
+      {/* Locked sections for trial users */}
+      {isTrial && lockedSections.length > 0 && (
+        <div style={{ position: "relative" }}>
+          {/* Blurred preview of remaining sections */}
+          <div style={{ filter: "blur(8px)", opacity: 0.5, pointerEvents: "none", userSelect: "none" }}>
+            <TemaComponent
+              restaurant={{ ...restaurant, name: "", logoUrl: null, address: null, phone: null }}
+              sections={lockedSections}
+              incluirFotos={incluirFotos}
+            />
+          </div>
+          {/* Overlay with upgrade CTA */}
+          <div style={{
+            position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: 12,
+            background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)",
+            borderRadius: "0 0 8px 8px",
+          }}>
+            <div style={{
+              background: "rgba(0,0,0,0.7)", borderRadius: 16, padding: "24px 32px",
+              textAlign: "center", maxWidth: 360,
+            }}>
+              <p style={{ fontSize: "2rem", margin: "0 0 8px" }}>🔒</p>
+              <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>
+                {lockedSections.length} sección{lockedSections.length !== 1 ? "es" : ""} más
+              </p>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "rgba(255,255,255,0.7)", margin: "0 0 16px", lineHeight: 1.5 }}>
+                Suscríbete al plan Premium para exportar tu carta completa en PDF.
+              </p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))}
+                style={{
+                  padding: "10px 24px", borderRadius: 10, border: "none", cursor: "pointer",
+                  background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700,
+                }}
+              >
+                Ver plan Premium
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </>
   );

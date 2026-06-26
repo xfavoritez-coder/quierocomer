@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true },
+    select: { id: true, name: true, slug: true, logoUrl: true, address: true, phone: true, subscriptionStatus: true, billingExempt: true },
   });
   if (!restaurant) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
@@ -42,5 +42,6 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ restaurant, categories, dishes });
+  const isPaid = restaurant.subscriptionStatus === "ACTIVE" || restaurant.billingExempt === true;
+  return NextResponse.json({ restaurant, categories, dishes, isPaid });
 }

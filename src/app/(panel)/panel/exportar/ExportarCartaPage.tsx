@@ -40,6 +40,7 @@ export default function ExportarCartaPage() {
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
 
   useEffect(() => {
     if (!selectedRestaurantId) return;
@@ -54,6 +55,7 @@ export default function ExportarCartaPage() {
         setRestaurant(data.restaurant);
         setCategories(data.categories);
         setDishes(data.dishes);
+        setIsPaid(data.isPaid ?? false);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -79,6 +81,7 @@ export default function ExportarCartaPage() {
       restaurant={restaurant}
       categories={filteredCategories}
       dishes={validDishes}
+      isPaid={isPaid}
     />
   );
 }
