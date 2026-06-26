@@ -140,8 +140,11 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <RestLogo size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 1 }}>
-                <p style={{ fontFamily: F, fontSize: "12.5px", color: "var(--adm-text3)", fontWeight: 500, margin: 0 }}>QuieroComer</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <a href="/qr/" style={{ display: "flex", alignItems: "center", gap: 5, textDecoration: "none" }}>
+                  <img src="/logo.png" alt="" style={{ width: 14, height: 14, borderRadius: 3 }} />
+                  <span style={{ fontFamily: F, fontSize: "12px", color: "var(--adm-text3)", fontWeight: 500 }}>QuieroComer</span>
+                </a>
                 {activePlan && basePath === "/panel" && (
                   <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px",
                     background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
