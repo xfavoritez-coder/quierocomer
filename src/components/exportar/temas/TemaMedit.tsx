@@ -140,13 +140,14 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
           font-size: 12pt;
           font-weight: 400;
           color: #2c2c2c;
-          white-space: nowrap;
-          flex-shrink: 0;
+          flex: 1;
+          min-width: 0;
+          word-wrap: break-word;
         }
         .medit-dish-dots {
-          flex: 1;
+          flex: 0 0 auto;
+          width: 20px;
           border-bottom: 1px dotted #c0622d50;
-          min-width: 10px;
           margin-bottom: 2px;
         }
         .medit-dish-price {

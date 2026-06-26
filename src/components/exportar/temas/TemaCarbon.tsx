@@ -121,13 +121,14 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           font-size: 12pt;
           font-weight: 700;
           color: #f5efe3;
-          white-space: nowrap;
-          flex-shrink: 0;
+          flex: 1;
+          min-width: 0;
+          word-wrap: break-word;
         }
         .carbon-dish-dots {
-          flex: 1;
+          flex: 0 0 auto;
+          width: 20px;
           border-bottom: 1px dotted #d8ad5750;
-          min-width: 10px;
           margin-bottom: 2px;
         }
         .carbon-dish-price {

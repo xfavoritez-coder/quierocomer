@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Download, Image as ImageIcon, ImageOff, Loader2 } from "lucide-react";
 import TemaCarbon from "./temas/TemaCarbon";
 import TemaHuerto from "./temas/TemaHuerto";
@@ -92,6 +92,22 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
   const [downloading, setDownloading] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
 
+  // Track page visit
+  useEffect(() => {
+    fetch("/api/admin/locales/" + restaurant.id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}), // no-op update just to log activity
+    }).catch(() => {});
+    // Log activity
+    fetch("/api/qr/stat-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventType: "EXPORTAR_CARTA_VIEWED", restaurantId: restaurant.id, metadata: {} }),
+      keepalive: true,
+    }).catch(() => {});
+  }, [restaurant.id]);
+
   const handleDownload = async () => {
     if (!sheetRef.current) return;
     setDownloading(true);
@@ -142,6 +158,14 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
 
       const safeName = restaurant.name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s-]/g, "").trim().replace(/\s+/g, "-");
       pdf.save(`${safeName}-carta-fisica.pdf`);
+
+      // Track PDF download
+      fetch("/api/qr/stat-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventType: "EXPORTAR_CARTA_PDF", restaurantId: restaurant.id, metadata: { tema, fotos: incluirFotos, pages: totalPages } }),
+        keepalive: true,
+      }).catch(() => {});
     } catch (e) {
       console.error("PDF generation error:", e);
       alert("Error al generar el PDF. Intenta de nuevo.");
@@ -156,64 +180,64 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={FONT_LINK} />
 
-      {/* Toolbar */}
-      <div className="exportar-toolbar" style={{
-        display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
-        marginBottom: 20, padding: "14px 18px",
+      {/* Header */}
+      <div style={{
         background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-        borderRadius: 16,
+        borderRadius: 16, padding: "20px 22px", marginBottom: 20,
       }}>
-        {/* Theme tabs */}
-        <div style={{ display: "flex", gap: 6 }}>
-          {TEMAS.map((t) => {
-            const active = tema === t.key;
-            return (
-              <button key={t.key} onClick={() => setTema(t.key)} style={{
-                padding: "8px 16px", borderRadius: 10, cursor: "pointer",
-                background: active ? `${t.color}18` : "var(--adm-input)",
-                border: active ? `1.5px solid ${t.color}` : "1px solid var(--adm-input-border)",
-                fontFamily: F, fontSize: "0.8rem", fontWeight: active ? 700 : 500,
-                color: active ? t.color : "var(--adm-text2)",
-              }}>
-                {t.label}
-              </button>
-            );
-          })}
+        <h2 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
+          Carta imprimible
+        </h2>
+        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
+          Elige un diseño, personaliza las opciones y descarga tu carta lista para imprimir o enviar como PDF.
+        </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+          {/* Theme tabs */}
+          <div style={{ display: "flex", gap: 6 }}>
+            {TEMAS.map((t) => {
+              const active = tema === t.key;
+              return (
+                <button key={t.key} onClick={() => setTema(t.key)} style={{
+                  padding: "8px 16px", borderRadius: 10, cursor: "pointer",
+                  background: active ? `${t.color}18` : "var(--adm-input)",
+                  border: active ? `1.5px solid ${t.color}` : "1px solid var(--adm-input-border)",
+                  fontFamily: F, fontSize: "0.8rem", fontWeight: active ? 700 : 500,
+                  color: active ? t.color : "var(--adm-text2)",
+                }}>
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Toggle fotos */}
+          <button onClick={() => setIncluirFotos((v) => !v)} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "8px 14px", borderRadius: 10, cursor: "pointer",
+            background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
+            border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
+            fontFamily: F, fontSize: "0.8rem", fontWeight: 600,
+            color: incluirFotos ? GOLD : "var(--adm-text2)",
+          }}>
+            {incluirFotos ? <ImageIcon size={14} /> : <ImageOff size={14} />}
+            {incluirFotos ? "Fotos activadas" : "Activar fotos"}
+          </button>
+
+          {/* Download PDF button */}
+          <button onClick={handleDownload} disabled={downloading} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "10px 22px", borderRadius: 12, cursor: downloading ? "wait" : "pointer",
+            background: GOLD, border: "none",
+            fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+            color: "#0a0a0a", marginLeft: "auto",
+            opacity: downloading ? 0.7 : 1,
+          }}>
+            {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            {downloading ? "Generando PDF..." : "Descargar PDF"}
+          </button>
         </div>
-
-        {/* Toggle fotos */}
-        <button onClick={() => setIncluirFotos((v) => !v)} style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "8px 14px", borderRadius: 10, cursor: "pointer",
-          background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
-          border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
-          fontFamily: F, fontSize: "0.8rem", fontWeight: 600,
-          color: incluirFotos ? GOLD : "var(--adm-text2)",
-        }}>
-          {incluirFotos ? <ImageIcon size={14} /> : <ImageOff size={14} />}
-          {incluirFotos ? "Fotos activadas" : "Activar fotos"}
-        </button>
-
-        {/* Download PDF button */}
-        <button onClick={handleDownload} disabled={downloading} style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "8px 18px", borderRadius: 10, cursor: downloading ? "wait" : "pointer",
-          background: GOLD, border: "none",
-          fontFamily: F, fontSize: "0.85rem", fontWeight: 700,
-          color: "#0a0a0a", marginLeft: "auto",
-          opacity: downloading ? 0.7 : 1,
-        }}>
-          {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          {downloading ? "Generando PDF..." : "Descargar PDF"}
-        </button>
       </div>
-
-      <p style={{
-        fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)",
-        margin: "-12px 0 16px", textAlign: "center",
-      }}>
-        Elige el diseño, activa fotos si quieres, y descarga el PDF listo para imprimir. El tema Carbón gasta más tinta.
-      </p>
 
       {/* The printable sheet */}
       <div ref={sheetRef} className="exportar-sheet" style={{

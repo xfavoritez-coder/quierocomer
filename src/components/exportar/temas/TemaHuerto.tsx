@@ -134,13 +134,14 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           font-size: 12pt;
           font-weight: 700;
           color: #2c2c2c;
-          white-space: nowrap;
-          flex-shrink: 0;
+          flex: 1;
+          min-width: 0;
+          word-wrap: break-word;
         }
         .huerto-dish-dots {
-          flex: 1;
+          flex: 0 0 auto;
+          width: 20px;
           border-bottom: 1px dotted #3f6b4c40;
-          min-width: 10px;
           margin-bottom: 2px;
         }
         .huerto-dish-price {
