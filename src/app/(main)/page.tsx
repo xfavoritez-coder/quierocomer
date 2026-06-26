@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import LandingClient from "./LandingClient";
+
+// TEMPORAL: redirect a /qr/ — quitar cuando se reactive el feed
+const REDIRECT_TO_QR = true;
 
 export const metadata: Metadata = {
   title: "QuieroComer.cl — Descubre qué pedir en restaurantes de Chile",
@@ -44,6 +48,8 @@ const FALLBACK_COLORS: Record<string, string> = {
 };
 
 export default async function LandingPage() {
+  if (REDIRECT_TO_QR) redirect("/qr/");
+
   const restaurants = await prisma.restaurant.findMany({
     where: { slug: { in: FEATURED_SLUGS }, isActive: true },
     select: { name: true, slug: true, logoUrl: true },
