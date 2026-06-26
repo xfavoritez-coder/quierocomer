@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Printer, Image as ImageIcon } from "lucide-react";
+import { Printer, Image as ImageIcon, ImageOff } from "lucide-react";
 import TemaCarbon from "./temas/TemaCarbon";
 import TemaHuerto from "./temas/TemaHuerto";
 import TemaMedit from "./temas/TemaMedit";
@@ -62,9 +62,9 @@ const F = "var(--font-display)";
 const GOLD = "#F4A623";
 
 const TEMAS: { key: Tema; label: string; color: string }[] = [
-  { key: "carbon", label: "Carbon", color: "#d8ad57" },
+  { key: "carbon", label: "Carbón", color: "#d8ad57" },
   { key: "huerto", label: "Huerto", color: "#3f6b4c" },
-  { key: "medit", label: "Medit", color: "#2f5d8a" },
+  { key: "medit", label: "Mediterráneo", color: "#2f5d8a" },
 ];
 
 export default function ExportarCarta({ restaurant, categories, dishes }: Props) {
@@ -90,6 +90,17 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
 
   const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : TemaMedit;
 
+  const handlePrint = () => {
+    // Add print class to body to hide panel layout
+    document.body.classList.add("exportar-printing");
+    // Small delay for styles to apply
+    requestAnimationFrame(() => {
+      window.print();
+      // Remove class after print dialog closes
+      document.body.classList.remove("exportar-printing");
+    });
+  };
+
   return (
     <>
       {/* Google Fonts */}
@@ -97,12 +108,39 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={FONT_LINK} />
 
-      {/* Print styles */}
+      {/* Print styles — hides EVERYTHING except the carta sheet */}
       <style>{`
+        @page {
+          size: A4;
+          margin: 0;
+        }
         @media print {
-          .exportar-toolbar { display: none !important; }
-          body { margin: 0; padding: 0; }
-          .exportar-preview { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+          /* Hide all panel chrome */
+          body.exportar-printing * {
+            visibility: hidden !important;
+          }
+          body.exportar-printing .exportar-sheet,
+          body.exportar-printing .exportar-sheet * {
+            visibility: visible !important;
+          }
+          body.exportar-printing .exportar-sheet {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          body.exportar-printing {
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body.exportar-printing .exportar-toolbar {
+            display: none !important;
+          }
         }
       `}</style>
 
@@ -140,34 +178,35 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
           fontFamily: F, fontSize: "0.8rem", fontWeight: 600,
           color: incluirFotos ? GOLD : "var(--adm-text2)",
         }}>
-          <ImageIcon size={14} />
-          {incluirFotos ? "Con fotos" : "Sin fotos"}
+          {incluirFotos ? <ImageIcon size={14} /> : <ImageOff size={14} />}
+          {incluirFotos ? "Fotos activadas" : "Activar fotos"}
         </button>
 
         {/* Print button */}
-        <button onClick={() => window.print()} style={{
+        <button onClick={handlePrint} style={{
           display: "flex", alignItems: "center", gap: 6,
           padding: "8px 18px", borderRadius: 10, cursor: "pointer",
           background: GOLD, border: "none",
           fontFamily: F, fontSize: "0.85rem", fontWeight: 700,
-          color: "#0a0a0a",
+          color: "#0a0a0a", marginLeft: "auto",
         }}>
           <Printer size={16} />
           Imprimir / PDF
         </button>
-
-        <span style={{
-          fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)",
-          marginLeft: 4,
-        }}>
-          Usa "Guardar como PDF" en el cuadro de impresion
-        </span>
       </div>
 
-      {/* Preview */}
-      <div className="exportar-preview" style={{
+      <p className="exportar-toolbar" style={{
+        fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)",
+        margin: "-12px 0 16px", textAlign: "center",
+      }}>
+        Al imprimir, selecciona &quot;Guardar como PDF&quot; en el cuadro de impresión. El tema Carbón gasta más tinta.
+      </p>
+
+      {/* The printable sheet */}
+      <div className="exportar-sheet" style={{
         boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
         borderRadius: 8, overflow: "hidden",
+        maxWidth: 900, margin: "0 auto",
       }}>
         <TemaComponent
           restaurant={restaurant}
