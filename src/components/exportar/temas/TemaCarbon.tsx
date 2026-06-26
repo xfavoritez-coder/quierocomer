@@ -44,11 +44,10 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
       <style>{`
         @page { size: A4; margin: 0; }
         .carbon-page {
-          width: 210mm; min-height: 297mm;
           background: linear-gradient(180deg, #2b231a 0%, #1d1812 100%);
           color: #f5efe3;
           font-family: 'Cormorant Garamond', serif;
-          padding: 18mm 16mm;
+          padding: 18mm 20mm;
           box-sizing: border-box;
           position: relative;
           print-color-adjust: exact;
@@ -59,7 +58,6 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           outline: 1px solid #d8ad5730;
           outline-offset: 4px;
           padding: 14mm 12mm;
-          min-height: calc(297mm - 36mm);
           position: relative;
           box-sizing: border-box;
         }
@@ -76,7 +74,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
         }
         .carbon-title {
           font-family: 'Cinzel', serif;
-          font-size: 22pt;
+          font-size: 28pt;
           font-weight: 700;
           color: #d8ad57;
           letter-spacing: 0.12em;
@@ -96,7 +94,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
         }
         .carbon-section-title {
           font-family: 'Cinzel', serif;
-          font-size: 12pt;
+          font-size: 15pt;
           font-weight: 700;
           color: #d8ad57;
           letter-spacing: 0.1em;
@@ -120,7 +118,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
         }
         .carbon-dish-name {
           font-family: 'Cinzel', serif;
-          font-size: 9pt;
+          font-size: 12pt;
           font-weight: 700;
           color: #f5efe3;
           white-space: nowrap;
@@ -134,14 +132,14 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
         }
         .carbon-dish-price {
           font-family: 'Cinzel', serif;
-          font-size: 9pt;
+          font-size: 12pt;
           font-weight: 700;
           color: #d8ad57;
           white-space: nowrap;
           flex-shrink: 0;
         }
         .carbon-dish-desc {
-          font-size: 8pt;
+          font-size: 10.5pt;
           font-style: italic;
           color: #f5efe3a0;
           margin: 1px 0 0;
@@ -160,7 +158,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           break-inside: avoid;
         }
         .carbon-dish-img {
-          width: 52px; height: 52px;
+          width: 56px; height: 56px;
           border-radius: 6px;
           object-fit: cover;
           border: 1px solid #d8ad5740;

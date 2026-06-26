@@ -66,7 +66,6 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
       <style>{`
         @page { size: A4; margin: 0; }
         .medit-page {
-          width: 210mm; min-height: 297mm;
           background: #faf4e6;
           color: #2c2c2c;
           font-family: 'Jost', sans-serif;
@@ -77,7 +76,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
           -webkit-print-color-adjust: exact;
         }
         .medit-inner {
-          padding: 22mm 16mm 16mm;
+          padding: 18mm 20mm;
         }
         .medit-header {
           text-align: center;
@@ -92,7 +91,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         }
         .medit-title {
           font-family: 'Marcellus', serif;
-          font-size: 22pt;
+          font-size: 28pt;
           font-weight: 400;
           color: #2f5d8a;
           letter-spacing: 0.1em;
@@ -113,7 +112,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         }
         .medit-section-title {
           font-family: 'Marcellus', serif;
-          font-size: 12pt;
+          font-size: 15pt;
           font-weight: 400;
           color: #2f5d8a;
           letter-spacing: 0.08em;
@@ -138,7 +137,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         }
         .medit-dish-name {
           font-family: 'Marcellus', serif;
-          font-size: 9.5pt;
+          font-size: 12pt;
           font-weight: 400;
           color: #2c2c2c;
           white-space: nowrap;
@@ -152,14 +151,14 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         }
         .medit-dish-price {
           font-family: 'Jost', sans-serif;
-          font-size: 9pt;
+          font-size: 12pt;
           font-weight: 600;
           color: #c0622d;
           white-space: nowrap;
           flex-shrink: 0;
         }
         .medit-dish-desc {
-          font-size: 7.5pt;
+          font-size: 10.5pt;
           color: #6a6a6a;
           font-style: italic;
           margin: 1px 0 0;
@@ -177,7 +176,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
           break-inside: avoid;
         }
         .medit-dish-img {
-          width: 52px; height: 52px;
+          width: 56px; height: 56px;
           border-radius: 6px;
           object-fit: cover;
           border: 1px solid #2f5d8a30;
@@ -281,9 +280,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         </div>
 
         {/* Bottom tile band */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-          <TileBand flip />
-        </div>
+        <TileBand flip />
       </div>
     </>
   );

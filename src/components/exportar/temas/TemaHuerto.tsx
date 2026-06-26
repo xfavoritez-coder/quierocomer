@@ -48,11 +48,10 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
       <style>{`
         @page { size: A4; margin: 0; }
         .huerto-page {
-          width: 210mm; min-height: 297mm;
           background: #f6f1e3;
           color: #2c2c2c;
           font-family: 'Jost', sans-serif;
-          padding: 16mm 14mm;
+          padding: 18mm 20mm;
           box-sizing: border-box;
           position: relative;
           print-color-adjust: exact;
@@ -61,7 +60,6 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         .huerto-border {
           border: 1px solid #3f6b4c40;
           padding: 12mm 10mm;
-          min-height: calc(297mm - 32mm);
           position: relative;
           box-sizing: border-box;
         }
@@ -78,7 +76,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         }
         .huerto-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 24pt;
+          font-size: 28pt;
           font-weight: 700;
           color: #3f6b4c;
           letter-spacing: 0.08em;
@@ -98,7 +96,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         }
         .huerto-section-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 13pt;
+          font-size: 16pt;
           font-weight: 700;
           color: #3f6b4c;
           letter-spacing: 0.06em;
@@ -133,7 +131,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         }
         .huerto-dish-name {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 9.5pt;
+          font-size: 12pt;
           font-weight: 700;
           color: #2c2c2c;
           white-space: nowrap;
@@ -147,14 +145,14 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         }
         .huerto-dish-price {
           font-family: 'Jost', sans-serif;
-          font-size: 9pt;
+          font-size: 12pt;
           font-weight: 600;
           color: #3f6b4c;
           white-space: nowrap;
           flex-shrink: 0;
         }
         .huerto-dish-desc {
-          font-size: 7.5pt;
+          font-size: 10.5pt;
           color: #5a5a5a;
           font-style: italic;
           margin: 1px 0 0;
@@ -173,7 +171,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           break-inside: avoid;
         }
         .huerto-dish-img {
-          width: 52px; height: 52px;
+          width: 56px; height: 56px;
           border-radius: 8px;
           object-fit: cover;
           border: 1px solid #3f6b4c30;
