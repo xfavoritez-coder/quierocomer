@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     }
 
     // Process all events
-    const records = [];
+    const records: any[] = [];
     for (const event of events) {
       const record = await processEvent(event, qrUserId, weather, timeOfDay);
       if (record) {
