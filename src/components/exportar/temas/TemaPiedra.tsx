@@ -33,17 +33,18 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
           background:
             repeating-linear-gradient(
               0deg,
-              rgba(120,110,100,0.03) 0px, rgba(120,110,100,0.03) 1px,
+              rgba(80,72,65,0.06) 0px, rgba(80,72,65,0.06) 1px,
               transparent 1px, transparent 3px
             ),
             repeating-linear-gradient(
               90deg,
-              rgba(100,90,80,0.02) 0px, rgba(100,90,80,0.02) 1px,
+              rgba(60,54,48,0.04) 0px, rgba(60,54,48,0.04) 1px,
               transparent 1px, transparent 4px
             ),
-            radial-gradient(ellipse at 30% 20%, rgba(140,130,118,0.15), transparent 50%),
-            radial-gradient(ellipse at 70% 80%, rgba(100,92,82,0.12), transparent 50%),
-            linear-gradient(168deg, #7a7268 0%, #6b6358 25%, #5e574e 50%, #696259 75%, #73695f 100%);
+            radial-gradient(ellipse at 25% 15%, rgba(90,82,72,0.2), transparent 45%),
+            radial-gradient(ellipse at 75% 85%, rgba(50,44,38,0.18), transparent 45%),
+            radial-gradient(ellipse at 50% 50%, rgba(70,62,55,0.1), transparent 60%),
+            linear-gradient(168deg, #3d3730 0%, #342f2a 25%, #2e2924 50%, #33302b 75%, #38342e 100%);
           color: #f0ece6;
           font-family: 'Jost', sans-serif;
           padding: 18mm 20mm;
@@ -53,7 +54,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
           -webkit-print-color-adjust: exact;
         }
         .piedra-frame {
-          border: 1px solid rgba(190,178,162,0.35);
+          border: 1px solid rgba(160,148,132,0.3);
           padding: 12mm 14mm;
           position: relative;
         }
@@ -61,7 +62,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
           content: '';
           position: absolute;
           inset: 3mm;
-          border: 1px solid rgba(190,178,162,0.15);
+          border: 1px solid rgba(160,148,132,0.12);
           pointer-events: none;
         }
         .piedra-header {
