@@ -29,6 +29,7 @@
     "disposable-email-domains": "^1.0.62",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.38.0",
+    "html2canvas-pro": "^2.2.0",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "libphonenumber-js": "^1.13.1",
@@ -69,7 +70,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "pg": "^8.22.0",
-    "puppeteer": "^25.1.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

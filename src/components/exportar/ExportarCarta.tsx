@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Download, Image as ImageIcon, ImageOff, Loader2 } from "lucide-react";
 import TemaCarbon from "./temas/TemaCarbon";
 import TemaHuerto from "./temas/TemaHuerto";
@@ -90,30 +90,60 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
 
   const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : TemaMedit;
   const [downloading, setDownloading] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = async () => {
+    if (!sheetRef.current) return;
     setDownloading(true);
     try {
-      const params = new URLSearchParams({
-        restaurantId: restaurant.id,
-        tema,
-        fotos: incluirFotos ? "1" : "0",
+      const html2canvas = (await import("html2canvas-pro")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const el = sheetRef.current;
+      const A4_W = 210; // mm
+      const A4_H = 297;
+      const DPI_SCALE = 2; // high-res capture
+
+      // Capture the rendered element as canvas
+      const canvas = await html2canvas(el, {
+        scale: DPI_SCALE,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
       });
-      const res = await fetch(`/api/admin/exportar/pdf?${params}`);
-      if (!res.ok) throw new Error("Error generando PDF");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      // Extract filename from Content-Disposition or build from restaurant name
-      const cd = res.headers.get("Content-Disposition");
-      const match = cd?.match(/filename="?(.+?)"?$/);
-      a.download = match?.[1] || `${restaurant.name}-carta-fisica.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+
+      // Calculate how many A4 pages we need
+      const pageHeightPx = (imgW / A4_W) * A4_H; // height of one A4 page in canvas pixels
+      const totalPages = Math.ceil(imgH / pageHeightPx);
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+
+        // Slice canvas for this page
+        const sliceY = page * pageHeightPx;
+        const sliceH = Math.min(pageHeightPx, imgH - sliceY);
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = imgW;
+        pageCanvas.height = sliceH;
+        const ctx = pageCanvas.getContext("2d")!;
+        ctx.drawImage(canvas, 0, sliceY, imgW, sliceH, 0, 0, imgW, sliceH);
+
+        const imgData = pageCanvas.toDataURL("image/jpeg", 0.92);
+        const hMM = (sliceH / imgW) * A4_W;
+        pdf.addImage(imgData, "JPEG", 0, 0, A4_W, hMM);
+      }
+
+      const safeName = restaurant.name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s-]/g, "").trim().replace(/\s+/g, "-");
+      pdf.save(`${safeName}-carta-fisica.pdf`);
     } catch (e) {
+      console.error("PDF generation error:", e);
       alert("Error al generar el PDF. Intenta de nuevo.");
     }
     setDownloading(false);
@@ -186,7 +216,7 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
       </p>
 
       {/* The printable sheet */}
-      <div className="exportar-sheet" style={{
+      <div ref={sheetRef} className="exportar-sheet" style={{
         boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
         borderRadius: 8, overflow: "hidden",
         maxWidth: 900, margin: "0 auto",
