@@ -273,15 +273,7 @@ export async function POST(req: Request) {
 
     const totalLiked = Object.values(positionWeight).reduce((s, v) => s + v, 0)
     const cats = Object.keys(catFreq)
-    // Expandir txTypes con hermanos para ampliar candidatos (importante con pocos antojos)
-    const expandedTxTypes = new Set(allTxTypes)
-    for (const t of allTxTypes) {
-      const parent = PARENT_FAMILY[t] ?? t
-      expandedTxTypes.add(parent)
-      for (const sibling of (RELATED_TX_TYPES[t] ?? [])) expandedTxTypes.add(sibling)
-      for (const sibling of (RELATED_TX_TYPES[parent] ?? [])) expandedTxTypes.add(sibling)
-    }
-    const txArray = [...expandedTxTypes]
+    const txArray = [...allTxTypes]
     const ingArray = [...allIngs]
 
     // ── 2b. Perfil de dislikes: tipos y categorías que el usuario rechazó ────
@@ -346,13 +338,8 @@ export async function POST(req: Request) {
     for (const row of candidates) {
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
 
-      // Aceptar categorías elegidas + categorías con tipos relacionados
-      if (!slots[leaf]) {
-        // Check if this dish's types relate to any liked category's types
-        const types: string[] = Array.isArray(row.txDishType) ? row.txDishType : []
-        const isRelated = types.some(t => expandedTxTypes.has(t))
-        if (!isRelated) continue
-      }
+      // Solo categorías que el usuario eligió directamente
+      if (!slots[leaf]) continue
 
       // Filtro distancia
       if (lat != null && lng != null && row.lat != null && row.lng != null) {
