@@ -31,7 +31,8 @@ export type Feature =
   | "live_dashboard"      // Dashboard en vivo
   | "genio"               // Genio IA
   | "modifiers"           // Modificadores de platos
-  | "multi_menu";         // Multi-menú (un QR, múltiples cartas)
+  | "multi_menu"          // Multi-menú (un QR, múltiples cartas)
+  | "print_menu";         // Exportar carta imprimible (PDF)
 
 // --- Plan definitions ---
 
@@ -136,7 +137,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "stats_basic", "stats_advanced",
       "multilang", "suggestions",
       "waiter", "campaigns", "automations", "clients_full", "clients_export",
-      "toteat_integration", "live_dashboard", "multi_menu",
+      "toteat_integration", "live_dashboard", "multi_menu", "print_menu",
     ]),
     featureDisplay: [
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente a inglés y portugués." },
@@ -145,6 +146,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación push." },
       { text: "Ver clientes ilimitados", tip: "Sin límite de clientes registrados. Ve correos, preferencias y más." },
       { text: "Multi-menú", tip: "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico." },
+      { text: "Exportar carta imprimible", tip: "Genera un PDF profesional de tu carta para imprimir con 3 diseños a elegir." },
     ],
     inheritsFrom: "Todo lo del plan Gold",
     isFeatured: false,

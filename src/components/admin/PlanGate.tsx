@@ -1,7 +1,7 @@
 "use client";
 
 import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan as PlanKey } from "@/lib/plans";
-import { Tag, Megaphone, BarChart3, Globe, Bell, Mail, Cake, Users, UtensilsCrossed, LayoutGrid } from "lucide-react";
+import { Tag, Megaphone, BarChart3, Globe, Bell, Mail, Cake, Users, UtensilsCrossed, LayoutGrid, FileText } from "lucide-react";
 type Plan = PlanKey;
 
 const F = "var(--font-display)";
@@ -19,6 +19,7 @@ const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; ico
   clients_full: { title: "Ver clientes ilimitados", desc: "Sin límite de clientes registrados. Ve correos, preferencias y más.", icon: Users },
   suggestions: { title: "Cross-selling", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", icon: UtensilsCrossed },
   multi_menu: { title: "Multi-carta", desc: "Un QR, múltiples cartas. Ideal para locales con más de un concepto.", icon: LayoutGrid },
+  print_menu: { title: "Carta imprimible", desc: "Exporta tu carta en PDF con diseño profesional para imprimir.", icon: FileText },
 };
 
 interface Props {

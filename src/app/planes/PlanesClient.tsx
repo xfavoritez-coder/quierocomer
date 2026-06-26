@@ -157,6 +157,7 @@ export default function PlanesClient() {
               <div>✓ Llamar al garzón <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzón recibe la notificación push</span></span></div>
               <div>✓ Ver clientes ilimitados <span className="qc-tip">i<span className="qc-tip-text">Sin límite de clientes registrados. Ve correos, preferencias y más</span></span></div>
               <div>✓ Multi-carta <span className="qc-tip">i<span className="qc-tip-text">Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico</span></span></div>
+              <div>✓ Exportar carta imprimible <span className="qc-tip">i<span className="qc-tip-text">Genera un PDF profesional de tu carta para imprimir con 3 diseños a elegir</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 dias</button>
           </article>
