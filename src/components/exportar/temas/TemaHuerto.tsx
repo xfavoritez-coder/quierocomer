@@ -76,10 +76,10 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         }
         .huerto-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 28pt;
+          font-size: 34pt;
           font-weight: 700;
-          color: #3f6b4c;
-          letter-spacing: 0.08em;
+          color: #1a3a24;
+          letter-spacing: 0.04em;
           margin: 0 0 3px;
         }
         .huerto-subtitle {

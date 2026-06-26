@@ -91,10 +91,10 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         }
         .medit-title {
           font-family: 'Marcellus', serif;
-          font-size: 28pt;
+          font-size: 34pt;
           font-weight: 400;
-          color: #2f5d8a;
-          letter-spacing: 0.1em;
+          color: #8b3a14;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
           margin: 0 0 3px;
         }

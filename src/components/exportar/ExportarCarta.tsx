@@ -5,8 +5,9 @@ import { Download, Image as ImageIcon, ImageOff, Loader2 } from "lucide-react";
 import TemaCarbon from "./temas/TemaCarbon";
 import TemaHuerto from "./temas/TemaHuerto";
 import TemaMedit from "./temas/TemaMedit";
+import TemaPiedra from "./temas/TemaPiedra";
 
-type Tema = "carbon" | "huerto" | "medit";
+type Tema = "carbon" | "huerto" | "medit" | "piedra";
 
 interface Restaurant {
   id: string;
@@ -65,6 +66,7 @@ const TEMAS: { key: Tema; label: string; color: string }[] = [
   { key: "carbon", label: "Carbón", color: "#d8ad57" },
   { key: "huerto", label: "Huerto", color: "#3f6b4c" },
   { key: "medit", label: "Mediterráneo", color: "#2f5d8a" },
+  { key: "piedra", label: "Piedra", color: "#8a7e72" },
 ];
 
 export default function ExportarCarta({ restaurant, categories, dishes }: Props) {
@@ -88,7 +90,7 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
     };
   });
 
-  const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : TemaMedit;
+  const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : tema === "medit" ? TemaMedit : TemaPiedra;
   const [downloading, setDownloading] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
 
