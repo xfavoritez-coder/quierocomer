@@ -213,11 +213,11 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
         </div>
 
         {/* Actions row */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="exportar-actions" style={{ display: "flex", gap: 8 }}>
           {/* Toggle fotos */}
           <button onClick={() => setIncluirFotos((v) => !v)} style={{
-            display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
-            padding: "9px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "9px 14px", borderRadius: 10, cursor: "pointer",
             background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
             border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
             fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
@@ -229,9 +229,9 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
 
           {/* Download PDF button */}
           <button onClick={handleDownload} disabled={downloading} style={{
-            display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
+            display: "flex", alignItems: "center", gap: 6,
             padding: "9px 18px", borderRadius: 10, cursor: downloading ? "wait" : "pointer",
-            background: GOLD, border: "none", justifyContent: "center",
+            background: GOLD, border: "none",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
             color: "#0a0a0a",
             opacity: downloading ? 0.7 : 1,
@@ -247,6 +247,8 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
         @media (max-width: 640px) {
           .exportar-sheet { transform: scale(0.5); transform-origin: top left; width: 200% !important; }
           .exportar-sheet-wrapper { overflow: hidden; }
+          .exportar-actions { flex-wrap: wrap; }
+          .exportar-actions button { flex: 1 1 auto !important; justify-content: center; }
         }
         @media (min-width: 641px) and (max-width: 900px) {
           .exportar-sheet { transform: scale(0.75); transform-origin: top left; width: 133.33% !important; }
