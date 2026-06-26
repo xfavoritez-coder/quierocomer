@@ -519,16 +519,6 @@ export default function UsuariosPage() {
               </div>
               )}
 
-              {/* Weekly email — only for non-owner */}
-              {!isOwner && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid var(--adm-card-border)" }}>
-                <div>
-                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Resumen semanal estadísticas</p>
-                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Recibir informe por email cada lunes</p>
-                </div>
-                <Toggle size="small" active={editWeekly} onToggle={() => setEditWeekly(!editWeekly)} />
-              </div>
-              )}
             </div>
 
             {/* Footer actions */}

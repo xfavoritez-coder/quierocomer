@@ -24,7 +24,6 @@ interface SettingsData {
   allPhotosReferential: boolean;
   birthdayPerk: string | null;
   defaultView: string | null;
-  weeklyEmailEnabled: boolean;
   showCategoryLobby: boolean;
   genioFabEnabled: boolean;
 }
