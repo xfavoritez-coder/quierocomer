@@ -136,11 +136,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // Batch insert
+    // Batch insert with resilient error handling per event
     if (records.length === 1) {
-      await prisma.statEvent.create({ data: records[0] });
+      await prisma.statEvent.create({ data: records[0] as any });
     } else if (records.length > 1) {
-      await prisma.statEvent.createMany({ data: records });
+      await prisma.statEvent.createMany({ data: records as any[] }).catch(async () => {
+        // If batch fails (e.g. enum mismatch), insert individually and skip bad ones
+        for (const r of records) {
+          await prisma.statEvent.create({ data: r as any }).catch((e: any) => {
+            console.warn(`[stats] Skipping event ${r.eventType}:`, e.message?.slice(0, 100));
+          });
+        }
+      });
     }
 
     return NextResponse.json({ ok: true });
