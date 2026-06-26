@@ -104,16 +104,16 @@ export default function ContactView({
             <div style={{ flex: 1 }}>
               <p style={{
                 fontFamily: 'var(--font-feed-display), serif',
-                fontSize: 16, fontWeight: 700, margin: '0 0 4px',
+                fontSize: 17, fontWeight: 700, margin: '0 0 4px',
                 color: isDark ? '#fff' : '#111',
               }}>
-                Crea tu carta inteligente
+                Tu carta puede vender más
               </p>
               <p style={{
                 fontSize: 13, margin: '0 0 12px', lineHeight: 1.45,
                 color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
               }}>
-                Sube tu carta en 60 segundos y deja que la IA haga el resto. Gratis para empezar.
+                Transforma tu carta en una herramienta que aumenta tus ventas.
               </p>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -121,7 +121,7 @@ export default function ContactView({
                 background: '#F4A623', color: '#0a0a0a',
                 fontSize: 13, fontWeight: 700,
               }}>
-                Comenzar gratis →
+                Sube tu carta · 60 segundos →
               </span>
             </div>
           </div>
