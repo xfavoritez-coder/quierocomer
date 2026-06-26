@@ -14,6 +14,7 @@ import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, Utensi
 import ImportMenuModal from "@/components/admin/ImportMenuModal";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
+import PlanGate from "@/components/admin/PlanGate";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -1333,8 +1334,12 @@ export default function AdminMenus() {
               {/* Sugerencias — "Va bien con" */}
               <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
 
-              {/* Traducciones */}
-              {selectedRestaurantId && <DishTranslationsEditor dishId={selectedDish.id} restaurantId={selectedRestaurantId} />}
+              {/* Traducciones — PREMIUM only */}
+              {selectedRestaurantId && (
+                <PlanGate feature="multilang" plan={activePlan}>
+                  <DishTranslationsEditor dishId={selectedDish.id} restaurantId={selectedRestaurantId} />
+                </PlanGate>
+              )}
 
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>

@@ -107,7 +107,6 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "view_gallery", "view_feed", "view_space", "view_selector",
       "highlight_dishes", "promotions", "announcements",
       "stats_basic",
-      "multilang",
     ]),
     featureDisplay: [
       { text: "3 vistas de carta", tip: "Galería, Lista e Impact. Elige la que mejor represente tu local." },
@@ -116,7 +115,6 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       { text: "Ofertas y promociones", tip: "Crea ofertas temporales visibles en la carta." },
       { text: "Estadísticas básicas", tip: "Visitas, platos más vistos y duración promedio." },
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
-      { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente." },
     ],
     inheritsFrom: "Todo lo del plan Gratis",
     isFeatured: true,
@@ -141,6 +139,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "toteat_integration", "live_dashboard", "multi_menu",
     ]),
     featureDisplay: [
+      { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente a inglés y portugués." },
       { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
       { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación push." },
