@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
     });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0", timeout: 30000 });
+    await page.setContent(html, { waitUntil: "load", timeout: 30000 });
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
