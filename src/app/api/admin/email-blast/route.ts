@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
+import { prisma } from "@/lib/prisma";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 const GOLD = "#F4A623";
@@ -16,10 +17,16 @@ function buildExportarCartaEmailHtml({ ownerName }: { ownerName: string }) {
 <tr><td align="center" style="padding:32px 16px;">
 <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
 
-  <!-- Logo -->
-  <tr><td align="center" style="padding-bottom:28px;">
-    <img src="${BASE}/logo.png" alt="QuieroComer" width="36" height="36" style="width:36px;height:36px;margin:0 auto 8px;display:block;" />
-    <span style="font-family:Georgia,serif;font-size:18px;color:${GOLD};">QuieroComer</span>
+  <!-- Logo + name inline -->
+  <tr><td style="padding-bottom:24px;">
+    <table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:10px;">
+        <img src="${BASE}/logo.png" alt="QC" width="32" height="32" style="width:32px;height:32px;border-radius:8px;" />
+      </td>
+      <td style="vertical-align:middle;">
+        <span style="font-family:Georgia,serif;font-size:17px;color:${GOLD};font-weight:600;">QuieroComer</span>
+      </td>
+    </tr></table>
   </td></tr>
 
   <!-- Card -->
@@ -91,10 +98,9 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const { testEmail } = await req.json();
+  const { testEmail, blast } = await req.json();
 
   if (testEmail) {
-    // Send test email to a specific address
     await sendAdminEmail({
       to: testEmail,
       subject: "Tu carta ahora se imprime — nuevo en QuieroComer",
@@ -104,5 +110,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, sent: 1 });
   }
 
-  return NextResponse.json({ error: "Usa testEmail para enviar prueba" }, { status: 400 });
+  if (blast) {
+    // Send to active restaurants with real emails
+    const restaurants = await prisma.$queryRaw<any[]>`
+      SELECT r.name, o.email, o.name as owner_name,
+        (SELECT COUNT(*)::int FROM "Session" WHERE "restaurantId" = r.id) as sessions,
+        (SELECT COUNT(*)::int FROM "Dish" WHERE "restaurantId" = r.id AND "isActive" = true) as dishes
+      FROM "Restaurant" r
+      JOIN "RestaurantOwner" o ON o.id = r."ownerId"
+      WHERE r."isActive" = true
+        AND r."isDemo" = false
+        AND r.name NOT ILIKE '%alleria%'
+        AND o.email IS NOT NULL
+        AND o.email != ''
+        AND o.email != 'import@quierocomer.cl'
+        AND ((SELECT COUNT(*) FROM "Session" WHERE "restaurantId" = r.id) > 0
+             OR (SELECT COUNT(*) FROM "Dish" WHERE "restaurantId" = r.id AND "isActive" = true) > 50)
+      ORDER BY (SELECT COUNT(*) FROM "Session" WHERE "restaurantId" = r.id) DESC
+      LIMIT 90
+    `;
+
+    // Deduplicate by email
+    const seen = new Set<string>();
+    const unique = restaurants.filter(r => {
+      const e = r.email.toLowerCase();
+      if (seen.has(e)) return false;
+      seen.add(e);
+      return true;
+    });
+
+    let sent = 0;
+    const errors: string[] = [];
+    for (const r of unique) {
+      try {
+        const ownerName = r.owner_name || r.name || "Hola";
+        await sendAdminEmail({
+          to: r.email,
+          subject: "Tu carta ahora se imprime — nuevo en QuieroComer",
+          html: buildExportarCartaEmailHtml({ ownerName }),
+          purpose: "feature_announcement",
+        });
+        sent++;
+        // Small delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (e: any) {
+        errors.push(`${r.email}: ${e.message?.slice(0, 50)}`);
+      }
+    }
+
+    return NextResponse.json({ ok: true, sent, total: unique.length, errors: errors.slice(0, 10) });
+  }
+
+  return NextResponse.json({ error: "Usa testEmail o blast:true" }, { status: 400 });
 }
