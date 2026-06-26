@@ -211,9 +211,9 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
               <img src={restaurant.logoUrl} alt="" className="medit-logo" />
             )}
             <ArchDecor />
-            <h1 className="medit-title">{restaurant.name}</h1>
+            <h1 className="medit-title" style={{ color: "#8b3a14", fontFamily: "'Marcellus', Georgia, serif", fontSize: "34pt" }}>{restaurant.name}</h1>
             {restaurant.address && (
-              <p className="medit-subtitle">{restaurant.address}</p>
+              <p className="medit-subtitle" style={{ color: "#8a7b63" }}>{restaurant.address}</p>
             )}
           </div>
 

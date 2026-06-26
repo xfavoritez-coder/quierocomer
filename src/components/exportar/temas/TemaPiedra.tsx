@@ -19,16 +19,12 @@ const StoneDivider = () => (
 );
 
 export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props) {
-  // SVG noise texture for rocky feel
-  const noiseSVG = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="200" height="200" filter="url(#n)" opacity="0.08"/></svg>`)}`;
-
   return (
     <>
       <style>{`
         .piedra-page {
           background:
-            url("${noiseSVG}") repeat,
-            linear-gradient(170deg, #6b6560 0%, #5a5550 30%, #4e4a45 60%, #5c5752 100%);
+            url("/exportar/piedra.png") center/cover no-repeat;
           color: #f0ece6;
           font-family: 'Jost', sans-serif;
           padding: 20mm 22mm;

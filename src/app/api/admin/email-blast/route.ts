@@ -18,7 +18,7 @@ function buildExportarCartaEmailHtml({ ownerName }: { ownerName: string }) {
 
   <!-- Logo -->
   <tr><td align="center" style="padding-bottom:28px;">
-    <img src="${BASE}/landing/logo.png" alt="QuieroComer" width="36" height="36" style="width:36px;height:36px;margin:0 auto 8px;display:block;" />
+    <img src="${BASE}/logo.png" alt="QuieroComer" width="36" height="36" style="width:36px;height:36px;margin:0 auto 8px;display:block;" />
     <span style="font-family:Georgia,serif;font-size:18px;color:${GOLD};">QuieroComer</span>
   </td></tr>
 
@@ -65,7 +65,7 @@ function buildExportarCartaEmailHtml({ ownerName }: { ownerName: string }) {
     </table>
 
     <p style="font-size:13px;color:#999;text-align:center;margin:20px 0 0;line-height:1.5;">
-      Disponible en el plan Premium. Si aún no lo tienes, puedes probarlo 14 días gratis.
+      Funcionalidad exclusiva del plan Premium.
     </p>
 
   </td></tr>

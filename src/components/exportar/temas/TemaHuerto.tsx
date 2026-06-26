@@ -208,9 +208,9 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="huerto-logo" />
             )}
-            <h1 className="huerto-title">{restaurant.name}</h1>
+            <h1 className="huerto-title" style={{ color: "#1a3a24", fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "34pt", fontWeight: 700 }}>{restaurant.name}</h1>
             {restaurant.address && (
-              <p className="huerto-subtitle">{restaurant.address}</p>
+              <p className="huerto-subtitle" style={{ color: "#6a6a5e" }}>{restaurant.address}</p>
             )}
             <div style={{ marginTop: 8 }}>
               <LeafDivider />

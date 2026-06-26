@@ -185,41 +185,42 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
       {/* Header */}
       <div style={{
         background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-        borderRadius: 16, padding: "20px 22px", marginBottom: 20,
+        borderRadius: 16, padding: "18px 16px", marginBottom: 16,
       }}>
-        <h2 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
+        <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
           Carta imprimible
         </h2>
-        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-          Elige un diseño, personaliza las opciones y descarga tu carta lista para imprimir o enviar como PDF.
+        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+          Elige un diseño, personaliza y descarga tu carta como PDF.
         </p>
 
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-          {/* Theme tabs */}
-          <div style={{ display: "flex", gap: 6 }}>
-            {TEMAS.map((t) => {
-              const active = tema === t.key;
-              return (
-                <button key={t.key} onClick={() => setTema(t.key)} style={{
-                  padding: "8px 16px", borderRadius: 10, cursor: "pointer",
-                  background: active ? `${t.color}18` : "var(--adm-input)",
-                  border: active ? `1.5px solid ${t.color}` : "1px solid var(--adm-input-border)",
-                  fontFamily: F, fontSize: "0.8rem", fontWeight: active ? 700 : 500,
-                  color: active ? t.color : "var(--adm-text2)",
-                }}>
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
+        {/* Theme tabs — horizontal scroll on mobile */}
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", marginBottom: 10, paddingBottom: 2 }}>
+          {TEMAS.map((t) => {
+            const active = tema === t.key;
+            return (
+              <button key={t.key} onClick={() => setTema(t.key)} style={{
+                padding: "7px 14px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                background: active ? `${t.color}18` : "var(--adm-input)",
+                border: active ? `1.5px solid ${t.color}` : "1px solid var(--adm-input-border)",
+                fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                color: active ? t.color : "var(--adm-text2)",
+              }}>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
 
+        {/* Actions row */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {/* Toggle fotos */}
           <button onClick={() => setIncluirFotos((v) => !v)} style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "8px 14px", borderRadius: 10, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
+            padding: "9px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
             background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
             border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
-            fontFamily: F, fontSize: "0.8rem", fontWeight: 600,
+            fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
             color: incluirFotos ? GOLD : "var(--adm-text2)",
           }}>
             {incluirFotos ? <ImageIcon size={14} /> : <ImageOff size={14} />}
@@ -228,30 +229,44 @@ export default function ExportarCarta({ restaurant, categories, dishes }: Props)
 
           {/* Download PDF button */}
           <button onClick={handleDownload} disabled={downloading} style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "10px 22px", borderRadius: 12, cursor: downloading ? "wait" : "pointer",
-            background: GOLD, border: "none",
-            fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
-            color: "#0a0a0a", marginLeft: "auto",
+            display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
+            padding: "9px 18px", borderRadius: 10, cursor: downloading ? "wait" : "pointer",
+            background: GOLD, border: "none", justifyContent: "center",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+            color: "#0a0a0a",
             opacity: downloading ? 0.7 : 1,
           }}>
             {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            {downloading ? "Generando PDF..." : "Descargar PDF"}
+            {downloading ? "Generando..." : "Descargar PDF"}
           </button>
         </div>
       </div>
 
+      {/* Responsive scale styles for mobile preview */}
+      <style>{`
+        @media (max-width: 640px) {
+          .exportar-sheet { transform: scale(0.5); transform-origin: top left; width: 200% !important; }
+          .exportar-sheet-wrapper { overflow: hidden; }
+        }
+        @media (min-width: 641px) and (max-width: 900px) {
+          .exportar-sheet { transform: scale(0.75); transform-origin: top left; width: 133.33% !important; }
+          .exportar-sheet-wrapper { overflow: hidden; }
+        }
+      `}</style>
+
       {/* The printable sheet */}
+      <div className="exportar-sheet-wrapper" style={{ overflow: "hidden", borderRadius: 8 }}>
       <div ref={sheetRef} className="exportar-sheet" style={{
         boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-        borderRadius: 8, overflow: "hidden",
-        maxWidth: 900, margin: "0 auto",
+        overflow: "hidden",
+        maxWidth: 900,
       }}>
         <TemaComponent
           restaurant={restaurant}
           sections={sections}
           incluirFotos={incluirFotos}
         />
+      </div>
       </div>
     </>
   );
