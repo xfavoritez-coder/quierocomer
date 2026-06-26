@@ -248,7 +248,7 @@ export async function POST(req: Request) {
     `
 
     // ── 2. Perfil de preferencias: frecuencia por categoría + txDishType ─────
-    // Peso igual para todas las selecciones
+    // Con pocos antojos (3), cada selección pesa más — peso uniforme
     const positionWeight: Record<string, number> = {}
     dishIds.forEach((id: string) => {
       positionWeight[id] = 1
@@ -273,7 +273,15 @@ export async function POST(req: Request) {
 
     const totalLiked = Object.values(positionWeight).reduce((s, v) => s + v, 0)
     const cats = Object.keys(catFreq)
-    const txArray = [...allTxTypes]
+    // Expandir txTypes con hermanos para ampliar candidatos (importante con pocos antojos)
+    const expandedTxTypes = new Set(allTxTypes)
+    for (const t of allTxTypes) {
+      const parent = PARENT_FAMILY[t] ?? t
+      expandedTxTypes.add(parent)
+      for (const sibling of (RELATED_TX_TYPES[t] ?? [])) expandedTxTypes.add(sibling)
+      for (const sibling of (RELATED_TX_TYPES[parent] ?? [])) expandedTxTypes.add(sibling)
+    }
+    const txArray = [...expandedTxTypes]
     const ingArray = [...allIngs]
 
     // ── 2b. Perfil de dislikes: tipos y categorías que el usuario rechazó ────
@@ -338,8 +346,13 @@ export async function POST(req: Request) {
     for (const row of candidates) {
       const leaf = resolveDishLeaf(row.name, row.catName, row.leafOverride, row.primaryCategory, null, row.catNormOverride)
 
-      // Solo categorías que el usuario eligió
-      if (!slots[leaf]) continue
+      // Aceptar categorías elegidas + categorías con tipos relacionados
+      if (!slots[leaf]) {
+        // Check if this dish's types relate to any liked category's types
+        const types: string[] = Array.isArray(row.txDishType) ? row.txDishType : []
+        const isRelated = types.some(t => expandedTxTypes.has(t))
+        if (!isRelated) continue
+      }
 
       // Filtro distancia
       if (lat != null && lng != null && row.lat != null && row.lng != null) {
@@ -352,13 +365,21 @@ export async function POST(req: Request) {
       if (diet === 'VEGETARIAN' && row.dishDiet !== 'VEGAN' && row.dishDiet !== 'VEGETARIAN') continue
 
       // Score dentro de su categoría (tipo + ingrediente + popularidad)
+      // Con pocos antojos, ingredientes compartidos son señal fuerte de gusto
       let score = Number(row.popularityScore ?? 0) * 0.01
       const types: string[] = Array.isArray(row.txDishType) ? row.txDishType : []
       const ings: string[] = Array.isArray(row.txIngredient) ? row.txIngredient : []
       const catTx = txTypesByCat[leaf] ?? new Set()
       const catIng = ingsByCat[leaf] ?? new Set()
-      score += types.filter(t => catTx.has(t)).length * 3
-      score += ings.filter(i => catIng.has(i)).length * 2
+      // Tipos directamente coincidentes
+      score += types.filter(t => catTx.has(t)).length * 4
+      // Ingredientes compartidos (peso alto con pocos antojos)
+      score += ings.filter(i => catIng.has(i)).length * 3
+      // Bonus: tipos relacionados (hermanos) — amplía la señal con pocos datos
+      for (const t of types) {
+        const siblings = RELATED_TX_TYPES[t]
+        if (siblings && siblings.some(s => catTx.has(s))) score += 2
+      }
 
       // Penalización por dislikes: tipos rechazados bajan el score
       for (const t of types) {

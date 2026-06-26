@@ -197,12 +197,12 @@ export default function NewHome({
     if (typeof window === 'undefined') return []
     try {
       const raw = localStorage.getItem('qc_eureka_liked')
-      if (raw) return (JSON.parse(raw) as FeedDish[]).slice(0, 5)
+      if (raw) return (JSON.parse(raw) as FeedDish[]).slice(0, 3)
     } catch {}
     return []
   })
-  const eurekaMax = 5
-  const eurekaMaxRef = useRef(5)
+  const eurekaMax = 3
+  const eurekaMaxRef = useRef(3)
   const [eurekaDisliked, setEurekaDisliked] = useState<FeedDish[]>(() => {
     if (typeof window === 'undefined') return []
     try {
@@ -212,12 +212,12 @@ export default function NewHome({
     return []
   })
   const [showEurekaModal, setShowEurekaModal] = useState(false)
-  // Pre-init to true when restoring 5 dishes — prevents modal re-trigger on return from /descubrir
+  // Pre-init to true when restoring 3 dishes — prevents modal re-trigger on return from /descubrir
   const [_eurekaAlreadyShown] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
     try {
       const raw = localStorage.getItem('qc_eureka_liked')
-      return !!raw && JSON.parse(raw).length >= 5
+      return !!raw && JSON.parse(raw).length >= 3
     } catch { return false }
   })
   const eurekaModalShownRef = useRef(_eurekaAlreadyShown)
@@ -1256,7 +1256,7 @@ export default function NewHome({
                 })()}
 
                 <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)', textAlign: 'center', margin: '18px 0 20px', lineHeight: 1.5 }}>
-                  Junta 5 antojos y descubre qué comer
+                  Junta 3 antojos y descubre qué comer
                 </p>
 
                 {/* CTA */}
