@@ -86,6 +86,47 @@ export default function ContactView({
           </h1>
         </div>
 
+        {/* CTA: Crea tu carta inteligente */}
+        <a
+          href="/qr/"
+          style={{
+            display: 'block', textDecoration: 'none', marginBottom: 24,
+            borderRadius: 16, overflow: 'hidden',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(244,166,35,0.12) 0%, rgba(244,166,35,0.04) 100%)'
+              : 'linear-gradient(135deg, rgba(244,166,35,0.08) 0%, rgba(244,166,35,0.02) 100%)',
+            border: `1px solid ${isDark ? 'rgba(244,166,35,0.2)' : 'rgba(244,166,35,0.15)'}`,
+            padding: '22px 20px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>✨</span>
+            <div style={{ flex: 1 }}>
+              <p style={{
+                fontFamily: 'var(--font-feed-display), serif',
+                fontSize: 16, fontWeight: 700, margin: '0 0 4px',
+                color: isDark ? '#fff' : '#111',
+              }}>
+                Crea tu carta inteligente
+              </p>
+              <p style={{
+                fontSize: 13, margin: '0 0 12px', lineHeight: 1.45,
+                color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+              }}>
+                Sube tu carta en 60 segundos y deja que la IA haga el resto. Gratis para empezar.
+              </p>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 10,
+                background: '#F4A623', color: '#0a0a0a',
+                fontSize: 13, fontWeight: 700,
+              }}>
+                Comenzar gratis →
+              </span>
+            </div>
+          </div>
+        </a>
+
         {sent ? (
           <div style={{
             padding: '32px 20px', borderRadius: 14, textAlign: 'center',
