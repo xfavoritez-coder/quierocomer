@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse, getAdminId } from "@/lib/adminAuth";
+import { logActivity } from "@/lib/admin/logActivity";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -43,5 +44,9 @@ export async function GET(req: NextRequest) {
   });
 
   const isPaid = restaurant.subscriptionStatus === "ACTIVE" || restaurant.billingExempt === true;
+
+  // Track in lifecycle timeline
+  logActivity(restaurantId, "exportar_carta_viewed", { dishes: dishes.length, categories: categories.length }, getAdminId(req) || undefined);
+
   return NextResponse.json({ restaurant, categories, dishes, isPaid });
 }

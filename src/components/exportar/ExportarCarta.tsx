@@ -99,21 +99,7 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
   const visibleSections = isTrial ? sections.slice(0, 2) : sections;
   const lockedSections = isTrial ? sections.slice(2) : [];
 
-  // Track page visit
-  useEffect(() => {
-    fetch("/api/admin/locales/" + restaurant.id, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}), // no-op update just to log activity
-    }).catch(() => {});
-    // Log activity
-    fetch("/api/qr/stat-events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "EXPORTAR_CARTA_VIEWED", restaurantId: restaurant.id, metadata: {} }),
-      keepalive: true,
-    }).catch(() => {});
-  }, [restaurant.id]);
+  // Track is done server-side via logActivity in /api/admin/exportar
 
   const handleDownload = async () => {
     if (!sheetRef.current) return;
@@ -166,11 +152,11 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       const safeName = restaurant.name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s-]/g, "").trim().replace(/\s+/g, "-");
       pdf.save(`${safeName}-carta-fisica.pdf`);
 
-      // Track PDF download
-      fetch("/api/qr/stat-events", {
+      // Track PDF download via logActivity
+      fetch("/api/admin/exportar/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventType: "EXPORTAR_CARTA_PDF", restaurantId: restaurant.id, metadata: { tema, fotos: incluirFotos, pages: totalPages } }),
+        body: JSON.stringify({ restaurantId: restaurant.id, action: "exportar_carta_pdf", tema, fotos: incluirFotos, pages: totalPages }),
         keepalive: true,
       }).catch(() => {});
     } catch (e) {
