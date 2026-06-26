@@ -108,13 +108,10 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           justify-content: center;
           gap: 6px;
         }
-        .huerto-section-title::before,
-        .huerto-section-title::after {
-          content: '';
-          display: inline-block;
-          width: 24px;
+        .huerto-section-line {
+          flex: 1;
           height: 1px;
-          background: #3f6b4c60;
+          background: rgba(63,107,76,0.35);
         }
         .huerto-dishes-text {
           column-count: 2;
@@ -220,7 +217,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           {/* Sections */}
           {sections.map((section, i) => (
             <div key={i} className="huerto-section">
-              <h2 className="huerto-section-title">{section.titulo}</h2>
+              <h2 className="huerto-section-title"><span className="huerto-section-line" />{section.titulo}<span className="huerto-section-line" /></h2>
 
               {incluirFotos ? (
                 <div className="huerto-dishes-photo">

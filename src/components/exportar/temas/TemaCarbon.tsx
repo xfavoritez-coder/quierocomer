@@ -101,6 +101,20 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           text-transform: uppercase;
           text-align: center;
           margin: 0 0 4mm;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+        .carbon-section-line {
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(216,173,87,0.4));
+        }
+        .carbon-section-line-r {
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, rgba(216,173,87,0.4), transparent);
         }
         /* Text-only (2 columns) */
         .carbon-dishes-text {
@@ -207,7 +221,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           {/* Sections */}
           {sections.map((section, i) => (
             <div key={i} className="carbon-section">
-              <h2 className="carbon-section-title">{section.titulo}</h2>
+              <h2 className="carbon-section-title"><span className="carbon-section-line" />{section.titulo}<span className="carbon-section-line-r" /></h2>
 
               {incluirFotos ? (
                 <div className="carbon-dishes-photo">

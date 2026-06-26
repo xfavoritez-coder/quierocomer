@@ -113,6 +113,27 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       const A4_H = 297;
       const DPI_SCALE = 2; // high-res capture
 
+      // Pre-convert all images to base64 to avoid CORS issues
+      const imgs = el.querySelectorAll("img");
+      const origSrcs: { img: HTMLImageElement; src: string }[] = [];
+      await Promise.all(Array.from(imgs).map(async (img) => {
+        if (!img.src || img.src.startsWith("data:")) return;
+        try {
+          const res = await fetch(img.src);
+          const blob = await res.blob();
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          origSrcs.push({ img, src: img.src });
+          img.src = dataUrl;
+        } catch {}
+      }));
+
+      // Wait for images to settle
+      await new Promise(r => setTimeout(r, 200));
+
       // Capture the rendered element as canvas
       const canvas = await html2canvas(el, {
         scale: DPI_SCALE,
@@ -122,11 +143,14 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
         logging: false,
       });
 
+      // Restore original srcs
+      for (const { img, src } of origSrcs) img.src = src;
+
       const imgW = canvas.width;
       const imgH = canvas.height;
 
-      // Calculate how many A4 pages we need
-      const pageHeightPx = (imgW / A4_W) * A4_H; // height of one A4 page in canvas pixels
+      // Calculate page dimensions in pixels
+      const pageHeightPx = (imgW / A4_W) * A4_H;
       const totalPages = Math.ceil(imgH / pageHeightPx);
 
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -134,7 +158,6 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       for (let page = 0; page < totalPages; page++) {
         if (page > 0) pdf.addPage();
 
-        // Slice canvas for this page
         const sliceY = page * pageHeightPx;
         const sliceH = Math.min(pageHeightPx, imgH - sliceY);
 

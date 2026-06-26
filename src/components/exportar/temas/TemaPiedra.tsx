@@ -113,14 +113,14 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
           justify-content: center;
           gap: 10px;
         }
-        .piedra-section-title::before,
-        .piedra-section-title::after {
-          content: '';
+        .piedra-section-line {
           height: 1px;
           flex: 1;
           background: linear-gradient(90deg, transparent, rgba(190,178,162,0.35));
         }
-        .piedra-section-title::after {
+        .piedra-section-line-r {
+          height: 1px;
+          flex: 1;
           background: linear-gradient(90deg, rgba(190,178,162,0.35), transparent);
         }
         /* Text-only (2 columns) */
@@ -228,7 +228,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
           {/* Sections */}
           {sections.map((section, i) => (
             <div key={i} className="piedra-section">
-              <h2 className="piedra-section-title">{section.titulo}</h2>
+              <h2 className="piedra-section-title"><span className="piedra-section-line" />{section.titulo}<span className="piedra-section-line-r" /></h2>
 
               {incluirFotos ? (
                 <div className="piedra-dishes-photo">
