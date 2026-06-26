@@ -111,7 +111,15 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       const el = sheetRef.current;
       const A4_W = 210; // mm
       const A4_H = 297;
-      const DPI_SCALE = 2; // high-res capture
+      const DPI_SCALE = 2;
+
+      // Force a fixed width for consistent PDF output (794px ≈ A4 at 96dpi)
+      const origWidth = el.style.width;
+      const origMaxWidth = el.style.maxWidth;
+      const origTransform = el.style.transform;
+      el.style.width = "794px";
+      el.style.maxWidth = "794px";
+      el.style.transform = "none";
 
       // Pre-convert all images to base64 to avoid CORS issues
       const imgs = el.querySelectorAll("img");
@@ -143,7 +151,10 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
         logging: false,
       });
 
-      // Restore original srcs
+      // Restore original styles and srcs
+      el.style.width = origWidth;
+      el.style.maxWidth = origMaxWidth;
+      el.style.transform = origTransform;
       for (const { img, src } of origSrcs) img.src = src;
 
       const imgW = canvas.width;
@@ -167,7 +178,7 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
         const ctx = pageCanvas.getContext("2d")!;
         ctx.drawImage(canvas, 0, sliceY, imgW, sliceH, 0, 0, imgW, sliceH);
 
-        const imgData = pageCanvas.toDataURL("image/jpeg", 0.92);
+        const imgData = pageCanvas.toDataURL("image/jpeg", 0.85);
         const hMM = (sliceH / imgW) * A4_W;
         pdf.addImage(imgData, "JPEG", 0, 0, A4_W, hMM);
       }
