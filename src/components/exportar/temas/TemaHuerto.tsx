@@ -217,52 +217,48 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           {/* Sections */}
           {sections.map((section, i) => (
             <div key={i} className="huerto-section" data-pdf-section>
-              <h2 className="huerto-section-title"><span className="huerto-section-line" />{section.titulo}<span className="huerto-section-line" /></h2>
+              <h2 className="huerto-section-title" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "16pt", fontWeight: 700, color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center", margin: "0 0 4mm", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <span className="huerto-section-line" style={{ flex: 1, height: 1, background: "rgba(63,107,76,0.35)" }} />
+                {section.titulo}
+                <span className="huerto-section-line" style={{ flex: 1, height: 1, background: "rgba(63,107,76,0.35)" }} />
+              </h2>
 
               {incluirFotos ? (
-                <div className="huerto-dishes-photo">
+                <div className="huerto-dishes-photo" style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
                   {section.platos.map((p, j) => (
-                    <div key={j} className="huerto-dish-photo-row">
+                    <div key={j} className="huerto-dish-photo-row" style={{ display: "flex", alignItems: "center", gap: "3mm", breakInside: "avoid" }}>
                       {p.foto ? (
-                        <img src={p.foto} alt="" className="huerto-dish-img" />
+                        <img src={p.foto} alt="" className="huerto-dish-img" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", border: "1px solid rgba(63,107,76,0.2)", flexShrink: 0 }} />
                       ) : (
-                        <div className="huerto-dish-img" style={{ background: "#e8e2d4" }} />
+                        <div className="huerto-dish-img" style={{ width: 56, height: 56, borderRadius: 8, background: "#e8e2d4", flexShrink: 0 }} />
                       )}
-                      <div className="huerto-dish-info">
-                        <div className="huerto-dish-info-top">
-                          <span className="huerto-dish-name">{p.nombre}</span>
-                          <span className="huerto-dish-dots" />
-                          <span className="huerto-dish-price">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                          <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "12pt", fontWeight: 700, color: "#2c2c2c", flex: 1, minWidth: 0, wordWrap: "break-word" }}>{p.nombre}</span>
+                          <span style={{ flex: "0 0 auto", width: 20, borderBottom: "1px dotted rgba(63,107,76,0.3)", marginBottom: 2 }} />
+                          <span style={{ fontSize: "12pt", fontWeight: 600, color: "#3f6b4c", whiteSpace: "nowrap", flexShrink: 0 }}>
                             {p.precio}
-                            {p.precioDescuento && (
-                              <span className="huerto-old-price">{p.precioDescuento}</span>
-                            )}
+                            {p.precioDescuento && <span style={{ fontSize: "9pt", color: "#9a9a9a", textDecoration: "line-through", marginLeft: 4 }}>{p.precioDescuento}</span>}
                           </span>
                         </div>
-                        {p.descripcion && (
-                          <p className="huerto-dish-desc">{p.descripcion}</p>
-                        )}
+                        {p.descripcion && <p style={{ fontSize: "10.5pt", color: "#5a5a5a", fontStyle: "italic", margin: "1px 0 0", lineHeight: 1.3 }}>{p.descripcion}</p>}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="huerto-dishes-text">
+                <div className="huerto-dishes-text" style={{ columnCount: 2, columnGap: "8mm" }}>
                   {section.platos.map((p, j) => (
-                    <div key={j} className="huerto-dish-text">
-                      <div className="huerto-dish-row">
-                        <span className="huerto-dish-name">{p.nombre}</span>
-                        <span className="huerto-dish-dots" />
-                        <span className="huerto-dish-price">
+                    <div key={j} style={{ breakInside: "avoid", marginBottom: "3.5mm" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "12pt", fontWeight: 700, color: "#2c2c2c", flex: 1, minWidth: 0, wordWrap: "break-word" }}>{p.nombre}</span>
+                        <span style={{ flex: "0 0 auto", width: 20, borderBottom: "1px dotted rgba(63,107,76,0.3)", marginBottom: 2 }} />
+                        <span style={{ fontSize: "12pt", fontWeight: 600, color: "#3f6b4c", whiteSpace: "nowrap", flexShrink: 0 }}>
                           {p.precio}
-                          {p.precioDescuento && (
-                            <span className="huerto-old-price">{p.precioDescuento}</span>
-                          )}
+                          {p.precioDescuento && <span style={{ fontSize: "9pt", color: "#9a9a9a", textDecoration: "line-through", marginLeft: 4 }}>{p.precioDescuento}</span>}
                         </span>
                       </div>
-                      {p.descripcion && (
-                        <p className="huerto-dish-desc">{p.descripcion}</p>
-                      )}
+                      {p.descripcion && <p style={{ fontSize: "10.5pt", color: "#5a5a5a", fontStyle: "italic", margin: "1px 0 0", lineHeight: 1.3 }}>{p.descripcion}</p>}
                     </div>
                   ))}
                 </div>

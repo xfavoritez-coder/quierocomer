@@ -220,52 +220,44 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
           {/* Sections */}
           {sections.map((section, i) => (
             <div key={i} className="medit-section" data-pdf-section>
-              <h2 className="medit-section-title">{section.titulo}</h2>
+              <h2 className="medit-section-title" style={{ fontFamily: "'Marcellus', Georgia, serif", fontSize: "15pt", color: "#2f5d8a", margin: "0 0 12px", paddingBottom: 6, borderBottom: "2px solid #c0622d" }}>{section.titulo}</h2>
 
               {incluirFotos ? (
-                <div className="medit-dishes-photo">
+                <div style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
                   {section.platos.map((p, j) => (
-                    <div key={j} className="medit-dish-photo-row">
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 10, breakInside: "avoid" }}>
                       {p.foto ? (
-                        <img src={p.foto} alt="" className="medit-dish-img" />
+                        <img src={p.foto} alt="" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", border: "1px solid rgba(192,98,45,0.2)", flexShrink: 0 }} />
                       ) : (
-                        <div className="medit-dish-img" style={{ background: "#ede7d6" }} />
+                        <div style={{ width: 56, height: 56, borderRadius: 8, background: "#ede7d6", flexShrink: 0 }} />
                       )}
-                      <div className="medit-dish-info">
-                        <div className="medit-dish-info-top">
-                          <span className="medit-dish-name">{p.nombre}</span>
-                          <span className="medit-dish-dots" />
-                          <span className="medit-dish-price">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                          <span style={{ fontSize: "12pt", fontWeight: 600, color: "#403428", flex: 1, minWidth: 0, wordWrap: "break-word" }}>{p.nombre}</span>
+                          <span style={{ flex: "0 0 auto", width: 20, borderBottom: "1px dotted #d8cdb4", marginBottom: 3 }} />
+                          <span style={{ fontSize: "12pt", fontWeight: 600, color: "#c0622d", whiteSpace: "nowrap", flexShrink: 0 }}>
                             {p.precio}
-                            {p.precioDescuento && (
-                              <span className="medit-old-price">{p.precioDescuento}</span>
-                            )}
+                            {p.precioDescuento && <span style={{ fontSize: "9pt", color: "#aaa", textDecoration: "line-through", marginLeft: 4 }}>{p.precioDescuento}</span>}
                           </span>
                         </div>
-                        {p.descripcion && (
-                          <p className="medit-dish-desc">{p.descripcion}</p>
-                        )}
+                        {p.descripcion && <p style={{ fontSize: "10.5pt", color: "#8a7b63", margin: "2px 0 0", lineHeight: 1.35 }}>{p.descripcion}</p>}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="medit-dishes-text">
+                <div style={{ columnCount: 2, columnGap: "8mm" }}>
                   {section.platos.map((p, j) => (
-                    <div key={j} className="medit-dish-text">
-                      <div className="medit-dish-row">
-                        <span className="medit-dish-name">{p.nombre}</span>
-                        <span className="medit-dish-dots" />
-                        <span className="medit-dish-price">
+                    <div key={j} style={{ breakInside: "avoid", marginBottom: "3.5mm" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        <span style={{ fontSize: "12pt", fontWeight: 600, color: "#403428", flex: 1, minWidth: 0, wordWrap: "break-word" }}>{p.nombre}</span>
+                        <span style={{ flex: "0 0 auto", width: 20, borderBottom: "1px dotted #d8cdb4", marginBottom: 3 }} />
+                        <span style={{ fontSize: "12pt", fontWeight: 600, color: "#c0622d", whiteSpace: "nowrap", flexShrink: 0 }}>
                           {p.precio}
-                          {p.precioDescuento && (
-                            <span className="medit-old-price">{p.precioDescuento}</span>
-                          )}
+                          {p.precioDescuento && <span style={{ fontSize: "9pt", color: "#aaa", textDecoration: "line-through", marginLeft: 4 }}>{p.precioDescuento}</span>}
                         </span>
                       </div>
-                      {p.descripcion && (
-                        <p className="medit-dish-desc">{p.descripcion}</p>
-                      )}
+                      {p.descripcion && <p style={{ fontSize: "10.5pt", color: "#8a7b63", margin: "2px 0 0", lineHeight: 1.35 }}>{p.descripcion}</p>}
                     </div>
                   ))}
                 </div>
