@@ -219,7 +219,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
 
           {/* Sections */}
           {sections.map((section, i) => (
-            <div key={i} className="medit-section">
+            <div key={i} className="medit-section" data-pdf-section>
               <h2 className="medit-section-title">{section.titulo}</h2>
 
               {incluirFotos ? (

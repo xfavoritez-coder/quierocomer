@@ -220,7 +220,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
 
           {/* Sections */}
           {sections.map((section, i) => (
-            <div key={i} className="carbon-section">
+            <div key={i} className="carbon-section" data-pdf-section>
               <h2 className="carbon-section-title"><span className="carbon-section-line" />{section.titulo}<span className="carbon-section-line-r" /></h2>
 
               {incluirFotos ? (

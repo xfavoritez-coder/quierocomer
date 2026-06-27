@@ -159,13 +159,15 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       }
       await new Promise(r => setTimeout(r, 100));
 
-      // Capture the rendered element as canvas
+      // ── Smart page-aware PDF: capture full sheet, cut at section boundaries ──
+
       const canvas = await html2canvas(el, {
         scale: DPI_SCALE,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
         logging: false,
+        width: 794,
       });
 
       // Restore original styles and srcs
@@ -176,30 +178,71 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
 
       const imgW = canvas.width;
       const imgH = canvas.height;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      const scale = pdfW / imgW;
+      const pageHPx = pdfH / scale; // one A4 page height in canvas pixels
 
-      // Calculate page dimensions in pixels
-      const pageHeightPx = (imgW / A4_W) * A4_H;
-      const totalPages = Math.ceil(imgH / pageHeightPx);
+      // Find section boundaries (top of each data-pdf-section in canvas coords)
+      const sectionEls = el.querySelectorAll("[data-pdf-section]");
+      const elTop = el.getBoundingClientRect().top;
+      const cutPoints: number[] = [0]; // start of content
 
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      if (sectionEls.length > 0) {
+        for (const sec of Array.from(sectionEls)) {
+          const rect = sec.getBoundingClientRect();
+          const yInCanvas = (rect.top - elTop) * DPI_SCALE;
+          cutPoints.push(yInCanvas);
+        }
+      }
+      cutPoints.push(imgH); // end of content
 
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) pdf.addPage();
+      // Group sections into pages: accumulate until next section would overflow
+      const pages: { startY: number; endY: number }[] = [];
+      let pageStartY = 0;
 
-        const sliceY = page * pageHeightPx;
-        const sliceH = Math.min(pageHeightPx, imgH - sliceY);
+      for (let i = 1; i < cutPoints.length; i++) {
+        const sectionEnd = cutPoints[i];
+        const pageContentH = sectionEnd - pageStartY;
+
+        if (pageContentH > pageHPx && i > 1) {
+          // This section would overflow — finalize current page at previous cut point
+          pages.push({ startY: pageStartY, endY: cutPoints[i - 1] });
+          pageStartY = cutPoints[i - 1];
+        }
+      }
+      // Add final page
+      if (pageStartY < imgH) {
+        pages.push({ startY: pageStartY, endY: imgH });
+      }
+
+      // If no sections found, fall back to simple slicing
+      if (pages.length === 0) {
+        const totalSimple = Math.ceil(imgH / pageHPx);
+        for (let p = 0; p < totalSimple; p++) {
+          pages.push({ startY: p * pageHPx, endY: Math.min((p + 1) * pageHPx, imgH) });
+        }
+      }
+
+      // Render each page
+      for (let p = 0; p < pages.length; p++) {
+        if (p > 0) pdf.addPage();
+        const { startY, endY } = pages[p];
+        const sliceH = endY - startY;
 
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = imgW;
         pageCanvas.height = sliceH;
         const ctx = pageCanvas.getContext("2d")!;
-        ctx.drawImage(canvas, 0, sliceY, imgW, sliceH, 0, 0, imgW, sliceH);
+        ctx.drawImage(canvas, 0, startY, imgW, sliceH, 0, 0, imgW, sliceH);
 
         const imgData = pageCanvas.toDataURL("image/jpeg", 0.85);
-        const hMM = (sliceH / imgW) * A4_W;
-        pdf.addImage(imgData, "JPEG", 0, 0, A4_W, hMM);
+        const renderedH = sliceH * scale;
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfW, renderedH);
       }
 
+      const totalPages = pages.length;
       const safeName = restaurant.name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s-]/g, "").trim().replace(/\s+/g, "-");
       pdf.save(`${safeName}-carta-fisica.pdf`);
 

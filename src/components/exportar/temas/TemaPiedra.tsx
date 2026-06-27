@@ -227,7 +227,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
 
           {/* Sections */}
           {sections.map((section, i) => (
-            <div key={i} className="piedra-section">
+            <div key={i} className="piedra-section" data-pdf-section>
               <h2 className="piedra-section-title"><span className="piedra-section-line" />{section.titulo}<span className="piedra-section-line-r" /></h2>
 
               {incluirFotos ? (

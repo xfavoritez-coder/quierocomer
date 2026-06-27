@@ -216,7 +216,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
 
           {/* Sections */}
           {sections.map((section, i) => (
-            <div key={i} className="huerto-section">
+            <div key={i} className="huerto-section" data-pdf-section>
               <h2 className="huerto-section-title"><span className="huerto-section-line" />{section.titulo}<span className="huerto-section-line" /></h2>
 
               {incluirFotos ? (
