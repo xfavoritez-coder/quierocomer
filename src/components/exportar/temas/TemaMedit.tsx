@@ -76,7 +76,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
           -webkit-print-color-adjust: exact;
         }
         .medit-inner {
-          padding: 18mm 20mm;
+          padding: 24mm 20mm 18mm;
         }
         .medit-header {
           text-align: center;

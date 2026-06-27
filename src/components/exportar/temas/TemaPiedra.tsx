@@ -47,7 +47,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
             linear-gradient(168deg, #3d3730 0%, #342f2a 25%, #2e2924 50%, #33302b 75%, #38342e 100%);
           color: #f0ece6;
           font-family: 'Jost', sans-serif;
-          padding: 18mm 20mm;
+          padding: 24mm 20mm 18mm;
           box-sizing: border-box;
           position: relative;
           print-color-adjust: exact;

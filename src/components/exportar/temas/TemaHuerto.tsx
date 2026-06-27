@@ -35,10 +35,13 @@ const LeafCorner = ({ style }: { style?: React.CSSProperties }) => (
 
 /* ── Leaf divider ── */
 const LeafDivider = () => (
-  <svg width="140" height="20" viewBox="0 0 140 20" style={{ display: "block", margin: "0 auto" }}>
-    <line x1="0" y1="10" x2="50" y2="10" stroke="#3f6b4c" strokeWidth="0.8" />
-    <path d="M65 4 Q70 10 65 16 Q70 12 75 10 Q70 8 65 4Z" fill="#3f6b4c" />
-    <line x1="90" y1="10" x2="140" y2="10" stroke="#3f6b4c" strokeWidth="0.8" />
+  <svg width="140" height="24" viewBox="0 0 140 24" style={{ display: "block", margin: "0 auto" }}>
+    <line x1="0" y1="12" x2="48" y2="12" stroke="#3f6b4c" strokeWidth="0.7" opacity="0.5" />
+    <g transform="translate(60, 4)" fill="#3f6b4c" opacity="0.6">
+      <path d="M10 0 C14 6 16 12 10 18 C4 12 6 6 10 0Z" />
+      <path d="M10 2 C10 8 10 14 10 16" stroke="#f6f1e3" strokeWidth="0.8" fill="none" />
+    </g>
+    <line x1="92" y1="12" x2="140" y2="12" stroke="#3f6b4c" strokeWidth="0.7" opacity="0.5" />
   </svg>
 );
 
@@ -51,7 +54,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           background: #f6f1e3;
           color: #2c2c2c;
           font-family: 'Jost', sans-serif;
-          padding: 18mm 20mm;
+          padding: 24mm 20mm 18mm;
           box-sizing: border-box;
           position: relative;
           print-color-adjust: exact;

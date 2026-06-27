@@ -74,6 +74,8 @@ const TEMAS: { key: Tema; label: string; color: string }[] = [
 export default function ExportarCarta({ restaurant, categories, dishes, isPaid = false }: Props) {
   const [tema, setTema] = useState<Tema>("carbon");
   const [incluirFotos, setIncluirFotos] = useState(false);
+  const [ahorroTinta, setAhorroTinta] = useState(false);
+  const esClaro = tema === "huerto" || tema === "medit";
 
   const sections: Section[] = categories.map((cat) => {
     const catDishes = dishes
@@ -135,6 +137,7 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
       print-color-adjust: exact !important;
     }
     body { background: #fff; }
+    ${ahorroTinta ? `.huerto-page, .medit-page, .medit-inner { background: #fff !important; }` : ""}
     img { max-width: 100%; }
   </style>
   ${styles}
@@ -216,6 +219,20 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
             {incluirFotos ? "Fotos activadas" : "Activar fotos"}
           </button>
 
+          {/* Ahorro de tinta — solo para temas claros */}
+          {esClaro && (
+            <button onClick={() => setAhorroTinta((v) => !v)} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "9px 14px", borderRadius: 10, cursor: "pointer",
+              background: ahorroTinta ? "rgba(34,197,94,0.1)" : "var(--adm-input)",
+              border: ahorroTinta ? "1.5px solid #22c55e" : "1px solid var(--adm-input-border)",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+              color: ahorroTinta ? "#22c55e" : "var(--adm-text2)",
+            }}>
+              🍃 {ahorroTinta ? "Fondo blanco" : "Ahorro tinta"}
+            </button>
+          )}
+
           <button
             onClick={isTrial
               ? () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))
@@ -250,6 +267,7 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
           .exportar-sheet { transform: scale(0.75); transform-origin: top left; width: 133.33% !important; }
           .exportar-sheet-wrapper { overflow: hidden; }
         }
+        ${ahorroTinta ? `.huerto-page, .medit-page, .medit-inner { background: #fff !important; }` : ""}
       `}</style>
 
       {/* Preview sheet */}

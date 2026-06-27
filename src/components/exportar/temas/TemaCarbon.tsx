@@ -47,7 +47,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           background: linear-gradient(180deg, #2b231a 0%, #1d1812 100%);
           color: #f5efe3;
           font-family: 'Cormorant Garamond', serif;
-          padding: 18mm 20mm;
+          padding: 24mm 20mm 18mm;
           box-sizing: border-box;
           position: relative;
           print-color-adjust: exact;
