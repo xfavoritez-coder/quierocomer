@@ -110,7 +110,7 @@ function formatDuration(ms: number) {
   return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
 }
 
-type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones" | "sugeridos";
+type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones";
 
 /* ═══ TAB: Resumen ═══ */
 function HeroKpi({ icon, value, label, sub, color, gradient, lucideIcon }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string; lucideIcon?: React.ReactNode }) {
@@ -1759,7 +1759,6 @@ const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
   { key: "clientes", label: "Clientes", icon: "👥" },
   { key: "busquedas", label: "Búsquedas", icon: "🔍" },
   { key: "garzon", label: "Garzón", icon: "🔔" },
-  { key: "sugeridos", label: "Sugeridos", icon: "💡" },
 ];
 
 type DatePreset = "hoy" | "ayer" | "semana" | "mes" | "custom";
@@ -1905,8 +1904,6 @@ export default function AnalyticsDashboard() {
       {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
       {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
-      {tab === "sugeridos" && <TabSugeridos rid={effectiveRid} from={dateFrom} to={dateTo} isDemo={isDemo} />}
-
       {/* Upgrade teaser for Gold users */}
       {!hasAdvanced && (
         <div style={{ marginTop: 32, background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.04))", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 16, padding: "24px 28px", textAlign: "center" }}>
