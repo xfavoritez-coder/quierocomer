@@ -607,13 +607,7 @@ function DishSlide({
           if (restaurantPlan && restaurantPlan !== "PREMIUM") return null;
           const { title, items: suggestions } = crossSell;
           if (suggestions.length === 0) return null;
-          // Track that suggestions were shown for this dish
-          if (typeof window !== "undefined" && !(window as any).__suggShown?.[dish.id]) {
-            ((window as any).__suggShown = (window as any).__suggShown || {})[dish.id] = true;
-            suggestions.forEach(s => {
-              track(restaurantId, "SUGGESTION_SHOWN", { dishId: s.dish.id, metadata: { fromDishId: dish.id } });
-            });
-          }
+          // SUGGESTION_SHOWN tracking removed — 825K+ rows sin valor accionable
           return (
             <div style={{ marginTop: 32 }}>
               <p style={{ fontSize: "0.82rem", color: "var(--carta-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
