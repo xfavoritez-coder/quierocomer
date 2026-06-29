@@ -198,8 +198,8 @@ export default function PanelDashboard() {
       <style>{`@media (min-width: 768px) { .panel-greeting { display: block !important; } }`}</style>
 
 
-      {/* ═══ Setup checklist ═══ */}
-      {!isDemo && restSettings && (() => {
+      {/* ═══ Setup checklist — desactivado ═══ */}
+      {false && !isDemo && restSettings && (() => {
         const checks = [
           { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
           // { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
