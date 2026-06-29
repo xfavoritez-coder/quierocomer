@@ -349,12 +349,28 @@ model Restaurant {
   waiterCalls                WaiterCall[]
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
+  invoices                   Invoice[]
 
   commune      String?
   communeSlug  String?
 
   @@index([ownerId])
   @@index([communeSlug])
+}
+
+model Invoice {
+  id           String     @id @default(cuid())
+  restaurantId String
+  folio        Int
+  tipoDTE      Int
+  total        Int
+  periodo      String?
+  status       String     @default("EMITIDA")
+  emittedAt    DateTime   @default(now())
+  metadata     Json?
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
 }
 
 model MenuGroup {

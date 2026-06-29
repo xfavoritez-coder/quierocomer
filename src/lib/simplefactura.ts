@@ -9,11 +9,11 @@ const SUCURSAL = "Casa_Matriz";
 // Emisor (QuieroComer / Evolución Gastronómica SpA)
 const EMISOR = {
   RUTEmisor: "78123543-1",
-  RznSoc: "EVOLUCIÓN GASTRONÓMICA SPA",
+  RznSoc: "EVOLUCION GASTRONOMICA SPA",
   GiroEmis: "ACTIVIDADES DE PROGRAMACION INFORMATICA",
   Acteco: [620100],
   DirOrigen: "EMILIO VAISSE 760 DP 2703 TORRE A",
-  CmnaOrigen: "Ñuñoa",
+  CmnaOrigen: "Nunoa",
   CiudadOrigen: "Santiago",
   Telefono: [],
   CorreoEmisor: "favoritez@gmail.com",
