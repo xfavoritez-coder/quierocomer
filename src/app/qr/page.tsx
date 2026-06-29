@@ -31,11 +31,11 @@ export const metadata = {
 // A/B winners hardcoded — experiment concluded
 const AB_WINNERS = {
   titleId: null,
-  titleText: "Tu carta puede vender más",
+  titleText: "Tu local puede {vender más}",
   subtitleId: null,
   subtitleText: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
-  ctaText: "Sube tu carta · 60 segundos →",
+  ctaText: "Transformar gratis →",
 };
 
 export default async function QRLandingPage() {

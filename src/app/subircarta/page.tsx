@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 // A/B winners hardcoded — experiment concluded
 const AB_WINNERS = {
   titleId: null,
-  titleText: "Sube tu carta y mira cómo queda",
+  titleText: "Tu carta, pero {inteligente}",
   ctaId: null,
-  ctaText: "Comenzar →",
+  ctaText: "Subir mi carta →",
 };
 
 export default async function SubirCartaPage() {
