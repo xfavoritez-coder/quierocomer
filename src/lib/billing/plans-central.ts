@@ -62,7 +62,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     features: new Set(["genio", "modifiers", "view_gallery"]),
     featureDisplay: [
       { text: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante." },
-      { text: "1 vista de carta", tip: "Vista lista para mostrar tu carta." },
+      { text: "1 diseño de carta", tip: "Vista lista para mostrar tu carta." },
       { text: "Panel autoadministrable", tip: "Edita platos, precios y fotos desde tu celular." },
     ],
     inheritsFrom: null,
@@ -84,10 +84,10 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "highlight_dishes", "promotions",
     ]),
     featureDisplay: [
-      { text: "3 vistas de carta", tip: "Galería, Lista e Impact. Lista como vista por defecto." },
+      { text: "3 diseños de carta", tip: "Galería, Lista e Impact. Lista como vista por defecto." },
       { text: "Dark / Light mode", tip: "Elige el tema claro u oscuro que mejor represente tu local." },
       { text: "Diseño personalizado", tip: "Cambia el color de tu carta: precios, botones y detalles." },
-      { text: "Destacar platos estrella", tip: "Resalta visualmente los platos que más te conviene vender." },
+      { text: "Destacar platos estrella", tip: "Resalta visualmente hasta 3 platos que más te conviene vender." },
       { text: "Ofertas y promociones", tip: "Crea ofertas temporales visibles en la carta." },
     ],
     inheritsFrom: "Todo lo del plan Gratis",
@@ -110,9 +110,9 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "stats_basic",
     ]),
     featureDisplay: [
-      { text: "3 vistas de carta", tip: "Galería, Lista e Impact. Elige la que mejor represente tu local." },
+      { text: "3 diseños de carta", tip: "Galería, Lista e Impact. Elige la que mejor represente tu local." },
       { text: "Dark / Light mode", tip: "Elige el tema claro u oscuro que mejor represente tu local." },
-      { text: "Destacar platos estrella", tip: "Resalta visualmente los platos que más te conviene vender." },
+      { text: "Destacar platos estrella", tip: "Resalta visualmente hasta 3 platos que más te conviene vender." },
       { text: "Ofertas y promociones", tip: "Crea ofertas temporales visibles en la carta." },
       { text: "Estadísticas básicas", tip: "Visitas, platos más vistos y duración promedio." },
       { text: "Anuncios en carta", tip: "Banner de novedades visible al abrir la carta." },
@@ -129,7 +129,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     tagline: "",
     priceMonthly: 44900,
     priceAnnualMonthly: 35900,
-    trialDays: 14,
+    trialDays: 7,
     features: new Set([
       "genio", "modifiers",
       "view_gallery", "view_feed", "view_space", "view_selector",
@@ -140,6 +140,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "toteat_integration", "live_dashboard", "multi_menu", "print_menu",
     ]),
     featureDisplay: [
+      { text: "Destacar platos estrella", tip: "Destaca ilimitados platos estrella sin ningún límite." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente a inglés y portugués." },
       { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
@@ -150,7 +151,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     ],
     inheritsFrom: "Todo lo del plan Gold",
     isFeatured: false,
-    ctaText: "Comenzar 14 días gratis",
+    ctaText: "Comenzar 7 días gratis",
     flowPlanId: "qc_premium_monthly",
   },
 };
@@ -164,7 +165,7 @@ export const PAID_PLANS: PlanKey[] = ["GOLD", "PREMIUM"];
 export const ALL_PLAN_ORDER: PlanKey[] = ["FREE", "SILVER", "GOLD", "PREMIUM"];
 
 export const IVA_RATE = 0.19;
-export const TRIAL_DAYS = 14;
+export const TRIAL_DAYS = 7;
 export const GRACE_DAYS = 7;
 
 export function ivaOf(amount: number): number { return Math.round(amount * IVA_RATE); }

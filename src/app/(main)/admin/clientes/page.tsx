@@ -430,7 +430,7 @@ function TimelineTab({ c }: { c: Cliente }) {
   // Registration + plan info
   const planLabel = c.plan === "FREE" ? "Free" : c.plan === "GOLD" ? "Gold" : c.plan === "PREMIUM" ? "Premium" : c.plan;
   const origenLabel = c.origen === "SUBIR_CARTA" ? "Subir Carta" : c.origen === "PLANES" ? "Planes" : "Handoff";
-  const trialInfo = c.trialDaysLeft ? ` · regalo 14 dias Premium` : "";
+  const trialInfo = c.trialDaysLeft ? ` · regalo 7 dias Premium` : "";
   items.push({ time: c.createdAt, text: `Registro desde ${origenLabel} · Plan ${planLabel}${trialInfo}`, dot: "purple" });
 
   // Sort chronologically desc

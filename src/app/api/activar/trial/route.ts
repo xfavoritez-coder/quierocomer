@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   } else {
     // Gold or Premium — activate trial
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
     await prisma.restaurant.update({
       where: { id: restaurantId },
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
-  const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (14 dias de Premium gratis)`;
+  const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (7 dias de Premium gratis)`;
 
   // Send welcome email to owner with credentials
   if (ownerEmail) {
@@ -138,6 +138,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     plan: selectedPlan,
-    ...(selectedPlan !== "FREE" && { trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString() }),
+    ...(selectedPlan !== "FREE" && { trialEndsAt: new Date(Date.now() + 7 * 86400000).toISOString() }),
   });
 }

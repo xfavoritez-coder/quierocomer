@@ -96,7 +96,7 @@ export default function PlanesModal({ onClose }: { onClose: () => void }) {
               <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(26px,4vw,44px)", color: "#E8DDC8", fontWeight: 400 }}>
                 Empieza gratis. <span style={{ color: "#E8A33D", fontStyle: "italic" }}>Crece cuando quieras.</span>
               </h2>
-              <p style={{ color: "#C9BBA0", fontSize: 14, marginTop: 8 }}>14 dias de prueba en planes pagados · Cancela cuando quieras</p>
+              <p style={{ color: "#C9BBA0", fontSize: 14, marginTop: 8 }}>7 dias de prueba en planes pagados · Cancela cuando quieras</p>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginTop: 20, fontSize: 14, color: "#C9BBA0" }}>
                 <span style={{ color: anual ? "#C9BBA0" : "#E8A33D", fontWeight: anual ? 300 : 600 }}>Mensual</span>
                 <label className="pm-toggle-label">

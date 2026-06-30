@@ -81,7 +81,7 @@ export function cartaReadyEmailHtml({
   <p style="color:#92400e;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 10px">Lo que incluye tu carta</p>
   <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr><td style="padding:5px 0;color:#8a7550;font-size:14px;line-height:1.5"><span style="color:#e8930a;margin-right:6px">✓</span> ${dishCount} platos con fotos por categoría</td></tr>
-    <tr><td style="padding:5px 0;color:#8a7550;font-size:14px;line-height:1.5"><span style="color:#e8930a;margin-right:6px">✓</span> 3 vistas distintas para tus clientes</td></tr>
+    <tr><td style="padding:5px 0;color:#8a7550;font-size:14px;line-height:1.5"><span style="color:#e8930a;margin-right:6px">✓</span> 3 diseños distintos para tus clientes</td></tr>
     <tr><td style="padding:5px 0;color:#8a7550;font-size:14px;line-height:1.5"><span style="color:#e8930a;margin-right:6px">✓</span> Primeros platos traducidos al inglés</td></tr>
     <tr><td style="padding:5px 0;color:#8a7550;font-size:14px;line-height:1.5"><span style="color:#e8930a;margin-right:6px">✓</span> Lista para compartir por QR o link</td></tr>
     <tr><td style="padding:5px 0;color:#8a7550;font-size:14px;line-height:1.5"><span style="color:#e8930a;margin-right:6px">✓</span> Todas las funcionalidades Premium</td></tr>

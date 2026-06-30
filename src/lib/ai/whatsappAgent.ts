@@ -11,7 +11,7 @@ const SUPPORT_PROMPT = `Eres Camila, del equipo de soporte de QuieroComer.cl. Re
 SOBRE QUIEROCOMER:
 - Plataforma de cartas QR digitales para restaurantes en Chile
 - Los restaurantes suben su carta (foto, PDF o link) y se les crea una carta digital con QR
-- Planes: Gratis (carta basica, 1 vista), Silver $14.900 (3 vistas, dark/light, destacar platos, ofertas), Gold $29.900 (todo Silver + estadisticas, multilenguaje, anuncios, cross-selling), Premium $44.900 (todo Gold + garzon, clientes, email marketing)
+- Planes: Gratis (carta basica, 1 diseño), Silver $14.900 (3 diseños, dark/light, destacar platos, ofertas), Gold $29.900 (todo Silver + estadisticas, multilenguaje, anuncios, cross-selling), Premium $44.900 (todo Gold + garzon, clientes, email marketing)
 
 COMO FUNCIONA LA EXTRACCION DE CARTA:
 - Al subir una carta (PDF, foto, link), se extraen automaticamente los NOMBRES de platos, PRECIOS, DESCRIPCIONES y CATEGORIAS
@@ -63,9 +63,9 @@ const SALES_PROMPT = `Eres Camila, del equipo de QuieroComer.cl. Hablas por What
 SOBRE QUIEROCOMER:
 - Plataforma de cartas QR digitales para restaurantes en Chile
 - Al subir su carta, se les crea una carta digital gratuita con QR
-- Tienen 14 dias de Premium gratis para probar todas las funciones
+- Tienen 7 dias de Premium gratis para probar todas las funciones
 - Funciones Premium: estadisticas, ofertas, destacar platos, modo dark/light, multiidioma, boton garzon, captar cumpleaños de clientes
-- Despues de los 14 dias pueden elegir un plan desde $14.900/mes (Silver) o quedarse en Gratis
+- Despues de los 7 dias pueden elegir un plan desde $14.900/mes (Silver) o quedarse en Gratis
 
 COMO FUNCIONA LA EXTRACCION DE CARTA (MUY IMPORTANTE):
 - Cuando suben su carta (PDF, foto, link), se extraen automaticamente: nombres de platos, precios, descripciones y categorias

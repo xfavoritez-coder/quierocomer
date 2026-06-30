@@ -103,7 +103,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
     setError("");
     try {
       if (plan === "FREE" || plan === "PREMIUM") {
-        // Free y Premium (trial 14 días) → sin pago
+        // Free y Premium (trial 7 días) → sin pago
         const endpoint = plan === "FREE" ? "/api/activar/free" : "/api/activar/trial";
         const res = await fetch(endpoint, {
           method: "POST",
@@ -247,7 +247,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
             {!done ? (
               <button className="rg-cta" disabled={loading} onClick={handleActivar}>
-                {loading ? "Procesando..." : plan === "FREE" ? "Activar gratis" : plan === "PREMIUM" ? "Probar gratis 14 días" : "Activar mi carta"}
+                {loading ? "Procesando..." : plan === "FREE" ? "Activar gratis" : plan === "PREMIUM" ? "Probar gratis 7 días" : "Activar mi carta"}
               </button>
             ) : (
               <div className="rg-done">Activado. Redirigiendo...</div>

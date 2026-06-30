@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { TRIAL_DAYS } from "@/lib/billing/plans-central";
 
 /**
- * Activates a 14-day Premium trial directly — no MercadoPago, no card.
+ * Activates a 7-day Premium trial directly — no MercadoPago, no card.
  * Only for restaurants that haven't had a trial before.
  */
 export async function POST(req: NextRequest) {

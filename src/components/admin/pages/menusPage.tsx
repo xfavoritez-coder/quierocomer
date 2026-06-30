@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
@@ -1819,7 +1820,11 @@ export default function AdminMenus() {
                     const wasRec = d.tags?.includes("RECOMMENDED");
                     if (!wasRec) {
                       const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
-                      if (currentRecCount >= 5) { alert("Máximo 5 platos destacados"); return; }
+                      if (activePlan !== "PREMIUM" && currentRecCount >= 3) {
+                        toast.error("El plan Gold permite hasta 3 platos destacados. Con Premium puedes destacar ilimitados.");
+                        return;
+                      }
+                      if (currentRecCount >= 5) { toast.error("Máximo 5 platos destacados"); return; }
                     }
                     const newTags = wasRec ? (d.tags || []).filter(t => t !== "RECOMMENDED") : [...(d.tags || []), "RECOMMENDED"];
                     await fetch(`/api/admin/dishes/${d.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags }) });
@@ -1953,6 +1958,13 @@ export default function AdminMenus() {
           const dish = dishes.find(d => d.id === dishId);
           if (!dish) return;
           const hasTags = dish.tags?.includes("RECOMMENDED");
+          if (!hasTags) {
+            const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.id !== dishId).length;
+            if (activePlan !== "PREMIUM" && currentRecCount >= 3) {
+              toast.error("El plan Gold permite hasta 3 platos destacados. Con Premium puedes destacar ilimitados.");
+              return;
+            }
+          }
           const newTags = hasTags ? dish.tags.filter((t: string) => t !== "RECOMMENDED") : [...(dish.tags || []), "RECOMMENDED"];
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, tags: newTags, isHero: newTags.includes("RECOMMENDED") } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });

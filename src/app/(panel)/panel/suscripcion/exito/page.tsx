@@ -12,7 +12,7 @@ const PLAN_LABELS: Record<string, string> = {
 
 const PLAN_FEATURES: Record<string, string[]> = {
   SILVER: [
-    "3 vistas de carta disponibles",
+    "3 diseños de carta disponibles",
     "Modo oscuro y claro",
     "Destacar platos estrella",
     "Ofertas y promociones",

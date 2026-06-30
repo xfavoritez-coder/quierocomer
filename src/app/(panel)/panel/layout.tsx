@@ -299,7 +299,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
           setSubmitting(false);
           return;
         }
-        toast.success("¡Premium activado! 14 días gratis.");
+        toast.success("¡Premium activado! 7 días gratis.");
         setTimeout(() => window.location.reload(), 1200);
         return;
       }
@@ -423,7 +423,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   {net > 0 && <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>}
                   {tab === "PREMIUM" && !inTrial && !trialUsed && plan !== "PREMIUM" && (
                     <div style={{ marginTop: 10, padding: "8px 14px", background: "#dc2626", borderRadius: 8 }}>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>14 días gratis para probar</span>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>7 días gratis para probar</span>
                     </div>
                   )}
                 </>
@@ -472,7 +472,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 14 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
@@ -518,7 +518,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                 {isPremiumTrial ? (
                   <>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 16, color: "#7c3aed", fontWeight: 800 }}>
-                      <span>14 días gratis</span>
+                      <span>7 días gratis</span>
                       <span>$0</span>
                     </div>
                   </>
@@ -542,7 +542,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
 
               <div style={{ fontSize: 13, color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
                 {isPremiumTrial
-                  ? "No se te cobra nada. Tu periodo de prueba de 14 días se activa de inmediato."
+                  ? "No se te cobra nada. Tu periodo de prueba de 7 días se activa de inmediato."
                   : "Serás redirigido a Webpay para completar tu pago con tarjeta de débito o crédito."
                 }
               </div>
@@ -557,7 +557,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
                   cursor: submitting ? "wait" : "pointer",
                 }}
               >
-                {submitting ? (isPremiumTrial ? "Activando..." : "Redirigiendo...") : isPremiumTrial ? "Activar 14 días gratis" : `Pagar ${fmt(gross)}`}
+                {submitting ? (isPremiumTrial ? "Activando..." : "Redirigiendo...") : isPremiumTrial ? "Activar 7 días gratis" : `Pagar ${fmt(gross)}`}
               </button>
 
               {!isPremiumTrial && (

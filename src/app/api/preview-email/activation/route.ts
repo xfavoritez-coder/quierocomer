@@ -11,7 +11,7 @@ export async function GET() {
     panelLink: "https://quierocomer.cl/api/panel/demo-auth?slug=sushi-master",
     qrLink: "https://quierocomer.cl/qr/sushi-master",
     credentials: { email: "dc_daniel_carrizo@hotmail.com", password: "sushi-master2026" },
-    planLabel: "Premium (14 dias gratis)",
+    planLabel: "Premium (7 dias gratis)",
   });
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });

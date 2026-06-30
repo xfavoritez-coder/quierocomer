@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No encontrado o ya activado" }, { status: 404 });
   }
 
-  // All plans from /planes get 14 days of premium trial
+  // All plans from /planes get 7 days of premium trial
   const trialEndsAt = new Date();
-  trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+  trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
   await prisma.$transaction([
     prisma.restaurant.update({
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         panelLink,
         qrLink,
         credentials: { email: ownerEmail, password },
-        planLabel: "Premium (14 dias gratis)",
+        planLabel: "Premium (7 dias gratis)",
       }),
       purpose: "activation_welcome",
     }).catch((err) => console.error("[activar/free] Email owner falló:", err));
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
 
   sendAdminEmail({
     to: "favoritez@gmail.com",
-    subject: `Nuevo cliente: ${restaurant.name} activó Gratis (14 dias premium)`,
-    html: adminNewActivationEmailHtml(restaurant.name, "Gratis + 14 dias Premium", "$0 (trial)", ownerEmail || "sin email", restaurant.slug || ""),
+    subject: `Nuevo cliente: ${restaurant.name} activó Gratis (7 dias premium)`,
+    html: adminNewActivationEmailHtml(restaurant.name, "Gratis + 7 dias Premium", "$0 (trial)", ownerEmail || "sin email", restaurant.slug || ""),
     purpose: "admin_new_activation",
   }).catch((err) => console.error("[activar/free] Email admin falló:", err));
 

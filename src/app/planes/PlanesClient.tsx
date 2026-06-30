@@ -123,7 +123,7 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$0</div>
             <div className="qc-checks">
               <div>✓ Carta digital con QR <span className="qc-tip">i<span className="qc-tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
-              <div>✓ 1 vista de carta <span className="qc-tip">i<span className="qc-tip-text">Vista lista para mostrar tu carta</span></span></div>
+              <div>✓ 1 diseño de carta <span className="qc-tip">i<span className="qc-tip-text">Vista lista para mostrar tu carta</span></span></div>
               <div>✓ Panel autoadministrable <span className="qc-tip">i<span className="qc-tip-text">Edita platos, precios y fotos desde tu celular</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("FREE")}>Comenzar gratis</button>
@@ -134,22 +134,21 @@ export default function PlanesClient() {
             <div className="qc-plan-price">$29.900<small>/mes + IVA</small></div>
             <div className="qc-checks">
               <div>✓ Todo lo del plan Gratis</div>
-              <div>✓ 3 vistas de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
+              <div>✓ 3 diseños de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
               <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema claro u oscuro que mejor represente tu local</span></span></div>
               <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que más te conviene vender</span></span></div>
               <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
               <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
-              <div>✓ Multilenguaje (ES / EN / PT) <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente al idioma del cliente</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("GOLD")}>Elegir Gold</button>
           </article>
 
           <article className="qc-plan qc-premium">
-            <div className="qc-badge" style={{ background: "#dc2626", color: "#fff" }}>14 días gratis</div>
+            <div className="qc-badge" style={{ background: "#dc2626", color: "#fff" }}>7 días gratis</div>
             <h3>Premium</h3>
             <div className="qc-plan-price">$44.900<small>/mes + IVA</small></div>
-            <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 14 días sin costo</div>
+            <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 7 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
               <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
@@ -159,7 +158,7 @@ export default function PlanesClient() {
               <div>✓ Multi-carta <span className="qc-tip">i<span className="qc-tip-text">Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico</span></span></div>
               <div>✓ Exportar carta imprimible <span className="qc-tip">i<span className="qc-tip-text">Genera un PDF profesional de tu carta para imprimir con 3 diseños a elegir</span></span></div>
             </div>
-            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 dias</button>
+            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 7 dias</button>
           </article>
         </div>
 

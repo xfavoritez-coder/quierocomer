@@ -360,7 +360,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           <div style={{ textAlign: "center", marginBottom: 44 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Planes</p>
             <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 8 }}>Empieza gratis. Crece cuando quieras</h2>
-            <p style={{ fontSize: 15, color: "#666" }}>Implementación gratis. 14 días de prueba en planes pagos. Cancela cuando quieras</p>
+            <p style={{ fontSize: 15, color: "#666" }}>Implementación gratis. 7 días de prueba en planes pagos. Cancela cuando quieras</p>
             {/* Toggle Mensual / Anual */}
             <div style={{ display: "inline-flex", background: "#fff", border: "1px solid #eeeae0", borderRadius: 999, padding: 3, marginTop: 20 }}>
               {(["mensual", "anual"] as const).map(mode => (
@@ -441,7 +441,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </>
               )}
               {billingMode === "mensual" ? (
-                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 14 dias gratis</a>
+                <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Empezar 7 dias gratis</a>
               ) : (
                 <a href={annualWhatsappUrl("Premium")} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "10px 12px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 13, textDecoration: "none", marginBottom: 18, marginTop: 10 }}>Contactar para plan anual</a>
               )}

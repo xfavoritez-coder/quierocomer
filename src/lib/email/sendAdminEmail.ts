@@ -347,7 +347,7 @@ export function trialEndingSoonEmailHtml(
   </td></tr>
 
   <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    Los 14 días de Premium en <strong style="color:${GOLD};">${restaurantName}</strong> están por terminar. Tu carta <strong>seguirá activa</strong> en el plan Gratis, pero estas funciones dejarán de estar disponibles:
+    Los 7 días de Premium en <strong style="color:${GOLD};">${restaurantName}</strong> están por terminar. Tu carta <strong>seguirá activa</strong> en el plan Gratis, pero estas funciones dejarán de estar disponibles:
   </td></tr>
 
   <tr><td style="padding-bottom:20px;">
@@ -434,7 +434,7 @@ export function trialExpiredEmailHtml(
   </td></tr>
 
   <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    Los 14 días de Premium en <strong style="color:${GOLD};">${restaurantName}</strong> terminaron. Tu carta <strong>sigue activa</strong> en el plan Gratis, pero estas funciones ya no están disponibles:
+    Los 7 días de Premium en <strong style="color:${GOLD};">${restaurantName}</strong> terminaron. Tu carta <strong>sigue activa</strong> en el plan Gratis, pero estas funciones ya no están disponibles:
   </td></tr>
 
   <tr><td style="padding-bottom:20px;">
