@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true, generatedSlug: true, ownerName: true, localName: true,
         whatsapp: true, cartaStatus: true, activated: true,
-        emailClickedAt: true, whatsappClickedAt: true,
+        emailClickedAt: true, whatsappClickedAt: true, events: true,
       },
     }),
     prisma.panelActivity.findMany({
@@ -154,12 +154,19 @@ export async function GET(req: NextRequest) {
     const nurturing = NURTURING_MAP[stage];
     if (!nurturing) continue;
 
-    // Skip if already sent ANY nurturing to this restaurant
+    // Skip if already sent ANY nurturing to this restaurant (via PanelActivity OR Lead.events)
     const already = await prisma.panelActivity.findFirst({
       where: { restaurantId: r.id, action: { startsWith: "nurturing_" } },
       select: { id: true },
     });
     if (already) { skipped++; continue; }
+
+    // Also check Lead.events (written by the one-time-nurturing endpoint)
+    if (lead) {
+      const events = Array.isArray(lead.events) ? (lead.events as any[]) : [];
+      const alreadyInEvents = events.some((e: any) => typeof e.action === "string" && e.action.startsWith("nurturing_"));
+      if (alreadyInEvents) { skipped++; continue; }
+    }
 
     // Only send to restaurants created more than 24h ago (give them time)
     const ageMs = now.getTime() - r.createdAt.getTime();
