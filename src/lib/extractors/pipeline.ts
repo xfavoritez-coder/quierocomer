@@ -162,6 +162,42 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
   }
 }
 
+function buildImagePrompt(imageCount: number): string {
+  return `Analiza ${imageCount > 1 ? "estas fotos" : "esta foto"} de carta/menú de restaurante.
+Extrae TODOS los platos que puedas ver y organízalos por categoría.
+IMPORTANTE: Solo extrae platos que puedas leer claramente. NO inventes ni agregues platos que no estén visibles.
+Responde SOLO con JSON:
+{"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
+Reglas:
+- Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
+- No inventes platos, solo extrae lo que ves.
+- diet: por defecto usa OMNIVORE si no sabes con certeza. Nunca adivines VEGAN o VEGETARIAN.
+- diet=OMNIVORE: cualquier plato con carne, pollo, pescado o mariscos. Hamburguesas, hot dogs, asados, pollo frito, parrilla, shawarma, sushi, ceviche, etc. → OMNIVORE aunque tengan queso o vegetales.
+- diet=VEGETARIAN: SOLO si el plato claramente NO tiene carne/ave/pescado/mariscos, pero sí puede tener lácteos o huevo.
+- diet=VEGAN: SOLO si el plato NO tiene NINGÚN ingrediente animal. Si tienes duda → OMNIVORE.
+- SOLO JSON.`;
+}
+
+function buildImageResult(parsed: any): ExtractionResult {
+  const dishes: ExtractedDish[] = [];
+  for (const cat of (parsed.categories || [])) {
+    for (const dish of (cat.dishes || [])) {
+      if (!dish.name) continue;
+      dishes.push({
+        name: dish.name.trim(),
+        description: dish.description || "",
+        price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
+        imageUrl: null,
+        photoCredit: null,
+        category: cat.name || "General",
+        diet: dish.diet || "OMNIVORE",
+        isSpicy: dish.isSpicy || false,
+      });
+    }
+  }
+  return { restaurantName: parsed.restaurantName || "Restaurante", dishes, logoUrl: null, bannerUrl: null };
+}
+
 /** Extract menu data from an uploaded image via Claude Vision */
 async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -178,16 +214,19 @@ async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
       const buffer = Buffer.from(await imgRes.arrayBuffer());
       let base64: string;
       let mediaType = "image/jpeg";
+      // Use lower quality when many images to stay under Anthropic payload limit (~20MB)
+      const quality = urls.length > 4 ? 70 : 85;
+      const maxDim = urls.length > 4 ? 1200 : 1600;
       try {
         const jpegBuffer = await sharp(buffer)
-          .jpeg({ quality: 85 })
-          .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality })
+          .resize({ width: maxDim, height: maxDim, fit: "inside", withoutEnlargement: true })
           .toBuffer();
         base64 = jpegBuffer.toString("base64");
       } catch (sharpErr) {
         // Sharp failed — try without resize (some formats need simpler pipeline)
         try {
-          const fallbackBuffer = await sharp(buffer).jpeg({ quality: 80 }).toBuffer();
+          const fallbackBuffer = await sharp(buffer).jpeg({ quality: 70 }).toBuffer();
           base64 = fallbackBuffer.toString("base64");
           console.log(`[Image] Sharp resize failed, converted without resize: ${url.slice(-30)}`);
         } catch {
@@ -212,19 +251,60 @@ async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
   }
   if (images.length === 0) throw new Error("No images could be downloaded");
 
-  const prompt = `Analiza ${images.length > 1 ? "estas fotos" : "esta foto"} de carta/menú de restaurante.
-Extrae TODOS los platos que puedas ver y organízalos por categoría.
-IMPORTANTE: Solo extrae platos que puedas leer claramente. NO inventes ni agregues platos que no estén visibles.
-Responde SOLO con JSON:
-{"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
-Reglas:
-- Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
-- No inventes platos, solo extrae lo que ves.
-- diet: por defecto usa OMNIVORE si no sabes con certeza. Nunca adivines VEGAN o VEGETARIAN.
-- diet=OMNIVORE: cualquier plato con carne, pollo, pescado o mariscos. Hamburguesas, hot dogs, asados, pollo frito, parrilla, shawarma, sushi, ceviche, etc. → OMNIVORE aunque tengan queso o vegetales.
-- diet=VEGETARIAN: SOLO si el plato claramente NO tiene carne/ave/pescado/mariscos, pero sí puede tener lácteos o huevo (pizza vegetariana, pastas sin carne, ensaladas, etc.).
-- diet=VEGAN: SOLO si el plato NO tiene NINGÚN ingrediente animal (ni carne ni lácteos ni huevo ni miel). Si tienes duda → OMNIVORE.
-- SOLO JSON.`;
+  // If too many images, process in batches of 4 and merge results
+  const BATCH_SIZE = 4;
+  if (images.length > BATCH_SIZE) {
+    console.log(`[Image] ${images.length} images — processing in batches of ${BATCH_SIZE}`);
+    const allCategories: any[] = [];
+    let restaurantName = "Restaurante";
+    for (let i = 0; i < images.length; i += BATCH_SIZE) {
+      const batch = images.slice(i, i + BATCH_SIZE);
+      const batchPrompt = i === 0
+        ? buildImagePrompt(batch.length)
+        : `Analiza estas ${batch.length} foto(s) adicionales de carta/menú. SOLO JSON:\n{"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}\nPrecios enteros sin puntos. diet=OMNIVORE por defecto. SOLO JSON.`;
+      try {
+        const batchRes = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 16000,
+            messages: [{ role: "user", content: [...batch, { type: "text", text: batchPrompt }] }],
+          }),
+        });
+        if (!batchRes.ok) {
+          const errBody = await batchRes.text().catch(() => "");
+          console.error(`[Image] Batch ${i / BATCH_SIZE + 1} failed: ${batchRes.status} ${errBody.slice(0, 300)}`);
+          continue;
+        }
+        const batchData = await batchRes.json();
+        logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: batchData.usage?.input_tokens || 0, outputTokens: batchData.usage?.output_tokens || 0, action: "extract_image_batch" });
+        const text = batchData.content?.[0]?.text || "";
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) {
+          try {
+            const parsed = JSON.parse(match[0]);
+            if (parsed.restaurantName && parsed.restaurantName !== "Restaurante") restaurantName = parsed.restaurantName;
+            if (parsed.categories) allCategories.push(...parsed.categories);
+          } catch {}
+        }
+      } catch (e) {
+        console.error(`[Image] Batch ${i / BATCH_SIZE + 1} error:`, (e as Error).message);
+      }
+    }
+    if (allCategories.length === 0) throw new Error("No categories extracted from any image batch");
+    // Merge categories with same name
+    const mergedMap = new Map<string, any>();
+    for (const cat of allCategories) {
+      const key = (cat.name || "General").toLowerCase().trim();
+      if (mergedMap.has(key)) mergedMap.get(key).dishes.push(...(cat.dishes || []));
+      else mergedMap.set(key, { ...cat, dishes: [...(cat.dishes || [])] });
+    }
+    const mergedCats = Array.from(mergedMap.values());
+    return buildImageResult({ restaurantName, categories: mergedCats });
+  }
+
+  const prompt = buildImagePrompt(images.length);
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -242,7 +322,10 @@ Reglas:
     }),
   });
 
-  if (!res.ok) throw new Error(`Claude Vision error: ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    throw new Error(`Claude Vision error: ${res.status} ${errBody.slice(0, 300)}`);
+  }
   const data = await res.json();
   const text = data.content?.[0]?.text || "";
   logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "extract_image" });
@@ -260,33 +343,7 @@ Reglas:
     parsed = JSON.parse(jsonStr);
   }
 
-  // Unsplash photo search removed — dishes display with text-only fallback
-  const photoMap = new Map<string, string>();
-  const creditMap = new Map<string, { photographer: string; profileUrl: string; unsplashId: string }>();
-
-  const dishes: ExtractedDish[] = [];
-  for (const cat of (parsed.categories || [])) {
-    for (const dish of (cat.dishes || [])) {
-      if (!dish.name) continue;
-      dishes.push({
-        name: dish.name.trim(),
-        description: dish.description || "",
-        price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
-        imageUrl: photoMap.get(dish.name) || null,
-        photoCredit: creditMap.get(dish.name) || null,
-        category: cat.name || "General",
-        diet: dish.diet || "OMNIVORE",
-        isSpicy: dish.isSpicy || false,
-      });
-    }
-  }
-
-  return {
-    restaurantName: parsed.restaurantName || "Restaurante",
-    dishes,
-    logoUrl: null,
-    bannerUrl: null,
-  };
+  return buildImageResult(parsed);
 }
 
 /** Clean tracking params from URL */
