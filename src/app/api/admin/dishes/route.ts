@@ -99,8 +99,8 @@ export async function POST(req: NextRequest) {
     if (description) translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
 
     return NextResponse.json(dish);
-  } catch (e) {
+  } catch (e: any) {
     console.error("[Admin dishes POST]", e);
-    return NextResponse.json({ error: "Error al crear plato" }, { status: 500 });
+    return NextResponse.json({ error: "Error al crear plato", detail: e?.message || String(e) }, { status: 500 });
   }
 }

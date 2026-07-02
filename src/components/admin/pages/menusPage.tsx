@@ -644,7 +644,7 @@ export default function AdminMenus() {
         setDishCreatedMsg("Producto creado");
         setTimeout(() => setDishCreatedMsg(""), 8000);
       } else {
-        setDishCreatedMsg(`Error: ${data?.error || "No se pudo crear el plato"}`);
+        setDishCreatedMsg(`Error: ${data?.detail || data?.error || "No se pudo crear el plato"}`);
         setTimeout(() => setDishCreatedMsg(""), 6000);
       }
     } catch {
