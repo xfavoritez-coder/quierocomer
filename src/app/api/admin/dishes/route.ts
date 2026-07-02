@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
-import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 import { translateDish } from "@/lib/ai/translateContent";
 import { logActivity } from "@/lib/admin/logActivity";
 import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
@@ -97,36 +96,9 @@ export async function POST(req: NextRequest) {
     logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
     revalidateQrCache();
     syncDishToMeilisearch(dish.id).catch(() => {});
+    if (description) translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
 
-    // Run AI extraction + allergen detection + translation in background (non-blocking)
-    Promise.resolve().then(async () => {
-      try {
-        const aiResult = await extractIngredientsForDish(dish.id, name, description || null, null);
-        console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
-        const dishIngs = await prisma.dishIngredient.findMany({
-          where: { dishId: dish.id },
-          include: { ingredient: { include: { allergens: { select: { name: true } } } } },
-        });
-        if (dishIngs.length > 0) {
-          const allergenNames = dishIngs.flatMap(di => di.ingredient.allergens.map(a => a.name.toLowerCase()));
-          const NUT_REGEX = /man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i;
-          const ingredientNames = dishIngs.map(di => di.ingredient.name.toLowerCase());
-          const hasNuts = allergenNames.some(a => NUT_REGEX.test(a)) || ingredientNames.some(n => NUT_REGEX.test(n));
-          await prisma.dish.update({
-            where: { id: dish.id },
-            data: {
-              isGlutenFree: !allergenNames.includes("gluten"),
-              isLactoseFree: !allergenNames.includes("lactosa"),
-              isSoyFree: !allergenNames.includes("soja") && !allergenNames.includes("soya"),
-              containsNuts: hasNuts,
-            },
-          });
-        }
-      } catch (e) { console.error("[AI extract/allergens]", e); }
-      if (description) translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
-    });
-
-    return NextResponse.json({ ...dish, aiIngredients: null });
+    return NextResponse.json(dish);
   } catch (e) {
     console.error("[Admin dishes POST]", e);
     return NextResponse.json({ error: "Error al crear plato" }, { status: 500 });
