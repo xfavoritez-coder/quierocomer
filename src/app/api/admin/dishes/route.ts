@@ -94,53 +94,39 @@ export async function POST(req: NextRequest) {
       include: { category: { select: { id: true, name: true } } },
     });
 
-    // Extract ingredients (blocking, text-only for speed)
-    let aiResult = null;
-    try {
-      aiResult = await extractIngredientsForDish(dish.id, name, description || null, null);
-      console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
-    } catch (e) {
-      console.error("[AI extract]", e);
-    }
-
-    // Auto-detect allergen-free flags from extracted ingredients
-    try {
-      const dishIngs = await prisma.dishIngredient.findMany({
-        where: { dishId: dish.id },
-        include: { ingredient: { include: { allergens: { select: { name: true } } } } },
-      });
-      if (dishIngs.length > 0) {
-        const allergenNames = dishIngs.flatMap(di => di.ingredient.allergens.map(a => a.name.toLowerCase()));
-        const NUT_REGEX = /man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i;
-        const ingredientNames = dishIngs.map(di => di.ingredient.name.toLowerCase());
-        const hasNuts = allergenNames.some(a => NUT_REGEX.test(a)) || ingredientNames.some(n => NUT_REGEX.test(n));
-        await prisma.dish.update({
-          where: { id: dish.id },
-          data: {
-            isGlutenFree: !allergenNames.includes("gluten"),
-            isLactoseFree: !allergenNames.includes("lactosa"),
-            isSoyFree: !allergenNames.includes("soja") && !allergenNames.includes("soya"),
-            containsNuts: hasNuts,
-          },
-        });
-      }
-    } catch (e) { console.error("[auto-detect allergens]", e); }
-
-    // Translate description to en/pt in background
-    if (description) {
-      translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
-    }
-
-    // Re-fetch dish with updated ingredients
-    const updatedDish = await prisma.dish.findUnique({
-      where: { id: dish.id },
-      include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
-    });
-
     logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
     revalidateQrCache();
     syncDishToMeilisearch(dish.id).catch(() => {});
-    return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult });
+
+    // Run AI extraction + allergen detection + translation in background (non-blocking)
+    Promise.resolve().then(async () => {
+      try {
+        const aiResult = await extractIngredientsForDish(dish.id, name, description || null, null);
+        console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
+        const dishIngs = await prisma.dishIngredient.findMany({
+          where: { dishId: dish.id },
+          include: { ingredient: { include: { allergens: { select: { name: true } } } } },
+        });
+        if (dishIngs.length > 0) {
+          const allergenNames = dishIngs.flatMap(di => di.ingredient.allergens.map(a => a.name.toLowerCase()));
+          const NUT_REGEX = /man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i;
+          const ingredientNames = dishIngs.map(di => di.ingredient.name.toLowerCase());
+          const hasNuts = allergenNames.some(a => NUT_REGEX.test(a)) || ingredientNames.some(n => NUT_REGEX.test(n));
+          await prisma.dish.update({
+            where: { id: dish.id },
+            data: {
+              isGlutenFree: !allergenNames.includes("gluten"),
+              isLactoseFree: !allergenNames.includes("lactosa"),
+              isSoyFree: !allergenNames.includes("soja") && !allergenNames.includes("soya"),
+              containsNuts: hasNuts,
+            },
+          });
+        }
+      } catch (e) { console.error("[AI extract/allergens]", e); }
+      if (description) translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
+    });
+
+    return NextResponse.json({ ...dish, aiIngredients: null });
   } catch (e) {
     console.error("[Admin dishes POST]", e);
     return NextResponse.json({ error: "Error al crear plato" }, { status: 500 });

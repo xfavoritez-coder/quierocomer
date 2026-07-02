@@ -641,18 +641,16 @@ export default function AdminMenus() {
         // Badge "Recién creado" — disappears after 5 min
         setRecentlyCreated(prev => new Set(prev).add(dish.id));
         setTimeout(() => setRecentlyCreated(prev => { const n = new Set(prev); n.delete(dish.id); return n; }), 5 * 60 * 1000);
-        // Show AI feedback
-        let msg = "Producto creado";
-        if (aiIngredients?.matched?.length > 0) {
-          msg += ` · ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""} detectados`;
-        }
-        if (suggestedAllergens?.length > 0) {
-          msg += ` · Sugerimos alérgenos: ${suggestedAllergens.join(", ")}`;
-        }
-        setDishCreatedMsg(msg);
+        setDishCreatedMsg("Producto creado");
         setTimeout(() => setDishCreatedMsg(""), 8000);
+      } else {
+        setDishCreatedMsg(`Error: ${data?.error || "No se pudo crear el plato"}`);
+        setTimeout(() => setDishCreatedMsg(""), 6000);
       }
-    } catch {}
+    } catch {
+      setDishCreatedMsg("Error de conexión al crear el plato");
+      setTimeout(() => setDishCreatedMsg(""), 6000);
+    }
     setDishSaving(false);
   };
 
@@ -1684,9 +1682,9 @@ export default function AdminMenus() {
       )}
 
       {dishCreatedMsg && (
-        <div style={{ padding: "10px 14px", background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.15)", borderRadius: 10, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: "0.85rem" }}>✓</span>
-          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a" }}>{dishCreatedMsg}</span>
+        <div style={{ padding: "10px 14px", background: dishCreatedMsg.startsWith("Error") ? "rgba(239,68,68,0.08)" : "rgba(22,163,74,0.08)", border: `1px solid ${dishCreatedMsg.startsWith("Error") ? "rgba(239,68,68,0.2)" : "rgba(22,163,74,0.15)"}`, borderRadius: 10, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: "0.85rem" }}>{dishCreatedMsg.startsWith("Error") ? "✗" : "✓"}</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: dishCreatedMsg.startsWith("Error") ? "#ef4444" : "#16a34a" }}>{dishCreatedMsg}</span>
         </div>
       )}
 
