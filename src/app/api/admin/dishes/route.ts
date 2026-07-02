@@ -89,6 +89,12 @@ export async function POST(req: NextRequest) {
         allergens: allergens || null,
         dishDiet: dishDiet || "OMNIVORE",
         position: (maxPos?.position ?? -1) + 1,
+        txDishType: [],
+        txCuisine: [],
+        txMealSlot: [],
+        txIngredient: [],
+        txEstilo: [],
+        flavorTags: [],
       },
       include: { category: { select: { id: true, name: true } } },
     });
