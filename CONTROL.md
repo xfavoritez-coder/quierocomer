@@ -214,11 +214,13 @@ Frase generada: *"Esta semana se perdieron $47.200, principalmente pollo por ven
 ### Etapa 0 — Schema ✅ COMPLETO
 Schema en DB. Todos los modelos creados con relaciones, índices y convenciones del repo.
 
-### Etapa 1 — Catálogo + onboarding (EMPEZAR AQUÍ)
-- Seed catálogo maestro chileno (~120 insumos con aliases y categorías)
-- CRUD de insumos en panel de dueños
-- Wizard de onboarding 4 pasos
-- Activar `controlEnabled` para Horus Vegan en DB
+### Etapa 1 — Catálogo + onboarding ✅ COMPLETO (2026-07-03)
+- 113 InsumoMaestro chilenos en DB (con aliases para matching IA)
+- CRUD de insumos en panel: `/panel/control/insumos`
+- Wizard onboarding 4 pasos: `/panel/control/onboarding`
+- `controlEnabled = true` para Horus Vegan en DB
+- Nav "Control" en sidebar cuando `controlEnabled` activo
+- Hub en `/panel/control`: muestra estado del módulo y accesos
 
 ### Etapa 2 — Registro de compras
 - Upload foto a Supabase Storage
