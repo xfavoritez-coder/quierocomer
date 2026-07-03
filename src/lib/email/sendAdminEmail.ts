@@ -139,22 +139,58 @@ export function planActivatedEmailHtml(
   amountPaid: string, nextChargeDate: string, nextChargeAmount: string,
   panelLink: string, qrLink: string,
 ): string {
+  const feature = (icon: string, text: string) =>
+    `<tr><td style="padding:5px 0;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="vertical-align:top;padding-right:10px;padding-top:1px;font-size:16px;">${icon}</td>
+        <td style="font-size:14px;color:#5a3e1b;line-height:1.5;">${text}</td>
+      </tr></table>
+    </td></tr>`;
+
   return wrap(`
-  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">🎉</span></td></tr>
-  <tr><td style="padding-bottom:8px;">
-    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Plan ${planLabel} activado</h1>
+  <tr><td style="text-align:center;padding-bottom:10px;"><span style="font-size:36px;">🎉</span></td></tr>
+  <tr><td style="padding-bottom:6px;">
+    <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">
+      ¡Bienvenido al plan ${planLabel}, ${firstName}!
+    </h1>
   </td></tr>
-  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    ${firstName}, tu carta de <strong>${restaurantName}</strong> ya funciona con el plan <strong>${planLabel}</strong>.
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.7;padding-bottom:24px;text-align:center;">
+    <strong>${restaurantName}</strong> ya está activo con todas las herramientas para destacar y atraer más clientes.
   </td></tr>
-  <tr><td style="padding-bottom:16px;">${card(`
-    ${label("Detalle del pago")}
-    ${field("Cobrado hoy", amountPaid)}
-    ${field("Plan activo hasta", nextChargeDate)}
-    ${field("Valor mensual", nextChargeAmount)}
-  `, true)}</td></tr>
-  <tr><td style="padding-bottom:8px;">${btn(panelLink, "Entrar al panel")}</td></tr>
-  <tr><td style="padding-bottom:16px;">${btn(qrLink, "Ver mi carta", false)}</td></tr>
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:16px;">
+      <tr><td style="padding:18px 20px;">
+        <div style="font-size:11px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;">A partir de hoy puedes</div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${feature("🍽️", "Tener tu <strong>carta digital siempre actualizada</strong> — sin imprimir ni llamar a nadie.")}
+          ${feature("📍", "Aparecer en el <strong>feed de QuieroComer</strong> para que nuevos clientes te descubran.")}
+          ${feature("📊", "Ver <strong>estadísticas reales</strong> — qué platos miran más, cuántas visitas, de dónde vienen.")}
+          ${feature("✏️", "Agregar fotos, precios, descripciones y categorías desde tu panel en segundos.")}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding-bottom:10px;">${btn(panelLink, "Abrir mi panel")}</td></tr>
+  <tr><td style="padding-bottom:24px;">${btn(qrLink, "Ver mi carta en vivo", false)}</td></tr>
+
+  <tr><td style="padding-bottom:16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f0e8;border-radius:12px;">
+      <tr><td style="padding:12px 16px;">
+        <div style="font-size:10px;color:#92400e;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Detalle del cobro</div>
+        <div style="font-size:13px;color:#5a3e1b;line-height:1.8;">
+          Cobrado hoy: <strong>${amountPaid}</strong><br/>
+          Plan activo hasta: <strong>${nextChargeDate}</strong><br/>
+          Renovación mensual: <strong>${nextChargeAmount}</strong>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="font-size:13px;color:#7a6547;line-height:1.6;text-align:center;padding-bottom:4px;">
+    ¿Tienes alguna duda? Escríbenos a <a href="mailto:hola@quierocomer.cl" style="color:${GOLD};text-decoration:none;font-weight:600;">hola@quierocomer.cl</a> y te ayudamos.
+  </td></tr>
   <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Puedes cancelar o cambiar de plan cuando quieras desde tu panel.</td></tr>
   `);
 }
