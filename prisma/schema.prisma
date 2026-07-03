@@ -350,6 +350,14 @@ model Restaurant {
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
   invoices                   Invoice[]
+  // Módulo Control
+  controlEnabled             Boolean                  @default(false)
+  insumos                    Insumo[]
+  compras                    Compra[]
+  conteos                    Conteo[]
+  mermas                     Merma[]
+  ventasDia                  VentaDia[]
+  hojasImpresas              HojaImpresa[]
 
   commune      String?
   communeSlug  String?
@@ -1998,4 +2006,251 @@ enum FeedAction {
 enum FeedSaveType {
   ANTOJO
   SAVED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MÓDULO CONTROL — Costos, Compras, Inventario, Merma
+// ═══════════════════════════════════════════════════════════════
+
+model InsumoMaestro {
+  id         String          @id @default(cuid())
+  nombre     String          @unique
+  categoria  InsumoCategoria
+  unidadBase UnidadMedida
+  aliases    String[]        @default([])
+  createdAt  DateTime        @default(now())
+  insumos    Insumo[]
+}
+
+model Insumo {
+  id           String          @id @default(cuid())
+  restaurantId String
+  maestroId    String?
+  nombre       String
+  categoria    InsumoCategoria
+  unidadBase   UnidadMedida
+  esCritico    Boolean         @default(false)
+  ordenConteo  Int?
+  ultimoPrecio Float?
+  activo       Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  maestro      InsumoMaestro?  @relation(fields: [maestroId], references: [id])
+  restaurant   Restaurant      @relation(fields: [restaurantId], references: [id])
+  compraLineas CompraLinea[]
+  conteoLineas ConteoLinea[]
+  mermaLineas  MermaLinea[]
+
+  @@unique([restaurantId, nombre])
+  @@index([restaurantId])
+  @@index([maestroId])
+}
+
+model Compra {
+  id              String        @id @default(cuid())
+  restaurantId    String
+  fecha           DateTime
+  origen          CompraOrigen
+  proveedorNombre String?
+  documentoTipo   String?
+  documentoFolio  String?
+  totalDeclarado  Float?
+  fotoUrl         String?
+  estado          IngestaEstado @default(PENDIENTE_REVISION)
+  confirmadaAt    DateTime?
+  confirmadaPor   String?
+  createdAt       DateTime      @default(now())
+  lineas          CompraLinea[]
+  restaurant      Restaurant    @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([restaurantId, fecha])
+}
+
+model CompraLinea {
+  id             String       @id @default(cuid())
+  compraId       String
+  insumoId       String?
+  textoOriginal  String
+  cantidad       Float
+  unidad         UnidadMedida
+  precioTotal    Float
+  precioUnitario Float
+  compra         Compra       @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  insumo         Insumo?      @relation(fields: [insumoId], references: [id])
+
+  @@index([compraId])
+  @@index([insumoId])
+}
+
+model Conteo {
+  id           String        @id @default(cuid())
+  restaurantId String
+  fecha        DateTime
+  tipo         ConteoTipo    @default(SEMANAL)
+  fotoUrl      String?
+  estado       IngestaEstado @default(PENDIENTE_REVISION)
+  hojaId       String?
+  createdAt    DateTime      @default(now())
+  lineas       ConteoLinea[]
+  hoja         HojaImpresa?  @relation(fields: [hojaId], references: [id])
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([restaurantId, fecha])
+}
+
+model ConteoLinea {
+  id         String       @id @default(cuid())
+  conteoId   String
+  insumoId   String
+  cantidad   Float
+  unidad     UnidadMedida
+  valorizado Float?
+  conteo     Conteo       @relation(fields: [conteoId], references: [id], onDelete: Cascade)
+  insumo     Insumo       @relation(fields: [insumoId], references: [id])
+
+  @@index([conteoId])
+  @@index([insumoId])
+}
+
+model Merma {
+  id           String        @id @default(cuid())
+  restaurantId String
+  fecha        DateTime
+  fotoUrl      String?
+  estado       IngestaEstado @default(PENDIENTE_REVISION)
+  hojaId       String?
+  createdAt    DateTime      @default(now())
+  lineas       MermaLinea[]
+  hoja         HojaImpresa?  @relation(fields: [hojaId], references: [id])
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([restaurantId, fecha])
+}
+
+model MermaLinea {
+  id            String       @id @default(cuid())
+  mermaId       String
+  insumoId      String?
+  textoOriginal String
+  cantidad      Float
+  unidad        UnidadMedida
+  motivo        MermaMotivo
+  valorizado    Float?
+  nota          String?
+  merma         Merma        @relation(fields: [mermaId], references: [id], onDelete: Cascade)
+  insumo        Insumo?      @relation(fields: [insumoId], references: [id])
+
+  @@index([mermaId])
+  @@index([insumoId])
+}
+
+model VentaDia {
+  id           String       @id @default(cuid())
+  restaurantId String
+  fecha        DateTime
+  totalNeto    Float
+  totalBruto   Float
+  numOrdenes   Int
+  origen       PosProveedor
+  rawSyncId    String?
+  lineas       VentaLinea[]
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, fecha])
+  @@index([restaurantId])
+}
+
+model VentaLinea {
+  id              String   @id @default(cuid())
+  ventaDiaId      String
+  productoExterno String
+  cantidad        Int
+  totalNeto       Float
+  ventaDia        VentaDia @relation(fields: [ventaDiaId], references: [id], onDelete: Cascade)
+
+  @@index([ventaDiaId])
+}
+
+model HojaImpresa {
+  id           String     @id @default(cuid())
+  restaurantId String
+  tipo         HojaTipo
+  snapshot     Json
+  generadaAt   DateTime   @default(now())
+  conteos      Conteo[]
+  mermas       Merma[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+// ─── Enums Módulo Control ────────────────────────────────────
+
+enum InsumoCategoria {
+  PROTEINA
+  VERDURA_FRUTA
+  ABARROTE
+  LACTEO
+  PANADERIA
+  BEBIDA
+  LICOR
+  DESECHABLE
+  LIMPIEZA
+  OTRO
+}
+
+enum UnidadMedida {
+  KG
+  GR
+  LT
+  ML
+  UN
+  DOCENA
+  PAQUETE
+  CAJA
+  BANDEJA
+  ATADO
+}
+
+enum CompraOrigen {
+  FOTO_BOLETA
+  FOTO_FACTURA
+  HOJA_FERIA
+  MANUAL
+}
+
+enum IngestaEstado {
+  PENDIENTE_REVISION
+  CONFIRMADA
+  DESCARTADA
+}
+
+enum ConteoTipo {
+  SEMANAL
+  APERTURA
+  CIERRE_MES
+}
+
+enum MermaMotivo {
+  VENCIDO
+  QUEMADO_ERROR
+  DEVOLUCION_CLIENTE
+  SOBREPRODUCCION
+  COLACION_PERSONAL
+  DERRAME_ROTURA
+  OTRO
+}
+
+enum PosProveedor {
+  TOTEAT
+  MANUAL
+}
+
+enum HojaTipo {
+  CONTEO
+  MERMA
+  COMPRAS_FERIA
 }
