@@ -16,15 +16,15 @@ export async function GET(req: NextRequest) {
 
       const restaurant = await prisma.restaurant.findFirst({
         where: { slug: demoSlug, isDemo: true },
-        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true },
+        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true },
       });
       if (!restaurant) return NextResponse.json({ error: "Demo no encontrado" }, { status: 401 });
 
-      const { toteatApiToken, isDemo, ...rest } = restaurant;
+      const { toteatApiToken, isDemo, controlEnabled: _ce, ...rest } = restaurant;
       return NextResponse.json({
         role: "OWNER",
         name: restaurant.name,
-        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: true }],
+        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: true, hasControl: !!_ce }],
         selectedRestaurantId: restaurant.id,
         mustChangePassword: false,
       });
@@ -35,17 +35,17 @@ export async function GET(req: NextRequest) {
       const memberId = panelId.slice(3);
       const member = await prisma.teamMember.findUnique({
         where: { id: memberId },
-        include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true } } },
+        include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true } } },
       });
 
       if (!member) return NextResponse.json({ error: "User not found" }, { status: 401 });
       if (member.status !== "ACTIVE") return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
 
-      const { toteatApiToken, isDemo, ...rest } = member.restaurant;
+      const { toteatApiToken, isDemo, controlEnabled: _ce2, ...rest } = member.restaurant;
       return NextResponse.json({
         role: member.role,
         name: member.name,
-        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: !!isDemo }],
+        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: !!isDemo, hasControl: !!_ce2 }],
         selectedRestaurantId: member.restaurant.id,
         mustChangePassword: false,
       });
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true }, orderBy: { createdAt: 'asc' } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true }, orderBy: { createdAt: 'asc' } } },
     });
 
     if (!owner) {
@@ -66,10 +66,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Don't leak the API token to the client; just expose a boolean
-    const restaurants = owner.restaurants.map(({ toteatApiToken, isDemo, ...rest }) => ({
+    const restaurants = owner.restaurants.map(({ toteatApiToken, isDemo, controlEnabled, ...rest }) => ({
       ...rest,
       hasToteat: !!toteatApiToken,
       isDemo: !!isDemo,
+      hasControl: !!controlEnabled,
     }));
 
     return NextResponse.json({

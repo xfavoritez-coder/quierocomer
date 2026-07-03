@@ -11,6 +11,7 @@ interface PanelRestaurant {
   hasToteat?: boolean;
   isDemo?: boolean;
   multiMenuEnabled?: boolean;
+  hasControl?: boolean;
 }
 
 export interface PanelSession {

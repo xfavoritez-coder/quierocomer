@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -31,7 +31,7 @@ function LiveIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM";
   const SIDEBAR_NAV = [
     { icon: Home, label: "Inicio", href: base },
@@ -41,6 +41,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: ContactRound, label: "Clientes", href: `${base}/clientes` },
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
+    ...(opts.hasControl ? [{ icon: Calculator, label: "Control", href: `${base}/control` }] : []),
     { icon: Printer, label: "Exportar carta", href: `${base}/exportar` },
     { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
     { icon: UsersRound, label: "Usuarios", href: `${base}/usuarios` },
@@ -62,7 +63,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const selected = restaurants.find((r: any) => r.id === selectedRestaurantId);
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
-  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan });
+  const hasControl = !!(selected as any)?.hasControl;
+  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl });
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [moreVisible, setMoreVisible] = useState(false);
