@@ -3,12 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 
 /** PATCH /api/admin/control/insumos/[id] */
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     const existing = await prisma.insumo.findUnique({
@@ -38,12 +38,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 /** DELETE /api/admin/control/insumos/[id] — soft delete */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const existing = await prisma.insumo.findUnique({
       where: { id },
