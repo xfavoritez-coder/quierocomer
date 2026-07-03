@@ -608,6 +608,7 @@ function ImpactDishCard({
   const photo = getDishPhoto(dish);
   const [imgLoaded, setImgLoaded] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
+  const isNew = dish.createdAt && (Date.now() - new Date(dish.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <button
@@ -663,6 +664,16 @@ function ImpactDishCard({
               background: "radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--carta-accent) 12%, transparent), transparent 60%)",
             }} />
           </div>
+        )}
+        {isNew && (
+          <div style={{
+            position: "absolute", top: 7, left: 7, zIndex: 2,
+            background: "linear-gradient(135deg, #e8292c, #c41c1f)",
+            color: "#fff", fontSize: 9, fontWeight: 900,
+            letterSpacing: "0.06em", textTransform: "uppercase",
+            padding: "3px 7px", borderRadius: 6,
+            boxShadow: "0 2px 8px rgba(200,28,31,0.55)",
+          }}>NUEVO</div>
         )}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={24} top={6} right={6} />
       </div>

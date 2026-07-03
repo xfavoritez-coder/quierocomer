@@ -34,6 +34,7 @@ interface RestaurantData {
   dietType: string | null;
   subscriptionStatus: string | null;
   trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
 }
 
 function Card({ children, title, icon: Icon }: { children: React.ReactNode; title: string; icon?: any }) {
@@ -231,9 +232,16 @@ export default function MiRestaurantePage() {
                 <span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: current.color, textTransform: "uppercase", letterSpacing: "1px" }}>Plan activo</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: "-0.5px" }}>
-                  {current.label}
-                </p>
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: "-0.5px" }}>
+                    {current.label}
+                  </p>
+                  {data?.subscriptionStatus === "ACTIVE" && data?.currentPeriodEnd && (
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
+                      Activo hasta el <strong style={{ color: "var(--adm-text2)" }}>{new Date(data.currentPeriodEnd).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}</strong>
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
                   style={{
