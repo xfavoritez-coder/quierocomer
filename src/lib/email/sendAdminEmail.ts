@@ -302,24 +302,38 @@ export function cartaListaSimpleEmailHtml({
 
 export function monthlyRenewalEmailHtml(
   firstName: string, restaurantName: string, planName: string,
-  amount: string, panelLink: string,
+  amount: string, nextChargeDate: string, panelLink: string, qrLink: string,
 ): string {
   return wrap(`
-  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">✅</span></td></tr>
-  <tr><td style="padding-bottom:8px;">
-    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Tu plan se renovó</h1>
+  <tr><td style="text-align:center;padding-bottom:10px;"><span style="font-size:32px;">☑️</span></td></tr>
+  <tr><td style="padding-bottom:6px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">
+      Todo sigue funcionando, ${firstName}.
+    </h1>
   </td></tr>
-  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
-    ${firstName}, tu plan <strong>${planName}</strong> en <strong>${restaurantName}</strong> se renovó exitosamente. Tu carta sigue activa sin interrupciones.
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.7;padding-bottom:24px;text-align:center;">
+    Tu plan <strong>${planName}</strong> de <strong>${restaurantName}</strong> se renovó automáticamente. Tu carta digital sigue activa y visible para tus clientes.
   </td></tr>
-  <tr><td style="padding-bottom:16px;">${card(`
-    ${label("Cobro del mes")}
-    ${field("Monto cobrado", amount)}
-    ${field("Plan", planName)}
-    ${field("Restaurante", restaurantName)}
-  `, true)}</td></tr>
-  <tr><td style="padding-bottom:8px;">${btn(panelLink, "Ir a mi panel")}</td></tr>
-  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Gracias por confiar en QuieroComer. Puedes cancelar o cambiar de plan cuando quieras desde tu panel.</td></tr>
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f0e8;border-radius:12px;">
+      <tr><td style="padding:14px 18px;">
+        <div style="font-size:10px;color:#92400e;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Detalle del cobro</div>
+        <div style="font-size:13px;color:#5a3e1b;line-height:2;">
+          Cobrado: <strong>${amount}</strong><br/>
+          Plan activo hasta: <strong>${nextChargeDate}</strong>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding-bottom:10px;">${btn(qrLink, "Ver mi carta en vivo")}</td></tr>
+  <tr><td style="padding-bottom:20px;">${btn(panelLink, "Ir al panel", false)}</td></tr>
+
+  <tr><td style="font-size:13px;color:#7a6547;line-height:1.6;text-align:center;padding-bottom:4px;">
+    ¿Tienes alguna duda? Escríbenos a <a href="mailto:hola@quierocomer.cl" style="color:${GOLD};text-decoration:none;font-weight:600;">hola@quierocomer.cl</a>
+  </td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Puedes cancelar o cambiar de plan cuando quieras desde tu panel.</td></tr>
   `);
 }
 

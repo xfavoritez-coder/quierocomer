@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
 import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
-import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail, planActivatedEmailHtml, monthlyRenewalEmailHtml } from "@/lib/email/sendAdminEmail";
 
 function redirect303(url: string) {
   return NextResponse.redirect(url, 303);
@@ -101,18 +101,31 @@ async function handleReturn(req: NextRequest) {
     const ownerEmail = restaurant.owner?.email;
     if (ownerEmail) {
       const ownerName = restaurant.owner?.name || ownerEmail.split("@")[0] || "Hola";
+      const firstName = ownerName.split(" ")[0];
       const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
       const chargeGross = grossOf(amountNet);
       const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
       const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-      const nextAmount = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+      const panelLink = `${baseUrl}/panel`;
+      const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
+      const isRenewal = restaurant.subscriptionStatus === "ACTIVE" && !!restaurant.lastPaymentAt;
 
-      sendAdminEmail({
-        to: ownerEmail,
-        subject: `${restaurant.name} · Plan ${planLabel} activado`,
-        html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, `${baseUrl}/panel`, `${baseUrl}/qr/${restaurant.slug}`),
-        purpose: "plan_activated",
-      }).catch(() => {});
+      if (isRenewal) {
+        sendAdminEmail({
+          to: ownerEmail,
+          subject: `${restaurant.name} · Plan ${planLabel} renovado`,
+          html: monthlyRenewalEmailHtml(firstName, restaurant.name, planLabel, amountPaid, nextDate, panelLink, qrLink),
+          purpose: "plan_renewed",
+        }).catch(() => {});
+      } else {
+        const nextAmount = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+        sendAdminEmail({
+          to: ownerEmail,
+          subject: `${restaurant.name} · Plan ${planLabel} activado`,
+          html: planActivatedEmailHtml(firstName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, panelLink, qrLink),
+          purpose: "plan_activated",
+        }).catch(() => {});
+      }
     }
 
     return redirect303(`${baseUrl}/panel/suscripcion/exito?plan=${appPlan}`);

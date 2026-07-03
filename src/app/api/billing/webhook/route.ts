@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
 import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
-import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail, planActivatedEmailHtml, monthlyRenewalEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
  * POST /api/billing/webhook
@@ -125,19 +125,32 @@ export async function POST(req: NextRequest) {
   if (ownerEmail) {
     const planKey = appPlan as Exclude<PlanKey, "FREE">;
     const ownerName = restaurant.owner?.name || ownerEmail.split("@")[0] || "Hola";
+    const firstName = ownerName.split(" ")[0];
     const planLabel = PLAN_LABELS[planKey as keyof typeof PLAN_LABELS] || planKey;
     const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[planKey]?.amountNet ?? 0;
     const chargeGross = grossOf(amountNet);
     const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
     const nextDate = periodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
     const nextAmount = `$${grossOf(FLOW_PLANS[planKey]?.amountNet ?? 0).toLocaleString("es-CL")} CLP`;
+    const panelLink = `${baseUrl}/panel`;
+    const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
+    const isRenewal = restaurant.subscriptionStatus === "ACTIVE" && !!restaurant.lastPaymentAt;
 
-    sendAdminEmail({
-      to: ownerEmail,
-      subject: `${restaurant.name} · Plan ${planLabel} activado`,
-      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, `${baseUrl}/panel`, `${baseUrl}/qr/${restaurant.slug}`),
-      purpose: "plan_activated",
-    }).catch(() => {});
+    if (isRenewal) {
+      sendAdminEmail({
+        to: ownerEmail,
+        subject: `${restaurant.name} · Plan ${planLabel} renovado`,
+        html: monthlyRenewalEmailHtml(firstName, restaurant.name, planLabel, amountPaid, nextDate, panelLink, qrLink),
+        purpose: "plan_renewed",
+      }).catch(() => {});
+    } else {
+      sendAdminEmail({
+        to: ownerEmail,
+        subject: `${restaurant.name} · Plan ${planLabel} activado`,
+        html: planActivatedEmailHtml(firstName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, panelLink, qrLink),
+        purpose: "plan_activated",
+      }).catch(() => {});
+    }
   }
 
   console.log(`[billing/webhook] ✅ Pago confirmado y plan activado: ${restaurant.name} → ${appPlan}`);
