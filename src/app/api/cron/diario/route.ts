@@ -285,7 +285,7 @@ export async function GET(req: NextRequest) {
           await sendAdminEmail({
             to: r.owner.email,
             subject: `${r.name} · Tu plan ${planLabel} vence ${daysLeft <= 1 ? "mañana" : `en ${daysLeft} días`}`,
-            html: renewalReminderEmailHtml(firstName, r.name, planLabel, `$${amountGross.toLocaleString("es-CL")} CLP`, daysLeft, `${baseUrl}/panel/suscripcion`),
+            html: renewalReminderEmailHtml(firstName, r.name, planLabel, `$${amountGross.toLocaleString("es-CL")} CLP`, daysLeft, `${baseUrl}/panel/mi-restaurante`),
             purpose: "renewal_reminder",
           });
           renewalRemindersSent++;

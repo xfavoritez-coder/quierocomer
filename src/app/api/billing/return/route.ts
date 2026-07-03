@@ -81,7 +81,11 @@ async function handleReturn(req: NextRequest) {
   // Pago confirmado (status 2)
   if (paymentStatus === 2) {
     const appPlan = (planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan) as "SILVER" | "GOLD" | "PREMIUM";
-    const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    // Early renewal: si el plan está activo y el período aún no vence, extender desde currentPeriodEnd
+    const existingEnd = restaurant.currentPeriodEnd ? new Date(restaurant.currentPeriodEnd) : null;
+    const isEarlyRenewal = restaurant.subscriptionStatus === "ACTIVE" && !!existingEnd && existingEnd > new Date();
+    const baseDate = isEarlyRenewal ? existingEnd! : new Date();
+    const periodEnd = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
     const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[appPlan as Exclude<PlanKey, "FREE">]?.amountNet ?? 0;
 
     await prisma.restaurant.update({

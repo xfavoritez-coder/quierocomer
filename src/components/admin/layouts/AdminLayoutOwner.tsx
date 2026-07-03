@@ -46,6 +46,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
     { icon: UsersRound, label: "Usuarios", href: `${base}/usuarios` },
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
+    ...(base === "/panel" ? [{ icon: CreditCard, label: "Suscripción", href: `${base}/suscripcion` }] : []),
     { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
   ];
   const BOTTOM_TABS = [
@@ -310,18 +311,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <a href="/panel/perfil" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
               <UserCog size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi perfil</span>
             </a>
-            {basePath === "/panel" && (
-              <a href="/panel/suscripcion" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
-                <CreditCard size={18} color={activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text2)"} />
-                <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi suscripción</span>
-                <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 4,
-                  background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
-                  color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
-                }}>
-                  {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : activePlan === "SILVER" ? "Silver" : "Free"}
-                </span>
-              </a>
-            )}
             <a href="/panel/ayuda" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", borderBottom: "1px solid var(--adm-card-border)", textDecoration: "none" }}>
               <Mail size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Ayuda / Soporte</span>
             </a>

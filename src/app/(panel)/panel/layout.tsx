@@ -256,10 +256,13 @@ function formatDateCL(d: string | null) {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 }
 
-function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; onClose: () => void }) {
+function PlanModal({ plan, restaurantId, initialTab, renewMode, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; renewMode?: boolean; onClose: () => void }) {
   const ALL_TABS = ["FREE", "GOLD", "PREMIUM"] as const;
   type TabKey = typeof ALL_TABS[number];
-  const defaultTab: TabKey = initialTab
+  // renewMode: abrir directo en el plan actual (sin swap a otro plan)
+  const defaultTab: TabKey = renewMode && initialTab
+    ? initialTab as TabKey
+    : initialTab
     ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab) as TabKey
     : "FREE";
   const [tab, setTab] = useState<TabKey>(defaultTab);
@@ -355,6 +358,11 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
   const isActive = status?.subscriptionStatus === "ACTIVE";
   const isCanceled = status?.subscriptionStatus === "CANCELED";
   const showCancelButton = isCurrentPlan && (inTrial || isActive) && status?.hasSubscription;
+  const isEarlyRenewal = isCurrentPlan && isActive && !!status?.currentPeriodEnd && new Date(status.currentPeriodEnd) > new Date();
+  // Fecha en que comenzaría el nuevo período si renueva anticipadamente
+  const nextPeriodStart = status?.currentPeriodEnd
+    ? new Date(status.currentPeriodEnd).toLocaleDateString("es-CL", { day: "numeric", month: "long" })
+    : null;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -474,6 +482,27 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
             >
               {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
+          ) : isEarlyRenewal ? (
+            <div style={{ marginBottom: 8 }}>
+              <button
+                onClick={() => setConfirmTab(tab)}
+                disabled={!restaurantId}
+                style={{
+                  display: "block", width: "100%", padding: "14px 20px", borderRadius: 999, textAlign: "center",
+                  background: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
+                  color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
+                  border: "none", cursor: "pointer", marginBottom: 8,
+                  boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
+                }}
+              >
+                Renovar por otro mes
+              </button>
+              {nextPeriodStart && (
+                <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#888", textAlign: "center", margin: 0, lineHeight: 1.4 }}>
+                  Tu nuevo período comenzará el <strong>{nextPeriodStart}</strong> · Pagas hoy y no pierdes días
+                </p>
+              )}
+            </div>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
               <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#999", margin: 0 }}>Estás disfrutando de este plan</p>
@@ -543,6 +572,8 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
               <div style={{ fontSize: 13, color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
                 {isPremiumTrial
                   ? "No se te cobra nada. Tu periodo de prueba de 7 días se activa de inmediato."
+                  : isEarlyRenewal && nextPeriodStart
+                  ? <>Serás redirigido a Webpay. Tu nuevo período comenzará el <strong>{nextPeriodStart}</strong> — pagas hoy y no pierdes días del período actual.</>
                   : "Serás redirigido a Webpay para completar tu pago con tarjeta de débito o crédito."
                 }
               </div>
@@ -644,16 +675,19 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [pathname, isDemoEarly, selectedRestEarly?.slug]);
 
-  const [planModalInitialTab, setPlanModalInitialTab] = useState<"GOLD" | "PREMIUM" | undefined>(undefined);
+  const [planModalInitialTab, setPlanModalInitialTab] = useState<"FREE" | "GOLD" | "PREMIUM" | undefined>(undefined);
+  const [planModalRenewMode, setPlanModalRenewMode] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.initialTab === "GOLD" || detail?.initialTab === "PREMIUM") {
-        setPlanModalInitialTab(detail.initialTab);
+      const tab = detail?.initialTab;
+      if (tab === "FREE" || tab === "GOLD" || tab === "PREMIUM") {
+        setPlanModalInitialTab(tab);
       } else {
         setPlanModalInitialTab(undefined);
       }
+      setPlanModalRenewMode(!!detail?.renew);
       setPlanModalOpen(true);
       // Track plan modal opened
       if (selectedRestEarly?.id) {
@@ -791,7 +825,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
       {/* Plan modal — triggered from "Mi Plan" menu */}
       {planModalOpen && (
-        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} initialTab={planModalInitialTab} onClose={() => setPlanModalOpen(false)} />
+        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} initialTab={planModalInitialTab} renewMode={planModalRenewMode} onClose={() => { setPlanModalOpen(false); setPlanModalRenewMode(false); }} />
       )}
     </SessionContext.Provider>
   );

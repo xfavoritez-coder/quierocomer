@@ -32,6 +32,7 @@ interface RestaurantData {
   instagram: string | null; website: string | null;
   scheduleJson: Record<string, string> | null;
   dietType: string | null;
+  plan: string | null;
   subscriptionStatus: string | null;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
@@ -242,17 +243,31 @@ export default function MiRestaurantePage() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
-                  style={{
-                    padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
-                    background: current.color, color: "#fff",
-                    fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
-                    boxShadow: `0 4px 16px ${current.color}30`,
-                  }}
-                >
-                  Ver planes
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                  {data?.subscriptionStatus === "ACTIVE" && (
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: data.plan?.toUpperCase(), renew: true } }))}
+                      style={{
+                        padding: "6px 14px", borderRadius: 999, border: `1.5px solid ${current.color}`, cursor: "pointer",
+                        background: "transparent", color: current.color,
+                        fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                      }}
+                    >
+                      Renovar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal"))}
+                    style={{
+                      padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+                      background: current.color, color: "#fff",
+                      fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                      boxShadow: `0 4px 16px ${current.color}30`,
+                    }}
+                  >
+                    Ver planes
+                  </button>
+                </div>
               </div>
             </div>
             {/* Trial end date banner */}
