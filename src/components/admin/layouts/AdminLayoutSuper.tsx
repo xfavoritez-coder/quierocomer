@@ -14,8 +14,6 @@ const NAV = [
   { icon: "📣", label: "FB Ads", href: "/admin/facebook-ads" },
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
-  { icon: "🏠", label: "QuieroComer", href: "/admin/quierocomer" },
-  { icon: "🔌", label: "Proveedores", href: "/admin/proveedores" },
 ];
 
 interface Props {

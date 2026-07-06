@@ -61,16 +61,6 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
       happyHours: {
         where: { isActive: true },
       },
-      reviews: {
-        where: { isVerified: true },
-        select: {
-          id: true,
-          dishId: true,
-          rating: true,
-          customerId: true,
-          createdAt: true,
-        },
-      },
       menuGroups: {
         where: { isActive: true },
         orderBy: { position: "asc" },
@@ -80,19 +70,6 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
   });
 
   if (!restaurant) return null;
-
-  // Compute average rating per dish
-  const ratingMap: Record<string, { avg: number; count: number }> = {};
-  for (const review of restaurant.reviews) {
-    if (!ratingMap[review.dishId]) {
-      ratingMap[review.dishId] = { avg: 0, count: 0 };
-    }
-    ratingMap[review.dishId].count++;
-    ratingMap[review.dishId].avg += review.rating;
-  }
-  for (const dishId of Object.keys(ratingMap)) {
-    ratingMap[dishId].avg = ratingMap[dishId].avg / ratingMap[dishId].count;
-  }
 
   // Overlay translations: replace description/name with translated versions
   // Components receive the same shape — no changes needed downstream
@@ -121,10 +98,10 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
     }
   }
 
-  return { ...restaurant, ratingMap };
+  return { ...restaurant, ratingMap: {} as Record<string, { avg: number; count: number }> };
 }
 
-// Cache per slug+lang — 2 minutes TTL
+// Cache per slug+lang — 5 minutes TTL (tag-based invalidation garantiza actualización inmediata en cambios del panel)
 // Tags allow targeted invalidation from the panel when the menu changes
 export function getRestaurantBySlug(slug: string, lang: Lang = "es") {
   return unstable_cache(
@@ -138,7 +115,7 @@ export function getRestaurantBySlug(slug: string, lang: Lang = "es") {
     ["qr-restaurant", slug, lang],
     {
       tags: ["qr-restaurant", `qr-restaurant-${slug}`],
-      revalidate: 120,
+      revalidate: 300,
     }
   )().catch(() => null)
 }

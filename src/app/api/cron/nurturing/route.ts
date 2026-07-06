@@ -73,8 +73,10 @@ export async function GET(req: NextRequest) {
   let errors = 0;
   const stageCounts: Record<string, number> = {};
 
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
   // ── Fetch all data in parallel ──
-  const [restaurants, leads, allActivity, sessions7dGroups] = await Promise.all([
+  const [restaurants, leads, allActivity, nurturingDoneRows, sessions7dGroups] = await Promise.all([
     prisma.restaurant.findMany({
       where: { ownerId: { not: null } },
       select: {
@@ -92,9 +94,16 @@ export async function GET(req: NextRequest) {
         emailClickedAt: true, whatsappClickedAt: true, events: true,
       },
     }),
+    // Only last 90 days — enough for lifecycle computation (dormancy = 7-30 days)
     prisma.panelActivity.findMany({
+      where: { createdAt: { gte: ninetyDaysAgo } },
       select: { restaurantId: true, action: true, createdAt: true },
       orderBy: { createdAt: "desc" },
+    }),
+    // Separate small query for ALL-TIME nurturing records to avoid false re-sends
+    prisma.panelActivity.findMany({
+      where: { action: { startsWith: "nurturing_" } },
+      select: { restaurantId: true },
     }),
     prisma.session.groupBy({
       by: ["restaurantId"],
@@ -115,6 +124,9 @@ export async function GET(req: NextRequest) {
 
   const sessions7dMap = new Map<string, number>();
   for (const s of sessions7dGroups) sessions7dMap.set(s.restaurantId, s._count);
+
+  // Set of restaurantIds that already received any nurturing (all-time, not just 90d)
+  const nurturingDoneSet = new Set(nurturingDoneRows.map(r => r.restaurantId));
 
   // ── Process each restaurant ──
   for (const r of restaurants) {
@@ -155,11 +167,7 @@ export async function GET(req: NextRequest) {
     if (!nurturing) continue;
 
     // Skip if already sent ANY nurturing to this restaurant (via PanelActivity OR Lead.events)
-    const already = await prisma.panelActivity.findFirst({
-      where: { restaurantId: r.id, action: { startsWith: "nurturing_" } },
-      select: { id: true },
-    });
-    if (already) { skipped++; continue; }
+    if (nurturingDoneSet.has(r.id)) { skipped++; continue; }
 
     // Also check Lead.events (written by the one-time-nurturing endpoint)
     if (lead) {

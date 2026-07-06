@@ -387,35 +387,6 @@ export async function GET(req: NextRequest) {
       console.error("[diario] Translation backfill error:", e);
     }
 
-    // 6. Safety net: if it's Monday and weekly-email didn't run, trigger it
-    let weeklyFallback = false;
-    const dayOfWeek = new Date().getUTCDay(); // 0=Sun, 1=Mon
-    if (dayOfWeek === 1) {
-      const todayMidnight = new Date();
-      todayMidnight.setUTCHours(0, 0, 0, 0);
-      const weeklyRan = await prisma.cronLog.findFirst({
-        where: { jobName: "weekly-email", createdAt: { gte: todayMidnight } },
-      });
-      if (!weeklyRan) {
-        console.log("[diario] Monday safety net: weekly-email didn't run today, triggering...");
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-          const secret = process.env.CRON_SECRET;
-          const headers: Record<string, string> = {};
-          if (secret) headers["Authorization"] = `Bearer ${secret}`;
-          const weeklyRes = await fetch(`${baseUrl}/api/cron/weekly-email`, {
-            headers,
-            signal: AbortSignal.timeout(110000),
-          });
-          const weeklyData = await weeklyRes.json();
-          console.log("[diario] Weekly email fallback result:", JSON.stringify(weeklyData));
-          weeklyFallback = true;
-        } catch (e: any) {
-          console.error("[diario] Weekly email fallback failed:", e.message);
-        }
-      }
-    }
-
     // 7. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -443,7 +414,6 @@ export async function GET(req: NextRequest) {
           renewalRemindersSent,
           activeExpiredDowngraded,
           translationsBackfilled,
-          weeklyFallback,
           automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,

@@ -20,23 +20,21 @@ export async function GET(req: Request) {
 
   const results: any[] = [];
   for (const r of restaurants) {
-    let saved = 0;
     try {
+      const snapshots: {
+        restaurantId: string;
+        dishId: string;
+        badgeType: string;
+        score?: number;
+        position?: number;
+      }[] = [];
+
       // POPULAR: run the same algorithm the carta uses, snapshot result
       const popular = await getPopularDishes(r.id);
       const popularList = [...(popular.global || []), ...(popular.byCategory || [])];
       for (let i = 0; i < popularList.length; i++) {
         const p = popularList[i];
-        await prisma.badgeSnapshot.create({
-          data: {
-            restaurantId: r.id,
-            dishId: p.dishId,
-            badgeType: "POPULAR",
-            score: p.score,
-            position: i + 1,
-          },
-        });
-        saved++;
+        snapshots.push({ restaurantId: r.id, dishId: p.dishId, badgeType: "POPULAR", score: p.score, position: i + 1 });
       }
 
       // RECOMMENDED: dishes currently tagged by the owner
@@ -45,13 +43,14 @@ export async function GET(req: Request) {
         select: { id: true },
       });
       for (const d of recommended) {
-        await prisma.badgeSnapshot.create({
-          data: { restaurantId: r.id, dishId: d.id, badgeType: "RECOMMENDED" },
-        });
-        saved++;
+        snapshots.push({ restaurantId: r.id, dishId: d.id, badgeType: "RECOMMENDED" });
       }
 
-      results.push({ slug: r.slug, ok: true, saved });
+      if (snapshots.length > 0) {
+        await prisma.badgeSnapshot.createMany({ data: snapshots });
+      }
+
+      results.push({ slug: r.slug, ok: true, saved: snapshots.length });
     } catch (e: any) {
       results.push({ slug: r.slug, ok: false, error: e?.message || "unknown" });
     }

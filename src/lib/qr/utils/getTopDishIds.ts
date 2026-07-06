@@ -11,6 +11,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 import { chileStartOfTodayUTC } from "@/lib/toteat/timezone";
 import { getPopularDishes } from "./getPopularDishes";
 
@@ -100,3 +101,17 @@ export async function getTopDishIds(restaurantId: string): Promise<TopDishesResu
     totalSalesToday: totalUnits,
   };
 }
+
+/**
+ * Cached version — 5 min TTL, invalidated when restaurant changes.
+ * Returns dishIds as string[] (Set can't be JSON-serialized).
+ * Reconstruct Set at call site: new Set(result.dishIds)
+ */
+export const getCachedTopDishIds = unstable_cache(
+  async (restaurantId: string): Promise<{ dishIds: string[]; source: "toteat" | "qc-views" | "none"; totalSalesToday: number }> => {
+    const result = await getTopDishIds(restaurantId);
+    return { dishIds: Array.from(result.dishIds), source: result.source, totalSalesToday: result.totalSalesToday };
+  },
+  ["qr-top-dishes"],
+  { revalidate: 300 }
+);

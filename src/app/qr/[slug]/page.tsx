@@ -21,7 +21,7 @@ import DemoViewToast from "@/components/qr/carta/DemoViewToast";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
 import MultiMenuLanding from "@/components/qr/carta/MultiMenuLanding";
 import { prisma } from "@/lib/prisma";
-import { getTopDishIds } from "@/lib/qr/utils/getTopDishIds";
+import { getCachedTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 
 // Deduplicate: both generateMetadata and page use the same query
 // Metadata always uses Spanish (restaurant name doesn't change)
@@ -162,11 +162,12 @@ export default async function CartaPage({
     ["qr-announcements", restaurant.id],
     { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 300 }
   );
-  const [topDishesResult, activePromos, rawAnnouncements] = await Promise.all([
-    getTopDishIds(restaurant.id).catch(() => ({ dishIds: new Set<string>(), source: "none" as const, totalSalesToday: 0 })),
+  const [topDishesRaw, activePromos, rawAnnouncements] = await Promise.all([
+    getCachedTopDishIds(restaurant.id).catch(() => ({ dishIds: [] as string[], source: "none" as const, totalSalesToday: 0 })),
     getPromos(restaurant.id),
     getAnnouncements(restaurant.id),
   ]);
+  const topDishesResult = { ...topDishesRaw, dishIds: new Set(topDishesRaw.dishIds) };
   // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
   const filteredPromos = activePromos.filter(p => !p.daysOfWeek?.length || p.daysOfWeek.includes(todayDow));
