@@ -37,15 +37,26 @@ export function isSuperAdmin(req: NextRequest): boolean {
 /**
  * Returns the list of restaurant IDs owned by the current admin.
  * Returns null for SUPERADMIN (meaning "all restaurants").
+ * Handles both RestaurantOwner (panel_id) and TeamMember (panel_id = "tm_<id>").
  */
 export async function getOwnedRestaurantIds(req: NextRequest): Promise<string[] | null> {
   if (isSuperAdmin(req)) return null;
 
-  const ownerId = getAdminId(req);
-  if (!ownerId) return [];
+  const rawId = getAdminId(req);
+  if (!rawId) return [];
+
+  // Team member: panel_id is prefixed with "tm_"
+  if (rawId.startsWith("tm_")) {
+    const memberId = rawId.slice(3);
+    const member = await prisma.teamMember.findUnique({
+      where: { id: memberId },
+      select: { restaurantId: true },
+    });
+    return member?.restaurantId ? [member.restaurantId] : [];
+  }
 
   const owner = await prisma.restaurantOwner.findUnique({
-    where: { id: ownerId },
+    where: { id: rawId },
     include: { restaurants: { select: { id: true } } },
   });
 
