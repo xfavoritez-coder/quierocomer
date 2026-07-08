@@ -213,7 +213,7 @@ export default async function CartaPage({
     promotions: restaurant.promotions,
     marketingPromos: canShowPromos ? marketingPromos : [],
     ratingMap: restaurant.ratingMap,
-    reviews: restaurant.reviews,
+    reviews: (restaurant as any).reviews,
     tableId,
     isQrScan,
     initialView: serverView,
