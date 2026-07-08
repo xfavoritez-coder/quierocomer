@@ -1335,7 +1335,7 @@ export default function AdminMenus() {
 
               {/* Traducciones — PREMIUM only */}
               {selectedRestaurantId && (
-                <PlanGate feature="multilang" plan={activePlan}>
+                <PlanGate feature="multilang" plan={activePlan} blur={false}>
                   <DishTranslationsEditor dishId={selectedDish.id} restaurantId={selectedRestaurantId} />
                 </PlanGate>
               )}
