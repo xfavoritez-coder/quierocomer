@@ -106,20 +106,9 @@ async function getGlobalCategoryDishes(category: string, categoryLabel: string) 
 // generateStaticParams
 // ---------------------------------------------------------------------------
 
+// Empty — pages generated on-demand via ISR (avoids connection pool exhaustion at build time)
 export async function generateStaticParams() {
-  const rows = await prisma.restaurant.findMany({
-    where: { communeSlug: { not: null }, isActive: true, isDemo: false },
-    select: { communeSlug: true },
-    distinct: ['communeSlug'],
-  })
-  const communeParams = rows
-    .filter(r => r.communeSlug)
-    .map(r => ({ restaurantSlug: r.communeSlug as string }))
-
-  // Global category pages
-  const categoryParams = Object.keys(CATEGORY_SLUGS).map(cat => ({ restaurantSlug: cat }))
-
-  return [...communeParams, ...categoryParams]
+  return []
 }
 
 // ---------------------------------------------------------------------------

@@ -39,10 +39,13 @@ const AB_WINNERS = {
 };
 
 export default async function QRLandingPage() {
-  const restaurants = await prisma.restaurant.findMany({
-    where: { slug: { in: FEATURED_SLUGS }, isActive: true },
-    select: { name: true, slug: true, logoUrl: true },
-  });
+  const restaurants = await Promise.race([
+    prisma.restaurant.findMany({
+      where: { slug: { in: FEATURED_SLUGS }, isActive: true },
+      select: { name: true, slug: true, logoUrl: true },
+    }),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("db timeout")), 8000)),
+  ]).catch(() => [] as { name: string; slug: string; logoUrl: string | null }[]);
 
   const logos = FEATURED_SLUGS.map((slug) => {
     const r = restaurants.find((x) => x.slug === slug);

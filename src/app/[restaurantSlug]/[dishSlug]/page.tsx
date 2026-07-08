@@ -499,53 +499,9 @@ const findDishCached = unstable_cache(
 // generateStaticParams — both dish entries AND commune+restaurant combos
 // ---------------------------------------------------------------------------
 
+// Empty — pages generated on-demand via ISR (avoids connection pool exhaustion at build time)
 export async function generateStaticParams() {
-  const [dishRows, communeRestaurantRows] = await Promise.all([
-    // Top dishes only — rest generated on-demand via ISR
-    prisma.dish.findMany({
-      where: { isActive: true, hiddenFromFeed: false, deletedAt: null },
-      select: {
-        name: true,
-        restaurant: { select: { slug: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 500,
-    }),
-    // New: communeSlug + restaurantSlug combos
-    prisma.restaurant.findMany({
-      where: { communeSlug: { not: null }, isActive: true, isDemo: false },
-      select: { slug: true, communeSlug: true },
-    }),
-  ])
-
-  const params: Array<{ restaurantSlug: string; dishSlug: string }> = []
-
-  // Real dish pages
-  for (const d of dishRows) {
-    params.push({
-      restaurantSlug: d.restaurant.slug,
-      dishSlug: slugify(d.name),
-    })
-  }
-
-  // Commune → restaurant pages
-  for (const r of communeRestaurantRows) {
-    if (!r.communeSlug) continue
-    params.push({ restaurantSlug: r.communeSlug, dishSlug: r.slug })
-  }
-
-  // Vegan/vegetarian + category pages for each commune
-  const communes = [...new Set(communeRestaurantRows.map(r => r.communeSlug).filter(Boolean))]
-  for (const c of communes) {
-    params.push({ restaurantSlug: c as string, dishSlug: 'vegano' })
-    params.push({ restaurantSlug: c as string, dishSlug: 'vegetariano' })
-    // Category pages
-    for (const cat of Object.keys(CATEGORY_SLUGS)) {
-      params.push({ restaurantSlug: c as string, dishSlug: cat })
-    }
-  }
-
-  return params
+  return []
 }
 
 // ---------------------------------------------------------------------------
