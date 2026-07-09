@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
       qrToken,
       qrActivatedAt: new Date(),
       plan: "PREMIUM",
+      subscriptionStatus: "TRIALING",
+      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 días de trial
       ownerId: owner.id,
       allPhotosReferential: false,
     },

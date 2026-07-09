@@ -8,8 +8,15 @@ export async function GET(req: NextRequest) {
   if (auth !== PASSWORD) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const [paidRestaurants, allLeads] = await Promise.all([
+    // Solo los que realmente tienen suscripción activa pagada (Flow o MP)
     prisma.restaurant.findMany({
-      where: { plan: { in: ["GOLD", "PREMIUM"] } },
+      where: {
+        OR: [
+          { flowSubscriptionId: { not: null } },
+          { mpSubscriptionId: { not: null } },
+        ],
+        subscriptionStatus: "ACTIVE",
+      },
       select: { slug: true, plan: true },
     }),
     prisma.lead.findMany({
