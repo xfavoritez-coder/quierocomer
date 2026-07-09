@@ -6,6 +6,7 @@ interface Props {
   restaurant: { name: string; logoUrl: string | null; address: string | null; phone: string | null };
   sections: Section[];
   incluirFotos: boolean;
+  qrDataUrl?: string;
 }
 
 /* ── SVG corner ornament (gold flourish) ── */
@@ -38,7 +39,7 @@ const GoldDivider = () => (
   </svg>
 );
 
-export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props) {
+export default function TemaCarbon({ restaurant, sections, incluirFotos, qrDataUrl }: Props) {
   return (
     <>
       <style>{`
@@ -206,7 +207,15 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
           <CornerOrnament style={{ position: "absolute", bottom: -2, right: -2, transform: "scale(-1)" }} />
 
           {/* Header */}
-          <div className="carbon-header">
+          <div className="carbon-header" style={{ position: "relative" }}>
+            {qrDataUrl && (
+              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ padding: 5, background: "#fff", borderRadius: 6, border: "1px solid rgba(216,173,87,0.4)" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
+                </div>
+                <span style={{ fontSize: "6.5pt", color: "#d8ad57", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cinzel', serif", textAlign: "center" }}>Ver carta QR</span>
+              </div>
+            )}
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="carbon-logo" />
             )}

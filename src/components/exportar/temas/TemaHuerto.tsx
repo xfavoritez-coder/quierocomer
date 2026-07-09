@@ -6,6 +6,7 @@ interface Props {
   restaurant: { name: string; logoUrl: string | null; address: string | null; phone: string | null };
   sections: Section[];
   incluirFotos: boolean;
+  qrDataUrl?: string;
 }
 
 /* ── Leaf corner ornament ── */
@@ -45,7 +46,7 @@ const LeafDivider = () => (
   </svg>
 );
 
-export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props) {
+export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataUrl }: Props) {
   return (
     <>
       <style>{`
@@ -205,7 +206,15 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
           <LeafCorner style={{ position: "absolute", bottom: -4, right: -4, transform: "scale(-1)" }} />
 
           {/* Header */}
-          <div className="huerto-header">
+          <div className="huerto-header" style={{ position: "relative" }}>
+            {qrDataUrl && (
+              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ padding: 5, background: "#fff", borderRadius: 6, border: "1px solid rgba(63,107,76,0.35)" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
+                </div>
+                <span style={{ fontSize: "6.5pt", color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cormorant Garamond', serif", textAlign: "center" }}>Ver carta QR</span>
+              </div>
+            )}
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="huerto-logo" />
             )}

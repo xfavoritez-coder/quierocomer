@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import QRCode from "qrcode";
 import { Printer, Image as ImageIcon, ImageOff } from "lucide-react";
 import TemaCarbon from "./temas/TemaCarbon";
 import TemaHuerto from "./temas/TemaHuerto";
@@ -98,6 +99,14 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   const [incluirFotos, setIncluirFotos] = useState(false);
   const [ahorroTinta, setAhorroTinta] = useState(false);
   const [lang, setLang] = useState<Lang>("es");
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    const qrUrl = `https://quierocomer.cl/qr/${restaurant.slug}`;
+    QRCode.toDataURL(qrUrl, { width: 200, margin: 1, errorCorrectionLevel: "H", color: { dark: "#000000", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => {});
+  }, [restaurant.slug]);
   const esClaro = tema === "huerto" || tema === "medit";
 
   // Build lookup maps for translations
@@ -334,6 +343,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
             restaurant={restaurant}
             sections={visibleSections}
             incluirFotos={incluirFotos}
+            qrDataUrl={qrDataUrl}
           />
         </div>
 

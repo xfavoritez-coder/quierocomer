@@ -6,6 +6,7 @@ interface Props {
   restaurant: { name: string; logoUrl: string | null; address: string | null; phone: string | null };
   sections: Section[];
   incluirFotos: boolean;
+  qrDataUrl?: string;
 }
 
 /* ── Tile band (top / bottom) ── */
@@ -60,7 +61,7 @@ const MeditDivider = () => (
   </svg>
 );
 
-export default function TemaMedit({ restaurant, sections, incluirFotos }: Props) {
+export default function TemaMedit({ restaurant, sections, incluirFotos, qrDataUrl }: Props) {
   return (
     <>
       <style>{`
@@ -207,7 +208,15 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
 
         <div className="medit-inner">
           {/* Header */}
-          <div className="medit-header">
+          <div className="medit-header" style={{ position: "relative" }}>
+            {qrDataUrl && (
+              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ padding: 5, background: "#fff", borderRadius: 6, border: "1px solid rgba(192,98,45,0.35)" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
+                </div>
+                <span style={{ fontSize: "6.5pt", color: "#2f5d8a", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Marcellus', serif", textAlign: "center" }}>Ver carta QR</span>
+              </div>
+            )}
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="medit-logo" />
             )}
