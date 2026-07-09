@@ -45,6 +45,8 @@ import VeganFloatingPill from "./VeganFloatingPill";
 import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 import { getDishPhoto } from "./utils/dishHelpers";
+import CartaFilterBar, { applyCartaFilter } from "./CartaFilterBar";
+import type { CartaFilterKey } from "./CartaFilterBar";
 
 /* ─── Multi-menu switcher (inline for Impact header) ─── */
 
@@ -946,6 +948,14 @@ export default function CartaImpact({
   const qrUser = qrUserProp ?? qrUserLocal;
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
 
+  /* ─── Filter ─── */
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f === key ? null : key);
+  const dishesFiltered = useMemo(
+    () => applyCartaFilter(dishes, activeFilter, new Set(popularDishIds || [])),
+    [dishes, activeFilter, popularDishIds],
+  );
+
   /* ─── Search ─── */
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1097,7 +1107,7 @@ export default function CartaImpact({
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
     for (const cat of categories) {
-      const catDishes = dishes.filter((d) => d.categoryId === cat.id && d.isActive);
+      const catDishes = dishesFiltered.filter((d) => d.categoryId === cat.id && d.isActive);
       if (sortKey !== "default") {
         result.push(...applyCartaSort(catDishes, sortKey, rankings));
         continue;
@@ -1128,7 +1138,7 @@ export default function CartaImpact({
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes, pMap, sortKey, rankings, clientAvoidsSpicyForSort]);
+  }, [categories, dishesFiltered, pMap, sortKey, rankings, clientAvoidsSpicyForSort]);
 
   /* ─── Category chips scroll ─── */
   const chipsRef = useRef<HTMLDivElement>(null);
@@ -1166,7 +1176,7 @@ export default function CartaImpact({
       .filter((c) => c.isActive)
       .sort((a, b) => a.position - b.position)
       .map((cat) => {
-        let catDishes = dishes
+        let catDishes = dishesFiltered
           .filter((d) => d.categoryId === cat.id && d.isActive)
           .filter((d) => {
             if (!searchQuery) return true;
@@ -1206,7 +1216,7 @@ export default function CartaImpact({
         return { category: cat, dishes: catDishes };
       })
       .filter((s) => s.dishes.length > 0);
-  }, [categories, dishes, searchQuery, sortKey, rankings, pMap, clientAvoidsSpicyForSort]);
+  }, [categories, dishesFiltered, searchQuery, sortKey, rankings, pMap, clientAvoidsSpicyForSort]);
 
   const allChipCats = useMemo(() => {
     const cats: { id: string; name: string }[] = [];
@@ -1604,6 +1614,11 @@ export default function CartaImpact({
             </div>
             <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
+        </div>
+
+        {/* Filter bar — debajo de chips, sobre platos */}
+        <div style={{ padding: "6px 0 10px" }}>
+          <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
         </div>
 
         {/* Genio diet carousels — inside menu, after nav chips */}

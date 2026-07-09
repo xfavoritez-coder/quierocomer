@@ -26,6 +26,8 @@ import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
+import CartaFilterBar, { applyCartaFilter } from "./CartaFilterBar";
+import type { CartaFilterKey } from "./CartaFilterBar";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import HeroDish from "./HeroDish";
 import ViewSelectorCompact from "./ViewSelectorCompact";
@@ -125,6 +127,8 @@ export default function CartaLista({
     window.addEventListener("genio-updated", onGenioUpdated);
     return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f === key ? null : key);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "lista");
@@ -337,15 +341,20 @@ export default function CartaLista({
     return result;
   }, [categories, dishes, pMap, clientAvoidsSpicyForSort]);
 
+  const dishesForFilter = useMemo(
+    () => applyCartaFilter(dishes, activeFilter, popularDishIds),
+    [dishes, activeFilter, popularDishIds],
+  );
+
   const filtered = useMemo(() => {
-    return dishes.filter((d) => {
+    return dishesForFilter.filter((d) => {
       if (query) {
         const q = norm(query.trim());
         return norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q);
       }
       return true;
     });
-  }, [dishes, query]);
+  }, [dishesForFilter, query]);
 
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(filtered, categories);
@@ -491,9 +500,14 @@ export default function CartaLista({
         )}
       </div>
 
-      {/* Announcement banner — sticky below category nav */}
+      {/* Filter bar — sticky below category nav */}
+      <div style={{ position: "sticky", top: 44, zIndex: 19, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", padding: "7px 12px 8px" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+      </div>
+
+      {/* Announcement banner — sticky below category nav + filter bar */}
       {announcements && announcements.length > 0 && (
-        <div style={{ position: "sticky", top: 44, zIndex: 39 }}>
+        <div style={{ position: "sticky", top: 93, zIndex: 39 }}>
           <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
         </div>
       )}
@@ -505,7 +519,7 @@ export default function CartaLista({
             No encontramos platos que coincidan.
           </p>
           <button
-            onClick={() => { setQuery(""); }}
+            onClick={() => { setQuery(""); setActiveFilter(null); }}
             style={{ marginTop: 12, fontSize: "0.88rem", color: "var(--carta-accent, #F4A623)", fontWeight: 600, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", fontFamily: "inherit" }}
           >
             Limpiar filtros

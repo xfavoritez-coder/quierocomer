@@ -11,6 +11,8 @@ import { Sparkles } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
+import CartaFilterBar, { applyCartaFilter } from "./CartaFilterBar";
+import type { CartaFilterKey } from "./CartaFilterBar";
 
 interface Review {
   id: string;
@@ -44,6 +46,12 @@ export default function CartaBasic({
   const dishes = isFree
     ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
     : rawDishes
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f === key ? null : key);
+  const dishesFiltered = useMemo(
+    () => applyCartaFilter(dishes, activeFilter, new Set<string>()),
+    [dishes, activeFilter],
+  );
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
@@ -91,9 +99,14 @@ export default function CartaBasic({
         rightSlot={<SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />}
       />
 
+      {/* Filter bar — Free B: compact con label */}
+      <div style={{ borderBottom: "1px solid var(--carta-border, #ede9e0)", padding: "6px 14px 7px", background: "var(--carta-bg-solid, #faf6ee)" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} compact />
+      </div>
+
       <main className="px-4 pb-28">
         {categories.map((cat) => {
-          const catDishesRaw = dishes.filter((d) => d.categoryId === cat.id);
+          const catDishesRaw = dishesFiltered.filter((d) => d.categoryId === cat.id);
           const catDishes = sortKey !== "default"
             ? applyCartaSort(catDishesRaw, sortKey, rankings)
             : [...catDishesRaw].sort((a, b) => {
