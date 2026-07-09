@@ -113,6 +113,7 @@ function PasswordScreen({ onAuth }: { onAuth: () => void }) {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0A0908", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <style>{`input::placeholder { color: #4A443D !important; opacity: 1; }`}</style>
       <div style={{ width: "100%", maxWidth: 360 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "#E8DDC8", marginBottom: 6 }}>QuieroComer</div>
@@ -450,6 +451,7 @@ function CRMApp() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3A342D; border-radius: 4px; }
         input[type=datetime-local]::-webkit-calendar-picker-indicator { filter: invert(.4); cursor: pointer; }
+        input::placeholder, textarea::placeholder { color: #4A443D !important; opacity: 1; }
         @media (max-width: 768px) {
           .desktop-panel { display: none !important; }
           .mobile-panel-overlay { display: flex !important; }
