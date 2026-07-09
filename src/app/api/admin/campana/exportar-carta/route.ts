@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         rMap, ctaUrl, !!magicToken
       )
     );
-    await sendAdminEmail({ to: testEmail, subject: `[TEST] ¿Tu carta solo existe en un QR? Eso tiene solución →`, html, purpose: "campana_exportar_carta_test" });
+    await sendAdminEmail({ to: testEmail, subject: `[TEST] Tu carta impresa está lista para imprimir`, html, purpose: "campana_exportar_carta_test" });
     return NextResponse.json({ ok: true, testEmail, message: "Email de prueba enviado" });
   }
 
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     try {
       await sendAdminEmail({
         to: lead.email,
-        subject: `¿Tu carta solo existe en un QR? Eso tiene solución →`,
+        subject: `Tu carta impresa está lista para imprimir`,
         html,
         purpose: "campana_exportar_carta",
       });
