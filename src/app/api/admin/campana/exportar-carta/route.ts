@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const leads = await prisma.lead.findMany({
     where: {
       email: { not: "import@quierocomer.cl" },
-      ownerName: { not: { contains: "Joan Valdivia", mode: "insensitive" } },
+      ownerName: { not: { contains: "Joan Valdivia" } },
     },
     select: {
       id: true,
