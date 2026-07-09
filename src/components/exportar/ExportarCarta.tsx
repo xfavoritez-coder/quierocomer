@@ -87,10 +87,10 @@ const TEMAS: { key: Tema; label: string; color: string }[] = [
   { key: "piedra", label: "Piedra", color: "#8a7e72" },
 ];
 
-const LANG_OPTIONS: { key: Lang; label: string; flag: string }[] = [
-  { key: "es", label: "Español", flag: "🇨🇱" },
-  { key: "en", label: "English", flag: "🇺🇸" },
-  { key: "pt", label: "Português", flag: "🇧🇷" },
+const LANG_OPTIONS: { key: Lang; label: string; flagSrc: string }[] = [
+  { key: "es", label: "Español",   flagSrc: "https://flagcdn.com/w40/cl.png" },
+  { key: "en", label: "English",   flagSrc: "https://flagcdn.com/w40/us.png" },
+  { key: "pt", label: "Português", flagSrc: "https://flagcdn.com/w40/br.png" },
 ];
 
 export default function ExportarCarta({ restaurant, categories, categoryTranslations = [], dishes, isPaid = false }: Props) {
@@ -269,29 +269,30 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
         </div>
 
         {/* Language selector */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, justifyContent: "center" }}>
           {LANG_OPTIONS.map((l) => {
             const active = lang === l.key;
             return (
               <button key={l.key} onClick={() => setLang(l.key)} style={{
-                padding: "6px 12px", borderRadius: 8, cursor: "pointer",
-                background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                padding: "6px 12px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                background: active ? `rgba(244,166,35,0.12)` : "var(--adm-input)",
                 border: active ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
-                fontFamily: F, fontSize: "0.75rem", fontWeight: active ? 700 : 400,
+                fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
                 color: active ? GOLD : "var(--adm-text2)",
-                display: "flex", alignItems: "center", gap: 5,
+                display: "flex", alignItems: "center", gap: 6,
               }}>
-                <span>{l.flag}</span> {l.label}
+                <img src={l.flagSrc} alt={l.key} style={{ width: 18, height: 12, objectFit: "cover", borderRadius: 2, flexShrink: 0 }} />
+                {l.label}
               </button>
             );
           })}
         </div>
 
-        {/* Actions row */}
-        <div className="exportar-actions" style={{ display: "flex", gap: 8 }}>
+        {/* Options row */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
           <button onClick={() => setIncluirFotos((v) => !v)} style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "9px 14px", borderRadius: 10, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
+            padding: "8px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
             background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
             border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
             fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
@@ -304,8 +305,8 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
           {/* Ahorro de tinta — solo para temas claros */}
           {esClaro && (
             <button onClick={() => setAhorroTinta((v) => !v)} style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "9px 14px", borderRadius: 10, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
+              padding: "8px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
               background: ahorroTinta ? "rgba(34,197,94,0.1)" : "var(--adm-input)",
               border: ahorroTinta ? "1.5px solid #22c55e" : "1px solid var(--adm-input-border)",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
@@ -314,28 +315,32 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
               🍃 {ahorroTinta ? "Fondo blanco" : "Ahorro tinta"}
             </button>
           )}
+        </div>
+
+        {/* Print / Unlock — full width */}
+        <div style={{ display: "flex" }}>
 
           {isTrial ? (
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }))}
               style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "9px 18px", borderRadius: 10, cursor: "pointer",
-                background: GOLD, border: "none",
-                fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
-                color: "#0a0a0a",
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "11px 18px", borderRadius: 10, cursor: "pointer",
+                background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%)",
+                border: "none", boxShadow: "0 4px 14px rgba(124,58,237,0.35)",
+                fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+                color: "#fff",
               }}>
-              <Printer size={16} />
-              Desbloquear para imprimir →
+              💎 Desbloquear para imprimir →
             </button>
           ) : (
             <button
               onClick={handlePrint}
               style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "9px 18px", borderRadius: 10, cursor: "pointer",
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "11px 18px", borderRadius: 10, cursor: "pointer",
                 background: GOLD, border: "none",
-                fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+                fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
                 color: "#0a0a0a",
               }}>
               <Printer size={16} />
@@ -344,40 +349,74 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
           )}
         </div>
 
-        {isTrial ? (
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "10px 0 0", lineHeight: 1.5, background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, padding: "8px 12px" }}>
-            ⭐ Esta es una vista previa real de tu carta. Sube al plan <strong>Gold</strong> para imprimir o guardar como PDF.
-          </p>
-        ) : (
+        {!isTrial && (
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.4 }}>
             Se abrirá una ventana de impresión. Selecciona &quot;Guardar como PDF&quot; como destino.
           </p>
         )}
       </div>
 
-      <style>{`
-        .exportar-actions { flex-wrap: wrap; }
-        .exportar-actions button { flex: 1 1 auto !important; justify-content: center; }
-        ${ahorroTinta ? `.huerto-page, .medit-page, .medit-inner { background: #fff !important; }` : ""}
-      `}</style>
+      {ahorroTinta && (
+        <style>{`.huerto-page, .medit-page, .medit-inner { background: #fff !important; }`}</style>
+      )}
 
       {/* Preview sheet — dynamic scale */}
-      <div ref={wrapperPreviewRef} style={{ width: "100%", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)", height: previewHeight || "auto" }}>
+      <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}>
         <div
-          ref={sheetRef}
+          ref={wrapperPreviewRef}
           style={{
-            transformOrigin: "top left",
-            transform: previewScale < 1 ? `scale(${previewScale})` : undefined,
-            width: previewScale < 1 ? `${100 / previewScale}%` : "100%",
+            width: "100%",
+            maxHeight: isTrial ? 420 : undefined,
+            overflow: isTrial ? "hidden" : undefined,
+            height: isTrial ? undefined : (previewHeight || "auto"),
           }}
         >
-          <TemaComponent
-            restaurant={restaurant}
-            sections={sections}
-            incluirFotos={incluirFotos}
-            qrDataUrl={qrDataUrl}
-          />
+          <div
+            ref={sheetRef}
+            style={{
+              transformOrigin: "top left",
+              transform: previewScale < 1 ? `scale(${previewScale})` : undefined,
+              width: previewScale < 1 ? `${100 / previewScale}%` : "100%",
+            }}
+          >
+            <TemaComponent
+              restaurant={restaurant}
+              sections={sections}
+              incluirFotos={incluirFotos}
+              qrDataUrl={qrDataUrl}
+            />
+          </div>
         </div>
+
+        {/* Trial blur overlay */}
+        {isTrial && (
+          <div style={{
+            position: "absolute", left: 0, right: 0, bottom: 0,
+            height: 220,
+            background: "linear-gradient(to bottom, transparent 0%, rgba(15,15,15,0.55) 35%, rgba(10,10,10,0.88) 70%, rgba(10,10,10,0.97) 100%)",
+            backdropFilter: "blur(3px)",
+            WebkitBackdropFilter: "blur(3px)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
+            padding: "0 20px 24px",
+            gap: 10,
+          }}>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "#fff", textAlign: "center", margin: 0, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              Tu carta completa en 4 diseños profesionales
+            </p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }))}
+              style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "10px 22px", borderRadius: 10, cursor: "pointer",
+                background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%)",
+                border: "none", boxShadow: "0 4px 18px rgba(124,58,237,0.5)",
+                fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+                color: "#fff",
+              }}>
+              💎 Ver planes y desbloquear
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

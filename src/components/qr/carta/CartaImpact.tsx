@@ -863,17 +863,20 @@ export default function CartaImpact({
 
   useEffect(() => {
     let shown = false;
+    let scrolled = false; // require at least one real scroll before activating
     const check = () => {
+      scrolled = true;
       const el = menuAnchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      // Histéresis: mostrar cuando sube de 60, ocultar solo cuando baja de 110
-      // Evita el parpadeo cuando el cambio de altura del header empuja el contenido
       if (!shown && rect.top < 60) { shown = true; setShowFixedCatNav(true); }
       else if (shown && rect.top > 110) { shown = false; setShowFixedCatNav(false); }
     };
-    window.addEventListener("scroll", check, { passive: true });
-    return () => window.removeEventListener("scroll", check);
+    // Delay attaching listener so iOS address-bar-hide scroll events don't trigger early
+    const tid = setTimeout(() => {
+      window.addEventListener("scroll", check, { passive: true });
+    }, 400);
+    return () => { clearTimeout(tid); window.removeEventListener("scroll", check); };
   }, []);
   // Measure real header height (includes safe-area-inset-top on iPhone)
   useEffect(() => {
@@ -1328,9 +1331,8 @@ export default function CartaImpact({
       <div style={{
         overflow: "hidden",
         maxHeight: showFixedCatNav ? 50 : 0,
-        opacity: showFixedCatNav ? 1 : 0,
-        transition: "max-height 0.25s ease, opacity 0.2s ease",
-        willChange: "max-height, opacity",
+        transition: "max-height 0.25s ease",
+        willChange: "max-height",
       }}>
         <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4 }}>
           <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
