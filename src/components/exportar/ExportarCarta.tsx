@@ -333,53 +333,46 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
       `}</style>
 
       {/* Preview sheet */}
-      <div className="exportar-sheet-wrapper" style={{ overflow: "hidden", borderRadius: 8, position: "relative" }}>
-        {/* Full carta rendered (always visible, but clipped for trial users) */}
-        <div ref={sheetRef} className="exportar-sheet" style={{
-          boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-          overflow: "hidden",
-          maxWidth: 900,
-          ...(isTrial ? { maxHeight: 680, overflow: "hidden" } : {}),
-        }}>
+      <div className="exportar-sheet-wrapper" style={{
+        borderRadius: 8, position: "relative",
+        maxHeight: isTrial ? 620 : undefined,
+        overflow: "hidden",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+      }}>
+        {/* Full carta always rendered */}
+        <div ref={sheetRef} className="exportar-sheet" style={{ maxWidth: 900 }}>
           <TemaComponent
             restaurant={restaurant}
-            sections={isTrial ? sections : visibleSections}
+            sections={sections}
             incluirFotos={incluirFotos}
             qrDataUrl={qrDataUrl}
           />
         </div>
 
-        {/* Fade + CTA overlay for trial users */}
+        {/* Gradient fade + CTA overlaid on top of the carta for trial users */}
         {isTrial && (
-          <div style={{ position: "relative" }}>
-            {/* Gradient fade that reveals the carta partially */}
-            <div style={{
-              position: "absolute", bottom: 0, left: 0, right: 0, height: 220,
-              background: "linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.55) 40%, rgba(10,10,10,0.92) 100%)",
-              pointerEvents: "none",
-            }} />
-            {/* CTA box */}
-            <div style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "flex-end", paddingBottom: 32, gap: 10,
-              minHeight: 180,
-            }}>
-              <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0, textAlign: "center", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-                Tu carta completa, lista para imprimir
-              </p>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "rgba(255,255,255,0.7)", margin: 0, textAlign: "center" }}>
-                Activa Premium y descárgala en segundos
-              </p>
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))}
-                style={{
-                  marginTop: 4, padding: "11px 28px", borderRadius: 10, border: "none", cursor: "pointer",
-                  background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
-                }}
-              >
-                Ver plan Premium →
-              </button>
-            </div>
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, height: 280,
+            background: "linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.75) 50%, rgba(10,10,10,0.97) 100%)",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "flex-end",
+            paddingBottom: 36, gap: 8,
+          }}>
+            <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0, textAlign: "center", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
+              Tu carta completa, lista para imprimir
+            </p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "rgba(255,255,255,0.65)", margin: 0, textAlign: "center" }}>
+              Activa Premium y descárgala en segundos
+            </p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))}
+              style={{
+                marginTop: 6, padding: "11px 28px", borderRadius: 10, border: "none", cursor: "pointer",
+                background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+              }}
+            >
+              Ver plan Premium →
+            </button>
           </div>
         )}
       </div>
