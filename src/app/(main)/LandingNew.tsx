@@ -28,14 +28,127 @@ const AB_DEFAULTS = {
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
+const I18N = {
+  es: {
+    eyebrow: "Para dueños de restaurantes",
+    microcopy: "Te mostramos en segundos cómo queda",
+    heroTitle: "Tu local puede {vender más}",
+    heroSubtitle: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
+    heroCta: "Transformar gratis →",
+    hiwEyebrow: "Así funciona QuieroComer",
+    hiwTitle: "Transformamos tu carta en una carta QR",
+    hiwTitleAccent: "inteligente",
+    steps: [
+      { h: "Subes gratis tu carta actual", li: "PDF, link QR, tu web o fotos del menú" },
+      { h: "La transformamos online", li: "En segundos con IA" },
+      { h: "Te mostramos como queda", li: "Creamos algo único para ti y tu restaurante" },
+    ],
+    funcionesEyebrow: "Funciones inteligentes",
+    funcionesTitle: "Tu carta QR también puede",
+    funcionesTitleAccent: "vender, atender y fidelizar.",
+    funciones: [
+      { icon: "🔔", title: "Llamar al garzón", desc: "El cliente puede llamar al garzón directamente desde la carta QR, sin levantar la mano ni esperar." },
+      { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos, acompañamientos o postres mientras el cliente decide." },
+      { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso." },
+      { icon: "👥", title: "Clientes ilimitados", desc: "Captura emails y preferencias de tus clientes sin límite. Exporta y usa donde quieras." },
+      { icon: "🏷️", title: "Promociones visibles", desc: "Muestra promociones, productos nuevos o platos estratégicos directamente en tu carta QR." },
+      { icon: "🌍", title: "Varios idiomas", desc: "Facilita la experiencia de turistas y clientes extranjeros con tu carta traducida." },
+    ],
+    verFunciones: "Ver todas las funciones →",
+    logosEyebrow: "Ya usan QuieroComer",
+    faqEyebrow: "Lo que más nos preguntan",
+    faqs: [
+      { q: "¿Qué es QuieroComer?", a: "Transforma tu carta, ya sea física o digital, en una experiencia visual que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes." },
+      { q: "¿Para qué tengo que subir mi carta?", a: "Nuestra IA analiza tu carta, física o QR, y en segundos te deja una Carta Viva lista para usar." },
+      { q: "Ya tengo una carta QR. ¿Sirve igual?", a: "Sí. Puedes subir el link de tu QR actual y te mostramos cómo se vería mejorada con QuieroComer." },
+      { q: "¿Tengo que dejar de usar cartas físicas?", a: "No. Puedes seguir usando cartas físicas. QuieroComer funciona como complemento digital para mostrar fotos, recomendaciones, traducciones y datos." },
+      { q: "¿Es gratis?", a: "plan_link" },
+    ],
+    faqPlanLink: <>Sí. Puedes empezar gratis y cuando quieras, ver nuestros <a href="/planes" style={{ color: "var(--amber)", textDecoration: "underline" }}>planes</a>.</>,
+    finalTitle: "Transforma tu carta en una herramienta que venda",
+    finalSub: "Sube tu carta. Lo demás, lo hacemos nosotros.",
+    finalCta: "Transformar mi carta gratis →",
+    planesTitle: <>Empieza gratis. <span className="accent">Crece cuando quieras.</span></>,
+    planesSub: "7 días de prueba en planes pagados · Cancela cuando quieras",
+    mensual: "Mensual",
+    anual: "Anual",
+    planes: {
+      free: { name: "Gratis", period: "para siempre", desc: "Carta QR digital para empezar a vender", btn: "Comenzar gratis",
+        features: [["Carta QR digital", "Tu carta lista para escanear con QR"], ["1 diseño de carta", "Muestra tu carta en formato lista"], ["Panel autoadministrable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"]] as [string,string][] },
+      gold: { name: "Gold", desc: "Gratis + herramientas para destacar tus platos y mejorar la experiencia de tus clientes", btn: "Comenzar 7 días gratis",
+        features: [["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"], ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"], ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"], ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"], ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"]] as [string,string][] },
+      premium: { name: "Premium", desc: "Gold + herramientas automatizadas de venta y retención", btn: "Comenzar 7 días gratis",
+        features: [["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"], ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"], ["Cross-selling", "Sugiere acompañamientos, bebidas o postres junto a cada plato"], ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"], ["Ver clientes ilimitados", "Sin límite de clientes registrados. Ve correos, preferencias y más"], ["Multi-carta", "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico"]] as [string,string][] },
+    },
+  },
+  en: {
+    eyebrow: "For restaurant owners",
+    microcopy: "We show you in seconds how it looks",
+    heroTitle: "Your restaurant can {sell more}",
+    heroSubtitle: "Turn your current menu into a tool that increases your sales and improves your customers' experience.",
+    heroCta: "Transform for free →",
+    hiwEyebrow: "How QuieroComer works",
+    hiwTitle: "We transform your menu into a smart",
+    hiwTitleAccent: "QR menu",
+    steps: [
+      { h: "Upload your current menu for free", li: "PDF, QR link, your website or menu photos" },
+      { h: "We transform it online", li: "In seconds with AI" },
+      { h: "We show you how it looks", li: "We create something unique for your restaurant" },
+    ],
+    funcionesEyebrow: "Smart features",
+    funcionesTitle: "Your QR menu can also",
+    funcionesTitleAccent: "sell, serve and retain.",
+    funciones: [
+      { icon: "🔔", title: "Call the waiter", desc: "Customers can call the waiter directly from the QR menu, without raising their hand or waiting." },
+      { icon: "🧞", title: "Smart suggestions", desc: "Recommends starters, drinks, sides or desserts while the customer decides." },
+      { icon: "📊", title: "Menu analytics", desc: "Discover what your customers look at, which dishes attract the most attention and which products need a boost." },
+      { icon: "👥", title: "Unlimited customers", desc: "Capture emails and preferences from your customers without limits. Export and use wherever you want." },
+      { icon: "🏷️", title: "Visible promotions", desc: "Show promotions, new products or strategic dishes directly in your QR menu." },
+      { icon: "🌍", title: "Multiple languages", desc: "Make it easy for tourists and foreign customers with your menu translated automatically." },
+    ],
+    verFunciones: "See all features →",
+    logosEyebrow: "Already using QuieroComer",
+    faqEyebrow: "Frequently asked questions",
+    faqs: [
+      { q: "What is QuieroComer?", a: "It transforms your menu — physical or digital — into a visual experience that recommends dishes, suggests starters, desserts and drinks. It translates your menu into multiple languages and gives you data on what your customers look at." },
+      { q: "Why do I need to upload my menu?", a: "Our AI analyzes your menu, physical or QR, and in seconds creates a Smart Menu ready to use." },
+      { q: "I already have a QR menu. Does it still work?", a: "Yes. You can upload the link to your current QR menu and we'll show you how it would look improved with QuieroComer." },
+      { q: "Do I have to stop using physical menus?", a: "No. You can keep using physical menus. QuieroComer works as a digital complement to show photos, recommendations, translations and data." },
+      { q: "Is it free?", a: "plan_link" },
+    ],
+    faqPlanLink: <>Yes. You can start for free and whenever you're ready, check our <a href="/planes" style={{ color: "var(--amber)", textDecoration: "underline" }}>plans</a>.</>,
+    finalTitle: "Transform your menu into a selling tool",
+    finalSub: "Upload your menu. We'll handle the rest.",
+    finalCta: "Transform my menu for free →",
+    planesTitle: <>Start free. <span className="accent">Grow whenever you want.</span></>,
+    planesSub: "7-day trial on paid plans · Cancel anytime",
+    mensual: "Monthly",
+    anual: "Annual",
+    planes: {
+      free: { name: "Free", period: "forever", desc: "Digital QR menu to start selling", btn: "Get started free",
+        features: [["Digital QR menu", "Your menu ready to scan with QR"], ["1 menu design", "Show your menu in list format"], ["Self-managed dashboard", "Edit dishes, prices and photos from your dashboard without depending on anyone"]] as [string,string][] },
+      gold: { name: "Gold", desc: "Free + tools to highlight your dishes and improve your customers' experience", btn: "Start 7-day free trial",
+        features: [["Genie (AI) included", "Smart assistant that recommends dishes based on the customer's profile and preferences"], ["Highlight star dishes", "Visually emphasize the dishes that are most profitable to sell"], ["Offers and promotions", "Create temporary offers and promos visible in the menu"], ["Basic analytics", "See how many visits your menu gets and which dishes are viewed most"], ["In-menu announcements", "Show announcements or highlights within your own menu"]] as [string,string][] },
+      premium: { name: "Premium", desc: "Gold + automated selling and retention tools", btn: "Start 7-day free trial",
+        features: [["Advanced analytics", "Detailed metrics: most viewed dishes, peak hours, conversion and trends"], ["Call waiter button", "Customers can call the waiter directly from the digital menu"], ["Cross-selling", "Suggests sides, drinks or desserts alongside each dish"], ["Multi-language (ES, EN, PT)", "Your menu is automatically translated to Spanish, English and Portuguese"], ["Unlimited customer view", "No limit on registered customers. See emails, preferences and more"], ["Multi-menu", "One QR, multiple menus. Ideal for venues with more than one concept"]] as [string,string][] },
+    },
+  },
+} as const;
+
 export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverAb?: Record<string, any> }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [planesOpen, setPlanesOpen] = useState(false);
   const [anual, setAnual] = useState(false);
+  const [lang, setLang] = useState<"es" | "en">("es");
+  const t = I18N[lang];
 
   // Forward UTM params to /subircarta so they survive in-app browser navigation
   const [subircartaHref, setSubircartaHref] = useState("/subircarta");
   useEffect(() => {
+    // Language detection — switch to English if browser is configured in English
+    const browserLang = navigator.language || "";
+    if (browserLang.toLowerCase().startsWith("en")) setLang("en");
+
     const params = new URLSearchParams(window.location.search);
     const keep = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "utm_id", "fbclid", "gclid"];
     const forwarded = new URLSearchParams();
@@ -187,11 +300,17 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
         <div className="hero-glow" />
         <div className="container hero-grid">
           <div>
-            <div className="eyebrow">Para dueños de restaurantes</div>
-            <h1 style={{ opacity: abTitle ? 1 : 0, transition: "opacity 0.3s ease" }}>{parseAbText(abTitle)}</h1>
-            <p className="hero-sub-text" style={{ opacity: abSubtitle ? 1 : 0, transition: "opacity 0.3s ease" }}>{parseAbText(abSubtitle)}</p>
-            <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
-            <div className="microcopy">Te mostramos en segundos cómo queda</div>
+            <div className="eyebrow">{t.eyebrow}</div>
+            <h1 style={{ opacity: 1, transition: "opacity 0.3s ease" }}>
+              {lang === "en" ? parseAbText(t.heroTitle) : parseAbText(abTitle || t.heroTitle)}
+            </h1>
+            <p className="hero-sub-text" style={{ opacity: 1, transition: "opacity 0.3s ease" }}>
+              {lang === "en" ? t.heroSubtitle : (abSubtitle || t.heroSubtitle)}
+            </p>
+            <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>
+              {lang === "en" ? t.heroCta : (abCta || t.heroCta)}
+            </a>
+            <div className="microcopy">{t.microcopy}</div>
           </div>
         </div>
       </section>
@@ -242,55 +361,24 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       {/* ASÍ FUNCIONA */}
       <section className="how-it-works" data-track="Como funciona">
         <div className="container">
-          <p className="hiw-eyebrow">Así funciona QuieroComer</p>
-          <h2 className="hiw-title">Transformamos tu carta en una carta QR <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>inteligente</span></h2>
+          <p className="hiw-eyebrow">{t.hiwEyebrow}</p>
+          <h2 className="hiw-title">{t.hiwTitle} <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>{t.hiwTitleAccent}</span></h2>
 
           <div className="hiw-steps">
-            <div className="hiw-step">
-              <div className="hiw-step-content">
-                <div className="hiw-num-col"><div className="hiw-num">1</div><div className="hiw-line" /></div>
-                <div>
-                  <h3>Subes gratis tu carta actual</h3>
-                  <ul>
-                    <li>PDF, link QR, tu web o fotos del menú</li>
-                  </ul>
+            {t.steps.map((step, i) => (
+              <div key={i} className="hiw-step">
+                <div className="hiw-step-content">
+                  <div className="hiw-num-col"><div className="hiw-num">{i + 1}</div><div className="hiw-line" /></div>
+                  <div>
+                    <h3>{step.h}</h3>
+                    <ul><li>{step.li}</li></ul>
+                  </div>
+                </div>
+                <div className="hiw-img-wrap">
+                  <img src={["/landing/11.jpg", "/landing/22.jpg", "/landing/feliz.jpg"][i]} alt={step.h} />
                 </div>
               </div>
-              <div className="hiw-img-wrap">
-                <img src="/landing/11.jpg" alt="Subir carta" />
-              </div>
-            </div>
-
-            <div className="hiw-step">
-              <div className="hiw-step-content">
-                <div className="hiw-num-col"><div className="hiw-num">2</div><div className="hiw-line" /></div>
-                <div>
-                  <h3>La transformamos online</h3>
-                  <ul>
-                    <li>En segundos con IA</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="hiw-img-wrap">
-                <img src="/landing/22.jpg" alt="Transformación" />
-              </div>
-            </div>
-
-            <div className="hiw-step">
-              <div className="hiw-step-content">
-                <div className="hiw-num-col"><div className="hiw-num">3</div><div className="hiw-line" /></div>
-                <div>
-                  <h3>Te mostramos como queda</h3>
-                  <ul>
-                    <li>Creamos algo único para ti y tu restaurante</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="hiw-img-wrap">
-                <img src="/landing/feliz.jpg" alt="Mejoras toda la experiencia" />
-              </div>
-            </div>
-
+            ))}
           </div>
         </div>
       </section>
@@ -299,19 +387,12 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       {/* FUNCIONES */}
       <section className="funciones-section" data-track="Funciones">
         <div className="container">
-          <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14, textAlign: "center" }}>Funciones inteligentes</p>
+          <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14, textAlign: "center" }}>{t.funcionesEyebrow}</p>
           <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(32px,4.5vw,46px)", lineHeight: 1.12, textAlign: "center", marginBottom: 48, fontWeight: 400 }}>
-            Tu carta QR también puede <span style={{ color: "var(--amber)", fontStyle: "italic" }}>vender, atender y fidelizar.</span>
+            {t.funcionesTitle} <span style={{ color: "var(--amber)", fontStyle: "italic" }}>{t.funcionesTitleAccent}</span>
           </h2>
           <div className="func-grid">
-            {[
-              { icon: "🔔", title: "Llamar al garzón", desc: "El cliente puede llamar al garzón directamente desde la carta QR, sin levantar la mano ni esperar." },
-              { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos, acompañamientos o postres mientras el cliente decide." },
-              { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso." },
-              { icon: "👥", title: "Clientes ilimitados", desc: "Captura emails y preferencias de tus clientes sin límite. Exporta y usa donde quieras." },
-              { icon: "🏷️", title: "Promociones visibles", desc: "Muestra promociones, productos nuevos o platos estratégicos directamente en tu carta QR." },
-              { icon: "🌍", title: "Varios idiomas", desc: "Facilita la experiencia de turistas y clientes extranjeros con tu carta traducida." },
-            ].map((f, i) => (
+            {t.funciones.map((f, i) => (
               <div key={i} className="func-card">
                 <span className="func-icon">{f.icon}</span>
                 <h3 className="func-title">{f.title}</h3>
@@ -327,7 +408,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
               fontSize: 14, fontWeight: 600, textDecoration: "none",
               letterSpacing: ".02em", transition: ".25s", borderRadius: 8,
             }}>
-              Ver todas las funciones →
+              {t.verFunciones}
             </a>
           </div>
         </div>
@@ -336,7 +417,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       {/* LOGOS */}
       <section className="logos-band" data-track="Logos">
         <div className="container">
-          <p className="logos-eyebrow">Ya usan QuieroComer</p>
+          <p className="logos-eyebrow">{t.logosEyebrow}</p>
           <div className="logos-grid">
             {logoChips.map((l, i) => (
               <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
@@ -356,19 +437,13 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       <section className="faq" data-track="FAQ">
         <div className="container">
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
-<p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginTop: 20, marginBottom: 8, textAlign: "center" }}>Lo que más nos preguntan</p>
+<p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginTop: 20, marginBottom: 8, textAlign: "center" }}>{t.faqEyebrow}</p>
           </div>
           <div className="faq-list">
-            {[
-              { q: "¿Qué es QuieroComer?", a: "Transforma tu carta, ya sea física o digital, en una experiencia visual que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes." },
-              { q: "¿Para qué tengo que subir mi carta?", a: "Nuestra IA analiza tu carta, física o QR, y en segundos te deja una Carta Viva lista para usar." },
-              { q: "Ya tengo una carta QR. ¿Sirve igual?", a: "Sí. Puedes subir el link de tu QR actual y te mostramos cómo se vería mejorada con QuieroComer." },
-              { q: "¿Tengo que dejar de usar cartas físicas?", a: "No. Puedes seguir usando cartas físicas. QuieroComer funciona como complemento digital para mostrar fotos, recomendaciones, traducciones y datos." },
-              { q: "¿Es gratis?", a: "plan_link" },
-            ].map((item, i) => (
+            {t.faqs.map((item, i) => (
               <div key={i} className={`faq-item${faqOpen === i ? " open" : ""}`}>
                 <div className="faq-q" onClick={() => setFaqOpen(faqOpen === i ? null : i)}>{item.q}</div>
-                <div className="faq-a">{item.a === "plan_link" ? <>Sí. Puedes empezar gratis y cuando quieras, ver nuestros <a href="/planes" style={{ color: "var(--amber)", textDecoration: "underline" }}>planes</a>.</> : item.a}</div>
+                <div className="faq-a">{item.a === "plan_link" ? t.faqPlanLink : item.a}</div>
               </div>
             ))}
           </div>
@@ -380,9 +455,9 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       {/* FINAL CTA */}
       <section className="final-cta" id="cta" data-track="CTA final">
         <div className="container">
-          <h2>Transforma tu carta en una herramienta que venda</h2>
-          <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Transformar mi carta gratis →</a>
+          <h2>{t.finalTitle}</h2>
+          <p style={{ lineHeight: "26px" }}>{t.finalSub}</p>
+          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>{t.finalCta}</a>
         </div>
       </section>
 
@@ -395,39 +470,22 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
             <div style={{ overflowY: "auto", padding: 40 }}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div className="eyebrow">Planes</div>
-              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(30px,4vw,48px)", color: "var(--cream)" }}>Empieza gratis. <span className="accent">Crece cuando quieras.</span></h2>
-              <p style={{ color: "var(--cream-soft)", fontSize: 15, marginTop: 8 }}>7 días de prueba en planes pagados · Cancela cuando quieras</p>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(30px,4vw,48px)", color: "var(--cream)" }}>{t.planesTitle}</h2>
+              <p style={{ color: "var(--cream-soft)", fontSize: 15, marginTop: 8 }}>{t.planesSub}</p>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginTop: 20, fontSize: 14, color: "var(--cream-soft)" }}>
-                <span style={{ color: anual ? "var(--cream-soft)" : "var(--amber)", fontWeight: anual ? 300 : 600 }}>Mensual</span>
+                <span style={{ color: anual ? "var(--cream-soft)" : "var(--amber)", fontWeight: anual ? 300 : 600 }}>{t.mensual}</span>
                 <label style={{ position: "relative", display: "inline-block", width: 48, height: 26, cursor: "pointer" }}>
                   <input type="checkbox" checked={anual} onChange={() => setAnual(!anual)} style={{ opacity: 0, width: 0, height: 0 }} />
                   <span style={{ position: "absolute", inset: 0, background: "var(--gray-deep)", borderRadius: 26, transition: ".3s" }} />
                   <span style={{ position: "absolute", top: 3, left: anual ? 25 : 3, width: 20, height: 20, background: "var(--amber)", borderRadius: "50%", transition: ".3s" }} />
                 </label>
-                <span style={{ color: anual ? "var(--amber)" : "var(--cream-soft)", fontWeight: anual ? 600 : 300 }}>Anual</span>
+                <span style={{ color: anual ? "var(--amber)" : "var(--cream-soft)", fontWeight: anual ? 600 : 300 }}>{t.anual}</span>
               </div>
             </div>
             <div className="planes-grid">
-              <PlanCard name="Gratis" price="$0" period="para siempre" desc="Carta QR digital para empezar a vender" features={[
-                ["Carta QR digital", "Tu carta lista para escanear con QR"],
-                ["1 diseño de carta", "Muestra tu carta en formato lista"],
-                ["Panel autoadministrable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"],
-              ]} btnText="Comenzar gratis" btnPrimary={false} />
-              <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes + IVA · $358.800/año" : "/mes + IVA"} discount={anual ? "-15%" : undefined} desc="Gratis + herramientas para destacar tus platos y mejorar la experiencia de tus clientes" featured features={[
-                ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
-                ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
-                ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"],
-                ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
-                ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
-              ]} btnText="Comenzar 7 días gratis" btnPrimary />
-              <PlanCard name="Premium" price={anual ? "$35.900" : "$44.900"} period={anual ? "/mes + IVA · $430.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
-                ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
-                ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
-                ["Cross-selling", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
-                ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
-                ["Ver clientes ilimitados", "Sin límite de clientes registrados. Ve correos, preferencias y más"],
-                ["Multi-carta", "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico"],
-              ]} btnText="Comenzar 7 días gratis" btnPrimary={false} />
+              <PlanCard name={t.planes.free.name} price="$0" period={t.planes.free.period} desc={t.planes.free.desc} features={t.planes.free.features} btnText={t.planes.free.btn} btnPrimary={false} />
+              <PlanCard name={t.planes.gold.name} price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes + IVA · $358.800/año" : "/mes + IVA"} discount={anual ? "-15%" : undefined} desc={t.planes.gold.desc} featured features={t.planes.gold.features} btnText={t.planes.gold.btn} btnPrimary />
+              <PlanCard name={t.planes.premium.name} price={anual ? "$35.900" : "$44.900"} period={anual ? "/mes + IVA · $430.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc={t.planes.premium.desc} features={t.planes.premium.features} btnText={t.planes.premium.btn} btnPrimary={false} />
             </div>
           </div>
           </div>
