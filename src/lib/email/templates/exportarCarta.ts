@@ -88,11 +88,6 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
     </p>
   </td></tr>
 
-  <!-- Languages badge -->
-  <tr><td align="center" style="padding-bottom:20px;">
-    <span style="display:inline-block;background:#f0f7ff;border:1px solid #c8dff5;border-radius:20px;padding:5px 14px;font-size:12px;color:#2f5d8a;font-weight:600;">🌎 Disponible en Español · English · Português</span>
-  </td></tr>
-
   <!-- "Diseños" label + theme pills centrados -->
   <tr><td align="center" style="padding-bottom:6px;">
     <div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.12em;font-weight:600;">Diseños disponibles</div>
