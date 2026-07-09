@@ -84,7 +84,7 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
   </td></tr>
   <tr><td align="center" style="padding-bottom:10px;">
     <p style="margin:0;font-size:15px;color:#666;line-height:1.6;">
-      Hola ${firstName} — ahora puedes imprimir la carta de <strong style="color:#1a1a1a;">${restaurantName}</strong><br>en 4 diseños profesionales, en segundos.
+      Ahora puedes imprimir la carta de <strong style="color:#1a1a1a;">${restaurantName}</strong><br>en 4 diseños profesionales, en segundos.
     </p>
   </td></tr>
 
