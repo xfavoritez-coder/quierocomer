@@ -20,6 +20,12 @@ interface Category {
   position: number;
 }
 
+interface DishTranslation {
+  lang: string;
+  name: string | null;
+  description: string | null;
+}
+
 interface Dish {
   id: string;
   name: string;
@@ -29,6 +35,13 @@ interface Dish {
   photos: string[];
   categoryId: string;
   position: number;
+  translations: DishTranslation[];
+}
+
+interface CategoryTranslation {
+  categoryId: string;
+  lang: string;
+  name: string;
 }
 
 const F = "var(--font-display)";
@@ -37,6 +50,7 @@ export default function ExportarCartaPage() {
   const { selectedRestaurantId, loading: sessionLoading } = useAdminSession();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryTranslations, setCategoryTranslations] = useState<CategoryTranslation[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -54,6 +68,7 @@ export default function ExportarCartaPage() {
       .then((data) => {
         setRestaurant(data.restaurant);
         setCategories(data.categories);
+        setCategoryTranslations(data.categoryTranslations ?? []);
         setDishes(data.dishes);
         setIsPaid(data.isPaid ?? false);
       })
@@ -80,6 +95,7 @@ export default function ExportarCartaPage() {
     <ExportarCarta
       restaurant={restaurant}
       categories={filteredCategories}
+      categoryTranslations={categoryTranslations}
       dishes={validDishes}
       isPaid={isPaid}
     />

@@ -25,6 +25,12 @@ interface Category {
   position: number;
 }
 
+interface DishTranslation {
+  lang: string;
+  name: string | null;
+  description: string | null;
+}
+
 interface Dish {
   id: string;
   name: string;
@@ -34,6 +40,13 @@ interface Dish {
   photos: string[];
   categoryId: string;
   position: number;
+  translations: DishTranslation[];
+}
+
+interface CategoryTranslation {
+  categoryId: string;
+  lang: string;
+  name: string;
 }
 
 export interface Section {
@@ -47,9 +60,12 @@ export interface Section {
   }[];
 }
 
+type Lang = "es" | "en" | "pt";
+
 interface Props {
   restaurant: Restaurant;
   categories: Category[];
+  categoryTranslations?: CategoryTranslation[];
   dishes: Dish[];
   isPaid?: boolean;
 }
@@ -71,25 +87,43 @@ const TEMAS: { key: Tema; label: string; color: string }[] = [
   { key: "piedra", label: "Piedra", color: "#8a7e72" },
 ];
 
-export default function ExportarCarta({ restaurant, categories, dishes, isPaid = false }: Props) {
+const LANG_OPTIONS: { key: Lang; label: string; flag: string }[] = [
+  { key: "es", label: "Español", flag: "🇨🇱" },
+  { key: "en", label: "English", flag: "🇺🇸" },
+  { key: "pt", label: "Português", flag: "🇧🇷" },
+];
+
+export default function ExportarCarta({ restaurant, categories, categoryTranslations = [], dishes, isPaid = false }: Props) {
   const [tema, setTema] = useState<Tema>("carbon");
   const [incluirFotos, setIncluirFotos] = useState(false);
   const [ahorroTinta, setAhorroTinta] = useState(false);
+  const [lang, setLang] = useState<Lang>("es");
   const esClaro = tema === "huerto" || tema === "medit";
+
+  // Build lookup maps for translations
+  const catTransMap = new Map(
+    categoryTranslations
+      .filter(t => t.lang === lang)
+      .map(t => [t.categoryId, t.name])
+  );
 
   const sections: Section[] = categories.map((cat) => {
     const catDishes = dishes
       .filter((d) => d.categoryId === cat.id)
       .sort((a, b) => a.position - b.position);
+    const catName = lang !== "es" ? (catTransMap.get(cat.id) ?? cat.name) : cat.name;
     return {
-      titulo: cat.name,
-      platos: catDishes.map((d) => ({
-        nombre: d.name,
-        descripcion: d.description || null,
-        precio: formatPrice(d.discountPrice ?? d.price),
-        precioDescuento: d.discountPrice ? formatPrice(d.price) : null,
-        foto: d.photos.length > 0 ? d.photos[0] : null,
-      })),
+      titulo: catName,
+      platos: catDishes.map((d) => {
+        const tr = lang !== "es" ? d.translations.find(t => t.lang === lang) : undefined;
+        return {
+          nombre: (tr?.name?.trim() ? tr.name : d.name),
+          descripcion: (tr?.description?.trim() ? tr.description : d.description) || null,
+          precio: formatPrice(d.discountPrice ?? d.price),
+          precioDescuento: d.discountPrice ? formatPrice(d.price) : null,
+          foto: d.photos.length > 0 ? d.photos[0] : null,
+        };
+      }),
     };
   });
 
@@ -120,7 +154,7 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
     }
 
     printWindow.document.write(`<!DOCTYPE html>
-<html lang="es">
+<html lang="${lang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -200,6 +234,25 @@ export default function ExportarCarta({ restaurant, categories, dishes, isPaid =
                 color: active ? t.color : "var(--adm-text2)",
               }}>
                 {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Language selector */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          {LANG_OPTIONS.map((l) => {
+            const active = lang === l.key;
+            return (
+              <button key={l.key} onClick={() => setLang(l.key)} style={{
+                padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+                background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                border: active ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
+                fontFamily: F, fontSize: "0.75rem", fontWeight: active ? 700 : 400,
+                color: active ? GOLD : "var(--adm-text2)",
+                display: "flex", alignItems: "center", gap: 5,
+              }}>
+                <span>{l.flag}</span> {l.label}
               </button>
             );
           })}

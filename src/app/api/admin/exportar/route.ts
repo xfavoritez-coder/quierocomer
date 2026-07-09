@@ -28,25 +28,34 @@ export async function GET(req: NextRequest) {
     select: { id: true, name: true, position: true },
   });
 
-  const dishes = await prisma.dish.findMany({
-    where: { restaurantId, isActive: true, deletedAt: null },
-    orderBy: { position: "asc" },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      price: true,
-      discountPrice: true,
-      photos: true,
-      categoryId: true,
-      position: true,
-    },
-  });
+  const [dishes, categoryTranslations] = await Promise.all([
+    prisma.dish.findMany({
+      where: { restaurantId, isActive: true, deletedAt: null },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        discountPrice: true,
+        photos: true,
+        categoryId: true,
+        position: true,
+        translations: {
+          select: { lang: true, name: true, description: true },
+        },
+      },
+    }),
+    prisma.categoryTranslation.findMany({
+      where: { category: { restaurantId } },
+      select: { categoryId: true, lang: true, name: true },
+    }),
+  ]);
 
   const isPaid = restaurant.subscriptionStatus === "ACTIVE" || restaurant.billingExempt === true;
 
   // Track in lifecycle timeline
   logActivity(restaurantId, "exportar_carta_viewed", { dishes: dishes.length, categories: categories.length }, getAdminId(req) || undefined);
 
-  return NextResponse.json({ restaurant, categories, dishes, isPaid });
+  return NextResponse.json({ restaurant, categories, categoryTranslations, dishes, isPaid });
 }
