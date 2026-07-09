@@ -8,9 +8,22 @@ interface Params {
   hasMagicLink: boolean;
 }
 
+const THEMES = [
+  { label: "Carbón", bg: "#1d1812", color: "#d8ad57" },
+  { label: "Huerto", bg: "#e8f0ec", color: "#3f6b4c" },
+  { label: "Mediterráneo", bg: "#eef3f9", color: "#2f5d8a" },
+  { label: "Piedra", bg: "#3d3730", color: "#beb2a2" },
+];
+
 export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagicLink }: Params): string {
   const firstName = ownerName?.split(" ")[0] || "Hola";
   const restaurantName = localName || "tu restaurante";
+
+  const themePills = THEMES.map(t =>
+    `<td style="padding-right:6px;padding-bottom:6px;">
+      <a href="${ctaUrl}" style="display:inline-block;padding:5px 13px;border-radius:20px;font-size:11px;font-weight:700;background:${t.bg};color:${t.color};text-decoration:none;">${t.label}</a>
+    </td>`
+  ).join("");
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -24,7 +37,7 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
   <tr><td align="center" style="padding-bottom:28px;">
     <a href="${BASE_URL}" style="text-decoration:none;">
       <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="28" height="22" style="display:block;" /></td>
+        <td style="vertical-align:middle;padding-right:7px;"><img src="${BASE_URL}/logo.png" alt="" width="26" style="display:block;width:26px;height:auto;" /></td>
         <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:17px;color:${GOLD};font-weight:normal;">QuieroComer</span></td>
       </tr></table>
     </a>
@@ -32,13 +45,18 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
 
   <!-- Hero headline -->
   <tr><td align="center" style="padding-bottom:8px;">
-    <h1 style="margin:0;font-size:26px;font-weight:700;color:#1a1a1a;line-height:1.3;">Tu carta, lista para imprimir</h1>
+    <h1 style="margin:0;font-size:26px;font-weight:700;color:#1a1a1a;line-height:1.3;">Tu carta, sin depender del WiFi</h1>
   </td></tr>
   <tr><td align="center" style="padding-bottom:24px;">
     <p style="margin:0;font-size:15px;color:#666;line-height:1.6;">
-      Hola ${firstName}, presentamos la <strong style="color:#1a1a1a;">carta imprimible</strong> de ${restaurantName}.<br>
-      Diseños profesionales en segundos, sin diseñador.
+      Hola ${firstName} — ahora puedes imprimir la carta de <strong style="color:#1a1a1a;">${restaurantName}</strong><br>
+      en 4 diseños profesionales, en segundos.
     </p>
+  </td></tr>
+
+  <!-- Theme pills (above preview, each links to CTA) -->
+  <tr><td style="padding-bottom:12px;">
+    <table cellpadding="0" cellspacing="0" border="0"><tr>${themePills}</tr></table>
   </td></tr>
 
   <!-- Mini carta preview -->
@@ -58,64 +76,28 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td style="font-size:12px;color:#2a2a2a;font-family:Georgia,serif;padding-bottom:6px;">Pasta al pomodoro</td>
-            <td style="font-size:12px;color:#888;text-align:right;font-size:11px;padding-bottom:6px;">${"·".repeat(8)}</td>
-            <td style="font-size:12px;color:${GOLD};font-weight:600;text-align:right;white-space:nowrap;padding-bottom:6px;">$9.900</td>
+            <td style="font-size:11px;color:#ccc;text-align:right;padding-bottom:6px;">· · · · · · ·</td>
+            <td style="font-size:12px;color:${GOLD};font-weight:600;text-align:right;white-space:nowrap;padding-bottom:6px;padding-left:8px;">$9.900</td>
           </tr>
           <tr>
             <td style="font-size:12px;color:#2a2a2a;font-family:Georgia,serif;padding-bottom:6px;">Risotto de hongos</td>
-            <td style="font-size:12px;color:#888;text-align:right;font-size:11px;padding-bottom:6px;">${"·".repeat(8)}</td>
-            <td style="font-size:12px;color:${GOLD};font-weight:600;text-align:right;white-space:nowrap;padding-bottom:6px;">$12.500</td>
+            <td style="font-size:11px;color:#ccc;text-align:right;padding-bottom:6px;">· · · · · · ·</td>
+            <td style="font-size:12px;color:${GOLD};font-weight:600;text-align:right;white-space:nowrap;padding-bottom:6px;padding-left:8px;">$12.500</td>
           </tr>
           <tr>
-            <td style="font-size:12px;color:#2a2a2a;font-family:Georgia,serif;padding-bottom:0;">Filete a la parrilla</td>
-            <td style="font-size:12px;color:#888;text-align:right;font-size:11px;padding-bottom:0;">${"·".repeat(8)}</td>
-            <td style="font-size:12px;color:${GOLD};font-weight:600;text-align:right;white-space:nowrap;padding-bottom:0;">$16.900</td>
-          </tr>
-        </table>
-
-        <!-- 4 theme pills -->
-        <table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;">
-          <tr>
-            <td style="padding-right:6px;"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;background:#1d1812;color:#d8ad57;">Carbon</span></td>
-            <td style="padding-right:6px;"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;background:#e8f0ec;color:#3f6b4c;">Huerto</span></td>
-            <td style="padding-right:6px;"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;background:#faf0e8;color:#8b3a14;">Mediterráneo</span></td>
-            <td><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;background:#3d3730;color:#beb2a2;">Piedra</span></td>
+            <td style="font-size:12px;color:#2a2a2a;font-family:Georgia,serif;">Filete a la parrilla</td>
+            <td style="font-size:11px;color:#ccc;text-align:right;">· · · · · · ·</td>
+            <td style="font-size:12px;color:${GOLD};font-weight:600;text-align:right;white-space:nowrap;padding-left:8px;">$16.900</td>
           </tr>
         </table>
       </td></tr>
 
-      <!-- QR hint -->
+      <!-- Footer hint -->
       <tr><td style="background:#f9f5ee;padding:10px 20px;border-top:1px solid #e8dcc4;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
           <td style="font-size:10px;color:#999;">📱 Incluye código QR para tu carta digital</td>
           <td align="right" style="font-size:10px;color:#999;">🌎 ES · EN · PT</td>
         </tr></table>
-      </td></tr>
-    </table>
-  </td></tr>
-
-  <!-- 3 languages section -->
-  <tr><td style="padding-bottom:24px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;">
-      <tr><td style="padding:16px 20px;">
-        <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#1a1a1a;">🌎 Ahora en 3 idiomas</p>
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td align="center" style="padding:8px;">
-              <div style="font-size:22px;">🇨🇱</div>
-              <div style="font-size:11px;color:#555;margin-top:4px;">Español</div>
-            </td>
-            <td align="center" style="padding:8px;">
-              <div style="font-size:22px;">🇺🇸</div>
-              <div style="font-size:11px;color:#555;margin-top:4px;">English</div>
-            </td>
-            <td align="center" style="padding:8px;">
-              <div style="font-size:22px;">🇧🇷</div>
-              <div style="font-size:11px;color:#555;margin-top:4px;">Português</div>
-            </td>
-          </tr>
-        </table>
-        <p style="margin:10px 0 0;font-size:12px;color:#777;">Ideal para restaurantes con turistas o en zonas fronterizas.</p>
       </td></tr>
     </table>
   </td></tr>
@@ -126,9 +108,9 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
       ${hasMagicLink ? "Ver mi carta imprimible →" : "Ir al panel →"}
     </a>
   </td></tr>
-  ${hasMagicLink ? `<tr><td align="center" style="padding-bottom:24px;">
-    <p style="margin:0;font-size:11px;color:#aaa;">Este enlace te lleva directo a tu panel, sin contraseña.</p>
-  </td></tr>` : `<tr><td style="padding-bottom:24px;"></td></tr>`}
+  <tr><td align="center" style="padding-bottom:28px;">
+    <p style="margin:6px 0 0;font-size:11px;color:#aaa;">${hasMagicLink ? "Este enlace te lleva directo a tu panel, sin contraseña." : ""}</p>
+  </td></tr>
 
   <!-- Footer -->
   <tr><td>

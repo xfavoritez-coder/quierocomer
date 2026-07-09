@@ -334,56 +334,51 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
 
       {/* Preview sheet */}
       <div className="exportar-sheet-wrapper" style={{ overflow: "hidden", borderRadius: 8, position: "relative" }}>
+        {/* Full carta rendered (always visible, but clipped for trial users) */}
         <div ref={sheetRef} className="exportar-sheet" style={{
           boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
           overflow: "hidden",
           maxWidth: 900,
+          ...(isTrial ? { maxHeight: 680, overflow: "hidden" } : {}),
         }}>
           <TemaComponent
             restaurant={restaurant}
-            sections={visibleSections}
+            sections={isTrial ? sections : visibleSections}
             incluirFotos={incluirFotos}
             qrDataUrl={qrDataUrl}
           />
         </div>
 
-        {/* Locked sections for trial users */}
-        {isTrial && lockedSections.length > 0 && (
+        {/* Fade + CTA overlay for trial users */}
+        {isTrial && (
           <div style={{ position: "relative" }}>
-            <div style={{ filter: "blur(8px)", opacity: 0.5, pointerEvents: "none", userSelect: "none" }}>
-              <TemaComponent
-                restaurant={{ ...restaurant, name: "", logoUrl: null, address: null, phone: null }}
-                sections={lockedSections}
-                incluirFotos={incluirFotos}
-              />
-            </div>
+            {/* Gradient fade that reveals the carta partially */}
             <div style={{
-              position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: 12,
-              background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)",
-              borderRadius: "0 0 8px 8px",
+              position: "absolute", bottom: 0, left: 0, right: 0, height: 220,
+              background: "linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.55) 40%, rgba(10,10,10,0.92) 100%)",
+              pointerEvents: "none",
+            }} />
+            {/* CTA box */}
+            <div style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "flex-end", paddingBottom: 32, gap: 10,
+              minHeight: 180,
             }}>
-              <div style={{
-                background: "rgba(0,0,0,0.7)", borderRadius: 16, padding: "24px 32px",
-                textAlign: "center", maxWidth: 360,
-              }}>
-                <p style={{ fontSize: "2rem", margin: "0 0 8px" }}>🔒</p>
-                <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>
-                  {lockedSections.length} sección{lockedSections.length !== 1 ? "es" : ""} más
-                </p>
-                <p style={{ fontFamily: F, fontSize: "0.82rem", color: "rgba(255,255,255,0.7)", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  Suscríbete al plan Premium para exportar tu carta completa.
-                </p>
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))}
-                  style={{
-                    padding: "10px 24px", borderRadius: 10, border: "none", cursor: "pointer",
-                    background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700,
-                  }}
-                >
-                  Ver plan Premium
-                </button>
-              </div>
+              <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0, textAlign: "center", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+                Tu carta completa, lista para imprimir
+              </p>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "rgba(255,255,255,0.7)", margin: 0, textAlign: "center" }}>
+                Activa Premium y descárgala en segundos
+              </p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))}
+                style={{
+                  marginTop: 4, padding: "11px 28px", borderRadius: 10, border: "none", cursor: "pointer",
+                  background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+                }}
+              >
+                Ver plan Premium →
+              </button>
             </div>
           </div>
         )}
