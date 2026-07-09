@@ -143,13 +143,15 @@ export default function CartaBasic({
 
       {/* Floating buttons */}
       <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 10 }}>
-        <button
-          onClick={() => setGenioOpen(true)}
-          className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
-        >
-          <Sparkles size={22} color="white" />
-        </button>
+        {(restaurant as any).genioFabEnabled !== false && (
+          <button
+            onClick={() => setGenioOpen(true)}
+            className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
+            style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
+          >
+            <Sparkles size={22} color="white" />
+          </button>
+        )}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} />}
       </div>
 

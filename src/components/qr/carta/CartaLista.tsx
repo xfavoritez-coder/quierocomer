@@ -500,14 +500,14 @@ export default function CartaLista({
         )}
       </div>
 
-      {/* Filter bar — sticky below category nav */}
-      <div style={{ position: "sticky", top: 44, zIndex: 19, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", padding: "7px 12px 8px" }}>
+      {/* Filter bar */}
+      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "7px 12px 8px" }}>
         <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
       </div>
 
-      {/* Announcement banner — sticky below category nav + filter bar */}
+      {/* Announcement banner — sticky below category nav */}
       {announcements && announcements.length > 0 && (
-        <div style={{ position: "sticky", top: 93, zIndex: 39 }}>
+        <div style={{ position: "sticky", top: 44, zIndex: 39 }}>
           <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
         </div>
       )}

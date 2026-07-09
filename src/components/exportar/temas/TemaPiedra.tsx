@@ -251,7 +251,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos, qrDataU
             <div key={i} className="piedra-section" data-pdf-section>
               <h2 className="piedra-section-title"><span className="piedra-section-line" />{section.titulo}<span className="piedra-section-line-r" /></h2>
 
-              {incluirFotos ? (
+              {(incluirFotos && section.platos.some(p => p.foto)) ? (
                 <div className="piedra-dishes-photo">
                   {section.platos.map((p, j) => (
                     <div key={j} className="piedra-dish-photo-row">

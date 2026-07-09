@@ -208,15 +208,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos, qrDataUr
 
         <div className="medit-inner">
           {/* Header */}
-          <div className="medit-header" style={{ position: "relative" }}>
-            {qrDataUrl && (
-              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ padding: 5, background: "rgba(47,93,138,0.08)", borderRadius: 6, border: "2px solid #2f5d8a" }}>
-                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
-                </div>
-                <span style={{ fontSize: "6.5pt", color: "#2f5d8a", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Marcellus', serif", textAlign: "center" }}>Ver carta QR</span>
-              </div>
-            )}
+          <div className="medit-header">
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="medit-logo" />
             )}
@@ -225,6 +217,14 @@ export default function TemaMedit({ restaurant, sections, incluirFotos, qrDataUr
             {restaurant.address && (
               <p className="medit-subtitle" style={{ color: "#8a7b63" }}>{restaurant.address}</p>
             )}
+            {qrDataUrl && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 10 }}>
+                <div style={{ padding: 5, background: "rgba(47,93,138,0.08)", borderRadius: 6, border: "2px solid #2f5d8a" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 52, height: 52, display: "block" }} />
+                </div>
+                <span style={{ fontSize: "6.5pt", color: "#2f5d8a", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Marcellus', serif", textAlign: "center" }}>Ver carta QR</span>
+              </div>
+            )}
           </div>
 
           {/* Sections */}
@@ -232,7 +232,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos, qrDataUr
             <div key={i} className="medit-section" data-pdf-section>
               <h2 className="medit-section-title" style={{ fontFamily: "'Marcellus', Georgia, serif", fontSize: "15pt", color: "#2f5d8a", margin: "0 0 12px", paddingBottom: 6, borderBottom: "2px solid #c0622d" }}>{section.titulo}</h2>
 
-              {incluirFotos ? (
+              {(incluirFotos && section.platos.some(p => p.foto)) ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
                   {section.platos.map((p, j) => (
                     <div key={j} style={{ display: "flex", alignItems: "center", gap: 10, breakInside: "avoid" }}>

@@ -5,7 +5,8 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
-import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check, Store, Receipt } from "lucide-react";
+import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check, Store, Receipt, CreditCard, Shield, XCircle, Sparkles } from "lucide-react";
+import { planNetAmount, ivaOf, type PlanKey } from "@/lib/billing/plans-config";
 import FacturacionPage from "./facturacionPage";
 import SubirFoto from "@/components/SubirFoto";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
@@ -24,6 +25,24 @@ const DAYS = [
   { key: "sab", label: "Sábado" },
   { key: "dom", label: "Domingo" },
 ];
+
+type BillingStatus = {
+  restaurantId: string;
+  plan: string;
+  subscriptionStatus: string;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  lastPaymentAt: string | null;
+  hasSubscription: boolean;
+  activeFlowPlan: string | null;
+  billingExempt: boolean;
+  ivaRate?: number;
+  billingInfo?: { isComplete: boolean; missingFields: string[] };
+};
+
+function formatCLP(amount: number) {
+  return `$${amount.toLocaleString("es-CL")}`;
+}
 
 interface RestaurantData {
   id: string; slug: string; name: string; description: string | null;
@@ -73,6 +92,8 @@ export default function MiRestaurantePage() {
   const [saving, setSaving] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [actioning, setActioning] = useState(false);
 
   // Form state
   const [name, setName] = useState("");
@@ -86,6 +107,7 @@ export default function MiRestaurantePage() {
   const [website, setWebsite] = useState("");
   const [schedule, setSchedule] = useState<Record<string, string>>({});
   const [dietType, setDietType] = useState("OMNIVORE");
+  const [genioFabEnabled, setGenioFabEnabled] = useState(true);
   const [highlightDiet, setHighlightDiet] = useState(false);
   const [highlightIg, setHighlightIg] = useState(false);
   const dietRef = useRef<HTMLDivElement>(null);
@@ -113,6 +135,7 @@ export default function MiRestaurantePage() {
       setInstagram(d.instagram || "");
       setWebsite(d.website || "");
       setSchedule(d.scheduleJson || {});
+      setGenioFabEnabled(d.genioFabEnabled !== false);
       const fromChecklist = section === "cocina" && !localStorage.getItem(`qc_diet_confirmed_${rid}`);
       setDietType(fromChecklist ? "" : (d.dietType || "OMNIVORE"));
     } catch {}
@@ -120,6 +143,14 @@ export default function MiRestaurantePage() {
   }, [rid]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    if (!rid) return;
+    fetch(`/api/billing/status?restaurantId=${rid}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setBillingStatus(d))
+      .catch(() => {});
+  }, [rid]);
 
   // Handle ?section= query param for scroll + highlight (runs after data loads)
   useEffect(() => {
@@ -200,6 +231,23 @@ export default function MiRestaurantePage() {
   };
 
   const selectedRestaurant = restaurants.find(r => r.id === rid);
+
+  const handleCancel = async () => {
+    if (!billingStatus?.restaurantId || actioning) return;
+    if (!window.confirm("¿Seguro que quieres cancelar tu suscripción? Mantendrás acceso hasta el final del periodo pagado.")) return;
+    setActioning(true);
+    try {
+      const res = await fetch("/api/billing/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: billingStatus.restaurantId, atPeriodEnd: true }),
+      });
+      const resData = await res.json();
+      if (!res.ok) { toast.error(resData.error || "No se pudo cancelar"); setActioning(false); return; }
+      toast.success("Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
+      setTimeout(() => window.location.reload(), 1200);
+    } catch { toast.error("Error de conexión"); setActioning(false); }
+  };
 
   if (loading) return <SkeletonLoading type="form" />;
   if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
@@ -289,6 +337,105 @@ export default function MiRestaurantePage() {
               );
             })()}
           </div>
+        );
+      })()}
+
+      {/* ── Suscripción detalles ── */}
+      {billingStatus && (() => {
+        const isExempt = billingStatus.billingExempt;
+        const hasPaidSub = billingStatus.hasSubscription && (billingStatus.subscriptionStatus === "ACTIVE" || billingStatus.subscriptionStatus === "PAST_DUE");
+        const monthlyNet = (billingStatus as any).customPlanPriceNet ?? planNetAmount(billingStatus.plan as PlanKey);
+        const monthlyIva = ivaOf(monthlyNet);
+        const monthlyGross = monthlyNet + monthlyIva;
+        const formatDate = (d: string | null) => !d ? "—" : new Date(d).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+
+        return (
+          <>
+            {/* Details grid inside a card */}
+            {(billingStatus.lastPaymentAt || billingStatus.currentPeriodEnd || billingStatus.hasSubscription) && (
+              <div style={{
+                background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+                borderRadius: 16, padding: "18px 20px", marginBottom: 10,
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14,
+              }}>
+                {billingStatus.lastPaymentAt && (
+                  <div>
+                    <p style={{ fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Último pago</p>
+                    <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "3px 0 0", fontWeight: 600, fontFamily: FB }}>{formatDate(billingStatus.lastPaymentAt)}</p>
+                  </div>
+                )}
+                {billingStatus.currentPeriodEnd && (
+                  <div>
+                    <p style={{ fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Periodo termina</p>
+                    <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "3px 0 0", fontWeight: 600, fontFamily: FB }}>{formatDate(billingStatus.currentPeriodEnd)}</p>
+                  </div>
+                )}
+                {billingStatus.hasSubscription && monthlyNet > 0 && (
+                  <div>
+                    <p style={{ fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Cobro mensual</p>
+                    <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "3px 0 0", fontWeight: 600, fontFamily: FB }}>{formatCLP(monthlyGross)}</p>
+                    <p style={{ fontSize: "0.66rem", color: "var(--adm-text3)", margin: "2px 0 0", fontFamily: FB }}>{formatCLP(monthlyNet)} neto + {formatCLP(monthlyIva)} IVA</p>
+                  </div>
+                )}
+                {billingStatus.hasSubscription && (
+                  <div>
+                    <p style={{ fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Pasarela</p>
+                    <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "3px 0 0", fontWeight: 600, fontFamily: FB }}>Flow.cl (Webpay)</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Método de pago */}
+            {hasPaidSub && (
+              <div style={{
+                background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+                borderRadius: 16, padding: "16px 20px", marginBottom: 10,
+              }}>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: ".6px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Shield size={13} /> Método de pago
+                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, height: 28, borderRadius: 6, background: "rgba(255,255,255,.06)", border: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <CreditCard size={16} color="var(--adm-text3)" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: "0.85rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, fontFamily: FB }}>Tarjeta vía Webpay</p>
+                      <p style={{ fontSize: "0.74rem", color: "var(--adm-text3)", margin: "2px 0 0", fontFamily: FB }}>Registrada en Flow.cl</p>
+                    </div>
+                  </div>
+                  <a href="https://www.flow.cl/app/web/misDatos.php" target="_blank" rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.76rem", color: GOLD, textDecoration: "none", fontWeight: 600, fontFamily: F }}>
+                    Gestionar <ExternalLink size={11} />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Cancelar */}
+            {!isExempt && hasPaidSub && (
+              <div style={{
+                background: "var(--adm-card)", border: "1px solid rgba(248,113,113,.15)",
+                borderRadius: 16, padding: "16px 20px", marginBottom: 10,
+              }}>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".6px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <XCircle size={13} /> Cancelar suscripción
+                </p>
+                <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.6, fontFamily: FB }}>
+                  Si cancelas, mantienes acceso hasta el final del periodo pagado. Tu carta sigue funcionando en plan Gratis.
+                </p>
+                <button onClick={handleCancel} disabled={actioning} style={{
+                  padding: "8px 16px", background: "transparent", color: "#f87171",
+                  border: "1px solid rgba(248,113,113,.3)", borderRadius: 999,
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+                  cursor: actioning ? "wait" : "pointer",
+                }}>
+                  {actioning ? "Cancelando…" : "Cancelar mi plan"}
+                </button>
+              </div>
+            )}
+          </>
         );
       })()}
 
@@ -387,6 +534,37 @@ export default function MiRestaurantePage() {
       </Card>
 
 
+
+      {/* ── Opciones de carta ── */}
+      <Card title="Opciones de carta" icon={Sparkles}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 2px" }}>Asistente Genio ✨</p>
+            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", margin: 0 }}>Muestra el botón flotante de recomendaciones en la carta digital</p>
+          </div>
+          <button
+            onClick={() => {
+              const next = !genioFabEnabled;
+              setGenioFabEnabled(next);
+              save({ genioFabEnabled: next });
+            }}
+            style={{
+              flexShrink: 0, width: 44, height: 24, borderRadius: 12, cursor: "pointer",
+              border: "none", padding: 2,
+              background: genioFabEnabled ? GOLD : "var(--adm-input-border)",
+              transition: "background 0.2s",
+              position: "relative",
+            }}
+          >
+            <span style={{
+              display: "block", width: 20, height: 20, borderRadius: "50%", background: "#fff",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+              transform: genioFabEnabled ? "translateX(20px)" : "translateX(0)",
+              transition: "transform 0.2s",
+            }} />
+          </button>
+        </div>
+      </Card>
 
       {/* ── Facturación ── */}
       <div style={{ marginBottom: 16 }}>

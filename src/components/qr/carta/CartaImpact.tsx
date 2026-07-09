@@ -1280,12 +1280,6 @@ export default function CartaImpact({
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button
-            onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
-            style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)", transition: "all 0.3s ease" }}
-          >
-            <Search size={15} color="var(--carta-text, white)" />
-          </button>
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
               <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
@@ -1542,14 +1536,21 @@ export default function CartaImpact({
       {/* Personalización ocurre en background sin bloquear la UI */}
 
       {/* ═══════ MENÚ ═══════ */}
-      <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 1 }}>
+      <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 8 }}>
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
           letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
-          color: "var(--impact-section-title)",
+          color: "var(--impact-section-title)", flex: 1,
         }}>
           {t(lang, "impactMenu" as any)}
         </h2>
+        <button
+          onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
+          style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
+        >
+          <Search size={15} color="var(--carta-text, white)" />
+        </button>
+        <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
@@ -1614,7 +1615,6 @@ export default function CartaImpact({
                 pointerEvents: "none", opacity: 0.8,
               }} />
             </div>
-            <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
         </div>
 

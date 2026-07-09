@@ -206,15 +206,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataU
           <LeafCorner style={{ position: "absolute", bottom: -4, right: -4, transform: "scale(-1)" }} />
 
           {/* Header */}
-          <div className="huerto-header" style={{ position: "relative" }}>
-            {qrDataUrl && (
-              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ padding: 5, background: "rgba(63,107,76,0.08)", borderRadius: 6, border: "2px solid #3f6b4c" }}>
-                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block", borderRadius: 3 }} />
-                </div>
-                <span style={{ fontSize: "6.5pt", color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cormorant Garamond', serif", textAlign: "center" }}>Ver carta QR</span>
-              </div>
-            )}
+          <div className="huerto-header">
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="huerto-logo" />
             )}
@@ -225,6 +217,14 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataU
             <div style={{ marginTop: 8 }}>
               <LeafDivider />
             </div>
+            {qrDataUrl && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 8 }}>
+                <div style={{ padding: 5, background: "rgba(63,107,76,0.08)", borderRadius: 6, border: "2px solid #3f6b4c" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 52, height: 52, display: "block", borderRadius: 3 }} />
+                </div>
+                <span style={{ fontSize: "6.5pt", color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cormorant Garamond', serif", textAlign: "center" }}>Ver carta QR</span>
+              </div>
+            )}
           </div>
 
           {/* Sections */}
@@ -236,7 +236,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataU
                 <span className="huerto-section-line" style={{ flex: 1, height: 1, background: "rgba(63,107,76,0.35)" }} />
               </h2>
 
-              {incluirFotos ? (
+              {(incluirFotos && section.platos.some(p => p.foto)) ? (
                 <div className="huerto-dishes-photo" style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
                   {section.platos.map((p, j) => (
                     <div key={j} className="huerto-dish-photo-row" style={{ display: "flex", alignItems: "center", gap: "3mm", breakInside: "avoid" }}>
