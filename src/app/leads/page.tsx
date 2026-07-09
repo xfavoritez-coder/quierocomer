@@ -34,6 +34,7 @@ interface Lead {
   crmNotes: Note[];
   crmFollowUpAt: string | null;
   city: string | null;
+  restaurantPlan: string | null;
 }
 
 const STATUS_CONFIG: Record<CrmStatus, { label: string; color: string; bg: string }> = {
@@ -375,9 +376,14 @@ function LeadCard({ lead, onClick, selected }: { lead: Lead; onClick: () => void
         </div>
         <StatusBadge status={lead.crmStatus as CrmStatus} />
       </div>
-      <div style={{ fontSize: 13, color: "#7D7366", marginBottom: 4 }}>
+      <div style={{ fontSize: 13, color: "#7D7366", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
         {lead.ownerName}
-        {lead.whatsapp && <span style={{ marginLeft: 6, color: "#25d366", fontSize: 12 }}>📱</span>}
+        {lead.whatsapp && <span style={{ color: "#25d366", fontSize: 12 }}>📱</span>}
+        {lead.restaurantPlan && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#E8A33D", background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.3)", padding: "1px 6px", borderRadius: 10, letterSpacing: ".04em" }}>
+            YA CLIENTE
+          </span>
+        )}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 11, color: "#7D7366" }}>{lead.cartaType} · {timeAgo(lead.createdAt)}</span>
