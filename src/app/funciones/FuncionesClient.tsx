@@ -117,6 +117,14 @@ const features = [
   },
   {
     num: "09",
+    title: "Carta imprimible profesional",
+    desc: "Exporta tu carta como PDF en 4 diseños elegantes. En español, inglés o portugués. Lista para imprimir o compartir.",
+    tags: ["PDF", "4 diseños", "ES / EN / PT", "Premium"],
+    img: "/funciones/carta-fisica.jpg",
+    imgPos: "center center",
+  },
+  {
+    num: "10",
     title: "Complementa tu carta física",
     desc: "No reemplaza tu carta impresa. La potencia con funciones inteligentes.",
     tags: ["Física + QR", "Mejor experiencia"],
