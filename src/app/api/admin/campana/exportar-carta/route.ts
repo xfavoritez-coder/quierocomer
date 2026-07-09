@@ -40,8 +40,11 @@ export async function POST(req: NextRequest) {
   // Get all leads excluding imports and Joan Valdivia test leads
   const leads = await prisma.lead.findMany({
     where: {
-      email: { not: "import@quierocomer.cl" },
-      ownerName: { not: { contains: "Joan Valdivia" } },
+      AND: [
+        { email: { not: "import@quierocomer.cl" } },
+        { email: { not: { contains: "joanvaldivia" } } },
+        { ownerName: { not: { contains: "Joan Valdivia" } } },
+      ],
     },
     select: {
       id: true,
