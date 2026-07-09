@@ -25,7 +25,7 @@ async function fetchRestaurantData(slugs: string[]): Promise<Map<string, Restaur
         where: { isActive: true, deletedAt: null, price: { gt: 0 } },
         select: { name: true, price: true, photos: true },
         orderBy: { position: "asc" },
-        take: 3,
+        take: 20,
       },
     },
   });
@@ -37,11 +37,11 @@ async function fetchRestaurantData(slugs: string[]): Promise<Map<string, Restaur
         slug: r.slug,
         ownerId: r.ownerId,
         logoUrl: r.logoUrl,
-        dishes: r.dishes.map((d) => ({
-          name: d.name,
-          price: d.price,
-          photoUrl: d.photos?.[0] ?? null,
-        })),
+        // Only dishes WITH photos (avoids "salsa extra" type entries)
+        dishes: r.dishes
+          .filter((d) => d.photos && d.photos.length > 0)
+          .slice(0, 3)
+          .map((d) => ({ name: d.name, price: d.price, photoUrl: d.photos[0] })),
       },
     ])
   );
