@@ -1,6 +1,6 @@
 "use client";
 
-export type CartaFilterKey = "popular" | "veggie" | "estrella" | "precio_asc";
+export type CartaFilterKey = "popular" | "veggie" | "estrella";
 
 interface Props {
   active: CartaFilterKey | null;
@@ -10,10 +10,9 @@ interface Props {
 }
 
 const FILTERS: { key: CartaFilterKey; emoji: string; label: string }[] = [
-  { key: "popular",    emoji: "🔥", label: "Popular" },
-  { key: "estrella",   emoji: "⭐", label: "Estrella" },
-  { key: "veggie",     emoji: "🌿", label: "Veggie" },
-  { key: "precio_asc", emoji: "↑",  label: "Precio" },
+  { key: "popular",  emoji: "🔥", label: "Popular" },
+  { key: "estrella", emoji: "⭐", label: "Estrella" },
+  { key: "veggie",   emoji: "🌿", label: "Veggie" },
 ];
 
 export default function CartaFilterBar({ active, onToggle, compact = false }: Props) {
@@ -91,6 +90,5 @@ export function applyCartaFilter<D extends {
   if (filter === "popular")    return dishes.filter(d => popularDishIds.has(d.id));
   if (filter === "estrella")   return dishes.filter(d => (d as any).tags?.includes("RECOMMENDED"));
   if (filter === "veggie")     return dishes.filter(d => (d as any).dishDiet === "VEGAN" || (d as any).dishDiet === "VEGETARIAN");
-  if (filter === "precio_asc") return [...dishes].sort((a, b) => (a.discountPrice ?? a.price) - (b.discountPrice ?? b.price));
   return dishes;
 }
