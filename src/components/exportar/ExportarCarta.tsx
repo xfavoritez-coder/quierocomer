@@ -160,6 +160,8 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
     return () => ro.disconnect();
   }, [sections, incluirFotos, tema]);
 
+  const isTrial = !isPaid;
+
   const handlePrint = () => {
     if (!sheetRef.current) return;
 
@@ -313,23 +315,44 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
             </button>
           )}
 
-          <button
-            onClick={handlePrint}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "9px 18px", borderRadius: 10, cursor: "pointer",
-              background: GOLD, border: "none",
-              fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
-              color: "#0a0a0a",
-            }}>
-            <Printer size={16} />
-            Guardar como PDF
-          </button>
+          {isTrial ? (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }))}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "9px 18px", borderRadius: 10, cursor: "pointer",
+                background: GOLD, border: "none",
+                fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+                color: "#0a0a0a",
+              }}>
+              <Printer size={16} />
+              Desbloquear para imprimir →
+            </button>
+          ) : (
+            <button
+              onClick={handlePrint}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "9px 18px", borderRadius: 10, cursor: "pointer",
+                background: GOLD, border: "none",
+                fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+                color: "#0a0a0a",
+              }}>
+              <Printer size={16} />
+              Guardar como PDF
+            </button>
+          )}
         </div>
 
-        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.4 }}>
-          Se abrirá una ventana de impresión. Selecciona &quot;Guardar como PDF&quot; como destino.
-        </p>
+        {isTrial ? (
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "10px 0 0", lineHeight: 1.5, background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, padding: "8px 12px" }}>
+            ⭐ Esta es una vista previa real de tu carta. Sube al plan <strong>Gold</strong> para imprimir o guardar como PDF.
+          </p>
+        ) : (
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.4 }}>
+            Se abrirá una ventana de impresión. Selecciona &quot;Guardar como PDF&quot; como destino.
+          </p>
+        )}
       </div>
 
       <style>{`
