@@ -1488,6 +1488,9 @@ model Lead {
   whatsappClickedAt  DateTime?
   whatsappOpenedAt   DateTime?
   whatsappSentAt     DateTime?
+  crmStatus          String            @default("nuevo")
+  crmNotes           Json[]            @default([])
+  crmFollowUpAt      DateTime?
   detectedProvider   MenuProvider?     @relation(fields: [detectedProviderId], references: [id])
   whatsappMessages   WhatsAppMessage[]
 
