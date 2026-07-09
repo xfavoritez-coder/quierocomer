@@ -139,8 +139,6 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : tema === "medit" ? TemaMedit : TemaPiedra;
   const sheetRef = useRef<HTMLDivElement>(null);
   const isTrial = !isPaid;
-  const visibleSections = isTrial ? sections.slice(0, 2) : sections;
-  const lockedSections = isTrial ? sections.slice(2) : [];
 
   const handlePrint = () => {
     if (!sheetRef.current) return;
@@ -296,19 +294,16 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
           )}
 
           <button
-            onClick={isTrial
-              ? () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))
-              : handlePrint
-            }
+            onClick={handlePrint}
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "9px 18px", borderRadius: 10, cursor: "pointer",
-              background: isTrial ? "var(--adm-input)" : GOLD, border: isTrial ? "1px solid var(--adm-input-border)" : "none",
+              background: GOLD, border: "none",
               fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
-              color: isTrial ? "var(--adm-text3)" : "#0a0a0a",
+              color: "#0a0a0a",
             }}>
             <Printer size={16} />
-            {isTrial ? "Premium requerido" : "Guardar como PDF"}
+            Guardar como PDF
           </button>
         </div>
 
@@ -334,12 +329,9 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
 
       {/* Preview sheet */}
       <div className="exportar-sheet-wrapper" style={{
-        borderRadius: 8, position: "relative",
-        maxHeight: isTrial ? 620 : undefined,
-        overflow: "hidden",
+        borderRadius: 8, overflow: "hidden",
         boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
       }}>
-        {/* Full carta always rendered */}
         <div ref={sheetRef} className="exportar-sheet" style={{ maxWidth: 900 }}>
           <TemaComponent
             restaurant={restaurant}
@@ -348,33 +340,6 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
             qrDataUrl={qrDataUrl}
           />
         </div>
-
-        {/* Gradient fade + CTA overlaid on top of the carta for trial users */}
-        {isTrial && (
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, right: 0, height: 280,
-            background: "linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.75) 50%, rgba(10,10,10,0.97) 100%)",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "flex-end",
-            paddingBottom: 36, gap: 8,
-          }}>
-            <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0, textAlign: "center", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
-              Tu carta completa, lista para imprimir
-            </p>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "rgba(255,255,255,0.65)", margin: 0, textAlign: "center" }}>
-              Activa Premium y descárgala en segundos
-            </p>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))}
-              style={{
-                marginTop: 6, padding: "11px 28px", borderRadius: 10, border: "none", cursor: "pointer",
-                background: GOLD, color: "#0a0a0a", fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
-              }}
-            >
-              Ver plan Premium →
-            </button>
-          </div>
-        )}
       </div>
     </>
   );
