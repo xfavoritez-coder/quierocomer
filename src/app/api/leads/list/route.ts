@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const allLeads = await prisma.lead.findMany({
     where: {
-      step2At: { not: null }, // solo leads reales de /subircarta
+      email: { not: "import@quierocomer.cl" }, // excluir importaciones automáticas
     },
     orderBy: { createdAt: "desc" },
     take: 500,
