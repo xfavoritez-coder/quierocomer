@@ -37,15 +37,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, testEmail, message: "Email de prueba enviado" });
   }
 
-  // Get all leads excluding imports and Joan Valdivia test leads
-  const leads = await prisma.lead.findMany({
-    where: {
-      AND: [
-        { email: { not: "import@quierocomer.cl" } },
-        { email: { not: { contains: "joanvaldivia" } } },
-        { ownerName: { not: { contains: "Joan Valdivia" } } },
-      ],
-    },
+  // Get all leads excluding imports
+  const rawLeads = await prisma.lead.findMany({
+    where: { email: { not: "import@quierocomer.cl" } },
     select: {
       id: true,
       email: true,
@@ -54,6 +48,14 @@ export async function POST(req: NextRequest) {
       generatedSlug: true,
     },
   });
+
+  // Exclude anything related to Joan Valdivia (all name/email variations)
+  const isJoanValdivia = (l: typeof rawLeads[0]) => {
+    const email = (l.email || "").toLowerCase().replace(/[.\-_]/g, "");
+    const name = (l.ownerName || "").toLowerCase();
+    return email.includes("joan") || email.includes("valdivia") || name.includes("joan") || name.includes("valdivia");
+  };
+  const leads = rawLeads.filter((l) => !isJoanValdivia(l));
 
   // Get restaurant owners for activated leads
   const slugs = leads.map((l) => l.generatedSlug).filter(Boolean) as string[];
