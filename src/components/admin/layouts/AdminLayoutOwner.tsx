@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -48,6 +48,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
     ...(base === "/panel" ? [{ icon: CreditCard, label: "Suscripción", href: `${base}/suscripcion` }] : []),
     { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
+    { icon: HelpCircle, label: "Ayuda", href: `${base}/ayuda` },
   ];
   const BOTTOM_TABS = [
     { icon: Home, label: "Inicio", href: base },
@@ -310,9 +311,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <div style={{ padding: "8px 20px", flex: 1 }}>
             <a href="/panel/perfil" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
               <UserCog size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi perfil</span>
-            </a>
-            <a href="/panel/ayuda" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", borderBottom: "1px solid var(--adm-card-border)", textDecoration: "none" }}>
-              <Mail size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Ayuda / Soporte</span>
             </a>
           </div>
           <button onClick={logout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", width: "100%" }}>
