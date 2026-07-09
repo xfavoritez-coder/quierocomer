@@ -34,8 +34,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           const totalRecCount = await prisma.dish.count({
             where: { restaurantId: currentDish.restaurantId, tags: { has: "RECOMMENDED" }, isActive: true, deletedAt: null, id: { not: id } },
           });
-          if (totalRecCount >= 5) {
-            return NextResponse.json({ error: "Máximo 5 platos destacados. Quita uno antes de agregar otro. Actualiza a Premium para destacar platos ilimitados." }, { status: 400 });
+          if (totalRecCount >= 3) {
+            return NextResponse.json({ error: "Máximo 3 platos destacados en el plan Gold. Quita uno antes de agregar otro. Actualiza a Premium para destacar platos ilimitados." }, { status: 400 });
           }
         }
       }

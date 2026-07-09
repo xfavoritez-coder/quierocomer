@@ -163,7 +163,7 @@ export default function AdminMenus() {
     setSaving(false);
   };
 
-  const MAX_RECOMMENDED = 5;
+  const MAX_RECOMMENDED = 3;
   const recCount = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.isActive && d.id !== selectedDish?.id).length;
   const toggleTag = (t: string) => {
     if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
@@ -394,7 +394,7 @@ export default function AdminMenus() {
                   Los platos destacados tienen mayor peso en el algoritmo que personaliza la carta para cada cliente. Aparecerán con mayor prioridad y con la etiqueta &ldquo;Recomendado por {activeRestaurant?.name || "tu local"}&rdquo; en la carta.
                 </p>
                 {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
-                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} destacados. Quita uno de otro plato para agregar aquí.</p>
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} platos destacados en el plan Gold. Quita uno para agregar aquí, o actualiza a Premium para tener ilimitados.</p>
                 )}
               </div>
 

@@ -136,7 +136,7 @@ export default function PlanesClient() {
               <div>✓ Todo lo del plan Gratis</div>
               <div>✓ 3 diseños de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
               <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema claro u oscuro que mejor represente tu local</span></span></div>
-              <div>✓ Destacar hasta 5 platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente hasta 5 platos para que tus clientes los pidan más</span></span></div>
+              <div>✓ Destacar hasta 3 platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente hasta 3 platos para que tus clientes los pidan más</span></span></div>
               <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
               <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
