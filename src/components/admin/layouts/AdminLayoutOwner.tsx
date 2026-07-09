@@ -216,7 +216,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        <button onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }} style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10 }}>
+        <button onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }} className="theme-toggle-btn" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10 }}>
           {theme === "dark" ? <Sun size={16} color="#777" /> : <Moon size={16} color="#bbb" />}
         </button>
         <button onClick={openAccount} style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(244,166,35,0.15)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "1rem", fontWeight: 700, flexShrink: 0 }}>
@@ -228,7 +228,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       <main className="owl-main" style={{ animation: "panelFadeIn 0.4s ease-out", position: "relative" }}>
         {children}
       </main>
-      <style>{`@keyframes panelFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <style>{`@keyframes panelFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } } @media(max-width:768px){.theme-toggle-btn{display:none!important;}}`}</style>
 
       {/* ── Mobile Bottom Nav (<768px) ── */}
       <nav className="owl-bottom-nav">

@@ -7,7 +7,6 @@ import TemaCarbon from "./temas/TemaCarbon";
 import TemaHuerto from "./temas/TemaHuerto";
 import TemaMedit from "./temas/TemaMedit";
 import TemaPiedra from "./temas/TemaPiedra";
-import { renderToStaticMarkup } from "react-dom/server";
 
 type Tema = "carbon" | "huerto" | "medit" | "piedra";
 
@@ -100,6 +99,10 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   const [ahorroTinta, setAhorroTinta] = useState(false);
   const [lang, setLang] = useState<Lang>("es");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const [previewScale, setPreviewScale] = useState(1);
+  const [previewHeight, setPreviewHeight] = useState(0);
+  const wrapperPreviewRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const qrUrl = `https://quierocomer.cl/qr/${restaurant.slug}`;
@@ -107,6 +110,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
       .then(setQrDataUrl)
       .catch(() => {});
   }, [restaurant.slug]);
+
   const esClaro = tema === "huerto" || tema === "medit";
 
   // Build lookup maps for translations
@@ -137,8 +141,24 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   });
 
   const TemaComponent = tema === "carbon" ? TemaCarbon : tema === "huerto" ? TemaHuerto : tema === "medit" ? TemaMedit : TemaPiedra;
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const isTrial = !isPaid;
+
+  // Dynamic scale: measure wrapper width vs carta width after render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!wrapperPreviewRef.current || !sheetRef.current) return;
+    const update = () => {
+      const wrapperWidth = wrapperPreviewRef.current!.offsetWidth;
+      const cartaWidth = sheetRef.current!.offsetWidth || 794;
+      const cartaHeight = sheetRef.current!.offsetHeight || 1123;
+      const scale = Math.min(1, wrapperWidth / cartaWidth);
+      setPreviewScale(scale);
+      setPreviewHeight(cartaHeight * scale);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrapperPreviewRef.current);
+    return () => ro.disconnect();
+  }, [sections, incluirFotos, tema]);
 
   const handlePrint = () => {
     if (!sheetRef.current) return;
@@ -312,27 +332,22 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
         </p>
       </div>
 
-      {/* Responsive styles */}
       <style>{`
-        @media (max-width: 640px) {
-          .exportar-sheet { transform: scale(0.5); transform-origin: top left; width: 200% !important; }
-          .exportar-sheet-wrapper { overflow: hidden; }
-          .exportar-actions { flex-wrap: wrap; }
-          .exportar-actions button { flex: 1 1 auto !important; justify-content: center; }
-        }
-        @media (min-width: 641px) and (max-width: 900px) {
-          .exportar-sheet { transform: scale(0.75); transform-origin: top left; width: 133.33% !important; }
-          .exportar-sheet-wrapper { overflow: hidden; }
-        }
+        .exportar-actions { flex-wrap: wrap; }
+        .exportar-actions button { flex: 1 1 auto !important; justify-content: center; }
         ${ahorroTinta ? `.huerto-page, .medit-page, .medit-inner { background: #fff !important; }` : ""}
       `}</style>
 
-      {/* Preview sheet */}
-      <div className="exportar-sheet-wrapper" style={{
-        borderRadius: 8, overflow: "hidden",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-      }}>
-        <div ref={sheetRef} className="exportar-sheet" style={{ maxWidth: 900 }}>
+      {/* Preview sheet — dynamic scale */}
+      <div ref={wrapperPreviewRef} style={{ width: "100%", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)", height: previewHeight || "auto" }}>
+        <div
+          ref={sheetRef}
+          style={{
+            transformOrigin: "top left",
+            transform: previewScale < 1 ? `scale(${previewScale})` : undefined,
+            width: previewScale < 1 ? `${100 / previewScale}%` : "100%",
+          }}
+        >
           <TemaComponent
             restaurant={restaurant}
             sections={sections}
