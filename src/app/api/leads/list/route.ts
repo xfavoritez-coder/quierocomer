@@ -7,11 +7,15 @@ export async function GET(req: NextRequest) {
   const auth = req.headers.get("x-leads-auth");
   if (auth !== PASSWORD) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  // Slugs de restaurantes con plan pago activo (GOLD o PREMIUM)
-  const paidRestaurants = await prisma.restaurant.findMany({
-    where: { plan: { in: ["GOLD", "PREMIUM"] } },
-    select: { slug: true },
-  });
+  // Conteos diagnóstico
+  const [totalDB, totalImports, paidRestaurants] = await Promise.all([
+    prisma.lead.count(),
+    prisma.lead.count({ where: { email: "import@quierocomer.cl" } }),
+    prisma.restaurant.findMany({
+      where: { plan: { in: ["GOLD", "PREMIUM"] } },
+      select: { slug: true },
+    }),
+  ]);
   const paidSlugs = new Set(paidRestaurants.map(r => r.slug));
 
   const allLeads = await prisma.lead.findMany({
@@ -19,7 +23,7 @@ export async function GET(req: NextRequest) {
       email: { not: "import@quierocomer.cl" }, // excluir importaciones automáticas
     },
     orderBy: { createdAt: "desc" },
-    take: 500,
+    take: 2000,
     select: {
       id: true,
       localName: true,
@@ -49,5 +53,10 @@ export async function GET(req: NextRequest) {
   // Excluir leads cuyo restaurante ya tiene plan pago
   const leads = allLeads.filter(l => !l.generatedSlug || !paidSlugs.has(l.generatedSlug));
 
-  return NextResponse.json({ leads, total: allLeads.length, filtered: leads.length });
+  return NextResponse.json({
+    leads,
+    total: allLeads.length,       // leads reales (sin imports)
+    filtered: leads.length,        // después de excluir plan pago
+    debug: { totalDB, totalImports, paidCount: paidSlugs.size },
+  });
 }
