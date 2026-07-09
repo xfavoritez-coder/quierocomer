@@ -1380,35 +1380,6 @@ export default function CartaImpact({
       <div style={{ height: impactHeaderH }} />
 
       {/* Search overlay */}
-      {searchOpen && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-          transform: "translate3d(0,0,0)", WebkitTransform: "translate3d(0,0,0)",
-          padding: "calc(10px + env(safe-area-inset-top)) 16px 12px",
-          background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-card-border)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, height: 44, background: "var(--carta-surface)", borderRadius: 999, padding: "0 14px", border: "1px solid var(--carta-card-border)" }}>
-            <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
-            <input
-              id="impact-search-input"
-              autoFocus type="search" value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (e.target.value && menuAnchorRef.current) {
-                  menuAnchorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-              }}
-              placeholder={t(lang, "search")}
-              className="font-[family-name:var(--font-dm)]"
-              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent", fontFamily: "inherit" }}
-            />
-            <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-              style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
-              <X size={18} color="var(--carta-text-muted)" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Hero */}
       <div style={{ position: "relative", zIndex: 1 }}>
@@ -1537,18 +1508,63 @@ export default function CartaImpact({
 
       {/* ═══════ MENÚ ═══════ */}
       <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Título — se oculta cuando busca */}
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
           letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
-          color: "var(--impact-section-title)", flex: 1,
+          color: "var(--impact-section-title)",
+          flex: searchOpen ? "0 0 0" : 1,
+          overflow: "hidden",
+          opacity: searchOpen ? 0 : 1,
+          transition: "flex 0.22s ease, opacity 0.15s ease",
+          whiteSpace: "nowrap",
         }}>
           {t(lang, "impactMenu" as any)}
         </h2>
+
+        {/* Input inline — se expande desde la derecha */}
+        <div style={{
+          flex: searchOpen ? 1 : "0 0 0",
+          overflow: "hidden",
+          opacity: searchOpen ? 1 : 0,
+          transition: "flex 0.22s ease, opacity 0.18s ease",
+          display: "flex", alignItems: "center",
+          minWidth: 0,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: "var(--impact-chip-inactive-bg, rgba(255,255,255,0.1))", borderRadius: 999, padding: "0 12px", border: "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", width: "100%" }}>
+            <Search size={14} color="var(--carta-text-muted, rgba(255,255,255,0.5))" style={{ flexShrink: 0 }} />
+            <input
+              id="impact-search-input"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value && menuAnchorRef.current) {
+                  menuAnchorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              placeholder={t(lang, "search")}
+              className="font-[family-name:var(--font-dm)]"
+              style={{ flex: 1, border: "none", outline: "none", fontSize: "15px", color: "var(--carta-text, #fff)", background: "transparent", minWidth: 0 }}
+            />
+          </div>
+        </div>
+
         <button
-          onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
-          style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
+          onClick={() => {
+            if (searchOpen) {
+              setSearchOpen(false);
+              setSearchQuery("");
+            } else {
+              setSearchOpen(true);
+              setTimeout(() => document.getElementById("impact-search-input")?.focus(), 250);
+            }
+          }}
+          style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: searchOpen ? "var(--impact-chip-inactive-bg, rgba(255,255,255,0.15))" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}
         >
-          <Search size={15} color="var(--carta-text, white)" />
+          {searchOpen
+            ? <X size={15} color="var(--carta-text, white)" />
+            : <Search size={15} color="var(--carta-text, white)" />}
         </button>
         <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
