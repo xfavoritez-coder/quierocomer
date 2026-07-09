@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   const restaurants = await prisma.restaurant.findMany({
     where: { slug: { in: slugs } },
     select: {
-      slug: true, ownerId: true, logoUrl: true,
+      id: true, slug: true, ownerId: true, logoUrl: true,
       dishes: { where: { isActive: true, deletedAt: null, price: { gt: 0 } }, select: { name: true, price: true, photos: true }, orderBy: { position: "asc" }, take: 20 },
     },
   });
@@ -82,8 +82,9 @@ export async function POST(req: NextRequest) {
     const rData = lead.generatedSlug ? restaurantMap.get(lead.generatedSlug) : undefined;
     const ownerId = rData?.ownerId ?? undefined;
     const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
+    const rid = rData?.id;
     const ctaUrl = magicToken
-      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=/panel/exportar`
+      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
       : `https://quierocomer.cl/panel/login`;
 
     const allDishes = rData?.dishes ?? [];

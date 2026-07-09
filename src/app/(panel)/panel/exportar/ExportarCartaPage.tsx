@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import ExportarCarta from "@/components/exportar/ExportarCarta";
@@ -47,7 +48,9 @@ interface CategoryTranslation {
 const F = "var(--font-display)";
 
 export default function ExportarCartaPage() {
-  const { selectedRestaurantId, loading: sessionLoading } = useAdminSession();
+  const { selectedRestaurantId, setSelectedRestaurant, loading: sessionLoading } = useAdminSession();
+  const searchParams = useSearchParams();
+  const ridFromUrl = searchParams.get("rid");
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryTranslations, setCategoryTranslations] = useState<CategoryTranslation[]>([]);
@@ -56,11 +59,18 @@ export default function ExportarCartaPage() {
   const [error, setError] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
+  // If magic link includes a specific restaurant ID, force-select it
   useEffect(() => {
-    if (!selectedRestaurantId) return;
+    if (ridFromUrl && setSelectedRestaurant) setSelectedRestaurant(ridFromUrl);
+  }, [ridFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const restaurantId = ridFromUrl || selectedRestaurantId;
+
+  useEffect(() => {
+    if (!restaurantId) return;
     setLoading(true);
     setError(false);
-    fetch(`/api/admin/exportar?restaurantId=${selectedRestaurantId}`)
+    fetch(`/api/admin/exportar?restaurantId=${restaurantId}`)
       .then((r) => {
         if (!r.ok) throw new Error("fetch error");
         return r.json();
@@ -74,7 +84,7 @@ export default function ExportarCartaPage() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [selectedRestaurantId]);
+  }, [restaurantId]);
 
   if (sessionLoading || loading) return <SkeletonLoading type="form" />;
   if (error || !restaurant)

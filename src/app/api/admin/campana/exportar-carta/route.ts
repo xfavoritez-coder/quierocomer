@@ -6,6 +6,7 @@ import { createPanelMagicToken } from "@/lib/magicLink";
 import { buildExportarCartaEmail } from "@/lib/email/templates/exportarCarta";
 
 interface RestaurantData {
+  id: string;
   slug: string;
   ownerId: string | null;
   logoUrl: string | null;
@@ -18,6 +19,7 @@ async function fetchRestaurantData(slugs: string[]): Promise<Map<string, Restaur
   const restaurants = await prisma.restaurant.findMany({
     where: { slug: { in: slugs } },
     select: {
+      id: true,
       slug: true,
       ownerId: true,
       logoUrl: true,
@@ -34,6 +36,7 @@ async function fetchRestaurantData(slugs: string[]): Promise<Map<string, Restaur
     restaurants.map((r) => [
       r.slug,
       {
+        id: r.id,
         slug: r.slug,
         ownerId: r.ownerId,
         logoUrl: r.logoUrl,
@@ -80,10 +83,12 @@ export async function POST(req: NextRequest) {
     });
     const slug = sampleLead?.generatedSlug ?? null;
     const rMap = await fetchRestaurantData(slug ? [slug] : []);
-    const ownerId = slug ? rMap.get(slug)?.ownerId : undefined;
+    const rDataTest = slug ? rMap.get(slug) : undefined;
+    const ownerId = rDataTest?.ownerId;
     const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
+    const rid = rDataTest?.id;
     const ctaUrl = magicToken
-      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=/panel/exportar`
+      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
       : `https://quierocomer.cl/panel/login`;
 
     const html = buildExportarCartaEmail(
@@ -124,9 +129,10 @@ export async function POST(req: NextRequest) {
     if (!lead.email || !lead.email.includes("@")) { skipped++; continue; }
 
     const ownerId = lead.generatedSlug ? slugToOwnerId.get(lead.generatedSlug) : undefined;
+    const rid = lead.generatedSlug ? restaurantData.get(lead.generatedSlug)?.id : undefined;
     const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
     const ctaUrl = magicToken
-      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=/panel/exportar`
+      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
       : `https://quierocomer.cl/panel/login`;
 
     const html = buildExportarCartaEmail(buildEmailParams(lead, restaurantData, ctaUrl, !!magicToken));
