@@ -55,7 +55,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataU
           background: #f6f1e3;
           color: #2c2c2c;
           font-family: 'Jost', sans-serif;
-          padding: 24mm 20mm 18mm;
+          padding: 32mm 20mm 18mm;
           box-sizing: border-box;
           position: relative;
           print-color-adjust: exact;
@@ -209,8 +209,8 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataU
           <div className="huerto-header" style={{ position: "relative" }}>
             {qrDataUrl && (
               <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ padding: 5, background: "#fff", borderRadius: 6, border: "1px solid rgba(63,107,76,0.35)" }}>
-                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
+                <div style={{ padding: 5, background: "rgba(63,107,76,0.08)", borderRadius: 6, border: "2px solid #3f6b4c" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block", borderRadius: 3 }} />
                 </div>
                 <span style={{ fontSize: "6.5pt", color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cormorant Garamond', serif", textAlign: "center" }}>Ver carta QR</span>
               </div>
