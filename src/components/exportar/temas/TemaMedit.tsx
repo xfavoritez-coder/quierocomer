@@ -109,6 +109,7 @@ export default function TemaMedit({ restaurant, sections, incluirFotos }: Props)
         .medit-section {
           break-inside: avoid;
           margin-bottom: 7mm;
+          padding-top: 6mm;
         }
         .medit-section-title {
           font-family: 'Marcellus', serif;

@@ -96,6 +96,7 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos }: Props
         .huerto-section {
           break-inside: avoid;
           margin-bottom: 7mm;
+          padding-top: 6mm;
         }
         .huerto-section-title {
           font-family: 'Cormorant Garamond', serif;

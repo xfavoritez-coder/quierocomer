@@ -98,6 +98,7 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos }: Props
         .piedra-section {
           break-inside: avoid;
           margin-bottom: 22px;
+          padding-top: 6mm;
         }
         .piedra-section-title {
           font-family: 'Cinzel', serif;

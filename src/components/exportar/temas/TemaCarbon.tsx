@@ -91,6 +91,7 @@ export default function TemaCarbon({ restaurant, sections, incluirFotos }: Props
         .carbon-section {
           break-inside: avoid;
           margin-bottom: 7mm;
+          padding-top: 6mm;
         }
         .carbon-section-title {
           font-family: 'Cinzel', serif;
