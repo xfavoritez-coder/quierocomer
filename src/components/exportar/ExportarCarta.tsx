@@ -231,7 +231,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
         </p>
 
         {/* Theme tabs */}
-        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", marginBottom: 10, paddingBottom: 2 }}>
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", marginBottom: 10, paddingBottom: 2, justifyContent: "center" }}>
           {TEMAS.map((t) => {
             const active = tema === t.key;
             return (
