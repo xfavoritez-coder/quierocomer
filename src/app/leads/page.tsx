@@ -35,6 +35,9 @@ interface Lead {
   crmFollowUpAt: string | null;
   city: string | null;
   restaurantPlan: string | null;
+  restaurantPlanPrice: number | null;
+  restaurantPeriodEnd: string | null;
+  restaurantLastPayment: string | null;
 }
 
 const STATUS_CONFIG: Record<CrmStatus, { label: string; color: string; bg: string }> = {
@@ -229,6 +232,33 @@ function LeadPanel({ lead, onClose, onUpdate }: {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 0 40px" }}>
+
+        {/* Ficha cliente activo */}
+        {lead.restaurantPlan && (
+          <div style={{ margin: "16px 20px 0", padding: "14px 16px", background: "rgba(232,163,61,.06)", border: "1px solid rgba(232,163,61,.25)", borderRadius: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 15 }}>{lead.restaurantPlan === "PREMIUM" ? "💎" : lead.restaurantPlan === "GOLD" ? "⭐" : "🥈"}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#E8A33D", letterSpacing: ".04em" }}>CLIENTE ACTIVO — PLAN {lead.restaurantPlan}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {lead.restaurantPlanPrice && (
+                <div style={{ fontSize: 13, color: "#C9BBA0" }}>
+                  💰 <strong style={{ color: "#E8DDC8" }}>${lead.restaurantPlanPrice.toLocaleString("es-CL")}</strong> / mes neto
+                </div>
+              )}
+              {lead.restaurantLastPayment && (
+                <div style={{ fontSize: 12, color: "#7D7366" }}>
+                  Último pago: {new Date(lead.restaurantLastPayment).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}
+                </div>
+              )}
+              {lead.restaurantPeriodEnd && (
+                <div style={{ fontSize: 12, color: new Date(lead.restaurantPeriodEnd) < new Date() ? "#ef4444" : "#34d399" }}>
+                  {new Date(lead.restaurantPeriodEnd) < new Date() ? "⚠️ Periodo vencido:" : "✓ Vigente hasta:"} {new Date(lead.restaurantPeriodEnd).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Contact info */}
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #3A342D" }}>

@@ -17,7 +17,16 @@ export async function GET(req: NextRequest) {
         ],
         subscriptionStatus: "ACTIVE",
       },
-      select: { slug: true, plan: true },
+      select: {
+        slug: true,
+        plan: true,
+        subscriptionStatus: true,
+        currentPeriodEnd: true,
+        lastPaymentAt: true,
+        billingExempt: true,
+        flowSubscriptionId: true,
+        mpSubscriptionId: true,
+      },
     }),
     prisma.lead.findMany({
       where: {
@@ -52,13 +61,21 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  const paidSlugs = new Map(paidRestaurants.map(r => [r.slug, r.plan]));
+  const PLAN_PRICES: Record<string, number> = { SILVER: 14900, GOLD: 29900, PREMIUM: 44900 };
+
+  const paidMap = new Map(paidRestaurants.map(r => [r.slug, r]));
 
   // Marcar leads cuyo restaurante ya tiene plan pago (no excluir, solo marcar)
-  const leads = allLeads.map(l => ({
-    ...l,
-    restaurantPlan: l.generatedSlug ? (paidSlugs.get(l.generatedSlug) ?? null) : null,
-  }));
+  const leads = allLeads.map(l => {
+    const paidR = l.generatedSlug ? paidMap.get(l.generatedSlug) : undefined;
+    return {
+      ...l,
+      restaurantPlan: paidR?.plan ?? null,
+      restaurantPlanPrice: paidR ? (PLAN_PRICES[paidR.plan] ?? null) : null,
+      restaurantPeriodEnd: paidR?.currentPeriodEnd ?? null,
+      restaurantLastPayment: paidR?.lastPaymentAt ?? null,
+    };
+  });
 
   return NextResponse.json({ leads, total: leads.length });
 }
