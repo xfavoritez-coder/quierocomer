@@ -67,9 +67,9 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos, qrDataU
           pointer-events: none;
         }
         .piedra-header {
-          text-align: center;
           margin-bottom: 20px;
           padding-bottom: 16px;
+          align-items: center;
         }
         .piedra-logo {
           width: 56px; height: 56px;
@@ -214,24 +214,35 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos, qrDataU
           <CornerBracket style={{ position: "absolute", bottom: 5, right: 5, transform: "scale(-1)" }} />
 
           {/* Header */}
-          <div className="piedra-header" style={{ position: "relative" }}>
-            {qrDataUrl && (
-              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ padding: 5, background: "#fff", borderRadius: 6, border: "1px solid rgba(160,152,136,0.4)" }}>
-                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
-                </div>
-                <span style={{ fontSize: "6.5pt", color: "#a09888", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cinzel', serif", textAlign: "center" }}>Ver carta QR</span>
+          <div className="piedra-header" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Logo left */}
+            <div style={{ flexShrink: 0, width: 70, display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {restaurant.logoUrl && (
+                <img src={restaurant.logoUrl} alt="" className="piedra-logo" style={{ margin: 0 }} />
+              )}
+            </div>
+
+            {/* Title center */}
+            <div style={{ flex: 1, textAlign: "center" }}>
+              <h1 className="piedra-title" style={{ color: "#f0ece6", fontFamily: "'Cinzel', Georgia, serif", fontSize: "30pt", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{restaurant.name}</h1>
+              {restaurant.address && (
+                <p className="piedra-subtitle" style={{ color: "#beb2a2" }}>{restaurant.address}</p>
+              )}
+              <div style={{ marginTop: 12 }}>
+                <ChiselDivider />
               </div>
-            )}
-            {restaurant.logoUrl && (
-              <img src={restaurant.logoUrl} alt="" className="piedra-logo" />
-            )}
-            <h1 className="piedra-title" style={{ color: "#f0ece6", fontFamily: "'Cinzel', Georgia, serif", fontSize: "30pt", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{restaurant.name}</h1>
-            {restaurant.address && (
-              <p className="piedra-subtitle" style={{ color: "#beb2a2" }}>{restaurant.address}</p>
-            )}
-            <div style={{ marginTop: 12 }}>
-              <ChiselDivider />
+            </div>
+
+            {/* QR right */}
+            <div style={{ flexShrink: 0, width: 70, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              {qrDataUrl && (
+                <>
+                  <div style={{ padding: 5, background: "rgba(160,148,132,0.08)", borderRadius: 6, border: "2px solid #a09888" }}>
+                    <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
+                  </div>
+                  <span style={{ fontSize: "6.5pt", color: "#a09888", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cinzel', serif", textAlign: "center" }}>Ver carta QR</span>
+                </>
+              )}
             </div>
           </div>
 
