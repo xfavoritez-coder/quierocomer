@@ -8,14 +8,13 @@ export async function GET(req: NextRequest) {
   if (auth !== PASSWORD) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const [paidRestaurants, allLeads] = await Promise.all([
-    // Solo los que realmente tienen suscripción activa pagada (Flow o MP)
+    // Restaurantes con plan pago activo o bonificados
     prisma.restaurant.findMany({
       where: {
         OR: [
-          { flowSubscriptionId: { not: null } },
-          { mpSubscriptionId: { not: null } },
+          { subscriptionStatus: "ACTIVE" },
+          { billingExempt: true },
         ],
-        subscriptionStatus: "ACTIVE",
       },
       select: {
         slug: true,
