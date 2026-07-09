@@ -331,7 +331,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
                 fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
                 color: "#fff",
               }}>
-              💎 Desbloquear para imprimir →
+              💎 Exportar en PDF e imprimir
             </button>
           ) : (
             <button
