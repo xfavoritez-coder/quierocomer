@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  const isPaid = restaurant.subscriptionStatus === "ACTIVE" || restaurant.billingExempt === true;
+  const isPaid = restaurant.subscriptionStatus === "ACTIVE" || restaurant.subscriptionStatus === "TRIALING" || restaurant.billingExempt === true;
 
   // Track in lifecycle timeline
   logActivity(restaurantId, "exportar_carta_viewed", { dishes: dishes.length, categories: categories.length }, getAdminId(req) || undefined);

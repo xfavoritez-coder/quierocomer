@@ -32,7 +32,10 @@ export async function POST(req: NextRequest) {
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { email: email.toLowerCase().trim() },
-      select: { id: true, name: true, email: true, status: true },
+      select: {
+        id: true, name: true, email: true, status: true,
+        restaurants: { select: { name: true }, orderBy: { createdAt: "asc" }, take: 1 },
+      },
     });
 
     // Don't reveal if email doesn't exist
@@ -59,12 +62,12 @@ export async function POST(req: NextRequest) {
     const resetLink = `${BASE_URL}/panel/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(owner.email)}`;
 
     // Send email — wrapped in try/catch to never reveal failures to user
-    const firstName = owner.name.split(" ")[0];
+    const restaurantName = owner.restaurants[0]?.name ?? undefined;
     try {
       await sendAdminEmail({
         to: owner.email,
-        subject: "Recuperar contraseña · QuieroComer",
-        html: resetPasswordEmailHtml(firstName, resetLink),
+        subject: `Recuperar contraseña${restaurantName ? ` · ${restaurantName}` : ""} · QuieroComer`,
+        html: resetPasswordEmailHtml(owner.name, resetLink, restaurantName),
         purpose: "password_reset",
       });
     } catch (emailErr) {

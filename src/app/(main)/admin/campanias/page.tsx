@@ -30,6 +30,15 @@ export default function AdminCampanias() {
   const [editing, setEditing] = useState<Campaign | null>(null);
   const [sending, setSending] = useState(false);
 
+  // Campaña exportar carta — restantes
+  const [exportarStats, setExportarStats] = useState<{ remaining: number; sent: number } | null>(null);
+  const [exportarSending, setExportarSending] = useState(false);
+  const [exportarResult, setExportarResult] = useState<{ sent: number; errors: number; total: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/campana/exportar-remaining").then(r => r.json()).then(setExportarStats).catch(() => {});
+  }, []);
+
   // Form state
   const [fName, setFName] = useState("");
   const [fSegment, setFSegment] = useState("");
@@ -115,8 +124,50 @@ export default function AdminCampanias() {
     <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#888", fontFamily: F }}>Selecciona un local</p><RestaurantPicker /></div>
   );
 
+  const handleExportarSend = async () => {
+    if (!confirm(`¿Enviar campaña "exportar carta" a ${exportarStats?.remaining ?? "?"} leads restantes? Esta acción no se puede deshacer.`)) return;
+    setExportarSending(true);
+    setExportarResult(null);
+    try {
+      const res = await fetch("/api/admin/campana/exportar-remaining", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dryRun: false }),
+      });
+      const data = await res.json();
+      setExportarResult({ sent: data.sent, errors: data.errors, total: data.total });
+      setExportarStats(prev => prev ? { ...prev, remaining: data.errors, sent: (prev.sent || 0) + data.sent } : null);
+    } catch { /* noop */ }
+    setExportarSending(false);
+  };
+
   return (
     <div style={{ maxWidth: 800 }}>
+      {/* Card campaña exportar carta restantes */}
+      <div style={{ background: "#1A1A1A", border: "1px solid rgba(168,85,247,0.25)", borderRadius: 16, padding: "18px 20px", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <p style={{ fontFamily: F, fontSize: "0.95rem", color: "white", fontWeight: 600, margin: 0 }}>📨 Campaña exportar carta — restantes</p>
+            {exportarStats && (
+              <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", margin: "4px 0 0" }}>
+                {exportarStats.sent} enviados · <span style={{ color: "#a855f7" }}>{exportarStats.remaining} pendientes</span>
+              </p>
+            )}
+            {exportarResult && (
+              <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#4ade80", margin: "4px 0 0" }}>
+                ✓ {exportarResult.sent} enviados{exportarResult.errors > 0 ? `, ${exportarResult.errors} errores` : ""}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={handleExportarSend}
+            disabled={exportarSending || exportarStats?.remaining === 0}
+            style={{ padding: "9px 18px", background: exportarStats?.remaining === 0 ? "#2A2A2A" : "linear-gradient(135deg,#a855f7,#7c3aed)", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: exportarStats?.remaining === 0 ? "default" : "pointer", opacity: exportarSending ? 0.6 : 1 }}
+          >
+            {exportarSending ? "Enviando..." : exportarStats?.remaining === 0 ? "Completada ✓" : "Enviar ahora"}
+          </button>
+        </div>
+      </div>
+
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Campañas</h1>
         <div style={{ display: "flex", gap: 10 }}>

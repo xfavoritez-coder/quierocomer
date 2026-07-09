@@ -1,20 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isSuperAdmin, checkAdminAuth } from "@/lib/adminAuth";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { createPanelMagicToken } from "@/lib/magicLink";
 import { buildExportarCartaEmail } from "@/lib/email/templates/exportarCarta";
 
-/** Ruta interna para enviar campaña exportar-carta a los leads restantes (offset 100).
- *  Protegida por CRON_SECRET en header x-cron-secret. One-shot: llamar una sola vez. */
+export async function GET(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
+
+  const alreadySent = await prisma.emailLog.findMany({
+    where: { purpose: "campana_exportar_carta", status: "sent" },
+    select: { to: true },
+  });
+  const alreadySentEmails = new Set(alreadySent.map((l) => l.to.toLowerCase()));
+
+  const rawLeads = await prisma.lead.findMany({
+    where: { email: { not: "import@quierocomer.cl" } },
+    select: { id: true, email: true },
+    orderBy: { id: "asc" },
+  });
+
+  const isJoanValdivia = (l: { email: string | null }) => {
+    const email = (l.email || "").toLowerCase().replace(/[.\-_]/g, "");
+    return email.includes("joan") || email.includes("valdivia");
+  };
+
+  const remaining = rawLeads.filter((l) =>
+    !isJoanValdivia(l) && l.email && !alreadySentEmails.has(l.email.toLowerCase())
+  );
+
+  return NextResponse.json({ remaining: remaining.length, sent: alreadySentEmails.size });
+}
+
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
   const { dryRun = false } = await req.json().catch(() => ({}));
 
-  // Emails que ya recibieron la campaña (enviados hoy o antes)
   const alreadySent = await prisma.emailLog.findMany({
     where: { purpose: "campana_exportar_carta", status: "sent" },
     select: { to: true },
@@ -33,7 +59,6 @@ export async function POST(req: NextRequest) {
     return email.includes("joan") || email.includes("valdivia") || name.includes("joan") || name.includes("valdivia");
   };
 
-  // Excluir Joan + los que ya recibieron el email
   const leads = rawLeads.filter((l) =>
     !isJoanValdivia(l) && l.email && !alreadySentEmails.has(l.email.toLowerCase())
   );
@@ -41,7 +66,10 @@ export async function POST(req: NextRequest) {
   const slugs = [...new Set(leads.map((l) => l.generatedSlug).filter(Boolean) as string[])];
   const restaurants = await prisma.restaurant.findMany({
     where: { slug: { in: slugs } },
-    select: { slug: true, ownerId: true, logoUrl: true, dishes: { where: { isActive: true, deletedAt: null, price: { gt: 0 } }, select: { name: true, price: true, photos: true }, orderBy: { position: "asc" }, take: 20 } },
+    select: {
+      slug: true, ownerId: true, logoUrl: true,
+      dishes: { where: { isActive: true, deletedAt: null, price: { gt: 0 } }, select: { name: true, price: true, photos: true }, orderBy: { position: "asc" }, take: 20 },
+    },
   });
   const restaurantMap = new Map(restaurants.map((r) => [r.slug, r]));
 

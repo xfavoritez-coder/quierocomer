@@ -38,10 +38,11 @@ async function fetchRestaurantData(slugs: string[]): Promise<Map<string, Restaur
         ownerId: r.ownerId,
         logoUrl: r.logoUrl,
         // Only dishes WITH photos (avoids "salsa extra" type entries)
-        dishes: r.dishes
-          .filter((d) => d.photos && d.photos.length > 0)
-          .slice(0, 3)
-          .map((d) => ({ name: d.name, price: d.price, photoUrl: d.photos[0] })),
+        dishes: (() => {
+          const withPhoto = r.dishes.filter((d) => d.photos && d.photos.length > 0);
+          const withoutPhoto = r.dishes.filter((d) => !d.photos || d.photos.length === 0);
+          return [...withPhoto, ...withoutPhoto].slice(0, 3).map((d) => ({ name: d.name, price: d.price, photoUrl: d.photos?.[0] ?? null }));
+        })(),
       },
     ])
   );

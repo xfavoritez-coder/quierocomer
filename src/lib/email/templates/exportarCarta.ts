@@ -146,7 +146,6 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
     </a>
   </td></tr>
   <tr><td align="center" style="padding-bottom:28px;">
-    <p style="margin:6px 0 0;font-size:11px;color:#aaa;">${hasMagicLink ? "Este enlace te lleva directo a tu panel, sin contraseña." : ""}</p>
   </td></tr>
 
   <!-- Footer -->

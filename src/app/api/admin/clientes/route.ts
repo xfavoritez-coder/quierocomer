@@ -12,9 +12,23 @@ export async function GET(req: NextRequest) {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  // 5 parallel queries
-  const [restaurants, leads, recentActivity, adSessions, emailLogs] = await Promise.all([
+  // Fetch leads first to get funnel slugs (skip Google Maps restaurants)
+  const leads = await prisma.lead.findMany({
+    where: { generatedSlug: { not: null } },
+    select: {
+      id: true, generatedSlug: true, localName: true, ownerName: true,
+      email: true, whatsapp: true, cartaType: true, cartaUrl: true,
+      cartaStatus: true, activated: true, activatedAt: true,
+      completedAt: true, deliveredAt: true, emailOpenedAt: true, emailClickedAt: true,
+      onboardingDoneAt: true, panelVisitedAt: true, activarVisitedAt: true,
+      events: true, createdAt: true, ip: true, city: true,
+    },
+  });
+  const funnelSlugs = leads.map((l) => l.generatedSlug).filter(Boolean) as string[];
+
+  const [restaurants, recentActivity, adSessions, emailLogs] = await Promise.all([
     prisma.restaurant.findMany({
+      where: { slug: { in: funnelSlugs } },
       orderBy: { createdAt: "desc" },
       select: {
         id: true, slug: true, name: true, logoUrl: true,
@@ -23,17 +37,6 @@ export async function GET(req: NextRequest) {
         website: true, createdAt: true, updatedAt: true, ownerId: true,
         owner: { select: { id: true, name: true, email: true, whatsapp: true, lastLoginAt: true, updatedAt: true } },
         _count: { select: { dishes: true, sessions: true, categories: true } },
-      },
-    }),
-    prisma.lead.findMany({
-      where: { generatedSlug: { not: null } },
-      select: {
-        id: true, generatedSlug: true, localName: true, ownerName: true,
-        email: true, whatsapp: true, cartaType: true, cartaUrl: true,
-        cartaStatus: true, activated: true, activatedAt: true,
-        completedAt: true, deliveredAt: true, emailOpenedAt: true, emailClickedAt: true,
-        onboardingDoneAt: true, panelVisitedAt: true, activarVisitedAt: true,
-        events: true, createdAt: true, ip: true, city: true,
       },
     }),
     prisma.panelActivity.findMany({
@@ -81,7 +84,7 @@ export async function GET(req: NextRequest) {
     activityByRestaurant.get(a.restaurantId)!.push(a);
   }
 
-  // Also count sessions in last 7 days per restaurant
+  // Count sessions in last 7 days per restaurant
   const recentSessions = await prisma.session.groupBy({
     by: ["restaurantId"],
     where: { startedAt: { gte: sevenDaysAgo } },
@@ -182,7 +185,6 @@ export async function GET(req: NextRequest) {
       billingExempt: r.billingExempt,
       isDemo: r.isDemo,
       createdAt: r.createdAt.toISOString(),
-      // For expanded detail
       leadId: lead?.id || null,
       leadEvents: lead ? (lead.events as any[]) || [] : [],
       leadTimeline: lead ? {
@@ -203,29 +205,18 @@ export async function GET(req: NextRequest) {
         createdAt: a.createdAt.toISOString(),
         details: a.details,
       })),
-      // Visitor/ad session data (pre-activation behavior)
       visitorSession: lead ? (() => {
         const vs = adSessionByLeadId.get(lead.id);
         return vs ? {
-          utmSource: vs.utmSource,
-          utmMedium: vs.utmMedium,
-          utmCampaign: vs.utmCampaign,
-          landingPage: vs.landingPage,
-          referrer: vs.referrer,
-          device: vs.device,
-          duration: vs.duration,
-          maxScroll: vs.maxScroll,
-          interactions: vs.interactions,
-          sectionsViewed: vs.sectionsViewed,
-          bounced: vs.bounced,
+          utmSource: vs.utmSource, utmMedium: vs.utmMedium, utmCampaign: vs.utmCampaign,
+          landingPage: vs.landingPage, referrer: vs.referrer, device: vs.device,
+          duration: vs.duration, maxScroll: vs.maxScroll, interactions: vs.interactions,
+          sectionsViewed: vs.sectionsViewed, bounced: vs.bounced,
           createdAt: vs.createdAt.toISOString(),
         } : null;
       })() : null,
-      // Emails sent to this owner
       emailsSent: r.owner?.email ? (emailsByOwnerEmail.get(r.owner.email) || []).map(e => ({
-        subject: e.subject,
-        purpose: e.purpose,
-        status: e.status,
+        subject: e.subject, purpose: e.purpose, status: e.status,
         openedAt: e.openedAt?.toISOString() || null,
         clickedAt: e.clickedAt?.toISOString() || null,
         createdAt: e.createdAt.toISOString(),

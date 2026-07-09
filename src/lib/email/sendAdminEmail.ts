@@ -120,16 +120,38 @@ function field(name: string, value: string): string {
 
 // ─── Email templates ──────────────────────────────────────────────────
 
-export function resetPasswordEmailHtml(name: string, resetLink: string): string {
+export function resetPasswordEmailHtml(name: string, resetLink: string, restaurantName?: string): string {
+  const firstName = name.split(" ")[0];
   return wrap(`
+  <tr><td style="text-align:center;padding-bottom:8px;">
+    <div style="display:inline-block;width:56px;height:56px;background:#fff8ee;border:2px solid #ead7b7;border-radius:50%;line-height:56px;font-size:26px;">🔑</div>
+  </td></tr>
+  <tr><td style="padding-bottom:6px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.3;">
+      Recuperar acceso
+    </h1>
+  </td></tr>
+  ${restaurantName ? `
+  <tr><td style="padding-bottom:16px;text-align:center;">
+    <span style="display:inline-block;font-size:12px;font-weight:700;color:${GOLD};letter-spacing:0.06em;text-transform:uppercase;background:#fff8ee;border:1px solid #ead7b7;border-radius:20px;padding:4px 14px;">${restaurantName}</span>
+  </td></tr>` : ""}
   <tr><td style="padding-bottom:20px;">
-    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Recuperar contraseña</h1>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;">
+      <tr><td style="padding:16px 20px;font-size:14px;color:#7a6547;line-height:1.7;">
+        Hola <strong>${firstName}</strong>, recibimos una solicitud para restablecer la contraseña de tu cuenta${restaurantName ? ` en <strong>${restaurantName}</strong>` : ""}.<br/>
+        Si no fuiste tú, puedes ignorar este mensaje — tu contraseña no cambiará.
+      </td></tr>
+    </table>
   </td></tr>
-  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;">
-    Hola ${name}, recibiste este email porque solicitaste recuperar tu contraseña. Si no fuiste tu, ignora este mensaje.
+  <tr><td style="padding-bottom:20px;">${btn(resetLink, "Restablecer mi contraseña")}</td></tr>
+  <tr><td style="padding-bottom:4px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fdf8f0;border:1px solid #e8dcc4;border-radius:10px;">
+      <tr><td style="padding:10px 16px;font-size:12px;color:#b8a888;line-height:1.6;">
+        🔒 Este link es de un solo uso y expira en <strong>1 hora</strong>.<br/>
+        Si tienes problemas para acceder, contáctanos en <a href="mailto:hola@quierocomer.cl" style="color:${GOLD};text-decoration:none;">hola@quierocomer.cl</a>
+      </td></tr>
+    </table>
   </td></tr>
-  <tr><td style="padding-bottom:16px;">${btn(resetLink, "Restablecer contraseña")}</td></tr>
-  <tr><td style="font-size:12px;color:#b8a888;text-align:center;">Este link expira en 1 hora.</td></tr>
   `);
 }
 

@@ -69,6 +69,19 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "No tienes restaurantes asignados" }, { status: 403 });
       }
       restaurantFilter = { restaurantId: { in: ownerIds } };
+    } else {
+      // Superadmin sin filtro: solo restaurantes del funnel (no Google Maps)
+      const funnelLeads = await prisma.lead.findMany({
+        where: { generatedSlug: { not: null } },
+        select: { generatedSlug: true },
+      });
+      const funnelSlugs = funnelLeads.map((l) => l.generatedSlug).filter(Boolean) as string[];
+      const funnelRestaurants = await prisma.restaurant.findMany({
+        where: { slug: { in: funnelSlugs } },
+        select: { id: true },
+      });
+      const funnelIds = funnelRestaurants.map((r) => r.id);
+      restaurantFilter = { restaurantId: { in: funnelIds } };
     }
 
     const dateFilter = { gte: rangeFrom, lte: rangeTo };

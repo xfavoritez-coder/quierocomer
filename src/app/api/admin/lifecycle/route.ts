@@ -15,10 +15,23 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // ── Parallel queries ──
+  // ── Fetch leads first to get funnel slugs (skip Google Maps restaurants) ──
+  const leads = await prisma.lead.findMany({
+    where: { generatedSlug: { not: null } },
+    select: {
+      id: true, generatedSlug: true, localName: true, ownerName: true,
+      email: true, whatsapp: true, cartaStatus: true, cartaType: true, cartaUrl: true, cartaFileUrl: true,
+      activated: true, activatedAt: true, deliveredAt: true,
+      emailClickedAt: true, whatsappClickedAt: true,
+      emailOpenedAt: true, completedAt: true,
+      events: true, createdAt: true,
+    },
+  });
+  const funnelSlugs = leads.map((l) => l.generatedSlug).filter(Boolean) as string[];
+
+  // ── Parallel queries — only funnel restaurants ──
   const [
     restaurants,
-    leads,
     allActivity,
     sessions7dGroups,
     totalSessionGroups,
@@ -27,6 +40,7 @@ export async function GET(req: NextRequest) {
     emailLogs,
   ] = await Promise.all([
     prisma.restaurant.findMany({
+      where: { slug: { in: funnelSlugs } },
       orderBy: { createdAt: "desc" },
       select: {
         id: true, slug: true, name: true, logoUrl: true,
@@ -35,17 +49,6 @@ export async function GET(req: NextRequest) {
         mpPayerEmail: true, currentPeriodEnd: true, lastPaymentAt: true,
         owner: { select: { id: true, name: true, email: true, whatsapp: true, lastLoginAt: true } },
         _count: { select: { dishes: true, sessions: true, categories: true } },
-      },
-    }),
-    prisma.lead.findMany({
-      where: { generatedSlug: { not: null } },
-      select: {
-        id: true, generatedSlug: true, localName: true, ownerName: true,
-        email: true, whatsapp: true, cartaStatus: true, cartaType: true, cartaUrl: true, cartaFileUrl: true,
-        activated: true, activatedAt: true, deliveredAt: true,
-        emailClickedAt: true, whatsappClickedAt: true,
-        emailOpenedAt: true, completedAt: true,
-        events: true, createdAt: true,
       },
     }),
     // All panel activity (not just 7d) for engagement checks
