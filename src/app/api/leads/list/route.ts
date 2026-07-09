@@ -8,6 +8,10 @@ export async function GET(req: NextRequest) {
   if (auth !== PASSWORD) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const leads = await prisma.lead.findMany({
+    where: {
+      step2At: { not: null },  // solo leads reales de /subircarta
+      activated: false,         // excluye quienes ya tienen plan activo
+    },
     orderBy: { createdAt: "desc" },
     take: 500,
     select: {
