@@ -460,17 +460,16 @@ function CRMApp() {
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #3A342D", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "rgba(10,9,8,.95)", backdropFilter: "blur(8px)", zIndex: 50 }}>
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid #3A342D", display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "rgba(10,9,8,.95)", backdropFilter: "blur(8px)", zIndex: 50 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="QuieroComer" style={{ height: 32, width: 32, objectFit: "contain", borderRadius: 6 }} />
         <div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "#E8DDC8" }}>Leads</div>
-          <div style={{ fontSize: 12, color: "#7D7366" }}>{leads.length} en total</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "#E8DDC8", letterSpacing: ".01em" }}>QuieroComer</span>
+            <span style={{ fontSize: 12, color: "#E8A33D", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase" }}>Leads</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#7D7366", marginTop: 1 }}>{leads.length} leads · CRM</div>
         </div>
-        <button
-          onClick={() => { setLoading(true); fetch("/api/leads/list", { headers: { "x-leads-auth": PASSWORD } }).then(r => r.json()).then(d => { setLeads(d.leads || []); setLoading(false); }); }}
-          style={{ background: "none", border: "1px solid #3A342D", color: "#7D7366", padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}
-        >
-          ↺ Actualizar
-        </button>
       </div>
 
       <div style={{ display: "flex", height: "calc(100vh - 65px)" }}>
