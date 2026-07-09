@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
-  const { dryRun = true, testEmail } = await req.json().catch(() => ({}));
+  const { dryRun = true, testEmail, offset = 0 } = await req.json().catch(() => ({}));
 
   // Test email: send to one address with the first real lead as example
   if (testEmail) {
@@ -95,10 +95,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, testEmail, message: "Email de prueba enviado" });
   }
 
-  // All leads excluding imports and Joan Valdivia
+  // All leads excluding imports and Joan Valdivia — orden estable por id para soportar offset
   const rawLeads = await prisma.lead.findMany({
     where: { email: { not: "import@quierocomer.cl" } },
     select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true },
+    orderBy: { id: "asc" },
   });
 
   const isJoanValdivia = (l: typeof rawLeads[0]) => {
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
     const name = (l.ownerName || "").toLowerCase();
     return email.includes("joan") || email.includes("valdivia") || name.includes("joan") || name.includes("valdivia");
   };
-  const leads = rawLeads.filter((l) => !isJoanValdivia(l));
+  const leads = rawLeads.filter((l) => !isJoanValdivia(l)).slice(offset);
 
   // Fetch all restaurant data in one batch
   const slugs = [...new Set(leads.map((l) => l.generatedSlug).filter(Boolean) as string[])];
@@ -147,5 +148,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ sent, skipped, errors, total: leads.length, dryRun, results: results.slice(0, 50) });
+  return NextResponse.json({ sent, skipped, errors, total: leads.length, offset, dryRun, results: results.slice(0, 50) });
 }
