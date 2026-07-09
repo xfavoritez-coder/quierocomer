@@ -11,7 +11,31 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "Solo superadmin" }, { status: 403 });
 
-  const { dryRun = true } = await req.json().catch(() => ({}));
+  const { dryRun = true, testEmail } = await req.json().catch(() => ({}));
+
+  // If testEmail provided, only send to that single address using the first valid lead as template
+  if (testEmail) {
+    const sampleLead = await prisma.lead.findFirst({
+      where: { email: { not: "import@quierocomer.cl" }, generatedSlug: { not: null } },
+      select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true },
+    });
+    const restaurant = sampleLead?.generatedSlug
+      ? await prisma.restaurant.findUnique({ where: { slug: sampleLead.generatedSlug }, select: { ownerId: true } })
+      : null;
+    const ownerId = restaurant?.ownerId ?? undefined;
+    const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
+    const ctaUrl = magicToken
+      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=/panel/exportar`
+      : `https://quierocomer.cl/panel/login`;
+    const html = buildExportarCartaEmail({
+      ownerName: sampleLead?.ownerName ?? "Restaurante",
+      localName: sampleLead?.localName ?? "Tu restaurante",
+      ctaUrl,
+      hasMagicLink: !!magicToken,
+    });
+    await sendAdminEmail({ to: testEmail, subject: `[TEST] 🍽️ Tu carta ahora se imprime en segundos`, html, purpose: "campana_exportar_carta_test" });
+    return NextResponse.json({ ok: true, testEmail, message: "Email de prueba enviado" });
+  }
 
   // Get all leads excluding imports and Joan Valdivia test leads
   const leads = await prisma.lead.findMany({

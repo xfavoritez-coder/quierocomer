@@ -136,7 +136,7 @@ export default function PlanesClient() {
               <div>✓ Todo lo del plan Gratis</div>
               <div>✓ 3 diseños de carta <span className="qc-tip">i<span className="qc-tip-text">Galería, Lista e Impact. Elige la que mejor represente tu local</span></span></div>
               <div>✓ Dark / Light mode <span className="qc-tip">i<span className="qc-tip-text">Elige el tema claro u oscuro que mejor represente tu local</span></span></div>
-              <div>✓ Destacar platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente los platos que más te conviene vender</span></span></div>
+              <div>✓ Destacar hasta 5 platos estrella <span className="qc-tip">i<span className="qc-tip-text">Resalta visualmente hasta 5 platos para que tus clientes los pidan más</span></span></div>
               <div>✓ Ofertas y promociones <span className="qc-tip">i<span className="qc-tip-text">Crea ofertas temporales visibles en la carta</span></span></div>
               <div>✓ Estadísticas básicas <span className="qc-tip">i<span className="qc-tip-text">Visitas, platos más vistos y duración promedio</span></span></div>
               <div>✓ Anuncios en carta <span className="qc-tip">i<span className="qc-tip-text">Banner de novedades visible al abrir la carta</span></span></div>
@@ -151,13 +151,14 @@ export default function PlanesClient() {
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 7 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
+              <div>✓ Platos estrella ilimitados <span className="qc-tip">i<span className="qc-tip-text">Sin límite de platos destacados. Resalta todos los que quieras</span></span></div>
               <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>
               <div>✓ Llamar al garzón <span className="qc-tip">i<span className="qc-tip-text">El cliente toca un botón y el garzón recibe la notificación push</span></span></div>
               <div>✓ Ver clientes ilimitados <span className="qc-tip">i<span className="qc-tip-text">Sin límite de clientes registrados. Ve correos, preferencias y más</span></span></div>
               <div>✓ Multi-carta <span className="qc-tip">i<span className="qc-tip-text">Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico</span></span></div>
               <div>✓ Multiidioma ES / EN / PT <span className="qc-tip">i<span className="qc-tip-text">Tu carta en español, inglés y portugués. Los clientes eligen su idioma</span></span></div>
-              <div>✓ Exportar carta imprimible <span className="qc-tip">i<span className="qc-tip-text">Genera un PDF profesional de tu carta para imprimir con 3 diseños a elegir</span></span></div>
+              <div>✓ Exportar carta imprimible <span className="qc-tip">i<span className="qc-tip-text">Genera un PDF profesional de tu carta para imprimir con 4 diseños elegantes a elegir</span></span></div>
             </div>
             <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 7 dias</button>
           </article>

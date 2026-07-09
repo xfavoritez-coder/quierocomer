@@ -96,7 +96,7 @@ const LANG_OPTIONS: { key: Lang; label: string; flag: string }[] = [
 
 export default function ExportarCarta({ restaurant, categories, categoryTranslations = [], dishes, isPaid = false }: Props) {
   const [tema, setTema] = useState<Tema>("carbon");
-  const [incluirFotos, setIncluirFotos] = useState(false);
+  const [incluirFotos, setIncluirFotos] = useState(true);
   const [ahorroTinta, setAhorroTinta] = useState(false);
   const [lang, setLang] = useState<Lang>("es");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
