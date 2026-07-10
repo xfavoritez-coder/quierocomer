@@ -644,14 +644,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
                     const badgeLabel = selectedPromo.daysOfWeek?.length ? `OFERTA ${DAY_NAMES[todayDow]}` : "OFERTA";
                     return (
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                        <div style={{ width: 14, height: 1, background: "var(--carta-accent, #F4A623)", opacity: 0.6 }} />
-                        <span style={{ fontSize: "10.5px", fontWeight: 600, color: "var(--carta-accent, #F4A623)", letterSpacing: "0.15em", textTransform: "uppercase" }}>{badgeLabel}</span>
-                      </div>
+                      <span style={{ color: "var(--carta-detail-sub)", fontSize: "13.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{badgeLabel}</span>
                     );
                   })()}
 
-                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "var(--carta-text)", margin: "0 0 12px" }}>
+                  <h2 style={{ fontSize: "32px", fontWeight: 800, color: "var(--carta-detail-heading)", lineHeight: 1.1, margin: "0 0 12px", letterSpacing: "-0.5px" }}>
                     {selectedPromo.name}
                   </h2>
 
@@ -680,7 +677,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                           <span style={{ color: "var(--carta-text3)", fontSize: "14px", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>
                         )}
                         {selectedPromo.promoPrice && (
-                          <span style={{ color: "var(--carta-accent, #F4A623)", fontSize: "22px", fontWeight: 800 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
+                          <span style={{ color: "var(--carta-detail-price, var(--carta-accent, #F4A623))", fontSize: "22px", fontWeight: 800 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
                         )}
                       </div>
                     </div>
