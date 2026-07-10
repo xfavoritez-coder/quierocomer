@@ -190,8 +190,8 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.groupBy({ by: ["query"], where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
       // Period avg duration (via aggregate, not fetching 10k rows)
       prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
-      // Filter usage this week (popular, estrella/recomendados, veggie)
-      prisma.statEvent.groupBy({ by: ["metadata"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+      // Filter usage this week (popular, estrella/recomendados, veggie) — stored in query field
+      prisma.statEvent.groupBy({ by: ["query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
     ]);
 
     const uniqueGuests = uniqueGuestsCount as number;
@@ -284,11 +284,11 @@ export async function GET(req: NextRequest) {
 
     const avgDurationSec = Math.round((periodDurationAgg._avg?.durationMs || 0) / 1000);
 
-    // Aggregate filter clicks by filterValue from metadata JSON
+    // Aggregate filter clicks by query field (popular | estrella | veggie)
     const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0 };
     for (const row of filterUsageRaw as any[]) {
-      const fv = (row.metadata as any)?.filterValue as string | undefined;
-      if (fv && fv in filterUsage) filterUsage[fv] += row._count.id;
+      const fv = row.query as string | undefined;
+      if (fv && fv in filterUsage) filterUsage[fv] = row._count.id;
     }
     const weekAvgDurationSec = Math.round((weekAvgDuration._avg?.durationMs || 0) / 1000);
 

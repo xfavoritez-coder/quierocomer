@@ -149,7 +149,7 @@ export default function CartaPremium({
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
     const next = f === key ? null : key;
-    if (next) trackFilterApplied(restaurant.id, "carta_filter", next, 0);
+    if (next) track(restaurant.id, "FILTER_APPLIED", { query: next });
     return next;
   });
 

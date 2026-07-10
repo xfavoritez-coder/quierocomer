@@ -27,6 +27,7 @@ interface DashData {
   genio: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
   restaurantRanking: { name: string; uniqueGuests: number }[];
   birthdaysByRestaurant: { name: string; count: number }[];
+  filterUsage?: { popular: number; estrella: number; veggie: number };
 }
 
 // ── Shared styles ──
@@ -161,8 +162,6 @@ export default function AdminDashboard() {
     return <div style={{ padding: 40, textAlign: "center" }}><p style={{ fontFamily: F, color: "var(--adm-text2)" }}>Sin datos disponibles</p></div>;
   }
 
-  const g = data.genio;
-
   return (
     <div style={{ maxWidth: 860, margin: "0 auto" }}>
       {/* ── Header ── */}
@@ -223,16 +222,6 @@ export default function AdminDashboard() {
         <StatCard label="Cumpleaños registrados" value={data.birthdaysSaved} accent="#f472b6" />
       </div>
 
-      {/* ── Top dishes ── */}
-      <div style={{ ...card, marginBottom: 16 }}>
-        <h3 style={sectionTitle}>Platos más vistos</h3>
-        {data.topDishesViewed.length > 0 ? (
-          <BarList items={data.topDishesViewed.map(d => ({ label: d.name, value: d.count }))} />
-        ) : (
-          <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text3)" }}>Sin datos</p>
-        )}
-      </div>
-
       {/* ── Restaurant ranking ── */}
       {data.restaurantRanking.length > 1 && (
         <div style={{ ...card, marginBottom: 16 }}>
@@ -249,74 +238,24 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ── Genio funnel ── */}
-      <div style={{ ...card, marginBottom: 16 }}>
-        <h3 style={sectionTitle}>Genio — Embudo de uso</h3>
-        {g.starts > 0 ? (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 16 }}>
-              <FunnelStep label="Abrieron" value={g.starts} total={g.starts} color={GOLD} />
-              <span style={{ color: "var(--adm-text3)", fontSize: "1.2rem", margin: "0 -4px" }}>→</span>
-              <FunnelStep label="Marcaron dieta" value={g.dietMarked} total={g.starts} color="#3db89e" />
-              <span style={{ color: "var(--adm-text3)", fontSize: "1.2rem", margin: "0 -4px" }}>→</span>
-              <FunnelStep label="Completaron" value={g.completed} total={g.starts} color="#7fbfdc" />
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <div style={{ flex: 1, background: "rgba(244,166,35,0.06)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                <p style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: GOLD, margin: 0 }}>{g.completionRate}%</p>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Tasa de completado</p>
-              </div>
-              <div style={{ flex: 1, background: "rgba(61,184,158,0.06)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                <p style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: "#3db89e", margin: 0 }}>{g.dietRate}%</p>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Marcaron su dieta</p>
-              </div>
-              <div style={{ flex: 1, background: "rgba(127,191,220,0.06)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                <p style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: "#7fbfdc", margin: 0 }}>{g.starts - g.completed}</p>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Abandonaron</p>
-              </div>
-            </div>
-          </>
-        ) : (
-          <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: "16px 0" }}>Nadie abrió el Genio en este periodo</p>
-        )}
-      </div>
-
-      {/* ── Diet + Restrictions ── */}
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-        <div style={card}>
-          <h3 style={sectionTitle}>Dietas de los clientes</h3>
-          <PillDist data={Object.fromEntries(data.dietDistribution.map(d => [d.type, d.count]))} labels={DIET_LABELS} />
-        </div>
-        <div style={card}>
-          <h3 style={sectionTitle}>Restricciones marcadas</h3>
-          {data.restrictionsList.length > 0 ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {data.restrictionsList.map(r => (
-                <span key={r.name} style={{
-                  fontFamily: F, fontSize: "0.76rem", padding: "5px 12px", borderRadius: 20,
-                  background: "rgba(232,85,48,0.08)", border: "1px solid rgba(232,85,48,0.2)", color: "#e85530",
-                }}>
-                  {r.name} <strong>{r.count}</strong>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text3)" }}>Sin restricciones registradas</p>
-          )}
-        </div>
-      </div>
-
-      {/* ── View + Device distributions ── */}
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-        <div style={card}>
-          <h3 style={sectionTitle}>Vista preferida</h3>
-          <PillDist data={data.viewDistribution} labels={VIEW_LABELS} />
-        </div>
-        <div style={card}>
-          <h3 style={sectionTitle}>Dispositivo</h3>
-          <PillDist data={data.deviceDistribution} />
-        </div>
-      </div>
+      {/* ── Filtros usados ── */}
+      {data.filterUsage && (() => {
+        const fu = data.filterUsage!;
+        const total = fu.popular + fu.estrella + fu.veggie;
+        if (total === 0) return null;
+        const filters = [
+          { emoji: "🔥", label: "Popular",      count: fu.popular },
+          { emoji: "⭐", label: "Recomendados", count: fu.estrella },
+          { emoji: "🌿", label: "Veggie",       count: fu.veggie },
+        ].sort((a, b) => b.count - a.count);
+        return (
+          <div style={{ ...card, marginBottom: 16 }}>
+            <h3 style={sectionTitle}>🎛️ Filtros usados en la carta</h3>
+            <BarList items={filters.map(f => ({ label: `${f.emoji} ${f.label}`, value: f.count }))} />
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "12px 0 0" }}>{total} clicks totales en el periodo</p>
+          </div>
+        );
+      })()}
     </div>
   );
 }
