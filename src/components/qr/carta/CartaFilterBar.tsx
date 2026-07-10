@@ -27,8 +27,7 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
         </span>
       )}
       <div style={{
-        display: "flex", gap: compact ? 5 : 7, overflowX: "auto",
-        scrollbarWidth: "none", msOverflowStyle: "none",
+        display: "flex", gap: compact ? 5 : 7, flex: 1,
       }}>
         {FILTERS.map((f) => {
           const isActive = active === f.key;
@@ -38,9 +37,9 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
               onClick={() => onToggle(f.key)}
               className="font-[family-name:var(--font-dm)]"
               style={{
-                flexShrink: 0,
-                display: "flex", alignItems: "center", gap: 5,
-                padding: compact ? "4px 11px" : "6px 13px",
+                flex: 1,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                padding: compact ? "3px 8px" : "5px 8px",
                 borderRadius: 999,
                 fontSize: compact ? 12 : 13,
                 fontWeight: isActive ? 700 : 500,
