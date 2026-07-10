@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
           isSpicy: d.isSpicy || false,
           dishDiet: d.diet || "OMNIVORE",
           isFeaturedAuto: d.isHero || false,
+          txDishType: [],
           position: i,
         },
       });
