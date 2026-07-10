@@ -70,18 +70,13 @@ export async function GET(req: NextRequest) {
       }
       restaurantFilter = { restaurantId: { in: ownerIds } };
     } else {
-      // Superadmin sin filtro: solo restaurantes del funnel (no Google Maps)
-      const funnelLeads = await prisma.lead.findMany({
-        where: { generatedSlug: { not: null } },
-        select: { generatedSlug: true },
-      });
-      const funnelSlugs = funnelLeads.map((l) => l.generatedSlug).filter(Boolean) as string[];
-      const funnelRestaurants = await prisma.restaurant.findMany({
-        where: { slug: { in: funnelSlugs } },
+      // Superadmin sin filtro: todos los restaurantes con owner (excluye Google Maps/importados sin dueño)
+      const realRestaurants = await prisma.restaurant.findMany({
+        where: { ownerId: { not: null } },
         select: { id: true },
       });
-      const funnelIds = funnelRestaurants.map((r) => r.id);
-      restaurantFilter = { restaurantId: { in: funnelIds } };
+      const realIds = realRestaurants.map((r) => r.id);
+      restaurantFilter = { restaurantId: { in: realIds } };
     }
 
     const dateFilter = { gte: rangeFrom, lte: rangeTo };
