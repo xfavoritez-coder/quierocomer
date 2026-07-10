@@ -504,7 +504,7 @@ export default function CartaPremium({
       )}
 
       {/* Filter bar */}
-      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "7px 12px 8px" }}>
+      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "13px 12px" }}>
         <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
       </div>
 
