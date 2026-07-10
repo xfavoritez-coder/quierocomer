@@ -1642,7 +1642,7 @@ export default function CartaImpact({
             <div id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
               <h3 style={{
                 fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 26,
-                color: "var(--impact-section-title)", margin: "38px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9, opacity: 0.8,
+                color: "var(--impact-section-title)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9, opacity: 0.8,
               }}>{category.name}</h3>
               {category.description && category.description.length <= 60 && (
                 <p style={{ fontSize: "0.8rem", color: "var(--carta-text3, #999)", marginTop: -6, marginBottom: 8 }}>
