@@ -12,7 +12,7 @@ import { linkVisitorToLead } from "@/lib/visitorTracker";
 import { normalizePhone } from "@/lib/normalizePhone";
 import { parseAbText } from "@/lib/ab/parseAbText";
 
-type Mode = "pdf" | "link" | "photo" | null;
+type Mode = "pdf" | "link" | "photo" | "scratch" | null;
 
 // A/B test state for hero
 interface AbData { titleId: string | null; titleText: string; ctaId: string | null; ctaText: string }
@@ -125,6 +125,13 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
+  // Scratch mode state
+  const [scratchName, setScratchName] = useState("");
+  const [scratchOwner, setScratchOwner] = useState("");
+  const [scratchEmail, setScratchEmail] = useState("");
+  const [scratchWA, setScratchWA] = useState("");
+  const [scratchError, setScratchError] = useState("");
+
   // Fallback form — shown when navigation to paso2 fails
   const [fallbackLeadId, setFallbackLeadId] = useState<string | null>(null);
   const [fbLocalName, setFbLocalName] = useState("");
@@ -151,7 +158,8 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
   })();
 
   const hasFile = (mode === "pdf" || mode === "photo") && !!fileName;
-  const ctaEnabled = mode === "link" ? isLinkValid : hasFile;
+  const scratchValid = mode === "scratch" && scratchName.trim().length > 0 && scratchEmail.includes("@");
+  const ctaEnabled = mode === "link" ? isLinkValid : mode === "scratch" ? scratchValid : hasFile;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -251,6 +259,28 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
     setError("");
 
     try {
+      if (mode === "scratch") {
+        setScratchError("");
+        const res = await fetch("/api/activar/registrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            localName: scratchName.trim(),
+            ownerName: scratchOwner.trim() || undefined,
+            email: scratchEmail.trim(),
+            whatsapp: scratchWA.trim() ? `+56${scratchWA.replace(/\s/g, "").replace(/^\+?56/, "")}` : undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.slug) {
+          setScratchError(data.error || "Error al crear tu carta.");
+          setLoading(false);
+          return;
+        }
+        window.location.href = `/registrar/${data.slug}?plan=PREMIUM`;
+        return;
+      }
+
       if (mode === "link") {
         // Block own URLs — this is already a QuieroComer menu
         if (normalizedUrl.includes("quierocomer.cl")) {
@@ -357,13 +387,13 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
 
           <div className="form-side centered-form">
             {/* Method selector */}
-            <div className="methods" data-track="Elegir metodo (link, foto, PDF)">
-              {(["photo", "link", "pdf"] as const).map((m) => (
+            <div className="methods" data-track="Elegir metodo (link, foto, PDF, scratch)">
+              {(["photo", "link", "pdf", "scratch"] as const).map((m) => (
                 <button
                   key={m}
                   className={`method${mode === m ? " active" : ""}`}
                   type="button"
-                  onClick={() => { setMode(m); setError(""); setFileName(""); setPdfFile(null); setPhotoFiles([]); }}
+                  onClick={() => { setMode(m); setError(""); setFileName(""); setPdfFile(null); setPhotoFiles([]); setScratchError(""); }}
                 >
                   {m === "pdf" && (
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
@@ -373,6 +403,9 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
                   )}
                   {m === "photo" && (
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Tengo foto</strong><span>de mi carta física</span></>
+                  )}
+                  {m === "scratch" && (
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M32 12v40M12 32h40" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><rect x="14" y="14" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Crear desde cero</strong><span>te armamos la carta</span></>
                   )}
                 </button>
               ))}
@@ -489,6 +522,46 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
               </div>
             )}
 
+            {/* Scratch panel */}
+            {mode === "scratch" && (
+              <div className="input-panel">
+                <div className="upload-card compact-upload" style={{ minHeight: "auto", padding: "24px 20px", textAlign: "left" }}>
+                  <div style={{ width: "100%" }}>
+                    <div className="upload-icon" style={{ margin: "0 auto 10px" }}>
+                      <svg viewBox="0 0 64 64" fill="none"><path d="M32 12v40M12 32h40" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><rect x="14" y="14" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="3"/></svg>
+                    </div>
+                    <div className="upload-title" style={{ textAlign: "center", marginBottom: 4 }}>Creamos tu carta con platos de ejemplo</div>
+                    <div className="upload-link" style={{ textAlign: "center", marginBottom: 18, fontSize: "0.82rem", fontWeight: 400, color: "var(--muted)" }}>Luego la personalizas desde tu panel</div>
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <div>
+                        <label className="field-label">Nombre del local *</label>
+                        <input type="text" placeholder="Ej: Mi Restaurante" value={scratchName} onChange={(e) => { setScratchName(e.target.value); setScratchError(""); }} />
+                      </div>
+                      <div>
+                        <label className="field-label">Tu nombre</label>
+                        <input type="text" placeholder="Ej: Juan Pérez" value={scratchOwner} onChange={(e) => setScratchOwner(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="field-label">Email *</label>
+                        <input type="email" placeholder="tu@correo.com" value={scratchEmail} onChange={(e) => { setScratchEmail(e.target.value); setScratchError(""); }} />
+                      </div>
+                      <div>
+                        <label className="field-label">WhatsApp</label>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
+                            <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
+                            <span style={{ fontWeight: 600 }}>+56</span>
+                          </div>
+                          <input type="tel" placeholder="9 1234 5678" value={scratchWA} onChange={(e) => setScratchWA(formatFbPhone(e.target.value))} style={{ flex: 1 }} />
+                        </div>
+                      </div>
+                    </div>
+                    {scratchError && <div style={{ color: "#e85d5d", fontSize: 13, marginTop: 10, textAlign: "center" }}>{scratchError}</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Error message */}
             {error && (
               <div style={{ marginTop: 12, color: "#e85d5d", fontSize: 14, textAlign: "center" }}>
@@ -507,7 +580,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
                 cursor: ctaEnabled && !loading ? "pointer" : "default",
               }}
             >
-              {loading ? <><span>{uploadProgress || "Subiendo"}</span><span className="loading-dots" /><span> </span></> : "Subir mi carta"} <span>→</span>
+              {loading ? <><span>{mode === "scratch" ? "Creando" : (uploadProgress || "Subiendo")}</span><span className="loading-dots" /><span> </span></> : mode === "scratch" ? "Crear mi carta" : "Subir mi carta"} <span>→</span>
             </button>
 
           </div>
@@ -643,7 +716,7 @@ h1 br.desktop-break { display: none; }
 .method-title { text-align: center; margin: 28px 0 14px; color: var(--cream-2); }
 .first-title { margin-top: 0; color: var(--cream-2); font-weight: 500; font-size: 19px; }
 .centered-form { max-width: 620px; margin: 0 auto; }
-.methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.methods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 14px; padding: 12px 8px; text-align: center; min-height: 100px; display: grid; align-content: center; gap: 6px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
 .method strong { margin-bottom: -4px; }
 .method span { line-height: 1.1; }
@@ -667,7 +740,7 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .below-cta { margin: 10px auto 0; max-width: 520px; }
 .cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
 .cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 16px; } .shell { padding: 46px; } h1 { font-size: 60px; } h1 br.desktop-break { display: block; } .methods { gap: 14px; } }
+@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 16px; } .shell { padding: 46px; } h1 { font-size: 60px; } h1 br.desktop-break { display: block; } .methods { grid-template-columns: repeat(4, 1fr); gap: 14px; } }
 @media (max-width: 390px) { h1 { font-size: 40px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
