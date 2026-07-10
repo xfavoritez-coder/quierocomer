@@ -65,17 +65,16 @@ export async function GET(req: NextRequest) {
 
   const paidMap = new Map(paidRestaurants.map(r => [r.slug, r]));
 
-  // Marcar leads cuyo restaurante ya tiene plan pago (no excluir, solo marcar)
-  const leads = allLeads.map(l => {
-    const paidR = l.generatedSlug ? paidMap.get(l.generatedSlug) : undefined;
-    return {
+  // Excluir leads cuyo restaurante ya es cliente activo (pago o bonificado)
+  const leads = allLeads
+    .filter(l => !l.generatedSlug || !paidMap.has(l.generatedSlug))
+    .map(l => ({
       ...l,
-      restaurantPlan: paidR?.plan ?? null,
-      restaurantPlanPrice: paidR ? (PLAN_PRICES[paidR.plan] ?? null) : null,
-      restaurantPeriodEnd: paidR?.currentPeriodEnd ?? null,
-      restaurantLastPayment: paidR?.lastPaymentAt ?? null,
-    };
-  });
+      restaurantPlan: null,
+      restaurantPlanPrice: null,
+      restaurantPeriodEnd: null,
+      restaurantLastPayment: null,
+    }));
 
   return NextResponse.json({ leads, total: leads.length });
 }
