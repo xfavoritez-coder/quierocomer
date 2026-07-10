@@ -1261,7 +1261,7 @@ export default function CartaImpact({
 
       {/* Announcement banner — between logo row and category chips */}
       {hasBannerActive && (
-        <div style={{ padding: "6px 14px 4px" }}>
+        <div style={{ padding: `6px 0 ${showFixedCatNav ? "10px" : "4px"}` }}>
           {announcements && announcements.length > 0
             ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
             : <HappyHourBanner happyHours={happyHours || []} />}
