@@ -21,7 +21,7 @@ import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
-import { trackSearchPerformed, track, trackFilterApplied } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, track, flushEvents } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -955,7 +955,7 @@ export default function CartaImpact({
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
     const next = f === key ? null : key;
-    if (next) track(restaurant.id, "FILTER_APPLIED", { query: next });
+    if (next) { track(restaurant.id, "FILTER_APPLIED", { query: next }); flushEvents(); }
     return next;
   });
   const dishesFiltered = useMemo(
@@ -1286,7 +1286,7 @@ export default function CartaImpact({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
-              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
+              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 40, height: 40, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
                 {LANG_FLAG_IMG[lang] ? <img src={LANG_FLAG_IMG[lang]} alt={lang} style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "var(--carta-text, #fff)", fontSize: 11, fontWeight: 900 }}>{lang.toUpperCase()}</span>}
               </button>
               <div style={{
@@ -1511,7 +1511,7 @@ export default function CartaImpact({
       {/* Personalización ocurre en background sin bloquear la UI */}
 
       {/* ═══════ MENÚ ═══════ */}
-      <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 2, display: "flex", alignItems: "center", gap: 8 }}>
         {/* Título — se oculta cuando busca */}
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,

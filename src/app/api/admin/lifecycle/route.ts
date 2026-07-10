@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-  // ── Fetch leads + restaurants con owner en paralelo ──
-  const [leads, restaurants, allActivity, sessions7dGroups, dishesWithPhotos, clientCounts, emailLogs] = await Promise.all([
+  // ── Phase 1: leads + restaurants (base data) ──
+  const [leads, restaurants] = await Promise.all([
     prisma.lead.findMany({
       where: { generatedSlug: { not: null } },
       select: {
@@ -43,32 +43,40 @@ export async function GET(req: NextRequest) {
         _count: { select: { dishes: true, sessions: true, categories: true } },
       },
     }),
-    // Actividad reciente (últimos 60 días, no todo el historial)
+  ]);
+
+  // ── Phase 2: all secondary queries scoped to owned restaurant IDs ──
+  const restaurantIds = restaurants.map(r => r.id);
+  const ownerEmails = [...new Set(restaurants.flatMap(r => r.owner?.email ? [r.owner.email] : []))];
+
+  const [allActivity, sessions7dGroups, dishesWithPhotos, clientCounts, emailLogs] = await Promise.all([
+    // Actividad reciente (últimos 60 días) — solo restaurantes con owner
     prisma.panelActivity.findMany({
-      where: { createdAt: { gte: sixtyDaysAgo } },
+      where: { restaurantId: { in: restaurantIds }, createdAt: { gte: sixtyDaysAgo } },
       select: { restaurantId: true, action: true, details: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
-    // Sessions last 7 days
+    // Sessions last 7 days — solo restaurantes con owner
     prisma.session.groupBy({
       by: ["restaurantId"],
-      where: { startedAt: { gte: sevenDaysAgo } },
+      where: { restaurantId: { in: restaurantIds }, startedAt: { gte: sevenDaysAgo } },
       _count: true,
     }),
-    // Restaurants that have at least 1 dish with photos
+    // Restaurants that have at least 1 dish with photos — solo restaurantes con owner
     prisma.dish.findMany({
-      where: { photos: { isEmpty: false }, deletedAt: null },
+      where: { restaurantId: { in: restaurantIds }, photos: { isEmpty: false }, deletedAt: null },
       select: { restaurantId: true },
       distinct: ["restaurantId"],
     }),
-    // RestaurantClient counts per restaurant
+    // RestaurantClient counts per restaurant — solo restaurantes con owner
     prisma.restaurantClient.groupBy({
       by: ["restaurantId"],
+      where: { restaurantId: { in: restaurantIds } },
       _count: true,
     }),
-    // Emails recientes (últimos 90 días)
+    // Emails recientes (últimos 90 días) — solo a owners conocidos
     prisma.emailLog.findMany({
-      where: { createdAt: { gte: ninetyDaysAgo } },
+      where: { to: { in: ownerEmails }, createdAt: { gte: ninetyDaysAgo } },
       select: { to: true, subject: true, purpose: true, status: true, openedAt: true, clickedAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),

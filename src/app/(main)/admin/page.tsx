@@ -28,6 +28,7 @@ interface DashData {
   restaurantRanking: { name: string; uniqueGuests: number }[];
   birthdaysByRestaurant: { name: string; count: number }[];
   filterUsage?: { popular: number; estrella: number; veggie: number };
+  filterUsageByRestaurant?: { name: string; popular: number; estrella: number; veggie: number; total: number }[];
 }
 
 // ── Shared styles ──
@@ -139,6 +140,7 @@ export default function AdminDashboard() {
     params.set("period", period);
     if (period === "custom" && customFrom) params.set("from", customFrom);
     if (period === "custom" && customTo) params.set("to", customTo);
+    params.set("mode", "admin");
     fetch(`/api/admin/dashboard?${params}`)
       .then(r => r.json())
       .then(d => { if (!d.error) setData(d); })
@@ -243,16 +245,42 @@ export default function AdminDashboard() {
         const fu = data.filterUsage!;
         const total = fu.popular + fu.estrella + fu.veggie;
         if (total === 0) return null;
-        const filters = [
-          { emoji: "🔥", label: "Popular",      count: fu.popular },
-          { emoji: "⭐", label: "Recomendados", count: fu.estrella },
-          { emoji: "🌿", label: "Veggie",       count: fu.veggie },
-        ].sort((a, b) => b.count - a.count);
+        const byRest = data.filterUsageByRestaurant || [];
         return (
           <div style={{ ...card, marginBottom: 16 }}>
-            <h3 style={sectionTitle}>🎛️ Filtros usados en la carta</h3>
-            <BarList items={filters.map(f => ({ label: `${f.emoji} ${f.label}`, value: f.count }))} />
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "12px 0 0" }}>{total} clicks totales en el periodo</p>
+            <h3 style={sectionTitle}>🎛️ Filtros usados en la carta (última semana)</h3>
+            {/* Totals row */}
+            <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
+              {[{ emoji: "🔥", label: "Popular", count: fu.popular }, { emoji: "⭐", label: "Recomendados", count: fu.estrella }, { emoji: "🌿", label: "Veggie", count: fu.veggie }]
+                .sort((a, b) => b.count - a.count)
+                .map(f => (
+                  <div key={f.label} style={{ textAlign: "center" }}>
+                    <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: GOLD, margin: 0 }}>{f.count}</p>
+                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{f.emoji} {f.label}</p>
+                  </div>
+                ))}
+              <div style={{ textAlign: "center", marginLeft: "auto" }}>
+                <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: "var(--adm-text2)", margin: 0 }}>{total}</p>
+                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Total</p>
+              </div>
+            </div>
+            {/* Per-restaurant breakdown */}
+            {byRest.length > 0 && (
+              <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 12 }}>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Por local</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {byRest.map(r => (
+                    <div key={r.name} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto", gap: 10, alignItems: "center" }}>
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)" }}>{r.name}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", minWidth: 40, textAlign: "center" }}>🔥 {r.popular}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", minWidth: 40, textAlign: "center" }}>⭐ {r.estrella}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", minWidth: 40, textAlign: "center" }}>🌿 {r.veggie}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: GOLD, minWidth: 40, textAlign: "right" }}>{r.total}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}

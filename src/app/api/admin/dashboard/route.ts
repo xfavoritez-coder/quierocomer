@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
     const period = url.searchParams.get("period") || "today";
     const customFrom = url.searchParams.get("from");
     const customTo = url.searchParams.get("to");
+    const adminMode = url.searchParams.get("mode") === "admin";
 
     const { from: rangeFrom, to: rangeTo } = getDateRange(period, customFrom, customTo);
 
@@ -88,7 +89,71 @@ export async function GET(req: NextRequest) {
     const weekAgo = new Date(todayStart.getTime() - 7 * 86400000);
     const twoWeeksAgo = new Date(todayStart.getTime() - 14 * 86400000);
 
-    // ── All queries in one parallel batch ──
+    // ── Admin-mode: only the queries needed for /admin/dashboard (fast) ──
+    if (adminMode) {
+      const [
+        totalSessions,
+        uniqueGuestsCount,
+        birthdaysSaved,
+        restaurantRankingRaw,
+        birthdaysByRestaurantRaw,
+        periodDurationAgg,
+        filterUsageRaw,
+      ] = await Promise.all([
+        prisma.session.count({ where: { ...restaurantFilter, startedAt: dateFilter } }),
+        prisma.session.groupBy({ by: ["guestId"], where: { ...restaurantFilter, startedAt: dateFilter }, _count: { id: true } }).then(r => r.length),
+        prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter } }),
+        prisma.session.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, startedAt: dateFilter }, _count: { guestId: true }, orderBy: { _count: { guestId: "desc" } }, take: 20 }),
+        prisma.statEvent.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
+        prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
+        prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+      ]);
+
+      const uniqueGuests = uniqueGuestsCount as number;
+      const avgDurationSec = Math.round((periodDurationAgg._avg?.durationMs || 0) / 1000);
+
+      // Resolve restaurant names
+      const restIds = [...new Set([
+        ...restaurantRankingRaw.map((r: any) => r.restaurantId),
+        ...(birthdaysByRestaurantRaw as any[]).map((r: any) => r.restaurantId),
+      ])];
+      const restRecords = restIds.length ? await prisma.restaurant.findMany({ where: { id: { in: restIds } }, select: { id: true, name: true } }) : [];
+      const restMap = Object.fromEntries(restRecords.map(r => [r.id, r.name]));
+
+      // Filter usage
+      const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0 };
+      const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number }> = {};
+      for (const row of filterUsageRaw as any[]) {
+        const fv = row.query as string | undefined;
+        const rid = row.restaurantId as string | undefined;
+        if (!fv || !(fv in filterUsage)) continue;
+        filterUsage[fv] += row._count.id;
+        if (rid) {
+          if (!filterByRestaurantMap[rid]) filterByRestaurantMap[rid] = { popular: 0, estrella: 0, veggie: 0 };
+          filterByRestaurantMap[rid][fv as "popular" | "estrella" | "veggie"] += row._count.id;
+        }
+      }
+      const filterRestIds = Object.keys(filterByRestaurantMap).filter(id => !restMap[id]);
+      const extraRests = filterRestIds.length ? await prisma.restaurant.findMany({ where: { id: { in: filterRestIds } }, select: { id: true, name: true } }) : [];
+      for (const r of extraRests) restMap[r.id] = r.name;
+      const filterUsageByRestaurant = Object.entries(filterByRestaurantMap)
+        .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie }))
+        .sort((a, b) => b.total - a.total);
+
+      return NextResponse.json({
+        period, from: rangeFrom.toISOString(), to: rangeTo.toISOString(),
+        totalSessions, uniqueGuests, avgDurationSec, birthdaysSaved,
+        registeredGuests: 0, conversionRate: 0,
+        topDishesViewed: [], viewDistribution: {}, deviceDistribution: {},
+        dietDistribution: [], restrictionsList: [],
+        genio: { starts: 0, dietMarked: 0, completed: 0, completionRate: 0, dietRate: 0 },
+        restaurantRanking: restaurantRankingRaw.map((r: any) => ({ name: restMap[r.restaurantId] || r.restaurantId, uniqueGuests: r._count.guestId })),
+        birthdaysByRestaurant: (birthdaysByRestaurantRaw as any[]).map((r: any) => ({ name: restMap[r.restaurantId] || r.restaurantId, count: r._count.id })),
+        filterUsage, filterUsageByRestaurant,
+      });
+    }
+
+    // ── Full mode: all queries (for /panel/dashboard) ──
     const [
       // Period-based
       totalSessions,
@@ -190,8 +255,8 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.groupBy({ by: ["query"], where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
       // Period avg duration (via aggregate, not fetching 10k rows)
       prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
-      // Filter usage this week (popular, estrella/recomendados, veggie) — stored in query field
-      prisma.statEvent.groupBy({ by: ["query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+      // Filter usage this week (popular, estrella/recomendados, veggie) — grouped by restaurantId + filter
+      prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
     ]);
 
     const uniqueGuests = uniqueGuestsCount as number;
@@ -284,12 +349,28 @@ export async function GET(req: NextRequest) {
 
     const avgDurationSec = Math.round((periodDurationAgg._avg?.durationMs || 0) / 1000);
 
-    // Aggregate filter clicks by query field (popular | estrella | veggie)
+    // Aggregate filter clicks by restaurant + query field (popular | estrella | veggie)
     const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0 };
+    const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number }> = {};
     for (const row of filterUsageRaw as any[]) {
       const fv = row.query as string | undefined;
-      if (fv && fv in filterUsage) filterUsage[fv] = row._count.id;
+      const rid = row.restaurantId as string | undefined;
+      if (!fv || !(fv in filterUsage)) continue;
+      filterUsage[fv] += row._count.id;
+      if (rid) {
+        if (!filterByRestaurantMap[rid]) filterByRestaurantMap[rid] = { popular: 0, estrella: 0, veggie: 0 };
+        filterByRestaurantMap[rid][fv as "popular" | "estrella" | "veggie"] += row._count.id;
+      }
     }
+    // Collect restaurant IDs from filter usage that may not be in restMap yet
+    const filterRestIds = Object.keys(filterByRestaurantMap).filter(id => !restMap[id]);
+    const extraRests = filterRestIds.length
+      ? await prisma.restaurant.findMany({ where: { id: { in: filterRestIds } }, select: { id: true, name: true } })
+      : [];
+    for (const r of extraRests) restMap[r.id] = r.name;
+    const filterUsageByRestaurant = Object.entries(filterByRestaurantMap)
+      .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie }))
+      .sort((a, b) => b.total - a.total);
     const weekAvgDurationSec = Math.round((weekAvgDuration._avg?.durationMs || 0) / 1000);
 
     return NextResponse.json({
@@ -357,6 +438,7 @@ export async function GET(req: NextRequest) {
       registeredGuests: 0,
       conversionRate: 0,
       filterUsage,
+      filterUsageByRestaurant,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);

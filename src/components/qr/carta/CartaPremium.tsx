@@ -21,7 +21,7 @@ import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
-import { trackSearchPerformed, track, trackFilterApplied } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, track, flushEvents } from "./utils/cartaAnalytics";
 import CartaFilterBar, { applyCartaFilter } from "./CartaFilterBar";
 import type { CartaFilterKey } from "./CartaFilterBar";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
@@ -149,7 +149,7 @@ export default function CartaPremium({
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
     const next = f === key ? null : key;
-    if (next) track(restaurant.id, "FILTER_APPLIED", { query: next });
+    if (next) { track(restaurant.id, "FILTER_APPLIED", { query: next }); flushEvents(); }
     return next;
   });
 

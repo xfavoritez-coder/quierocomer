@@ -20,7 +20,7 @@ let eventBatch: QueuedEvent[] = [];
 let eventFlushTimer: ReturnType<typeof setTimeout> | null = null;
 const EVENT_FLUSH_INTERVAL = 10_000; // 10 seconds
 
-function flushEvents() {
+export function flushEvents() {
   if (eventBatch.length === 0) return;
   const batch = [...eventBatch];
   eventBatch = [];

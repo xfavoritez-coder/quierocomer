@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
-import { trackSearchPerformed, track } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, track, flushEvents } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -130,7 +130,7 @@ export default function CartaLista({
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
     const next = f === key ? null : key;
-    if (next) track(restaurant.id, "FILTER_APPLIED", { query: next });
+    if (next) { track(restaurant.id, "FILTER_APPLIED", { query: next }); flushEvents(); }
     return next;
   });
   const [query, setQuery] = useState("");
