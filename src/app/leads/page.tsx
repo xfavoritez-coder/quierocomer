@@ -506,7 +506,6 @@ function CRMApp() {
             <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "#E8DDC8", letterSpacing: ".01em" }}>QuieroComer</span>
             <span style={{ fontSize: 12, color: "#E8A33D", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase" }}>Leads</span>
           </div>
-          <div style={{ fontSize: 11, color: "#7D7366", marginTop: 1 }}>{leads.length} leads · CRM</div>
         </div>
       </div>
 
