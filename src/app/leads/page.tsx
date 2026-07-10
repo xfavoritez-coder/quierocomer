@@ -217,7 +217,7 @@ function LeadPanel({ lead, onClose, onUpdate }: {
   if (lead.panelVisitedAt)timeline.push({ label: "Ingresó al panel por primera vez", ts: lead.panelVisitedAt, color: "#a78bfa" });
   if (lead.activatedAt)   timeline.push({ label: "Activó su cuenta", ts: lead.activatedAt, color: "#34d399" });
   for (const ev of extraActivity) timeline.push(ev);
-  timeline.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+  timeline.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
   const cartaPreviewUrl = lead.generatedSlug ? `/qr/${lead.generatedSlug}` : lead.cartaUrl;
   const waMsg = encodeURIComponent(`Hola ${lead.ownerName?.split(" ")[0] || ""}, te escribo de QuieroComer. Vi que subiste tu carta de ${lead.localName} y quería mostrarte cómo quedó. ¿Tienes un momento?`);
