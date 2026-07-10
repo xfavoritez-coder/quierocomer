@@ -650,12 +650,23 @@ export default async function DishSlugPage({ params }: Props) {
   if (!dish) redirect('/')
 
   // getFeedDishes tiene su propio unstable_cache — corre solo después de liberar la conexión anterior
-  const feedDishes = await getFeedDishes()
+  let feedDishes: Awaited<ReturnType<typeof getFeedDishes>> = []
+  try {
+    feedDishes = await getFeedDishes()
+  } catch (err) {
+    console.error('[dish-page] getFeedDishes failed:', err)
+    redirect(`/qr/${restaurantSlug}`)
+  }
 
   // Si el plato no está en el feed (MAX_PER=5 por restaurante), lo traemos explícitamente
-  const dishesWithInitial = feedDishes.some(d => d.id === dish.id)
-    ? feedDishes
-    : [...(await getDishesById([dish.id])), ...feedDishes]
+  let dishesWithInitial = feedDishes
+  try {
+    dishesWithInitial = feedDishes.some(d => d.id === dish.id)
+      ? feedDishes
+      : [...(await getDishesById([dish.id])), ...feedDishes]
+  } catch {
+    dishesWithInitial = feedDishes
+  }
 
   const jsonLd = {
     '@context': 'https://schema.org',
