@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: "QuieroComer - Descúbre qué, y donde comer",
   description: "Descubre qué comer hoy. El Genio aprende tus gustos y te recomienda el plato perfecto.",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/logo.png", type: "image/png" }],
   },
   openGraph: {
     title: "QuieroComer - Descúbre qué, y donde comer",

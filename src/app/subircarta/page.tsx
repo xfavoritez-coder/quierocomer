@@ -5,8 +5,16 @@ import SubirCartaClient from "./SubirCartaClient";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Subir mi carta · QuieroComer",
-  description: "Sube tu carta física, PDF o link QR y nuestra IA la transforma en una Carta Viva.",
+  title: "Crear carta QR para mi restaurante gratis | QuieroComer",
+  description: "Sube tu carta física, PDF o link y en minutos tendrás tu carta QR digital con fotos, filtros y recomendaciones IA. Gratis para siempre.",
+  openGraph: {
+    title: "Crear carta QR para mi restaurante gratis | QuieroComer",
+    description: "Sube tu carta física, PDF o link y en minutos tendrás tu carta QR digital con fotos, filtros y recomendaciones IA. Gratis para siempre.",
+    url: "https://quierocomer.com/subircarta",
+    siteName: "QuieroComer",
+    type: "website",
+    locale: "es_CL",
+  },
 };
 
 // A/B winners hardcoded — experiment concluded

@@ -23,11 +23,11 @@ const AB_WINNERS = {
 };
 
 export const metadata = {
-  title: "QuieroComer | La carta inteligente que vende más por ti",
-  description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
+  title: "Carta QR para restaurantes gratis | QuieroComer",
+  description: "Crea tu carta QR digital gratis. Nuestra IA transforma tu carta física en una experiencia visual que recomienda platos, muestra fotos y vende más por ti.",
   openGraph: {
-    title: "QuieroComer | La carta inteligente que vende más por ti",
-    description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
+    title: "Carta QR para restaurantes gratis | QuieroComer",
+    description: "Crea tu carta QR digital gratis. Nuestra IA transforma tu carta física en una experiencia visual que recomienda platos, muestra fotos y vende más por ti.",
     url: "https://quierocomer.com/landing",
     siteName: "QuieroComer",
     type: "website",
@@ -35,9 +35,9 @@ export const metadata = {
     images: [{ url: "https://quierocomer.com/og-landing.png", width: 1254, height: 1254, type: "image/png" }],
   },
   twitter: {
-    card: "summary",
-    title: "QuieroComer | La carta inteligente que vende más por ti",
-    description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
+    card: "summary_large_image",
+    title: "Carta QR para restaurantes gratis | QuieroComer",
+    description: "Crea tu carta QR digital gratis. Nuestra IA transforma tu carta física en una experiencia visual que recomienda platos, muestra fotos y vende más por ti.",
     images: ["https://quierocomer.com/og-landing.png"],
   },
 };

@@ -33,9 +33,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!restaurant) return {};
 
-  const title = `${restaurant.name} | Carta online`;
-  const description = `Mira la carta completa de ${restaurant.name}. Platos con fotos, recomendaciones del Genio y más.`;
-  const image = restaurant.logoUrl || "https://quierocomer.com/favicon.svg";
+  const address = (restaurant as any).address as string | null | undefined;
+  const commune = (restaurant as any).communeSlug as string | null | undefined;
+  const locationHint = address
+    ? ` en ${address}`
+    : commune
+    ? ` en ${commune.replace(/-/g, " ")}`
+    : "";
+
+  const title = `${restaurant.name} · Carta QR online | QuieroComer`;
+  const description = `Escanea el QR o ve la carta digital de ${restaurant.name}${locationHint}. Platos con fotos, precios actualizados y recomendaciones IA.`;
+  const image = restaurant.logoUrl || "https://quierocomer.com/og.png";
 
   return {
     title,
@@ -48,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: `https://quierocomer.com/qr/${slug}`,
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
       images: [image],
