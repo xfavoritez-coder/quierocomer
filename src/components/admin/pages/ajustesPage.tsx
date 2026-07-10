@@ -25,7 +25,6 @@ interface SettingsData {
   birthdayPerk: string | null;
   defaultView: string | null;
   showCategoryLobby: boolean;
-  genioFabEnabled: boolean;
 }
 
 const ACCENT_OPTIONS = [
@@ -362,31 +361,6 @@ export default function AjustesPage() {
           </button>
         )}
       </div>
-
-      {/* Genio FAB en la carta */}
-      {(() => {
-        const genioOn = data.genioFabEnabled ?? true;
-        return (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div>
-                <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><img src="/genio-lamp.png" alt="Genio" style={{ width: 20, height: 20, objectFit: "contain" }} /> Genio en la carta</h3>
-                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-                  {genioOn ? "El botón del Genio aparece en tu carta para personalizar la experiencia" : "El botón del Genio no se muestra en tu carta"}
-                </p>
-              </div>
-              <Toggle
-                active={genioOn}
-                onToggle={() => {
-                  const next = !genioOn;
-                  setData((prev: any) => prev ? { ...prev, genioFabEnabled: next } : prev);
-                  save({ genioFabEnabled: next });
-                }}
-              />
-            </div>
-          </div>
-        );
-      })()}
 
       {(() => {
         const hasWaiter = activePlan === "PREMIUM";

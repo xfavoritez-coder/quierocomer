@@ -93,6 +93,11 @@ export default async function CartaPage({
   ]);
   if (!restaurant) return notFound();
 
+  // Only Premium restaurants support multilingual — override lang for others
+  if ((restaurant as any).plan !== "PREMIUM" && !isValidLang(urlLang)) {
+    lang = "es";
+  }
+
   const timeOfDay = getTimeOfDay();
 
   const scheduled = applyScheduleRules(

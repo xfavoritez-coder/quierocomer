@@ -9,6 +9,7 @@ interface CategoryNavProps {
   onCategoryChange: (id: string) => void;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  stickyTop?: number;
 }
 
 export default function CategoryNav({
@@ -17,6 +18,7 @@ export default function CategoryNav({
   onCategoryChange,
   leftSlot,
   rightSlot,
+  stickyTop = 0,
 }: CategoryNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
@@ -43,8 +45,8 @@ export default function CategoryNav({
   return (
     <nav
       data-category-nav
-      className="sticky top-0 z-40"
-      style={{ position: "sticky", top: 0, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
+      className="z-40"
+      style={{ position: "sticky", top: stickyTop, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
     >
       {leftSlot && (
         <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center", height: "100%" }}>

@@ -9,12 +9,8 @@ import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { groupDishesByCategory, isGeniePick } from "./utils/dishHelpers";
-import { getCarouselMode, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
 import DishDetailEsencial from "./DishDetailEsencial";
-import FabSpeedDial from "./FabSpeedDial";
 import ViewSelectorCompact from "./ViewSelectorCompact";
-import GenioFab from "./GenioFab";
-import GenioOnboarding from "../genio/GenioOnboarding";
 
 /* ─── palettes ─── */
 const LIGHT = {
@@ -223,42 +219,6 @@ export default function CartaEsencial({
   /* ─── lang dropdown ─── */
   const [langOpen, setLangOpen] = useState(false);
 
-  /* ─── genio diet state ─── */
-  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
-  useEffect(() => {
-    const check = () => {
-      setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
-    };
-    const onGenioUpdated = () => {
-      check();
-      setTimeout(() => {
-        const el = document.getElementById("esencial-genio-section");
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 500);
-    };
-    check();
-    window.addEventListener("genio-updated", onGenioUpdated);
-    return () => window.removeEventListener("genio-updated", onGenioUpdated);
-  }, []);
-
-  const genioDishes = useMemo(() => {
-    if (!hasCompletedGenio || typeof window === "undefined") return [];
-    const diet = localStorage.getItem("qr_diet");
-    const restrictions: string[] = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const activeR = restrictions.filter(r => r !== "ninguna");
-
-    return dishes.filter(d => {
-      const dd = (d as any).dishDiet;
-      const isGF = (d as any).isGlutenFree;
-      const isLF = (d as any).isLactoseFree;
-      if (diet === "vegan" && dd !== "VEGAN") return false;
-      if (diet === "vegetarian" && dd !== "VEGAN" && dd !== "VEGETARIAN") return false;
-      if (activeR.includes("sin gluten") && !isGF) return false;
-      if (activeR.includes("sin lactosa") && !isLF) return false;
-      return true;
-    });
-  }, [hasCompletedGenio, dishes]);
-
   /* ─── search ─── */
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -329,9 +289,6 @@ export default function CartaEsencial({
     document.addEventListener("visibilitychange", flush);
     return () => { flush(); document.removeEventListener("visibilitychange", flush); };
   }, []);
-
-  /* ─── genio modal ─── */
-  const [genioOpen, setGenioOpen] = useState(false);
 
   /* ─── dish detail ─── */
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
@@ -573,85 +530,6 @@ export default function CartaEsencial({
           </section>
         );
       })()}
-
-      {/* ══════ GENIO DIET SECTION ══════ */}
-      {hasCompletedGenio && genioDishes.length > 0 && !query && (
-        <section id="esencial-genio-section" style={{
-          margin: "0 16px 14px",
-          padding: "24px 20px",
-          background: isDark
-            ? "linear-gradient(135deg, #1a1510 0%, #231c12 100%)"
-            : `linear-gradient(135deg, ${C.green} 0%, ${C.green2} 100%)`,
-          borderRadius: 30,
-          color: C.paper,
-          position: "relative", overflow: "hidden",
-        }}>
-          <div style={{
-            position: "absolute", width: 180, height: 180, borderRadius: "50%",
-            background: isDark
-              ? "radial-gradient(circle, rgba(212,168,75,0.2), transparent 66%)"
-              : "radial-gradient(circle, rgba(184,137,53,0.28), transparent 66%)",
-            right: -60, top: -70,
-          }} />
-          <div style={{
-            fontSize: 11, fontWeight: 700, letterSpacing: ".2em", textTransform: "uppercase",
-            color: C.gold, marginBottom: 6, position: "relative",
-          }}>
-            🧞 Tu selección
-          </div>
-          <h2 style={{
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: 24, fontWeight: 400, margin: "0 0 16px", color: isDark ? "#e8dcc4" : C.paper,
-            position: "relative",
-          }}>
-            {(() => {
-              const diet = localStorage.getItem("qr_diet");
-              const restrictions: string[] = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-              const activeR = restrictions.filter(r => r !== "ninguna");
-              const parts: string[] = [];
-              if (diet === "vegan") parts.push("veganos");
-              else if (diet === "vegetarian") parts.push("vegetarianos");
-              activeR.forEach(r => parts.push(`sin ${r}`));
-              return parts.length > 0 ? `Platos para ti ${parts.join(" y ")}` : "Platos para ti";
-            })()}
-          </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
-            {genioDishes.slice(0, 5).map(d => (
-              <button
-                key={d.id}
-                onClick={() => handleDishClick(d)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: "12px 14px",
-                  background: isDark ? "rgba(212,168,75,0.06)" : "rgba(255,255,255,0.08)",
-                  borderRadius: 18,
-                  border: isDark ? "1px solid rgba(212,168,75,0.15)" : "1px solid rgba(184,137,53,0.25)",
-                  cursor: "pointer", textAlign: "left", width: "100%",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 14, fontWeight: 700, color: isDark ? "#e8dcc4" : C.paper,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    fontFamily: "system-ui, sans-serif",
-                  }}>
-                    {d.name}
-                  </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                    {(d as any).dishDiet === "VEGAN" && <span style={{ fontSize: 10, fontWeight: 500, color: "#86efac" }}>🌿 Vegano</span>}
-                    {(d as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: 10, fontWeight: 500, color: "#86efac" }}>🥬 Vegetariano</span>}
-                    {(d as any).isGlutenFree && <span style={{ fontSize: 10, fontWeight: 500, color: "#fde68a" }}>Sin gluten</span>}
-                    {(d as any).isSpicy && <span style={{ fontSize: 10, fontWeight: 500, color: "#fca5a5" }}>🌶 Picante</span>}
-                  </div>
-                </div>
-                <span style={{ fontSize: 15, fontWeight: 700, color: C.gold, flexShrink: 0, fontFamily: "system-ui, sans-serif" }}>
-                  ${(d.discountPrice || d.price)?.toLocaleString("es-CL") ?? "—"}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ══════ OFERTAS ══════ */}
       {marketingPromos && marketingPromos.length > 0 && (
@@ -992,29 +870,6 @@ export default function CartaEsencial({
           stroke: ${C.ink} !important;
         }
       `}</style>
-
-      {/* ══════ FAB: lamp (Genio) + views (demo) ══════ */}
-      <FabSpeedDial
-        onLampClick={() => setGenioOpen(true)}
-        hideLamp={(restaurant as any).genioFabEnabled === false}
-        pinned={undefined}
-      />
-
-      {/* ══════ GENIO ONBOARDING MODAL ══════ */}
-      {genioOpen && (
-        <GenioOnboarding
-          restaurantId={restaurant.id}
-          dishes={dishes}
-          categories={categories}
-          qrUser={qrUser}
-          restaurantDietType={(restaurant as any).dietType}
-          onClose={() => { setGenioOpen(false); window.dispatchEvent(new Event("genio-closed")); }}
-          onResult={(dish) => {
-            setGenioOpen(false);
-            setTimeout(() => setSelectedDish(dish), 250);
-          }}
-        />
-      )}
 
       {/* ══════ DISH DETAIL MODAL ══════ */}
       {selectedDish && (

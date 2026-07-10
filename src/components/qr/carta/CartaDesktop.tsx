@@ -15,20 +15,8 @@ import MenuSwitcher from "./MenuSwitcher";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, setCartaLang } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
-import GenioOnboarding from "../genio/GenioOnboarding";
-import GenioFab from "./GenioFab";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
-import { canAccess, effectivePlan } from "@/lib/plans";
 import PromoCarousel from "../capture/PromoCarousel";
-import GenioVeganCarousel from "./GenioVeganCarousel";
-import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
-import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
-import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
-import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
-import GenioNutsCarousel from "./GenioNutsCarousel";
-import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
-import GenioDietMessage from "./GenioDietMessage";
 
 interface Props {
   restaurant: Restaurant;
@@ -47,22 +35,10 @@ const LANG_STORAGE_KEY = "qc_lang";
 
 export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang, marketingPromos, menuGroups, activeMenuSlug }: Props) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
-  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
-
-  const dietNavItem = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    const diet = localStorage.getItem("qr_diet");
-    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-    if (!mode) return null;
-    if (!hasMatchingDishes(dishes, categories, mode, diet, restrictions.filter((r: string) => r !== "ninguna"))) return null;
-    return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
-  }, [restaurant, hasCompletedGenio, dishes, categories]);
 
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "desktop");
-  const [genioOpen, setGenioOpen] = useState(false);
   const [modalImgLoaded, setModalImgLoaded] = useState(false);
   useEffect(() => { setModalImgLoaded(false); }, [selectedDish?.id]);
   const [langOpen, setLangOpen] = useState(false);
@@ -117,26 +93,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
       return () => { trackDetailClose(); };
     }
   }, [selectedDish?.id]);
-
-  // Check if genio was completed
-  useEffect(() => {
-    const check = () => setHasCompletedGenio(!!localStorage.getItem("qr_diet"));
-    const onGenioUpdated = () => {
-      check();
-      setTimeout(() => {
-        const diet = localStorage.getItem("qr_diet");
-        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-        const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-        const scrollId = getCarouselScrollId(mode);
-        const el = scrollId ? document.getElementById(scrollId) : null;
-        const target = el || document.getElementById("genio-diet-message");
-        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 500);
-    };
-    check();
-    window.addEventListener("genio-updated", onGenioUpdated);
-    return () => window.removeEventListener("genio-updated", onGenioUpdated);
-  }, []);
 
   // Close lang dropdown on outside click
   useEffect(() => {
@@ -291,21 +247,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
       <nav style={{ background: "white", borderBottom: "1px solid #e8e4dc", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px" }}>
           <div ref={navScrollerRef} style={{ display: "flex", gap: 4, overflowX: "auto", padding: "8px 0", scrollbarWidth: "thin", scrollbarColor: "#ccc transparent" }}>
-            {dietNavItem && (
-              <button
-                data-cat-id="diet-carousel"
-                onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-                style={{
-                  padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
-                  fontSize: "0.85rem", fontWeight: 600, whiteSpace: "nowrap",
-                  background: activeCategory === "diet-carousel" ? "#1a1a1a" : "transparent",
-                  color: activeCategory === "diet-carousel" ? "white" : "#888",
-                  transition: "all 0.15s",
-                }}
-              >
-                {dietNavItem.name}
-              </button>
-            )}
             {categories.map(cat => {
               const isActive = activeCategory === cat.id;
               return (
@@ -340,33 +281,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             }} />
           </div>
         )}
-
-        {/* Diet carousels */}
-        {hasCompletedGenio && (() => {
-          const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-          const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-          const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-          const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
-          const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
-          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          // reordered-spicy and redundant-vegan/vegetarian are now shown as GenioFab toast, not inline banner
-          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
-          if (msgType) return <div style={{ marginBottom: 32 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
-          if (!mode) return null;
-          return (
-            <div style={{ marginBottom: 32, display: "flex", flexDirection: "column", gap: 8 }}>
-              {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-              {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-              {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
-            </div>
-          );
-        })()}
 
         {grouped.map(group => {
           if (group.dishes.length === 0) return null;
@@ -521,13 +435,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
       {/* Floating buttons — bottom right */}
       <div style={{ position: "fixed", bottom: 28, right: 28, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && (() => {
-          const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-          const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} redundantDiet={dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian" ? dietMsg : null} restaurantName={restaurant.name} />;
-        })()}
-
         {/* Waiter button */}
         {showWaiter && (
           <WaiterButton
@@ -605,26 +512,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           )}
         </div>}
       </div>
-
-      {/* Genio modal */}
-      {genioOpen && (
-        <GenioOnboarding
-          restaurantId={restaurant.id}
-          dishes={dishes}
-          categories={categories}
-          restaurantDietType={(restaurant as any).dietType}
-          onClose={() => { setGenioOpen(false); setHasCompletedGenio(!!localStorage.getItem("qr_diet")); }}
-          onResult={(dish) => {
-            setGenioOpen(false);
-            setHasCompletedGenio(true);
-            setTimeout(() => {
-              const el = document.getElementById(`desktop-cat-${(dish as any).categoryId}`);
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-              setTimeout(() => setSelectedDish(dish), 400);
-            }, 200);
-          }}
-        />
-      )}
 
       {/* Footer */}
       <footer style={{ textAlign: "center", padding: "20px 0 30px" }}>
