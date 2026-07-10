@@ -27,13 +27,15 @@ interface HeroDishProps {
   enabledLangs?: string[];
   variant?: "full" | "compact";
   onSearchClick?: () => void;
+  /** Slot rendered between the top nav bar and the hero image (e.g. announcement banner). */
+  belowNavSlot?: React.ReactNode;
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs, variant = "full", onSearchClick }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs, variant = "full", onSearchClick, belowNavSlot }: HeroDishProps) {
   const lang = useLang();
   const isCompact = variant === "compact";
   const [current, setCurrent] = useState(0);
@@ -132,6 +134,8 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           {viewSelectorSlot}
         </div>
       </div>
+
+      {belowNavSlot}
 
       <section
         className="relative w-full overflow-hidden"

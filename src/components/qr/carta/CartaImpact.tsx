@@ -1201,18 +1201,9 @@ export default function CartaImpact({
       {/* Wrapper: nav + banner — fixed al tope */}
       <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: "rgba(3,3,3,0.32)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
 
-      {/* Announcement banner — above nav */}
-      {hasBannerActive && (
-        <div style={{ paddingTop: "env(safe-area-inset-top)", paddingLeft: 14, paddingRight: 14, paddingBottom: 8 }}>
-          {announcements && announcements.length > 0
-            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
-            : <HappyHourBanner happyHours={happyHours || []} />}
-        </div>
-      )}
-
       {/* Nav: logo + botones */}
       <header style={{
-        padding: hasBannerActive ? "10px 16px 0" : "calc(10px + env(safe-area-inset-top)) 16px 0",
+        padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
         pointerEvents: "auto",
       }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
@@ -1267,6 +1258,15 @@ export default function CartaImpact({
           )}
         </div>
       </div>
+
+      {/* Announcement banner — between logo row and category chips */}
+      {hasBannerActive && (
+        <div style={{ padding: "6px 14px 4px" }}>
+          {announcements && announcements.length > 0
+            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
+            : <HappyHourBanner happyHours={happyHours || []} />}
+        </div>
+      )}
 
       {/* Multi-menu switcher */}
       {menuGroups && activeMenuSlug && menuGroups.length > 1 && (

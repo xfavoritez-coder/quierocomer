@@ -10,18 +10,6 @@ import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import { getGuestId } from "@/lib/guestId";
 import PromoCompact from "./PromoCompact";
 import PromoCarousel from "../capture/PromoCarousel";
-import GenioVeganCarousel from "./GenioVeganCarousel";
-import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
-import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
-import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
-import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
-import GenioNutsCarousel from "./GenioNutsCarousel";
-import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
-import GenioDietMessage from "./GenioDietMessage";
-import VeganFloatingPill from "./VeganFloatingPill";
-import VegetarianFloatingPill from "./VegetarianFloatingPill";
-import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
@@ -35,9 +23,6 @@ import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
-import GenioOnboarding from "../genio/GenioOnboarding";
-import GenioFab from "./GenioFab";
-import FabSpeedDial from "./FabSpeedDial";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
@@ -105,28 +90,6 @@ export default function CartaLista({
   )
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
-  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
-  useEffect(() => {
-    const check = () => {
-      setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
-    };
-    const onGenioUpdated = () => {
-      check();
-      // Auto-scroll to diet carousel after Genio completes
-      setTimeout(() => {
-        const diet = localStorage.getItem("qr_diet");
-        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-        const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-        const scrollId = getCarouselScrollId(mode);
-        const el = scrollId ? document.getElementById(scrollId) : null;
-        const target = el || document.getElementById("genio-diet-message");
-        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 500);
-    };
-    check();
-    window.addEventListener("genio-updated", onGenioUpdated);
-    return () => window.removeEventListener("genio-updated", onGenioUpdated);
-  }, []);
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
     const next = f === key ? null : key;
@@ -212,16 +175,6 @@ export default function CartaLista({
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
-  const dietNavItem = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    const diet = localStorage.getItem("qr_diet");
-    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-    if (!mode) return null;
-    if (!hasMatchingDishes(dishes, categories, mode, diet, restrictions.filter((r: string) => r !== "ninguna"))) return null;
-    return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
-  }, [restaurant, hasCompletedGenio, dishes, categories]);
-
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const lastScrollY = useRef(0);
   useEffect(() => {
@@ -264,9 +217,19 @@ export default function CartaLista({
   const [dishFromHero, setDishFromHero] = useState(false);
   const [openPromo, setOpenPromo] = useState<any>(null);
 
-  const [genioOpen, setGenioOpen] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const activeCatRef = useRef<HTMLButtonElement>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [bannerH, setBannerH] = useState(0);
+
+  useEffect(() => {
+    if (!bannerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      setBannerH(bannerRef.current?.offsetHeight ?? 0);
+    });
+    ro.observe(bannerRef.current);
+    return () => ro.disconnect();
+  }, [announcements?.length]);
 
   // Auto-scroll category nav to active
   useEffect(() => {
@@ -296,20 +259,8 @@ export default function CartaLista({
       obs.observe(el);
       observers.push(obs);
     }
-    // Observe diet carousel for active nav state
-    if (dietNavItem) {
-      const dietEl = document.getElementById(dietNavItem.scrollTo);
-      if (dietEl) {
-        const dietObs = new IntersectionObserver(
-          ([entry]) => { if (entry.isIntersecting) setActiveCategory("diet-carousel"); },
-          { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
-        );
-        dietObs.observe(dietEl);
-        observers.push(dietObs);
-      }
-    }
     return () => observers.forEach(obs => obs.disconnect());
-  }, [categories, hasPromos, dietNavItem]);
+  }, [categories, hasPromos]);
 
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
@@ -396,17 +347,29 @@ export default function CartaLista({
     trackCartaDishOpenedInList(restaurant.id, dish.id, isGeniePick(dish));
   };
 
+  const isDemo = (restaurant as any).isDemo;
+  const demoOffset = isDemo ? 105 : 0;
+
+  const announcementSlot = announcements && announcements.length > 0 ? (
+    <div
+      ref={bannerRef}
+      style={{ position: "sticky", top: demoOffset, left: 0, right: 0, zIndex: 45 }}
+    >
+      <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
+    </div>
+  ) : undefined;
+
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 105 : 0 }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: demoOffset }}>
       {/* Hero — FREE gets slim, Gold/Premium get full hero */}
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       ) : (
-        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
+        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} belowNavSlot={announcementSlot} />
       )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
+      <div style={{ position: "sticky", top: bannerH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
@@ -446,18 +409,6 @@ export default function CartaLista({
                     className="shrink-0 font-[family-name:var(--font-dm)]"
                     style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer" }}
                   >Ofertas</button>
-                );
-              })()}
-              {dietNavItem && (() => {
-                const isActive = "diet-carousel" === activeCategory;
-                return (
-                  <button
-                    key="diet-carousel"
-                    ref={isActive ? activeCatRef : null}
-                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-                    className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer", whiteSpace: "nowrap" }}
-                  >{dietNavItem.name}</button>
                 );
               })()}
               {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
@@ -515,13 +466,6 @@ export default function CartaLista({
         <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
       </div>
 
-      {/* Announcement banner — sticky below category nav */}
-      {announcements && announcements.length > 0 && (
-        <div style={{ position: "sticky", top: 44, zIndex: 39 }}>
-          <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
-        </div>
-      )}
-
       {/* EMPTY STATE */}
       {grouped.length === 0 && (
         <div style={{ padding: "64px 28px", textAlign: "center" }}>
@@ -570,42 +514,6 @@ export default function CartaLista({
           <PromoCompact promos={marketingPromos || []} onViewPromo={(promo) => setOpenPromo(promo)} />
         </section>
       )}
-
-      {/* Genio diet carousels */}
-      {hasCompletedGenio && (() => {
-        const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-        const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-        const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-        const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
-        const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
-        const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-        // Fallback: if user is vegan and no vegan dishes exist, try vegetarian carousel
-        let effectiveMode = mode;
-        if (mode === "vegan" && !hasMatchingDishes(dishes, categories, "vegan", diet, activeRestrictions)) {
-          if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) effectiveMode = "vegetarian";
-        }
-        if (mode === "vegan+gf" && !hasMatchingDishes(dishes, categories, "vegan+gf", diet, activeRestrictions)) {
-          if (hasMatchingDishes(dishes, categories, "vegetarian+gf", "vegetarian", activeRestrictions)) effectiveMode = "vegetarian+gf";
-          else if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) effectiveMode = "vegetarian";
-        }
-        // reordered-spicy and redundant-vegan/vegetarian are now shown as GenioFab toast, not inline banner
-        const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!effectiveMode || !hasMatchingDishes(dishes, categories, effectiveMode, diet, activeRestrictions)) ? dietMsg : null;
-        if (msgType) return <div style={{ marginTop: 16, paddingTop: 6 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
-        if (!effectiveMode) return null;
-        return (
-          <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-            {effectiveMode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {effectiveMode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-            {effectiveMode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {effectiveMode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-            {effectiveMode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {effectiveMode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {effectiveMode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {effectiveMode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {effectiveMode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
-          </div>
-        );
-      })()}
 
       {/* CATEGORIES */}
       {grouped.map(({ category, dishes: catDishes }, index) => (
@@ -700,36 +608,11 @@ export default function CartaLista({
         <span style={{ color: "var(--carta-text-muted)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
-      {/* Floating diet pills */}
-      {hasCompletedGenio && (() => {
-        const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-        const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-        const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
-        return (
-          <>
-            {diet === "vegan" && isOmnivoreRestaurant && dishes.some(d => (d as any).dishDiet === "VEGAN") && <VeganFloatingPill />}
-            {diet === "vegetarian" && isOmnivoreRestaurant && dishes.some(d => (d as any).dishDiet === "VEGETARIAN" || (d as any).dishDiet === "VEGAN") && <VegetarianFloatingPill />}
-            {diet === "omnivore" && restrictions.includes("gluten") && dishes.some(d => (d as any).isGlutenFree) && <GlutenFreeFloatingPill />}
-          </>
-        );
-      })()}
-
-      {/* Floating buttons: lamp (Genio) + views (demo) + bell (waiter) */}
-      {!(restaurant as any).isDemo && (
-        <FabSpeedDial
-          onLampClick={() => setGenioOpen(true)}
-          hideLamp={(restaurant as any).genioFabEnabled === false}
-          pinned={
-            <>
-              {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-            </>
-          }
-        />
+      {!(restaurant as any).isDemo && showWaiter && (
+        <div className="fixed z-50" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom)" }}>
+          <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />
+        </div>
       )}
-      <style>{`
-        @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-        @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-      `}</style>
 
       {/* Promo detail modal — uses the full PromoCarousel modal */}
       <PromoCarousel
@@ -745,23 +628,6 @@ export default function CartaLista({
       />
 
       {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} logoUrl={restaurant.logoUrl} />}
-
-      {/* Genio */}
-      {genioOpen && (
-        <GenioOnboarding
-          restaurantId={restaurant.id}
-          dishes={dishes}
-          categories={categories}
-          qrUser={qrUser}
-          restaurantDietType={(restaurant as any).dietType}
-          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); window.dispatchEvent(new Event("genio-closed")); }}
-          onResult={(dish) => {
-            setGenioOpen(false);
-            setProfileTrigger((n) => n + 1);
-            setTimeout(() => setSelectedDish(dish), 250);
-          }}
-        />
-      )}
 
       {/* DishDetail modal */}
       {selectedDish && (

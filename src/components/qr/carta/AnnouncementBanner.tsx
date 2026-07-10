@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Announcement {
   id: string;
@@ -31,7 +31,12 @@ function isLight(hex: string | null | undefined): boolean {
 export default function AnnouncementBanner({ announcements, variant = "solid", accentColor }: Props) {
   const [current, setCurrent] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [isClamped, setIsClamped] = useState(false);
 
+  const textRef = useRef<HTMLSpanElement>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  // Auto-advance timer — recreated whenever `current` changes so manual swipe resets it
   useEffect(() => {
     if (announcements.length <= 1) return;
     const timer = setInterval(() => {
@@ -39,20 +44,62 @@ export default function AnnouncementBanner({ announcements, variant = "solid", a
       setExpanded(false);
     }, 7000);
     return () => clearInterval(timer);
-  }, [announcements.length]);
+  }, [current, announcements.length]);
+
+  // Detect real overflow on the clamped text span — uses ResizeObserver so it
+  // works even inside fixed/sticky parents where clientHeight may be 0 on first paint.
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    if (expanded) { setIsClamped(false); return; }
+
+    const measure = () => {
+      const node = textRef.current;
+      if (!node) return;
+      const ch = node.clientHeight;
+      const sh = node.scrollHeight;
+      // Only update when the element has a real painted height
+      if (ch > 0) setIsClamped(sh > ch + 2);
+    };
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    // Also run after next two animation frames as a fallback
+    const id1 = requestAnimationFrame(() => requestAnimationFrame(measure));
+    return () => { ro.disconnect(); cancelAnimationFrame(id1); };
+  }, [current, expanded]);
 
   if (announcements.length === 0) return null;
 
   const ann = announcements[current];
-  const needsClamp = ann.text.length > 90;
   const isGlass = variant === "glass";
   const darkText = !isGlass && isLight(accentColor);
 
   const textColor = isGlass ? "#fff" : darkText ? "#1a1a1a" : "#fff";
   const subtleColor = isGlass ? "rgba(255,255,255,0.6)" : darkText ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.7)";
 
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 40) return;
+    if (delta > 0) {
+      // Swipe right → previous
+      setCurrent((c) => (c - 1 + announcements.length) % announcements.length);
+    } else {
+      // Swipe left → next
+      setCurrent((c) => (c + 1) % announcements.length);
+    }
+    setExpanded(false);
+  }
+
   const textNode = (
     <span
+      ref={textRef}
       className="font-[family-name:var(--font-dm)]"
       style={{
         display: "-webkit-box",
@@ -74,24 +121,27 @@ export default function AnnouncementBanner({ announcements, variant = "solid", a
   // ── Glass variant (Impact view — unchanged) ──
   if (isGlass) {
     return (
-      <div style={{
-        borderRadius: 16,
-        border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 60%, transparent)",
-        background: "rgba(8,8,8,0.32)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        overflow: "hidden",
-        padding: "12px 16px",
-        textAlign: "center",
-        boxShadow: "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 25%, transparent), inset 0 0 12px rgba(255,255,255,0.03)",
-      }}>
-          {ann.linkUrl && !needsClamp ? (
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          borderRadius: 16,
+          border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 60%, transparent)",
+          background: "rgba(8,8,8,0.32)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          overflow: "hidden",
+          padding: "12px 16px",
+          textAlign: "center",
+          boxShadow: "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 25%, transparent), inset 0 0 12px rgba(255,255,255,0.03)",
+        }}>
+          {ann.linkUrl && !isClamped ? (
             <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
               {textNode}
             </a>
           ) : textNode}
 
-          {needsClamp && (
+          {isClamped && (
             <button onClick={() => setExpanded(e => !e)} style={{
               background: "none", border: "none", cursor: "pointer", padding: "2px 0 0",
               fontSize: "0.72rem", fontWeight: 700, color: "var(--carta-accent, #F4A623)",
@@ -118,20 +168,23 @@ export default function AnnouncementBanner({ announcements, variant = "solid", a
 
   // ── Solid variant — full-width ribbon ──
   return (
-    <div style={{
-      background: "var(--carta-accent, #F4A623)",
-      padding: "9px 20px",
-      textAlign: "center",
-      position: "relative",
-      zIndex: 15,
-    }}>
-      {ann.linkUrl && !needsClamp ? (
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        background: "var(--carta-accent, #F4A623)",
+        padding: "9px 20px",
+        textAlign: "center",
+        position: "relative",
+        zIndex: 15,
+      }}>
+      {ann.linkUrl && !isClamped ? (
         <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
           {textNode}
         </a>
       ) : textNode}
 
-      {needsClamp && (
+      {isClamped && (
         <button onClick={() => setExpanded(e => !e)} style={{
           background: "none", border: "none", cursor: "pointer", padding: "3px 0 0",
           fontSize: "0.7rem", fontWeight: 700, color: subtleColor,
