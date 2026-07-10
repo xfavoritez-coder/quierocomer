@@ -273,7 +273,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
         });
         let data: any;
         try { data = await res.json(); } catch {
-          setScratchError(res.status >= 500 ? "Error del servidor. Intenta de nuevo." : `Error (${res.status}). Intenta de nuevo.`);
+          setScratchError(`Error del servidor (${res.status}). Intenta de nuevo.`);
           setLoading(false);
           return;
         }

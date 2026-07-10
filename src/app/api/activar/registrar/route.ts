@@ -43,83 +43,88 @@ export async function POST(req: NextRequest) {
   const localName = toTitleCase(rawLocalName);
   const ownerName = rawOwnerName?.trim() ? toTitleCase(rawOwnerName) : undefined;
 
-  // Generar slug
-  let slug = localName.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  if (!slug) slug = "mi-local";
-  const existing = await prisma.restaurant.findUnique({ where: { slug } });
-  if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+  try {
+    // Generar slug
+    let slug = localName.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!slug) slug = "mi-local";
+    const existing = await prisma.restaurant.findUnique({ where: { slug } });
+    if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
 
-  const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+    const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 
-  // Crear o encontrar owner
-  let owner = await prisma.restaurantOwner.findFirst({ where: { email: email.trim().toLowerCase() } });
-  if (!owner) {
-    const passwordHash = await bcrypt.hash(`${slug}2026`, 10);
-    owner = await prisma.restaurantOwner.create({
+    // Crear o encontrar owner
+    let owner = await prisma.restaurantOwner.findFirst({ where: { email: email.trim().toLowerCase() } });
+    if (!owner) {
+      const passwordHash = await bcrypt.hash(`${slug}2026`, 10);
+      owner = await prisma.restaurantOwner.create({
+        data: {
+          name: ownerName?.trim() || localName.trim(),
+          email: email.trim().toLowerCase(),
+          passwordHash,
+          role: "OWNER",
+          whatsapp: whatsapp?.trim() || undefined,
+        },
+      });
+    }
+
+    // Crear restaurant con categorías y platos de ejemplo
+    const restaurant = await prisma.restaurant.create({
       data: {
-        name: ownerName?.trim() || localName.trim(),
-        email: email.trim().toLowerCase(),
-        passwordHash,
-        role: "OWNER",
-        whatsapp: whatsapp?.trim() || undefined,
+        name: localName.trim(),
+        slug,
+        cartaTheme: "PREMIUM",
+        cartaColorMode: "DARK",
+        defaultView: "impact",
+        enabledLangs: ["es", "en", "pt"],
+        isActive: true,
+        isDemo: true,
+        weeklyEmailEnabled: true,
+        qrToken,
+        qrActivatedAt: new Date(),
+        plan: "PREMIUM",
+        subscriptionStatus: "TRIALING",
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 días de trial
+        ownerId: owner.id,
+        allPhotosReferential: false,
       },
     });
+
+    // Crear categorías
+    const categoryIds: string[] = [];
+    for (const cat of SAMPLE_CATEGORIES) {
+      const c = await prisma.category.create({
+        data: { restaurantId: restaurant.id, name: cat.name, position: cat.position },
+      });
+      categoryIds.push(c.id);
+    }
+
+    // Crear platos de ejemplo
+    for (let i = 0; i < SAMPLE_DISHES.length; i++) {
+      const d = SAMPLE_DISHES[i];
+      await prisma.dish.create({
+        data: {
+          restaurantId: restaurant.id,
+          categoryId: categoryIds[d.cat],
+          name: d.name,
+          description: d.desc,
+          price: d.price,
+          photos: [d.photo],
+          isPhotoReferential: true,
+          photoCredits: [{ source: "unsplash", referential: true }],
+          isHero: d.isHero || false,
+          isSpicy: d.isSpicy || false,
+          dishDiet: d.diet || "OMNIVORE",
+          isFeaturedAuto: d.isHero || false,
+          position: i,
+        },
+      });
+    }
+
+    return NextResponse.json({ ok: true, slug: restaurant.slug, plan: "PREMIUM" });
+  } catch (err: any) {
+    console.error("[activar/registrar] error:", err);
+    return NextResponse.json({ error: err?.message || "Error interno al crear el local" }, { status: 500 });
   }
-
-  // Crear restaurant con categorías y platos de ejemplo
-  const restaurant = await prisma.restaurant.create({
-    data: {
-      name: localName.trim(),
-      slug,
-      cartaTheme: "PREMIUM",
-      cartaColorMode: "DARK",
-      defaultView: "impact",
-      enabledLangs: ["es", "en", "pt"],
-      isActive: true,
-      isDemo: true,
-      weeklyEmailEnabled: true,
-      qrToken,
-      qrActivatedAt: new Date(),
-      plan: "PREMIUM",
-      subscriptionStatus: "TRIALING",
-      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 días de trial
-      ownerId: owner.id,
-      allPhotosReferential: false,
-    },
-  });
-
-  // Crear categorías
-  const categoryIds: string[] = [];
-  for (const cat of SAMPLE_CATEGORIES) {
-    const c = await prisma.category.create({
-      data: { restaurantId: restaurant.id, name: cat.name, position: cat.position },
-    });
-    categoryIds.push(c.id);
-  }
-
-  // Crear platos de ejemplo
-  for (let i = 0; i < SAMPLE_DISHES.length; i++) {
-    const d = SAMPLE_DISHES[i];
-    await prisma.dish.create({
-      data: {
-        restaurantId: restaurant.id,
-        categoryId: categoryIds[d.cat],
-        name: d.name,
-        description: d.desc,
-        price: d.price,
-        photos: [d.photo],
-        isPhotoReferential: true,
-        photoCredits: [{ source: "unsplash", referential: true }],
-        isHero: d.isHero || false,
-        isSpicy: d.isSpicy || false,
-        dishDiet: d.diet || "OMNIVORE",
-        isFeaturedAuto: d.isHero || false,
-        position: i,
-      },
-    });
-  }
-
-  return NextResponse.json({ ok: true, slug: restaurant.slug, plan: "PREMIUM" });
 }
