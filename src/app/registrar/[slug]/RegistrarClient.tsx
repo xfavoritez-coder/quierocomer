@@ -221,8 +221,21 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
           <div className="rg-right-col">
             <div className="rg-connector-h" />
             <section className="rg-checkout">
-            <div className="rg-plan-label">PLAN {info.label.toUpperCase()}</div>
-            <div className="rg-price-row"><span className="rg-price-main">{info.price}</span> <span className="rg-price-sub">{info.priceSub}</span></div>
+            <div className="rg-plan-label">{plan === "PREMIUM" ? "PRUEBA GRATUITA · PREMIUM" : `PLAN ${info.label.toUpperCase()}`}</div>
+
+            {plan === "PREMIUM" ? (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+                  <span style={{ fontSize: 38, fontWeight: 900, color: "#74e49a", letterSpacing: "-1px" }}>7 días gratis</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ textDecoration: "line-through", color: "var(--muted)", fontSize: 20, fontWeight: 700 }}>$44.900</span>
+                  <span style={{ color: "var(--muted)", fontSize: 12 }}>/ mes + IVA después</span>
+                </div>
+              </div>
+            ) : (
+              <div className="rg-price-row"><span className="rg-price-main">{info.price}</span> <span className="rg-price-sub">{info.priceSub}</span></div>
+            )}
 
             <div className="rg-divider" />
 
