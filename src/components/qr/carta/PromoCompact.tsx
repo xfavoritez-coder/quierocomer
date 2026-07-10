@@ -29,10 +29,8 @@ export default function PromoCompact({ promos, onViewDish, onViewPromo }: Props)
   return (
     <div className="promo-compact-scroll" style={{
       display: "flex", flexDirection: "row", gap: 10,
-      padding: "0 12px", overflowX: "auto", scrollSnapType: "x mandatory",
-      WebkitOverflowScrolling: "touch",
-      scrollbarWidth: "none",
-      msOverflowStyle: "none" as any,
+      padding: "0 12px",
+      ...(promos.length > 1 ? { overflowX: "auto" as const, scrollSnapType: "x mandatory" as const, WebkitOverflowScrolling: "touch" as const, scrollbarWidth: "none" as const, msOverflowStyle: "none" as any } : {}),
     }}>
       <style>{`.promo-compact-scroll::-webkit-scrollbar { display: none; }`}</style>
       {promos.map((p) => {
@@ -51,7 +49,8 @@ export default function PromoCompact({ promos, onViewDish, onViewPromo }: Props)
               if (dish && onViewDish) onViewDish(dish.id);
             }}
             style={{
-              minWidth: 280, width: 280, height: 150, borderRadius: 18, overflow: "hidden", position: "relative",
+              width: "100%", minWidth: "100%",
+              height: 150, borderRadius: 18, overflow: "hidden", position: "relative",
               background: "#111", display: "flex", border: "none", cursor: "pointer", textAlign: "left",
               flexShrink: 0, scrollSnapAlign: "start",
             }}
