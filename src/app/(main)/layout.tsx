@@ -31,11 +31,11 @@ export const metadata: Metadata = {
     siteName: "QuieroComer",
     type: "website",
     locale: "es_CL",
-    images: [{ url: "https://quierocomer.com/og.png", width: 1200, height: 630 }],
+    images: [{ url: "https://quierocomer.com/og-square.jpg", width: 400, height: 400 }],
   },
   twitter: {
-    card: "summary_large_image",
-    images: ["https://quierocomer.com/og.png"],
+    card: "summary",
+    images: ["https://quierocomer.com/og-square.jpg"],
   },
 };
 

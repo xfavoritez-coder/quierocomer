@@ -35,7 +35,7 @@ export const metadata = {
     images: [{ url: "https://quierocomer.com/og-landing.png", width: 1254, height: 1254, type: "image/png" }],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Carta QR para restaurantes gratis | QuieroComer",
     description: "Crea tu carta QR digital gratis. Nuestra IA transforma tu carta física en una experiencia visual que recomienda platos, muestra fotos y vende más por ti.",
     images: ["https://quierocomer.com/og-landing.png"],
