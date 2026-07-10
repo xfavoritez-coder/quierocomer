@@ -21,7 +21,7 @@ import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
-import { trackSearchPerformed, track } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, track, trackFilterApplied } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -953,7 +953,11 @@ export default function CartaImpact({
 
   /* ─── Filter ─── */
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
-  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f === key ? null : key);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
+    const next = f === key ? null : key;
+    if (next) trackFilterApplied(restaurant.id, "carta_filter", next, 0);
+    return next;
+  });
   const dishesFiltered = useMemo(
     () => applyCartaFilter(dishes, activeFilter, new Set(popularDishIds || [])),
     [dishes, activeFilter, popularDishIds],
@@ -1700,23 +1704,21 @@ export default function CartaImpact({
         {activeFilter && !searchQuery && menuSections.length === 0 && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 28px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
-              {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : activeFilter === "veggie" ? "🌿" : "👁"}
+              {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : "🌿"}
             </span>
             <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, marginBottom: 6 }}>
               {activeFilter === "estrella"
-                ? "Sin platos estrella por ahora"
+                ? "Sin platos recomendados por ahora"
                 : activeFilter === "popular"
                   ? "Sin platos populares por ahora"
-                  : activeFilter === "veggie"
-                    ? "Sin platos veggie registrados"
-                    : "Sin datos de visitas aún"}
+                  : "Sin platos veggie registrados"}
             </p>
             <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, marginBottom: 16 }}>
               {activeFilter === "estrella"
-                ? "El local aún no ha marcado platos destacados."
+                ? "El local aún no ha marcado platos como recomendados."
                 : activeFilter === "popular"
                   ? "Se necesitan más visitas para identificar tendencias."
-                  : null}
+                  : "Este local aún no tiene platos veganos o vegetarianos marcados."}
             </p>
             <button
               onClick={() => setActiveFilter(null)}

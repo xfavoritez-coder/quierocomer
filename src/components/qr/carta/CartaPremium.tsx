@@ -21,7 +21,9 @@ import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
-import { trackSearchPerformed, track } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, track, trackFilterApplied } from "./utils/cartaAnalytics";
+import CartaFilterBar, { applyCartaFilter } from "./CartaFilterBar";
+import type { CartaFilterKey } from "./CartaFilterBar";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -144,6 +146,12 @@ export default function CartaPremium({
     return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
   const hasPromos = marketingPromos && marketingPromos.length > 0;
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
+    const next = f === key ? null : key;
+    if (next) trackFilterApplied(restaurant.id, "carta_filter", next, 0);
+    return next;
+  });
 
   // Diet nav item for category bar
   const dietNavItem = useMemo(() => {
@@ -532,6 +540,48 @@ export default function CartaPremium({
         </div>
       )}
 
+      {/* Filter bar */}
+      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "7px 12px 8px" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+      </div>
+
+      {/* Empty state — filtro activo sin resultados */}
+      {activeFilter && !searchQuery && !categories.some(cat =>
+        applyCartaFilter(dishes.filter(d => d.categoryId === cat.id), activeFilter, popularDishIds).length > 0
+      ) && (
+        <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 28px", textAlign: "center" }}>
+          <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
+            {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : "🌿"}
+          </span>
+          <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px" }}>
+            {activeFilter === "estrella"
+              ? "Sin platos recomendados por ahora"
+              : activeFilter === "popular"
+                ? "Sin platos populares por ahora"
+                : "Sin platos veggie registrados"}
+          </p>
+          <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, margin: "0 0 16px" }}>
+            {activeFilter === "estrella"
+              ? "El local aún no ha marcado platos como recomendados."
+              : activeFilter === "popular"
+                ? "Se necesitan más visitas para identificar tendencias."
+                : "Este local aún no tiene platos veganos o vegetarianos marcados."}
+          </p>
+          <button
+            onClick={() => setActiveFilter(null)}
+            className="font-[family-name:var(--font-dm)]"
+            style={{
+              fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600,
+              background: "color-mix(in srgb, var(--carta-accent) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--carta-accent) 30%, transparent)",
+              padding: "8px 18px", borderRadius: 999, cursor: "pointer",
+            }}
+          >
+            Ver todos los platos
+          </button>
+        </div>
+      )}
+
       {/* Personalización ocurre en background sin bloquear la UI */}
 
       <main style={{ paddingBottom: 55 }}>
@@ -588,9 +638,11 @@ export default function CartaPremium({
           </div>
         )}
         {categories.map((cat, index) => {
-          const catDishes = dishes
-            .filter((d) => d.categoryId === cat.id)
-            .filter((d) => {
+          const catDishes = applyCartaFilter(
+            dishes.filter((d) => d.categoryId === cat.id),
+            activeFilter,
+            popularDishIds,
+          ).filter((d) => {
               if (!searchQuery) return true;
               const q = norm(searchQuery.trim());
               return norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q);

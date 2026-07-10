@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
-import { trackSearchPerformed } from "./utils/cartaAnalytics";
+import { trackSearchPerformed, trackFilterApplied } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -128,7 +128,11 @@ export default function CartaLista({
     return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
   const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
-  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f === key ? null : key);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
+    const next = f === key ? null : key;
+    if (next) trackFilterApplied(restaurant.id, "carta_filter", next, 0);
+    return next;
+  });
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "lista");
@@ -514,15 +518,42 @@ export default function CartaLista({
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (
-        <div style={{ padding: "64px 32px", textAlign: "center" }}>
-          <p style={{ color: "var(--carta-text-muted)", fontSize: "0.9rem" }}>
-            No encontramos platos que coincidan.
-          </p>
+        <div style={{ padding: "64px 28px", textAlign: "center" }}>
+          {activeFilter && !query ? (
+            <>
+              <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
+                {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : "🌿"}
+              </span>
+              <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px" }}>
+                {activeFilter === "estrella"
+                  ? "Sin platos recomendados por ahora"
+                  : activeFilter === "popular"
+                    ? "Sin platos populares por ahora"
+                    : "Sin platos veggie registrados"}
+              </p>
+              <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, margin: "0 0 16px" }}>
+                {activeFilter === "estrella"
+                  ? "El local aún no ha marcado platos como recomendados."
+                  : activeFilter === "popular"
+                    ? "Se necesitan más visitas para identificar tendencias."
+                    : "Este local aún no tiene platos veganos o vegetarianos marcados."}
+              </p>
+            </>
+          ) : (
+            <p style={{ color: "var(--carta-text-muted)", fontSize: "0.9rem", margin: "0 0 12px" }}>
+              No encontramos platos que coincidan.
+            </p>
+          )}
           <button
             onClick={() => { setQuery(""); setActiveFilter(null); }}
-            style={{ marginTop: 12, fontSize: "0.88rem", color: "var(--carta-accent, #F4A623)", fontWeight: 600, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", fontFamily: "inherit" }}
+            style={{
+              fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600,
+              background: "color-mix(in srgb, var(--carta-accent) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--carta-accent) 30%, transparent)",
+              padding: "8px 18px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit",
+            }}
           >
-            Limpiar filtros
+            Ver todos los platos
           </button>
         </div>
       )}

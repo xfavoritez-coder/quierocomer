@@ -126,6 +126,8 @@ export async function GET(req: NextRequest) {
       topSearches,
       // Period avg duration
       periodDurationAgg,
+      // Filter usage week
+      filterUsageRaw,
     ] = await Promise.all([
       // ── Period-based (using groupBy/count/aggregate instead of findMany) ──
       prisma.session.count({ where: { ...restaurantFilter, startedAt: dateFilter } }),
@@ -188,6 +190,8 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.groupBy({ by: ["query"], where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
       // Period avg duration (via aggregate, not fetching 10k rows)
       prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
+      // Filter usage this week (popular, estrella/recomendados, veggie)
+      prisma.statEvent.groupBy({ by: ["metadata"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, createdAt: { gte: weekAgo } }, _count: { id: true } }),
     ]);
 
     const uniqueGuests = uniqueGuestsCount as number;
@@ -279,6 +283,13 @@ export async function GET(req: NextRequest) {
       : null;
 
     const avgDurationSec = Math.round((periodDurationAgg._avg?.durationMs || 0) / 1000);
+
+    // Aggregate filter clicks by filterValue from metadata JSON
+    const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0 };
+    for (const row of filterUsageRaw as any[]) {
+      const fv = (row.metadata as any)?.filterValue as string | undefined;
+      if (fv && fv in filterUsage) filterUsage[fv] += row._count.id;
+    }
     const weekAvgDurationSec = Math.round((weekAvgDuration._avg?.durationMs || 0) / 1000);
 
     return NextResponse.json({
@@ -345,6 +356,7 @@ export async function GET(req: NextRequest) {
       totalGuests: uniqueGuests,
       registeredGuests: 0,
       conversionRate: 0,
+      filterUsage,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);

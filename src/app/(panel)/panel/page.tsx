@@ -42,6 +42,7 @@ const DEMO_DATA: DashData = {
   genioToday: 7,
   todayAvgDuration: 82,
   weekGenio: { starts: 38, dietMarked: 32, completed: 28, completionRate: 74, dietRate: 84 },
+  filterUsage: { popular: 14, estrella: 9, veggie: 6 },
   weekDietDistribution: [{ type: "omnivore", count: 45 }, { type: "vegetarian", count: 12 }, { type: "vegan", count: 6 }],
   weekRestrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
 };
@@ -59,6 +60,7 @@ interface DashData {
   weekGenio?: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
   weekDietDistribution?: { type: string; count: number }[];
   weekRestrictionsList?: { name: string; count: number }[];
+  filterUsage?: { popular: number; estrella: number; veggie: number };
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -421,6 +423,35 @@ export default function PanelDashboard() {
         </div>
       )}
 
+
+      {/* ═══ Filtros usados ═══ */}
+      {data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie) > 0 && (() => {
+        const fu = data.filterUsage!;
+        const total = fu.popular + fu.estrella + fu.veggie;
+        const filters = [
+          { key: "popular",  emoji: "🔥", label: "Popular",       count: fu.popular },
+          { key: "estrella", emoji: "⭐", label: "Recomendados",  count: fu.estrella },
+          { key: "veggie",   emoji: "🌿", label: "Veggie",        count: fu.veggie },
+        ].sort((a, b) => b.count - a.count);
+        return (
+          <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>🎛️ Filtros usados esta semana</h3>
+            {filters.map((f, i) => (
+              <div key={f.key} style={{ display: "grid", gridTemplateColumns: "28px 1fr 38px", alignItems: "center", gap: 10, marginTop: i > 0 ? 12 : 0 }}>
+                <span style={{ fontSize: "1rem", textAlign: "center" }}>{f.emoji}</span>
+                <div>
+                  <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 850, color: "var(--adm-text)", marginBottom: 4 }}>{f.label}</div>
+                  <div style={{ height: 5, background: "var(--adm-hover)", borderRadius: 10, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${total > 0 ? (f.count / filters[0].count) * 100 : 0}%`, background: GOLD, borderRadius: 10 }} />
+                  </div>
+                </div>
+                <div style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 900, textAlign: "right" }}>{f.count}</div>
+              </div>
+            ))}
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "14px 0 0" }}>{total} clicks en filtros esta semana</p>
+          </div>
+        );
+      })()}
 
       </PlanGate>
 
