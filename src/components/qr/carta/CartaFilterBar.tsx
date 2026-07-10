@@ -40,7 +40,7 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
               style={{
                 flexShrink: 0,
                 display: "flex", alignItems: "center", gap: 5,
-                padding: compact ? "5px 11px" : "7px 13px",
+                padding: compact ? "7px 11px" : "10px 13px",
                 borderRadius: 999,
                 fontSize: compact ? 12 : 13,
                 fontWeight: isActive ? 700 : 500,

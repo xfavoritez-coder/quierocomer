@@ -107,7 +107,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
       `}</style>
 
       {/* Nav bar — logo + name left, social + lang right */}
-      <div className="w-full flex items-center justify-between" style={{ background: "var(--carta-nav-bg, var(--carta-bg-solid, #1a1a1a))", borderBottom: "1px solid var(--carta-border)", padding: "10px 16px", zIndex: 20, position: "relative" }}>
+      <div className="w-full flex items-center justify-between" style={{ background: "var(--carta-nav-bg, var(--carta-bg-solid, #1a1a1a))", borderBottom: "1px solid var(--carta-border)", padding: "10px 16px", zIndex: 50, position: "relative" }}>
         <button onClick={() => window.location.reload()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           {logoSrc ? (
             <img src={logoSrc} alt={restaurant.name} loading="lazy" style={{ width: 28, height: 28, borderRadius: "50%", border: "none" }} />
