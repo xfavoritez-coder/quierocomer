@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     prisma.lead.findMany({
       where: {
         email: { not: "import@quierocomer.com" },
+        whatsapp: { not: null },
       },
       orderBy: { createdAt: "desc" },
       take: 2000,
