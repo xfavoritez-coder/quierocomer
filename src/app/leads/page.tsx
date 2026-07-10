@@ -421,7 +421,7 @@ function LeadCard({ lead, onClick, selected }: { lead: Lead; onClick: () => void
           <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>● Seguimiento vencido</span>
         )}
         {lead.crmFollowUpAt && !hasFU && (
-          <span style={{ fontSize: 11, color: "#E8A33D" }}>📅 {new Date(lead.crmFollowUpAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+          <span style={{ fontSize: 11, color: "#E8A33D" }}>Contactar: {new Date(lead.crmFollowUpAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
         )}
       </div>
     </div>
