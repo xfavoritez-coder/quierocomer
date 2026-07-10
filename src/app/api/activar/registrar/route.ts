@@ -118,6 +118,10 @@ export async function POST(req: NextRequest) {
           dishDiet: d.diet || "OMNIVORE",
           isFeaturedAuto: d.isHero || false,
           txDishType: [],
+          txCuisine: [],
+          txMealSlot: [],
+          txIngredient: [],
+          txEstilo: [],
           position: i,
         },
       });
