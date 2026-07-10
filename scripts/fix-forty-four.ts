@@ -31,7 +31,7 @@ async function main() {
 
   // Send email
   const { sendAdminEmail, cartaListaSimpleEmailHtml } = await import("../src/lib/email/sendAdminEmail");
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const openPixel = `${baseUrl}/api/funnel/track/open?lid=${lead.id}`;
   const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(`${baseUrl}/qr/${rest.slug}`)}`;
   const ownerName = (lead.ownerName || "Hola").split(" ")[0];

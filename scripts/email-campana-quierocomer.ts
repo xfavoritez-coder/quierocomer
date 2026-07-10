@@ -6,7 +6,7 @@
 export const CAMPAIGN_SUBJECT = "Vende más con una carta QR que vende sola";
 
 export function buildQuieroComerEmailHtml({ email, campaignId }: { email: string; campaignId: string }): string {
-  const base = "https://quierocomer.cl";
+  const base = "https://quierocomer.com";
   const desuscribirUrl = `${base}/desuscribir?email=${encodeURIComponent(email)}`;
   const trackOpenUrl = `${base}/api/platform/track/open?cid=${campaignId}&e=${encodeURIComponent(email)}`;
   const trackClickUrl = `${base}/api/platform/track/click?cid=${campaignId}&e=${encodeURIComponent(email)}&url=${encodeURIComponent(base)}`;
@@ -85,7 +85,7 @@ export function buildQuieroComerEmailHtml({ email, campaignId }: { email: string
 <!-- Footer -->
 <div style="background:#faf6ee;padding:20px 32px;border-top:1px solid #f0e8d0;text-align:center">
   <p style="font-size:13px;font-weight:700;color:#d4a015;margin:0 0 6px">🧞 El equipo de QuieroComer</p>
-  <p style="font-size:11px;color:#a08040;line-height:1.6;margin:0">quierocomer.cl · Hecho en Chile<br><a href="${desuscribirUrl}" style="color:#c47f1a">Desuscribirse</a></p>
+  <p style="font-size:11px;color:#a08040;line-height:1.6;margin:0">quierocomer.com · Hecho en Chile<br><a href="${desuscribirUrl}" style="color:#c47f1a">Desuscribirse</a></p>
 </div>
 
 <img src="${trackOpenUrl}" width="1" height="1" style="display:none" />

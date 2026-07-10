@@ -10,7 +10,7 @@ async function main() {
   const SID = process.env.TWILIO_ACCOUNT_SID!;
   const TOKEN = process.env.TWILIO_AUTH_TOKEN!;
   const FROM = process.env.TWILIO_WHATSAPP_FROM!;
-  const trackUrl = `https://quierocomer.cl/api/funnel/track/wa-click?lid=${l.id}&url=${encodeURIComponent(`https://quierocomer.cl/qr/${l.generatedSlug}`)}`;
+  const trackUrl = `https://quierocomer.com/api/funnel/track/wa-click?lid=${l.id}&url=${encodeURIComponent(`https://quierocomer.com/qr/${l.generatedSlug}`)}`;
 
   const params = new URLSearchParams({
     From: FROM, To: `whatsapp:${l.whatsapp}`,

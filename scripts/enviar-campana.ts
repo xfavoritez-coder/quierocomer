@@ -15,7 +15,7 @@ import { Resend } from "resend";
 import { buildQuieroComerEmailHtml, CAMPAIGN_SUBJECT } from "./email-campana-quierocomer";
 
 const RESEND_KEY = process.env.RESEND_API_KEY || "re_VXBZsdmT_JsnyY57KFCraYBeP62kjckFD";
-const FROM = "QuieroComer <hola@quierocomer.cl>";
+const FROM = "QuieroComer <hola@quierocomer.com>";
 const REPLY_TO = "favoritez@gmail.com";
 const BATCH_SIZE = 50;
 const DELAY_MS = 2000;

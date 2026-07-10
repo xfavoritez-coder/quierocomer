@@ -37,16 +37,16 @@ async function main() {
 <p style="font-size:13px;color:#a08a68;line-height:1.5;margin:0 0 22px;text-align:center">Tu carta es privada — nadie la ve hasta que tu compartas el QR en tus mesas.</p>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:12px"><a href="https://quierocomer.cl/api/panel/demo-auth?slug=don-matu" style="display:block;background:#f7a400;color:#fff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,.28)">Entrar a mi panel →</a></td></tr>
-<tr><td style="text-align:center;padding-bottom:22px"><a href="https://quierocomer.cl/qr/don-matu" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">Ver como se ve mi carta</a></td></tr>
+<tr><td style="text-align:center;padding-bottom:12px"><a href="https://quierocomer.com/api/panel/demo-auth?slug=don-matu" style="display:block;background:#f7a400;color:#fff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,.28)">Entrar a mi panel →</a></td></tr>
+<tr><td style="text-align:center;padding-bottom:22px"><a href="https://quierocomer.com/qr/don-matu" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">Ver como se ve mi carta</a></td></tr>
 </table>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #ead7b7;border-radius:22px;margin-bottom:22px"><tr><td style="padding:22px 20px">
 <p style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:800;color:#92400e;margin:0 0 16px;text-align:center">&#128272; Tus datos de acceso</p>
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px"><tr><td style="padding:12px 14px"><p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Email</p><p style="font-size:14px;color:#111;font-weight:700;margin:0">juanmaturanaencalada@gmail.com</p></td></tr></table>
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px"><tr><td style="padding:12px 14px"><p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Contrasena</p><p style="font-size:14px;color:#111;font-weight:700;margin:0;font-family:monospace">don-matu2026</p></td></tr></table>
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px"><tr><td style="padding:12px 14px"><p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta</p><a href="https://quierocomer.cl/qr/don-matu" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none">quierocomer.cl/qr/don-matu</a></td></tr></table>
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px"><tr><td style="padding:12px 14px"><p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p><a href="https://quierocomer.cl/panel" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none">quierocomer.cl/panel</a></td></tr></table>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px"><tr><td style="padding:12px 14px"><p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta</p><a href="https://quierocomer.com/qr/don-matu" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none">quierocomer.com/qr/don-matu</a></td></tr></table>
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px"><tr><td style="padding:12px 14px"><p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p><a href="https://quierocomer.com/panel" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none">quierocomer.com/panel</a></td></tr></table>
 <p style="color:#8a724f;font-size:11px;margin:0;text-align:center">Te recomendamos cambiar la contrasena en tu primer ingreso.</p>
 </td></tr></table>
 
@@ -54,7 +54,7 @@ async function main() {
 </td></tr></table>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="text-align:center;padding-top:24px">
-<p style="color:#927955;font-size:12px;margin:0">Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contactanos</a></p>
+<p style="color:#927955;font-size:12px;margin:0">Necesitas ayuda? <a href="https://quierocomer.com/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contactanos</a></p>
 <p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · 2026</p>
 </td></tr></table>
 </td></tr></table></body></html>`,

@@ -26,7 +26,7 @@ async function main() {
   if (!rest) { console.log("Restaurant not found"); await p.$disconnect(); return; }
 
   const { sendWhatsApp, buildCartaReadyMessage } = await import("../src/lib/whatsapp");
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const waTrackUrl = `${baseUrl}/c/${rest.slug}`;
   const ownerName = (lead.ownerName || "Hola").split(" ")[0];
 

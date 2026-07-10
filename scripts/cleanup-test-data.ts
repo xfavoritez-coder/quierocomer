@@ -52,7 +52,7 @@ async function main() {
   counts["QRUserInteraction"] = r6.count;
 
   // Test QRUsers
-  const r7 = await prisma.qRUser.deleteMany({ where: { email: { endsWith: "@test.quierocomer.cl" } } });
+  const r7 = await prisma.qRUser.deleteMany({ where: { email: { endsWith: "@test.quierocomer.com" } } });
   counts["QRUser"] = r7.count;
 
   // Test GuestProfiles

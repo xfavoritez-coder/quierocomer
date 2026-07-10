@@ -333,7 +333,7 @@ async function main() {
     console.log(`  ✓ ${cat.name}: ${cat.dishes.length} platos`);
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   console.log(`\n✓ Listo. ${totalCategories} categorías, ${totalDishes} platos creados.`);
   console.log(`\nCarta: ${baseUrl}/qr/${restaurant.slug}`);
   console.log(`Slug:  ${restaurant.slug}`);

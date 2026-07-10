@@ -88,7 +88,7 @@ ${credentials ? `
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
   <tr><td style="padding:12px 14px">
     <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
-    <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.cl/panel</a>
+    <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.com/panel</a>
   </td></tr>
   </table>
   <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso al panel.</p>
@@ -136,7 +136,7 @@ ${credentials ? `
 </table>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-top:24px">
-<p style="color:#927955;font-size:12px;margin:0">¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a></p>
+<p style="color:#927955;font-size:12px;margin:0">¿Necesitas ayuda? <a href="https://quierocomer.com/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a></p>
 <p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · 2026</p>
 </td></tr>
 </table>
@@ -153,8 +153,8 @@ async function main() {
     html: activationWelcomeEmailHtml({
       ownerName: "Juan",
       restaurantName: "Don Matu",
-      panelLink: "https://quierocomer.cl/api/panel/demo-auth?slug=don-matu",
-      qrLink: "https://quierocomer.cl/qr/don-matu",
+      panelLink: "https://quierocomer.com/api/panel/demo-auth?slug=don-matu",
+      qrLink: "https://quierocomer.com/qr/don-matu",
       credentials: { email: "juanmaturaanancalada@gmail.com", password: "don-matu2026" },
       planLabel: "Premium (14 dias gratis)",
     }),

@@ -12,7 +12,7 @@ async function main() {
   const FROM = process.env.TWILIO_WHATSAPP_FROM!;
   const name = (lead.ownerName || "").split(" ")[0];
 
-  const body = `Hola ${name}. No pudimos acceder al link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.cl/subircarta 😊`;
+  const body = `Hola ${name}. No pudimos acceder al link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.com/subircarta 😊`;
 
   const phone = lead.whatsapp.startsWith("+") ? lead.whatsapp : "+" + lead.whatsapp;
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {

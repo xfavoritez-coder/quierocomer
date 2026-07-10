@@ -12,7 +12,7 @@ async function main() {
   if (rest && rest._count.dishes >= 100 && rest._count.categories >= 10) {
     console.log("Carta verified OK. Sending email via production API...");
     
-    const BASE = "https://quierocomer.cl";
+    const BASE = "https://quierocomer.com";
     const SEED = process.env.SEED_SECRET || "qr-seed-2024-secreto";
     
     // Use send-message API to send carta_lista email

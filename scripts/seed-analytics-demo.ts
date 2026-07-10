@@ -178,7 +178,7 @@ async function main() {
   const convertedUsers: { userId: string; guestId: string }[] = [];
   for (let i = 0; i < 8; i++) {
     const g = guests[i];
-    const user = await prisma.qRUser.create({ data: { email: `demo-${i}-${NOW}@test.quierocomer.cl`, name: `Demo User ${i}` } });
+    const user = await prisma.qRUser.create({ data: { email: `demo-${i}-${NOW}@test.quierocomer.com`, name: `Demo User ${i}` } });
     await prisma.guestProfile.update({ where: { id: g.id }, data: { linkedQrUserId: user.id, convertedToUserAt: daysAgo(Math.max(0, g.createdDaysAgo - rand(2, 5))) } });
     await prisma.statEvent.updateMany({ where: { guestId: g.id, qrUserId: null }, data: { qrUserId: user.id } });
     await prisma.session.updateMany({ where: { guestId: g.id, qrUserId: null }, data: { qrUserId: user.id } });

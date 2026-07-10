@@ -159,7 +159,7 @@ async function main() {
       data: {
         localName: name,
         ownerName: 'Google Places Import',
-        email: 'import@quierocomer.cl',
+        email: 'import@quierocomer.com',
         cartaType: 'LINK',
         cartaUrl: website,
         cartaStatus: 'PENDING',

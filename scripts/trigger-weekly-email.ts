@@ -8,7 +8,7 @@ async function main() {
   const dotenv = await import("dotenv");
   dotenv.config({ path: ".env.local" });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const cronSecret = process.env.CRON_SECRET;
 
   // Try hitting production endpoint first
@@ -58,7 +58,7 @@ async function main() {
     console.log("Options:");
     console.log("  1. Set CRON_SECRET in .env.local to match Vercel env var, then re-run");
     console.log("  2. Trigger from Vercel dashboard: Functions → /api/cron/weekly-email → Invoke");
-    console.log("  3. Use curl: curl -H 'Authorization: Bearer YOUR_SECRET' https://quierocomer.cl/api/cron/weekly-email");
+    console.log("  3. Use curl: curl -H 'Authorization: Bearer YOUR_SECRET' https://quierocomer.com/api/cron/weekly-email");
   } finally {
     await prisma.$disconnect();
   }

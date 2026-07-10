@@ -27,7 +27,7 @@ async function main() {
     if (!r.owner?.email) { console.log("Sin email, skip"); continue; }
     const daysLeft = Math.max(1, Math.ceil(((r.trialEndsAt?.getTime() || now.getTime()) - now.getTime()) / (24 * 60 * 60 * 1000)));
     const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
-    const baseUrl = "https://quierocomer.cl";
+    const baseUrl = "https://quierocomer.com";
 
     console.log(`Enviando email a ${r.owner.email} — ${firstName}, ${daysLeft} día(s) restantes`);
 

@@ -10,11 +10,11 @@ async function main() {
       where: { id: provider.id },
       data: {
         status: "IN_RESEARCH",
-        notes: "QR code landing pages (qrco.de). Content is AngularJS-rendered with PDF loaded dynamically — NOT scrapeable. Extraction always fails. When a lead uses this provider and fails, the pipeline should send a WhatsApp asking them to upload their carta as photo/PDF directly via quierocomer.cl/subircarta.",
+        notes: "QR code landing pages (qrco.de). Content is AngularJS-rendered with PDF loaded dynamically — NOT scrapeable. Extraction always fails. When a lead uses this provider and fails, the pipeline should send a WhatsApp asking them to upload their carta as photo/PDF directly via quierocomer.com/subircarta.",
         extractionConfig: {
           useJina: true,
           notScrapeable: true,
-          failMessage: "No pudimos extraer tu carta desde el link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.cl/subircarta 😊",
+          failMessage: "No pudimos extraer tu carta desde el link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.com/subircarta 😊",
         },
       },
     });

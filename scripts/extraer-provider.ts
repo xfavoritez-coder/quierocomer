@@ -58,7 +58,7 @@ async function main() {
     if (!lead) {
       lead = await prisma.lead.create({
         data: {
-          localName: local.name, ownerName: `${provider} Import`, email: 'import@quierocomer.cl',
+          localName: local.name, ownerName: `${provider} Import`, email: 'import@quierocomer.com',
           cartaType: 'LINK', cartaUrl: local.website, cartaStatus: 'PENDING', generatedSlug: slug,
         },
       })

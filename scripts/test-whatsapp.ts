@@ -14,7 +14,7 @@ async function main() {
     From: FROM,
     To: "whatsapp:+56982067333",
     ContentSid: TEMPLATE,
-    ContentVariables: JSON.stringify({ "1": "Test", "2": "Restaurante Demo", "3": "https://quierocomer.cl/qr/horus" }),
+    ContentVariables: JSON.stringify({ "1": "Test", "2": "Restaurante Demo", "3": "https://quierocomer.com/qr/horus" }),
   });
 
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {

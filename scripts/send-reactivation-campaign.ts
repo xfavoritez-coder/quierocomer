@@ -18,7 +18,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.FROM_EMAIL
   ? `QuieroComer <${process.env.FROM_EMAIL}>`
   : "QuieroComer <onboarding@resend.dev>";
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 const DRY_RUN = process.argv.includes("--dry-run");
 
 const p = new PrismaClient();

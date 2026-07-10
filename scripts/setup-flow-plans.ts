@@ -16,7 +16,7 @@ dotenv.config({ path: ".env.local", override: true });
 import { flowPost } from "../src/lib/billing/flow";
 import { FLOW_PLANS, grossOf, ivaOf } from "../src/lib/billing/plans-config";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 const URL_CALLBACK = `${BASE_URL}/api/billing/webhook`;
 
 async function planExists(planId: string): Promise<boolean> {

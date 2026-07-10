@@ -17,7 +17,7 @@ async function main() {
   if (!rest) { console.log("Restaurant not found"); await p.$disconnect(); return; }
 
   const dishCount = await p.dish.count({ where: { restaurantId: rest.id } });
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const openPixel = `${baseUrl}/api/funnel/track/open?lid=${lead.id}`;
   const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(`${baseUrl}/qr/${rest.slug}`)}`;
   const activarUrl = `${baseUrl}/activar/${rest.slug}`;

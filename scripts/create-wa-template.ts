@@ -18,7 +18,7 @@ async function main() {
       variables: { "1": "nombre" },
       types: {
         "twilio/text": {
-          body: "Hola {{1}}\n\nNo pudimos procesar tu carta desde el link que nos compartiste.\n\nPuedes subir fotos de tu carta o el PDF directamente aqui:\nhttps://quierocomer.cl/subircarta\n\nCualquier duda estamos para ayudarte.\nQuieroComer.cl"
+          body: "Hola {{1}}\n\nNo pudimos procesar tu carta desde el link que nos compartiste.\n\nPuedes subir fotos de tu carta o el PDF directamente aqui:\nhttps://quierocomer.com/subircarta\n\nCualquier duda estamos para ayudarte.\nQuieroComer.cl"
         }
       }
     }),

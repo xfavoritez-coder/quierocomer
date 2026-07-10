@@ -17,7 +17,7 @@ async function main() {
 
   console.log(`Restaurant: ${restaurant.name}, ${dishCount} dishes, ${catCount} categories`);
 
-  const baseUrl = "https://quierocomer.cl";
+  const baseUrl = "https://quierocomer.com";
   const ownerName = (lead.ownerName || "Hola").split(" ")[0];
 
   // Send email

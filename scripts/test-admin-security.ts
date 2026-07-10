@@ -77,7 +77,7 @@ async function main() {
   // Get superadmin cookies — read from .env.local
   const dotenv = await import("dotenv");
   dotenv.config({ path: ".env.local" });
-  const superEmail = process.env.ADMIN_EMAIL || "admin@quierocomer.cl";
+  const superEmail = process.env.ADMIN_EMAIL || "admin@quierocomer.com";
   const superPass = process.env.ADMIN_PASSWORD || "admin123";
   console.log(`Superadmin: ${superEmail}\n`);
   const { cookies: superCookies } = await login(superEmail, superPass);

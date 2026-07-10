@@ -28,7 +28,7 @@ async function main() {
   const TOKEN = process.env.TWILIO_AUTH_TOKEN!;
   const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
   const TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
-  const baseUrl = "https://quierocomer.cl";
+  const baseUrl = "https://quierocomer.com";
 
   let sent = 0;
   for (const l of leads) {

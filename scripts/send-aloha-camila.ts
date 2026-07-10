@@ -13,7 +13,7 @@ async function main() {
   if (!accountSid || !authToken || !from) {
     console.log("No Twilio credentials in .env.local — cannot send locally");
     console.log("Use the production endpoint instead:");
-    console.log("https://quierocomer.cl/api/cron/nurturing?key=qr-seed-2024-secreto&test=%2B56934343410&scenario=no_volvio");
+    console.log("https://quierocomer.com/api/cron/nurturing?key=qr-seed-2024-secreto&test=%2B56934343410&scenario=no_volvio");
     await p.$disconnect();
     return;
   }

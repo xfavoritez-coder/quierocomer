@@ -11,7 +11,7 @@ async function main() {
   const TOKEN = process.env.TWILIO_AUTH_TOKEN!;
   const FROM = process.env.TWILIO_WHATSAPP_FROM!;
 
-  const body = "Hola Enrique, no pudimos extraer tu carta desde el link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.cl/subircarta 😊";
+  const body = "Hola Enrique, no pudimos extraer tu carta desde el link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.com/subircarta 😊";
 
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
     method: "POST",

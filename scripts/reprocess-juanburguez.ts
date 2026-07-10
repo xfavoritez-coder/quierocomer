@@ -32,7 +32,7 @@ async function main() {
   console.log('Lead reset to PENDING. Triggering reprocess...');
 
   // Trigger processing via API
-  const BASE = process.env.NEXT_PUBLIC_BASE_URL || 'https://quierocomer.cl';
+  const BASE = process.env.NEXT_PUBLIC_BASE_URL || 'https://quierocomer.com';
   const res = await fetch(`${BASE}/api/subircarta/process`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -60,7 +60,7 @@ async function main() {
       lead = await prisma.lead.create({
         data: {
           localName: local.name, ownerName: 'Gourmedia Import',
-          email: 'import@quierocomer.cl', cartaType: 'LINK',
+          email: 'import@quierocomer.com', cartaType: 'LINK',
           cartaUrl: local.website, cartaStatus: 'PENDING', generatedSlug: slug,
         },
       })

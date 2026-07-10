@@ -19,7 +19,7 @@ const MENU_ONLY_SUFFIXES = [
   "netlify.app", "tripadvisor.cl", "tripadvisor.com",
   "instagram.com", "facebook.com", "twitter.com", "tiktok.com",
   "linktr.ee", "linktree.com", "atom.bio",
-  "quierocomer.cl",
+  "quierocomer.com",
 ];
 
 function isOrderable(url: string): boolean {

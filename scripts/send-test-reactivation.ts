@@ -47,10 +47,10 @@ async function main() {
     slug,
     dishCount: totalDishes,
     categories,
-    cartaUrl: `https://quierocomer.cl/qr/${slug}`,
-    panelUrl: `https://quierocomer.cl/panel`,
-    activarUrl: `https://quierocomer.cl/activar/${slug}`,
-    openPixel: "https://quierocomer.cl/api/email/track/open?eid=test-reactivation-2",
+    cartaUrl: `https://quierocomer.com/qr/${slug}`,
+    panelUrl: `https://quierocomer.com/panel`,
+    activarUrl: `https://quierocomer.com/activar/${slug}`,
+    openPixel: "https://quierocomer.com/api/email/track/open?eid=test-reactivation-2",
   });
 
   console.log(`Restaurant: ${restaurant.name}`);

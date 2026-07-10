@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const GOLD = "#e8930a";
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 
 function wrap(content: string): string {
   return `<!DOCTYPE html>
@@ -28,7 +28,7 @@ function wrap(content: string): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
   </td></tr>
   <tr><td align="center" style="padding:16px 0 0;">
-    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.cl</a>
+    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.com</a>
     <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
   </td></tr>
 
@@ -79,7 +79,7 @@ async function main() {
   </td></tr>
   <tr><td style="padding-bottom:16px;">
     <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
-      <a href="https://quierocomer.cl" style="display:inline-block;background:${GOLD};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Volver a subir mi carta</a>
+      <a href="https://quierocomer.com" style="display:inline-block;background:${GOLD};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Volver a subir mi carta</a>
     </td></tr></table>
   </td></tr>
   <tr><td style="font-size:13px;color:#b8a888;text-align:center;line-height:1.6;">

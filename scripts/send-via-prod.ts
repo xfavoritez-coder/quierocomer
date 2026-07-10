@@ -1,7 +1,7 @@
 import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local" });
 
-const BASE = "https://quierocomer.cl";
+const BASE = "https://quierocomer.com";
 const KEY = process.env.SEED_SECRET;
 
 if (!KEY) { console.error("SEED_SECRET not found in .env.local"); process.exit(1); }

@@ -82,7 +82,7 @@ async function main() {
 
   const totalDishes = await prisma.dish.count({ where: { restaurantId: restaurant!.id } })
   console.log(`\nTotal platos en DB: ${totalDishes}`)
-  console.log(`URL: https://quierocomer.cl/qr/${result.slug}`)
+  console.log(`URL: https://quierocomer.com/qr/${result.slug}`)
 
   await prisma.$disconnect()
 }

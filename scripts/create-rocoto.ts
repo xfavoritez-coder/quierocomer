@@ -199,7 +199,7 @@ async function main() {
   await prisma.category.updateMany({ where: { id: { in: [bo.picoteos.id, bo.compartir.id, bo.chorrillanas.id, bo.salsas.id] } }, data: { menuGroupId: mgBoro.id } });
   await prisma.category.updateMany({ where: { id: { in: [be.bebidas.id, be.clasicos.id, be.destilados.id, be.cerveza.id, be.micheladas.id, be.cockCerveza.id, be.vinos.id, be.autor.id] } }, data: { menuGroupId: mgBeb.id } });
 
-  console.log("Done! URL: https://quierocomer.cl/qr/" + slug);
+  console.log("Done! URL: https://quierocomer.com/qr/" + slug);
   await prisma.$disconnect();
 }
 

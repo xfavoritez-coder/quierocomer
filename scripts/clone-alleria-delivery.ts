@@ -132,10 +132,10 @@ async function main() {
     console.log('TeamMember already exists, skipping')
   }
 
-  console.log('\n✓ Done! Access: https://quierocomer.cl/panel/login')
+  console.log('\n✓ Done! Access: https://quierocomer.com/panel/login')
   console.log('  Email: gomezlowry@gmail.com')
   console.log('  Password: alleria-delivery')
-  console.log(`  Panel URL: https://quierocomer.cl/panel/${delivery.slug}`)
+  console.log(`  Panel URL: https://quierocomer.com/panel/${delivery.slug}`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())

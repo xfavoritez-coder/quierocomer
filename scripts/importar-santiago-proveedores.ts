@@ -220,7 +220,7 @@ async function main() {
       data: {
         localName: f.name,
         ownerName: `${f.provider} Import`,
-        email: 'import@quierocomer.cl',
+        email: 'import@quierocomer.com',
         cartaType: 'LINK',
         cartaUrl: f.menuUrl,
         cartaStatus: 'PENDING',

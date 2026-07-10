@@ -7,7 +7,7 @@ async function main() {
   const p = new PrismaClient();
 
   // Send update email
-  const baseUrl = "https://quierocomer.cl";
+  const baseUrl = "https://quierocomer.com";
   const slug = "heladeria-italia-1609-cafe-crepe";
   const qrLink = `${baseUrl}/qr/${slug}`;
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${slug}`;
@@ -60,7 +60,7 @@ async function main() {
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid #ead7b7">
 <tr><td style="padding-top:16px;text-align:center">
   <p style="font-size:13px;color:#7a6547;margin:0">
-    ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
+    ¿Necesitas ayuda? <a href="https://quierocomer.com/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
   </p>
 </td></tr>
 </table>

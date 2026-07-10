@@ -84,7 +84,7 @@ async function main() {
   });
 
   if (updated?.resetToken) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
     console.log(`\n📋 Token stored in DB (hashed): ${updated.resetToken.substring(0, 30)}...`);
     console.log(`⏰ Expires at: ${updated.resetTokenExpiry?.toISOString()}`);
     console.log(`\n⚠️  The actual reset link was sent to ${email}.`);

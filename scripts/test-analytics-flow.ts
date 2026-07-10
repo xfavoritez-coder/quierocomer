@@ -7,7 +7,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 const TS = Date.now();
 const SLUG = `test-smoke-${TS}`;
-const EMAIL = `smoke-${TS}@test.quierocomer.cl`;
+const EMAIL = `smoke-${TS}@test.quierocomer.com`;
 const results: { step: string; ok: boolean; detail: string }[] = [];
 
 function log(step: string, ok: boolean, detail: string) {

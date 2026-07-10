@@ -181,7 +181,7 @@ async function restoreRestaurant(slug: string, cartaUrl: string, provider: strin
   const ownerName = (restaurant.owner?.name || "").split(" ")[0] || "Hola";
 
   if (ownerEmail) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
     const cartaLink = `${baseUrl}/qr/${slug}`;
 
     const emailHtml = `<!DOCTYPE html>
