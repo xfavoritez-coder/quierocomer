@@ -271,9 +271,14 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
             whatsapp: scratchWA.trim() ? `+56${scratchWA.replace(/\s/g, "").replace(/^\+?56/, "")}` : undefined,
           }),
         });
-        const data = await res.json();
+        let data: any;
+        try { data = await res.json(); } catch {
+          setScratchError(res.status >= 500 ? "Error del servidor. Intenta de nuevo." : `Error (${res.status}). Intenta de nuevo.`);
+          setLoading(false);
+          return;
+        }
         if (!res.ok || !data.slug) {
-          setScratchError(data.error || "Error al crear tu carta.");
+          setScratchError(data?.error || "Error al crear tu carta.");
           setLoading(false);
           return;
         }
