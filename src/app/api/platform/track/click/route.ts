@@ -13,5 +13,5 @@ export async function GET(req: NextRequest) {
     }).catch(() => {});
   }
 
-  return NextResponse.redirect(url || "https://quierocomer.cl");
+  return NextResponse.redirect(url || "https://quierocomer.com");
 }

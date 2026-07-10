@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
 
     let trialRemindersSent = 0;
     if (trialsEndingSoon.length > 0) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
       const { sendAdminEmail, trialEndingSoonEmailHtml } = await import("@/lib/email/sendAdminEmail");
       for (const r of trialsEndingSoon) {
         if (!r.owner?.email) continue;
@@ -157,7 +157,7 @@ export async function GET(req: NextRequest) {
       trialsExpired = expiredTrials.length;
 
       // Email notificacion al dueno (best effort, no falla el cron si falla)
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
       for (const r of expiredTrials) {
         if (!r.owner?.email) continue;
         try {
@@ -264,7 +264,7 @@ export async function GET(req: NextRequest) {
     if (renewalCandidates.length > 0) {
       const { sendAdminEmail, renewalReminderEmailHtml } = await import("@/lib/email/sendAdminEmail");
       const { FLOW_PLANS, grossOf, PLAN_LABELS } = await import("@/lib/billing/plans-config");
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
       for (const r of renewalCandidates) {
         if (!r.owner?.email) continue;
@@ -345,7 +345,7 @@ export async function GET(req: NextRequest) {
             if (lead?.email) {
               try {
                 const dishCount = await prisma.dish.count({ where: { restaurantId: r.id, isActive: true, deletedAt: null } });
-                const cartaUrl = `https://quierocomer.cl/qr/${r.slug}`;
+                const cartaUrl = `https://quierocomer.com/qr/${r.slug}`;
                 const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
                 const ownerName = lead.ownerName || "Hola";
                 await sendAdminEmail({
@@ -354,7 +354,7 @@ export async function GET(req: NextRequest) {
                   purpose: "funnel_carta_ready",
                   html: `
                     <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
-                      ${r.logoUrl ? `<img src="${r.logoUrl}" alt="${r.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.cl/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />`}
+                      ${r.logoUrl ? `<img src="${r.logoUrl}" alt="${r.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.com/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />`}
                       <h1 style="font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px;">
                         ${ownerName}, tu carta está lista
                       </h1>
@@ -362,13 +362,13 @@ export async function GET(req: NextRequest) {
                         Transformamos la carta de <strong>${r.name}</strong> en una experiencia digital.
                         Tiene ${dishCount} platos organizados y listos para que tus clientes los vean.
                       </p>
-                      <a href="${`https://quierocomer.cl/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(cartaUrl)}`}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
+                      <a href="${`https://quierocomer.com/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(cartaUrl)}`}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
                         Ver mi carta →
                       </a>
                       <p style="font-size: 13px; color: #999; margin: 24px 0 0; line-height: 1.5;">
                         Este link es tu carta viva. Compártelo con tus clientes o imprímelo en un QR.
                       </p>
-                      <img src="https://quierocomer.cl/api/funnel/track/open?lid=${lead.id}" alt="" width="1" height="1" style="display:none" />
+                      <img src="https://quierocomer.com/api/funnel/track/open?lid=${lead.id}" alt="" width="1" height="1" style="display:none" />
                     </div>
                   `,
                 });

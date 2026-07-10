@@ -243,11 +243,11 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
         ${data.isDemo
           ? `<span style="font-size:11px;color:#ccc;line-height:1.8;">Este correo se envía solo una vez como vista previa. Al activar tu carta, recibirás este informe cada semana con tus datos reales.</span>`
           : `<span style="font-size:11px;color:#ccc;line-height:1.8;">Este correo se envía cada semana.</span><br/>
-        <a href="https://quierocomer.cl/api/email/unsubscribe?slug=${data.slug}" style="font-size:11px;color:#ccc;text-decoration:underline;">No deseo seguir recibiéndolo</a>`
+        <a href="https://quierocomer.com/api/email/unsubscribe?slug=${data.slug}" style="font-size:11px;color:#ccc;text-decoration:underline;">No deseo seguir recibiéndolo</a>`
         }
       </td></tr>
       <tr><td align="center" style="padding:18px 0 0;">
-        <a href="https://quierocomer.cl" style="font-size:12px;color:${GOLD};text-decoration:none;">QuieroComer.cl</a>
+        <a href="https://quierocomer.com" style="font-size:12px;color:${GOLD};text-decoration:none;">QuieroComer.cl</a>
         <br/>
         <span style="font-size:10px;color:#ddd;">&copy; ${new Date().getFullYear()} · Todos los derechos reservados</span>
       </td></tr>

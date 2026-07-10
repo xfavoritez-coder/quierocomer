@@ -23,5 +23,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(url || "https://quierocomer.cl", { status: 302 });
+  return NextResponse.redirect(url || "https://quierocomer.com", { status: 302 });
 }

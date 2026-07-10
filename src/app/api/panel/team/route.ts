@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   // Send invite email
   try {
     const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
     await sendAdminEmail({
       to: email,
       subject: `Te invitaron al equipo de ${restaurant?.name || "un restaurante"} · QuieroComer`,
@@ -128,7 +128,7 @@ export async function PUT(req: NextRequest) {
     });
     try {
       const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
       await sendAdminEmail({
         to: m.email,
         subject: `Te invitaron al equipo de ${m.restaurant.name} · QuieroComer`,
@@ -160,7 +160,7 @@ export async function PUT(req: NextRequest) {
     });
     try {
       const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
       await sendAdminEmail({
         to: m.email,
         subject: `Restablece tu contraseña · ${m.restaurant.name}`,

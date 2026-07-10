@@ -364,7 +364,7 @@ export default function DescubrirClient() {
         onToggleTheme={() => toggleTheme(setIsDark)}
         onInicio={goHomeKeep}
         onPerfil={goHomeKeep}
-        onContacto={() => { window.location.href = 'mailto:hola@quierocomer.cl' }}
+        onContacto={() => { window.location.href = 'mailto:hola@quierocomer.com' }}
       />
 
       {locationModalOpen && (

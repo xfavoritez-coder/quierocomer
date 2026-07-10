@@ -24,7 +24,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     <p style="font-size:1.1rem;color:#333;line-height:1.6;margin:0">Hola {{name}}, ahora puedes ver nuestra carta completa desde tu celular. Fotos, descripciones y más. Te esperamos.</p>
   </div>
   <div style="text-align:center">
-    <a href="https://quierocomer.cl/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver la carta</a>
+    <a href="https://quierocomer.com/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver la carta</a>
   </div>
 </div>`,
   },
@@ -44,7 +44,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     <p style="font-size:1.1rem;color:#92400e;line-height:1.6;margin:0">{{name}}, tenemos una oferta especial que no te puedes perder. Pasa por nuestro local y aprovecha.</p>
   </div>
   <div style="text-align:center">
-    <a href="https://quierocomer.cl/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver oferta</a>
+    <a href="https://quierocomer.com/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver oferta</a>
   </div>
 </div>`,
   },
@@ -64,7 +64,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     <p style="font-size:1.1rem;color:#333;line-height:1.6;margin:0">Hola {{name}}, queremos contarte una novedad importante. Te esperamos pronto.</p>
   </div>
   <div style="text-align:center">
-    <a href="https://quierocomer.cl/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver más</a>
+    <a href="https://quierocomer.com/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver más</a>
   </div>
 </div>`,
   },
@@ -84,7 +84,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     <p style="font-size:1.1rem;color:#333;line-height:1.6;margin:0">Hola {{name}}, agregamos algo nuevo a nuestra carta que creemos te va a encantar. ¿Vienes a probarlo?</p>
   </div>
   <div style="text-align:center">
-    <a href="https://quierocomer.cl/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Descubrir</a>
+    <a href="https://quierocomer.com/qr/{{slug}}" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Descubrir</a>
   </div>
 </div>`,
   },

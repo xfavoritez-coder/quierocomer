@@ -218,7 +218,7 @@ function ExitoContent() {
 
         {/* Footer */}
         <p style={{ fontSize: "0.72rem", color: "var(--adm-text3, #444)", marginTop: 24 }}>
-          Hecho en Chile · <a href="/" style={{ color: GOLD, textDecoration: "none" }}>quierocomer.cl</a>
+          Hecho en Chile · <a href="/" style={{ color: GOLD, textDecoration: "none" }}>quierocomer.com</a>
         </p>
       </div>
     </div>

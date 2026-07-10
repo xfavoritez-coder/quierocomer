@@ -51,7 +51,7 @@ export default async function CartaImprimiblePage({ params, searchParams }: { pa
   const uncategorized = dishesByCategory.get("__uncategorized");
   if (uncategorized?.length) sections.push({ id: "__uncategorized", name: "Otros", dishes: uncategorized });
 
-  const qrUrl = `https://quierocomer.cl/qr/${slug}`;
+  const qrUrl = `https://quierocomer.com/qr/${slug}`;
   const promotions = promos.map(p => ({
     id: p.id, name: p.name, description: p.description,
     promoPrice: p.promoPrice, originalPrice: p.originalPrice,

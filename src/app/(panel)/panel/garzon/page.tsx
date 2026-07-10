@@ -16,7 +16,7 @@ export default function GarzonPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
 
   const restaurant = restaurants.find(r => r.id === selectedRestaurantId);
-  const garzonLink = restaurant ? `https://quierocomer.cl/qr/${restaurant.slug}/garzon` : "";
+  const garzonLink = restaurant ? `https://quierocomer.com/qr/${restaurant.slug}/garzon` : "";
 
   useEffect(() => {
     if (!garzonLink) return;

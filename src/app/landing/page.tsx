@@ -28,17 +28,17 @@ export const metadata = {
   openGraph: {
     title: "QuieroComer | La carta inteligente que vende más por ti",
     description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
-    url: "https://quierocomer.cl/landing",
+    url: "https://quierocomer.com/landing",
     siteName: "QuieroComer",
     type: "website",
     locale: "es_CL",
-    images: [{ url: "https://quierocomer.cl/og-landing.png", width: 1254, height: 1254, type: "image/png" }],
+    images: [{ url: "https://quierocomer.com/og-landing.png", width: 1254, height: 1254, type: "image/png" }],
   },
   twitter: {
     card: "summary",
     title: "QuieroComer | La carta inteligente que vende más por ti",
     description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
-    images: ["https://quierocomer.cl/og-landing.png"],
+    images: ["https://quierocomer.com/og-landing.png"],
   },
 };
 

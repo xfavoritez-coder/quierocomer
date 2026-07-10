@@ -23,8 +23,8 @@ export async function POST(req: Request) {
   try {
     await Promise.all([
       resend.emails.send({
-        from: "QuieroComer Soporte <soporte@quierocomer.cl>",
-        to: "hola@quierocomer.cl",
+        from: "QuieroComer Soporte <soporte@quierocomer.com>",
+        to: "hola@quierocomer.com",
         replyTo: owner.email,
         subject: `[Soporte Panel] ${owner.name || owner.email}`,
         html: `

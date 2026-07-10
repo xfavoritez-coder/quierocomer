@@ -22,8 +22,8 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
         body: JSON.stringify({
-          from: process.env.FROM_EMAIL || "QuieroComer <hola@quierocomer.cl>",
-          to: "hola@quierocomer.cl",
+          from: process.env.FROM_EMAIL || "QuieroComer <hola@quierocomer.com>",
+          to: "hola@quierocomer.com",
           subject: `Nuevo vendedor registrado: ${nombre}`,
           html: `<h2>Nuevo vendedor</h2><p><strong>Nombre:</strong> ${nombre}</p><p><strong>Teléfono:</strong> ${telefono}</p><p><strong>Email:</strong> ${email}</p>`,
         }),

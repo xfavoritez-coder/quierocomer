@@ -559,7 +559,7 @@ function AccionesTab({ c, togglingExempt, onToggleExempt, onDelete, onUpdateFiel
   c: Cliente; togglingExempt: string | null; onToggleExempt: () => void;
   onDelete: () => void; onUpdateField: (field: string, value: string) => void;
 }) {
-  const baseUrl = "https://quierocomer.cl";
+  const baseUrl = "https://quierocomer.com";
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(c.name);
   const [editPlan, setEditPlan] = useState(c.plan);

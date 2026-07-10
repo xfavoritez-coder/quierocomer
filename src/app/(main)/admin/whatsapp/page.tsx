@@ -522,7 +522,7 @@ export default function WhatsAppPage() {
           <div className="wa-thread-messages">
             {chatMessages.map((m, i) => {
               const isNurturing = m.direction === "OUTBOUND" && m.body.includes("Camila de QuieroComer");
-              const isAutoTemplate = m.direction === "OUTBOUND" && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.cl/api/funnel"));
+              const isAutoTemplate = m.direction === "OUTBOUND" && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.com/api/funnel"));
               const isAI = m.direction === "OUTBOUND" && !isNurturing && !isAutoTemplate;
               const isOut = m.direction === "OUTBOUND";
               const prevMsg = chatMessages[i - 1];

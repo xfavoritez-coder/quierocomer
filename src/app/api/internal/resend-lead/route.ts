@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   });
   if (!restaurant) return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const ownerName = (lead.ownerName || "Hola").split(" ")[0];
   const dishCount = await prisma.dish.count({ where: { restaurantId: restaurant.id, isActive: true } });
   const catCount = await prisma.category.count({ where: { restaurantId: restaurant.id, isActive: true } });

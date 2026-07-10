@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     await Promise.all([
       resend.emails.send({
-        from: process.env.FROM_EMAIL || "noreply@quierocomer.cl",
+        from: process.env.FROM_EMAIL || "noreply@quierocomer.com",
         to: NOTIFY_TO,
         subject: mensaje ? `Contacto QuieroComer — ${nombre || email}` : `Nueva solicitud de demo — ${nombre || email}`,
         html: lines,

@@ -61,7 +61,7 @@ function Content() {
           </a>
         </div>
         <div style={{ marginTop: 32, borderTop: "1px solid #1a1a1a", paddingTop: 16 }}>
-          <a href="https://quierocomer.cl" style={{ fontSize: 12, color: "#444", textDecoration: "none" }}>QuieroComer.cl</a>
+          <a href="https://quierocomer.com" style={{ fontSize: 12, color: "#444", textDecoration: "none" }}>QuieroComer.cl</a>
           <span style={{ fontSize: 12, color: "#333" }}> · © {new Date().getFullYear()}</span>
         </div>
       </div>

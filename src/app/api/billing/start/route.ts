@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   if (!restaurant) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
   const planConfig = FLOW_PLANS[plan];
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const amountNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
   const amountGross = grossOf(amountNet);
   const planLabel = PLAN_LABELS[plan] || plan;

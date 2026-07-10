@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
       topViewed,
       leastViewed,
       visitsByHour,
-      panelUrl: `https://quierocomer.cl/api/panel/demo-auth?slug=${restaurant.slug}`,
+      panelUrl: `https://quierocomer.com/api/panel/demo-auth?slug=${restaurant.slug}`,
       slug: restaurant.slug,
       isDemo: true,
       insight: demoInsight,
@@ -222,7 +222,7 @@ export async function GET(req: NextRequest) {
       topViewed,
       leastViewed,
       visitsByHour,
-      panelUrl: "https://quierocomer.cl/panel",
+      panelUrl: "https://quierocomer.com/panel",
       slug: restaurant.slug,
       isDemo: false,
       insight: insight || undefined,
@@ -230,7 +230,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Pre-create log for tracking
-  const baseUrl = "https://quierocomer.cl";
+  const baseUrl = "https://quierocomer.com";
   const log = await prisma.emailLog.create({
     data: { to: toParam, subject: `Tu semana en ${restaurant.name}`, purpose: "weekly_summary", status: "pending" },
   }).catch(() => null);

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       <div style="font-family:system-ui,sans-serif;max-width:600px;">
         <p><strong>${msg.name || msg.email}</strong> respondio a su ticket de soporte:</p>
         <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;white-space:pre-wrap;line-height:1.6;">${text.trim()}</div>
-        <p><a href="https://quierocomer.cl/admin/soporte" style="color:#e8930a;font-weight:700;">Ver en admin</a></p>
+        <p><a href="https://quierocomer.com/admin/soporte" style="color:#e8930a;font-weight:700;">Ver en admin</a></p>
       </div>
     `,
     purpose: "support_reply_notification",

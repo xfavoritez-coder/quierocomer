@@ -16,5 +16,5 @@ export async function GET(req: NextRequest) {
     }).catch(() => {});
   }
 
-  return NextResponse.redirect(url || "https://quierocomer.cl/panel", { status: 302 });
+  return NextResponse.redirect(url || "https://quierocomer.com/panel", { status: 302 });
 }

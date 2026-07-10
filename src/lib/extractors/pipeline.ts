@@ -446,7 +446,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   if (["PROCESSING", "READY", "DELIVERED"].includes(lead.cartaStatus || "")) {
     const existing = lead.generatedSlug || "";
     console.log(`[Pipeline] Lead ${leadId} already ${lead.cartaStatus} — skipping`);
-    return { slug: existing, url: existing ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${existing}` : "" };
+    return { slug: existing, url: existing ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com"}/qr/${existing}` : "" };
   }
 
   // Mark as processing
@@ -568,7 +568,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         console.log(`[Pipeline] Restaurant "${slug}" already exists and is active — reusing (${existingRest.id})`);
         await prisma.lead.update({ where: { id: leadId }, data: { generatedSlug: slug, cartaStatus: "READY", readyAt: new Date() } });
         clearTimeout(pipelineTimeout);
-        const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${slug}`;
+        const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com"}/qr/${slug}`;
         return { slug, url };
       }
     }
@@ -704,7 +704,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Mark lead as READY early — before slow operations (photos, translations)
     // so a timeout won't mark it FAILED after the restaurant already exists
-    const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}`;
+    const cartaUrl = `https://quierocomer.com/qr/${restaurant.slug}`;
     await prisma.lead.update({
       where: { id: leadId },
       data: { cartaStatus: "READY", generatedSlug: restaurant.slug, readyAt: new Date() },
@@ -886,7 +886,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     if (lead.email) {
       try {
         const { sendAdminEmail, cartaListaSimpleEmailHtml } = await import("@/lib/email/sendAdminEmail");
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
         const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
         const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(`${baseUrl}/qr/${restaurant.slug}`)}`;
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
@@ -911,7 +911,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     if (lead.whatsapp) {
       try {
         const { sendWhatsApp, buildCartaReadyMessage } = await import("@/lib/whatsapp");
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
         const waTrackUrl = `${baseUrl}/c/${restaurant.slug}`;
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
         const msg = buildCartaReadyMessage({

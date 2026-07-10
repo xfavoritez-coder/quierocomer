@@ -7,7 +7,7 @@ import { sendAdminEmail, adminEmailTemplate } from "./sendAdminEmail";
 import { prisma } from "@/lib/prisma";
 
 const GOLD = "#e8930a";
-const SUBIR_URL = "https://quierocomer.cl";
+const SUBIR_URL = "https://quierocomer.com";
 
 interface FailureEmailOptions {
   leadId: string;

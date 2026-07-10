@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Email de confirmación
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const ownerEmail = restaurant.owner?.email;
   if (ownerEmail) {
     const planKey = appPlan as Exclude<PlanKey, "FREE">;

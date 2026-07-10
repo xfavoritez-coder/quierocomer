@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const destination = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${slug}`;
+  const destination = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com"}/qr/${slug}`;
 
   // Find the lead by slug and track WhatsApp click
   const lead = await prisma.lead.findFirst({

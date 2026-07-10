@@ -157,17 +157,17 @@ export default function AjustesPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>Tu carta</p>
             <a
-              href={`https://quierocomer.cl/qr/${currentRestaurant.slug}`}
+              href={`https://quierocomer.com/qr/${currentRestaurant.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontFamily: FB, fontSize: "0.85rem", color: GOLD, textDecoration: "none", wordBreak: "break-all", fontWeight: 600 }}
             >
-              quierocomer.cl/qr/{currentRestaurant.slug}
+              quierocomer.com/qr/{currentRestaurant.slug}
             </a>
           </div>
           <button
             onClick={() => {
-              navigator.clipboard.writeText(`https://quierocomer.cl/qr/${currentRestaurant.slug}`);
+              navigator.clipboard.writeText(`https://quierocomer.com/qr/${currentRestaurant.slug}`);
               toast.success("Link copiado");
             }}
             style={{

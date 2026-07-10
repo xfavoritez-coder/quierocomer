@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendAdminEmail, btn } from "@/lib/email/sendAdminEmail";
 
 const GOLD = "#e8930a";
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 
 /**
  * GET /api/internal/email-taranta?key=SEED_SECRET

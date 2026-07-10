@@ -11,7 +11,7 @@ const F = "var(--font-display)";
 
 export default function QRGeneratorModal({ restaurant, onClose }: Props) {
   const [copied, setCopied] = useState(false);
-  const link = `https://quierocomer.cl/qr/generar/${restaurant.slug}`;
+  const link = `https://quierocomer.com/qr/generar/${restaurant.slug}`;
 
   const copy = () => {
     navigator.clipboard.writeText(link);

@@ -52,7 +52,7 @@ function PrintPageInner() {
   // Generate QR data URL once we have the restaurant
   useEffect(() => {
     if (!restaurant) return;
-    const baseUrl = typeof window !== "undefined" ? window.location.origin.replace(/^http:/, "https:") : "https://quierocomer.cl";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin.replace(/^http:/, "https:") : "https://quierocomer.com";
     const url = `${baseUrl}/qr/${restaurant.slug}`;
     QRCode.toDataURL(url, {
       errorCorrectionLevel: "H",

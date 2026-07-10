@@ -185,7 +185,7 @@ export default function PanelDashboard() {
   const maxCount = topViewed[0]?.count || 1;
 
   const rest = restaurants.find(r => r.id === selectedRestaurantId);
-  const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}` : "#";
+  const cartaUrl = rest ? `https://quierocomer.com/qr/${rest.slug}` : "#";
   const delta = data.visitsDelta;
 
   return (

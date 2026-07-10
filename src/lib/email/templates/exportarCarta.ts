@@ -1,4 +1,4 @@
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 const GOLD = "#e8930a";
 
 interface Dish {
@@ -151,7 +151,7 @@ export function buildExportarCartaEmail({ ownerName, localName, ctaUrl, hasMagic
   <!-- Footer -->
   <tr><td><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table></td></tr>
   <tr><td align="center" style="padding:16px 0 0;">
-    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.cl</a>
+    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.com</a>
     <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()} QuieroComer</span>
   </td></tr>
 

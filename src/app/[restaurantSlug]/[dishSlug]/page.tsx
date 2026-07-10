@@ -11,7 +11,7 @@ import { getFeedDishes, getDishesById } from '@/app/a/lib/feed-queries'
 import NewHome from '@/app/a/preview/NewHome'
 import FeedLayout from '@/app/a/layout'
 
-const BASE = 'https://quierocomer.cl'
+const BASE = 'https://quierocomer.com'
 
 type Props = { params: Promise<{ restaurantSlug: string; dishSlug: string }> }
 

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "QuieroComer | Funciones",
     description:
       "Tu carta QR también puede vender, atender y fidelizar. Descubre todas las funciones inteligentes de QuieroComer.",
-    url: "https://quierocomer.cl/funciones",
+    url: "https://quierocomer.com/funciones",
     siteName: "QuieroComer",
     type: "website",
     locale: "es_CL",

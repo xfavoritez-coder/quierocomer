@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /** Create owner for a freshly-added restaurant (from /agregarlocal) */
 export async function POST(request: Request) {

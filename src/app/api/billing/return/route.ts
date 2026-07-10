@@ -14,7 +14,7 @@ function redirect303(url: string) {
  * Flow redirige aquí después del pago.
  */
 async function handleReturn(req: NextRequest) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
   let token = req.nextUrl.searchParams.get("token");
   if (!token && req.method === "POST") {

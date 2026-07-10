@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       data: { userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.com";
     const verifyUrl = `${baseUrl}/api/qr/user/verify?token=${token.token}`;
 
     const resendKey = process.env.RESEND_API_KEY;
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
         body: JSON.stringify({
-          from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
+          from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
           to: email,
           subject: "Tu link para ingresar a QuieroComer",
           html: `

@@ -559,7 +559,7 @@ export default function AgregarLocalPage() {
             </button>
 
             <a
-              href={result.url.replace("https://quierocomer.cl", "")}
+              href={result.url.replace("https://quierocomer.com", "")}
               target="_blank"
               style={{
                 display: "block", width: "100%", padding: "14px", borderRadius: 50,

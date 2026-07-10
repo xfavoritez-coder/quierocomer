@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (!restaurant) return NextResponse.json({ error: "Restaurant no encontrado" }, { status: 404 });
   if (!restaurant.owner?.email) return NextResponse.json({ error: "Owner sin email" }, { status: 400 });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
   try {
     // Create MP customer if needed

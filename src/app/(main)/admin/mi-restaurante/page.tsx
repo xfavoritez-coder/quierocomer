@@ -116,7 +116,7 @@ export default function MiRestaurantePage() {
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => save({ instagram: instagram || null, website: website || null });
 
-  const garzonLink = data ? `https://quierocomer.cl/qr/admin/garzon/${data.slug}` : "";
+  const garzonLink = data ? `https://quierocomer.com/qr/admin/garzon/${data.slug}` : "";
 
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);

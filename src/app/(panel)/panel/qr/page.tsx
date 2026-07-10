@@ -10,7 +10,7 @@ import { jsPDF } from "jspdf";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 
 const PADDING_MM = 5;
 type Size = "small" | "medium" | "large";

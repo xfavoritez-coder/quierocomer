@@ -962,7 +962,7 @@ export default function CartaEsencial({
       {/* ══════ FOOTER ══════ */}
       <footer style={{ padding: "28px 24px 24px", textAlign: "center" }}>
         <a
-          href="https://quierocomer.cl"
+          href="https://quierocomer.com"
           target="_blank"
           rel="noopener noreferrer"
           style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}

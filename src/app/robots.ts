@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/panel/', '/admin/', '/api/', '/email-preview', '/imprimirqr'],
       },
     ],
-    sitemap: 'https://quierocomer.cl/sitemap.xml',
+    sitemap: 'https://quierocomer.com/sitemap.xml',
   }
 }

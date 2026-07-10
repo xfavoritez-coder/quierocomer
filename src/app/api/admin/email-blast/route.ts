@@ -3,7 +3,7 @@ import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { prisma } from "@/lib/prisma";
 
-const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 const GOLD = "#F4A623";
 
 function buildExportarCartaEmailHtml({ ownerName }: { ownerName: string }) {
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
         AND r.name NOT ILIKE '%alleria%'
         AND o.email IS NOT NULL
         AND o.email != ''
-        AND o.email != 'import@quierocomer.cl'
+        AND o.email != 'import@quierocomer.com'
         AND ((SELECT COUNT(*) FROM "Session" WHERE "restaurantId" = r.id) > 0
              OR (SELECT COUNT(*) FROM "Dish" WHERE "restaurantId" = r.id AND "isActive" = true) > 50)
       ORDER BY (SELECT COUNT(*) FROM "Session" WHERE "restaurantId" = r.id) DESC

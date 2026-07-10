@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const alreadySentEmails = new Set(alreadySent.map((l) => l.to.toLowerCase()));
 
   const rawLeads = await prisma.lead.findMany({
-    where: { email: { not: "import@quierocomer.cl" } },
+    where: { email: { not: "import@quierocomer.com" } },
     select: { id: true, email: true },
     orderBy: { id: "asc" },
   });
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   const alreadySentEmails = new Set(alreadySent.map((l) => l.to.toLowerCase()));
 
   const rawLeads = await prisma.lead.findMany({
-    where: { email: { not: "import@quierocomer.cl" } },
+    where: { email: { not: "import@quierocomer.com" } },
     select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true },
     orderBy: { id: "asc" },
   });
@@ -84,8 +84,8 @@ export async function POST(req: NextRequest) {
     const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
     const rid = rData?.id;
     const ctaUrl = magicToken
-      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
-      : `https://quierocomer.cl/panel/login`;
+      ? `https://quierocomer.com/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
+      : `https://quierocomer.com/panel/login`;
 
     const allDishes = rData?.dishes ?? [];
     const withPhoto = allDishes.filter((d) => d.photos && d.photos.length > 0);
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     const dishes = top3.map((d) => ({ name: d.name, price: d.price, photoUrl: d.photos?.[0] ?? null }));
 
     const qrUrl = lead.generatedSlug
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://quierocomer.cl/qr/${lead.generatedSlug}`)}&format=png`
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://quierocomer.com/qr/${lead.generatedSlug}`)}&format=png`
       : null;
 
     const html = buildExportarCartaEmail({

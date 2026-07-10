@@ -92,7 +92,7 @@ Tono: místico, cálido, personal. Usa su nombre. NO uses markdown, solo texto p
     <p style="font-size:0.78rem;color:${accentColor};text-transform:uppercase;letter-spacing:0.15em;margin:0 0 16px">Tu resultado, ${sub.userName}</p>
     ${personalizedMsg.split("\n\n").map((p: string) => `<p style="font-size:0.92rem;line-height:1.6;color:rgba(255,255,255,0.8);margin:0 0 16px">${p}</p>`).join("")}
     <div style="text-align:center;margin-top:28px">
-      <a href="https://quierocomer.cl/qr/${restaurant.slug}" style="display:inline-block;background:${accentColor};color:#0a0a0a;text-decoration:none;padding:14px 28px;border-radius:50px;font-weight:700;font-size:0.92rem">Ver la carta de ${restaurant.name}</a>
+      <a href="https://quierocomer.com/qr/${restaurant.slug}" style="display:inline-block;background:${accentColor};color:#0a0a0a;text-decoration:none;padding:14px 28px;border-radius:50px;font-weight:700;font-size:0.92rem">Ver la carta de ${restaurant.name}</a>
     </div>
   </div>
   <div style="padding:16px 28px;border-top:1px solid rgba(255,255,255,0.05);text-align:center">
@@ -105,7 +105,7 @@ Tono: místico, cálido, personal. Usa su nombre. NO uses markdown, solo texto p
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
+            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
             to: sub.email,
             subject: `${sub.userName}, eres ${result.name} ${template.iconEmoji}`,
             html: emailHtml,

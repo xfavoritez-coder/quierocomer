@@ -22,7 +22,7 @@ export async function POST(request: Request) {
           },
           signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
+            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
             to: "favoritez@gmail.com",
             subject: `🍽 Nueva solicitud de demo — ${localName}`,
             html: `

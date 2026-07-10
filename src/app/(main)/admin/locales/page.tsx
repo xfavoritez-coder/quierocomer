@@ -481,7 +481,7 @@ export default function AdminLocales() {
               🤝 Entregar al dueño
             </button>
           )}
-          <button onClick={() => { navigator.clipboard.writeText(`https://quierocomer.cl/qr/generar/${selected.slug}`); setQrModalOpen(true); }} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>📱 Generar QR</button>
+          <button onClick={() => { navigator.clipboard.writeText(`https://quierocomer.com/qr/generar/${selected.slug}`); setQrModalOpen(true); }} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>📱 Generar QR</button>
           <a href={`/qr/${selected.slug}?mesa=demo&demo=true`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>🔔 Demo Garzón</a>
           <a href={`/qr/admin/garzon/${selected.slug}`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>📱 Panel Garzón</a>
           <button onClick={() => { toggleActive(selected); setSelected({ ...selected, isActive: !selected.isActive }); }} style={{ flex: 1, padding: "10px", background: selected.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${selected.isActive ? "rgba(255,100,100,0.2)" : "rgba(74,222,128,0.2)"}`, borderRadius: 10, color: selected.isActive ? "#ff6b6b" : "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
@@ -525,11 +525,11 @@ export default function AdminLocales() {
         {/* Inline QR */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 16 }}>
           <div style={{ background: "white", borderRadius: 10, padding: 8, flexShrink: 0 }}>
-            <QRCodeCanvas value={`https://quierocomer.cl/qr/${selected.slug}`} size={80} level="H" />
+            <QRCodeCanvas value={`https://quierocomer.com/qr/${selected.slug}`} size={80} level="H" />
           </div>
           <div>
             <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", margin: "0 0 4px" }}>QR de la carta</p>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.cl/qr/{selected.slug}</p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.com/qr/{selected.slug}</p>
           </div>
         </div>
 

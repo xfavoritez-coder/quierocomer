@@ -7,7 +7,7 @@ import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/r
 import { TRIAL_DAYS } from "@/lib/billing/plans-config";
 import type { RestaurantPlan } from "@prisma/client";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /**
  * POST /api/admin/locales/[id]/handoff

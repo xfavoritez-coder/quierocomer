@@ -286,7 +286,7 @@ export default function VendedoresPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {[
               { n: 1, title: "Encuentras un restaurante interesado", desc: "Tu red de contactos. Cualquiera que tenga restaurante sirve" },
-              { n: 2, title: "Le muestras una carta de ejemplo", desc: "Le abres quierocomer.cl/qr/hand-roll en su celular y le muestras cómo se ve. En 2 minutos entiende el producto" },
+              { n: 2, title: "Le muestras una carta de ejemplo", desc: "Le abres quierocomer.com/qr/hand-roll en su celular y le muestras cómo se ve. En 2 minutos entiende el producto" },
               { n: 3, title: "Cargas su carta y le dejas el local andando", desc: "Subes los platos con sus fotos y precios, configuras el QR de cada mesa y dejas todo listo para que reciba clientes. Te entrenamos para hacerlo en pocas horas" },
               { n: 4, title: "Cobras cuando paga el cliente", desc: "Cuando el restaurante paga su primer mes, te transferimos el 100% (cierre directo). Cuando paga el segundo mes, te llega el 50% adicional. Si entró Gratis y luego sube de plan, te pagamos 50% una vez al confirmar el upgrade" },
             ].map((step, i) => (

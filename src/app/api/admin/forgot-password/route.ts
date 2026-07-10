@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 import { sendAdminEmail, resetPasswordEmailHtml } from "@/lib/email/sendAdminEmail";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 export async function POST(req: NextRequest) {
   try {

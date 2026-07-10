@@ -371,7 +371,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   `}</style>;
 
   const baseStep = STEPS[Math.min(step, STEPS.length - 1)];
-  // Showcase overrides: adapt copy for visitors from quierocomer.cl
+  // Showcase overrides: adapt copy for visitors from quierocomer.com
   const current = showcaseMode ? {
     ...baseStep,
     ...(step === 0 && { title: `Recorre la carta de ${restaurantName || "un restaurante"}`, body: "Te muestro cómo es una carta QuieroComer.", buttonLabel: "Ver" }),

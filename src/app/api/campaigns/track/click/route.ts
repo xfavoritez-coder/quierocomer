@@ -14,6 +14,6 @@ export async function GET(req: NextRequest) {
   }
 
   // Redirect to destination
-  const destination = url || "https://quierocomer.cl";
+  const destination = url || "https://quierocomer.com";
   return NextResponse.redirect(destination);
 }

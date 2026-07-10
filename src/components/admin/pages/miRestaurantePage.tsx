@@ -222,7 +222,7 @@ export default function MiRestaurantePage() {
     setSchedule(newSched);
   };
 
-  const garzonLink = data ? `https://quierocomer.cl/qr/admin/garzon/${data.slug}` : "";
+  const garzonLink = data ? `https://quierocomer.com/qr/admin/garzon/${data.slug}` : "";
 
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);

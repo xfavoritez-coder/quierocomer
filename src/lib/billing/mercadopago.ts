@@ -48,7 +48,7 @@ export function initMercadoPago(): MercadoPagoConfig {
 }
 
 function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  return process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 }
 
 // ─── Customer ───────────────────────────────────────────────────────────

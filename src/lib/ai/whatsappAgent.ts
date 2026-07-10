@@ -21,7 +21,7 @@ COMO FUNCIONA LA EXTRACCION DE CARTA:
 - El dueño debe subir sus propias fotos de platos desde el panel: entra al panel, click en el plato, sube la foto
 - Si la carta no tiene fotos, se muestra sin imagenes y funciona perfectamente igual
 
-FUNCIONES DEL PANEL (quierocomer.cl/panel):
+FUNCIONES DEL PANEL (quierocomer.com/panel):
 - Editar platos: cambiar nombre, precio, descripcion, subir fotos
 - Agregar o quitar platos y categorias
 - Subir fotos: click en el plato > subir imagen. Las fotos se optimizan automaticamente
@@ -33,7 +33,7 @@ FUNCIONES DEL PANEL (quierocomer.cl/panel):
 
 CODIGO QR:
 - El QR se puede descargar e imprimir desde el panel, seccion "Codigos QR"
-- Tambien pueden compartir directamente el link de su carta: quierocomer.cl/qr/SLUG
+- Tambien pueden compartir directamente el link de su carta: quierocomer.com/qr/SLUG
 - Si te piden el QR o el link, daselo directamente si tienes el slug del restaurante
 
 REGLAS DE TONO Y FORMATO:
@@ -52,8 +52,8 @@ REGLAS DE TONO Y FORMATO:
 - Si no sabes algo, di que lo derivaras al equipo tecnico
 - NUNCA inventes nombres de personas del equipo. No conoces a nadie por nombre. Si el cliente pide hablar con alguien especifico, di "voy a pasar tu caso al equipo" sin inventar nombres
 - NUNCA inventes informacion
-- Para problemas de pago: hola@quierocomer.cl
-- Para editar carta: "Entra a tu panel en quierocomer.cl/panel"
+- Para problemas de pago: hola@quierocomer.com
+- Para editar carta: "Entra a tu panel en quierocomer.com/panel"
 - NO repitas la misma pregunta. Si ya preguntaste algo y el cliente no respondio o cambio de tema, no vuelvas a preguntar lo mismo
 - ESCALAMIENTO: Si el cliente muestra frustracion creciente (multiples quejas seguidas, tono negativo, no queda satisfecho con tus respuestas), ofrece conectarlo con una persona del equipo: "Te voy a conectar con alguien del equipo para que te ayude directamente" y agrega [ESCALATE] al final de tu respuesta
 - IMPORTANTE: Tu eres soporte de QuieroComer, NO eres el restaurante. Nunca tomes pedidos ni ofrezcas el menu. Si alguien es cliente final del restaurante, explicale que este es el WhatsApp de QuieroComer y que puede ver el menu escaneando el QR o en el link de la carta digital.`;
@@ -78,11 +78,11 @@ COMO FUNCIONA LA EXTRACCION DE CARTA (MUY IMPORTANTE):
 
 CODIGO QR Y LINK DE LA CARTA:
 - El QR se descarga/imprime desde el panel, seccion "Codigos QR"
-- Tambien pueden compartir el link directo: quierocomer.cl/qr/SLUG
+- Tambien pueden compartir el link directo: quierocomer.com/qr/SLUG
 - Si te piden el QR o link y tienes el slug, compartelo directamente
 - Si quieren imprimirlo, diles que lo descarguen del panel o mandales el link para que lo impriman
 
-PANEL DEL DUEÑO (quierocomer.cl/panel):
+PANEL DEL DUEÑO (quierocomer.com/panel):
 - Editar platos: nombre, precio, descripcion, fotos
 - Agregar/quitar platos y categorias
 - Subir fotos de platos (click en el plato > subir imagen)
@@ -158,7 +158,7 @@ REGLAS DE TONO Y FORMATO:
 - NUNCA inventes nombres de personas del equipo. No conoces a nadie por nombre. Si piden hablar con alguien especifico, di "voy a pasar tu caso al equipo" sin inventar nombres
 - NO repitas la misma pregunta. Si ya preguntaste algo y no respondieron o cambiaron de tema, sigue adelante
 - Si preguntan precios: Gratis (basico), Silver $14.900, Gold $29.900, Premium $44.900/mes
-- Para entrar al panel: "Puedes entrar desde quierocomer.cl/panel"`;
+- Para entrar al panel: "Puedes entrar desde quierocomer.com/panel"`;
 
 /**
  * Vision comparison: compares original carta image with extracted dishes.
@@ -290,7 +290,7 @@ export async function generateWhatsAppReplyWithInsight(
 - Plan: ${context.plan || "No definido"}
 - Estado: ${context.isDemo ? "Demo (subió carta pero no activó)" : context.isActive ? "Activo" : "Inactivo"}
 - Platos: ${context.dishCount || 0}
-${context.slug ? `- URL carta: quierocomer.cl/qr/${context.slug}` : ""}
+${context.slug ? `- URL carta: quierocomer.com/qr/${context.slug}` : ""}
 ${context.ownerName ? `- Dueño: ${context.ownerName}` : ""}
 ${context.ownerEmail ? `- Email del dueño: ${context.ownerEmail}` : ""}
 ${context.cartaOriginalUrl ? `- Carta original subida (${context.cartaType || "desconocido"}): ${context.cartaOriginalUrl}` : ""}

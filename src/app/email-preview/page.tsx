@@ -47,7 +47,7 @@ function EmailContent({ forcedMode }: { forcedMode?: string }) {
       { hour: "21", count: 52 },
       { hour: "22", count: 30 },
     ],
-    panelUrl: "https://quierocomer.cl/panel",
+    panelUrl: "https://quierocomer.com/panel",
   };
 
   const delta = Math.round(((data.totalVisits - data.prevVisits) / data.prevVisits) * 100);

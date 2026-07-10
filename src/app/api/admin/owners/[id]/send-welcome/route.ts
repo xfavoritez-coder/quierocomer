@@ -5,7 +5,7 @@ import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/route";
 import bcrypt from "bcryptjs";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /** Superadmin sends a welcome email with auto-generated password */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

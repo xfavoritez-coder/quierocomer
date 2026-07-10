@@ -19,7 +19,7 @@ export default function Image() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://quierocomer.cl/logo.png"
+          src="https://quierocomer.com/logo.png"
           width={220}
           height={220}
           style={{ objectFit: 'contain' }}

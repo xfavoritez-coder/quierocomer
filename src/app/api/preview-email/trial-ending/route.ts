@@ -10,8 +10,8 @@ export async function GET() {
     "Daniel",
     "El Menú de la Esquina",
     2,
-    "https://quierocomer.cl/panel",
-    "https://quierocomer.cl/panel/suscripcion",
+    "https://quierocomer.com/panel",
+    "https://quierocomer.com/panel/suscripcion",
     "el-menu-de-la-esquina",
   );
 

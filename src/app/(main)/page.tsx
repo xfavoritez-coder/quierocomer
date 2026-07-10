@@ -20,16 +20,16 @@ export const metadata: Metadata = {
     "delivery Chile",
     "food Chile",
   ],
-  alternates: { canonical: "https://quierocomer.cl" },
+  alternates: { canonical: "https://quierocomer.com" },
   openGraph: {
     title: "QuieroComer.cl — Descubre qué pedir en restaurantes de Chile",
     description:
       "Encuentra los mejores platos de restaurantes en Chile. Fotos reales, precios actualizados, opciones veganas y vegetarianas.",
-    url: "https://quierocomer.cl",
+    url: "https://quierocomer.com",
     siteName: "QuieroComer.cl",
     locale: "es_CL",
     type: "website",
-    images: [{ url: "https://quierocomer.cl/opengraph-image", width: 1200, height: 630 }],
+    images: [{ url: "https://quierocomer.com/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

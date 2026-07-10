@@ -9,8 +9,8 @@ export async function GET() {
   const html = trialExpiredEmailHtml(
     "Daniel",
     "Sushi Master",
-    "https://quierocomer.cl/panel/suscripcion",
-    "https://quierocomer.cl/sushi-master",
+    "https://quierocomer.com/panel/suscripcion",
+    "https://quierocomer.com/sushi-master",
   );
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });

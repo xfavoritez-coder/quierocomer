@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { sendAdminEmail, resetPasswordEmailHtml } from "@/lib/email/sendAdminEmail";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 /** Superadmin sends a reset link to an owner (bypasses rate limit) */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

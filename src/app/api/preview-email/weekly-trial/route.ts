@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
         photosUploaded: 0,
         dishesEdited: 2,
         totalDishes: 143,
-        panelUrl: "https://quierocomer.cl/panel",
+        panelUrl: "https://quierocomer.com/panel",
         slug: "tres-toques",
       })
     : buildTrialWeek1Html({
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         totalDishes: 143,
         categories: 20,
         topDishes: ["Roll Acevichado", "Tabla Especial", "Cerveza Austral Lager"],
-        panelUrl: "https://quierocomer.cl/panel",
+        panelUrl: "https://quierocomer.com/panel",
         slug: "tres-toques",
       });
 
@@ -48,7 +48,7 @@ export function buildTrialWeek1Html({
   topDishes: string[]; panelUrl: string; slug: string;
 }): string {
   const initials = restaurantName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
   const fakeTopRows = topDishes.slice(0, 3).map((name, i) => {
     const count = [42, 35, 28][i];
@@ -231,7 +231,7 @@ export function buildTrialWeek1Html({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-top:24px">
   <p style="color:#927955;font-size:12px;margin:0">
-    ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
+    ¿Necesitas ayuda? <a href="https://quierocomer.com/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
   </p>
   <p style="color:#b8a888;font-size:11px;margin:6px 0 0">QuieroComer.cl · 2026</p>
 </td></tr>
@@ -255,7 +255,7 @@ export function buildTrialWeek2Html({
   panelUrl: string; slug: string;
 }): string {
   const initials = restaurantName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
   const checks = [
     { done: true, label: "Carta creada", sub: `${totalDishes} platos listos` },
@@ -372,7 +372,7 @@ export function buildTrialWeek2Html({
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid #ead7b7;margin-top:12px">
 <tr><td style="padding-top:16px;text-align:center">
   <p style="font-size:13px;color:#7a6547;line-height:1.5;margin:0">
-    ¿Tienes dudas o necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
+    ¿Tienes dudas o necesitas ayuda? <a href="https://quierocomer.com/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
   </p>
 </td></tr>
 </table>

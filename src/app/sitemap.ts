@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
 
-const BASE = 'https://quierocomer.cl'
+const BASE = 'https://quierocomer.com'
 
 const CATEGORY_SLUGS = [
   'sushi', 'pizza', 'burger', 'ramen', 'pasta', 'tacos',

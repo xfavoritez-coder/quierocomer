@@ -6,7 +6,7 @@ import { activationWelcomeEmailHtml } from "@/app/api/preview-email/activation/r
 import { sendWhatsApp } from "@/lib/whatsapp";
 import bcrypt from "bcryptjs";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 // WA Templates with exact approved texts
 const WA_TEMPLATES: Record<string, { sid: string; vars: (name: string, restName?: string) => Record<string, string>; desc: string; text: (name: string, rest: string) => string }> = {

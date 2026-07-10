@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   // Fire-and-forget: emails de notificación
   const ownerEmail = restaurant.owner?.email;
   const ownerName = restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
 

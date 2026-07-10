@@ -54,7 +54,7 @@ async function fetchRestaurantData(slugs: string[]): Promise<Map<string, Restaur
 function buildEmailParams(lead: { ownerName: string; localName: string; generatedSlug: string | null }, restaurantData: Map<string, RestaurantData>, ctaUrl: string, hasMagicLink: boolean) {
   const rData = lead.generatedSlug ? restaurantData.get(lead.generatedSlug) : undefined;
   const qrUrl = lead.generatedSlug
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://quierocomer.cl/qr/${lead.generatedSlug}`)}&format=png`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://quierocomer.com/qr/${lead.generatedSlug}`)}&format=png`
     : null;
 
   return {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   // Test email: send to one address with the first real lead as example
   if (testEmail) {
     const sampleLead = await prisma.lead.findFirst({
-      where: { email: { not: "import@quierocomer.cl" }, generatedSlug: { not: null } },
+      where: { email: { not: "import@quierocomer.com" }, generatedSlug: { not: null } },
       select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true },
     });
     const slug = sampleLead?.generatedSlug ?? null;
@@ -88,8 +88,8 @@ export async function POST(req: NextRequest) {
     const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
     const rid = rDataTest?.id;
     const ctaUrl = magicToken
-      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
-      : `https://quierocomer.cl/panel/login`;
+      ? `https://quierocomer.com/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
+      : `https://quierocomer.com/panel/login`;
 
     const html = buildExportarCartaEmail(
       buildEmailParams(
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
   // All leads excluding imports and Joan Valdivia — orden estable por id para soportar offset
   const rawLeads = await prisma.lead.findMany({
-    where: { email: { not: "import@quierocomer.cl" } },
+    where: { email: { not: "import@quierocomer.com" } },
     select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true },
     orderBy: { id: "asc" },
   });
@@ -132,8 +132,8 @@ export async function POST(req: NextRequest) {
     const rid = lead.generatedSlug ? restaurantData.get(lead.generatedSlug)?.id : undefined;
     const magicToken = ownerId ? createPanelMagicToken(ownerId) : null;
     const ctaUrl = magicToken
-      ? `https://quierocomer.cl/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
-      : `https://quierocomer.cl/panel/login`;
+      ? `https://quierocomer.com/api/panel/magic-entry?t=${magicToken}&r=${encodeURIComponent(`/panel/exportar${rid ? `?rid=${rid}` : ""}`)}`
+      : `https://quierocomer.com/panel/login`;
 
     const html = buildExportarCartaEmail(buildEmailParams(lead, restaurantData, ctaUrl, !!magicToken));
 

@@ -950,7 +950,7 @@ function ChatModalBtn({ phone, name }: { phone: string; name: string }) {
                 messages.map((m, i) => {
                   const isOut = m.direction === "OUTBOUND";
                   const isNurturing = isOut && m.body.includes("Camila de QuieroComer");
-                  const isTemplate = isOut && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.cl/api/funnel"));
+                  const isTemplate = isOut && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.com/api/funnel"));
                   const isAI = isOut && !isNurturing && !isTemplate;
                   const prev = messages[i - 1];
                   const showDate = !prev || new Date(m.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();

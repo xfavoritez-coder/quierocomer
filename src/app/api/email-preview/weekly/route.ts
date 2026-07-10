@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     topViewed,
     leastViewed,
     visitsByHour,
-    panelUrl: `https://quierocomer.cl/api/panel/demo-auth?slug=${restaurant.slug}`,
+    panelUrl: `https://quierocomer.com/api/panel/demo-auth?slug=${restaurant.slug}`,
     slug: restaurant.slug,
     isDemo: true,
     insight: demoInsight,

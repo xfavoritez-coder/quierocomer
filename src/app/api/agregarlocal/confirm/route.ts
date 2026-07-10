@@ -234,7 +234,7 @@ export async function POST(request: Request) {
       },
       totalCategories: categories.filter((c: any) => c.dishes?.length > 0).length,
       totalDishes,
-      url: `https://quierocomer.cl/qr/${restaurant.slug}`,
+      url: `https://quierocomer.com/qr/${restaurant.slug}`,
     });
   } catch (e: any) {
     console.error("[agregarlocal confirm]", e);

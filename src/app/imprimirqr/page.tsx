@@ -100,7 +100,7 @@ export default function ImprimirQrPage() {
               </select>
               {selectedRestaurant && (
                 <p style={{ fontSize: "0.78rem", color: "#888", margin: "6px 0 0" }}>
-                  Apunta a: <code style={{ background: "#f5f5f3", padding: "1px 6px", borderRadius: 3 }}>quierocomer.cl/qr/{selectedRestaurant.slug}</code>
+                  Apunta a: <code style={{ background: "#f5f5f3", padding: "1px 6px", borderRadius: 3 }}>quierocomer.com/qr/{selectedRestaurant.slug}</code>
                 </p>
               )}
             </Field>

@@ -105,7 +105,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const qrUrl = `https://quierocomer.cl/qr/${restaurant.slug}`;
+    const qrUrl = `https://quierocomer.com/qr/${restaurant.slug}`;
     QRCode.toDataURL(qrUrl, { width: 200, margin: 1, errorCorrectionLevel: "H", color: { dark: "#000000", light: "#ffffff" } })
       .then(setQrDataUrl)
       .catch(() => {});

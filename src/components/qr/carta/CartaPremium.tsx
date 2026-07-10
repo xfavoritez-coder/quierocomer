@@ -754,7 +754,7 @@ export default function CartaPremium({
         }}
       >
         <a
-          href="https://quierocomer.cl"
+          href="https://quierocomer.com"
           target="_blank"
           rel="noopener noreferrer"
           style={{

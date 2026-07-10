@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const title = `${restaurant.name} | Carta online`;
   const description = `Mira la carta completa de ${restaurant.name}. Platos con fotos, recomendaciones del Genio y más.`;
-  const image = restaurant.logoUrl || "https://quierocomer.cl/favicon.svg";
+  const image = restaurant.logoUrl || "https://quierocomer.com/favicon.svg";
 
   return {
     title,
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       images: [{ url: image }],
       type: "website",
-      url: `https://quierocomer.cl/qr/${slug}`,
+      url: `https://quierocomer.com/qr/${slug}`,
     },
     twitter: {
       card: "summary",
@@ -239,8 +239,8 @@ export default async function CartaPage({
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     name: restaurant.name,
-    url: `https://quierocomer.cl/qr/${slug}`,
-    hasMenu: `https://quierocomer.cl/qr/${slug}`,
+    url: `https://quierocomer.com/qr/${slug}`,
+    hasMenu: `https://quierocomer.com/qr/${slug}`,
     ...((restaurant as any).address ? {
       address: {
         '@type': 'PostalAddress',

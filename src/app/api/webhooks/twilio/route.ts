@@ -199,15 +199,15 @@ export async function POST(req: NextRequest) {
     // Escalation: notify team when AI detects frustrated customer
     if (shouldEscalate && resend) {
       resend.emails.send({
-        from: "QuieroComer <hola@quierocomer.cl>",
-        to: "hola@quierocomer.cl",
+        from: "QuieroComer <hola@quierocomer.com>",
+        to: "hola@quierocomer.com",
         subject: `⚠️ Escalar: ${context.restaurantName || phone} necesita atención humana`,
         html: `<p><strong>Cliente frustrado detectado por Camila IA</strong></p>
 <p>Teléfono: ${phone}</p>
 <p>Restaurante: ${context.restaurantName || "Desconocido"}</p>
 <p>Último mensaje: ${body.trim()}</p>
 <p>Última respuesta de Camila: ${reply}</p>
-<p><a href="https://quierocomer.cl/admin/whatsapp">Ver conversación</a></p>`,
+<p><a href="https://quierocomer.com/admin/whatsapp">Ver conversación</a></p>`,
       }).catch(() => {});
     }
 

@@ -8,8 +8,8 @@ export async function GET() {
   const html = activationWelcomeEmailHtml({
     ownerName: "Daniel",
     restaurantName: "Sushi Master",
-    panelLink: "https://quierocomer.cl/api/panel/demo-auth?slug=sushi-master",
-    qrLink: "https://quierocomer.cl/qr/sushi-master",
+    panelLink: "https://quierocomer.com/api/panel/demo-auth?slug=sushi-master",
+    qrLink: "https://quierocomer.com/qr/sushi-master",
     credentials: { email: "dc_daniel_carrizo@hotmail.com", password: "sushi-master2026" },
     planLabel: "Premium (7 dias gratis)",
   });
@@ -46,8 +46,8 @@ export function activationWelcomeEmailHtml({
 <!-- Logo -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:16px">
-  <a href="https://quierocomer.cl" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-    <td style="vertical-align:middle;padding-right:3px;"><img src="https://quierocomer.cl/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+  <a href="https://quierocomer.com" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    <td style="vertical-align:middle;padding-right:3px;"><img src="https://quierocomer.com/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
     <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:#e8930a;">QuieroComer</span></td>
   </tr></table></a>
 </td></tr>
@@ -123,7 +123,7 @@ ${credentials ? `
   <tr>
     <td style="padding:12px 14px">
       <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
-      <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.cl/panel</a>
+      <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.com/panel</a>
     </td>
   </tr>
   </table>
@@ -197,7 +197,7 @@ ${credentials ? `
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-top:24px">
 <p style="color:#927955;font-size:12px;margin:0">
-  ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
+  ¿Necesitas ayuda? <a href="https://quierocomer.com/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
 </p>
 <p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · 2026 · Hecho en Chile</p>
 </td></tr>

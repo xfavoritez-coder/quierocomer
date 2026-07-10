@@ -72,7 +72,7 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
     for (const user of batch) {
       try {
         // Add click tracking, unsubscribe link, and open pixel
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.com";
         const unsubUrl = `${baseUrl}/api/qr/user/unsubscribe?userId=${user.id}`;
         const pixelUrl = `${baseUrl}/api/campaigns/track/open?cid=${campaignId}&uid=${user.id}`;
 
@@ -98,7 +98,7 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
+            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
             to: user.email,
             subject: campaign.subject.replace(/\{\{name\}\}/g, user.name || "").replace(/\{\{restaurant\}\}/g, campaign.restaurant.name),
             html: personalizedHtml,

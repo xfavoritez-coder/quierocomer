@@ -27,15 +27,15 @@ export const metadata: Metadata = {
   openGraph: {
     title: "QuieroComer - Descúbre qué, y donde comer",
     description: "Descubre qué comer hoy. El Genio aprende tus gustos y te recomienda el plato perfecto.",
-    url: "https://quierocomer.cl",
+    url: "https://quierocomer.com",
     siteName: "QuieroComer",
     type: "website",
     locale: "es_CL",
-    images: [{ url: "https://quierocomer.cl/og.png", width: 1200, height: 630 }],
+    images: [{ url: "https://quierocomer.com/og.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["https://quierocomer.cl/og.png"],
+    images: ["https://quierocomer.com/og.png"],
   },
 };
 

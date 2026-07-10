@@ -52,7 +52,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
   if (!isDesktop) return <>{children}</>;
 
   if (fromLanding) {
-    const qrDest = isShowcase ? `https://quierocomer.cl/qr/${slug}?showcase=1` : `https://quierocomer.cl/qr/${slug}`;
+    const qrDest = isShowcase ? `https://quierocomer.com/qr/${slug}?showcase=1` : `https://quierocomer.com/qr/${slug}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrDest)}&bgcolor=ffffff&color=0a0908&margin=0`;
 
     return (
@@ -63,7 +63,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
 
         {/* Left: Info + QR */}
         <div style={styles.left}>
-          <a href="https://quierocomer.cl" target="_blank" rel="noopener" style={{ ...styles.badge, textDecoration: "none", cursor: "pointer" }}>
+          <a href="https://quierocomer.com" target="_blank" rel="noopener" style={{ ...styles.badge, textDecoration: "none", cursor: "pointer" }}>
             <img src="/landing/logo.png" alt="" style={{ height: 18, width: "auto" }} />
             <span style={styles.badgeText}>QuieroComer</span>
           </a>
@@ -81,7 +81,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
             <img src={qrUrl} alt="QR" style={styles.qrImg} />
           </div>
 
-          <p style={styles.url}>quierocomer.cl/qr/{slug}</p>
+          <p style={styles.url}>quierocomer.com/qr/{slug}</p>
 
           <div style={styles.powered}>
             <span style={styles.poweredBy}>Powered by</span>

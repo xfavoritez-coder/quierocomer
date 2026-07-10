@@ -56,7 +56,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other", ski
 // All emails use this base. Warm beige tones, table-based, email-safe.
 
 const GOLD = "#e8930a";
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 
 /** Wrap arbitrary HTML content in the branded light template */
 export function adminEmailTemplate(content: string): string {
@@ -84,7 +84,7 @@ function wrap(content: string): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
   </td></tr>
   <tr><td align="center" style="padding:16px 0 0;">
-    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.cl</a>
+    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.com</a>
     <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
   </td></tr>
 
@@ -148,7 +148,7 @@ export function resetPasswordEmailHtml(name: string, resetLink: string, restaura
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fdf8f0;border:1px solid #e8dcc4;border-radius:10px;">
       <tr><td style="padding:10px 16px;font-size:12px;color:#b8a888;line-height:1.6;">
         🔒 Este link es de un solo uso y expira en <strong>1 hora</strong>.<br/>
-        Si tienes problemas para acceder, contáctanos en <a href="mailto:hola@quierocomer.cl" style="color:${GOLD};text-decoration:none;">hola@quierocomer.cl</a>
+        Si tienes problemas para acceder, contáctanos en <a href="mailto:hola@quierocomer.com" style="color:${GOLD};text-decoration:none;">hola@quierocomer.com</a>
       </td></tr>
     </table>
   </td></tr>

@@ -9,7 +9,7 @@ function genToken(): string {
 }
 
 const GOLD = "#e8930a";
-const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 function buildReplyEmailHtml(msg: { name: string | null; email: string; message: string }, replyText: string, replyToken: string): string {
   const replyUrl = `${BASE}/soporte/responder/${replyToken}`;
@@ -56,7 +56,7 @@ function buildReplyEmailHtml(msg: { name: string | null; email: string; message:
   </td></tr>
 
   <tr><td align="center">
-    <a href="${BASE}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.cl</a>
+    <a href="${BASE}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.com</a>
     <br/><span style="font-size:10px;color:#ddd;">&copy; ${new Date().getFullYear()}</span>
   </td></tr>
 
@@ -112,9 +112,9 @@ export async function POST(req: NextRequest) {
 
   try {
     await resend.emails.send({
-      from: "QuieroComer <soporte@quierocomer.cl>",
+      from: "QuieroComer <soporte@quierocomer.com>",
       to: msg.email,
-      replyTo: "hola@quierocomer.cl",
+      replyTo: "hola@quierocomer.com",
       subject: `Re: Tu consulta en QuieroComer`,
       html: buildReplyEmailHtml(msg, replyText.trim(), token),
     });

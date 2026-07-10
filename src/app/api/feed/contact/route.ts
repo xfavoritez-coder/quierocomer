@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     ].join('')
 
     const { error: resendError } = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'QuieroComer <soporte@quierocomer.cl>',
+      from: process.env.FROM_EMAIL || 'QuieroComer <soporte@quierocomer.com>',
       to: TO,
       replyTo: email,
       subject: `Contacto feed — ${nombre}`,

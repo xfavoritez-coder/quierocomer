@@ -288,7 +288,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
 
       if (mode === "link") {
         // Block own URLs — this is already a QuieroComer menu
-        if (normalizedUrl.includes("quierocomer.cl")) {
+        if (normalizedUrl.includes("quierocomer.com")) {
           setError("Esta ya es una carta en QuieroComer. Si necesitas editarla, accede a tu panel.");
           setLoading(false);
           return;

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   const panelToken = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
-  const response = NextResponse.redirect(new URL(redirectTo, "https://quierocomer.cl"));
+  const response = NextResponse.redirect(new URL(redirectTo, "https://quierocomer.com"));
   response.cookies.set("panel_token", panelToken, { ...base, httpOnly: true });
   response.cookies.set("panel_role", "OWNER", { ...base, httpOnly: true });
   response.cookies.set("panel_id", owner.id, { ...base, httpOnly: true });

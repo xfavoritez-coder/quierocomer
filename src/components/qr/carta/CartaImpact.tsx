@@ -1823,7 +1823,7 @@ export default function CartaImpact({
         }}
       >
         <a
-          href="https://quierocomer.cl" target="_blank" rel="noopener noreferrer"
+          href="https://quierocomer.com" target="_blank" rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
         >
           <span style={{ color: "var(--carta-text3, #555)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>

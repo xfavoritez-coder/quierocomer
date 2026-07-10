@@ -30,7 +30,7 @@ function EmailContent() {
       { hour: "17", count: 10 }, { hour: "18", count: 8 }, { hour: "19", count: 28 },
       { hour: "20", count: 45 }, { hour: "21", count: 52 }, { hour: "22", count: 30 },
     ],
-    panelUrl: "https://quierocomer.cl/panel",
+    panelUrl: "https://quierocomer.com/panel",
   };
 
   const delta = Math.round(((data.totalVisits - data.prevVisits) / data.prevVisits) * 100);

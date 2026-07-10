@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     restaurant: { name: restaurant.name, slug: restaurant.slug },
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
   // Count dishes/categories for email
   const [dishCount, categoryCount] = await Promise.all([

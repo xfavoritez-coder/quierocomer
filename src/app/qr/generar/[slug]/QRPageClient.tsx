@@ -20,7 +20,7 @@ const SIZE_CONFIG: Record<string, { label: string; desc: string; qrMm: number }>
   custom: { label: "Personalizado", desc: "", qrMm: 0 },
 };
 
-const BASE_URL = "https://quierocomer.cl";
+const BASE_URL = "https://quierocomer.com";
 
 export default function QRPageClient({ restaurant }: Props) {
   const [size, setSize] = useState<Size>("medium");

@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const MAX_AGENT_ATTEMPTS = 5; // max leads per cron run
   const results: { leadId: string; name: string; action: string; success: boolean }[] = [];
 

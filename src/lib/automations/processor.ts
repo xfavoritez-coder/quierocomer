@@ -63,14 +63,14 @@ export async function processAutomations(): Promise<ProcessResult[]> {
             .replace(/\{\{restaurant\}\}/g, rule.restaurant.name)
             .replace(/\{\{slug\}\}/g, rule.restaurant.slug || "");
 
-          const unsubUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl"}/api/qr/user/unsubscribe?userId=${user.id}`;
+          const unsubUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.com"}/api/qr/user/unsubscribe?userId=${user.id}`;
           const fullHtml = html + `<p style="text-align:center;margin-top:32px;font-size:11px;color:#999"><a href="${unsubUrl}" style="color:#999">Desuscribirse</a></p>`;
 
           await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
             body: JSON.stringify({
-              from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
+              from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
               to: user.email,
               subject,
               html: fullHtml,

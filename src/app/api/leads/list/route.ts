@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     }),
     prisma.lead.findMany({
       where: {
-        email: { not: "import@quierocomer.cl" },
+        email: { not: "import@quierocomer.com" },
       },
       orderBy: { createdAt: "desc" },
       take: 2000,

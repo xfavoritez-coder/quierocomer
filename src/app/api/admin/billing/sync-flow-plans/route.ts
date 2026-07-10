@@ -14,7 +14,7 @@ import { FLOW_PLANS, grossOf, ivaOf } from "@/lib/billing/plans-config";
  * Idempotente: si el plan ya existe lo edita, si no lo crea.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 const URL_CALLBACK = `${BASE_URL}/api/billing/webhook`;
 
 type SyncResult = {

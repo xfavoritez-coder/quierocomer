@@ -10,7 +10,7 @@ function getSecondaryDishTypes(types: string[], primary: string): string[] {
 const NO_BUTTON_SUFFIXES = [
   'tripadvisor.cl', 'tripadvisor.com',
   'google.com', 'share.google',
-  'quierocomer.cl',
+  'quierocomer.com',
 ]
 
 /** Redes sociales → "Ver Instagram" / "Ver Facebook" / etc. */
@@ -869,7 +869,7 @@ function DesktopDishContent({
                   </svg>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00' }}>Ver carta QR</span>
-                    <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1 }}>quierocomer.cl</span>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', marginTop: 1 }}>quierocomer.com</span>
                   </span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round">
                     <path d="M9 18l6-6-6-6"/>
@@ -1332,7 +1332,7 @@ function DishSlide({
               </svg>
               <span style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? '#F4A623' : '#c97d00', whiteSpace: 'nowrap' }}>Ver carta QR</span>
-                <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>quierocomer.cl</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>quierocomer.com</span>
               </span>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark ? 'rgba(244,166,35,0.8)' : '#c97d00'} strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
                 <path d="M9 18l6-6-6-6"/>

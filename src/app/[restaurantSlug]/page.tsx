@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 
-const BASE = 'https://quierocomer.cl'
+const BASE = 'https://quierocomer.com'
 
 export const revalidate = 3600
 

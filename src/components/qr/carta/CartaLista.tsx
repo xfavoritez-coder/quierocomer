@@ -650,7 +650,7 @@ export default function CartaLista({
         }}
       >
         <a
-          href="https://quierocomer.cl"
+          href="https://quierocomer.com"
           target="_blank"
           rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}

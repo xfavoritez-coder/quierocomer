@@ -5,7 +5,7 @@ import { sendWhatsApp } from "@/lib/whatsapp";
 /**
  * Resend webhook — handles email bounce/complaint events.
  * Configure at: https://resend.com/webhooks
- * URL: https://quierocomer.cl/api/webhooks/resend
+ * URL: https://quierocomer.com/api/webhooks/resend
  * Events: email.bounced, email.complained
  */
 export async function POST(req: NextRequest) {
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           await sendAdminPush(
             "📧 Email rebotó",
             `${email} — ${leads.length} lead${leads.length > 1 ? "s" : ""} afectado${leads.length > 1 ? "s" : ""}`,
-            "https://quierocomer.cl/admin/funnel",
+            "https://quierocomer.com/admin/funnel",
           );
         } catch {}
       }

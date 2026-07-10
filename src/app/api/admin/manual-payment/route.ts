@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
   // Enviar email de confirmación al dueño
   const ownerEmail = restaurant.owner?.email;
   if (ownerEmail) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
     const ownerName = restaurant.owner?.name || ownerEmail.split("@")[0] || "Hola";
     const planLabel = PLAN_LABELS[planKey as keyof typeof PLAN_LABELS] || planKey;
     const amountStr = `$${amountGross.toLocaleString("es-CL")} CLP`;

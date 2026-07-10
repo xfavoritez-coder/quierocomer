@@ -164,7 +164,7 @@ export default function ContactoPage() {
 
               <div className="contacto-alt">
                 <p>También puedes escribirnos a</p>
-                <a href="mailto:hola@quierocomer.cl">hola@quierocomer.cl</a>
+                <a href="mailto:hola@quierocomer.com">hola@quierocomer.com</a>
                 <p style={{ marginTop: 10 }}>Santiago, Chile</p>
               </div>
             </>

@@ -12,9 +12,9 @@ export default function PreviewReactivacion() {
       { name: "Tiraditos", dishCount: 3, topDish: "Tiradito Nikkei", topDishPhoto: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=120&h=120&fit=crop", topDishPrice: 9990 },
       { name: "Bebidas", dishCount: 2, topDish: "Pisco Sour", topDishPhoto: null, topDishPrice: 4500 },
     ],
-    cartaUrl: "https://quierocomer.cl/ceviche-a-lo-tigre",
-    panelUrl: "https://quierocomer.cl/panel",
-    activarUrl: "https://quierocomer.cl/activar/example",
+    cartaUrl: "https://quierocomer.com/ceviche-a-lo-tigre",
+    panelUrl: "https://quierocomer.com/panel",
+    activarUrl: "https://quierocomer.com/activar/example",
     openPixel: "#",
   });
 
@@ -33,9 +33,9 @@ export default function PreviewReactivacion() {
       { name: "Almuerzos", dishCount: 12 },
       { name: "Sopas", dishCount: 6 },
     ],
-    cartaUrl: "https://quierocomer.cl/el-tumbaito",
-    panelUrl: "https://quierocomer.cl/panel",
-    activarUrl: "https://quierocomer.cl/activar/example",
+    cartaUrl: "https://quierocomer.com/el-tumbaito",
+    panelUrl: "https://quierocomer.com/panel",
+    activarUrl: "https://quierocomer.com/activar/example",
     openPixel: "#",
   });
 
@@ -52,9 +52,9 @@ export default function PreviewReactivacion() {
       { name: "Pizzas", dishCount: 10 },
       { name: "Postres", dishCount: 8 },
     ],
-    cartaUrl: "https://quierocomer.cl/beer-house-atacama",
-    panelUrl: "https://quierocomer.cl/panel",
-    activarUrl: "https://quierocomer.cl/activar/example",
+    cartaUrl: "https://quierocomer.com/beer-house-atacama",
+    panelUrl: "https://quierocomer.com/panel",
+    activarUrl: "https://quierocomer.com/activar/example",
     openPixel: "#",
   });
 

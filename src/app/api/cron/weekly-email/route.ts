@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
             totalDishes: dishes.length,
             categories: cats,
             topDishes: dishes.slice(0, 3).map(d => d.name),
-            panelUrl: `https://quierocomer.cl/panel`,
+            panelUrl: `https://quierocomer.com/panel`,
             slug: r.slug,
           });
           emailSubject = `${r.name} · Tu primera semana`;
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
             photosUploaded,
             dishesEdited,
             totalDishes,
-            panelUrl: `https://quierocomer.cl/panel`,
+            panelUrl: `https://quierocomer.com/panel`,
             slug: r.slug,
           });
           emailSubject = `${r.name} · ¿Cómo va tu carta?`;
@@ -160,7 +160,7 @@ export async function GET(req: NextRequest) {
           topViewed,
           leastViewed,
           visitsByHour,
-          panelUrl: `https://quierocomer.cl/api/panel/demo-auth?slug=${r.slug}`,
+          panelUrl: `https://quierocomer.com/api/panel/demo-auth?slug=${r.slug}`,
           slug: r.slug,
           isDemo: true,
           insight: demoInsight,
@@ -242,7 +242,7 @@ export async function GET(req: NextRequest) {
           topViewed,
           leastViewed,
           visitsByHour,
-          panelUrl: "https://quierocomer.cl/panel",
+          panelUrl: "https://quierocomer.com/panel",
           slug: r.slug,
           isDemo: false,
           insight: topInsight || undefined,
@@ -259,7 +259,7 @@ export async function GET(req: NextRequest) {
       if (recipients.length === 0) continue;
 
       // Send to all with tracking
-      const baseUrl = "https://quierocomer.cl";
+      const baseUrl = "https://quierocomer.com";
       for (const to of recipients) {
         // Pre-create log to get ID for tracking
         const log = await prisma.emailLog.create({
