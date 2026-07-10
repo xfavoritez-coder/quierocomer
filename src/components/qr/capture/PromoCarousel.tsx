@@ -625,7 +625,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                         ))}
                       </div>
                       {selectedPromo.discountPct && (
-                        <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
+                        <div style={{ position: "absolute", top: 20, left: 20, background: "var(--carta-accent, #F4A623)", color: "#fff", padding: "5px 12px", borderRadius: 8, fontSize: "12px", fontWeight: 800, letterSpacing: "0.3px", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>-{selectedPromo.discountPct}% OFERTA</div>
                       )}
                       {allPhotos.length > 1 && (
                         <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 4 }}>
@@ -663,12 +663,25 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     return <p style={{ fontSize: "14px", lineHeight: 1.5, color: "var(--carta-text2)", margin: "0 0 20px" }}>{desc}</p>;
                   })()}
 
-                  {selectedPromo.promoPrice && (
-                    <div style={{ padding: "18px 0", borderTop: "1px solid var(--carta-card-border)", borderBottom: "1px solid var(--carta-card-border)", marginBottom: 24 }}>
-                      <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--carta-text3)", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO OFERTA</p>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "var(--carta-accent, #F4A623)", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
-                        {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "var(--carta-text3)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                  {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
+                    <div style={{ marginTop: 8, marginBottom: 20, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      {(() => {
+                        const pct = selectedPromo.discountPct || (selectedPromo.originalPrice && selectedPromo.promoPrice
+                          ? Math.round((1 - selectedPromo.promoPrice / selectedPromo.originalPrice) * 100)
+                          : null);
+                        return pct && pct > 0 ? (
+                          <span style={{ background: "var(--carta-accent, #F4A623)", color: "#fff", fontSize: "0.78rem", fontWeight: 800, padding: "5px 12px", borderRadius: 8, whiteSpace: "nowrap", letterSpacing: "0.3px" }}>
+                            -{pct}% OFERTA
+                          </span>
+                        ) : null;
+                      })()}
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                        {selectedPromo.originalPrice && (
+                          <span style={{ color: "var(--carta-text3)", fontSize: "14px", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>
+                        )}
+                        {selectedPromo.promoPrice && (
+                          <span style={{ color: "var(--carta-accent, #F4A623)", fontSize: "22px", fontWeight: 800 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
+                        )}
                       </div>
                     </div>
                   )}

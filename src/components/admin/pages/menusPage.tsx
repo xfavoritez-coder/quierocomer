@@ -885,7 +885,7 @@ export default function AdminMenus() {
     setEName(d.name);
     setEDesc(d.description || "");
     setEPrice(String(d.price));
-    setEDiscountPrice(d.discountPrice ? String(d.discountPrice) : "");
+    setEDiscountPrice(d.discountPrice != null ? String(d.discountPrice) : "");
     setEIngredients(d.ingredients || "");
     setRespectAllergens(new Set()); // reset al abrir un plato distinto
     setETags([...d.tags]);
@@ -1793,6 +1793,11 @@ export default function AdminMenus() {
                     {isHidden && (
                       <span style={{ display: "inline-block", fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "#9a3d2c", background: "rgba(220,80,40,0.10)", border: "1px solid rgba(220,80,40,0.18)", padding: "2px 7px", borderRadius: 999 }}>
                         🚫 No se ve en la carta
+                      </span>
+                    )}
+                    {d.discountPrice && (
+                      <span style={{ display: "inline-block", fontFamily: F, fontSize: "10.5px", fontWeight: 700, color: "#b45309", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.30)", padding: "2px 7px", borderRadius: 999 }}>
+                        % OFERTA
                       </span>
                     )}
                   </div>

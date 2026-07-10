@@ -5,15 +5,12 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
-import GenioOnboarding from "../genio/GenioOnboarding";
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
 import ViewSelectorCompact from "./ViewSelectorCompact";
-import GenioFab from "./GenioFab";
-import FabSpeedDial from "./FabSpeedDial";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -32,18 +29,6 @@ import { t } from "@/lib/qr/i18n";
 import type { Lang } from "@/lib/qr/i18n";
 import AnnouncementBanner from "./AnnouncementBanner";
 import HappyHourBanner, { getActiveHappyHour } from "./HappyHourBanner";
-import GenioVeganCarousel from "./GenioVeganCarousel";
-import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
-import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
-import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
-import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
-import GenioNutsCarousel from "./GenioNutsCarousel";
-import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
-import GenioDietMessage from "./GenioDietMessage";
-import VeganFloatingPill from "./VeganFloatingPill";
-import VegetarianFloatingPill from "./VegetarianFloatingPill";
-import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 import { getDishPhoto } from "./utils/dishHelpers";
 import CartaFilterBar, { applyCartaFilter } from "./CartaFilterBar";
 import type { CartaFilterKey } from "./CartaFilterBar";
@@ -810,38 +795,6 @@ export default function CartaImpact({
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
-  /* ─── Genio state ─── */
-  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
-  useEffect(() => {
-    const check = () => setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
-    const onGenioUpdated = () => {
-      check();
-      setTimeout(() => {
-        const diet = localStorage.getItem("qr_diet");
-        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-        const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-        const scrollId = getCarouselScrollId(mode);
-        const el = scrollId ? document.getElementById(scrollId) : null;
-        const target = el || document.getElementById("genio-diet-message");
-        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 500);
-    };
-    check();
-    window.addEventListener("genio-updated", onGenioUpdated);
-    return () => window.removeEventListener("genio-updated", onGenioUpdated);
-  }, []);
-
-  /* ─── Diet nav item for category chips ─── */
-  const dietNavItem = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    const diet = localStorage.getItem("qr_diet");
-    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-    if (!mode) return null;
-    if (!hasMatchingDishes(dishes, categories, mode, diet, restrictions.filter((r: string) => r !== "ninguna"))) return null;
-    return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
-  }, [restaurant, hasCompletedGenio, dishes, categories]);
-
   /* ─── Active category tracking ─── */
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [showFixedCatNav, setShowFixedCatNav] = useState(false);
@@ -927,25 +880,13 @@ export default function CartaImpact({
       obs.observe(el);
       observers.push(obs);
     }
-    if (dietNavItem) {
-      const dietEl = document.getElementById(dietNavItem.scrollTo);
-      if (dietEl) {
-        const dietObs = new IntersectionObserver(
-          ([entry]) => { if (entry.isIntersecting) setActiveCategory("diet-carousel"); },
-          { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
-        );
-        dietObs.observe(dietEl);
-        observers.push(dietObs);
-      }
-    }
     return () => observers.forEach((o) => o.disconnect());
-  }, [categories, hasPromos, dietNavItem]);
+  }, [categories, hasPromos]);
 
   /* ─── Dish / modal state ─── */
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [dishFromHero, setDishFromHero] = useState(false);
   const [openPromo, setOpenPromo] = useState<any>(null);
-  const [genioOpen, setGenioOpen] = useState(false);
   const [qrUserLocal, setQrUserLocal] = useState<any>(null);
   const [profileOpenLocal, setProfileOpenLocal] = useState(false);
   const qrUser = qrUserProp ?? qrUserLocal;
@@ -1227,11 +1168,10 @@ export default function CartaImpact({
 
   const allChipCats = useMemo(() => {
     const cats: { id: string; name: string }[] = [];
-    if (dietNavItem) cats.push({ id: dietNavItem.id, name: dietNavItem.name });
     // Ofertas has its own section above menu, not in chips
     for (const s of menuSections) cats.push({ id: s.category.id, name: s.category.name });
     return cats;
-  }, [dietNavItem, hasPromos, menuSections]);
+  }, [hasPromos, menuSections]);
 
   return (
     <div
@@ -1261,9 +1201,18 @@ export default function CartaImpact({
       {/* Wrapper: nav + banner — fixed al tope */}
       <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: "rgba(3,3,3,0.32)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
 
+      {/* Announcement banner — above nav */}
+      {hasBannerActive && (
+        <div style={{ paddingTop: "env(safe-area-inset-top)", paddingLeft: 14, paddingRight: 14, paddingBottom: 8 }}>
+          {announcements && announcements.length > 0
+            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
+            : <HappyHourBanner happyHours={happyHours || []} />}
+        </div>
+      )}
+
       {/* Nav: logo + botones */}
       <header style={{
-        padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
+        padding: hasBannerActive ? "10px 16px 0" : "calc(10px + env(safe-area-inset-top)) 16px 0",
         pointerEvents: "auto",
       }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
@@ -1369,14 +1318,6 @@ export default function CartaImpact({
         </div>
       </div>
       </header>
-      {/* Announcement banner inside fixed wrapper, outside header padding */}
-      {hasBannerActive && (
-        <div style={{ padding: "0 14px 10px" }}>
-          {announcements && announcements.length > 0
-            ? <AnnouncementBanner announcements={announcements} variant="glass" accentColor={(restaurant as any).cartaAccentColor} />
-            : <HappyHourBanner happyHours={happyHours || []} />}
-        </div>
-      )}
 
       </div>{/* end fixed wrapper */}
 
@@ -1592,10 +1533,7 @@ export default function CartaImpact({
                       ref={isActive ? activeChipRef : null}
                       onClick={() => {
                         setActiveCategory(cat.id);
-                        if (cat.id === "diet-carousel" && dietNavItem) {
-                          const el = document.getElementById(dietNavItem.scrollTo);
-                          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                        } else if (cat.id === "promos") {
+                        if (cat.id === "promos") {
                           const el = document.getElementById("impact-cat-promos");
                           if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" });
                         } else {
@@ -1642,46 +1580,6 @@ export default function CartaImpact({
         <div style={{ padding: "6px 0 10px" }}>
           <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
         </div>
-
-        {/* Genio diet carousels — inside menu, after nav chips */}
-        {hasCompletedGenio && (() => {
-          const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-          const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-          const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-          const onDishClick = (dishId: string) => { const dish = dishes.find((d) => d.id === dishId); if (dish) setSelectedDish(dish); };
-          const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
-          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          // Fallback: if user is vegan and no vegan dishes exist, try vegetarian carousel
-          let effectiveMode = mode;
-          if (mode === "vegan" && !hasMatchingDishes(dishes, categories, "vegan", diet, activeRestrictions)) {
-            if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) {
-              effectiveMode = "vegetarian";
-            }
-          }
-          if (mode === "vegan+gf" && !hasMatchingDishes(dishes, categories, "vegan+gf", diet, activeRestrictions)) {
-            if (hasMatchingDishes(dishes, categories, "vegetarian+gf", "vegetarian", activeRestrictions)) {
-              effectiveMode = "vegetarian+gf";
-            } else if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) {
-              effectiveMode = "vegetarian";
-            }
-          }
-          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!effectiveMode || !hasMatchingDishes(dishes, categories, effectiveMode, diet, activeRestrictions)) ? dietMsg : null;
-          if (msgType) return <div style={{ marginBottom: 12, marginLeft: -14, marginRight: -14 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
-          if (!effectiveMode) return null;
-          return (
-            <div style={{ marginBottom: 4, marginLeft: -14, marginRight: -14, display: "flex", flexDirection: "column", gap: 8 }}>
-              {effectiveMode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {effectiveMode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-              {effectiveMode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {effectiveMode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-              {effectiveMode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {effectiveMode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {effectiveMode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {effectiveMode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {effectiveMode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
-            </div>
-          );
-        })()}
 
         {/* Empty state — búsqueda */}
         {searchQuery && menuSections.length === 0 && (
@@ -1839,36 +1737,15 @@ export default function CartaImpact({
         <span style={{ color: "var(--carta-text3, #555)", fontSize: "0.62rem" }}>&copy; {new Date().getFullYear()}</span>
       </footer>
 
-      {/* Floating diet pills */}
-      {hasCompletedGenio && (() => {
-        const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-        const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-        const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
-        return (
-          <>
-            {diet === "vegan" && isOmnivoreRestaurant && dishes.some((d) => (d as any).dishDiet === "VEGAN") && <VeganFloatingPill />}
-            {diet === "vegetarian" && isOmnivoreRestaurant && dishes.some((d) => (d as any).dishDiet === "VEGETARIAN" || (d as any).dishDiet === "VEGAN") && <VegetarianFloatingPill />}
-            {diet === "omnivore" && restrictions.includes("gluten") && dishes.some((d) => (d as any).isGlutenFree) && <GlutenFreeFloatingPill />}
-          </>
-        );
-      })()}
-
-      {/* FABs: lamp (Genio) + views (demo) + bell (waiter) */}
-      {!(restaurant as any).isDemo && (
-        <FabSpeedDial
-          onLampClick={() => setGenioOpen(true)}
-          hideLamp={(restaurant as any).genioFabEnabled === false}
-          pinned={
-            <>
-              {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-            </>
-          }
-        />
+      {/* FAB: waiter button */}
+      {!(restaurant as any).isDemo && showWaiter && (
+        <div className="fixed z-50" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom)" }}>
+          <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />
+        </div>
       )}
 
       {/* Keyframe animations */}
       <style>{`
-        @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes genioFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes impactShimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
       `}</style>
@@ -1913,31 +1790,6 @@ export default function CartaImpact({
       {/* Birthday auto-modal */}
       {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} logoUrl={restaurant.logoUrl} />}
 
-      {/* Genio onboarding */}
-      {genioOpen && (
-        <GenioOnboarding
-          restaurantId={restaurant.id}
-          dishes={dishes}
-          categories={categories}
-          qrUser={qrUser}
-          restaurantDietType={(restaurant as any).dietType}
-          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); window.dispatchEvent(new Event("genio-closed")); }}
-          onResult={(dish) => {
-            setGenioOpen(false);
-            setProfileTrigger((n) => n + 1);
-            setTimeout(() => {
-              const el = document.querySelector(`[data-dish-id="${dish.id}"]`);
-              if (el) {
-                const section = el.closest("[id^='impact-cat-']");
-                const target = section || el;
-                const top = target.getBoundingClientRect().top + window.scrollY - 48;
-                window.scrollTo({ top, behavior: "smooth" });
-              }
-              setTimeout(() => setSelectedDish(dish), 500);
-            }, 250);
-          }}
-        />
-      )}
     </div>
   );
 }
