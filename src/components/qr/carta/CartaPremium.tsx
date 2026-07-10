@@ -479,7 +479,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 105 : 0 }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} onSearchClick={() => setSearchOpen(true)} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} viewSelectorSlot={(restaurant as any).plan !== "FREE" ? <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} /> : undefined} />
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
@@ -527,6 +527,12 @@ export default function CartaPremium({
           }}
           rightSlot={
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                onClick={() => setSearchOpen(true)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: 4, cursor: "pointer", borderRadius: 8 }}
+              >
+                <Search size={17} color="var(--carta-text-muted)" />
+              </button>
               <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
           }
@@ -555,17 +561,17 @@ export default function CartaPremium({
           </span>
           <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px" }}>
             {activeFilter === "estrella"
-              ? "Sin platos recomendados por ahora"
+              ? "No hay platos recomendados por ahora"
               : activeFilter === "popular"
-                ? "Sin platos populares por ahora"
-                : "Sin platos veggie registrados"}
+                ? "No hay platos populares por ahora"
+                : "No hay platos veggie por ahora"}
           </p>
           <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, margin: "0 0 16px" }}>
             {activeFilter === "estrella"
-              ? "El local aún no ha marcado platos como recomendados."
+              ? "Aún no hay platos marcados como recomendados."
               : activeFilter === "popular"
                 ? "Se necesitan más visitas para identificar tendencias."
-                : "Este local aún no tiene platos veganos o vegetarianos marcados."}
+                : "Aún no hay platos veganos o vegetarianos disponibles."}
           </p>
           <button
             onClick={() => setActiveFilter(null)}

@@ -1708,17 +1708,17 @@ export default function CartaImpact({
             </span>
             <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, marginBottom: 6 }}>
               {activeFilter === "estrella"
-                ? "Sin platos recomendados por ahora"
+                ? "No hay platos recomendados por ahora"
                 : activeFilter === "popular"
-                  ? "Sin platos populares por ahora"
-                  : "Sin platos veggie registrados"}
+                  ? "No hay platos populares por ahora"
+                  : "No hay platos veggie por ahora"}
             </p>
             <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, marginBottom: 16 }}>
               {activeFilter === "estrella"
-                ? "El local aún no ha marcado platos como recomendados."
+                ? "Aún no hay platos marcados como recomendados."
                 : activeFilter === "popular"
                   ? "Se necesitan más visitas para identificar tendencias."
-                  : "Este local aún no tiene platos veganos o vegetarianos marcados."}
+                  : "Aún no hay platos veganos o vegetarianos disponibles."}
             </p>
             <button
               onClick={() => setActiveFilter(null)}
