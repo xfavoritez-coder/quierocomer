@@ -158,6 +158,7 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.findMany({
         where: { ...restaurantFilter, eventType: { in: ["GENIO_COMPLETE", "GENIO_STEP_RESTRICTIONS"] as any }, createdAt: dateFilter },
         select: { guestId: true, eventType: true },
+        take: 5000,
       }),
       prisma.statEvent.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
 
@@ -179,7 +180,7 @@ export async function GET(req: NextRequest) {
       prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: { gte: weekAgo }, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_RESTRICTIONS" as any, createdAt: { gte: weekAgo } } }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: { gte: weekAgo } } }),
-      prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: { in: ["GENIO_COMPLETE"] as any }, createdAt: { gte: weekAgo } }, select: { guestId: true } }),
+      prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: { in: ["GENIO_COMPLETE"] as any }, createdAt: { gte: weekAgo } }, select: { guestId: true }, take: 2000 }),
 
       // ── Misc ──
       prisma.session.findFirst({ where: restaurantFilter, orderBy: { startedAt: "desc" }, select: { startedAt: true } }),

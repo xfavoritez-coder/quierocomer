@@ -14,33 +14,25 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-  // ── Fetch leads first to get funnel slugs (skip Google Maps restaurants) ──
-  const leads = await prisma.lead.findMany({
-    where: { generatedSlug: { not: null } },
-    select: {
-      id: true, generatedSlug: true, localName: true, ownerName: true,
-      email: true, whatsapp: true, cartaStatus: true, cartaType: true, cartaUrl: true, cartaFileUrl: true,
-      activated: true, activatedAt: true, deliveredAt: true,
-      emailClickedAt: true, whatsappClickedAt: true,
-      emailOpenedAt: true, completedAt: true,
-      events: true, createdAt: true,
-    },
-  });
-  const funnelSlugs = leads.map((l) => l.generatedSlug).filter(Boolean) as string[];
-
-  // ── Parallel queries — only funnel restaurants ──
-  const [
-    restaurants,
-    allActivity,
-    sessions7dGroups,
-    totalSessionGroups,
-    dishesWithPhotos,
-    clientCounts,
-    emailLogs,
-  ] = await Promise.all([
+  // ── Fetch leads + restaurants con owner en paralelo ──
+  const [leads, restaurants, allActivity, sessions7dGroups, dishesWithPhotos, clientCounts, emailLogs] = await Promise.all([
+    prisma.lead.findMany({
+      where: { generatedSlug: { not: null } },
+      select: {
+        id: true, generatedSlug: true, localName: true, ownerName: true,
+        email: true, whatsapp: true, cartaStatus: true, cartaType: true, cartaUrl: true, cartaFileUrl: true,
+        activated: true, activatedAt: true, deliveredAt: true,
+        emailClickedAt: true, whatsappClickedAt: true,
+        emailOpenedAt: true, completedAt: true,
+        events: true, createdAt: true,
+      },
+    }),
+    // Todos los restaurantes con owner (no solo funnel)
     prisma.restaurant.findMany({
-      where: { slug: { in: funnelSlugs } },
+      where: { ownerId: { not: null } },
       orderBy: { createdAt: "desc" },
       select: {
         id: true, slug: true, name: true, logoUrl: true,
@@ -51,8 +43,9 @@ export async function GET(req: NextRequest) {
         _count: { select: { dishes: true, sessions: true, categories: true } },
       },
     }),
-    // All panel activity (not just 7d) for engagement checks
+    // Actividad reciente (últimos 60 días, no todo el historial)
     prisma.panelActivity.findMany({
+      where: { createdAt: { gte: sixtyDaysAgo } },
       select: { restaurantId: true, action: true, details: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
@@ -60,11 +53,6 @@ export async function GET(req: NextRequest) {
     prisma.session.groupBy({
       by: ["restaurantId"],
       where: { startedAt: { gte: sevenDaysAgo } },
-      _count: true,
-    }),
-    // Total sessions ever
-    prisma.session.groupBy({
-      by: ["restaurantId"],
       _count: true,
     }),
     // Restaurants that have at least 1 dish with photos
@@ -78,7 +66,9 @@ export async function GET(req: NextRequest) {
       by: ["restaurantId"],
       _count: true,
     }),
+    // Emails recientes (últimos 90 días)
     prisma.emailLog.findMany({
+      where: { createdAt: { gte: ninetyDaysAgo } },
       select: { to: true, subject: true, purpose: true, status: true, openedAt: true, clickedAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
@@ -100,9 +90,6 @@ export async function GET(req: NextRequest) {
   const sessions7dMap = new Map<string, number>();
   for (const s of sessions7dGroups) sessions7dMap.set(s.restaurantId, s._count);
 
-  const totalSessionsMap = new Map<string, number>();
-  for (const s of totalSessionGroups) totalSessionsMap.set(s.restaurantId, s._count);
-
   const hasPhotosSet = new Set(dishesWithPhotos.map(d => d.restaurantId));
 
   const clientCountMap = new Map<string, number>();
@@ -123,7 +110,7 @@ export async function GET(req: NextRequest) {
     const lead = leadBySlug.get(r.slug);
     const activity = activityByRest.get(r.id) || [];
     const sessions7d = sessions7dMap.get(r.id) || 0;
-    const totalSessions = totalSessionsMap.get(r.id) || 0;
+    const totalSessions = r._count.sessions;
 
     // Find last OWNER-initiated activity
     const lastOwnerAct = activity.find(a => OWNER_ACTIONS.has(a.action));
