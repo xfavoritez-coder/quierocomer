@@ -1679,7 +1679,7 @@ export default function CartaImpact({
           );
         })()}
 
-        {/* Empty state */}
+        {/* Empty state — búsqueda */}
         {searchQuery && menuSections.length === 0 && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
@@ -1692,6 +1692,43 @@ export default function CartaImpact({
               style={{ marginTop: 12, fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
             >
               Limpiar busqueda
+            </button>
+          </div>
+        )}
+
+        {/* Empty state — filtro activo sin resultados */}
+        {activeFilter && !searchQuery && menuSections.length === 0 && (
+          <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 28px", textAlign: "center" }}>
+            <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
+              {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : activeFilter === "veggie" ? "🌿" : "👁"}
+            </span>
+            <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, marginBottom: 6 }}>
+              {activeFilter === "estrella"
+                ? "Sin platos estrella por ahora"
+                : activeFilter === "popular"
+                  ? "Sin platos populares por ahora"
+                  : activeFilter === "veggie"
+                    ? "Sin platos veggie registrados"
+                    : "Sin datos de visitas aún"}
+            </p>
+            <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, marginBottom: 16 }}>
+              {activeFilter === "estrella"
+                ? "El local aún no ha marcado platos destacados."
+                : activeFilter === "popular"
+                  ? "Se necesitan más visitas para identificar tendencias."
+                  : null}
+            </p>
+            <button
+              onClick={() => setActiveFilter(null)}
+              className="font-[family-name:var(--font-dm)]"
+              style={{
+                fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600,
+                background: "color-mix(in srgb, var(--carta-accent) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--carta-accent) 30%, transparent)",
+                padding: "8px 18px", borderRadius: 999, cursor: "pointer",
+              }}
+            >
+              Ver todos los platos
             </button>
           </div>
         )}

@@ -127,13 +127,17 @@ export default function PanelDashboard() {
     setLoading(true);
     const rid = selectedRestaurantId;
     // Fetch each API independently so a single failure doesn't blank the whole page
-    const safeFetch = (url: string) => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
+    const safeFetch = (url: string) => fetch(url).then(r => {
+      if (!r.ok) { console.error(`Dashboard fetch error: ${r.status} ${r.statusText} — ${url}`); return null; }
+      return r.json();
+    }).catch((e) => { console.error(`Dashboard fetch exception: ${url}`, e); return null; });
     Promise.all([
       safeFetch(`/api/admin/dashboard?restaurantId=${rid}`),
       safeFetch(`/api/admin/locales/${rid}`),
     ]).then(([d, settings]) => {
       if (d && !d.error) setData(d);
       else {
+        if (d?.error) console.error("Dashboard API error:", d.error);
         // Provide minimal empty data so the page renders instead of "Sin datos disponibles"
         setData({
           visitsThisWeek: 0, visitsDelta: null, avgSessionDuration: 0, genioUsedThisWeek: 0,
