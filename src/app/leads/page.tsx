@@ -172,6 +172,15 @@ function LeadPanel({ lead, onClose, onUpdate }: {
   const [followUp, setFollowUp] = useState(fmtDateInput(lead.crmFollowUpAt));
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [extraActivity, setExtraActivity] = useState<{ label: string; ts: string; color?: string }[]>([]);
+
+  useEffect(() => {
+    setExtraActivity([]);
+    fetch(`/api/leads/${lead.id}`, { headers: { "x-leads-auth": PASSWORD } })
+      .then(r => r.json())
+      .then(d => { if (d.activity) setExtraActivity(d.activity); })
+      .catch(() => {});
+  }, [lead.id]);
 
   const api = useCallback(async (patch: Record<string, unknown>) => {
     setSaving(true);
@@ -198,15 +207,16 @@ function LeadPanel({ lead, onClose, onUpdate }: {
 
   const saveFollowUp = () => api({ crmFollowUpAt: followUp || null });
 
-  // Timeline events from funnel
-  const timeline: { label: string; ts: string }[] = [];
-  if (lead.createdAt)     timeline.push({ label: "Envió su carta", ts: lead.createdAt });
+  // Timeline: funnel milestones + panelActivity
+  const timeline: { label: string; ts: string; color?: string }[] = [];
+  if (lead.createdAt)     timeline.push({ label: "Subió su carta", ts: lead.createdAt });
   if (lead.completedAt)   timeline.push({ label: "Completó el formulario", ts: lead.completedAt });
   if (lead.deliveredAt)   timeline.push({ label: "Email enviado", ts: lead.deliveredAt });
   if (lead.emailOpenedAt) timeline.push({ label: "Abrió el email", ts: lead.emailOpenedAt });
-  if (lead.emailClickedAt)timeline.push({ label: "Hizo clic en el email", ts: lead.emailClickedAt });
-  if (lead.panelVisitedAt)timeline.push({ label: "Visitó el panel", ts: lead.panelVisitedAt });
-  if (lead.activatedAt)   timeline.push({ label: "Activó cuenta", ts: lead.activatedAt });
+  if (lead.emailClickedAt)timeline.push({ label: "Hizo clic en email — vio su carta", ts: lead.emailClickedAt, color: "#E8A33D" });
+  if (lead.panelVisitedAt)timeline.push({ label: "Ingresó al panel por primera vez", ts: lead.panelVisitedAt, color: "#a78bfa" });
+  if (lead.activatedAt)   timeline.push({ label: "Activó su cuenta", ts: lead.activatedAt, color: "#34d399" });
+  for (const ev of extraActivity) timeline.push(ev);
   timeline.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
 
   const cartaPreviewUrl = lead.generatedSlug ? `/qr/${lead.generatedSlug}` : lead.cartaUrl;
@@ -273,18 +283,10 @@ function LeadPanel({ lead, onClose, onUpdate }: {
             📧 <a href={`mailto:${lead.email}`} style={{ color: "#C9BBA0", textDecoration: "none" }}>{lead.email}</a>
           </div>
           {lead.city && <div style={{ fontSize: 13, color: "#7D7366" }}>📍 {lead.city}</div>}
-          <div style={{ fontSize: 13, color: "#7D7366", marginTop: 4 }}>
-            📄 {lead.cartaType} · {lead.cartaStatus}
-          </div>
           {cartaPreviewUrl && (
             <a href={cartaPreviewUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 10, fontSize: 13, color: "#E8A33D", textDecoration: "none", border: "1px solid rgba(232,163,61,.3)", padding: "6px 12px", borderRadius: 6 }}>
               Ver carta →
             </a>
-          )}
-          {false && lead.errorLog && (
-            <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, fontSize: 12, color: "#fca5a5", lineHeight: 1.5 }}>
-              {lead.errorLog.substring(0, 200)}
-            </div>
           )}
         </div>
 
@@ -360,14 +362,14 @@ function LeadPanel({ lead, onClose, onUpdate }: {
         {/* Timeline */}
         {timeline.length > 0 && (
           <div style={{ padding: "16px 20px" }}>
-            <div style={{ fontSize: 13, color: "#7D7366", marginBottom: 12, letterSpacing: ".06em", textTransform: "uppercase" }}>Actividad del lead</div>
+            <div style={{ fontSize: 13, color: "#7D7366", marginBottom: 12, letterSpacing: ".06em", textTransform: "uppercase" }}>Actividad</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {timeline.map((ev, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#E8A33D", marginTop: 5, flexShrink: 0 }} />
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: ev.color || "#5c5249", marginTop: 5, flexShrink: 0 }} />
                   <div>
-                    <div style={{ fontSize: 13, color: "#C9BBA0" }}>{ev.label}</div>
-                    <div style={{ fontSize: 11, color: "#7D7366" }}>{fmtDate(ev.ts)}</div>
+                    <div style={{ fontSize: 13, color: ev.color ? "#C9BBA0" : "#7D7366" }}>{ev.label}</div>
+                    <div style={{ fontSize: 11, color: "#5c5249" }}>{fmtDate(ev.ts)}</div>
                   </div>
                 </div>
               ))}
@@ -414,7 +416,7 @@ function LeadCard({ lead, onClick, selected }: { lead: Lead; onClick: () => void
         )}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 11, color: "#7D7366" }}>{lead.cartaType} · {timeAgo(lead.createdAt)}</span>
+        <span style={{ fontSize: 11, color: "#7D7366" }}>{timeAgo(lead.createdAt)}</span>
         {hasFU && (
           <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>● Seguimiento vencido</span>
         )}
