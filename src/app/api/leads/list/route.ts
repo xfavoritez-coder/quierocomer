@@ -66,8 +66,16 @@ export async function GET(req: NextRequest) {
   const paidMap = new Map(paidRestaurants.map(r => [r.slug, r]));
 
   // Excluir leads cuyo restaurante ya es cliente activo (pago o bonificado)
+  // y deduplicar por whatsapp (queda el más reciente — orderBy: createdAt desc arriba)
+  const seenWa = new Set<string>();
   const leads = allLeads
     .filter(l => !l.generatedSlug || !paidMap.has(l.generatedSlug))
+    .filter(l => {
+      const key = l.whatsapp!.replace(/\D/g, "");
+      if (seenWa.has(key)) return false;
+      seenWa.add(key);
+      return true;
+    })
     .map(l => ({
       ...l,
       restaurantPlan: null,
