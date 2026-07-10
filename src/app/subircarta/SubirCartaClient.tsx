@@ -410,7 +410,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Tengo foto</strong><span>de mi carta física</span></>
                   )}
                   {m === "scratch" && (
-                    <><svg viewBox="0 0 64 64" fill="none"><path d="M32 12v40M12 32h40" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><rect x="14" y="14" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Crear desde cero</strong><span>te armamos la carta</span></>
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M32 12v40M12 32h40" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><rect x="14" y="14" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Crear de cero</strong><span>te armamos la carta</span></>
                   )}
                 </button>
               ))}
