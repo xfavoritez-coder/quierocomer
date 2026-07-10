@@ -71,7 +71,7 @@ function fmtDateInput(iso: string | null): string {
   return new Date(iso).toISOString().slice(0, 16);
 }
 
-type Tab = "nuevos" | "en_proceso" | "interesados" | "cerrados" | "no_interesados" | "errores" | "todos";
+type Tab = "nuevos" | "en_proceso" | "interesados" | "cerrados" | "no_interesados" | "todos";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "nuevos",        label: "Nuevos" },
@@ -79,18 +79,16 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "interesados",   label: "Interesados" },
   { id: "cerrados",      label: "Cerrados" },
   { id: "no_interesados",label: "Descartados" },
-  { id: "errores",       label: "Con error" },
   { id: "todos",         label: "Todos" },
 ];
 
 function filterByTab(leads: Lead[], tab: Tab): Lead[] {
   switch (tab) {
-    case "nuevos":        return leads.filter(l => l.crmStatus === "nuevo" && l.cartaStatus !== "FAILED");
+    case "nuevos":        return leads.filter(l => l.crmStatus === "nuevo");
     case "en_proceso":    return leads.filter(l => l.crmStatus === "llamando" || l.crmStatus === "contactado");
     case "interesados":   return leads.filter(l => l.crmStatus === "interesado");
     case "cerrados":      return leads.filter(l => l.crmStatus === "cerrado");
     case "no_interesados":return leads.filter(l => l.crmStatus === "no_interesado");
-    case "errores":       return leads.filter(l => l.cartaStatus === "FAILED");
     case "todos":         return leads;
   }
 }
@@ -276,14 +274,14 @@ function LeadPanel({ lead, onClose, onUpdate }: {
           </div>
           {lead.city && <div style={{ fontSize: 13, color: "#7D7366" }}>📍 {lead.city}</div>}
           <div style={{ fontSize: 13, color: "#7D7366", marginTop: 4 }}>
-            📄 {lead.cartaType} · {lead.cartaStatus === "FAILED" ? <span style={{ color: "#ef4444" }}>Error al procesar</span> : lead.cartaStatus}
+            📄 {lead.cartaType} · {lead.cartaStatus}
           </div>
           {cartaPreviewUrl && (
             <a href={cartaPreviewUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 10, fontSize: 13, color: "#E8A33D", textDecoration: "none", border: "1px solid rgba(232,163,61,.3)", padding: "6px 12px", borderRadius: 6 }}>
               Ver carta →
             </a>
           )}
-          {lead.errorLog && (
+          {false && lead.errorLog && (
             <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, fontSize: 12, color: "#fca5a5", lineHeight: 1.5 }}>
               {lead.errorLog.substring(0, 200)}
             </div>
@@ -470,12 +468,11 @@ function CRMApp() {
 
   // Tab counts
   const counts: Record<Tab, number> = {
-    nuevos:        leads.filter(l => l.crmStatus === "nuevo" && l.cartaStatus !== "FAILED").length,
+    nuevos:        leads.filter(l => l.crmStatus === "nuevo").length,
     en_proceso:    leads.filter(l => l.crmStatus === "llamando" || l.crmStatus === "contactado").length,
     interesados:   leads.filter(l => l.crmStatus === "interesado").length,
     cerrados:      leads.filter(l => l.crmStatus === "cerrado").length,
     no_interesados:leads.filter(l => l.crmStatus === "no_interesado").length,
-    errores:       leads.filter(l => l.cartaStatus === "FAILED").length,
     todos:         leads.length,
   };
 
