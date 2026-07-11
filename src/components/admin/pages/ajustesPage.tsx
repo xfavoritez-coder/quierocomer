@@ -74,7 +74,7 @@ export default function AjustesPage() {
   const [customColor, setPersonalizadoColor] = useState("#F4A623");
   const [customDirty, setPersonalizadoDirty] = useState(false);
 
-  useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "light"); }, []);
+  useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "dark"); }, []);
 
   const rid = selectedRestaurantId;
 

@@ -126,8 +126,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     setPwLoading(false);
   };
 
-  // Theme: read from localStorage, default light
-  const [theme, setTheme] = useState<"dark" | "light">("light");
+  // Theme: read from localStorage, default dark
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   useEffect(() => {
     const saved = localStorage.getItem("qc_panel_theme");
     if (saved === "light" || saved === "dark") setTheme(saved);

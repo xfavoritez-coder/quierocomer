@@ -19,11 +19,11 @@ const inter = Inter({
 
 export default function PanelRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${spaceGrotesk.variable} ${inter.variable} theme-light`}>
+    <div className={`${spaceGrotesk.variable} ${inter.variable} theme-dark`}>
       <script dangerouslySetInnerHTML={{ __html: `
         (function(){
           var t=localStorage.getItem('qc_panel_theme');
-          if(t==='dark'){document.currentScript.parentElement.classList.remove('theme-light');document.currentScript.parentElement.classList.add('theme-dark');}
+          if(t==='light'){document.currentScript.parentElement.classList.remove('theme-dark');document.currentScript.parentElement.classList.add('theme-light');}
         })();
       `}} />
       {children}
