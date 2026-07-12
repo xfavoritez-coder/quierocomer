@@ -289,6 +289,16 @@ function DishSlide({
         ? `${raw}?w=900&q=85&fm=webp&fit=crop&crop=entropy&auto=compress`
         : `${raw}?w=500&q=80&fm=webp&fit=crop&crop=entropy&auto=compress`;
     }
+    if (url.includes(".supabase.co/storage/v1/object/public/")) {
+      const baseUrl = url.split("?")[0];
+      const ext = baseUrl.split(".").pop()?.toLowerCase();
+      if (ext !== "svg" && ext !== "gif") {
+        const renderUrl = baseUrl.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+        const w = size === "detail" ? 900 : 500;
+        const q = size === "detail" ? 85 : 80;
+        return `${renderUrl}?width=${w}&quality=${q}&resize=cover`;
+      }
+    }
     return url;
   };
   const [photoIndex, setPhotoIndex] = useState(0);
