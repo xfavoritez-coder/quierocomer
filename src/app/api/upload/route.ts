@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/optimizeImage";
+import { warmImageCache } from "@/lib/warmImageCache";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+    warmImageCache(urlData.publicUrl);
 
     return NextResponse.json({ url: urlData.publicUrl });
   } catch (error) {

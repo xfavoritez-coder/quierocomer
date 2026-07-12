@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/optimizeImage";
+import { warmImageCache } from "@/lib/warmImageCache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+    warmImageCache(urlData.publicUrl);
     await prisma.menuItem.update({ where: { id: menuItemId }, data: { imagenUrl: urlData.publicUrl } });
 
     return NextResponse.json({ success: true, url: urlData.publicUrl });
