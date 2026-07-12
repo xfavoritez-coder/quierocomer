@@ -20,6 +20,18 @@ export function getDishPhoto(dish: Dish, size: "thumb" | "card" | "detail" | "he
     return `${rawUrl}?${params[size] || params.card}`;
   }
 
+  // Supabase Storage: use image transformation endpoint (resize)
+  if (url.includes(".supabase.co/storage/v1/object/public/")) {
+    const baseUrl = url.split("?")[0]; // strip any existing query params
+    // Skip non-transformable formats
+    const ext = baseUrl.split(".").pop()?.toLowerCase();
+    if (ext === "svg" || ext === "gif") return url;
+    const widths: Record<string, number> = { thumb: 320, card: 500, detail: 900, hero: 1200 };
+    const qualities: Record<string, number> = { thumb: 75, card: 80, detail: 85, hero: 85 };
+    const renderUrl = baseUrl.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+    return `${renderUrl}?width=${widths[size] || 500}&quality=${qualities[size] || 80}&resize=cover`;
+  }
+
   return url;
 }
 
