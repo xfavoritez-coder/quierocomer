@@ -289,10 +289,6 @@ function DishSlide({
         ? `${raw}?w=900&q=85&fm=webp&fit=crop&crop=entropy&auto=compress`
         : `${raw}?w=500&q=80&fm=webp&fit=crop&crop=entropy&auto=compress`;
     }
-    if (url.includes(".supabase.co/storage/v1/object/public/")) {
-      const render = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-      return size === "detail" ? `${render}?width=900&quality=85` : `${render}?width=500&quality=80`;
-    }
     return url;
   };
   const [photoIndex, setPhotoIndex] = useState(0);
