@@ -15,7 +15,7 @@ import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelectorCompact from "./ViewSelectorCompact";
-import { groupDishesByCategory } from "./utils/dishHelpers";
+import { groupDishesByCategory, getDishPhoto } from "./utils/dishHelpers";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
@@ -117,9 +117,10 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
       {/* Photo or gradient fallback */}
       {dish.photos?.[0] ? (
         <img
-          src={dish.photos[0]}
+          src={getDishPhoto(dish, "hero") || dish.photos[0]}
           alt={dish.name}
-          loading="lazy"
+          loading="eager"
+          fetchPriority="high"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.5s ease" }}
         />
       ) : (
@@ -224,7 +225,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
   pEntry?: { autoRecommended?: boolean; reason?: string | null } | null;
 }) {
   const lang = useLang();
-  const photo = dish.photos?.[0];
+  const photo = getDishPhoto(dish, "card");
   const isRec = dish.tags?.includes("RECOMMENDED");
   const isNew = dish.tags?.includes("NEW");
   const d = dish as any;

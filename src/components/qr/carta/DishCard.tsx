@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Dish } from "@prisma/client";
 import SpicyStamp from "./SpicyStamp";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
+import { getDishPhoto } from "./utils/dishHelpers";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
@@ -33,7 +34,7 @@ function DishBadges({ dish }: { dish: Dish }) {
 /* ── BASIC ── */
 function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendationReason, isExploration, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
   const lang = useLang();
-  const photo = dish.photos?.[0];
+  const photo = getDishPhoto(dish, "thumb");
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   const inner = (
@@ -118,7 +119,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 /* ── PREMIUM CARD — foto arriba, info abajo ── */
 function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
   const lang = useLang();
-  const photo = dish.photos?.[0];
+  const photo = getDishPhoto(dish, "card");
   const isRec = dish.tags?.includes("RECOMMENDED");
   const [loaded, setLoaded] = useState(false);
 

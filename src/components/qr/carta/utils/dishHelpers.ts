@@ -7,17 +7,29 @@ export function isGeniePick(dish: Dish): boolean {
 export function getDishPhoto(dish: Dish, size: "thumb" | "card" | "detail" | "hero" = "card"): string | null {
   const url = dish.photos?.[0] ?? null;
   if (!url) return null;
-  // Unsplash URLs: apply Imgix params for the right size
+
+  // Unsplash: Imgix params
   if (url.includes("images.unsplash.com")) {
     const rawUrl = url.split("?")[0];
     const params: Record<string, string> = {
-      thumb: "w=400&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
-      card:  "w=600&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
-      detail:"w=1080&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
+      thumb: "w=320&q=75&fm=webp&fit=crop&crop=entropy&auto=compress",
+      card:  "w=500&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
+      detail:"w=900&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
       hero:  "w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
     };
     return `${rawUrl}?${params[size] || params.card}`;
   }
+
+  // Supabase Storage: use image transformation endpoint (resize + WebP)
+  if (url.includes(".supabase.co/storage/v1/object/public/")) {
+    const widths: Record<string, number> = { thumb: 320, card: 500, detail: 900, hero: 1200 };
+    const qualities: Record<string, number> = { thumb: 75, card: 80, detail: 85, hero: 85 };
+    const w = widths[size] || 500;
+    const q = qualities[size] || 80;
+    const renderUrl = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+    return `${renderUrl}?width=${w}&quality=${q}&format=webp`;
+  }
+
   return url;
 }
 

@@ -234,7 +234,9 @@ function ImpactHeroSlider({
           }}>
             {p ? (
               <img
-                src={p} alt={dish.name} loading="lazy"
+                src={p} alt={dish.name}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "auto"}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
               />
             ) : (
