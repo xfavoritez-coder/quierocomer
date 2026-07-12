@@ -291,7 +291,7 @@ function DishSlide({
     }
     if (url.includes(".supabase.co/storage/v1/object/public/")) {
       const render = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-      return size === "detail" ? `${render}?width=900&quality=85&format=webp` : `${render}?width=500&quality=80&format=webp`;
+      return size === "detail" ? `${render}?width=900&quality=85` : `${render}?width=500&quality=80`;
     }
     return url;
   };
