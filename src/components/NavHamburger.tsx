@@ -52,7 +52,7 @@ export default function NavHamburger() {
         <div className="nav-menu-panel" onClick={(e) => e.stopPropagation()}>
           <div className="nav-menu-header">
             <a href="/" onClick={() => setMenuOpen(false)} style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 600, color: "#E8DDC8", display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-              <img src="/landing/logo.png" alt="" style={{ height: 18, marginRight: -6 }} />
+              <img src="/logo.png" alt="" style={{ height: 24, width: 24, objectFit: "contain" }} />
               QuieroComer
             </a>
             <button className="nav-menu-close" onClick={() => setMenuOpen(false)}>
@@ -96,7 +96,7 @@ export default function NavHamburger() {
           {/* Footer */}
           <div style={{ padding: "16px 22px 24px", borderTop: "1px solid rgba(255,255,255,.04)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", marginBottom: 6 }}>
-              <img src="/landing/logo.png" alt="" style={{ height: 14, opacity: 0.4 }} />
+              <img src="/logo.png" alt="" style={{ height: 16, width: 16, objectFit: "contain", opacity: 0.4 }} />
               <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: "rgba(232,221,200,0.35)" }}>
                 QuieroComer<span style={{ color: "rgba(232,163,61,0.35)" }}>.cl</span>
               </span>

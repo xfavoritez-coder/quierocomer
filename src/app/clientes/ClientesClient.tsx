@@ -110,7 +110,7 @@ export default function ClientesClient({ clients, totalDishes, totalCategories, 
           color: "#F5EFE2", display: "flex", alignItems: "center", gap: 8,
           letterSpacing: "-.03em", textDecoration: "none",
         }}>
-          <img src="/landing/logo.png" alt="" style={{ height: 20, marginRight: -8 }} />
+          <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
           QuieroComer
         </a>
         <NavHamburger />

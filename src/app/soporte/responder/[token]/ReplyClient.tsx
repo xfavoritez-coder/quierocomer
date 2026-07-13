@@ -55,7 +55,7 @@ export default function ReplyClient({ token, thread }: { token: string; thread: 
     <div style={{ minHeight: "100vh", background: "#fefefe", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
       {/* Header */}
       <div style={{ borderBottom: "1px solid #f0ede6", padding: "16px 20px", display: "flex", alignItems: "center", gap: 10 }}>
-        <img src="/landing/logo.png" alt="" style={{ height: 22 }} />
+        <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
         <span style={{ fontFamily: "Georgia,serif", fontSize: 16, color: GOLD }}>QuieroComer</span>
       </div>
 

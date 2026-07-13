@@ -91,14 +91,6 @@ const features = [
     imgPos: "center 30%",
   },
   {
-    num: "07",
-    title: "Promociones visibles",
-    desc: "Destaca productos nuevos, ofertas del día o platos con mejor margen.",
-    tags: ["Promos", "Lanzamientos"],
-    img: "/funciones/promos.jpg",
-    imgPos: "center 30%",
-  },
-  {
     num: "08",
     title: "Analítica de la carta",
     desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso.",
@@ -120,14 +112,6 @@ const features = [
     title: "Carta imprimible profesional",
     desc: "Exporta tu carta como PDF en 4 diseños elegantes. En español, inglés o portugués. Lista para imprimir o compartir.",
     tags: ["PDF", "4 diseños", "ES / EN / PT", "Premium"],
-    img: "/funciones/carta-fisica.jpg",
-    imgPos: "center center",
-  },
-  {
-    num: "10",
-    title: "Complementa tu carta física",
-    desc: "No reemplaza tu carta impresa. La potencia con funciones inteligentes.",
-    tags: ["Física + QR", "Mejor experiencia"],
     img: "/funciones/carta-fisica.jpg",
     imgPos: "center center",
   },
@@ -155,7 +139,7 @@ section{position:relative}
 /* Nav */
 .fn-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)}
 .fn-logo{font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none}
-.fn-lamp{height:20px;width:auto;margin-right:-8px;object-fit:contain}
+.fn-lamp{height:26px;width:26px;object-fit:contain}
 
 /* Hero */
 .fn-hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:140px 0 100px}
@@ -248,7 +232,7 @@ function FuncionesInner() {
       {/* NAV */}
       <nav className="fn-nav">
         <a href="/" className="fn-logo">
-          <img src="/landing/logo.png" alt="" className="fn-lamp" />
+          <img src="/logo.png" alt="" className="fn-lamp" />
           QuieroComer
         </a>
         <NavHamburger />

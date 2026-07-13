@@ -410,7 +410,7 @@ export async function GET(req: NextRequest) {
                   purpose: "funnel_carta_ready",
                   html: `
                     <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
-                      ${r.logoUrl ? `<img src="${r.logoUrl}" alt="${r.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.com/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />`}
+                      ${r.logoUrl ? `<img src="${r.logoUrl}" alt="${r.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.com/logo.png" alt="QuieroComer" style="width:24px;height:24px;margin-bottom:24px;" />`}
                       <h1 style="font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px;">
                         ${ownerName}, tu carta está lista
                       </h1>

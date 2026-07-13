@@ -22,7 +22,7 @@ function buildReplyEmailHtml(msg: { name: string | null; email: string; message:
 <table width="520" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;width:100%;">
 
   <tr><td align="center" style="padding-bottom:24px;">
-    <img src="${BASE}/landing/logo.png" alt="QuieroComer" width="32" height="32" style="width:32px;height:32px;margin:0 auto 8px;display:block;" />
+    <img src="${BASE}/logo.png" alt="QuieroComer" width="32" height="32" style="width:32px;height:32px;margin:0 auto 8px;display:block;" />
     <span style="font-family:Georgia,serif;font-size:18px;color:${GOLD};">QuieroComer</span>
   </td></tr>
 

@@ -135,7 +135,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
   const { crmStatus, crmFollowUpAt, note } = body;
 
-  const current = await prisma.lead.findUnique({ where: { id }, select: { crmNotes: true } });
+  const current = await prisma.lead.findUnique({ where: { id }, select: { crmStatus: true, crmNotes: true, crmStatusHistory: true } });
   if (!current) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const existingNotes = Array.isArray(current.crmNotes) ? current.crmNotes : [];
@@ -143,18 +143,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ? [...existingNotes, { text: note, ts: new Date().toISOString() }]
     : existingNotes;
 
+  // Track status change in history
+  const existingHistory = Array.isArray(current.crmStatusHistory) ? current.crmStatusHistory : [];
+  const statusChanged = crmStatus !== undefined && crmStatus !== current.crmStatus;
+  const updatedHistory = statusChanged
+    ? [...existingHistory, { status: crmStatus, ts: new Date().toISOString() }]
+    : existingHistory;
+
   const updated = await prisma.lead.update({
     where: { id },
     data: {
       ...(crmStatus !== undefined && { crmStatus }),
       ...(crmFollowUpAt !== undefined && { crmFollowUpAt: crmFollowUpAt ? new Date(crmFollowUpAt) : null }),
       ...(note && { crmNotes: updatedNotes }),
+      ...(statusChanged && { crmStatusHistory: updatedHistory }),
     },
     select: {
       id: true,
       crmStatus: true,
       crmNotes: true,
       crmFollowUpAt: true,
+      crmStatusHistory: true,
     },
   });
 

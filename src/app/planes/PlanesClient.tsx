@@ -94,7 +94,7 @@ export default function PlanesClient() {
           color: "#E8DDC8", display: "flex", alignItems: "center", gap: 10,
           letterSpacing: ".02em", textDecoration: "none",
         }}>
-          <img src="/landing/logo.png" alt="" style={{ height: 20, marginRight: -8 }} />
+          <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
           QuieroComer
         </a>
         <NavHamburger />

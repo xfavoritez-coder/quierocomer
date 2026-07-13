@@ -363,7 +363,6 @@ export function renewalReminderEmailHtml(
 ): string {
   const dayLabel = daysLeft <= 1 ? "mañana" : `en ${daysLeft} días`;
   return wrap(`
-  <tr><td style="text-align:center;padding-bottom:6px;"><span style="font-size:28px;">📋</span></td></tr>
   <tr><td style="padding-bottom:8px;">
     <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;">Tu plan vence ${dayLabel}</h1>
   </td></tr>

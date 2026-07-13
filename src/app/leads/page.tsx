@@ -33,6 +33,7 @@ interface Lead {
   crmStatus: CrmStatus;
   crmNotes: Note[];
   crmFollowUpAt: string | null;
+  crmStatusHistory: { status: string; ts: string }[];
   city: string | null;
   restaurantPlan: string | null;
   restaurantPlanPrice: number | null;
@@ -218,6 +219,12 @@ function LeadPanel({ lead, onClose, onUpdate }: {
   if (lead.panelVisitedAt)timeline.push({ label: "Ingresó al panel por primera vez", ts: lead.panelVisitedAt, color: "#a78bfa" });
   if (lead.activatedAt)   timeline.push({ label: "Activó su cuenta", ts: lead.activatedAt, color: "#34d399" });
   for (const ev of extraActivity) timeline.push(ev);
+  // Status history
+  const statusHistory = Array.isArray(lead.crmStatusHistory) ? lead.crmStatusHistory : [];
+  for (const sh of statusHistory) {
+    const cfg = STATUS_CONFIG[sh.status as CrmStatus];
+    if (cfg) timeline.push({ label: `Estado → ${cfg.label}`, ts: sh.ts, color: cfg.color });
+  }
   timeline.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
   const cartaPreviewUrl = lead.generatedSlug ? `/qr/${lead.generatedSlug}` : lead.cartaUrl;

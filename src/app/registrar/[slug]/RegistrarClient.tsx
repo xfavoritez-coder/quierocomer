@@ -141,7 +141,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
       {/* Header */}
       <header className="rg-header">
         <a className="rg-brand" href="/">
-          <img src="/landing/logo.png" alt="" style={{ height: 16 }} />
+          <img src="/logo.png" alt="" style={{ height: 20, width: 20, objectFit: "contain" }} />
           QuieroComer
         </a>
         <NavHamburger />

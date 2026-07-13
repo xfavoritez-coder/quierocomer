@@ -535,37 +535,6 @@ export default function MiRestaurantePage() {
 
 
 
-      {/* ── Opciones de carta ── */}
-      <Card title="Opciones de carta" icon={Sparkles}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 2px" }}>Asistente Genio ✨</p>
-            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", margin: 0 }}>Muestra el botón flotante de recomendaciones en la carta digital</p>
-          </div>
-          <button
-            onClick={() => {
-              const next = !genioFabEnabled;
-              setGenioFabEnabled(next);
-              save({ genioFabEnabled: next });
-            }}
-            style={{
-              flexShrink: 0, width: 44, height: 24, borderRadius: 12, cursor: "pointer",
-              border: "none", padding: 2,
-              background: genioFabEnabled ? GOLD : "var(--adm-input-border)",
-              transition: "background 0.2s",
-              position: "relative",
-            }}
-          >
-            <span style={{
-              display: "block", width: 20, height: 20, borderRadius: "50%", background: "#fff",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-              transform: genioFabEnabled ? "translateX(20px)" : "translateX(0)",
-              transition: "transform 0.2s",
-            }} />
-          </button>
-        </div>
-      </Card>
-
       {/* ── Facturación ── */}
       <div style={{ marginBottom: 16 }}>
         <FacturacionPage />

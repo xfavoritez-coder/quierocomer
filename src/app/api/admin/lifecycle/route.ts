@@ -8,9 +8,21 @@ import {
   type LifecycleStage,
 } from "@/lib/admin/lifecycle";
 
+// In-memory cache — valid for 3 minutes, survives within same serverless instance
+let _cache: { entries: any[]; stats: any; ts: number } | null = null;
+const CACHE_TTL = 3 * 60 * 1000;
+
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
+
+  const url = new URL(req.url);
+  const bust = url.searchParams.get("bust") === "1";
+
+  // Serve from cache if available and not busting
+  if (!bust && _cache && Date.now() - _cache.ts < CACHE_TTL) {
+    return NextResponse.json({ entries: _cache.entries, stats: _cache.stats, cached: true });
+  }
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -311,6 +323,16 @@ export async function GET(req: NextRequest) {
     tasaActivacion,
     stageCounts,
   };
+
+  // Default sort: lastActivity desc (most recently active first)
+  entries.sort((a, b) => {
+    const ta = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
+    const tb = b.lastActivity ? new Date(b.lastActivity).getTime() : 0;
+    return tb - ta;
+  });
+
+  // Cache full result
+  _cache = { entries, stats, ts: Date.now() };
 
   return NextResponse.json({ entries, stats });
 }

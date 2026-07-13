@@ -204,7 +204,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
       <nav className="activar-nav">
         <a className="logo" href="/">
-          <img src="/landing/logo.png" alt="" />
+          <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
           QuieroComer
         </a>
         <NavHamburger />

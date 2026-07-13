@@ -64,7 +64,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
         {/* Left: Info + QR */}
         <div style={styles.left}>
           <a href="https://quierocomer.com" target="_blank" rel="noopener" style={{ ...styles.badge, textDecoration: "none", cursor: "pointer" }}>
-            <img src="/landing/logo.png" alt="" style={{ height: 18, width: "auto" }} />
+            <img src="/logo.png" alt="" style={{ height: 24, width: 24, objectFit: "contain" }} />
             <span style={styles.badgeText}>QuieroComer</span>
           </a>
 

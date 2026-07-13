@@ -114,12 +114,16 @@ export default function LifecyclePage() {
   const [visibleCount, setVisibleCount] = useState(30);
   useEffect(() => { setVisibleCount(30); }, [filter, search]);
 
-  useEffect(() => {
-    fetch("/api/admin/lifecycle").then(r => r.json()).then(data => {
+  const [cached, setCached] = useState(false);
+  const loadData = (bust = false) => {
+    setLoading(true);
+    fetch(`/api/admin/lifecycle${bust ? "?bust=1" : ""}`).then(r => r.json()).then(data => {
       setEntries(data.entries || []);
       setStats(data.stats || null);
+      setCached(!!data.cached);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  };
+  useEffect(() => { loadData(); }, []);
 
   const handleExpand = (id: string) => {
     if (expanded === id) { setExpanded(null); return; }
@@ -201,11 +205,16 @@ export default function LifecyclePage() {
         }
       `}</style>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
-          Lifecycle
-        </h1>
-        <p style={{ color: "#888", fontSize: 13, margin: 0 }}>Vista unificada de leads, clientes y su estado actual</p>
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
+            Lifecycle
+          </h1>
+          <p style={{ color: "#888", fontSize: 13, margin: 0 }}>Vista unificada de leads, clientes y su estado actual{cached && <span style={{ color: "#F4A623", marginLeft: 8, fontSize: 11 }}>· desde caché</span>}</p>
+        </div>
+        <button onClick={() => loadData(true)} disabled={loading} style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.78rem", cursor: loading ? "default" : "pointer", opacity: loading ? 0.5 : 1 }}>
+          {loading ? "Cargando..." : "↻ Actualizar"}
+        </button>
       </div>
 
       {/* Stats cards */}

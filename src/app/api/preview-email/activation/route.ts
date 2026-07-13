@@ -47,7 +47,7 @@ export function activationWelcomeEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:16px">
   <a href="https://quierocomer.com" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-    <td style="vertical-align:middle;padding-right:3px;"><img src="https://quierocomer.com/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+    <td style="vertical-align:middle;padding-right:3px;"><img src="https://quierocomer.com/logo.png" alt="" width="24" height="24" style="width:24px;height:24px;display:block;" /></td>
     <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:#e8930a;">QuieroComer</span></td>
   </tr></table></a>
 </td></tr>

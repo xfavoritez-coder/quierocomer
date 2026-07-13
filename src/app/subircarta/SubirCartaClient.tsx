@@ -371,7 +371,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
       <main className="page">
         <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "20px clamp(22px,4vw,64px)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(9,8,6,.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
           <a href="/landing" style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 600, color: "var(--cream)", display: "flex", alignItems: "center", gap: 10, letterSpacing: ".02em", textDecoration: "none" }}>
-            <img src="/landing/logo.png" alt="" style={{ height: 20, width: "auto", marginRight: -8 }} />
+            <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
             QuieroComer
           </a>
           <NavHamburger />

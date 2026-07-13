@@ -39,8 +39,25 @@ interface Props {
 
 type Phase = "form" | "done";
 
+function isLightColor(hex: string): boolean {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  // Perceived luminance
+  return (r * 299 + g * 587 + b * 114) / 1000 > 155;
+}
+
+function getAccentTextColor(): string {
+  if (typeof window === "undefined") return "white";
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--carta-accent").trim();
+  if (raw && raw.startsWith("#") && raw.length >= 7) return isLightColor(raw) ? "#111" : "white";
+  return "white";
+}
+
 export default function BirthdayModal({ restaurantId, restaurantName, birthdayPerk, existingUser, bannerVariantId, abVariant, logoUrl, onClose, onSuccess, onNameSaved }: Props) {
   const lang = useLang();
+  const accentTextColor = getAccentTextColor();
   // Form state
   const [email, setEmail] = useState(existingUser?.email || "");
   const [userName, setUserName] = useState(existingUser?.name || "");
@@ -393,7 +410,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                 onClick={handleSubmit}
                 className="active:scale-[0.98] transition-transform"
                 style={{
-                  width: "100%", marginTop: 4, background: "var(--carta-accent, #F4A623)", color: "white",
+                  width: "100%", marginTop: 4, background: "var(--carta-accent, #F4A623)", color: accentTextColor,
                   borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
                   border: "none", fontFamily: "inherit", cursor: "pointer",
                   boxShadow: "0 4px 14px rgba(244,166,35,0.3)",

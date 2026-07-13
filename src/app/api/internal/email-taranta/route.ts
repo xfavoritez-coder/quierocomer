@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
   <tr><td align="center" style="padding-bottom:24px;">
     <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/landing/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/logo.png" alt="" width="24" height="24" style="width:24px;height:24px;display:block;" /></td>
       <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
     </tr></table></a>
   </td></tr>

@@ -282,9 +282,10 @@ function DishSlide({
   }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
   /** Optimize image URLs for detail/card view */
-  const photoUrl = (url: string, size: "card" | "detail" = "detail") => {
+  const photoUrl = (url: string, size: "card" | "detail" | "blur" = "detail") => {
     if (url.includes("images.unsplash.com")) {
       const raw = url.split("?")[0];
+      if (size === "blur") return `${raw}?w=40&q=10&fm=webp&fit=crop&crop=entropy&auto=compress`;
       return size === "detail"
         ? `${raw}?w=900&q=85&fm=webp&fit=crop&crop=entropy&auto=compress`
         : `${raw}?w=500&q=80&fm=webp&fit=crop&crop=entropy&auto=compress`;
@@ -294,6 +295,7 @@ function DishSlide({
       const ext = baseUrl.split(".").pop()?.toLowerCase();
       if (ext !== "svg" && ext !== "gif") {
         const renderUrl = baseUrl.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+        if (size === "blur") return `${renderUrl}?width=40&quality=10&resize=cover`;
         const w = size === "detail" ? 900 : 500;
         const q = size === "detail" ? 85 : 80;
         return `${renderUrl}?width=${w}&quality=${q}&resize=cover`;
@@ -364,10 +366,10 @@ function DishSlide({
         )}
         {photos.length > 0 && (
           <img
-            src={photoUrl(photos[photoIndex])}
-            alt={dish.name}
-            loading="lazy"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+            src={photoUrl(photos[photoIndex], "blur")}
+            alt=""
+            loading="eager"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "blur(12px)", transform: "scale(1.08)" }}
           />
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}

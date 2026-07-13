@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
         crmStatus: true,
         crmNotes: true,
         crmFollowUpAt: true,
+        crmStatusHistory: true,
         city: true,
       },
     }),

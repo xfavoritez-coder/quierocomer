@@ -39,8 +39,8 @@ const I18N = {
     hiwTitle: "Transformamos tu carta en una carta QR",
     hiwTitleAccent: "inteligente",
     steps: [
-      { h: "Subes gratis tu carta actual", li: "PDF, link QR, tu web o fotos del menú" },
-      { h: "La transformamos online", li: "En segundos con IA" },
+      { h: "Sube tu carta actual", li: "Link, PDF o fotos" },
+      { h: "La transformamos online", li: "En segundos" },
       { h: "Te mostramos como queda", li: "Creamos algo único para ti y tu restaurante" },
     ],
     funcionesEyebrow: "Funciones inteligentes",
@@ -51,7 +51,6 @@ const I18N = {
       { icon: "🧞", title: "Sugerencias inteligentes", desc: "Recomienda entradas, tragos, acompañamientos o postres mientras el cliente decide." },
       { icon: "📊", title: "Analítica de la carta", desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso." },
       { icon: "👥", title: "Clientes ilimitados", desc: "Captura emails y preferencias de tus clientes sin límite. Exporta y usa donde quieras." },
-      { icon: "🏷️", title: "Promociones visibles", desc: "Muestra promociones, productos nuevos o platos estratégicos directamente en tu carta QR." },
       { icon: "🌍", title: "Varios idiomas", desc: "Facilita la experiencia de turistas y clientes extranjeros con tu carta traducida." },
     ],
     verFunciones: "Ver todas las funciones →",

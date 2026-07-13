@@ -39,7 +39,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
       <nav className="exito-nav">
         <a className="exito-logo" href="/">
-          <img src="/landing/logo.png" alt="" style={{ height: 16 }} />
+          <img src="/logo.png" alt="" style={{ height: 20, width: 20, objectFit: "contain" }} />
           QuieroComer
         </a>
         <NavHamburger />
