@@ -103,6 +103,8 @@ export default function LifecyclePage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [visibleCount, setVisibleCount] = useState(30);
+  useEffect(() => { setVisibleCount(30); }, [filter, search]);
 
   useEffect(() => {
     fetch("/api/admin/lifecycle").then(r => r.json()).then(data => {
@@ -148,6 +150,8 @@ export default function LifecyclePage() {
     });
     return list;
   }, [entries, filter, search, sortBy, sortDir]);
+
+  const displayed = search.trim() ? filtered : filtered.slice(0, visibleCount);
 
   const statCards = stats ? [
     { label: "Total", value: stats.total, color: "#fff" },
@@ -235,7 +239,7 @@ export default function LifecyclePage() {
           ))}
         </div>
 
-        {filtered.map(entry => {
+        {displayed.map(entry => {
           const ownerName = entry.owner?.name || entry.leadOwner || null;
           const ownerEmail = entry.owner?.email || entry.leadEmail || null;
           const ownerWa = entry.owner?.whatsapp || entry.leadWhatsapp || null;
@@ -453,6 +457,16 @@ export default function LifecyclePage() {
 
         {filtered.length === 0 && (
           <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 14 }}>Sin resultados</div>
+        )}
+        {!search.trim() && filtered.length > visibleCount && (
+          <div style={{ padding: "14px 16px", textAlign: "center", borderTop: "1px solid #2a2a2a" }}>
+            <button
+              onClick={() => setVisibleCount(v => v + 30)}
+              style={{ padding: "8px 20px", background: "#222", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.8rem", cursor: "pointer" }}
+            >
+              Ver más — {filtered.length - visibleCount} restantes
+            </button>
+          </div>
         )}
       </div>
     </div>
