@@ -1,4 +1,6 @@
 "use client";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 export type CartaFilterKey = "popular" | "veggie" | "estrella";
 
@@ -9,13 +11,15 @@ interface Props {
   compact?: boolean;
 }
 
-const FILTERS: { key: CartaFilterKey; emoji: string; label: string }[] = [
-  { key: "popular",  emoji: "🔥", label: "Popular" },
-  { key: "estrella", emoji: "⭐", label: "Recomendados" },
-  { key: "veggie",   emoji: "🌿", label: "Veggie" },
-];
-
 export default function CartaFilterBar({ active, onToggle, compact = false }: Props) {
+  const lang = useLang();
+
+  const FILTERS: { key: CartaFilterKey; emoji: string; label: string }[] = [
+    { key: "popular",  emoji: "🔥", label: t(lang, "filterPopular") },
+    { key: "estrella", emoji: "⭐", label: t(lang, "filterRecommended") },
+    { key: "veggie",   emoji: "🌿", label: t(lang, "filterVeggie") },
+  ];
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: compact ? 6 : 8 }}>
       {compact && (
@@ -23,7 +27,7 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
           fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
           color: "var(--carta-text-muted)", flexShrink: 0, textTransform: "uppercase",
         }}>
-          Filtrar
+          {t(lang, "filters")}
         </span>
       )}
       <div style={{
