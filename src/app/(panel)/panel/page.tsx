@@ -42,7 +42,7 @@ const DEMO_DATA: DashData = {
   genioToday: 7,
   todayAvgDuration: 82,
   weekGenio: { starts: 38, dietMarked: 32, completed: 28, completionRate: 74, dietRate: 84 },
-  filterUsage: { popular: 14, estrella: 9, veggie: 6 },
+  filterUsage: { popular: 14, estrella: 9, veggie: 6, "gluten-free": 4 },
   weekDietDistribution: [{ type: "omnivore", count: 45 }, { type: "vegetarian", count: 12 }, { type: "vegan", count: 6 }],
   weekRestrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
 };
@@ -60,7 +60,7 @@ interface DashData {
   weekGenio?: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
   weekDietDistribution?: { type: string; count: number }[];
   weekRestrictionsList?: { name: string; count: number }[];
-  filterUsage?: { popular: number; estrella: number; veggie: number };
+  filterUsage?: { popular: number; estrella: number; veggie: number; "gluten-free"?: number };
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -425,14 +425,15 @@ export default function PanelDashboard() {
 
 
       {/* ═══ Filtros usados ═══ */}
-      {data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie) > 0 && (() => {
+      {data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
         const fu = data.filterUsage!;
-        const total = fu.popular + fu.estrella + fu.veggie;
+        const total = fu.popular + fu.estrella + fu.veggie + (fu["gluten-free"] || 0);
         const filters = [
-          { key: "popular",  emoji: "🔥", label: "Popular",       count: fu.popular },
-          { key: "estrella", emoji: "⭐", label: "Recomendados",  count: fu.estrella },
-          { key: "veggie",   emoji: "🌿", label: "Veggie",        count: fu.veggie },
-        ].sort((a, b) => b.count - a.count);
+          { key: "popular",     emoji: "🔥", label: "Popular",       count: fu.popular },
+          { key: "estrella",    emoji: "⭐", label: "Recomendados",  count: fu.estrella },
+          { key: "veggie",      emoji: "🌿", label: "Veggie",        count: fu.veggie },
+          { key: "gluten-free", emoji: "🌾", label: "Sin gluten",    count: fu["gluten-free"] || 0 },
+        ].filter(f => f.count > 0).sort((a, b) => b.count - a.count);
         return (
           <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
             <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>🎛️ Filtros usados esta semana</h3>

@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
         prisma.session.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, startedAt: dateFilter }, _count: { guestId: true }, orderBy: { _count: { guestId: "desc" } }, take: 20 }),
         prisma.statEvent.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
         prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
-        prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+        prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie", "gluten-free"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
       ]);
 
       const uniqueGuests = uniqueGuestsCount as number;
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
       const restMap = Object.fromEntries(restRecords.map(r => [r.id, r.name]));
 
       // Filter usage
-      const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0 };
+      const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0, "gluten-free": 0 };
       const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number }> = {};
       for (const row of filterUsageRaw as any[]) {
         const fv = row.query as string | undefined;
@@ -129,15 +129,15 @@ export async function GET(req: NextRequest) {
         if (!fv || !(fv in filterUsage)) continue;
         filterUsage[fv] += row._count.id;
         if (rid) {
-          if (!filterByRestaurantMap[rid]) filterByRestaurantMap[rid] = { popular: 0, estrella: 0, veggie: 0 };
-          filterByRestaurantMap[rid][fv as "popular" | "estrella" | "veggie"] += row._count.id;
+          if (!filterByRestaurantMap[rid]) filterByRestaurantMap[rid] = { popular: 0, estrella: 0, veggie: 0, "gluten-free": 0 };
+          (filterByRestaurantMap[rid] as any)[fv] += row._count.id;
         }
       }
       const filterRestIds = Object.keys(filterByRestaurantMap).filter(id => !restMap[id]);
       const extraRests = filterRestIds.length ? await prisma.restaurant.findMany({ where: { id: { in: filterRestIds } }, select: { id: true, name: true } }) : [];
       for (const r of extraRests) restMap[r.id] = r.name;
       const filterUsageByRestaurant = Object.entries(filterByRestaurantMap)
-        .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie }))
+        .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie + (counts["gluten-free"] || 0) }))
         .sort((a, b) => b.total - a.total);
 
       return NextResponse.json({
@@ -256,7 +256,7 @@ export async function GET(req: NextRequest) {
       // Period avg duration (via aggregate, not fetching 10k rows)
       prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
       // Filter usage this week (popular, estrella/recomendados, veggie) — grouped by restaurantId + filter
-      prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+      prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie", "gluten-free"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
     ]);
 
     const uniqueGuests = uniqueGuestsCount as number;
@@ -350,7 +350,7 @@ export async function GET(req: NextRequest) {
     const avgDurationSec = Math.round((periodDurationAgg._avg?.durationMs || 0) / 1000);
 
     // Aggregate filter clicks by restaurant + query field (popular | estrella | veggie)
-    const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0 };
+    const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0, "gluten-free": 0 };
     const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number }> = {};
     for (const row of filterUsageRaw as any[]) {
       const fv = row.query as string | undefined;
@@ -369,7 +369,7 @@ export async function GET(req: NextRequest) {
       : [];
     for (const r of extraRests) restMap[r.id] = r.name;
     const filterUsageByRestaurant = Object.entries(filterByRestaurantMap)
-      .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie }))
+      .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie + (counts["gluten-free"] || 0) }))
       .sort((a, b) => b.total - a.total);
     const weekAvgDurationSec = Math.round((weekAvgDuration._avg?.durationMs || 0) / 1000);
 
