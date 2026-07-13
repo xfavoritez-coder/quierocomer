@@ -21,10 +21,28 @@ export async function GET(req: NextRequest) {
       id: true, name: true, plan: true, subscriptionStatus: true,
       currentPeriodEnd: true, lastPaymentAt: true, trialEndsAt: true,
       billingExempt: true, mpPayerEmail: true, customPlanPriceNet: true,
-      flowSubscriptionId: true,
+      flowPlanId: true, flowSubscriptionId: true,
     },
     orderBy: { currentPeriodEnd: "desc" },
   });
+
+  const restaurantIds = restaurants.map(r => r.id);
+
+  // Detect manual payments via PanelActivity log
+  const manualPaymentLogs = await prisma.panelActivity.findMany({
+    where: { restaurantId: { in: restaurantIds }, action: "manual_payment" },
+    select: { restaurantId: true, details: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const manualMethodByRestaurant = new Map<string, string>();
+  for (const log of manualPaymentLogs) {
+    if (!manualMethodByRestaurant.has(log.restaurantId)) {
+      const d = log.details as any;
+      const label = d?.methodLabel || d?.method || "Manual";
+      manualMethodByRestaurant.set(log.restaurantId, label);
+    }
+  }
 
   const now = Date.now();
 
@@ -35,6 +53,18 @@ export async function GET(req: NextRequest) {
     const daysLeft = r.currentPeriodEnd
       ? Math.ceil((new Date(r.currentPeriodEnd).getTime() - now) / 86400000)
       : null;
+
+    let method: string;
+    if (manualMethodByRestaurant.has(r.id)) {
+      method = manualMethodByRestaurant.get(r.id)!;
+    } else if (r.flowPlanId || r.flowSubscriptionId) {
+      method = "Flow";
+    } else if (r.mpPayerEmail) {
+      method = "MercadoPago";
+    } else {
+      method = "—";
+    }
+
     return {
       id: r.id,
       name: r.name,
@@ -47,7 +77,7 @@ export async function GET(req: NextRequest) {
       daysLeft,
       netAmount: net,
       grossAmount: gross,
-      method: r.flowSubscriptionId ? "Flow" : r.mpPayerEmail ? "MercadoPago" : "Manual",
+      method,
     };
   });
 
