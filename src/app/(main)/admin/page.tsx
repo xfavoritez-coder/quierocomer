@@ -324,13 +324,8 @@ export default function AdminDashboard() {
 
       {/* ── Stat cards ── */}
       <div className="adm-stat-cards" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <StatCard icon="👥" label="Sesiones" value={data.totalSessions} />
         <StatCard icon="✨" label="Visitantes únicos" value={data.uniqueGuests} accent={GOLD} />
         <StatCard icon="🎂" label="Cumpleaños" value={data.birthdaysSaved} accent="#f472b6" />
-        <StatCard icon="⏱" label="Duración prom." value={fmtDuration(data.avgDurationSec)} />
-        {data.totalSessions > 0 && data.uniqueGuests > 0 && (
-          <StatCard icon="📊" label="Sesiones / usuario" value={(data.totalSessions / Math.max(data.uniqueGuests, 1)).toFixed(1)} />
-        )}
       </div>
 
       {/* ── Rankings grid ── */}
