@@ -243,66 +243,75 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4.7 Recordatorio de renovación (3 días antes de que venza el período)
-    let renewalRemindersSent = 0;
-    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-    const renewalCandidates = await prisma.restaurant.findMany({
+    // Helper: detect payment method for a set of restaurant IDs
+    async function detectPaymentMethods(restaurantIds: string[]): Promise<Map<string, "transfer" | "online">> {
+      const manualLogs = await prisma.panelActivity.findMany({
+        where: { restaurantId: { in: restaurantIds }, action: "manual_payment" },
+        select: { restaurantId: true },
+        distinct: ["restaurantId"],
+      });
+      const hasManual = new Set(manualLogs.map((l: any) => l.restaurantId));
+      const map = new Map<string, "transfer" | "online">();
+      for (const id of restaurantIds) map.set(id, hasManual.has(id) ? "transfer" : "online");
+      return map;
+    }
+
+    // 4.7 Correo "vence hoy" — enviado el mismo día que expira el período
+    let expiryTodayEmailsSent = 0;
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(now); endOfToday.setHours(23, 59, 59, 999);
+    const expiringToday = await prisma.restaurant.findMany({
       where: {
         subscriptionStatus: "ACTIVE",
-        currentPeriodEnd: { gt: now, lte: threeDaysFromNow },
+        currentPeriodEnd: { gte: startOfToday, lte: endOfToday },
         billingExempt: false,
-        mpSubscriptionId: null, // Solo los que NO tienen suscripción automática de MP
+        mpSubscriptionId: null,
         plan: { not: "FREE" },
       },
       select: {
-        id: true, name: true, slug: true, plan: true, customPlanPriceNet: true,
-        currentPeriodEnd: true,
-        owner: { select: { email: true, name: true } },
+        id: true, name: true, plan: true,
+        owner: { select: { id: true, email: true, name: true } },
       },
     });
-
-    if (renewalCandidates.length > 0) {
-      const { sendAdminEmail, renewalReminderEmailHtml } = await import("@/lib/email/sendAdminEmail");
-      const { FLOW_PLANS, grossOf, PLAN_LABELS } = await import("@/lib/billing/plans-config");
+    if (expiringToday.length > 0) {
+      const { sendAdminEmail, planExpiryTodayEmailHtml } = await import("@/lib/email/sendAdminEmail");
+      const { buildAutoLoginUrl } = await import("@/lib/email/autoLoginUrl");
+      const { PLAN_LABELS } = await import("@/lib/billing/plans-config");
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      const paymentMethods = await detectPaymentMethods(expiringToday.map(r => r.id));
+      const expiryDate = now.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 
-      for (const r of renewalCandidates) {
+      for (const r of expiringToday) {
         if (!r.owner?.email) continue;
-        // Check if we already sent a reminder for this period
         const alreadySent = await prisma.emailLog.findFirst({
-          where: { to: r.owner.email, purpose: "renewal_reminder", createdAt: { gte: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) } },
+          where: { to: r.owner.email, purpose: "expiry_today", createdAt: { gte: startOfToday } },
         });
         if (alreadySent) continue;
 
-        const daysLeft = Math.max(1, Math.ceil(((r.currentPeriodEnd?.getTime() || now.getTime()) - now.getTime()) / (24 * 60 * 60 * 1000)));
-        const planKey = r.plan as "SILVER" | "GOLD" | "PREMIUM";
-        const amountNet = r.customPlanPriceNet ?? FLOW_PLANS[planKey]?.amountNet ?? 0;
-        const amountGross = grossOf(amountNet);
-        const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
-        const planLabel = PLAN_LABELS[planKey] || planKey;
-
+        const paymentMethod = paymentMethods.get(r.id) ?? "online";
+        const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante";
         try {
           await sendAdminEmail({
             to: r.owner.email,
-            subject: `${r.name} · Tu plan ${planLabel} vence ${daysLeft <= 1 ? "mañana" : `en ${daysLeft} días`}`,
-            html: renewalReminderEmailHtml(firstName, r.name, planLabel, `$${amountGross.toLocaleString("es-CL")} CLP`, daysLeft, `${baseUrl}/panel/mi-restaurante`),
-            purpose: "renewal_reminder",
+            subject: `${r.name} · Tu plan ${planLabel} vence hoy, ${expiryDate}`,
+            html: planExpiryTodayEmailHtml({ restaurantName: r.name, planLabel, expiryDate, panelLink, paymentMethod }),
+            purpose: "expiry_today",
           });
-          renewalRemindersSent++;
-        } catch (e) {
-          console.error("[diario] renewal reminder error:", e);
-        }
+          expiryTodayEmailsSent++;
+        } catch (e) { console.error("[diario] expiry_today email error:", e); }
       }
     }
 
-    // 4.8 Downgrade planes ACTIVE cuyo período venció (sin suscripción automática)
+    // 4.8 Downgrade planes ACTIVE cuyo período venció hace más de 3 días (gracia de 3 días)
     let activeExpiredDowngraded = 0;
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const expiredActive = await prisma.restaurant.findMany({
       where: {
         subscriptionStatus: "ACTIVE",
-        currentPeriodEnd: { lt: now },
+        currentPeriodEnd: { lt: threeDaysAgo },
         billingExempt: false,
-        mpSubscriptionId: null, // Solo los que NO tienen suscripción automática
+        mpSubscriptionId: null,
         plan: { not: "FREE" },
       },
       select: { id: true, name: true, slug: true },
@@ -314,7 +323,54 @@ export async function GET(req: NextRequest) {
       });
       activeExpiredDowngraded = expiredActive.length;
       for (const r of expiredActive) {
-        console.log(`[diario] Downgraded expired active plan: ${r.name} (${r.slug})`);
+        console.log(`[diario] Downgraded expired active plan (after grace): ${r.name} (${r.slug})`);
+      }
+    }
+
+    // 4.9 Correo "se desactiva mañana" — día +2 de gracia (último día antes del downgrade)
+    let graceWarningEmailsSent = 0;
+    const graceDay2Start = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); graceDay2Start.setHours(0, 0, 0, 0);
+    const graceDay2End = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); graceDay2End.setHours(23, 59, 59, 999);
+    const inGracePeriod = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "ACTIVE",
+        currentPeriodEnd: { gte: graceDay2Start, lte: graceDay2End },
+        billingExempt: false,
+        mpSubscriptionId: null,
+        plan: { not: "FREE" },
+      },
+      select: {
+        id: true, name: true, plan: true,
+        owner: { select: { id: true, email: true, name: true } },
+      },
+    });
+    if (inGracePeriod.length > 0) {
+      const { sendAdminEmail, graceExpiryWarningEmailHtml } = await import("@/lib/email/sendAdminEmail");
+      const { buildAutoLoginUrl } = await import("@/lib/email/autoLoginUrl");
+      const { PLAN_LABELS } = await import("@/lib/billing/plans-config");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      const paymentMethods = await detectPaymentMethods(inGracePeriod.map(r => r.id));
+      const expiryDate = now.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+
+      for (const r of inGracePeriod) {
+        if (!r.owner?.email) continue;
+        const alreadySent = await prisma.emailLog.findFirst({
+          where: { to: r.owner.email, purpose: "grace_expiry_warning", createdAt: { gte: graceDay2Start } },
+        });
+        if (alreadySent) continue;
+
+        const paymentMethod = paymentMethods.get(r.id) ?? "online";
+        const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante";
+        try {
+          await sendAdminEmail({
+            to: r.owner.email,
+            subject: `⚠️ ${r.name} · Tu carta QR se desactiva mañana`,
+            html: graceExpiryWarningEmailHtml({ restaurantName: r.name, planLabel, expiryDate, panelLink, paymentMethod }),
+            purpose: "grace_expiry_warning",
+          });
+          graceWarningEmailsSent++;
+        } catch (e) { console.error("[diario] grace_expiry_warning email error:", e); }
       }
     }
 
@@ -411,8 +467,9 @@ export async function GET(req: NextRequest) {
           trialRemindersSent,
           trialsExpired,
           canceledDowngraded,
-          renewalRemindersSent,
+          expiryTodayEmailsSent,
           activeExpiredDowngraded,
+          graceWarningEmailsSent,
           translationsBackfilled,
           automations: automationResults,
           dailySnapshot: {
@@ -433,6 +490,7 @@ export async function GET(req: NextRequest) {
       expiredTokensCleaned: expiredTokens.count,
       trialRemindersSent,
       trialsExpired,
+      activeExpiredDowngraded,
       translationsBackfilled,
     });
   } catch (error) {

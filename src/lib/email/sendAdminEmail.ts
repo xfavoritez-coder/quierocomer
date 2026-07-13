@@ -73,7 +73,7 @@ function wrap(content: string): string {
 
   <tr><td align="center" style="padding-bottom:24px;">
     <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
       <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
     </tr></table></a>
   </td></tr>
@@ -270,7 +270,7 @@ export function cartaListaSimpleEmailHtml({
 
   <tr><td align="center" style="padding-bottom:24px;">
     <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
       <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
     </tr></table></a>
   </td></tr>
@@ -405,7 +405,7 @@ export function trialEndingSoonEmailHtml(
 
   <tr><td align="center" style="padding-bottom:24px;">
     <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
       <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
     </tr></table></a>
   </td></tr>
@@ -458,6 +458,96 @@ export function trialEndingSoonEmailHtml(
 </body></html>`;
 }
 
+const TRANSFER_BLOCK = `
+  <tr><td style="padding-bottom:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f0e8;border:1px solid #e8dcc4;border-radius:12px;">
+      <tr><td style="padding:14px 18px;">
+        <div style="font-size:10px;color:#92400e;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Realiza tu transferencia hoy</div>
+        <div style="font-size:13px;color:#5a3e1b;line-height:2;">
+          Banco: <strong>Santander</strong><br/>
+          Tipo: <strong>Cuenta corriente</strong><br/>
+          N°: <strong>70929597</strong><br/>
+          Nombre: <strong>Jaime Rodriguez</strong><br/>
+          RUT: <strong>17.102.959-7</strong><br/>
+          Email: <strong>favoritez@gmail.com</strong>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="font-size:12px;color:#b8a888;text-align:center;padding-top:4px;">Una vez recibida la transferencia activamos tu plan de inmediato.</td></tr>`;
+
+/**
+ * Same-day expiry email (sent when currentPeriodEnd = today).
+ * paymentMethod: "transfer" → shows bank data only
+ *                "online"   → shows auto-login CTA button
+ */
+export function planExpiryTodayEmailHtml({
+  restaurantName,
+  planLabel,
+  expiryDate,
+  panelLink,
+  paymentMethod,
+}: {
+  restaurantName: string;
+  planLabel: string;
+  expiryDate: string;
+  panelLink: string;
+  paymentMethod: "transfer" | "online";
+}): string {
+  const actionBlock = paymentMethod === "transfer"
+    ? TRANSFER_BLOCK
+    : `<tr><td style="padding-bottom:8px;">${btn(panelLink, "Renovar mi plan →")}</td></tr>`;
+
+  return wrap(`
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">
+      Tu plan vence hoy, ${expiryDate}
+    </h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.7;padding-bottom:24px;text-align:center;">
+    El plan ${planLabel} de <strong>${restaurantName}</strong> vence hoy. Renueva antes de la medianoche para seguir sin interrupciones.
+  </td></tr>
+  ${actionBlock}
+  `);
+}
+
+/**
+ * Grace period expiry warning email (sent on grace day +2: "se desactiva mañana").
+ * paymentMethod: "transfer" → shows bank data only (no CTA button)
+ *                "online"   → shows CTA button only (no bank data)
+ */
+export function graceExpiryWarningEmailHtml({
+  restaurantName,
+  planLabel,
+  expiryDate,
+  panelLink,
+  paymentMethod,
+}: {
+  restaurantName: string;
+  planLabel: string;
+  /** Formatted date string, e.g. "16 de julio" */
+  expiryDate: string;
+  panelLink: string;
+  paymentMethod: "transfer" | "online";
+}): string {
+  const actionBlock = paymentMethod === "transfer"
+    ? TRANSFER_BLOCK
+    : `<tr><td style="padding-bottom:8px;">${btn(panelLink, "Renovar mi plan →")}</td></tr>`;
+
+  return wrap(`
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">
+      Tu carta QR se desactiva mañana
+    </h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.7;padding-bottom:24px;text-align:center;">
+    El plan ${planLabel} de <strong>${restaurantName}</strong> vence hoy, ${expiryDate}. Renueva antes de la medianoche para no perder nada.
+  </td></tr>
+
+  ${actionBlock}
+  `);
+}
+
 export function trialExpiredEmailHtml(
   firstName: string, restaurantName: string, suscripcionLink: string, cartaUrl?: string,
 ): string {
@@ -492,7 +582,7 @@ export function trialExpiredEmailHtml(
 
   <tr><td align="center" style="padding-bottom:24px;">
     <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:middle;padding-right:3px;"><img src="${BASE_URL}/logo.png" alt="" width="26" height="20" style="width:26px;height:20px;display:block;" /></td>
+      <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
       <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
     </tr></table></a>
   </td></tr>
