@@ -10,7 +10,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
-import ViewSelectorCompact from "./ViewSelectorCompact";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
@@ -1254,9 +1253,6 @@ export default function CartaImpact({
                   ))}
                 </div>
             </div>
-          )}
-          {(restaurant as any).plan !== "FREE" && (
-            <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />
           )}
         </div>
       </div>

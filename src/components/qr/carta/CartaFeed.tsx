@@ -14,7 +14,6 @@ import { getGuestId } from "@/lib/guestId";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
-import ViewSelectorCompact from "./ViewSelectorCompact";
 import { groupDishesByCategory, getDishPhoto } from "./utils/dishHelpers";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
@@ -158,10 +157,6 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
           <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, letterSpacing: "-0.1px" }}>{r.name}</span>
         </div>
 
-        {/* View selector */}
-        <div style={{ display: "flex", gap: 6 }} onClick={e => e.stopPropagation()}>
-          {(r as any).plan !== "FREE" && <ViewSelectorCompact restaurantId={r.id} plan={(r as any).plan} defaultView={(r as any).defaultView} />}
-        </div>
       </div>
 
       {/* Hero content */}

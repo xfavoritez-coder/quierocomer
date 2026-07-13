@@ -14,8 +14,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const body = await req.json();
 
-    // Ownership check: fetch dish first to get restaurantId
-    const existing = await prisma.dish.findUnique({ where: { id }, select: { restaurantId: true } });
+    // Ownership check: fetch dish first to get restaurantId + current name/desc for translation comparison
+    const existing = await prisma.dish.findUnique({ where: { id }, select: { restaurantId: true, name: true, description: true } });
     if (!existing) return NextResponse.json({ error: "Plato no encontrado" }, { status: 404 });
     await assertOwnsRestaurant(req, existing.restaurantId);
 
@@ -71,14 +71,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: { category: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
     });
 
-    // Re-translate if name or description changed
-    if (body.name !== undefined || body.description !== undefined) {
+    // Re-translate only if name or description actually changed (not just photo/tags/etc.)
+    const nameChanged = body.name !== undefined && body.name !== existing.name;
+    const descChanged = body.description !== undefined && (body.description || null) !== existing.description;
+    if (nameChanged || descChanged) {
       // Reset auto-translated fields that changed, keep manual translations intact
       await prisma.dishTranslation.updateMany({
         where: { dishId: id, isManual: false },
         data: {
-          ...(body.name !== undefined ? { name: null } : {}),
-          ...(body.description !== undefined ? { description: null } : {}),
+          ...(nameChanged ? { name: null } : {}),
+          ...(descChanged ? { description: null } : {}),
         },
       });
       translateDish(id).catch((e) => console.error("[translate dish]", e));

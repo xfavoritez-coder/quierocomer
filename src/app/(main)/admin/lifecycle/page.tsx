@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { STAGE_META, ENGAGEMENT_CRITERIA, type LifecycleStage } from "@/lib/admin/lifecycle";
 
 const F = "var(--font-display)";
@@ -111,18 +111,33 @@ export default function LifecyclePage() {
   const [detailLoading, setDetailLoading] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [visibleCount, setVisibleCount] = useState(30);
-  useEffect(() => { setVisibleCount(30); }, [filter, search]);
 
   const [cached, setCached] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const pageRef = useRef(1);
+
   const loadData = (bust = false) => {
     setLoading(true);
-    fetch(`/api/admin/lifecycle${bust ? "?bust=1" : ""}`).then(r => r.json()).then(data => {
+    pageRef.current = 1;
+    const qs = bust ? "?bust=1&limit=20" : "?limit=20";
+    fetch(`/api/admin/lifecycle${qs}`).then(r => r.json()).then(data => {
       setEntries(data.entries || []);
       setStats(data.stats || null);
+      setTotal(data.total || 0);
       setCached(!!data.cached);
     }).catch(() => {}).finally(() => setLoading(false));
   };
+
+  const loadMore = () => {
+    const nextPage = pageRef.current + 1;
+    setLoadingMore(true);
+    fetch(`/api/admin/lifecycle?page=${nextPage}&limit=20`).then(r => r.json()).then(data => {
+      setEntries(prev => [...prev, ...(data.entries || [])]);
+      pageRef.current = nextPage;
+    }).catch(() => {}).finally(() => setLoadingMore(false));
+  };
+
   useEffect(() => { loadData(); }, []);
 
   const handleExpand = (id: string) => {
@@ -175,7 +190,7 @@ export default function LifecyclePage() {
     return list;
   }, [entries, filter, search, sortBy, sortDir]);
 
-  const displayed = search.trim() ? filtered : filtered.slice(0, visibleCount);
+  const displayed = search.trim() ? filtered : filtered;
 
   const statCards = stats ? [
     { label: "Total", value: stats.total, color: "#fff" },
@@ -500,13 +515,14 @@ export default function LifecyclePage() {
         {filtered.length === 0 && (
           <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 14 }}>Sin resultados</div>
         )}
-        {!search.trim() && filtered.length > visibleCount && (
+        {entries.length < total && (
           <div style={{ padding: "14px 16px", textAlign: "center", borderTop: "1px solid #2a2a2a" }}>
             <button
-              onClick={() => setVisibleCount(v => v + 30)}
-              style={{ padding: "8px 20px", background: "#222", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.8rem", cursor: "pointer" }}
+              onClick={loadMore}
+              disabled={loadingMore}
+              style={{ padding: "8px 20px", background: "#222", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.8rem", cursor: loadingMore ? "default" : "pointer", opacity: loadingMore ? 0.6 : 1 }}
             >
-              Ver más — {filtered.length - visibleCount} restantes
+              {loadingMore ? "Cargando..." : `Ver más — ${total - entries.length} restantes`}
             </button>
           </div>
         )}

@@ -18,10 +18,21 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const bust = url.searchParams.get("bust") === "1";
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+  const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get("limit") || "20")));
+  const offset = (page - 1) * limit;
 
   // Serve from cache if available and not busting
   if (!bust && _cache && Date.now() - _cache.ts < CACHE_TTL) {
-    return NextResponse.json({ entries: _cache.entries, stats: _cache.stats, cached: true });
+    const slice = _cache.entries.slice(offset, offset + limit);
+    return NextResponse.json({
+      entries: slice,
+      stats: _cache.stats,
+      total: _cache.entries.length,
+      page,
+      hasMore: offset + limit < _cache.entries.length,
+      cached: true,
+    });
   }
 
   const now = new Date();
@@ -334,5 +345,12 @@ export async function GET(req: NextRequest) {
   // Cache full result
   _cache = { entries, stats, ts: Date.now() };
 
-  return NextResponse.json({ entries, stats });
+  const slice = entries.slice(offset, offset + limit);
+  return NextResponse.json({
+    entries: slice,
+    stats,
+    total: entries.length,
+    page,
+    hasMore: offset + limit < entries.length,
+  });
 }

@@ -10,7 +10,7 @@ import { t } from "@/lib/qr/i18n";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { groupDishesByCategory, isGeniePick } from "./utils/dishHelpers";
 import DishDetailEsencial from "./DishDetailEsencial";
-import ViewSelectorCompact from "./ViewSelectorCompact";
+
 
 /* ─── palettes ─── */
 const LIGHT = {
@@ -443,7 +443,6 @@ export default function CartaEsencial({
               </>
             )}
           </div>
-          {(restaurant as any).plan !== "FREE" && <ViewSelectorCompact restaurantId={restaurant.id} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />}
         </div>
       </header>
 

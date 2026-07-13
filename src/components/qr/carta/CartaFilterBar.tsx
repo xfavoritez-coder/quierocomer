@@ -2,7 +2,7 @@
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
-export type CartaFilterKey = "popular" | "veggie" | "estrella";
+export type CartaFilterKey = "popular" | "veggie" | "estrella" | "gluten-free";
 
 interface Props {
   active: CartaFilterKey | null;
@@ -15,9 +15,10 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
   const lang = useLang();
 
   const FILTERS: { key: CartaFilterKey; emoji: string; label: string }[] = [
-    { key: "popular",  emoji: "🔥", label: t(lang, "filterPopular") },
-    { key: "estrella", emoji: "⭐", label: t(lang, "filterRecommended") },
-    { key: "veggie",   emoji: "🌿", label: t(lang, "filterVeggie") },
+    { key: "popular",     emoji: "🔥", label: t(lang, "filterPopular") },
+    { key: "estrella",    emoji: "⭐", label: t(lang, "filterRecommended") },
+    { key: "veggie",      emoji: "🌿", label: t(lang, "filterVeggie") },
+    { key: "gluten-free", emoji: "🌾", label: t(lang, "filterGlutenFree" as any) },
   ];
 
   return (
@@ -32,6 +33,7 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
       )}
       <div style={{
         display: "flex", gap: compact ? 5 : 7, flex: 1,
+        overflowX: "auto", scrollbarWidth: "none",
       }}>
         {FILTERS.map((f) => {
           const isActive = active === f.key;
@@ -41,7 +43,7 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
               onClick={() => onToggle(f.key)}
               className="font-[family-name:var(--font-dm)]"
               style={{
-                flex: 1,
+                flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                 padding: compact ? "5px 8px" : "7px 8px",
                 borderRadius: 999,
@@ -55,17 +57,21 @@ export default function CartaFilterBar({ active, onToggle, compact = false }: Pr
                       ? "color-mix(in srgb, #ef4444 12%, var(--carta-bg))"
                       : f.key === "veggie"
                         ? "color-mix(in srgb, #16a34a 12%, var(--carta-bg))"
-                        : "color-mix(in srgb, var(--carta-accent) 13%, var(--carta-bg))")
+                        : f.key === "gluten-free"
+                          ? "color-mix(in srgb, #ca8a04 12%, var(--carta-bg))"
+                          : "color-mix(in srgb, var(--carta-accent) 13%, var(--carta-bg))")
                   : "color-mix(in srgb, var(--carta-text) 6%, var(--carta-bg))",
                 border: isActive
                   ? (f.key === "popular"
                       ? "1px solid rgba(239,68,68,0.45)"
                       : f.key === "veggie"
                         ? "1px solid rgba(22,163,74,0.45)"
-                        : "1px solid color-mix(in srgb, var(--carta-accent) 50%, transparent)")
+                        : f.key === "gluten-free"
+                          ? "1px solid rgba(202,138,4,0.45)"
+                          : "1px solid color-mix(in srgb, var(--carta-accent) 50%, transparent)")
                   : "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
                 color: isActive
-                  ? (f.key === "popular" ? "#ef4444" : f.key === "veggie" ? "#16a34a" : "var(--carta-accent)")
+                  ? (f.key === "popular" ? "#ef4444" : f.key === "veggie" ? "#16a34a" : f.key === "gluten-free" ? "#ca8a04" : "var(--carta-accent)")
                   : "var(--carta-text-muted)",
               }}
             >
@@ -90,8 +96,9 @@ export function applyCartaFilter<D extends {
   dishDiet?: string | null;
 }>(dishes: D[], filter: CartaFilterKey | null, popularDishIds: Set<string>): D[] {
   if (!filter) return dishes;
-  if (filter === "popular")  return dishes.filter(d => popularDishIds.has(d.id));
-  if (filter === "estrella") return dishes.filter(d => (d as any).tags?.includes("RECOMMENDED"));
-  if (filter === "veggie")   return dishes.filter(d => (d as any).dishDiet === "VEGAN" || (d as any).dishDiet === "VEGETARIAN");
+  if (filter === "popular")     return dishes.filter(d => popularDishIds.has(d.id));
+  if (filter === "estrella")    return dishes.filter(d => (d as any).tags?.includes("RECOMMENDED"));
+  if (filter === "veggie")      return dishes.filter(d => (d as any).dishDiet === "VEGAN" || (d as any).dishDiet === "VEGETARIAN");
+  if (filter === "gluten-free") return dishes.filter(d => (d as any).isGlutenFree === true);
   return dishes;
 }

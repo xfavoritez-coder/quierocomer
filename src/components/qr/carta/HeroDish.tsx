@@ -5,7 +5,6 @@ import type { Restaurant, Dish } from "@prisma/client";
 import { User, Search } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
 import LangSelector from "./LangSelector";
-import ViewSelectorCompact from "./ViewSelectorCompact";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 import DishPlaceholderIcon from "./DishPlaceholderIcon";
@@ -23,7 +22,6 @@ interface HeroDishProps {
   qrUser?: QRUserData | null;
   onProfileOpen?: () => void;
   onDishSelect?: (dish: Dish) => void;
-  viewSelectorSlot?: React.ReactNode;
   enabledLangs?: string[];
   variant?: "full" | "compact";
   onSearchClick?: () => void;
@@ -35,7 +33,7 @@ function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs, variant = "full", onSearchClick, belowNavSlot }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, enabledLangs, variant = "full", onSearchClick, belowNavSlot }: HeroDishProps) {
   const lang = useLang();
   const isCompact = variant === "compact";
   const [current, setCurrent] = useState(0);
@@ -131,7 +129,6 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
             </button>
           )}
           <LangSelector enabledLangs={enabledLangs} />
-          {viewSelectorSlot}
         </div>
       </div>
 
