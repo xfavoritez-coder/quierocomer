@@ -326,9 +326,6 @@ export default function LifecyclePage() {
                 }}>
                   {meta.label}{entry.trialDaysLeft != null ? ` · ${entry.trialDaysLeft}d` : ""}
                 </span>
-                {entry.nurturingSent?.length > 0 && (
-                  <span title={`WA enviado: ${entry.nurturingSent.map(n => n.action.replace("nurturing_", "")).join(", ")}`} style={{ fontSize: 13, cursor: "help" }}>💬</span>
-                )}
               </div>
 
               {/* Engagement bar */}
