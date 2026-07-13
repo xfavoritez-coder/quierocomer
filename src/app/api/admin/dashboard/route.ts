@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
 
       // Filter usage
       const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0, "gluten-free": 0 };
-      const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number }> = {};
+      const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number; "gluten-free": number }> = {};
       for (const row of filterUsageRaw as any[]) {
         const fv = row.query as string | undefined;
         const rid = row.restaurantId as string | undefined;
@@ -351,15 +351,15 @@ export async function GET(req: NextRequest) {
 
     // Aggregate filter clicks by restaurant + query field (popular | estrella | veggie)
     const filterUsage: Record<string, number> = { popular: 0, estrella: 0, veggie: 0, "gluten-free": 0 };
-    const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number }> = {};
+    const filterByRestaurantMap: Record<string, { popular: number; estrella: number; veggie: number; "gluten-free": number }> = {};
     for (const row of filterUsageRaw as any[]) {
       const fv = row.query as string | undefined;
       const rid = row.restaurantId as string | undefined;
       if (!fv || !(fv in filterUsage)) continue;
       filterUsage[fv] += row._count.id;
       if (rid) {
-        if (!filterByRestaurantMap[rid]) filterByRestaurantMap[rid] = { popular: 0, estrella: 0, veggie: 0 };
-        filterByRestaurantMap[rid][fv as "popular" | "estrella" | "veggie"] += row._count.id;
+        if (!filterByRestaurantMap[rid]) filterByRestaurantMap[rid] = { popular: 0, estrella: 0, veggie: 0, "gluten-free": 0 };
+        (filterByRestaurantMap[rid] as any)[fv] += row._count.id;
       }
     }
     // Collect restaurant IDs from filter usage that may not be in restMap yet
