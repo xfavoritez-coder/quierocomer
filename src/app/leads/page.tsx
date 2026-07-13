@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 const PASSWORD = "joan";
 const AUTH_KEY = "leads_auth";
 
-type CrmStatus = "nuevo" | "llamando" | "contactado" | "interesado" | "no_interesado" | "cerrado";
+type CrmStatus = "nuevo" | "llamando" | "contactado" | "interesado" | "no_interesado" | "no_existe" | "cerrado";
 
 interface Note {
   text: string;
@@ -46,10 +46,11 @@ const STATUS_CONFIG: Record<CrmStatus, { label: string; color: string; bg: strin
   contactado:    { label: "Contactado",    color: "#a78bfa", bg: "rgba(167,139,250,.15)" },
   interesado:    { label: "Interesado",    color: "#34d399", bg: "rgba(52,211,153,.15)" },
   no_interesado: { label: "No interesado", color: "#9ca3af", bg: "rgba(156,163,175,.12)" },
+  no_existe:     { label: "No existe",     color: "#f87171", bg: "rgba(248,113,113,.12)" },
   cerrado:       { label: "Cerrado",       color: "#E8A33D", bg: "rgba(232,163,61,.18)" },
 };
 
-const CRM_STATUSES: CrmStatus[] = ["nuevo", "llamando", "contactado", "interesado", "no_interesado", "cerrado"];
+const CRM_STATUSES: CrmStatus[] = ["nuevo", "llamando", "contactado", "interesado", "no_interesado", "no_existe", "cerrado"];
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -88,7 +89,7 @@ function filterByTab(leads: Lead[], tab: Tab): Lead[] {
     case "en_proceso":    return leads.filter(l => l.crmStatus === "llamando" || l.crmStatus === "contactado");
     case "interesados":   return leads.filter(l => l.crmStatus === "interesado");
     case "cerrados":      return leads.filter(l => l.crmStatus === "cerrado");
-    case "no_interesados":return leads.filter(l => l.crmStatus === "no_interesado");
+    case "no_interesados":return leads.filter(l => l.crmStatus === "no_interesado" || l.crmStatus === "no_existe");
     case "todos":         return leads;
   }
 }
@@ -474,7 +475,7 @@ function CRMApp() {
     en_proceso:    leads.filter(l => l.crmStatus === "llamando" || l.crmStatus === "contactado").length,
     interesados:   leads.filter(l => l.crmStatus === "interesado").length,
     cerrados:      leads.filter(l => l.crmStatus === "cerrado").length,
-    no_interesados:leads.filter(l => l.crmStatus === "no_interesado").length,
+    no_interesados:leads.filter(l => l.crmStatus === "no_interesado" || l.crmStatus === "no_existe").length,
     todos:         leads.length,
   };
 
