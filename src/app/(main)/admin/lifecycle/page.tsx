@@ -59,6 +59,12 @@ interface Stats {
   dormidos: number; vencidos: number; tasaActivacion: number;
 }
 
+interface DetailData {
+  recentActivity: { action: string; details?: any; createdAt: string }[];
+  emailsSent: { purpose: string; status: string; openedAt: string | null; clickedAt: string | null; createdAt: string }[];
+  leadEvents: any[];
+}
+
 function timeAgo(iso: string | null): string {
   if (!iso) return "Nunca";
   const diff = Date.now() - new Date(iso).getTime();
@@ -101,6 +107,8 @@ export default function LifecyclePage() {
   const [filter, setFilter] = useState("todos");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [detailCache, setDetailCache] = useState<Record<string, DetailData>>({});
+  const [detailLoading, setDetailLoading] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [visibleCount, setVisibleCount] = useState(30);
@@ -112,6 +120,18 @@ export default function LifecyclePage() {
       setStats(data.stats || null);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const handleExpand = (id: string) => {
+    if (expanded === id) { setExpanded(null); return; }
+    setExpanded(id);
+    if (detailCache[id]) return; // already loaded
+    setDetailLoading(id);
+    fetch(`/api/admin/lifecycle/detail?id=${id}`)
+      .then(r => r.json())
+      .then(data => setDetailCache(prev => ({ ...prev, [id]: data })))
+      .catch(() => setDetailCache(prev => ({ ...prev, [id]: { recentActivity: [], emailsSent: [], leadEvents: [] } })))
+      .finally(() => setDetailLoading(prev => prev === id ? null : prev));
+  };
 
   const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -164,9 +184,22 @@ export default function LifecyclePage() {
 
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#888" }}>Cargando...</div>;
 
-
   return (
     <div style={{ padding: "0 0 40px" }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .lc-table-header { display: none !important; }
+          .lc-table-row { grid-template-columns: 1fr auto !important; padding: 10px 12px !important; gap: 4px !important; }
+          .lc-col-owner { display: none !important; }
+          .lc-col-engagement { display: none !important; }
+          .lc-col-activity { display: none !important; }
+          .lc-col-reg { display: none !important; }
+          .lc-search { width: 100% !important; }
+          .lc-filters { flex-direction: column !important; }
+          .lc-filters-inner { order: 2; display: flex; flex-wrap: wrap; gap: 6px; }
+          .lc-filters-search { order: 1; width: 100% !important; }
+        }
+      `}</style>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
@@ -216,7 +249,7 @@ export default function LifecyclePage() {
       {/* Table */}
       <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 14, overflow: "hidden" }}>
         {/* Header row */}
-        <div style={{
+        <div className="lc-table-header" style={{
           display: "grid", gridTemplateColumns: "2fr 1.3fr 1fr 1.1fr 0.7fr 0.5fr 0.7fr",
           padding: "10px 16px", borderBottom: "1px solid #2a2a2a", fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em",
         }}>
@@ -249,7 +282,8 @@ export default function LifecyclePage() {
           <div key={entry.id}>
             {/* Row */}
             <div
-              onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
+              className="lc-table-row"
+              onClick={() => handleExpand(entry.id)}
               style={{
                 display: "grid", gridTemplateColumns: "2fr 1.3fr 1fr 1.1fr 0.7fr 0.5fr 0.7fr",
                 padding: "12px 16px", borderBottom: "1px solid #1f1f1f", cursor: "pointer",
@@ -273,7 +307,7 @@ export default function LifecyclePage() {
               </div>
 
               {/* Owner */}
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div className="lc-col-owner" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 {ownerName ? (
                   <>
                     <div style={{ fontSize: 13, color: "#ccc" }}>{ownerName}</div>
@@ -298,7 +332,7 @@ export default function LifecyclePage() {
               </div>
 
               {/* Engagement bar */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="lc-col-engagement" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ flex: 1, height: 6, borderRadius: 3, background: "#2a2a2a", overflow: "hidden" }}>
                   <div style={{
                     width: `${entry.engagement}%`, height: "100%", borderRadius: 3,
@@ -310,7 +344,7 @@ export default function LifecyclePage() {
               </div>
 
               {/* Last activity */}
-              <div style={{ display: "flex", alignItems: "center", fontSize: 12, color: "#888" }}>
+              <div className="lc-col-activity" style={{ display: "flex", alignItems: "center", fontSize: 12, color: "#888" }}>
                 {timeAgo(entry.lastActivity)}
               </div>
 
@@ -321,7 +355,7 @@ export default function LifecyclePage() {
               </div>
 
               {/* Registro */}
-              <div style={{ display: "flex", alignItems: "center", fontSize: 11, color: "#888" }}>
+              <div className="lc-col-reg" style={{ display: "flex", alignItems: "center", fontSize: 11, color: "#888" }}>
                 {new Date(entry.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
               </div>
             </div>
@@ -329,6 +363,9 @@ export default function LifecyclePage() {
             {/* Expanded detail */}
             {expanded === entry.id && (
               <div style={{ padding: "16px 20px 20px", borderBottom: "1px solid #2a2a2a", background: "#141414" }}>
+                {detailLoading === entry.id && (
+                  <div style={{ color: "#666", fontSize: 12, padding: "8px 0 12px" }}>Cargando historial…</div>
+                )}
                 <button onClick={(e) => { e.stopPropagation(); setExpanded(null); }} style={{
                   background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", padding: "0 0 12px", display: "flex", alignItems: "center", gap: 4,
                 }}>← Volver</button>
@@ -390,39 +427,41 @@ export default function LifecyclePage() {
                     </div>
                     <ActivityBtn restaurantId={entry.id} name={entry.name} />
                   </div>
-                  <TimelineSection entry={entry} />
+                  <TimelineSection entry={entry} detail={detailCache[entry.id]} />
                 </div>
 
                 {/* Email/WA communication history */}
-                {(entry.leadTimeline || entry.emailsSent?.length > 0 || entry.nurturingSent?.length > 0) && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                      Comunicaciones
+                {(() => {
+                  const det = detailCache[entry.id];
+                  const emailsSent = det?.emailsSent || [];
+                  const hasComms = entry.leadTimeline || emailsSent.length > 0 || entry.nurturingSent?.length > 0;
+                  if (!hasComms) return null;
+                  const purposeLabels: Record<string, string> = {
+                    activation_welcome: "Bienvenida", funnel_carta_lista: "Carta lista",
+                    funnel_carta_ready: "Carta lista", trial_reminder: "Trial reminder",
+                    trial_expired: "Trial vencido", plan_activated: "Plan activado",
+                    weekly_summary: "Informe semanal", lead_failure_help: "Ayuda carta falló",
+                    reset_password: "Reset contraseña", reactivation: "Reactivación",
+                  };
+                  const comms: { date: string; node: React.ReactNode }[] = [];
+                  if (entry.leadTimeline?.deliveredAt) comms.push({ date: entry.leadTimeline.deliveredAt, node: <CommBadge key="ld" icon="📧" label="Email enviado" date={entry.leadTimeline.deliveredAt} color="#60a5fa" /> });
+                  if (entry.leadTimeline?.emailOpenedAt) comms.push({ date: entry.leadTimeline.emailOpenedAt, node: <CommBadge key="lo" icon="👁" label="Email abierto" date={entry.leadTimeline.emailOpenedAt} color="#4ade80" /> });
+                  if (entry.leadTimeline?.emailClickedAt) comms.push({ date: entry.leadTimeline.emailClickedAt, node: <CommBadge key="lc" icon="👆" label="Click en email" date={entry.leadTimeline.emailClickedAt} color="#4ade80" /> });
+                  if (entry.leadTimeline?.activatedAt) comms.push({ date: entry.leadTimeline.activatedAt, node: <CommBadge key="la" icon="🟢" label="Activó" date={entry.leadTimeline.activatedAt} color="#4ade80" /> });
+                  entry.nurturingSent?.forEach((n, i) => comms.push({ date: n.date, node: <CommBadge key={`n${i}`} icon="💬" label={ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} date={n.date} color="#22d3ee" /> }));
+                  emailsSent.forEach((e, i) => comms.push({ date: e.createdAt, node: <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} /> }));
+                  comms.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                  return (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Comunicaciones</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        {comms.length === 0
+                          ? <span style={{ fontSize: 11, color: "#555" }}>Sin comunicaciones registradas</span>
+                          : comms.map((c, i) => <div key={i}>{c.node}</div>)}
+                      </div>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {(() => {
-                        const purposeLabels: Record<string, string> = {
-                          activation_welcome: "Bienvenida", funnel_carta_lista: "Carta lista",
-                          funnel_carta_ready: "Carta lista", trial_reminder: "Trial reminder",
-                          trial_expired: "Trial vencido", plan_activated: "Plan activado",
-                          weekly_summary: "Informe semanal", lead_failure_help: "Ayuda carta falló",
-                          reset_password: "Reset contraseña", reactivation: "Reactivación",
-                        };
-                        // Collect all comms into one array with dates for sorting
-                        const comms: { date: string; node: React.ReactNode }[] = [];
-                        if (entry.leadTimeline?.deliveredAt) comms.push({ date: entry.leadTimeline.deliveredAt, node: <CommBadge key="ld" icon="📧" label="Email enviado" date={entry.leadTimeline.deliveredAt} color="#60a5fa" /> });
-                        if (entry.leadTimeline?.emailOpenedAt) comms.push({ date: entry.leadTimeline.emailOpenedAt, node: <CommBadge key="lo" icon="👁" label="Email abierto" date={entry.leadTimeline.emailOpenedAt} color="#4ade80" /> });
-                        if (entry.leadTimeline?.emailClickedAt) comms.push({ date: entry.leadTimeline.emailClickedAt, node: <CommBadge key="lc" icon="👆" label="Click en email" date={entry.leadTimeline.emailClickedAt} color="#4ade80" /> });
-                        if (entry.leadTimeline?.activatedAt) comms.push({ date: entry.leadTimeline.activatedAt, node: <CommBadge key="la" icon="🟢" label="Activó" date={entry.leadTimeline.activatedAt} color="#4ade80" /> });
-                        entry.nurturingSent?.forEach((n, i) => comms.push({ date: n.date, node: <CommBadge key={`n${i}`} icon="💬" label={ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} date={n.date} color="#22d3ee" /> }));
-                        entry.emailsSent?.forEach((e, i) => comms.push({ date: e.createdAt, node: <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} /> }));
-                        comms.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                        if (comms.length === 0) return <span style={{ fontSize: 11, color: "#555" }}>Sin comunicaciones registradas</span>;
-                        return comms.map((c, i) => <div key={i}>{c.node}</div>);
-                      })()}
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Plan & Billing */}
                 <PlanActions entry={entry} onUpdate={(updates) => {
@@ -481,12 +520,13 @@ function fmtDate(iso: string | null): string {
 
 const DOT_COLORS: Record<string, string> = { gold: GOLD, green: "#4ade80", blue: "#60a5fa", purple: "#a855f7", red: "#f87171" };
 
-function TimelineSection({ entry }: { entry: Entry }) {
+function TimelineSection({ entry, detail }: { entry: Entry; detail?: DetailData }) {
   const items: { time: string; text: string; dot: string }[] = [];
 
-  // Lead events
-  if (entry.leadEvents?.length > 0) {
-    for (const ev of entry.leadEvents) {
+  // Lead events (from lazy-loaded detail)
+  const leadEvents = detail?.leadEvents || entry.leadEvents || [];
+  if (leadEvents.length > 0) {
+    for (const ev of leadEvents) {
       const action = ev.action || "";
       const ts = ev.ts || "";
       let text = action;
@@ -514,8 +554,9 @@ function TimelineSection({ entry }: { entry: Entry }) {
     if (lt.activatedAt) items.push({ time: lt.activatedAt, text: "Activo plan", dot: "gold" });
   }
 
-  // Panel activity
-  for (const a of entry.recentActivity) {
+  // Panel activity (from lazy-loaded detail)
+  const recentActivity = detail?.recentActivity || entry.recentActivity || [];
+  for (const a of recentActivity) {
     const label = ACTION_LABELS[a.action] || a.action;
     const d = a.details && typeof a.details === "object" ? a.details : {};
     const detail = d.dishName || d.name || d.section || "";
@@ -527,8 +568,9 @@ function TimelineSection({ entry }: { entry: Entry }) {
     items.push({ time: n.date, text: ACTION_LABELS[n.action] || n.action, dot: "purple" });
   }
 
-  // Emails
-  for (const e of entry.emailsSent || []) {
+  // Emails (from lazy-loaded detail)
+  const emailsSent = detail?.emailsSent || entry.emailsSent || [];
+  for (const e of emailsSent) {
     const purposeLabels: Record<string, string> = {
       activation_welcome: "Email bienvenida", funnel_carta_lista: "Email carta lista",
       trial_reminder: "Email trial reminder", trial_expired: "Email trial vencido",

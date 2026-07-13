@@ -258,6 +258,13 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 0 40px" }}>
+      <style>{`
+        @media (max-width: 600px) {
+          .adm-stat-cards { grid-template-columns: repeat(2, 1fr) !important; }
+          .adm-period-pills { gap: 4px !important; }
+          .adm-period-pills button { padding: 5px 10px !important; font-size: 0.72rem !important; }
+        }
+      `}</style>
 
       {/* ── Header ── */}
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 22 }}>
@@ -308,7 +315,7 @@ export default function AdminDashboard() {
       )}
 
       {/* ── Stat cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 20 }}>
+      <div className="adm-stat-cards" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 20 }}>
         <StatCard icon="👥" label="Sesiones" value={data.totalSessions} />
         <StatCard icon="✨" label="Visitantes únicos" value={data.uniqueGuests} accent={GOLD} />
         <StatCard icon="🎂" label="Cumpleaños" value={data.birthdaysSaved} accent="#f472b6" />
@@ -320,7 +327,7 @@ export default function AdminDashboard() {
 
       {/* ── Rankings grid ── */}
       {(data.restaurantRanking.length > 1 || (data.birthdaysByRestaurant && data.birthdaysByRestaurant.length > 0)) && (
-        <div style={{ display: "grid", gridTemplateColumns: data.restaurantRanking.length > 1 && data.birthdaysByRestaurant?.length > 0 ? "1fr 1fr" : "1fr", gap: 12, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 20 }}>
           {data.restaurantRanking.length > 1 && (
             <div style={card}>
               <h3 style={sectionTitle}>Visitantes únicos por local</h3>

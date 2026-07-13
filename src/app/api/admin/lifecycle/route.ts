@@ -15,7 +15,6 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
   // ── Phase 1: leads + restaurants (base data) ──
   const [leads, restaurants] = await Promise.all([
@@ -47,13 +46,22 @@ export async function GET(req: NextRequest) {
 
   // ── Phase 2: all secondary queries scoped to owned restaurant IDs ──
   const restaurantIds = restaurants.map(r => r.id);
-  const ownerEmails = [...new Set(restaurants.flatMap(r => r.owner?.email ? [r.owner.email] : []))];
 
-  const [allActivity, sessions7dGroups, dishesWithPhotos, clientCounts, emailLogs] = await Promise.all([
-    // Actividad reciente (últimos 60 días) — solo restaurantes con owner
+  // Only fetch the specific actions needed for stage/salud/engagement — not ALL activity
+  const OWNER_ACTIONS_ARRAY = [...OWNER_ACTIONS];
+
+  const [allActivity, sessions7dGroups, dishesWithPhotos, clientCounts] = await Promise.all([
+    // Only owner-relevant actions + nurturing — drastically smaller than "all activity"
     prisma.panelActivity.findMany({
-      where: { restaurantId: { in: restaurantIds }, createdAt: { gte: sixtyDaysAgo } },
-      select: { restaurantId: true, action: true, details: true, createdAt: true },
+      where: {
+        restaurantId: { in: restaurantIds },
+        createdAt: { gte: sixtyDaysAgo },
+        OR: [
+          { action: { in: OWNER_ACTIONS_ARRAY } },
+          { action: { startsWith: "nurturing_" } },
+        ],
+      },
+      select: { restaurantId: true, action: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
     // Sessions last 7 days — solo restaurantes con owner
@@ -73,12 +81,6 @@ export async function GET(req: NextRequest) {
       by: ["restaurantId"],
       where: { restaurantId: { in: restaurantIds } },
       _count: true,
-    }),
-    // Emails recientes (últimos 90 días) — solo a owners conocidos
-    prisma.emailLog.findMany({
-      where: { to: { in: ownerEmails }, createdAt: { gte: ninetyDaysAgo } },
-      select: { to: true, subject: true, purpose: true, status: true, openedAt: true, clickedAt: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -103,11 +105,6 @@ export async function GET(req: NextRequest) {
   const clientCountMap = new Map<string, number>();
   for (const c of clientCounts) clientCountMap.set(c.restaurantId, c._count);
 
-  const emailsByOwnerEmail = new Map<string, typeof emailLogs>();
-  for (const e of emailLogs) {
-    if (!emailsByOwnerEmail.has(e.to)) emailsByOwnerEmail.set(e.to, []);
-    emailsByOwnerEmail.get(e.to)!.push(e);
-  }
 
   // ── Process each restaurant ──
   const stageCounts: Record<string, number> = {};
@@ -230,22 +227,6 @@ export async function GET(req: NextRequest) {
         emailClickedAt: lead.emailClickedAt?.toISOString() || null,
         activatedAt: lead.activatedAt?.toISOString() || null,
       } : null,
-      // Emails sent to owner
-      emailsSent: r.owner?.email ? (emailsByOwnerEmail.get(r.owner.email) || []).slice(0, 10).map(e => ({
-        purpose: e.purpose,
-        status: e.status,
-        openedAt: e.openedAt?.toISOString() || null,
-        clickedAt: e.clickedAt?.toISOString() || null,
-        createdAt: e.createdAt.toISOString(),
-      })) : [],
-      // Recent activity for timeline
-      recentActivity: activity.slice(0, 15).map(a => ({
-        action: a.action,
-        details: a.details,
-        createdAt: a.createdAt.toISOString(),
-      })),
-      // Lead events for full timeline
-      leadEvents: lead?.events && Array.isArray(lead.events) ? lead.events : [],
     };
   });
 
@@ -314,14 +295,6 @@ export async function GET(req: NextRequest) {
         emailClickedAt: null,
         activatedAt: null,
       },
-      emailsSent: lead.email ? (emailsByOwnerEmail.get(lead.email) || []).slice(0, 10).map(e => ({
-        purpose: e.purpose, status: e.status,
-        openedAt: e.openedAt?.toISOString() || null,
-        clickedAt: e.clickedAt?.toISOString() || null,
-        createdAt: e.createdAt.toISOString(),
-      })) : [],
-      recentActivity: [],
-      leadEvents: lead.events && Array.isArray(lead.events) ? lead.events : [],
     });
   }
 
