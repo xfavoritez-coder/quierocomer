@@ -32,6 +32,9 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
   // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
+  // Set browser tab title for admin area
+  useEffect(() => { document.title = "QuieroComer.com - Panel Administración"; }, []);
+
   useEffect(() => {
     fetch("/api/admin/soporte?countOnly=1")
       .then(r => r.ok ? r.json() : null)

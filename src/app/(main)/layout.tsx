@@ -19,13 +19,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "QuieroComer - Descúbre qué, y donde comer",
+  title: "QuieroComer | La carta QR inteligente que vende más por ti",
   description: "Descubre qué comer hoy. El Genio aprende tus gustos y te recomienda el plato perfecto.",
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
   },
   openGraph: {
-    title: "QuieroComer - Descúbre qué, y donde comer",
+    title: "QuieroComer | La carta QR inteligente que vende más por ti",
     description: "Descubre qué comer hoy. El Genio aprende tus gustos y te recomienda el plato perfecto.",
     url: "https://quierocomer.com",
     siteName: "QuieroComer",
