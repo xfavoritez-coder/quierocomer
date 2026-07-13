@@ -71,12 +71,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: { category: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
     });
 
-    // Re-translate if Spanish description changed
-    if (body.description !== undefined) {
-      // Reset auto-translations, keep manual ones
+    // Re-translate if name or description changed
+    if (body.name !== undefined || body.description !== undefined) {
+      // Reset auto-translated fields that changed, keep manual translations intact
       await prisma.dishTranslation.updateMany({
         where: { dishId: id, isManual: false },
-        data: { description: null },
+        data: {
+          ...(body.name !== undefined ? { name: null } : {}),
+          ...(body.description !== undefined ? { description: null } : {}),
+        },
       });
       translateDish(id).catch((e) => console.error("[translate dish]", e));
     }
