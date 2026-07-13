@@ -54,7 +54,7 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
   );
 
   return (
-    <div className="theme-dark" style={{ display: "flex", minHeight: "100vh", background: "#111111" }}>
+    <div className="theme-dark" style={{ display: "flex", minHeight: "100vh", background: "#111111", overflowX: "hidden" }}>
       {/* Mobile top bar */}
       <div className="adm-mobilebar">
         <div>
@@ -132,7 +132,7 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
             border-bottom: 1px solid #2A2A2A;
             justify-content: space-between; align-items: center;
           }
-          .adm-main { margin-left: 0; padding: 80px 16px 32px; }
+          .adm-main { margin-left: 0; padding: 80px 16px 32px; overflow-x: hidden; }
           .adm-grid-2 { grid-template-columns: 1fr !important; }
           .adm-grid-4 { grid-template-columns: 1fr 1fr !important; }
           .adm-flex-wrap { flex-wrap: wrap !important; }

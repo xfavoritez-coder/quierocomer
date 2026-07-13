@@ -257,7 +257,7 @@ export default function AdminDashboard() {
   const periodLabel = PERIODS.find(p => p.key === period)?.label || period;
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 0 40px" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 0 40px", overflowX: "hidden" }}>
       <style>{`
         @media (max-width: 600px) {
           .adm-stat-cards { grid-template-columns: repeat(2, 1fr) !important; }
