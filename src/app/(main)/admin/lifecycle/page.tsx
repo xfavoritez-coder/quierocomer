@@ -349,9 +349,8 @@ export default function LifecyclePage() {
               </div>
 
               {/* Health dot */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: SALUD_COLORS[entry.salud] || "#555" }} />
-                <span style={{ fontSize: 11, color: "#666" }}>{SALUD_LABELS[entry.salud] || ""}</span>
               </div>
 
               {/* Registro */}
