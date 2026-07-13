@@ -189,10 +189,10 @@ export default function LifecyclePage() {
       <style>{`
         @media (max-width: 640px) {
           .lc-table-header { display: none !important; }
-          .lc-table-row { grid-template-columns: 1fr auto !important; padding: 10px 12px !important; gap: 4px !important; }
+          .lc-table-row { grid-template-columns: 1fr auto auto !important; padding: 10px 12px !important; gap: 4px !important; }
           .lc-col-owner { display: none !important; }
           .lc-col-engagement { display: none !important; }
-          .lc-col-activity { display: none !important; }
+          /* lc-col-activity stays visible on mobile */
           .lc-col-reg { display: none !important; }
           .lc-search { width: 100% !important; }
           .lc-filters { flex-direction: column !important; }

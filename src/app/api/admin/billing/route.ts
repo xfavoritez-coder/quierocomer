@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
       id: true, name: true, plan: true, subscriptionStatus: true,
       currentPeriodEnd: true, lastPaymentAt: true, trialEndsAt: true,
       billingExempt: true, mpPayerEmail: true, customPlanPriceNet: true,
+      flowSubscriptionId: true,
     },
     orderBy: { currentPeriodEnd: "desc" },
   });
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
       daysLeft,
       netAmount: net,
       grossAmount: gross,
-      method: r.mpPayerEmail ? "Flow/MP" : "Manual",
+      method: r.flowSubscriptionId ? "Flow" : r.mpPayerEmail ? "MercadoPago" : "Manual",
     };
   });
 
