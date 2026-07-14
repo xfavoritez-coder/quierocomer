@@ -89,10 +89,10 @@ export default function CartaLista({
   )
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
-  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey[]>([]);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
-    const next = f === key ? null : key;
-    if (next) { track(restaurant.id, "FILTER_APPLIED", { query: next }); flushEvents(); }
+    const next = f.includes(key) ? f.filter(k => k !== key) : [...f, key];
+    if (next.length > 0) { track(restaurant.id, "FILTER_APPLIED", { query: next.join(",") }); flushEvents(); }
     return next;
   });
   const [query, setQuery] = useState("");
@@ -478,24 +478,14 @@ export default function CartaLista({
       {/* EMPTY STATE */}
       {grouped.length === 0 && (
         <div style={{ padding: "64px 28px", textAlign: "center" }}>
-          {activeFilter && !query ? (
+          {activeFilter.length > 0 && !query ? (
             <>
-              <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
-                {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : "🌿"}
-              </span>
+              <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
               <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px" }}>
-                {activeFilter === "estrella"
-                  ? "No hay platos recomendados por ahora"
-                  : activeFilter === "popular"
-                    ? "No hay platos populares por ahora"
-                    : "No hay platos veggie por ahora"}
+                Sin resultados para los filtros seleccionados
               </p>
               <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, margin: "0 0 16px" }}>
-                {activeFilter === "estrella"
-                  ? "Aún no hay platos marcados como recomendados."
-                  : activeFilter === "popular"
-                    ? "Se necesitan más visitas para identificar tendencias."
-                    : "Aún no hay platos veganos o vegetarianos disponibles."}
+                Prueba quitando alguno de los filtros activos.
               </p>
             </>
           ) : (
@@ -504,7 +494,7 @@ export default function CartaLista({
             </p>
           )}
           <button
-            onClick={() => { setQuery(""); setActiveFilter(null); }}
+            onClick={() => { setQuery(""); setActiveFilter([]); }}
             style={{
               fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600,
               background: "color-mix(in srgb, var(--carta-accent) 10%, transparent)",

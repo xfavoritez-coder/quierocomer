@@ -895,10 +895,10 @@ export default function CartaImpact({
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
 
   /* ─── Filter ─── */
-  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey[]>([]);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
-    const next = f === key ? null : key;
-    if (next) { track(restaurant.id, "FILTER_APPLIED", { query: next }); flushEvents(); }
+    const next = f.includes(key) ? f.filter(k => k !== key) : [...f, key];
+    if (next.length > 0) { track(restaurant.id, "FILTER_APPLIED", { query: next.join(",") }); flushEvents(); }
     return next;
   });
   const dishesFiltered = useMemo(
@@ -1272,6 +1272,11 @@ export default function CartaImpact({
         <ImpactMenuSwitcher menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} accent={(restaurant as any).cartaAccentColor || "var(--carta-accent, #F4A623)"} />
       )}
 
+      {/* Filter bar — always visible in fixed header */}
+      <div style={{ padding: "6px 14px 8px" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} glass />
+      </div>
+
 
       {/* Fixed category nav — slides in when menu section reaches header */}
       <div style={{
@@ -1512,11 +1517,6 @@ export default function CartaImpact({
         </button>
         <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
-      {/* Filter bar — encima de chips de categoría */}
-      <div style={{ padding: "10px 14px 4px" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-      </div>
-
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search */}
         <div ref={menuAnchorRef} style={{ paddingTop: 6, paddingBottom: 6, marginBottom: 0 }}>
@@ -1599,27 +1599,17 @@ export default function CartaImpact({
         )}
 
         {/* Empty state — filtro activo sin resultados */}
-        {activeFilter && !searchQuery && menuSections.length === 0 && (
+        {activeFilter.length > 0 && !searchQuery && menuSections.length === 0 && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 28px", textAlign: "center" }}>
-            <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
-              {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : "🌿"}
-            </span>
+            <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
             <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, marginBottom: 6 }}>
-              {activeFilter === "estrella"
-                ? "No hay platos recomendados por ahora"
-                : activeFilter === "popular"
-                  ? "No hay platos populares por ahora"
-                  : "No hay platos veggie por ahora"}
+              Sin resultados para los filtros seleccionados
             </p>
             <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, marginBottom: 16 }}>
-              {activeFilter === "estrella"
-                ? "Aún no hay platos marcados como recomendados."
-                : activeFilter === "popular"
-                  ? "Se necesitan más visitas para identificar tendencias."
-                  : "Aún no hay platos veganos o vegetarianos disponibles."}
+              Prueba quitando alguno de los filtros activos.
             </p>
             <button
-              onClick={() => setActiveFilter(null)}
+              onClick={() => setActiveFilter([])}
               className="font-[family-name:var(--font-dm)]"
               style={{
                 fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600,

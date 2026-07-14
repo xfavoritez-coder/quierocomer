@@ -111,10 +111,10 @@ export default function CartaPremium({
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
   const hasPromos = marketingPromos && marketingPromos.length > 0;
-  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey[]>([]);
   const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => {
-    const next = f === key ? null : key;
-    if (next) { track(restaurant.id, "FILTER_APPLIED", { query: next }); flushEvents(); }
+    const next = f.includes(key) ? f.filter(k => k !== key) : [...f, key];
+    if (next.length > 0) { track(restaurant.id, "FILTER_APPLIED", { query: next.join(",") }); flushEvents(); }
     return next;
   });
 
@@ -342,7 +342,7 @@ export default function CartaPremium({
 
   // Categorías que tienen al menos un plato visible con el filtro/búsqueda activos
   const visibleCatIds = useMemo(() => {
-    if (!activeFilter && !searchQuery) return null;
+    if (!activeFilter.length && !searchQuery) return null;
     const ids = new Set<string>();
     for (const cat of categories) {
       const has = applyCartaFilter(
@@ -535,29 +535,19 @@ export default function CartaPremium({
       )}
 
       {/* Empty state — filtro activo sin resultados */}
-      {activeFilter && !searchQuery && !categories.some(cat =>
+      {activeFilter.length > 0 && !searchQuery && !categories.some(cat =>
         applyCartaFilter(dishes.filter(d => d.categoryId === cat.id), activeFilter, popularDishIds).length > 0
       ) && (
         <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 28px", textAlign: "center" }}>
-          <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>
-            {activeFilter === "estrella" ? "⭐" : activeFilter === "popular" ? "🔥" : "🌿"}
-          </span>
+          <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
           <p style={{ color: "var(--carta-text)", fontSize: "0.95rem", fontWeight: 600, margin: "0 0 6px" }}>
-            {activeFilter === "estrella"
-              ? "No hay platos recomendados por ahora"
-              : activeFilter === "popular"
-                ? "No hay platos populares por ahora"
-                : "No hay platos veggie por ahora"}
+            Sin resultados para los filtros seleccionados
           </p>
           <p style={{ color: "var(--carta-text-muted)", fontSize: "0.82rem", lineHeight: 1.5, margin: "0 0 16px" }}>
-            {activeFilter === "estrella"
-              ? "Aún no hay platos marcados como recomendados."
-              : activeFilter === "popular"
-                ? "Se necesitan más visitas para identificar tendencias."
-                : "Aún no hay platos veganos o vegetarianos disponibles."}
+            Prueba quitando alguno de los filtros activos.
           </p>
           <button
-            onClick={() => setActiveFilter(null)}
+            onClick={() => setActiveFilter([])}
             className="font-[family-name:var(--font-dm)]"
             style={{
               fontSize: "0.88rem", color: "var(--carta-accent)", fontWeight: 600,

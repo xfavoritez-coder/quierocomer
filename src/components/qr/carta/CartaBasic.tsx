@@ -44,8 +44,8 @@ export default function CartaBasic({
   const dishes = isFree
     ? rawDishes.map((d: any) => d.tags?.includes('RECOMMENDED') ? { ...d, tags: (d.tags as string[]).filter(t => t !== 'RECOMMENDED') } : d)
     : rawDishes
-  const [activeFilter, setActiveFilter] = useState<CartaFilterKey | null>(null);
-  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f === key ? null : key);
+  const [activeFilter, setActiveFilter] = useState<CartaFilterKey[]>([]);
+  const toggleFilter = (key: CartaFilterKey) => setActiveFilter(f => f.includes(key) ? f.filter(k => k !== key) : [...f, key]);
   const dishesFiltered = useMemo(
     () => applyCartaFilter(dishes, activeFilter, new Set<string>()),
     [dishes, activeFilter],
