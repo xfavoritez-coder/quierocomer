@@ -31,9 +31,9 @@ export const metadata = {
 // A/B winners hardcoded — experiment concluded
 const AB_WINNERS = {
   titleId: null,
-  titleText: "Crea una carta QR que {venda más} por ti",
+  titleText: "Crea gratis una carta QR inteligente que {vende más} por ti",
   subtitleId: null,
-  subtitleText: "Crea una carta QR inteligente que aumenta tus ventas y mejora la experiencia de tus clientes.",
+  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
   ctaText: "Crear carta",
 };
