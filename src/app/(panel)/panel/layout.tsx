@@ -256,7 +256,7 @@ function formatDateCL(d: string | null) {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 }
 
-function PlanModal({ plan, restaurantId, initialTab, renewMode, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; renewMode?: boolean; onClose: () => void }) {
+function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; renewMode?: boolean; context?: string; onClose: () => void }) {
   const ALL_TABS = ["FREE", "GOLD", "PREMIUM"] as const;
   type TabKey = typeof ALL_TABS[number];
   // renewMode: abrir directo en el plan actual (sin swap a otro plan)
@@ -451,6 +451,19 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, onClose }: { pla
             border: `1px solid ${borderColor}`,
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {context === "featured_dishes" && (tab === "GOLD" || tab === "PREMIUM") && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "9px 12px", borderRadius: 10, marginBottom: 4,
+                  background: tab === "PREMIUM" ? "rgba(124,58,237,0.12)" : "rgba(244,166,35,0.12)",
+                  border: `1.5px solid ${tab === "PREMIUM" ? "rgba(124,58,237,0.3)" : "rgba(244,166,35,0.3)"}`,
+                }}>
+                  <span style={{ fontSize: 15, flexShrink: 0 }}>⭐</span>
+                  <span style={{ fontFamily: FD, fontSize: "0.8rem", fontWeight: 700, color: accentColor, lineHeight: 1.3 }}>
+                    {tab === "PREMIUM" ? "Platos destacados ilimitados" : "Hasta 3 platos destacados"}
+                  </span>
+                </div>
+              )}
               {PLAN_INHERITS_FROM[tab] && (
               <PlanFeatureRow
                 text={PLAN_INHERITS_FROM[tab] || ""}
@@ -677,6 +690,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   const [planModalInitialTab, setPlanModalInitialTab] = useState<"FREE" | "GOLD" | "PREMIUM" | undefined>(undefined);
   const [planModalRenewMode, setPlanModalRenewMode] = useState(false);
+  const [planModalContext, setPlanModalContext] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -688,6 +702,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         setPlanModalInitialTab(undefined);
       }
       setPlanModalRenewMode(!!detail?.renew);
+      setPlanModalContext(detail?.context || undefined);
       setPlanModalOpen(true);
       // Track plan modal opened
       if (selectedRestEarly?.id) {
@@ -825,7 +840,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
       {/* Plan modal — triggered from "Mi Plan" menu */}
       {planModalOpen && (
-        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} initialTab={planModalInitialTab} renewMode={planModalRenewMode} onClose={() => { setPlanModalOpen(false); setPlanModalRenewMode(false); }} />
+        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} initialTab={planModalInitialTab} renewMode={planModalRenewMode} context={planModalContext} onClose={() => { setPlanModalOpen(false); setPlanModalRenewMode(false); setPlanModalContext(undefined); }} />
       )}
     </SessionContext.Provider>
   );

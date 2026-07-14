@@ -982,7 +982,7 @@ export default function AdminMenus() {
   const toggleTag = async (t: string) => {
     if (!selectedDish) return;
     if (t === "RECOMMENDED" && !eTags.includes(t) && !canHighlight) {
-      window.dispatchEvent(new CustomEvent("show-plan-modal"));
+      window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD", source: "star_highlight", context: "featured_dishes" } }));
       return;
     }
     if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
@@ -1817,14 +1817,14 @@ export default function AdminMenus() {
                   {/* Star — visible siempre, abre modal de planes si no tiene acceso */}
                   <button onClick={async () => {
                     if (!canHighlight) {
-                      window.dispatchEvent(new CustomEvent("show-plan-modal"));
+                      window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD", source: "star_highlight", context: "featured_dishes" } }));
                       return;
                     }
                     const wasRec = d.tags?.includes("RECOMMENDED");
                     if (!wasRec) {
                       const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
                       if (activePlan !== "PREMIUM" && currentRecCount >= 3) {
-                        toast.error("El plan Gold permite hasta 3 platos destacados. Con Premium puedes destacar ilimitados.");
+                        window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM", source: "star_highlight_limit", context: "featured_dishes" } }));
                         return;
                       }
                       if (currentRecCount >= 5) { toast.error("Máximo 5 platos destacados"); return; }
@@ -1957,21 +1957,25 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} activeMenuGroupId={activeMenuGroupId} menuGroups={menuGroups} canHighlight={canHighlight} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} onToggleFeatured={canHighlight ? (dishId) => {
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} activeMenuGroupId={activeMenuGroupId} menuGroups={menuGroups} canHighlight={canHighlight} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} onToggleFeatured={(dishId) => {
+          if (!canHighlight) {
+            window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD", source: "star_highlight", context: "featured_dishes" } }));
+            return;
+          }
           const dish = dishes.find(d => d.id === dishId);
           if (!dish) return;
           const hasTags = dish.tags?.includes("RECOMMENDED");
           if (!hasTags) {
             const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.id !== dishId).length;
             if (activePlan !== "PREMIUM" && currentRecCount >= 3) {
-              toast.error("El plan Gold permite hasta 3 platos destacados. Con Premium puedes destacar ilimitados.");
+              window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM", source: "star_highlight_limit", context: "featured_dishes" } }));
               return;
             }
           }
           const newTags = hasTags ? dish.tags.filter((t: string) => t !== "RECOMMENDED") : [...(dish.tags || []), "RECOMMENDED"];
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, tags: newTags, isHero: newTags.includes("RECOMMENDED") } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
-        } : undefined} onToggleVisibility={(dishId, isActive) => {
+        }} onToggleVisibility={(dishId, isActive) => {
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, isActive } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive }) });
         }} onPhotoClick={(url) => setPhotoModal(url)} />
