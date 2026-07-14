@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         mustChangePassword: owner.mustChangePassword,
       });
       setPanelCookies(response, token, owner.role, owner.id);
-      if (owner.restaurants[0]) logActivity(owner.restaurants[0].id, "panel_login", { email: owner.email }, owner.id);
+      if (owner.restaurants[0]) logActivity(owner.restaurants[0].id, "panel_login", { email: owner.email }, owner.id, req);
       return response;
     }
 

@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
     warmImageCache(urlData.publicUrl);
 
-    logActivity(localId, "photo_upload", { dishName, fileName, originalSize, optimizedSize });
+    logActivity(localId, "photo_upload", { dishName, fileName, originalSize, optimizedSize }, undefined, req);
 
     return NextResponse.json({
       url: urlData.publicUrl,

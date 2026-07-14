@@ -121,11 +121,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Track specific action for visibility toggle
     if (body.isActive !== undefined) {
-      logActivity(existing.restaurantId, body.isActive ? "dish_show" : "dish_hide", { dishId: id, dishName: dish.name });
+      logActivity(existing.restaurantId, body.isActive ? "dish_show" : "dish_hide", { dishId: id, dishName: dish.name }, undefined, req);
     }
     // Track activity
     const changes = Object.keys(body).filter(k => k !== "restaurantId");
-    logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes });
+    logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes }, undefined, req);
 
     try { revalidateQrCache(); } catch {}
     syncDishToMeilisearch(id).catch(() => {});
@@ -151,7 +151,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     // Soft delete: mark as inactive + set deletedAt
     const deleted = await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() }, select: { name: true } });
-    logActivity(existing.restaurantId, "dish_delete", { dishId: id, dishName: deleted.name });
+    logActivity(existing.restaurantId, "dish_delete", { dishId: id, dishName: deleted.name }, undefined, req);
     try { revalidateQrCache(); } catch {}
     syncDishToMeilisearch(id).catch(() => {}); // updates isEligibleForFeed → false
     return NextResponse.json({ ok: true });

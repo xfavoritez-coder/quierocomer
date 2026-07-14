@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
       include: { category: { select: { id: true, name: true } } },
     });
 
-    logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
+    logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price }, undefined, req);
     revalidateQrCache();
     syncDishToMeilisearch(dish.id).catch(() => {});
     translateDish(dish.id).catch((e) => console.error("[translate dish]", e));

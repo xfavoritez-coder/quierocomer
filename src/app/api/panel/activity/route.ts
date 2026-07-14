@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   try {
     const { restaurantId, action, details } = await req.json();
     if (restaurantId && action) {
-      logActivity(restaurantId, action, details || undefined, panelId);
+      logActivity(restaurantId, action, details || undefined, panelId, req);
     }
   } catch {}
 

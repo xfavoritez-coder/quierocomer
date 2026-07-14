@@ -691,13 +691,16 @@ function ActivityModal({ restaurantId, name, onClose }: { restaurantId: string; 
               if (d.fileName) parts.push(d.fileName);
               if (d.text) parts.push(`"${String(d.text).slice(0, 50)}"`);
               const detail = parts.join(" · ");
+              const deviceType = d.deviceType as "mobile" | "desktop" | undefined;
+              const deviceIcon = deviceType === "mobile" ? "📱" : deviceType === "desktop" ? "🖥" : null;
               return (
                 <div key={a.id || i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid #222" }}>
                   <div style={{ fontSize: 11, color: "#666", minWidth: 110, flexShrink: 0 }}>{fmtDate(a.createdAt)}</div>
-                  <div style={{ fontSize: 13, color: "#bbb" }}>
+                  <div style={{ fontSize: 13, color: "#bbb", flex: 1 }}>
                     <strong style={{ color: "#ddd" }}>{label}</strong>
                     {detail && <span style={{ marginLeft: 6, color: "#777", fontSize: 12 }}>{detail}</span>}
                   </div>
+                  {deviceIcon && <span style={{ fontSize: 13, flexShrink: 0, opacity: 0.7 }} title={deviceType}>{deviceIcon}</span>}
                 </div>
               );
             })

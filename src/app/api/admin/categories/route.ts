@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    logActivity(restaurantId, "category_create", { categoryId: category.id, name });
+    logActivity(restaurantId, "category_create", { categoryId: category.id, name }, undefined, req);
 
     // Translate category name to en/pt in background
     translateCategory(category.id).catch((e) => console.error("[translate cat]", e));
@@ -109,9 +109,9 @@ export async function PUT(req: NextRequest) {
 
     // Log specific action for visibility toggle vs generic edit
     if (isActive !== undefined) {
-      logActivity(existing.restaurantId, isActive ? "category_show" : "category_hide", { categoryId: id, name: updated.name });
+      logActivity(existing.restaurantId, isActive ? "category_show" : "category_hide", { categoryId: id, name: updated.name }, undefined, req);
     }
-    logActivity(existing.restaurantId, "category_edit", { categoryId: id, name: updated.name, fields: Object.keys(data) });
+    logActivity(existing.restaurantId, "category_edit", { categoryId: id, name: updated.name, fields: Object.keys(data) }, undefined, req);
 
     // Re-translate if name changed
     if (name !== undefined) {
@@ -155,7 +155,7 @@ export async function DELETE(req: NextRequest) {
     // Delete soft-deleted dishes first to clear foreign key constraints
     await prisma.dish.deleteMany({ where: { categoryId: id, isActive: false } });
     await prisma.category.delete({ where: { id } });
-    logActivity(existing.restaurantId, "category_delete", { categoryId: id, name: existing.name });
+    logActivity(existing.restaurantId, "category_delete", { categoryId: id, name: existing.name }, undefined, req);
     revalidateQrCache();
     return NextResponse.json({ success: true });
   } catch (e: any) {

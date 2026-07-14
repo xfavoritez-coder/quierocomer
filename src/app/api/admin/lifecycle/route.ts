@@ -8,33 +8,11 @@ import {
   type LifecycleStage,
 } from "@/lib/admin/lifecycle";
 
-// In-memory cache — valid for 3 minutes, survives within same serverless instance
+// In-memory cache — stale-while-revalidate pattern
 let _cache: { entries: any[]; stats: any; ts: number } | null = null;
-const CACHE_TTL = 3 * 60 * 1000;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes stale threshold
 
-export async function GET(req: NextRequest) {
-  const authErr = checkAdminAuth(req);
-  if (authErr) return authErr;
-
-  const url = new URL(req.url);
-  const bust = url.searchParams.get("bust") === "1";
-  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
-  const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get("limit") || "20")));
-  const offset = (page - 1) * limit;
-
-  // Serve from cache if available and not busting
-  if (!bust && _cache && Date.now() - _cache.ts < CACHE_TTL) {
-    const slice = _cache.entries.slice(offset, offset + limit);
-    return NextResponse.json({
-      entries: slice,
-      stats: _cache.stats,
-      total: _cache.entries.length,
-      page,
-      hasMore: offset + limit < _cache.entries.length,
-      cached: true,
-    });
-  }
-
+async function buildLifecycleCache(): Promise<void> {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
@@ -344,13 +322,48 @@ export async function GET(req: NextRequest) {
 
   // Cache full result
   _cache = { entries, stats, ts: Date.now() };
+}
 
-  const slice = entries.slice(offset, offset + limit);
+export async function GET(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  const url = new URL(req.url);
+  const bust = url.searchParams.get("bust") === "1";
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+  const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get("limit") || "20")));
+  const offset = (page - 1) * limit;
+
+  // ── Cache logic: stale-while-revalidate ──
+  // Si tenemos cache (aunque sea viejo), devolver inmediatamente
+  // Si está stale, reconstruir en background sin bloquear
+  if (_cache && !bust) {
+    const isStale = Date.now() - _cache.ts > CACHE_TTL;
+    const slice = _cache.entries.slice(offset, offset + limit);
+    const response = NextResponse.json({
+      entries: slice,
+      stats: _cache.stats,
+      total: _cache.entries.length,
+      page,
+      hasMore: offset + limit < _cache.entries.length,
+      cached: true,
+      stale: isStale,
+    });
+    if (isStale) {
+      // Rebuild in background — non-blocking
+      buildLifecycleCache().catch(() => {});
+    }
+    return response;
+  }
+
+  // No cache at all (cold start) — must build synchronously
+  await buildLifecycleCache();
+  const slice = (_cache as NonNullable<typeof _cache>).entries.slice(offset, offset + limit);
   return NextResponse.json({
     entries: slice,
-    stats,
-    total: entries.length,
+    stats: (_cache as NonNullable<typeof _cache>).stats,
+    total: (_cache as NonNullable<typeof _cache>).entries.length,
     page,
-    hasMore: offset + limit < entries.length,
+    hasMore: offset + limit < (_cache as NonNullable<typeof _cache>).entries.length,
   });
 }
