@@ -424,7 +424,7 @@ export default function CartaLista({
                   >Ofertas</button>
                 );
               })()}
-              {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
+              {grouped.map(({ category: cat }) => {
                 const isActive = cat.id === activeCategory;
                 return (
                   <button

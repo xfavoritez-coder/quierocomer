@@ -340,6 +340,24 @@ export default function CartaPremium({
   // muy destacado que este.
   const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
 
+  // Categorías que tienen al menos un plato visible con el filtro/búsqueda activos
+  const visibleCatIds = useMemo(() => {
+    if (!activeFilter && !searchQuery) return null;
+    const ids = new Set<string>();
+    for (const cat of categories) {
+      const has = applyCartaFilter(
+        dishes.filter(d => d.categoryId === cat.id),
+        activeFilter, popularDishIds
+      ).some(d => {
+        if (!searchQuery) return true;
+        const q = norm(searchQuery.trim());
+        return norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm((d as any).ingredients || "").includes(q);
+      });
+      if (has) ids.add(cat.id);
+    }
+    return ids;
+  }, [categories, dishes, activeFilter, searchQuery, popularDishIds]);
+
   // Build sorted dish list matching carta visual order (category by category, recommended first, then by score)
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
@@ -494,7 +512,7 @@ export default function CartaPremium({
         <CategoryNav
           categories={[
             ...(hasPromos ? [{ id: "promos", name: "Ofertas", position: -2, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
-            ...categories,
+            ...(visibleCatIds ? categories.filter(c => visibleCatIds.has(c.id)) : categories),
           ]}
           activeCategory={activeCategory}
           stickyTop={bannerH + navH}
