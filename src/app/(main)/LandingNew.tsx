@@ -23,7 +23,7 @@ const RESTAURANTS: [string, string][] = [
 ];
 
 const AB_DEFAULTS = {
-  titleText: "Crea gratis una carta QR inteligente que {vende más} por ti",
+  titleText: "Crea una carta QR inteligente que {vende más} por ti",
   subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Crear carta",
 };
@@ -32,7 +32,7 @@ const I18N = {
   es: {
     eyebrow: "Para dueños de restaurantes",
     microcopy: "",
-    heroTitle: "Crea gratis una carta QR inteligente que {vende más} por ti",
+    heroTitle: "Crea una carta QR inteligente que {vende más} por ti",
     heroSubtitle: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
     heroCta: "Crear carta",
     hiwEyebrow: "Así funciona QuieroComer",

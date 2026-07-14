@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const EXPERIMENT_SLUG = "landing-hero";
 
 const DEFAULTS = {
-  titleText: "Crea gratis una carta QR inteligente que {vende más} por ti",
+  titleText: "Crea una carta QR inteligente que {vende más} por ti",
   subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Crear carta",
 };
