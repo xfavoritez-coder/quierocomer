@@ -34,7 +34,7 @@ const AB_WINNERS = {
   subtitleId: null,
   subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
-  ctaText: "Crear carta",
+  ctaText: "Crear carta gratis",
 };
 
 export default async function QRLandingPage() {

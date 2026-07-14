@@ -34,7 +34,7 @@ const I18N = {
     microcopy: "",
     heroTitle: "Crea una carta QR inteligente que {vende más} por ti",
     heroSubtitle: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
-    heroCta: "Crear carta",
+    heroCta: "Crear carta gratis",
     hiwEyebrow: "Así funciona QuieroComer",
     hiwTitle: "Transformamos tu carta en una carta QR",
     hiwTitleAccent: "inteligente",

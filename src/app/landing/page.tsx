@@ -18,7 +18,7 @@ const AB_WINNERS = {
   subtitleId: null,
   subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
-  ctaText: "Crear carta gratis →",
+  ctaText: "Crear carta gratis",
 };
 
 export const metadata = {
