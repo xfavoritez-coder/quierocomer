@@ -10,14 +10,13 @@ const FALLBACK_COLORS: Record<string, string> = {
   "el-menu-de-la-esquina": "#2563eb",
 };
 
-// Cached (ISR)
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const AB_WINNERS = {
   titleId: null,
-  titleText: "Tu local puede {vender más}",
+  titleText: "Crea una carta QR inteligente que {vende más} por ti",
   subtitleId: null,
-  subtitleText: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
+  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
   ctaText: "Crear carta gratis →",
 };
