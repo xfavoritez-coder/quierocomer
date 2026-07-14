@@ -13,8 +13,8 @@ const GOLD = "#F4A623";
 const BASE_URL = "https://quierocomer.com";
 
 const PADDING_MM = 5;
-type Size = "small" | "medium" | "large";
-const SIZE_CONFIG: Record<Size, { label: string; qrMm: number }> = {
+type Size = "small" | "medium" | "large" | "custom";
+const SIZE_CONFIG: Record<Exclude<Size, "custom">, { label: string; qrMm: number }> = {
   small:  { label: "5×5 cm", qrMm: 50 },
   medium: { label: "8×8 cm", qrMm: 80 },
   large:  { label: "12×12 cm", qrMm: 120 },
@@ -26,6 +26,8 @@ export default function PanelQRPage() {
   const [qrWithLogo, setQrWithLogo] = useState("");
   const [showLogo, setShowLogo] = useState(true);
   const [size, setSize] = useState<Size>("medium");
+  const [customSizeCm, setCustomSizeCm] = useState(10);
+  const [customSizeInput, setCustomSizeInput] = useState("10");
   const [quantity, setQuantity] = useState(4);
   const [quantityInput, setQuantityInput] = useState("4");
   const [generating, setGenerating] = useState(false);
@@ -70,7 +72,8 @@ export default function PanelQRPage() {
   }, [qrUrl, logoUrl, slug]);
 
   const finalQr = showLogo && logoUrl ? qrWithLogo || qrPreview : qrPreview;
-  const qrMm = SIZE_CONFIG[size].qrMm;
+  const qrMm = size === "custom" ? customSizeCm * 10 : SIZE_CONFIG[size].qrMm;
+  const sizeLabel = size === "custom" ? `${customSizeCm}×${customSizeCm} cm` : SIZE_CONFIG[size].label;
 
   const downloadImage = async () => {
     if (!finalQr || generatingImg) return;
@@ -237,8 +240,8 @@ export default function PanelQRPage() {
 
         {/* Tamaño */}
         <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".06em" }}>Tamaño</p>
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-          {(["small", "medium", "large"] as Size[]).map(s => {
+        <div style={{ display: "flex", gap: 6, marginBottom: size === "custom" ? 8 : 14 }}>
+          {(["small", "medium", "large"] as Exclude<Size, "custom">[]).map(s => {
             const active = size === s;
             return (
               <button key={s} onClick={() => setSize(s)} style={{
@@ -252,7 +255,35 @@ export default function PanelQRPage() {
               </button>
             );
           })}
+          <button onClick={() => setSize("custom")} style={{
+            flex: 1, padding: "10px 6px", textAlign: "center", borderRadius: 10, cursor: "pointer",
+            background: size === "custom" ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
+            border: size === "custom" ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
+            fontFamily: F, fontSize: "0.78rem", fontWeight: size === "custom" ? 700 : 500,
+            color: size === "custom" ? GOLD : "var(--adm-text2)",
+          }}>
+            Otro
+          </button>
         </div>
+        {size === "custom" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+            <input
+              type="number" min={3} max={100} value={customSizeInput}
+              onChange={e => setCustomSizeInput(e.target.value)}
+              onBlur={() => {
+                const n = Math.max(3, Math.min(100, parseInt(customSizeInput) || 10));
+                setCustomSizeCm(n);
+                setCustomSizeInput(String(n));
+              }}
+              style={{
+                width: 80, height: 36, textAlign: "center", borderRadius: 10,
+                border: `1.5px solid ${GOLD}`, background: "var(--adm-input)",
+                fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", outline: "none",
+              }}
+            />
+            <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>cm × {customSizeCm} cm</span>
+          </div>
+        )}
 
         {/* Cantidad */}
         <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".06em" }}>Cantidad</p>
@@ -321,7 +352,7 @@ export default function PanelQRPage() {
               boxShadow: "0 4px 20px rgba(0,0,0,0.1)", marginBottom: 16, background: "white",
             }} />
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 16px" }}>
-              {quantity} código{quantity > 1 ? "s" : ""} QR · {SIZE_CONFIG[size].label}
+              {quantity} código{quantity > 1 ? "s" : ""} QR · {sizeLabel}
             </p>
             <div style={{ display: "flex", gap: 8 }}>
               <a href={previewDataUrl} download={`QR-${slug}-x${quantity}.png`} style={{
