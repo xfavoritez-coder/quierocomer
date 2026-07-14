@@ -19,7 +19,7 @@ const AB_WINNERS = {
   subtitleId: null,
   subtitleText: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
-  ctaText: "Transformar gratis →",
+  ctaText: "Crear carta gratis →",
 };
 
 export const metadata = {

@@ -66,7 +66,7 @@ const I18N = {
     faqPlanLink: <>Sí. Puedes empezar gratis y cuando quieras, ver nuestros <a href="/planes" style={{ color: "var(--amber)", textDecoration: "underline" }}>planes</a>.</>,
     finalTitle: "Transforma tu carta en una herramienta que venda",
     finalSub: "Sube tu carta. Lo demás, lo hacemos nosotros.",
-    finalCta: "Transformar mi carta gratis →",
+    finalCta: "Crear carta gratis →",
     planesTitle: <>Empieza gratis. <span className="accent">Crece cuando quieras.</span></>,
     planesSub: "7 días de prueba en planes pagados · Cancela cuando quieras",
     mensual: "Mensual",

@@ -348,7 +348,7 @@ function FuncionesInner() {
           </h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="/subircarta" className="fn-btn-cta">
-            Transformar mi carta gratis →
+            Crear carta gratis →
           </a>
         </div>
       </section>
