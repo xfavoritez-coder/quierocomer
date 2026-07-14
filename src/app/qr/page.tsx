@@ -11,8 +11,7 @@ const FALLBACK_COLORS: Record<string, string> = {
   "guffsushi": "#1a1a2e",
 };
 
-// Cached (ISR) — no more force-dynamic A/B queries
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "QuieroComer | La carta inteligente que vende más por ti",
