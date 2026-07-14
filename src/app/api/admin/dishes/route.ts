@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     logActivity(restaurantId, "dish_create", { dishId: dish.id, dishName: name, price });
     revalidateQrCache();
     syncDishToMeilisearch(dish.id).catch(() => {});
-    if (description) translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
+    translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
 
     return NextResponse.json(dish);
   } catch (e: any) {

@@ -443,6 +443,30 @@ export async function GET(req: NextRequest) {
       console.error("[diario] Translation backfill error:", e);
     }
 
+    // 5b. Auto-detect restaurants with untranslated dishes and mark them for backfill
+    try {
+      const untranslated = await prisma.$queryRaw<{ restaurantId: string }[]>`
+        SELECT DISTINCT d."restaurantId"
+        FROM "Dish" d
+        WHERE d."isActive" = true
+          AND d."deletedAt" IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM "DishTranslation" dt WHERE dt."dishId" = d.id AND dt.lang = 'en'
+          )
+        LIMIT 20
+      `;
+      if (untranslated.length > 0) {
+        const ids = untranslated.map(r => r.restaurantId);
+        await prisma.restaurant.updateMany({
+          where: { id: { in: ids }, needsTranslation: false },
+          data: { needsTranslation: true },
+        });
+        if (ids.length > 0) console.log(`[diario] Marked ${ids.length} restaurants for translation sweep`);
+      }
+    } catch (e) {
+      console.error("[diario] Translation sweep error:", e);
+    }
+
     // 7. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
