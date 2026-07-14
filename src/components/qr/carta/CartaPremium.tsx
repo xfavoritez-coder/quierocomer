@@ -521,15 +521,12 @@ export default function CartaPremium({
             if (id === "promos") { const el = document.getElementById("cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 54, behavior: "smooth" }); }
           }}
           rightSlot={
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <button
-                onClick={() => setSearchOpen(true)}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: 4, cursor: "pointer", borderRadius: 8 }}
-              >
-                <Search size={17} color="var(--carta-text-muted)" />
-              </button>
-              <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
-            </div>
+            <button
+              onClick={() => setSearchOpen(true)}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: 4, cursor: "pointer", borderRadius: 8 }}
+            >
+              <Search size={17} color="var(--carta-text-muted)" />
+            </button>
           }
         />
       )}

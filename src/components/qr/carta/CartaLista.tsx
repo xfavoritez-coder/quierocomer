@@ -382,7 +382,7 @@ export default function CartaLista({
       </div>
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
-      <div style={{ position: "sticky", top: bannerH + navH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
+      <div style={{ position: "sticky", top: bannerH + navH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
@@ -400,13 +400,13 @@ export default function CartaLista({
             </button>
           </div>
         ) : (
-          <nav style={{ height: 44, display: "flex", alignItems: "center" }}>
-            {/* Category tabs */}
+          <nav style={{ display: "flex", alignItems: "center" }}>
+            {/* Category pills */}
             <div
               ref={catScrollRef}
               className="flex overflow-x-auto"
               style={{
-                flex: 1, height: "100%", paddingLeft: 12, paddingRight: 28, gap: 20,
+                flex: 1, paddingLeft: 12, paddingRight: 8, paddingTop: 8, paddingBottom: 8, gap: 6,
                 scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch",
                 maskImage: "linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)",
                 WebkitMaskImage: "linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)",
@@ -418,9 +418,16 @@ export default function CartaLista({
                   <button
                     key="promos"
                     ref={isActive ? activeCatRef : null}
-                    onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
+                    onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 50, behavior: "smooth" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer" }}
+                    style={{
+                      whiteSpace: "nowrap", padding: "7px 14px", borderRadius: 999,
+                      fontSize: "0.82rem", fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "var(--carta-accent, #F4A623)" : "var(--carta-text3)",
+                      background: isActive ? "color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent)" : "transparent",
+                      border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" : "1px solid var(--carta-border)",
+                      cursor: "pointer", transition: "all 0.15s ease",
+                    }}
                   >Ofertas</button>
                 );
               })()}
@@ -434,25 +441,18 @@ export default function CartaLista({
                       setActiveCategory(cat.id);
                       const el = document.getElementById(`lista-cat-${cat.id}`);
                       if (el) {
-                        const top = el.getBoundingClientRect().top + window.scrollY - 52;
+                        const top = el.getBoundingClientRect().top + window.scrollY - 50;
                         window.scrollTo({ top, behavior: "smooth" });
                       }
                     }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
                     style={{
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "0 2px",
-                      fontSize: "1rem",
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? "var(--carta-text)" : "var(--carta-text3)",
-                      background: "none",
-                      border: "none",
-                      borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      transition: "color 0.15s, border-color 0.15s",
+                      whiteSpace: "nowrap", padding: "7px 14px", borderRadius: 999,
+                      fontSize: "0.82rem", fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "var(--carta-accent, #F4A623)" : "var(--carta-text3)",
+                      background: isActive ? "color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent)" : "transparent",
+                      border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" : "1px solid var(--carta-border)",
+                      cursor: "pointer", transition: "all 0.15s ease",
                     }}
                   >
                     {cat.name}
@@ -460,15 +460,14 @@ export default function CartaLista({
                 );
               })}
             </div>
-            {/* Search + Sort */}
-            <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
+            {/* Search */}
+            <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center" }}>
               <button
                 onClick={() => setSearchOpen(true)}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: 4, cursor: "pointer", borderRadius: 8 }}
               >
                 <Search size={17} color="var(--carta-text-muted)" />
               </button>
-              <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
           </nav>
         )}

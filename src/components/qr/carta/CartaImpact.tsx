@@ -1310,9 +1310,6 @@ export default function CartaImpact({
               })}
             </div>
           </div>
-          <div style={{ paddingBottom: 10 }}>
-            <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
-          </div>
         </div>
       </div>
       </header>
@@ -1509,7 +1506,6 @@ export default function CartaImpact({
             ? <X size={15} color="var(--carta-text, white)" />
             : <Search size={15} color="var(--carta-text, white)" />}
         </button>
-        <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
       {/* Filter bar — arriba de los chips de categoría */}
       <div style={{ padding: "8px 14px 0", position: "relative", zIndex: 2 }}>
