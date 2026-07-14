@@ -14,10 +14,10 @@ const FALLBACK_COLORS: Record<string, string> = {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "QuieroComer | La carta inteligente que vende más por ti",
+  title: "QuieroComer | Ve demos de cartas reales funcionando",
   description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
   openGraph: {
-    title: "QuieroComer | La carta inteligente que vende más por ti",
+    title: "QuieroComer | Ve demos de cartas reales funcionando",
     description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
     url: "https://quierocomer.com/qr",
     siteName: "QuieroComer",
@@ -30,9 +30,9 @@ export const metadata = {
 // A/B winners hardcoded — experiment concluded
 const AB_WINNERS = {
   titleId: null,
-  titleText: "Crea una carta QR inteligente que {vende más} por ti",
+  titleText: "Mira demos de cartas {reales} funcionando",
   subtitleId: null,
-  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
+  subtitleText: "Elige un local y explora su carta como si fueras un cliente.",
   ctaId: null,
   ctaText: "Crear carta gratis",
 };
