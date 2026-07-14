@@ -1507,10 +1507,12 @@ export default function CartaImpact({
             : <Search size={15} color="var(--carta-text, white)" />}
         </button>
       </div>
-      {/* Filter bar — arriba de los chips de categoría */}
-      <div style={{ padding: "8px 14px 0", position: "relative", zIndex: 2 }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-      </div>
+      {/* Filter bar — solo Gold y Premium */}
+      {(restaurant as any).plan !== "FREE" && (
+        <div style={{ padding: "8px 14px 0", position: "relative", zIndex: 2 }}>
+          <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+        </div>
+      )}
 
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search */}

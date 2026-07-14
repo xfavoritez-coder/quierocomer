@@ -376,10 +376,12 @@ export default function CartaLista({
         <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} />
       )}
 
-      {/* Filter bar */}
-      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-      </div>
+      {/* Filter bar — solo Gold y Premium */}
+      {(restaurant as any).plan !== "FREE" && (
+        <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
+          <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+        </div>
+      )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
       <div style={{ position: "sticky", top: bannerH + navH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>

@@ -472,10 +472,12 @@ export default function CartaPremium({
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: demoOffset }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} />
 
-      {/* Filter bar */}
-      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-      </div>
+      {/* Filter bar — solo Gold y Premium */}
+      {(restaurant as any).plan !== "FREE" && (
+        <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
+          <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+        </div>
+      )}
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (

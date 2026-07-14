@@ -96,10 +96,12 @@ export default function CartaBasic({
         rightSlot={<SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />}
       />
 
-      {/* Filter bar — Free B: compact con label */}
-      <div style={{ borderBottom: "1px solid var(--carta-border, #ede9e0)", padding: "6px 14px 7px", background: "var(--carta-bg-solid, #faf6ee)" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} compact />
-      </div>
+      {/* Filter bar — solo Gold y Premium */}
+      {(restaurant as any).plan !== "FREE" && (
+        <div style={{ borderBottom: "1px solid var(--carta-border, #ede9e0)", padding: "6px 14px 7px", background: "var(--carta-bg-solid, #faf6ee)" }}>
+          <CartaFilterBar active={activeFilter} onToggle={toggleFilter} compact />
+        </div>
+      )}
 
       <main className="px-4 pb-28">
         {categories.map((cat) => {
