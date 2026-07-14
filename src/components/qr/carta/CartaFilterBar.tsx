@@ -57,13 +57,13 @@ export default function CartaFilterBar({ active, onToggle, compact = false, glas
                 transition: "all 0.15s",
                 background: isActive
                   ? (f.key === "popular"
-                      ? (glass ? "rgba(239,68,68,0.2)" : "color-mix(in srgb, #ef4444 12%, var(--carta-bg))")
+                      ? "color-mix(in srgb, #ef4444 14%, var(--impact-chip-inactive-bg, var(--carta-bg)))"
                       : f.key === "veggie"
-                        ? (glass ? "rgba(22,163,74,0.2)" : "color-mix(in srgb, #16a34a 12%, var(--carta-bg))")
+                        ? "color-mix(in srgb, #16a34a 14%, var(--impact-chip-inactive-bg, var(--carta-bg)))"
                         : f.key === "gluten-free"
-                          ? (glass ? "rgba(202,138,4,0.2)" : "color-mix(in srgb, #ca8a04 12%, var(--carta-bg))")
-                          : (glass ? "rgba(244,166,35,0.2)" : "color-mix(in srgb, var(--carta-accent) 13%, var(--carta-bg))"))
-                  : (glass ? "rgba(255,255,255,0.08)" : "color-mix(in srgb, var(--carta-text) 6%, var(--carta-bg))"),
+                          ? "color-mix(in srgb, #ca8a04 14%, var(--impact-chip-inactive-bg, var(--carta-bg)))"
+                          : "color-mix(in srgb, var(--carta-accent) 15%, var(--impact-chip-inactive-bg, var(--carta-bg)))")
+                  : (glass ? "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))" : "color-mix(in srgb, var(--carta-text) 6%, var(--carta-bg))"),
                 border: isActive
                   ? (f.key === "popular"
                       ? "1px solid rgba(239,68,68,0.45)"
@@ -72,10 +72,10 @@ export default function CartaFilterBar({ active, onToggle, compact = false, glas
                         : f.key === "gluten-free"
                           ? "1px solid rgba(202,138,4,0.45)"
                           : "1px solid color-mix(in srgb, var(--carta-accent) 50%, transparent)")
-                  : (glass ? "1px solid rgba(255,255,255,0.18)" : "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)"),
+                  : (glass ? "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))" : "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)"),
                 color: isActive
                   ? activeColor
-                  : (glass ? "rgba(255,255,255,0.65)" : "var(--carta-text-muted)"),
+                  : (glass ? "var(--impact-chip-inactive-text, rgba(255,255,255,0.65))" : "var(--carta-text-muted)"),
               }}
             >
               <span>{f.emoji}</span>
