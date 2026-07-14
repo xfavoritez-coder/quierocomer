@@ -404,19 +404,19 @@ export default function MiRestaurantePage() {
                 )}
 
                 {/* Botones */}
-                <div style={{ display: "flex", gap: 8 }}>
-                  {(inGrace || cycleEndsToday) && !isExempt && (
-                    <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
-                      <RefreshCw size={14} /> Renovar plan
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setPlansTab(plan === "FREE" ? "GOLD" : plan === "GOLD" ? "PREMIUM" : "GOLD"); setShowPlansModal(true); }}
-                    style={{ flex: inGrace || cycleEndsToday ? "0 0 auto" : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 16px", border: `1.5px solid ${accent}55`, borderRadius: 999, background: `${accent}14`, color: accent, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                  >
-                    <Sparkles size={14} /> Ver planes
-                  </button>
-                </div>
+                {!isExempt && (plan as string) !== "PREMIUM" && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {(inGrace || cycleEndsToday) ? (
+                      <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+                        <RefreshCw size={14} /> Renovar plan
+                      </button>
+                    ) : (
+                      <button onClick={() => setShowPlansModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: accent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+                        <Sparkles size={14} /> Mejorar plan
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -453,9 +453,9 @@ export default function MiRestaurantePage() {
 
             {/* ─── Modal planes ─── */}
             {showPlansModal && (
-              <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+              <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
                 <div onClick={() => setShowPlansModal(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
-                <div style={{ position: "relative", background: "var(--adm-card)", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", width: "100%", maxWidth: 480, boxShadow: "0 -8px 40px rgba(0,0,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
+                <div style={{ position: "relative", background: "var(--adm-card)", borderRadius: 16, padding: "24px 20px 32px", width: "100%", maxWidth: 480, boxShadow: "0 8px 40px rgba(0,0,0,0.25)", maxHeight: "90vh", overflowY: "auto" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
                     <h3 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Planes disponibles</h3>
                     <button onClick={() => setShowPlansModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={20} color="var(--adm-text3)" /></button>
