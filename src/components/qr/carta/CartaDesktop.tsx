@@ -517,7 +517,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
       <footer style={{ textAlign: "center", padding: "20px 0 30px" }}>
         <span style={{ fontSize: "0.78rem", color: "#bbb" }}>Powered by </span>
         <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.85rem", color: "#999", fontWeight: 700 }}>
-          QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
+          QuieroComer<span style={{ color: "#F4A623" }}>.com</span>
         </span>
       </footer>
 

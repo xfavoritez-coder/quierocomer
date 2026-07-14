@@ -611,7 +611,7 @@ export default function CartaLista({
         >
           <span style={{ color: "var(--carta-text-muted)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
           <span className="font-[family-name:var(--font-playfair)]" style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}>
-            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.cl</span>
+            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.com</span>
           </span>
         </a>
         <span style={{ color: "var(--carta-text-muted)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
@@ -753,6 +753,7 @@ function DishListCard({
           {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
           {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🥗</span>}
           {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
+          {(dish as any).isGlutenFree && <span style={{ fontSize: "12px", flexShrink: 0 }} title="Sin gluten">🌾</span>}
         </h3>
         {dish.description && (
           <p

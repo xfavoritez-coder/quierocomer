@@ -780,7 +780,7 @@ export default function CartaPremium({
             className="font-[family-name:var(--font-playfair)]"
             style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}
           >
-            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.cl</span>
+            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.com</span>
           </span>
         </a>
         <span style={{ color: "var(--carta-text3)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>

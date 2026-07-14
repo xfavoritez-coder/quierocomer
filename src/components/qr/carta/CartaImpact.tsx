@@ -699,6 +699,7 @@ function ImpactDishCard({
           {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "16px", flexShrink: 0 }}>🌿</span>}
           {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "16px", flexShrink: 0 }}>🥗</span>}
           {(dish as any).isSpicy && <span style={{ fontSize: "16px", flexShrink: 0 }}>🌶️</span>}
+          {(dish as any).isGlutenFree && <span style={{ fontSize: "16px", flexShrink: 0 }} title="Sin gluten">🌾</span>}
         </h4>
         {dish.description && (
           <p style={{
@@ -1730,7 +1731,7 @@ export default function CartaImpact({
             className="font-[family-name:var(--font-playfair)]"
             style={{ color: "var(--carta-text3, #555)", fontSize: "0.82rem", fontWeight: 700 }}
           >
-            QuieroComer<span style={{ color: "var(--carta-accent)" }}>.cl</span>
+            QuieroComer<span style={{ color: "var(--carta-accent)" }}>.com</span>
           </span>
         </a>
         <span style={{ color: "var(--carta-text3, #555)", fontSize: "0.62rem" }}>&copy; {new Date().getFullYear()}</span>
