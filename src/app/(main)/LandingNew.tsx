@@ -23,18 +23,18 @@ const RESTAURANTS: [string, string][] = [
 ];
 
 const AB_DEFAULTS = {
-  titleText: "Tu carta puede vender m\u00e1s",
-  subtitleText: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
-  ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
+  titleText: "Crea una carta QR que {venda más} por ti",
+  subtitleText: "Crea una carta QR inteligente que aumenta tus ventas y mejora la experiencia de tus clientes.",
+  ctaText: "Crear carta gratis",
 };
 
 const I18N = {
   es: {
     eyebrow: "Para dueños de restaurantes",
-    microcopy: "Te mostramos en segundos cómo queda",
-    heroTitle: "Tu local puede {vender más}",
-    heroSubtitle: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
-    heroCta: "Transformar gratis →",
+    microcopy: "",
+    heroTitle: "Crea una carta QR que {venda más} por ti",
+    heroSubtitle: "Crea una carta QR inteligente que aumenta tus ventas y mejora la experiencia de tus clientes.",
+    heroCta: "Crear carta gratis",
     hiwEyebrow: "Así funciona QuieroComer",
     hiwTitle: "Transformamos tu carta en una carta QR",
     hiwTitleAccent: "inteligente",
@@ -309,7 +309,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
             <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>
               {lang === "en" ? t.heroCta : (abCta || t.heroCta)}
             </a>
-            <div className="microcopy">{t.microcopy}</div>
+            {t.microcopy && <div className="microcopy">{t.microcopy}</div>}
           </div>
         </div>
       </section>
@@ -357,30 +357,6 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
       </section>
       */}
 
-      {/* ASÍ FUNCIONA */}
-      <section className="how-it-works" data-track="Como funciona">
-        <div className="container">
-          <p className="hiw-eyebrow">{t.hiwEyebrow}</p>
-          <h2 className="hiw-title">{t.hiwTitle} <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>{t.hiwTitleAccent}</span></h2>
-
-          <div className="hiw-steps">
-            {t.steps.map((step, i) => (
-              <div key={i} className="hiw-step">
-                <div className="hiw-step-content">
-                  <div className="hiw-num-col"><div className="hiw-num">{i + 1}</div><div className="hiw-line" /></div>
-                  <div>
-                    <h3>{step.h}</h3>
-                    <ul><li>{step.li}</li></ul>
-                  </div>
-                </div>
-                <div className="hiw-img-wrap">
-                  <img src={["/landing/11.jpg", "/landing/22.jpg", "/landing/feliz.jpg"][i]} alt={step.h} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
 
       {/* FUNCIONES */}
