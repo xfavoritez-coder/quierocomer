@@ -1272,12 +1272,6 @@ export default function CartaImpact({
         <ImpactMenuSwitcher menuGroups={menuGroups} activeMenuSlug={activeMenuSlug} accent={(restaurant as any).cartaAccentColor || "var(--carta-accent, #F4A623)"} />
       )}
 
-      {/* Filter bar — always visible in fixed header */}
-      <div style={{ padding: "6px 14px 8px" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} glass />
-      </div>
-
-
       {/* Fixed category nav — slides in when menu section reaches header */}
       <div style={{
         overflow: "hidden",
@@ -1517,6 +1511,11 @@ export default function CartaImpact({
         </button>
         <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
+      {/* Filter bar — arriba de los chips de categoría */}
+      <div style={{ padding: "8px 14px 0" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} glass />
+      </div>
+
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search */}
         <div ref={menuAnchorRef} style={{ paddingTop: 6, paddingBottom: 6, marginBottom: 0 }}>
