@@ -30,7 +30,7 @@ interface HeroDishProps {
   /** Hace que el nav bar quede sticky al top (visible mientras scrolleas) */
   stickyNav?: boolean;
   /** Ref para medir el alto del nav bar desde el componente padre */
-  navRef?: React.RefObject<HTMLDivElement>;
+  navRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 function isReal(url: string | null | undefined): boolean {

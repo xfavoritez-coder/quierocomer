@@ -336,8 +336,8 @@ export default function MiRestaurantePage() {
         const iva = ivaOf(net);
         const gross = grossOf(net);
         const tabLabel = subscribeTab === "FREE" ? "Gratis" : subscribeTab.charAt(0) + subscribeTab.slice(1).toLowerCase();
-        const features = PLAN_FEATURES_DISPLAY[subscribeTab as any] || [];
-        const inherits = PLAN_INHERITS_FROM[subscribeTab as any];
+        const features = PLAN_FEATURES_DISPLAY[subscribeTab as PlanKey] || [];
+        const inherits = PLAN_INHERITS_FROM[subscribeTab as PlanKey];
         const monthlyNet = (billingStatus as any)?.customPlanPriceNet ?? planNetAmount(billingStatus?.plan as PlanKey ?? "FREE");
         const monthlyGross = monthlyNet + ivaOf(monthlyNet);
 
@@ -357,7 +357,7 @@ export default function MiRestaurantePage() {
                 : <CreditCard size={17} color="var(--adm-text3)" />}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-                  Plan {plan === "FREE" ? "Gratis" : plan === "SILVER" ? "Silver" : plan === "GOLD" ? "Gold" : "Premium"}
+                  Plan {(plan as string) === "FREE" ? "Gratis" : (plan as string) === "SILVER" ? "Silver" : (plan as string) === "GOLD" ? "Gold" : "Premium"}
                   {" "}
                   <span style={{ fontSize: "0.7rem", fontWeight: 600, padding: "2px 7px", borderRadius: 99, background: isActive ? "rgba(22,163,74,0.12)" : inTrial ? "rgba(244,166,35,0.12)" : isCanceled ? "rgba(220,38,38,0.12)" : "var(--adm-hover)", color: isActive ? "#16a34a" : inTrial ? GOLD : isCanceled ? "#dc2626" : "var(--adm-text3)" }}>
                     {isActive ? "Activo" : inTrial ? "Prueba" : isCanceled ? "Cancelado" : "Sin suscripción"}
@@ -477,7 +477,7 @@ export default function MiRestaurantePage() {
                 ) : (
                   <div style={{ background: "var(--adm-hover)", borderRadius: 12, padding: "16px" }}>
                     <p style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, color: tc.accent, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 10px" }}>Resumen del pedido</p>
-                    {isPremiumTrial && subscribeTab !== "FREE" ? (
+                    {isPremiumTrial ? (
                       <div style={{ marginBottom: 14 }}>
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
                           <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)" }}>Plan {tabLabel} · 7 días gratis</span>
