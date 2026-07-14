@@ -463,12 +463,12 @@ const TRANSFER_BLOCK = `
       <tr><td style="padding:14px 18px;">
         <div style="font-size:10px;color:#92400e;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Realiza tu transferencia hoy</div>
         <div style="font-size:13px;color:#5a3e1b;line-height:2;">
-          Banco: <strong>Santander</strong><br/>
+          Banco: <strong>BCI</strong><br/>
           Tipo: <strong>Cuenta corriente</strong><br/>
-          N°: <strong>70929597</strong><br/>
-          Nombre: <strong>Jaime Rodriguez</strong><br/>
-          RUT: <strong>17.102.959-7</strong><br/>
-          Email: <strong>favoritez@gmail.com</strong>
+          N°: <strong>69584989</strong><br/>
+          Nombre: <strong>Evolucion Gastronomica Spa</strong><br/>
+          RUT: <strong>78.123.543-1</strong><br/>
+          Email: <strong>hola@quierocomer.cl</strong>
         </div>
       </td></tr>
     </table>

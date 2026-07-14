@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import LandingNew from "../(main)/LandingNew";
 
-const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "el-menu-de-la-esquina", "krua-thai"];
+const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "el-menu-de-la-esquina", "guffsushi"];
 const FALLBACK_COLORS: Record<string, string> = {
   "hand-roll": "#dc2626",
   "horusvegan": "#1a5f3f",
   "juana-la-brava": "#7c2d12",
   "alleria-pizza": "#c0392b",
   "el-menu-de-la-esquina": "#2563eb",
-  "krua-thai": "#e65100",
+  "guffsushi": "#1a1a2e",
 };
 
 // Cached (ISR) — no more force-dynamic A/B queries

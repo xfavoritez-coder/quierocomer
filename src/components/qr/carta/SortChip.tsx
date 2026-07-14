@@ -21,9 +21,16 @@ export default function SortChip({ sortKey, setSortKey, salesMode }: Props) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; right: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    // Calculate fixed position from button's bounding rect
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
     const handler = (e: MouseEvent | TouchEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
@@ -57,6 +64,7 @@ export default function SortChip({ sortKey, setSortKey, salesMode }: Props) {
   return (
     <div ref={wrapRef} style={{ position: "relative" }}>
       <button
+        ref={btnRef}
         onClick={() => setOpen((v) => !v)}
         aria-label={t(lang, "sortBy" as any) || "Ordenar"}
         aria-expanded={open}
@@ -75,20 +83,20 @@ export default function SortChip({ sortKey, setSortKey, salesMode }: Props) {
         <ArrowUpDown size={17} strokeWidth={1.8} />
       </button>
 
-      {open && (
+      {open && dropPos && (
         <div
           role="menu"
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
+            position: "fixed",
+            top: dropPos.top,
+            right: dropPos.right,
             background: "white",
             border: "1px solid rgba(14,14,14,0.08)",
             borderRadius: 14,
-            boxShadow: "0 8px 28px rgba(0,0,0,0.12)",
+            boxShadow: "0 8px 28px rgba(0,0,0,0.18)",
             padding: 4,
             minWidth: 200,
-            zIndex: 50,
+            zIndex: 9999,
             animation: "scFadeIn 0.15s ease-out",
           }}
         >
