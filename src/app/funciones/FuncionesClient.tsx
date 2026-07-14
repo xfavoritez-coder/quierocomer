@@ -83,7 +83,7 @@ const features = [
     imgPos: "center 30%",
   },
   {
-    num: "06",
+    num: "04",
     title: "Multi-carta",
     desc: "Un QR, múltiples cartas. Ideal para locales con más de un concepto gastronómico.",
     tags: ["Multi-menú", "Premium", "QR"],
@@ -91,7 +91,7 @@ const features = [
     imgPos: "center 30%",
   },
   {
-    num: "08",
+    num: "05",
     title: "Analítica de la carta",
     desc: "Descubre qué miran tus clientes, qué platos llaman más la atención y qué productos necesitan impulso.",
     tags: ["Platos vistos", "Horarios", "Datos reales"],
@@ -100,17 +100,9 @@ const features = [
     wide: true,
   },
   {
-    num: "08",
-    title: "Varios idiomas",
-    desc: "Facilita la experiencia de turistas y clientes extranjeros.",
-    tags: ["Español", "Inglés"],
-    img: "/funciones/idiomas.jpg",
-    imgPos: "center 20%",
-  },
-  {
-    num: "09",
-    title: "Carta imprimible profesional",
-    desc: "Exporta tu carta como PDF en 4 diseños elegantes. En español, inglés o portugués. Lista para imprimir o compartir.",
+    num: "06",
+    title: "Exporta tu carta impresa",
+    desc: "Descarga tu carta como PDF con diseño profesional listo para imprimir. En español, inglés o portugués.",
     tags: ["PDF", "4 diseños", "ES / EN / PT", "Premium"],
     img: "/funciones/carta-fisica.jpg",
     imgPos: "center center",
