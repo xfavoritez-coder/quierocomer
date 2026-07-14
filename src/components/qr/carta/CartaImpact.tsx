@@ -1512,7 +1512,7 @@ export default function CartaImpact({
         <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
       {/* Filter bar — arriba de los chips de categoría */}
-      <div style={{ padding: "8px 14px 0" }}>
+      <div style={{ padding: "8px 14px 0", position: "relative", zIndex: 2 }}>
         <CartaFilterBar active={activeFilter} onToggle={toggleFilter} compact />
       </div>
 
