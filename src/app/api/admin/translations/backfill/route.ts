@@ -3,8 +3,12 @@ import { checkAdminAuth } from "@/lib/adminAuth";
 import { translateAllForRestaurant } from "@/lib/ai/translateContent";
 
 export async function POST(req: NextRequest) {
-  const authErr = checkAdminAuth(req);
-  if (authErr) return authErr;
+  // Allow CRON_SECRET header as alternative auth
+  const cronSecret = req.headers.get("x-cron-secret");
+  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+    const authErr = checkAdminAuth(req);
+    if (authErr) return authErr;
+  }
 
   const { restaurantId } = await req.json();
   if (!restaurantId) {
