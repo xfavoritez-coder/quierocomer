@@ -14,9 +14,9 @@ export const dynamic = "force-dynamic";
 
 const AB_WINNERS = {
   titleId: null,
-  titleText: "Crea una carta QR inteligente que {vende más} por ti",
+  titleText: "Mira demos de cartas {reales} funcionando",
   subtitleId: null,
-  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
+  subtitleText: "Elige un local y explora su carta como si fueras un cliente.",
   ctaId: null,
   ctaText: "Crear carta gratis",
 };

@@ -23,8 +23,8 @@ const RESTAURANTS: [string, string][] = [
 ];
 
 const AB_DEFAULTS = {
-  titleText: "Crea una carta QR inteligente que {vende más} por ti",
-  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
+  titleText: "Mira demos de cartas {reales} funcionando",
+  subtitleText: "Elige un local y explora su carta como si fueras un cliente.",
   ctaText: "Crear carta",
 };
 
