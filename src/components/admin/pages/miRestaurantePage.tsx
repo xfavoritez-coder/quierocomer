@@ -5,8 +5,8 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
-import { Camera, QrCode, ExternalLink, Store, CreditCard, XCircle, CheckCircle2, Clock, AlertTriangle, RefreshCw } from "lucide-react";
-import { planNetAmount, ivaOf, grossOf, type PlanKey } from "@/lib/billing/plans-config";
+import { Camera, QrCode, ExternalLink, Store, CreditCard, XCircle, CheckCircle2, Clock, AlertTriangle, RefreshCw, Sparkles, X } from "lucide-react";
+import { planNetAmount, ivaOf, grossOf, type PlanKey, PLAN_FEATURES_DISPLAY, PLAN_INHERITS_FROM } from "@/lib/billing/plans-config";
 import FacturacionPage from "./facturacionPage";
 import SubirFoto from "@/components/SubirFoto";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
@@ -104,6 +104,8 @@ export default function MiRestaurantePage() {
   const plan = (activePlan || "FREE").toUpperCase();
   const [subscribing, setSubscribing] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
+  const [plansTab, setPlansTab] = useState<"FREE" | "GOLD" | "PREMIUM">("GOLD");
 
   // Form state
   const [name, setName] = useState("");
@@ -273,6 +275,33 @@ export default function MiRestaurantePage() {
     } catch { toast.error("Error de conexión"); setSubscribing(false); }
   };
 
+  const handleSubscribePlan = async (targetPlan: "GOLD" | "PREMIUM") => {
+    if (!rid || subscribing) return;
+    setSubscribing(true);
+    try {
+      const trialUsed = !!billingStatus?.trialUsed;
+      const inTrial = billingStatus?.subscriptionStatus === "TRIALING";
+      if (targetPlan === "PREMIUM" && !trialUsed && !inTrial && plan !== "PREMIUM") {
+        const res = await fetch("/api/billing/start-trial", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: rid }),
+        });
+        const d = await res.json();
+        if (!res.ok) { toast.error(d.error || "No se pudo activar la prueba"); setSubscribing(false); return; }
+        toast.success("¡Premium activado! 7 días gratis.");
+        setTimeout(() => window.location.reload(), 1200);
+        return;
+      }
+      const res = await fetch("/api/billing/start", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: rid, plan: targetPlan }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.url) { toast.error(d.error || "No se pudo iniciar la suscripción"); setSubscribing(false); return; }
+      window.location.href = d.url;
+    } catch { toast.error("Error de conexión"); setSubscribing(false); }
+  };
+
   if (loading) return <SkeletonLoading type="form" />;
   if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
 
@@ -291,22 +320,16 @@ export default function MiRestaurantePage() {
         const isCanceled = subStatus === "CANCELED";
         const isPastDue = subStatus === "PAST_DUE";
         const periodEnd = billingStatus.currentPeriodEnd ? new Date(billingStatus.currentPeriodEnd) : null;
-        const trialEnd = billingStatus.trialEndsAt ? new Date(billingStatus.trialEndsAt) : null;
         const isExempt = billingStatus.billingExempt;
+        const trialUsed = !!billingStatus.trialUsed;
 
-        // Determina si está en periodo de gracia (venció y no ha renovado)
         const inGrace = isPastDue || (!inTrial && !isCanceled && periodEnd && periodEnd < now && isActive);
-        // El ciclo se cumple HOY
         const cycleEndsToday = !inGrace && periodEnd && periodEnd.toDateString() === now.toDateString();
 
-        // Color del bloque según estado
-        const accent = inGrace
-          ? "#dc2626"
-          : cycleEndsToday
-            ? "#d97706"
-            : (plan as string) === "PREMIUM" ? "#7c3aed"
-            : (plan as string) === "GOLD" || (plan as string) === "SILVER" ? GOLD
-            : "#64748b";
+        const planAccent = (plan as string) === "PREMIUM" ? "#7c3aed"
+          : (plan as string) === "GOLD" || (plan as string) === "SILVER" ? GOLD
+          : "#64748b";
+        const accent = inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : planAccent;
 
         const planEmoji = (plan as string) === "PREMIUM" ? "💎" : (plan as string) === "GOLD" ? "⭐" : (plan as string) === "SILVER" ? "🥈" : "🆓";
         const planName = (plan as string) === "FREE" ? "Gratis" : (plan as string) === "GOLD" ? "Gold" : (plan as string) === "PREMIUM" ? "Premium" : (plan as string) === "SILVER" ? "Silver" : (plan as string);
@@ -314,16 +337,11 @@ export default function MiRestaurantePage() {
         const net = (billingStatus as any).customPlanPriceNet ?? planNetAmount(plan as PlanKey);
         const gross = grossOf(net);
 
-        const StatusIcon = inGrace ? AlertTriangle : cycleEndsToday ? Clock : isActive || inTrial ? CheckCircle2 : isCanceled ? XCircle : CreditCard;
-        const statusLabel = inGrace ? "Vencido" : cycleEndsToday ? "Renueva hoy" : inTrial ? "En prueba" : isActive ? "Activo" : isCanceled ? "Cancelado" : "Sin suscripción";
-        const statusColor = inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : isActive || inTrial ? "#16a34a" : isCanceled ? "#dc2626" : "var(--adm-text3)";
-
-        // Texto del periodo
-        const periodoText = inGrace && periodEnd
-          ? `Venció el ${formatDate(billingStatus.currentPeriodEnd)}`
+        const periodoText = inGrace
+          ? `⚠️ Vencido el ${formatDate(billingStatus.currentPeriodEnd)}`
           : cycleEndsToday
-            ? `Se renueva hoy · ${formatCLP(gross)} con IVA`
-            : inTrial && trialEnd
+            ? `Renueva hoy · ${formatCLP(gross)} con IVA`
+            : inTrial
               ? `Prueba gratis hasta el ${formatDate(billingStatus.trialEndsAt)}`
               : isActive && periodEnd
                 ? `Vigente hasta el ${formatDate(billingStatus.currentPeriodEnd)}`
@@ -331,81 +349,84 @@ export default function MiRestaurantePage() {
                   ? `Acceso hasta el ${formatDate(billingStatus.currentPeriodEnd)}`
                   : null;
 
+        // Modal de planes — datos por tab
+        const PLAN_DATA = {
+          FREE:    { accent: "#64748b", emoji: "🆓", name: "Gratis",  net: 0 },
+          GOLD:    { accent: GOLD,      emoji: "⭐", name: "Gold",    net: planNetAmount("GOLD") },
+          PREMIUM: { accent: "#7c3aed", emoji: "💎", name: "Premium", net: planNetAmount("PREMIUM") },
+        } as const;
+        const tabData = PLAN_DATA[plansTab];
+        const tabNet = tabData.net;
+        const tabGross = grossOf(tabNet);
+        const tabFeatures = PLAN_FEATURES_DISPLAY[plansTab] || [];
+        const tabInherits = PLAN_INHERITS_FROM[plansTab];
+        const isPremiumTrial = plansTab === "PREMIUM" && !trialUsed && !inTrial && plan !== "PREMIUM";
+        const isCurrentPlan = plansTab === (plan as string);
+
         return (
           <div style={{ marginBottom: 16 }}>
+            {/* ─── Bloque plan ─── */}
             <div style={{
               borderRadius: 16, overflow: "hidden",
-              border: `1.5px solid ${accent}40`,
-              background: "var(--adm-card)",
-              boxShadow: `0 2px 16px ${accent}18`,
+              border: `1.5px solid ${accent}55`,
+              background: `linear-gradient(145deg, ${accent}22 0%, ${accent}0a 60%, var(--adm-card) 100%)`,
+              boxShadow: `0 4px 24px ${accent}22`,
+              marginBottom: 0,
             }}>
-              {/* Banda de color superior */}
-              <div style={{ height: 4, background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
-
-              <div style={{ padding: "18px 20px" }}>
-                {/* Cabecera: plan + badge */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: periodoText ? 10 : 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: `${accent}16`, display: "grid", placeItems: "center", fontSize: "1.3rem", flexShrink: 0 }}>
-                      {planEmoji}
-                    </div>
+              <div style={{ padding: "22px 20px 18px" }}>
+                {/* Top row */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: "2rem", lineHeight: 1 }}>{planEmoji}</span>
                     <div>
-                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".08em", margin: 0 }}>Plan activo</p>
-                      <p style={{ fontFamily: F, fontSize: "1.15rem", fontWeight: 800, color: accent, margin: "2px 0 0", lineHeight: 1 }}>{planName}</p>
+                      <p style={{ fontFamily: F, fontSize: "0.65rem", color: accent, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700, margin: 0, opacity: 0.8 }}>Plan activo</p>
+                      <p style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: accent, margin: "0", lineHeight: 1, letterSpacing: "-0.5px" }}>{planName}</p>
                     </div>
                   </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 99, background: `${statusColor}18`, border: `1px solid ${statusColor}35` }}>
-                      <StatusIcon size={13} color={statusColor} />
-                      <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: statusColor }}>{statusLabel}</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 99, background: inGrace ? "rgba(220,38,38,0.12)" : cycleEndsToday ? "rgba(217,119,6,0.12)" : isActive || inTrial ? "rgba(22,163,74,0.12)" : "rgba(100,116,139,0.12)", border: `1px solid ${inGrace ? "rgba(220,38,38,0.3)" : cycleEndsToday ? "rgba(217,119,6,0.3)" : isActive || inTrial ? "rgba(22,163,74,0.3)" : "rgba(100,116,139,0.3)"}` }}>
+                      {inGrace ? <AlertTriangle size={12} color="#dc2626" /> : cycleEndsToday ? <Clock size={12} color="#d97706" /> : isActive || inTrial ? <CheckCircle2 size={12} color="#16a34a" /> : isCanceled ? <XCircle size={12} color="#dc2626" /> : <CreditCard size={12} color="var(--adm-text3)" />}
+                      <span style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : isActive || inTrial ? "#16a34a" : isCanceled ? "#dc2626" : "var(--adm-text3)" }}>
+                        {inGrace ? "Vencido" : cycleEndsToday ? "Renueva hoy" : inTrial ? "En prueba" : isActive ? "Activo" : isCanceled ? "Cancelado" : "Sin suscripción"}
+                      </span>
                     </div>
-                    {inGrace && !isExempt && (
-                      <button
-                        onClick={() => setShowRenewModal(true)}
-                        style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 99, border: "none", background: "#dc2626", color: "#fff", fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
-                      >
-                        <RefreshCw size={12} /> Renovar
-                      </button>
+                    {net > 0 && !inGrace && (
+                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: accent, margin: 0, opacity: 0.75 }}>{formatCLP(gross)}/mes con IVA</p>
                     )}
                   </div>
                 </div>
 
                 {/* Periodo */}
                 {periodoText && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8, background: `${accent}0c`, marginTop: 2 }}>
-                    <Clock size={13} color={accent} style={{ flexShrink: 0 }} />
-                    <p style={{ fontFamily: FB, fontSize: "0.8rem", color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : "var(--adm-text2)", margin: 0 }}>{periodoText}</p>
-                    {cycleEndsToday && !isExempt && (
-                      <button onClick={() => setShowRenewModal(true)} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 99, border: "none", background: "#d97706", color: "#fff", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
-                        <RefreshCw size={11} /> Renovar
-                      </button>
-                    )}
-                  </div>
+                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : `${accent}cc`, margin: "0 0 16px", fontWeight: inGrace || cycleEndsToday ? 600 : 400 }}>
+                    {periodoText}
+                  </p>
                 )}
 
-                {/* Info: monto + ver planes */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-                  {net > 0 && (
-                    <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>
-                      {formatCLP(net)} neto + IVA · {formatCLP(gross)} /mes
-                    </p>
+                {/* Botones */}
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(inGrace || cycleEndsToday) && !isExempt && (
+                    <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+                      <RefreshCw size={14} /> Renovar plan
+                    </button>
                   )}
-                  <a href="/panel/suscripcion" style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: accent, textDecoration: "none" }}>
-                    Ver planes →
-                  </a>
+                  <button
+                    onClick={() => { setPlansTab(plan === "FREE" ? "GOLD" : plan === "GOLD" ? "PREMIUM" : "GOLD"); setShowPlansModal(true); }}
+                    style={{ flex: inGrace || cycleEndsToday ? "0 0 auto" : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 16px", border: `1.5px solid ${accent}55`, borderRadius: 999, background: `${accent}14`, color: accent, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    <Sparkles size={14} /> Ver planes
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Modal renovar */}
+            {/* ─── Modal renovar ─── */}
             {showRenewModal && (
               <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-                <div onClick={() => setShowRenewModal(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
-                <div style={{ position: "relative", background: "var(--adm-card)", borderRadius: 20, padding: "28px 24px", width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
-                  <h3 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px" }}>Renovar plan {planName}</h3>
+                <div onClick={() => setShowRenewModal(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
+                <div style={{ position: "relative", background: "var(--adm-card)", borderRadius: 20, padding: "28px 24px", width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+                  <h3 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 4px" }}>Renovar plan {planName}</h3>
                   <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 20px" }}>Se generará un nuevo cobro mensual</p>
-
                   <div style={{ background: "var(--adm-hover)", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                       <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)" }}>Plan {planName} (neto)</span>
@@ -416,17 +437,80 @@ export default function MiRestaurantePage() {
                       <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>{formatCLP(ivaOf(net))}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid var(--adm-card-border)" }}>
-                      <span style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)" }}>Total a pagar</span>
+                      <span style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)" }}>Total</span>
                       <span style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: accent }}>{formatCLP(gross)}</span>
                     </div>
                   </div>
-
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button onClick={() => setShowRenewModal(false)} style={{ flex: 1, padding: "12px 0", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 999, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+                    <button onClick={() => setShowRenewModal(false)} style={{ flex: 1, padding: "12px 0", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 999, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Volver</button>
                     <button onClick={handleRenew} disabled={subscribing} style={{ flex: 2, padding: "12px 0", border: "none", borderRadius: 999, background: accent, color: "#fff", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", opacity: subscribing ? 0.7 : 1 }}>
                       {subscribing ? "Redirigiendo…" : "Ir a pagar →"}
                     </button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ─── Modal planes ─── */}
+            {showPlansModal && (
+              <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                <div onClick={() => setShowPlansModal(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
+                <div style={{ position: "relative", background: "var(--adm-card)", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", width: "100%", maxWidth: 480, boxShadow: "0 -8px 40px rgba(0,0,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                    <h3 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Planes disponibles</h3>
+                    <button onClick={() => setShowPlansModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={20} color="var(--adm-text3)" /></button>
+                  </div>
+
+                  {/* Tabs */}
+                  <div style={{ display: "flex", background: "var(--adm-hover)", borderRadius: 10, padding: 4, marginBottom: 16 }}>
+                    {(["FREE", "GOLD", "PREMIUM"] as const).map(t => {
+                      const active = plansTab === t;
+                      const c = PLAN_DATA[t].accent;
+                      return (
+                        <button key={t} onClick={() => setPlansTab(t)} style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", borderRadius: 7, background: active ? "var(--adm-card)" : "transparent", color: active ? c : "var(--adm-text3)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, boxShadow: active ? "0 1px 6px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
+                          {PLAN_DATA[t].emoji} {PLAN_DATA[t].name}
+                          {t === (plan as string) && <span style={{ marginLeft: 3, fontSize: "0.6rem", opacity: 0.7 }}>✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Plan card */}
+                  <div style={{ border: `1.5px solid ${tabData.accent}40`, borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
+                    <div style={{ padding: "16px 18px 14px", background: `${tabData.accent}0e`, borderBottom: "1px solid var(--adm-card-border)" }}>
+                      {isCurrentPlan && <div style={{ display: "inline-block", padding: "2px 8px", background: `${tabData.accent}20`, border: `1px solid ${tabData.accent}40`, borderRadius: 99, marginBottom: 8 }}><span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: tabData.accent }}>✓ Tu plan actual</span></div>}
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                        <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1 }}>{tabNet === 0 ? "$0" : formatCLP(tabNet)}</span>
+                        <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>{tabNet === 0 ? "gratis" : "+ IVA /mes"}</span>
+                      </div>
+                      {tabNet > 0 && <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{formatCLP(tabGross)} con IVA · Sin contratos</p>}
+                      {isPremiumTrial && <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#7c3aed", margin: "8px 0 0" }}>✨ 7 días gratis para probar</p>}
+                    </div>
+                    <div style={{ padding: "12px 18px" }}>
+                      {tabInherits && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", fontStyle: "italic", margin: "0 0 8px" }}>{tabInherits}</p>}
+                      {tabFeatures.length > 0
+                        ? tabFeatures.map(f => (
+                            <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
+                              <span style={{ color: tabData.accent, fontSize: "0.85rem", flexShrink: 0 }}>✓</span>
+                              <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)" }}>{f.text}</span>
+                            </div>
+                          ))
+                        : <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>Carta QR digital · Panel autoadministrable</p>
+                      }
+                    </div>
+                  </div>
+
+                  {/* Acción */}
+                  {!isCurrentPlan && plansTab !== "FREE" && (
+                    <button onClick={() => handleSubscribePlan(plansTab as "GOLD" | "PREMIUM")} disabled={subscribing} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 999, background: tabData.accent, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${tabData.accent}44`, opacity: subscribing ? 0.7 : 1 }}>
+                      {subscribing ? "Redirigiendo…" : isPremiumTrial ? "Empezar 7 días gratis" : `Contratar ${tabData.name}`}
+                    </button>
+                  )}
+                  {isCurrentPlan && (
+                    <div style={{ padding: "12px 16px", background: "var(--adm-hover)", borderRadius: 10, textAlign: "center" }}>
+                      <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>Estás disfrutando de este plan</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
