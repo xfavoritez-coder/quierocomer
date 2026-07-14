@@ -140,6 +140,17 @@ export default function LifecyclePage() {
 
   useEffect(() => { loadData(); }, []);
 
+  // Cuando hay búsqueda activa y no están todos cargados, traer todos para buscar en el total
+  const allLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!search.trim() || allLoadedRef.current || entries.length >= total) return;
+    allLoadedRef.current = true;
+    fetch(`/api/admin/lifecycle?limit=500`).then(r => r.json()).then(data => {
+      setEntries(data.entries || []);
+      setTotal(data.total || 0);
+    }).catch(() => {});
+  }, [search, entries.length, total]);
+
   const handleExpand = (id: string) => {
     if (expanded === id) { setExpanded(null); return; }
     setExpanded(id);
