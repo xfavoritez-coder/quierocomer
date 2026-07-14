@@ -600,8 +600,8 @@ export default function CartaLista({
           style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
         >
           <span style={{ color: "var(--carta-text-muted)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
-          <span className="font-[family-name:var(--font-playfair)]" style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}>
-            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.com</span>
+          <span className="font-[family-name:var(--font-playfair)]" style={{ color: "var(--carta-accent, #F4A623)", fontSize: "0.82rem", fontWeight: 700 }}>
+            QuieroComer.com
           </span>
         </a>
         <span style={{ color: "var(--carta-text-muted)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>

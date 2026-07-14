@@ -1718,9 +1718,9 @@ export default function CartaImpact({
           <span style={{ color: "var(--carta-text3, #555)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
           <span
             className="font-[family-name:var(--font-playfair)]"
-            style={{ color: "var(--carta-text3, #555)", fontSize: "0.82rem", fontWeight: 700 }}
+            style={{ color: "var(--carta-accent)", fontSize: "0.82rem", fontWeight: 700 }}
           >
-            QuieroComer<span style={{ color: "var(--carta-accent)" }}>.com</span>
+            QuieroComer.com
           </span>
         </a>
         <span style={{ color: "var(--carta-text3, #555)", fontSize: "0.62rem" }}>&copy; {new Date().getFullYear()}</span>

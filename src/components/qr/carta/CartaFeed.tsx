@@ -642,8 +642,8 @@ export default function CartaFeed({
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "24px 0 16px", marginTop: 40 }}>
         <span style={{ fontSize: "0.72rem", color: "#ccc" }}>Powered by </span>
-        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.78rem", color: "#999", fontWeight: 700 }}>
-          QuieroComer<span style={{ color: "#F4A623" }}>.com</span>
+        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 700 }}>
+          QuieroComer.com
         </span>
       </div>
 

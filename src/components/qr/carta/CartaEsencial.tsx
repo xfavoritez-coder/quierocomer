@@ -845,8 +845,8 @@ export default function CartaEsencial({
           style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
         >
           <span style={{ color: "rgba(117,107,95,0.6)", fontSize: 12 }}>Powered by</span>
-          <span style={{ color: "rgba(21,36,27,0.5)", fontSize: 14, fontWeight: 700, fontFamily: "Georgia, 'Times New Roman', serif" }}>
-            QuieroComer<span style={{ color: "rgba(184,137,53,0.6)" }}>.com</span>
+          <span style={{ color: "rgba(184,137,53,0.85)", fontSize: 14, fontWeight: 700, fontFamily: "Georgia, 'Times New Roman', serif" }}>
+            QuieroComer.com
           </span>
         </a>
       </footer>
