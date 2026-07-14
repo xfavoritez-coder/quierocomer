@@ -390,9 +390,6 @@ export default function MiRestaurantePage() {
                         {inGrace ? "Vencido" : cycleEndsToday ? "Renueva hoy" : inTrial ? "En prueba" : isActive ? "Activo" : isCanceled ? "Cancelado" : "Sin suscripción"}
                       </span>
                     </div>
-                    {net > 0 && !inGrace && (
-                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: accent, margin: 0, opacity: 0.75 }}>{formatCLP(gross)}/mes con IVA</p>
-                    )}
                   </div>
                 </div>
 
