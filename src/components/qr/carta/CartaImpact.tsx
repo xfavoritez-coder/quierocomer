@@ -1513,7 +1513,7 @@ export default function CartaImpact({
       </div>
       {/* Filter bar — arriba de los chips de categoría */}
       <div style={{ padding: "8px 14px 0" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} glass />
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} compact />
       </div>
 
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
