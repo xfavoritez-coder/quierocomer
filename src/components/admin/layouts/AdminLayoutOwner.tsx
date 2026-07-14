@@ -46,7 +46,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
     { icon: UsersRound, label: "Usuarios", href: `${base}/usuarios` },
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
-    ...(base === "/panel" ? [{ icon: CreditCard, label: "Suscripción", href: `${base}/suscripcion` }] : []),
     { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
     { icon: HelpCircle, label: "Soporte", href: `${base}/ayuda` },
   ];

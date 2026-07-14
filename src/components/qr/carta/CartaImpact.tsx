@@ -1511,9 +1511,14 @@ export default function CartaImpact({
         </button>
         <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
       </div>
+      {/* Filter bar — encima de chips de categoría */}
+      <div style={{ padding: "10px 14px 4px" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+      </div>
+
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
-        {/* Category chips + search — sticky */}
-        <div ref={menuAnchorRef} style={{ paddingTop: 10, paddingBottom: 6, marginBottom: 0 }}>
+        {/* Category chips + search */}
+        <div ref={menuAnchorRef} style={{ paddingTop: 6, paddingBottom: 6, marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <div
@@ -1574,10 +1579,6 @@ export default function CartaImpact({
           </div>
         </div>
 
-        {/* Filter bar — debajo de chips, sobre platos */}
-        <div style={{ padding: "6px 0 10px" }}>
-          <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-        </div>
 
         {/* Empty state — búsqueda */}
         {searchQuery && menuSections.length === 0 && (

@@ -27,13 +27,17 @@ interface HeroDishProps {
   onSearchClick?: () => void;
   /** Slot rendered between the top nav bar and the hero image (e.g. announcement banner). */
   belowNavSlot?: React.ReactNode;
+  /** Hace que el nav bar quede sticky al top (visible mientras scrolleas) */
+  stickyNav?: boolean;
+  /** Ref para medir el alto del nav bar desde el componente padre */
+  navRef?: React.RefObject<HTMLDivElement>;
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, enabledLangs, variant = "full", onSearchClick, belowNavSlot }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, enabledLangs, variant = "full", onSearchClick, belowNavSlot, stickyNav, navRef }: HeroDishProps) {
   const lang = useLang();
   const isCompact = variant === "compact";
   const [current, setCurrent] = useState(0);
@@ -105,7 +109,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
       `}</style>
 
       {/* Nav bar — logo + name left, social + lang right */}
-      <div className="w-full flex items-center justify-between" style={{ background: "var(--carta-nav-bg, var(--carta-bg-solid, #1a1a1a))", borderBottom: "1px solid var(--carta-border)", padding: "10px 16px", zIndex: 50, position: "relative" }}>
+      <div ref={navRef} className="w-full flex items-center justify-between" style={{ background: "var(--carta-nav-bg, var(--carta-bg-solid, #1a1a1a))", borderBottom: "1px solid var(--carta-border)", padding: "10px 16px", zIndex: 50, position: stickyNav ? "sticky" : "relative", top: stickyNav ? 0 : undefined }}>
         <button onClick={() => window.location.reload()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           {logoSrc ? (
             <img src={logoSrc} alt={restaurant.name} loading="lazy" style={{ width: 28, height: 28, borderRadius: "50%", border: "none" }} />

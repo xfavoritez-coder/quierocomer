@@ -220,6 +220,8 @@ export default function CartaLista({
   const activeCatRef = useRef<HTMLButtonElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
   const [bannerH, setBannerH] = useState(0);
+  const navRef = useRef<HTMLDivElement>(null);
+  const [navH, setNavH] = useState(0);
 
   useEffect(() => {
     if (!bannerRef.current) return;
@@ -229,6 +231,13 @@ export default function CartaLista({
     ro.observe(bannerRef.current);
     return () => ro.disconnect();
   }, [announcements?.length]);
+
+  useEffect(() => {
+    if (!navRef.current) return;
+    const ro = new ResizeObserver(() => setNavH(navRef.current?.offsetHeight ?? 0));
+    ro.observe(navRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Auto-scroll category nav to active
   useEffect(() => {
@@ -352,7 +361,7 @@ export default function CartaLista({
   const announcementSlot = announcements && announcements.length > 0 ? (
     <div
       ref={bannerRef}
-      style={{ position: "sticky", top: demoOffset, left: 0, right: 0, zIndex: 45 }}
+      style={{ position: "sticky", top: demoOffset + navH, left: 0, right: 0, zIndex: 45 }}
     >
       <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
     </div>
@@ -364,11 +373,16 @@ export default function CartaLista({
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       ) : (
-        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} />
+        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} />
       )}
 
+      {/* Filter bar */}
+      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+      </div>
+
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
-      <div style={{ position: "sticky", top: bannerH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
+      <div style={{ position: "sticky", top: bannerH + navH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
@@ -460,10 +474,6 @@ export default function CartaLista({
         )}
       </div>
 
-      {/* Filter bar */}
-      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "13px 12px" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-      </div>
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (

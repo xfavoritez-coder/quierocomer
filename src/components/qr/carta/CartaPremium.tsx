@@ -208,6 +208,8 @@ export default function CartaPremium({
   const recShownRef = useRef(new Set<string>());
   const bannerRef = useRef<HTMLDivElement>(null);
   const [bannerH, setBannerH] = useState(0);
+  const navRef = useRef<HTMLDivElement>(null);
+  const [navH, setNavH] = useState(0);
 
   useEffect(() => {
     if (!bannerRef.current) return;
@@ -217,6 +219,13 @@ export default function CartaPremium({
     ro.observe(bannerRef.current);
     return () => ro.disconnect();
   }, [announcements?.length]);
+
+  useEffect(() => {
+    if (!navRef.current) return;
+    const ro = new ResizeObserver(() => setNavH(navRef.current?.offsetHeight ?? 0));
+    ro.observe(navRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Track search with debounce
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -435,7 +444,7 @@ export default function CartaPremium({
   const announcementSlot = announcements && announcements.length > 0 ? (
     <div
       ref={bannerRef}
-      style={{ position: "sticky", top: demoOffset, left: 0, right: 0, zIndex: 45 }}
+      style={{ position: "sticky", top: demoOffset + navH, left: 0, right: 0, zIndex: 45 }}
     >
       <AnnouncementBanner announcements={announcements} accentColor={(restaurant as any).cartaAccentColor} />
     </div>
@@ -443,13 +452,18 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: demoOffset }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} />
+
+      {/* Filter bar */}
+      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
+        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
+      </div>
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
           className="z-40"
-          style={{ position: "sticky", top: bannerH, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
+          style={{ position: "sticky", top: bannerH + navH, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
         >
           <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
           <input
@@ -483,7 +497,7 @@ export default function CartaPremium({
             ...categories,
           ]}
           activeCategory={activeCategory}
-          stickyTop={bannerH}
+          stickyTop={bannerH + navH}
           onCategoryChange={(id) => {
             setActiveCategory(id);
             if (id === "promos") { const el = document.getElementById("cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 54, behavior: "smooth" }); }
@@ -501,11 +515,6 @@ export default function CartaPremium({
           }
         />
       )}
-
-      {/* Filter bar */}
-      <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "13px 12px" }}>
-        <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
-      </div>
 
       {/* Empty state — filtro activo sin resultados */}
       {activeFilter && !searchQuery && !categories.some(cat =>
