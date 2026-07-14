@@ -9,7 +9,7 @@ const EXPERIMENT_SLUG = "landing-hero";
 const DEFAULTS = {
   titleText: "Crea una carta QR que {venda más} por ti",
   subtitleText: "Crea una carta QR inteligente que aumenta tus ventas y mejora la experiencia de tus clientes.",
-  ctaText: "Crear carta gratis",
+  ctaText: "Crear carta",
 };
 
 /**

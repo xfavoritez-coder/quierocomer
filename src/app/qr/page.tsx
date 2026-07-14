@@ -35,7 +35,7 @@ const AB_WINNERS = {
   subtitleId: null,
   subtitleText: "Crea una carta QR inteligente que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaId: null,
-  ctaText: "Crear carta gratis",
+  ctaText: "Crear carta",
 };
 
 export default async function QRLandingPage() {
