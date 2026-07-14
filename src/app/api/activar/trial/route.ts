@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendAdminEmail, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
@@ -134,6 +135,9 @@ export async function POST(req: NextRequest) {
       data: { activatedAt: new Date(), activated: true },
     }).catch(() => {});
   }
+
+  // Invalidate carta cache so it immediately reflects isDemo=false
+  revalidateTag(`qr-restaurant-${restaurant.slug}`);
 
   return NextResponse.json({
     ok: true,
