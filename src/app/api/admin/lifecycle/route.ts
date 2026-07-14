@@ -325,7 +325,7 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   if (bust) {
-    revalidateTag(CACHE_TAG);
+    revalidateTag(CACHE_TAG, "minutes");
   }
 
   const { entries, stats } = await getCachedLifecycle();

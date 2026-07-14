@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Invalidate carta cache so it immediately reflects isDemo=false
-  revalidateTag(`qr-restaurant-${restaurant.slug}`);
+  revalidateTag(`qr-restaurant-${restaurant.slug}`, "minutes");
 
   return NextResponse.json({
     ok: true,
