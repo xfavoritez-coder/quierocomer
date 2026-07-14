@@ -50,7 +50,7 @@ export default function CartaFilterBar({ active, onToggle, compact = false, glas
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                 padding: compact ? "5px 8px" : "7px 8px",
                 borderRadius: 999,
-                fontSize: compact ? 12 : 13,
+                fontSize: compact ? 13 : 14,
                 fontWeight: isActive ? 700 : 500,
                 cursor: "pointer",
                 whiteSpace: "nowrap",
