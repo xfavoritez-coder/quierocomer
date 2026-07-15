@@ -25,33 +25,40 @@ export type StudyItem = {
   direction: "en_to_es" | "es_to_en";
 };
 
-// SM-2: quality 0=fail, 1=difícil, 2=bien, 3=perfecto
+/**
+ * SM-2 simplificado — 3 niveles:
+ *   0 = No lo sabía  → re-queue en sesión + vuelve mañana, ease baja
+ *   1 = Más o menos  → NO re-queue, vuelve mañana, ease baja un poco
+ *   2 = Lo tengo     → avance normal (1d → 3d → xEase...)
+ */
 export function sm2(
-  quality: 0 | 1 | 2 | 3,
+  quality: 0 | 1 | 2,
   ease: number,
   interval: number,
   reps: number
 ) {
-  if (quality < 2) {
+  if (quality === 0) {
     return {
       ease_factor: Math.max(1.3, ease - 0.2),
       interval_days: 1,
       repetitions: 0,
     };
   }
-
+  if (quality === 1) {
+    return {
+      ease_factor: Math.max(1.3, ease - 0.1),
+      interval_days: 1,
+      repetitions: reps, // no avanza
+    };
+  }
+  // quality === 2: bueno
   let newInterval: number;
   if (reps === 0) newInterval = 1;
   else if (reps === 1) newInterval = 3;
   else newInterval = Math.round(interval * ease);
 
-  const newEase = Math.max(
-    1.3,
-    ease + 0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02)
-  );
-
   return {
-    ease_factor: newEase,
+    ease_factor: Math.min(2.5, ease + 0.1),
     interval_days: newInterval,
     repetitions: reps + 1,
   };
@@ -97,7 +104,7 @@ export async function getDueItems(newLimit = 20): Promise<StudyItem[]> {
 export async function submitReview(
   cardId: string,
   direction: "en_to_es" | "es_to_en",
-  quality: 0 | 1 | 2 | 3,
+  quality: 0 | 1 | 2,
   currentProgress: Progress | null
 ) {
   const base = currentProgress ?? {

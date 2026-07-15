@@ -12,10 +12,9 @@ function uid() {
 }
 
 const GRADE = [
-  { q: 0 as const, emoji: "✕", label: "No sabía", color: "var(--en-red)", dim: "var(--en-red-dim)", key: "1" },
-  { q: 1 as const, emoji: "~", label: "Difícil", color: "var(--en-orange)", dim: "var(--en-orange-dim)", key: "2" },
-  { q: 2 as const, emoji: "✓", label: "Bien", color: "var(--en-green)", dim: "var(--en-green-dim)", key: "3" },
-  { q: 3 as const, emoji: "★", label: "Perfecto", color: "var(--en-gold)", dim: "var(--en-gold-dim)", key: "4" },
+  { q: 0 as const, emoji: "✕", label: "No", color: "var(--en-red)", dim: "var(--en-red-dim)", key: "1" },
+  { q: 1 as const, emoji: "~", label: "Más o menos", color: "var(--en-orange)", dim: "var(--en-orange-dim)", key: "2" },
+  { q: 2 as const, emoji: "✓", label: "Lo tengo", color: "var(--en-green)", dim: "var(--en-green-dim)", key: "3" },
 ];
 
 export default function SessionPage() {
@@ -24,7 +23,7 @@ export default function SessionPage() {
   const [current, setCurrent] = useState<QueueItem | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [answer, setAnswer] = useState("");
-  const [stats, setStats] = useState({ total: 0, correct: 0, failed: 0 });
+  const [stats, setStats] = useState({ total: 0, correct: 0, failed: 0, maybe: 0 });
   const [animate, setAnimate] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,12 +35,13 @@ export default function SessionPage() {
     }
   }, [phase, current?.uid]);
 
-  // Keyboard shortcuts for grading
+  // Keyboard shortcuts for grading (1=No, 2=Más o menos, 3=Lo tengo)
   useEffect(() => {
     if (phase !== "revealed") return;
     function onKey(e: KeyboardEvent) {
-      const g = GRADE.find((g) => g.key === e.key);
-      if (g) grade(g.q);
+      if (e.key === "1") grade(0);
+      else if (e.key === "2") grade(1);
+      else if (e.key === "3") grade(2);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -62,7 +62,7 @@ export default function SessionPage() {
     const items = await getDueItems(20);
     if (!items.length) { setPhase("empty"); return; }
     const q: QueueItem[] = items.map((i) => ({ ...i, uid: uid() }));
-    setStats({ total: q.length, correct: 0, failed: 0 });
+    setStats({ total: q.length, correct: 0, failed: 0, maybe: 0 });
     setCurrent(q[0]);
     setQueue(q.slice(1));
     setAnswer("");
@@ -84,18 +84,20 @@ export default function SessionPage() {
     }
   }
 
-  function grade(quality: 0 | 1 | 2 | 3) {
+  function grade(quality: 0 | 1 | 2) {
     if (!current) return;
     submitReview(current.card.id, current.direction, quality, current.progress);
 
     let newQueue = [...queue];
 
     if (!current.requeued) {
-      if (quality >= 2) setStats((s) => ({ ...s, correct: s.correct + 1 }));
+      if (quality === 2) setStats((s) => ({ ...s, correct: s.correct + 1 }));
+      else if (quality === 1) setStats((s) => ({ ...s, maybe: s.maybe + 1 }));
       else setStats((s) => ({ ...s, failed: s.failed + 1 }));
     }
 
-    if (quality < 2) {
+    // Solo re-queue si no lo sabía (0). "Más o menos" (1) vuelve mañana pero no hoy.
+    if (quality === 0) {
       const at = Math.min(5, newQueue.length);
       newQueue.splice(at, 0, { ...current, requeued: true, uid: uid() });
     }
@@ -241,6 +243,9 @@ export default function SessionPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {stats.correct > 0 && (
             <span style={{ color: "var(--en-green)", fontSize: 13, fontWeight: 600 }}>✓{stats.correct}</span>
+          )}
+          {stats.maybe > 0 && (
+            <span style={{ color: "var(--en-orange)", fontSize: 13, fontWeight: 600 }}>~{stats.maybe}</span>
           )}
           {stats.failed > 0 && (
             <span style={{ color: "var(--en-red)", fontSize: 13, fontWeight: 600 }}>✕{stats.failed}</span>
@@ -400,7 +405,7 @@ export default function SessionPage() {
             )}
 
             {/* Grade buttons */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {GRADE.map((g) => (
                 <button
                   key={g.q}
