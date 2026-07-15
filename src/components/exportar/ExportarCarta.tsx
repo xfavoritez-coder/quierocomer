@@ -100,7 +100,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   const [lang, setLang] = useState<Lang>("es");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [previewScale, setPreviewScale] = useState(1);
-  const [previewHeight, setPreviewHeight] = useState(0);
+  const [previewHeight, setPreviewHeight] = useState(1123); // A4 height fallback
   const wrapperPreviewRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -149,7 +149,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
     const CARTA_W = 794; // A4 at 96dpi — always fixed
     const update = () => {
       const wrapperWidth = wrapperPreviewRef.current!.offsetWidth;
-      const cartaHeight = sheetRef.current!.offsetHeight || 1123;
+      const cartaHeight = sheetRef.current!.scrollHeight || sheetRef.current!.offsetHeight || 1123;
       const scale = wrapperWidth / CARTA_W;
       setPreviewScale(scale);
       setPreviewHeight(cartaHeight * scale);
@@ -364,23 +364,28 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
         </div>
 
         {/* Preview sheet — dynamic scale */}
-        <div className="exportar-preview" style={{ position: "relative", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}>
+        {/* wrapperPreviewRef mide el ancho disponible; el sheetRef se fija en 794px y escala */}
         <div
           ref={wrapperPreviewRef}
+          className="exportar-preview"
           style={{
-            width: "100%",
-            maxHeight: isTrial ? 420 : undefined,
-            overflow: isTrial ? "hidden" : undefined,
-            height: isTrial ? undefined : (previewHeight || "auto"),
+            position: "relative",
+            borderRadius: 8,
+            overflow: "hidden",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+            /* altura = carta-full-height * scale para que el contenedor colapse correctamente */
+            height: isTrial ? Math.min(420, previewHeight) : previewHeight,
           }}
         >
           <div
             ref={sheetRef}
             style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
               transformOrigin: "top left",
-              transform: `scale(${previewScale})`,
+              transform: previewScale !== 1 ? `scale(${previewScale})` : undefined,
               width: 794,
-              height: "auto",
             }}
           >
             <TemaComponent
@@ -390,37 +395,36 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
               qrDataUrl={qrDataUrl}
             />
           </div>
-        </div>
 
-        {/* Trial blur overlay */}
-        {isTrial && (
-          <div style={{
-            position: "absolute", left: 0, right: 0, bottom: 0,
-            height: 220,
-            background: "linear-gradient(to bottom, transparent 0%, rgba(15,15,15,0.55) 35%, rgba(10,10,10,0.88) 70%, rgba(10,10,10,0.97) 100%)",
-            backdropFilter: "blur(3px)",
-            WebkitBackdropFilter: "blur(3px)",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
-            padding: "0 20px 24px",
-            gap: 10,
-          }}>
-            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "#fff", textAlign: "center", margin: 0, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-              Tu carta completa en 4 diseños profesionales
-            </p>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }))}
-              style={{
-                display: "flex", alignItems: "center", gap: 7,
-                padding: "10px 22px", borderRadius: 10, cursor: "pointer",
-                background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%)",
-                border: "none", boxShadow: "0 4px 18px rgba(124,58,237,0.5)",
-                fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
-                color: "#fff",
-              }}>
-              💎 Ver planes y desbloquear
-            </button>
-          </div>
-        )}
+          {/* Trial blur overlay */}
+          {isTrial && (
+            <div style={{
+              position: "absolute", left: 0, right: 0, bottom: 0,
+              height: 220,
+              background: "linear-gradient(to bottom, transparent 0%, rgba(15,15,15,0.55) 35%, rgba(10,10,10,0.88) 70%, rgba(10,10,10,0.97) 100%)",
+              backdropFilter: "blur(3px)",
+              WebkitBackdropFilter: "blur(3px)",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
+              padding: "0 20px 24px",
+              gap: 10,
+            }}>
+              <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "#fff", textAlign: "center", margin: 0, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                Tu carta completa en 4 diseños profesionales
+              </p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }))}
+                style={{
+                  display: "flex", alignItems: "center", gap: 7,
+                  padding: "10px 22px", borderRadius: 10, cursor: "pointer",
+                  background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #6d28d9 100%)",
+                  border: "none", boxShadow: "0 4px 18px rgba(124,58,237,0.5)",
+                  fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+                  color: "#fff",
+                }}>
+                💎 Ver planes y desbloquear
+              </button>
+            </div>
+          )}
         </div>
 
       </div>
