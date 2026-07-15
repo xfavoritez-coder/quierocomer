@@ -13,7 +13,7 @@ export default function EnglishDashboard() {
     getStats().then(setStats);
   }, []);
 
-  const todayBothDone = stats?.doneMeaningToday && stats?.donePronToday;
+  const todayAllDone = stats?.doneMeaningToday && stats?.donePronToday && stats?.doneCtxToday;
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 28 }}>
@@ -27,13 +27,9 @@ export default function EnglishDashboard() {
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.5px", margin: 0 }}>English Practice</h1>
           {stats && (
             <p style={{ color: "var(--en-text-2)", fontSize: 13, marginTop: 4 }}>
-              {todayBothDone
+              {todayAllDone
                 ? "✅ Sesión completa de hoy"
-                : stats.doneMeaningToday
-                ? "Falta pronunciación para completar el día"
-                : stats.donePronToday
-                ? "Falta significado para completar el día"
-                : "Completa ambas sesiones para mantener la racha"}
+                : "Completa las 3 sesiones para mantener la racha"}
             </p>
           )}
         </div>
@@ -44,8 +40,8 @@ export default function EnglishDashboard() {
         <div style={{
           width: "100%", maxWidth: 380,
           borderRadius: 18, padding: "14px 20px",
-          background: todayBothDone ? "var(--en-gold-dim)" : "var(--en-surface)",
-          border: `1px solid ${todayBothDone ? "var(--en-gold)" : "var(--en-border)"}`,
+          background: todayAllDone ? "var(--en-gold-dim)" : "var(--en-surface)",
+          border: `1px solid ${todayAllDone ? "var(--en-gold)" : "var(--en-border)"}`,
           display: "flex", alignItems: "center", justifyContent: "space-between"
         }}>
           <div>
@@ -54,9 +50,10 @@ export default function EnglishDashboard() {
               🔥 {stats.streakCombined} {stats.streakCombined === 1 ? "día" : "días"}
             </p>
           </div>
-          <div style={{ display: "flex", gap: 12, fontSize: 22 }}>
+          <div style={{ display: "flex", gap: 10, fontSize: 20 }}>
             <span title="Significado">{stats.doneMeaningToday ? "✅" : "⬜"}</span>
             <span title="Pronunciación">{stats.donePronToday ? "✅" : "⬜"}</span>
+            <span title="Contexto">{stats.doneCtxToday ? "✅" : "⬜"}</span>
           </div>
         </div>
       )}
@@ -86,6 +83,19 @@ export default function EnglishDashboard() {
         accent="purple"
       />
 
+      {/* Módulo Contexto */}
+      <SessionModule
+        icon="💬"
+        title="Contexto"
+        subtitle="Traduce frases usando la expresión"
+        streak={stats?.streakCtx ?? 0}
+        due={stats?.dueCtx ?? 0}
+        doneToday={stats?.doneCtxToday ?? false}
+        href="/ingles/context"
+        loading={stats === null}
+        accent="green"
+      />
+
       {/* Links secundarios */}
       <div style={{ display: "flex", gap: 10, width: "100%", maxWidth: 380 }}>
         <Link href="/ingles/add" style={{ flex: 1, textAlign: "center", textDecoration: "none", background: "var(--en-surface)", color: "var(--en-text)", borderRadius: 12, padding: "11px 16px", fontWeight: 600, fontSize: 13, border: "1px solid var(--en-border)" }}>
@@ -104,9 +114,9 @@ function SessionModule({
 }: {
   icon: string; title: string; subtitle: string;
   streak: number; due: number; doneToday: boolean;
-  href: string; loading: boolean; accent?: "purple";
+  href: string; loading: boolean; accent?: "purple" | "green";
 }) {
-  const accentColor = accent === "purple" ? "#8b5cf6" : "var(--en-accent)";
+  const accentColor = accent === "purple" ? "#8b5cf6" : accent === "green" ? "#10b981" : "var(--en-accent)";
   const hasSession = due > 0 && !doneToday;
 
   return (
@@ -152,7 +162,7 @@ function SessionModule({
           <Link href={href} style={{
             display: "block", textAlign: "center", textDecoration: "none",
             padding: "13px", borderRadius: 14, fontWeight: 700, fontSize: 15,
-            background: hasSession ? `linear-gradient(135deg, ${accentColor}, ${accent === "purple" ? "var(--en-accent)" : "#8b5cf6"})` : "var(--en-surface-2)",
+            background: hasSession ? `linear-gradient(135deg, ${accentColor}, ${accent === "purple" ? "var(--en-accent)" : accent === "green" ? "#6366f1" : "#8b5cf6"})` : "var(--en-surface-2)",
             color: hasSession ? "#fff" : "var(--en-text-3)",
             boxShadow: hasSession ? `0 4px 20px ${accentColor}55` : "none",
           }}>
