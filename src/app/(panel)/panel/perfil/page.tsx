@@ -170,35 +170,6 @@ export default function PanelPerfilPage() {
       </div>
 
 
-      {/* Weekly email */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Mail size={18} color="var(--adm-text3)" />
-            <div>
-              <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: 0 }}>Resumen semanal estadísticas</h2>
-              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                {weeklyEmail ? "Recibes un informe cada lunes" : "No recibes el informe semanal"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={toggleWeeklyEmail}
-            disabled={savingWeekly}
-            style={{
-              width: 44, height: 24, borderRadius: 12, border: "none", cursor: savingWeekly ? "wait" : "pointer",
-              position: "relative", background: weeklyEmail ? GOLD : "var(--adm-toggle-off)",
-              transition: "all 0.2s", flexShrink: 0, opacity: savingWeekly ? 0.5 : 1,
-            }}
-          >
-            <div style={{
-              width: 18, height: 18, borderRadius: "50%", background: "white", position: "absolute", top: 3,
-              left: weeklyEmail ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
-            }} />
-          </button>
-        </div>
-      </div>
-
       {/* Password section */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 16px" }}>Cambiar contraseña</h2>

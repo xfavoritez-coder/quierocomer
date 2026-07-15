@@ -214,7 +214,15 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos, qrDataU
           <CornerBracket style={{ position: "absolute", bottom: 5, right: 5, transform: "scale(-1)" }} />
 
           {/* Header */}
-          <div className="piedra-header" style={{ textAlign: "center" }}>
+          <div className="piedra-header" style={{ textAlign: "center", position: "relative" }}>
+            {qrDataUrl && (
+              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ padding: 5, background: "rgba(160,148,132,0.08)", borderRadius: 6, border: "2px solid #a09888" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
+                </div>
+                <span style={{ fontSize: "6.5pt", color: "#a09888", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cinzel', serif", textAlign: "center" }}>Ver carta QR</span>
+              </div>
+            )}
             {restaurant.logoUrl && (
               <img src={restaurant.logoUrl} alt="" className="piedra-logo" />
             )}
@@ -225,14 +233,6 @@ export default function TemaPiedra({ restaurant, sections, incluirFotos, qrDataU
             <div style={{ marginTop: 12 }}>
               <ChiselDivider />
             </div>
-            {qrDataUrl && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 8 }}>
-                <div style={{ padding: 5, background: "rgba(160,148,132,0.08)", borderRadius: 6, border: "2px solid #a09888" }}>
-                  <img src={qrDataUrl} alt="QR" style={{ width: 52, height: 52, display: "block" }} />
-                </div>
-                <span style={{ fontSize: "6.5pt", color: "#a09888", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cinzel', serif", textAlign: "center" }}>Ver carta QR</span>
-              </div>
-            )}
           </div>
 
           {/* Sections */}

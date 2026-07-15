@@ -146,11 +146,11 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!wrapperPreviewRef.current || !sheetRef.current) return;
+    const CARTA_W = 794; // A4 at 96dpi — always fixed
     const update = () => {
       const wrapperWidth = wrapperPreviewRef.current!.offsetWidth;
-      const cartaWidth = sheetRef.current!.offsetWidth || 794;
       const cartaHeight = sheetRef.current!.offsetHeight || 1123;
-      const scale = Math.min(1, wrapperWidth / cartaWidth);
+      const scale = wrapperWidth / CARTA_W;
       setPreviewScale(scale);
       setPreviewHeight(cartaHeight * scale);
     };
@@ -238,88 +238,97 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={FONT_LINK} />
 
-      {/* Header */}
-      <div style={{
-        background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-        borderRadius: 16, padding: "18px 16px", marginBottom: 16,
-      }}>
-        <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
-          Carta imprimible
-        </h2>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
-          Elige un diseño, personaliza y descarga tu carta como PDF.
-        </p>
+      <style>{`
+        @media (min-width: 900px) {
+          .exportar-layout { display: flex !important; align-items: flex-start; gap: 20px; }
+          .exportar-controls { width: 300px !important; flex-shrink: 0; position: sticky; top: 16px; }
+          .exportar-preview { flex: 1; min-width: 0; }
+        }
+        ${ahorroTinta ? `.huerto-page, .medit-page, .medit-inner { background: #fff !important; }` : ""}
+      `}</style>
 
-        {/* Theme tabs */}
-        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", marginBottom: 10, paddingBottom: 2, justifyContent: "center" }}>
-          {TEMAS.map((t) => {
-            const active = tema === t.key;
-            return (
-              <button key={t.key} onClick={() => setTema(t.key)} style={{
-                padding: "7px 14px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
-                background: active ? `${t.color}18` : "var(--adm-input)",
-                border: active ? `1.5px solid ${t.color}` : "1px solid var(--adm-input-border)",
-                fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
-                color: active ? t.color : "var(--adm-text2)",
-              }}>
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+      <div className="exportar-layout" style={{ display: "block" }}>
 
-        {/* Language selector */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 10, justifyContent: "center" }}>
-          {LANG_OPTIONS.map((l) => {
-            const active = lang === l.key;
-            return (
-              <button key={l.key} onClick={() => setLang(l.key)} style={{
-                padding: "6px 12px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
-                background: active ? `rgba(244,166,35,0.12)` : "var(--adm-input)",
-                border: active ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
-                fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
-                color: active ? GOLD : "var(--adm-text2)",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <img src={l.flagSrc} alt={l.key} style={{ width: 18, height: 12, objectFit: "cover", borderRadius: 2, flexShrink: 0 }} />
-                {l.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Controls panel */}
+        <div className="exportar-controls" style={{
+          background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+          borderRadius: 16, padding: "18px 16px", marginBottom: 16,
+        }}>
+          <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
+            Carta imprimible
+          </h2>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+            Elige un diseño, personaliza y descarga tu carta como PDF.
+          </p>
 
-        {/* Options row */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-          <button onClick={() => setIncluirFotos((v) => !v)} style={{
-            display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
-            padding: "8px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
-            background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
-            border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
-            fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
-            color: incluirFotos ? GOLD : "var(--adm-text2)",
-          }}>
-            {incluirFotos ? <ImageIcon size={14} /> : <ImageOff size={14} />}
-            {incluirFotos ? "Fotos activadas" : "Activar fotos"}
-          </button>
+          {/* Theme tabs */}
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", marginBottom: 10, paddingBottom: 2, flexWrap: "wrap" }}>
+            {TEMAS.map((t) => {
+              const active = tema === t.key;
+              return (
+                <button key={t.key} onClick={() => setTema(t.key)} style={{
+                  padding: "7px 14px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                  background: active ? `${t.color}18` : "var(--adm-input)",
+                  border: active ? `1.5px solid ${t.color}` : "1px solid var(--adm-input-border)",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                  color: active ? t.color : "var(--adm-text2)",
+                }}>
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Ahorro de tinta — solo para temas claros */}
-          {esClaro && (
-            <button onClick={() => setAhorroTinta((v) => !v)} style={{
-              display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto",
+          {/* Language selector */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+            {LANG_OPTIONS.map((l) => {
+              const active = lang === l.key;
+              return (
+                <button key={l.key} onClick={() => setLang(l.key)} style={{
+                  padding: "6px 12px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                  background: active ? `rgba(244,166,35,0.12)` : "var(--adm-input)",
+                  border: active ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                  color: active ? GOLD : "var(--adm-text2)",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <img src={l.flagSrc} alt={l.key} style={{ width: 18, height: 12, objectFit: "cover", borderRadius: 2, flexShrink: 0 }} />
+                  {l.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Options row */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+            <button onClick={() => setIncluirFotos((v) => !v)} style={{
+              display: "flex", alignItems: "center", gap: 6,
               padding: "8px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
-              background: ahorroTinta ? "rgba(34,197,94,0.1)" : "var(--adm-input)",
-              border: ahorroTinta ? "1.5px solid #22c55e" : "1px solid var(--adm-input-border)",
+              background: incluirFotos ? "rgba(244,166,35,0.1)" : "var(--adm-input)",
+              border: incluirFotos ? `1.5px solid ${GOLD}` : "1px solid var(--adm-input-border)",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
-              color: ahorroTinta ? "#22c55e" : "var(--adm-text2)",
+              color: incluirFotos ? GOLD : "var(--adm-text2)",
             }}>
-              🍃 {ahorroTinta ? "Fondo blanco" : "Ahorro tinta"}
+              {incluirFotos ? <ImageIcon size={14} /> : <ImageOff size={14} />}
+              {incluirFotos ? "Fotos activadas" : "Activar fotos"}
             </button>
-          )}
-        </div>
 
-        {/* Print / Unlock — full width */}
-        <div style={{ display: "flex" }}>
+            {/* Ahorro de tinta — solo para temas claros */}
+            {esClaro && (
+              <button onClick={() => setAhorroTinta((v) => !v)} style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 14px", borderRadius: 10, cursor: "pointer", justifyContent: "center",
+                background: ahorroTinta ? "rgba(34,197,94,0.1)" : "var(--adm-input)",
+                border: ahorroTinta ? "1.5px solid #22c55e" : "1px solid var(--adm-input-border)",
+                fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+                color: ahorroTinta ? "#22c55e" : "var(--adm-text2)",
+              }}>
+                🍃 {ahorroTinta ? "Fondo blanco" : "Ahorro tinta"}
+              </button>
+            )}
+          </div>
 
+          {/* Print / Unlock */}
           {isTrial ? (
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD" } }))}
@@ -334,34 +343,28 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
               💎 Exportar en PDF e imprimir
             </button>
           ) : (
-            <button
-              onClick={handlePrint}
-              style={{
-                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                padding: "11px 18px", borderRadius: 10, cursor: "pointer",
-                background: GOLD, border: "none",
-                fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
-                color: "#0a0a0a",
-              }}>
-              <Printer size={16} />
-              Guardar como PDF
-            </button>
+            <>
+              <button
+                onClick={handlePrint}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  padding: "11px 18px", borderRadius: 10, cursor: "pointer",
+                  background: GOLD, border: "none",
+                  fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+                  color: "#0a0a0a",
+                }}>
+                <Printer size={16} />
+                Guardar como PDF
+              </button>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.4 }}>
+                Se abrirá una ventana de impresión. Selecciona &quot;Guardar como PDF&quot; como destino.
+              </p>
+            </>
           )}
         </div>
 
-        {!isTrial && (
-          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.4 }}>
-            Se abrirá una ventana de impresión. Selecciona &quot;Guardar como PDF&quot; como destino.
-          </p>
-        )}
-      </div>
-
-      {ahorroTinta && (
-        <style>{`.huerto-page, .medit-page, .medit-inner { background: #fff !important; }`}</style>
-      )}
-
-      {/* Preview sheet — dynamic scale */}
-      <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}>
+        {/* Preview sheet — dynamic scale */}
+        <div className="exportar-preview" style={{ position: "relative", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)" }}>
         <div
           ref={wrapperPreviewRef}
           style={{
@@ -375,8 +378,9 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
             ref={sheetRef}
             style={{
               transformOrigin: "top left",
-              transform: previewScale < 1 ? `scale(${previewScale})` : undefined,
-              width: previewScale < 1 ? `${100 / previewScale}%` : "100%",
+              transform: `scale(${previewScale})`,
+              width: 794,
+              height: "auto",
             }}
           >
             <TemaComponent
@@ -417,6 +421,8 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
             </button>
           </div>
         )}
+        </div>
+
       </div>
     </>
   );
