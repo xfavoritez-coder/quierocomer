@@ -67,7 +67,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
 
         <h2 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Importar mi carta</h2>
         <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 20px", lineHeight: 1.4 }}>
-          Sube tu carta actual y reemplazaremos los platos de ejemplo con los tuyos. Esto reemplaza todos los platos actuales.
+          Sube tu carta real y la IA la digitaliza automáticamente. <strong style={{ color: "var(--adm-text2)" }}>Esto borra todos los platos actuales</strong> y los reemplaza con los tuyos.
         </p>
 
         {!mode ? (
