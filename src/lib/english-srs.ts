@@ -145,7 +145,12 @@ export async function getStats() {
 
   const now = new Date().toISOString();
   const mature = progress?.filter((p) => p.interval_days >= 21).length ?? 0;
-  const due = progress?.filter((p) => p.next_review_at <= now).length ?? 0;
+  const dueReviews = progress?.filter((p) => p.next_review_at <= now).length ?? 0;
+  // Tarjetas nuevas (sin ningún progress record) también cuentan como "para hoy"
+  const reviewedPairs = progress?.length ?? 0;
+  const totalPairs = (cards?.length ?? 0) * 2;
+  const newCards = Math.min(Math.max(0, totalPairs - reviewedPairs), 40); // límite 20 cards × 2 dir
+  const due = dueReviews + newCards;
 
   // Racha: días consecutivos con al menos una revisión
   let streak = 0;
