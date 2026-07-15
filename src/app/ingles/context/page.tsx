@@ -28,12 +28,9 @@ export default function ContextPage() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (phase === "showing") {
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }
+    if (phase === "showing") setTimeout(() => inputRef.current?.focus(), 300);
   }, [phase, current?.uid]);
 
-  // Keyboard: Enter to reveal, 1/2/3 to grade
   useEffect(() => {
     if (phase === "showing") {
       function onKey(e: KeyboardEvent) {
@@ -73,39 +70,27 @@ export default function ContextPage() {
     window.speechSynthesis.speak(u);
   }
 
-  function reveal() {
-    setPhase("revealed");
-  }
+  function reveal() { setPhase("revealed"); }
 
   function grade(quality: 0 | 1 | 2) {
     if (!current) return;
     submitContextReview(current.card.id, quality, current.progress);
 
     let newQueue = [...queue];
-
     if (!current.requeued) {
       if (quality === 2) setStats((s) => ({ ...s, correct: s.correct + 1 }));
       else if (quality === 1) setStats((s) => ({ ...s, maybe: s.maybe + 1 }));
       else setStats((s) => ({ ...s, failed: s.failed + 1 }));
     }
-
     if (quality === 0) {
-      const at = Math.min(5, newQueue.length);
-      newQueue.splice(at, 0, { ...current, requeued: true, uid: uid() });
+      newQueue.splice(Math.min(5, newQueue.length), 0, { ...current, requeued: true, uid: uid() });
     }
 
     setAnimate(true);
     setTimeout(() => {
       setAnimate(false);
-      if (newQueue.length === 0) {
-        setCurrent(null);
-        setPhase("done");
-      } else {
-        setCurrent(newQueue[0]);
-        setQueue(newQueue.slice(1));
-        setAnswer("");
-        setPhase("showing");
-      }
+      if (newQueue.length === 0) { setCurrent(null); setPhase("done"); }
+      else { setCurrent(newQueue[0]); setQueue(newQueue.slice(1)); setAnswer(""); setPhase("showing"); }
     }, 150);
   }
 
@@ -116,10 +101,8 @@ export default function ContextPage() {
       <Center>
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
           <span style={{ fontSize: 60 }}>🎉</span>
-          <div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>¡Todo al día!</h2>
-            <p style={{ color: "var(--en-text-2)", marginTop: 8 }}>No hay frases de contexto pendientes.</p>
-          </div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>¡Todo al día!</h2>
+          <p style={{ color: "var(--en-text-2)", margin: 0 }}>No hay situaciones pendientes.</p>
           <button onClick={() => router.push("/ingles")} className="en-btn-secondary">← Volver</button>
         </div>
       </Center>
@@ -127,7 +110,7 @@ export default function ContextPage() {
   }
 
   if (phase === "done") {
-    const { total, correct, failed, maybe } = stats;
+    const { total, correct, failed } = stats;
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
     return (
       <Center>
@@ -149,9 +132,7 @@ export default function ContextPage() {
             <button onClick={load} style={{ flex: 1, padding: 14, borderRadius: 14, fontWeight: 700, fontSize: 15, background: "linear-gradient(135deg, #10b981, #6366f1)", color: "#fff", border: "none", cursor: "pointer" }}>
               Otra sesión
             </button>
-            <button onClick={() => router.push("/ingles")} className="en-btn-secondary" style={{ flex: 1 }}>
-              Inicio
-            </button>
+            <button onClick={() => router.push("/ingles")} className="en-btn-secondary" style={{ flex: 1 }}>Inicio</button>
           </div>
         </div>
       </Center>
@@ -159,7 +140,6 @@ export default function ContextPage() {
   }
 
   if (!current) return null;
-
   const { card } = current;
   const done = stats.correct + stats.failed + stats.maybe;
   const pct = stats.total > 0 ? (done / stats.total) * 100 : 0;
@@ -177,57 +157,70 @@ export default function ContextPage() {
           {stats.correct > 0 && <span style={{ color: "var(--en-green)", fontSize: 13, fontWeight: 600 }}>✓{stats.correct}</span>}
           {stats.maybe > 0 && <span style={{ color: "var(--en-orange)", fontSize: 13, fontWeight: 600 }}>~{stats.maybe}</span>}
           {stats.failed > 0 && <span style={{ color: "var(--en-red)", fontSize: 13, fontWeight: 600 }}>✕{stats.failed}</span>}
-          <span style={{ fontSize: 11, background: "var(--en-surface-2)", color: "var(--en-text-3)", padding: "3px 8px", borderRadius: 8 }}>
-            💬 Contexto
-          </span>
+          <span style={{ fontSize: 11, background: "var(--en-surface-2)", color: "var(--en-text-3)", padding: "3px 8px", borderRadius: 8 }}>💬 Contexto</span>
         </div>
       </div>
 
       {/* Content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 20, maxWidth: 520, margin: "0 auto", width: "100%", opacity: animate ? 0 : 1, transition: "opacity 0.15s" }}>
 
-        {/* Card */}
-        <div style={{ width: "100%", borderRadius: 24, background: "var(--en-surface)", border: "1px solid var(--en-border)", padding: "28px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, boxShadow: "0 4px 40px rgba(0,0,0,0.3)" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>💬 Traduce al inglés</span>
+        <div style={{ width: "100%", borderRadius: 24, background: "var(--en-surface)", border: "1px solid var(--en-border)", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 16, boxShadow: "0 4px 40px rgba(0,0,0,0.3)" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>💬 ¿Cómo lo dirías en inglés?</span>
 
-          {/* Spanish sentence to translate */}
-          <p style={{ fontSize: card.example_es && card.example_es.length > 60 ? 17 : 20, fontWeight: 700, textAlign: "center", color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+          {/* Situación */}
+          <p style={{ fontSize: card.example_es && card.example_es.length > 80 ? 15 : 17, color: "var(--en-text)", margin: 0, lineHeight: 1.6 }}>
             {card.example_es}
           </p>
 
-          {/* Hint: what phrase they should use */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(99,102,241,0.1)", padding: "6px 14px", borderRadius: 10 }}>
-            <span style={{ fontSize: 11, color: "var(--en-text-3)" }}>Usa:</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--en-accent)" }}>{card.phrase_en}</span>
-          </div>
-
+          {/* Reveal */}
           {phase === "revealed" && (
             <>
               <div style={{ width: "100%", height: 1, background: "var(--en-border)" }} />
-              {/* Show what they wrote */}
+
+              {/* Lo que escribiste */}
               {answer.trim() && (
-                <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: 0, textAlign: "center" }}>
+                <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: 0 }}>
                   Escribiste: <em style={{ color: "var(--en-text-2)" }}>"{answer}"</em>
                 </p>
               )}
-              {/* Correct answer */}
-              <div style={{ width: "100%", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 14, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#10b981", margin: 0, textTransform: "uppercase", letterSpacing: "1px" }}>Respuesta de referencia</p>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>{card.phrase_en}</p>
+
+              {/* Respuesta de referencia */}
+              <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 16, padding: "16px" }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#10b981", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                  Una forma de decirlo
+                </p>
+                {/* Full example sentence */}
+                <p style={{ fontSize: 16, fontWeight: 700, color: "var(--en-text)", margin: "0 0 8px", lineHeight: 1.5 }}>
+                  {card.example_en || card.phrase_en}
+                </p>
+                {/* Core phrase highlighted */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, color: "var(--en-text-3)" }}>Expresión clave:</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--en-accent)", background: "rgba(99,102,241,0.12)", padding: "2px 10px", borderRadius: 8 }}>
+                    {card.phrase_en}
+                  </span>
+                </div>
                 {card.pronunciation_hint && (
-                  <span style={{ fontSize: 13, fontFamily: "monospace", color: "#8b5cf6" }}>{card.pronunciation_hint}</span>
+                  <span style={{ fontSize: 13, fontFamily: "monospace", color: "#8b5cf6", display: "block", marginTop: 6 }}>
+                    {card.pronunciation_hint}
+                  </span>
                 )}
-                <p style={{ fontSize: 13, color: "var(--en-text-2)", margin: 0 }}>{card.phrase_es}</p>
-                <button onClick={() => speak(card.phrase_en)} style={{ alignSelf: "flex-start", background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: "2px 0" }}>🔊</button>
+                <p style={{ fontSize: 13, color: "var(--en-text-2)", margin: "8px 0 0" }}>{card.phrase_es}</p>
+                <button
+                  onClick={() => speak(card.example_en || card.phrase_en)}
+                  style={{ marginTop: 10, background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: 0 }}
+                >
+                  🔊
+                </button>
               </div>
+
               <p style={{ fontSize: 12, color: "var(--en-text-3)", margin: 0, textAlign: "center" }}>
-                Evalúate tú mismo — ¿tu frase tenía el mismo sentido?
+                ¿Transmitiste la misma idea, aunque con otras palabras?
               </p>
             </>
           )}
         </div>
 
-        {/* Input or grade buttons */}
         {phase === "showing" ? (
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
             <textarea
@@ -236,7 +229,7 @@ export default function ContextPage() {
               rows={3}
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Escribe la frase en inglés..."
+              placeholder="Escribe lo que dirías en inglés..."
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reveal(); } }}
             />
             <button onClick={reveal} style={{ background: "linear-gradient(135deg, #10b981, #6366f1)", color: "#fff", border: "none", borderRadius: 14, padding: 15, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
@@ -257,11 +250,8 @@ function GradeButtons({ onGrade }: { onGrade: (q: 0 | 1 | 2) => void }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
       {GRADE.map((g) => (
-        <button
-          key={g.q}
-          onClick={() => onGrade(g.q)}
-          style={{ padding: "14px 8px", borderRadius: 14, background: g.dim, border: `1.5px solid ${g.color}`, color: "var(--en-text)", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-        >
+        <button key={g.q} onClick={() => onGrade(g.q)}
+          style={{ padding: "14px 8px", borderRadius: 14, background: g.dim, border: `1.5px solid ${g.color}`, color: "var(--en-text)", fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           <span style={{ color: g.color, fontSize: 18 }}>{g.emoji}</span>
           <span>{g.label}</span>
         </button>

@@ -6,6 +6,7 @@ export type Card = {
   phrase_es: string;
   pronunciation_hint: string | null;
   example_es: string | null;
+  example_en: string | null;
   notes: string | null;
   created_at: string;
 };
