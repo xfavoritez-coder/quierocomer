@@ -140,8 +140,13 @@ function SessionModule({
       {/* Button */}
       <div style={{ padding: "0 16px 16px" }}>
         {doneToday ? (
-          <div style={{ padding: "12px", borderRadius: 14, background: "var(--en-surface-2)", textAlign: "center", fontSize: 13, color: "var(--en-text-3)", fontWeight: 600 }}>
-            Completado por hoy ✓
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ padding: "12px", borderRadius: 14, background: "var(--en-surface-2)", textAlign: "center", fontSize: 13, color: "var(--en-text-3)", fontWeight: 600 }}>
+              Completado por hoy ✓
+            </div>
+            <Link href={href} style={{ display: "block", textAlign: "center", textDecoration: "none", padding: "10px", borderRadius: 14, fontWeight: 600, fontSize: 13, background: "var(--en-surface-2)", color: "var(--en-text-2)", border: "1px solid var(--en-border)" }}>
+              Repasar de nuevo
+            </Link>
           </div>
         ) : (
           <Link href={href} style={{
