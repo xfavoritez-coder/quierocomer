@@ -57,6 +57,15 @@ function AddCardForm() {
 
   const canSave = form.phrase_en.trim() && form.phrase_es.trim();
 
+  function speak() {
+    if (!form.phrase_en.trim()) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(form.phrase_en.trim());
+    u.lang = "en-US";
+    u.rate = 0.85;
+    window.speechSynthesis.speak(u);
+  }
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
 
@@ -94,9 +103,25 @@ function AddCardForm() {
           display: "flex", flexDirection: "column", gap: 6
         }}>
           <p style={{ fontSize: 11, color: "var(--en-text-3)", margin: 0, textTransform: "uppercase", letterSpacing: "1px" }}>Preview</p>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "var(--en-text)", margin: 0, minHeight: 28 }}>
-            {form.phrase_en || <span style={{ color: "var(--en-text-3)" }}>Frase en inglés...</span>}
-          </p>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "var(--en-text)", margin: 0, minHeight: 28, flex: 1 }}>
+              {form.phrase_en || <span style={{ color: "var(--en-text-3)" }}>Frase en inglés...</span>}
+            </p>
+            <button
+              onClick={speak}
+              disabled={!form.phrase_en.trim()}
+              title="Escuchar pronunciación"
+              style={{
+                background: form.phrase_en.trim() ? "var(--en-accent)" : "var(--en-surface-2)",
+                border: "none", borderRadius: 10, padding: "8px 10px",
+                fontSize: 18, cursor: form.phrase_en.trim() ? "pointer" : "default",
+                opacity: form.phrase_en.trim() ? 1 : 0.3,
+                transition: "all 0.15s", flexShrink: 0
+              }}
+            >
+              🔊
+            </button>
+          </div>
           {form.pronunciation_hint && (
             <span style={{ fontSize: 12, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface-2)", padding: "3px 8px", borderRadius: 6, alignSelf: "flex-start" }}>
               {form.pronunciation_hint}
