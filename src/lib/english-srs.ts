@@ -174,12 +174,126 @@ export async function getStats() {
     }
   }
 
+  // Pronunciación stats
+  const [{ data: pronProgress }, { data: pronReviews }] = await Promise.all([
+    supabase.from("english_pronunciation_progress").select("next_review_at, interval_days"),
+    supabase.from("english_pronunciation_reviews").select("reviewed_at").order("reviewed_at", { ascending: false }).limit(365),
+  ]);
+
+  const duePron = (pronProgress?.filter((p) => p.next_review_at <= now).length ?? 0)
+    + Math.min(Math.max(0, (cards?.length ?? 0) * 2 - (pronProgress?.length ?? 0)), 40);
+
+  let streakPron = 0;
+  if (pronReviews?.length) {
+    const pronDays = new Set(pronReviews.map((r) => r.reviewed_at.slice(0, 10)));
+    let d2 = new Date();
+    if (!pronDays.has(d2.toISOString().slice(0, 10))) d2.setDate(d2.getDate() - 1);
+    while (pronDays.has(d2.toISOString().slice(0, 10))) { streakPron++; d2.setDate(d2.getDate() - 1); }
+  }
+
+  // Racha combinada: días consecutivos donde se hicieron AMBAS sesiones
+  let streakCombined = 0;
+  if (reviews?.length && pronReviews?.length) {
+    const mDays = new Set(reviews.map((r) => r.reviewed_at.slice(0, 10)));
+    const pDays = new Set(pronReviews.map((r) => r.reviewed_at.slice(0, 10)));
+    const today = new Date().toISOString().slice(0, 10);
+    let d3 = new Date();
+    if (!mDays.has(today) || !pDays.has(today)) d3.setDate(d3.getDate() - 1);
+    while (mDays.has(d3.toISOString().slice(0, 10)) && pDays.has(d3.toISOString().slice(0, 10))) {
+      streakCombined++;
+      d3.setDate(d3.getDate() - 1);
+    }
+  }
+
+  // ¿Se completaron ambas hoy?
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const doneMeaningToday = reviews?.some((r) => r.reviewed_at.slice(0, 10) === todayStr) ?? false;
+  const donePronToday = pronReviews?.some((r) => r.reviewed_at.slice(0, 10) === todayStr) ?? false;
+
   return {
     totalCards: cards?.length ?? 0,
     mature,
     due,
     streak,
+    duePron,
+    streakPron,
+    streakCombined,
+    doneMeaningToday,
+    donePronToday,
   };
+}
+
+// ── PRONUNCIACIÓN ──────────────────────────────────────────
+
+export type PronunciationProgress = {
+  id: string;
+  card_id: string;
+  type: "listen" | "speak";
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  next_review_at: string;
+};
+
+export type PronunciationItem = {
+  card: Card;
+  progress: PronunciationProgress | null;
+  type: "listen" | "speak";
+};
+
+export async function getDuePronunciationItems(newLimit = 20): Promise<PronunciationItem[]> {
+  const [{ data: cards }, { data: allProgress }] = await Promise.all([
+    supabase.from("english_cards").select("*").order("created_at"),
+    supabase.from("english_pronunciation_progress").select("*"),
+  ]);
+
+  if (!cards?.length) return [];
+
+  const now = new Date().toISOString();
+  const pm = new Map<string, PronunciationProgress>();
+  for (const p of allProgress || []) pm.set(`${p.card_id}__${p.type}`, p);
+
+  const due: PronunciationItem[] = [];
+  const newItems: PronunciationItem[] = [];
+
+  for (const card of cards) {
+    for (const type of ["listen", "speak"] as const) {
+      const progress = pm.get(`${card.id}__${type}`) ?? null;
+      if (!progress) newItems.push({ card, progress: null, type });
+      else if (progress.next_review_at <= now) due.push({ card, progress, type });
+    }
+  }
+
+  return [
+    ...due.sort(() => Math.random() - 0.5),
+    ...newItems.slice(0, newLimit).sort(() => Math.random() - 0.5),
+  ];
+}
+
+export async function submitPronunciationReview(
+  cardId: string,
+  type: "listen" | "speak",
+  quality: 0 | 1 | 2,
+  currentProgress: PronunciationProgress | null
+) {
+  const base = currentProgress ?? { ease_factor: 2.5, interval_days: 0, repetitions: 0 };
+  const next = sm2(quality, base.ease_factor, base.interval_days, base.repetitions);
+  const nextDate = new Date();
+  nextDate.setDate(nextDate.getDate() + next.interval_days);
+
+  if (currentProgress?.id) {
+    await supabase.from("english_pronunciation_progress")
+      .update({ ...next, next_review_at: nextDate.toISOString() })
+      .eq("id", currentProgress.id);
+  } else {
+    await supabase.from("english_pronunciation_progress").insert({
+      card_id: cardId, type, ...next, next_review_at: nextDate.toISOString(),
+    });
+  }
+
+  await supabase.from("english_pronunciation_reviews").insert({
+    card_id: cardId, type, quality,
+  });
 }
 
 export async function getAllCards(): Promise<(Card & { progress_en: Progress | null; progress_es: Progress | null })[]> {
