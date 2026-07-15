@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
 import { parseAbText } from "@/lib/ab/parseAbText";
 import { initAdTracker } from "@/lib/adTracker";
+import { getOptimizedUrl } from "@/lib/warmImageCache";
 
 interface Logo {
   slug: string;
@@ -399,7 +400,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
             {logoChips.map((l, i) => (
               <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
                 {l.logoUrl ? (
-                  <img src={l.logoUrl} alt={l.name} className="logo-grid-img" />
+                  <img src={getOptimizedUrl(l.logoUrl, 120, 85) ?? l.logoUrl} alt={l.name} className="logo-grid-img" />
                 ) : (
                   <div className="logo-grid-init" style={{ background: l.color }}>{l.initials}</div>
                 )}

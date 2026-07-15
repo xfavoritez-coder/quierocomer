@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { initAdTracker } from "@/lib/adTracker";
+import { getOptimizedUrl } from "@/lib/warmImageCache";
 import {
   PLAN_FEATURES_DISPLAY,
   PLAN_TAGLINES,
@@ -247,7 +248,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   className="lnd-logo-chip"
                   style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #eeeae0", borderRadius: 999, padding: "10px 20px 10px 10px", textDecoration: "none", flexShrink: 0, transition: "all 0.2s", touchAction: "manipulation" }}>
                   {l.logoUrl ? (
-                    <img src={l.logoUrl} alt={l.name} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
+                    <img src={getOptimizedUrl(l.logoUrl, 76, 85) ?? l.logoUrl} alt={l.name} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
                   ) : (
                     <div style={{ width: 38, height: 38, borderRadius: "50%", background: l.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: F, fontSize: 14, fontWeight: 700 }}>{l.initials}</div>
                   )}
