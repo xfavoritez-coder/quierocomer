@@ -215,7 +215,7 @@ export default function PronunciationPage() {
           <>
             {/* Card — only shows phrase AFTER reveal */}
             <div style={{ width: "100%", borderRadius: 24, background: "var(--en-surface)", border: "1px solid var(--en-border)", padding: "32px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, boxShadow: "0 4px 40px rgba(0,0,0,0.3)" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>👂 Escucha y escribí</span>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>👂 Escucha y escribe</span>
 
               {phase === "showing" ? (
                 <>
@@ -232,11 +232,12 @@ export default function PronunciationPage() {
                     {card.phrase_en}
                   </p>
                   {card.pronunciation_hint && (
-                    <span style={{ fontSize: 13, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface-2)", padding: "4px 10px", borderRadius: 8 }}>
+                    <span style={{ fontSize: 14, fontFamily: "monospace", color: "#8b5cf6", background: "rgba(139,92,246,0.12)", padding: "6px 14px", borderRadius: 10, letterSpacing: "0.5px" }}>
                       {card.pronunciation_hint}
                     </span>
                   )}
-                  <p style={{ fontSize: 14, color: "var(--en-text-2)", margin: 0, textAlign: "center" }}>{card.phrase_es}</p>
+                  <div style={{ width: "100%", height: 1, background: "var(--en-border)" }} />
+                  <p style={{ fontSize: 15, color: "var(--en-text-2)", margin: 0, textAlign: "center" }}>{card.phrase_es}</p>
                   <button onClick={() => speak(card.phrase_en)} style={{ background: "var(--en-surface-2)", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 18, cursor: "pointer" }}>🔊</button>
                 </>
               )}
@@ -282,7 +283,7 @@ export default function PronunciationPage() {
 
               {/* Hint oculto hasta presionar 🔊 */}
               {card.pronunciation_hint && hintVisible && (
-                <span style={{ fontSize: 13, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface-2)", padding: "4px 10px", borderRadius: 8 }}>
+                <span style={{ fontSize: 14, fontFamily: "monospace", color: "#8b5cf6", background: "rgba(139,92,246,0.12)", padding: "6px 14px", borderRadius: 10, letterSpacing: "0.5px" }}>
                   {card.pronunciation_hint}
                 </span>
               )}
