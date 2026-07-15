@@ -203,7 +203,7 @@ export default function PronunciationPage() {
           {stats.failed > 0 && <span style={{ color: "var(--en-red)", fontSize: 13, fontWeight: 600 }}>✕{stats.failed}</span>}
           {/* Type badge */}
           <span style={{ fontSize: 11, background: "var(--en-surface-2)", color: "var(--en-text-3)", padding: "3px 8px", borderRadius: 8 }}>
-            {isListen ? "👂 Escuchá" : "🎙 Pronunciá"}
+            {isListen ? "👂 Escucha" : "🎙 Pronuncia"}
           </span>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function PronunciationPage() {
                   <button onClick={() => speak(card.phrase_en)} style={{ background: "var(--en-surface-2)", border: "none", borderRadius: 10, padding: "8px 16px", color: "var(--en-text-2)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                     Repetir audio
                   </button>
-                  <p style={{ fontSize: 12, color: "var(--en-text-3)", margin: 0 }}>Escribí lo que escuchaste en inglés</p>
+                  <p style={{ fontSize: 12, color: "var(--en-text-3)", margin: 0 }}>Escribe lo que escuchaste en inglés</p>
                 </>
               ) : (
                 <>
@@ -251,7 +251,7 @@ export default function PronunciationPage() {
                   rows={2}
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Escribí lo que escuchaste..."
+                  placeholder="Escribe lo que escuchaste..."
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reveal(); } }}
                 />
                 <button onClick={reveal} style={{ background: "linear-gradient(135deg, #8b5cf6, var(--en-accent))", color: "#fff", border: "none", borderRadius: 14, padding: 15, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
@@ -275,7 +275,7 @@ export default function PronunciationPage() {
         {!isListen && (
           <>
             <div style={{ width: "100%", borderRadius: 24, background: "var(--en-surface)", border: "1px solid var(--en-border)", padding: "32px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, boxShadow: "0 4px 40px rgba(0,0,0,0.3)" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>🎙 Pronunciá en voz alta</span>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>🎙 Pronuncia en voz alta</span>
               <p style={{ fontSize: card.phrase_en.length > 50 ? 18 : 24, fontWeight: 700, textAlign: "center", color: "var(--en-text)", margin: 0, lineHeight: 1.4 }}>
                 {card.phrase_en}
               </p>
@@ -295,7 +295,7 @@ export default function PronunciationPage() {
 
             <div style={{ width: "100%" }}>
               <p style={{ textAlign: "center", fontSize: 13, color: "var(--en-text-3)", margin: "0 0 12px" }}>
-                ¿Cómo te salió?
+                ¿Cómo te fue?
               </p>
               <GradeButtons onGrade={grade} />
             </div>

@@ -33,7 +33,7 @@ export default function EnglishDashboard() {
                 ? "Falta pronunciación para completar el día"
                 : stats.donePronToday
                 ? "Falta significado para completar el día"
-                : "Completá ambas sesiones para mantener la racha"}
+                : "Completa ambas sesiones para mantener la racha"}
             </p>
           )}
         </div>
@@ -65,7 +65,7 @@ export default function EnglishDashboard() {
       <SessionModule
         icon="🎯"
         title="Significado"
-        subtitle="Escribí el significado de cada frase"
+        subtitle="Escribe el significado de cada frase"
         streak={stats?.streak ?? 0}
         due={stats?.due ?? 0}
         doneToday={stats?.doneMeaningToday ?? false}
@@ -77,7 +77,7 @@ export default function EnglishDashboard() {
       <SessionModule
         icon="🎙"
         title="Pronunciación"
-        subtitle="Escuchá y leé en voz alta"
+        subtitle="Escucha y lee en voz alta"
         streak={stats?.streakPron ?? 0}
         due={stats?.duePron ?? 0}
         doneToday={stats?.donePronToday ?? false}

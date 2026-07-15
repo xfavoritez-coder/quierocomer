@@ -333,7 +333,7 @@ export default function SessionPage() {
               rows={2}
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Escribí tu respuesta..."
+              placeholder="Escribe tu respuesta..."
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reveal(); } }}
             />
             <button
