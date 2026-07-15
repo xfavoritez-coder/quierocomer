@@ -23,19 +23,18 @@ export default function PronunciationPage() {
   const [answer, setAnswer] = useState("");
   const [stats, setStats] = useState({ total: 0, correct: 0, failed: 0, maybe: 0 });
   const [animate, setAnimate] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { load(); }, []);
 
-  // Auto-play audio when showing a "listen" card
+  // Auto-play solo en modo "listen" — el usuario escucha y escribe
+  // En modo "speak" NO hay auto-play: el usuario habla primero, luego escucha el modelo
   useEffect(() => {
     if (phase === "showing" && current?.type === "listen") {
       setTimeout(() => speak(current.card.phrase_en), 400);
     }
-    if (phase === "showing" && current?.type === "speak") {
-      // For speak: auto-play so they know what to say
-      setTimeout(() => speak(current.card.phrase_en), 300);
-    }
+    setHintVisible(false); // ocultar hint al cambiar de tarjeta
   }, [phase, current?.uid]);
 
   // Focus input on listen cards
@@ -279,17 +278,32 @@ export default function PronunciationPage() {
               <p style={{ fontSize: card.phrase_en.length > 50 ? 18 : 24, fontWeight: 700, textAlign: "center", color: "var(--en-text)", margin: 0, lineHeight: 1.4 }}>
                 {card.phrase_en}
               </p>
-              {card.pronunciation_hint && (
+              <p style={{ fontSize: 14, color: "var(--en-text-2)", margin: 0, textAlign: "center" }}>{card.phrase_es}</p>
+
+              {/* Hint oculto hasta presionar 🔊 */}
+              {card.pronunciation_hint && hintVisible && (
                 <span style={{ fontSize: 13, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface-2)", padding: "4px 10px", borderRadius: 8 }}>
                   {card.pronunciation_hint}
                 </span>
               )}
-              <p style={{ fontSize: 14, color: "var(--en-text-2)", margin: 0, textAlign: "center" }}>{card.phrase_es}</p>
+
+              {/* Instrucción antes de escuchar */}
+              {!hintVisible && (
+                <p style={{ fontSize: 12, color: "var(--en-text-3)", margin: 0 }}>
+                  Dilo en voz alta primero, luego escucha el modelo
+                </p>
+              )}
+
               <button
-                onClick={() => speak(card.phrase_en)}
-                style={{ background: "var(--en-surface-2)", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 20, cursor: "pointer" }}
+                onClick={() => { speak(card.phrase_en); setHintVisible(true); }}
+                style={{
+                  background: hintVisible ? "var(--en-surface-2)" : "linear-gradient(135deg, #8b5cf6, var(--en-accent))",
+                  border: "none", borderRadius: 10, padding: "10px 18px",
+                  fontSize: 16, cursor: "pointer", color: "#fff", fontWeight: 600,
+                  transition: "all 0.2s"
+                }}
               >
-                🔊 Escuchar modelo
+                🔊 {hintVisible ? "Repetir" : "Escuchar modelo"}
               </button>
             </div>
 
