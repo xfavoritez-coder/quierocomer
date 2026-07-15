@@ -6,6 +6,8 @@ import { getDueContextItems, submitContextReview, ContextItem } from "@/lib/engl
 
 type QueueItem = ContextItem & { uid: string; requeued?: boolean };
 type Phase = "loading" | "empty" | "showing" | "revealed" | "done";
+type InputMode = "write" | "speak";
+type RecordState = "idle" | "recording" | "done";
 
 const GRADE = [
   { q: 0 as const, emoji: "✕", label: "No", color: "var(--en-red)", dim: "var(--en-red-dim)" },
@@ -21,20 +23,32 @@ export default function ContextPage() {
   const [current, setCurrent] = useState<QueueItem | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [answer, setAnswer] = useState("");
+  const [inputMode, setInputMode] = useState<InputMode>("write");
+  const [recordState, setRecordState] = useState<RecordState>("idle");
   const [stats, setStats] = useState({ total: 0, correct: 0, failed: 0, maybe: 0 });
   const [animate, setAnimate] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (phase === "showing") setTimeout(() => inputRef.current?.focus(), 300);
-  }, [phase, current?.uid]);
+    if (phase === "showing" && inputMode === "write") {
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [phase, current?.uid, inputMode]);
+
+  // Reset answer & recording when card changes
+  useEffect(() => {
+    setAnswer("");
+    setRecordState("idle");
+    stopRecording();
+  }, [current?.uid]);
 
   useEffect(() => {
     if (phase === "showing") {
       function onKey(e: KeyboardEvent) {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reveal(); }
+        if (e.key === "Enter" && !e.shiftKey && inputMode === "write") { e.preventDefault(); reveal(); }
       }
       window.addEventListener("keydown", onKey);
       return () => window.removeEventListener("keydown", onKey);
@@ -48,7 +62,7 @@ export default function ContextPage() {
       window.addEventListener("keydown", onKey);
       return () => window.removeEventListener("keydown", onKey);
     }
-  }, [phase, current]);
+  }, [phase, current, inputMode]);
 
   async function load() {
     setPhase("loading");
@@ -70,7 +84,39 @@ export default function ContextPage() {
     window.speechSynthesis.speak(u);
   }
 
-  function reveal() { setPhase("revealed"); }
+  function startRecording() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome."); return; }
+
+    const rec = new SR();
+    rec.lang = "en-US";
+    rec.continuous = false;
+    rec.interimResults = false;
+
+    rec.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript;
+      setAnswer(transcript);
+      setRecordState("done");
+    };
+    rec.onerror = () => setRecordState("idle");
+    rec.onend = () => {
+      setRecordState((prev) => prev === "recording" ? "idle" : prev);
+    };
+
+    recognitionRef.current = rec;
+    rec.start();
+    setRecordState("recording");
+  }
+
+  function stopRecording() {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+  }
+
+  function reveal() {
+    stopRecording();
+    setPhase("revealed");
+  }
 
   function grade(quality: 0 | 1 | 2) {
     if (!current) return;
@@ -162,40 +208,56 @@ export default function ContextPage() {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 20, maxWidth: 520, margin: "0 auto", width: "100%", opacity: animate ? 0 : 1, transition: "opacity 0.15s" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px", gap: 16, maxWidth: 520, margin: "0 auto", width: "100%", opacity: animate ? 0 : 1, transition: "opacity 0.15s" }}>
 
+        {/* Input mode toggle */}
+        {phase === "showing" && (
+          <div style={{ display: "flex", gap: 0, background: "var(--en-surface-2)", borderRadius: 12, padding: 3, width: "100%", maxWidth: 260 }}>
+            {(["write", "speak"] as InputMode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setInputMode(m); setAnswer(""); setRecordState("idle"); stopRecording(); }}
+                style={{
+                  flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13,
+                  background: inputMode === m ? "var(--en-surface)" : "transparent",
+                  color: inputMode === m ? "var(--en-text)" : "var(--en-text-3)",
+                  boxShadow: inputMode === m ? "0 1px 4px rgba(0,0,0,0.2)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                {m === "write" ? "✍️ Escribir" : "🎙 Hablar"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Card */}
         <div style={{ width: "100%", borderRadius: 24, background: "var(--en-surface)", border: "1px solid var(--en-border)", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 16, boxShadow: "0 4px 40px rgba(0,0,0,0.3)" }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>💬 ¿Cómo lo dirías en inglés?</span>
 
-          {/* Situación */}
           <p style={{ fontSize: card.example_es && card.example_es.length > 80 ? 15 : 17, color: "var(--en-text)", margin: 0, lineHeight: 1.6 }}>
             {card.example_es}
           </p>
 
-          {/* Reveal */}
           {phase === "revealed" && (
             <>
               <div style={{ width: "100%", height: 1, background: "var(--en-border)" }} />
 
-              {/* Lo que escribiste */}
               {answer.trim() && (
                 <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: 0 }}>
-                  Escribiste: <em style={{ color: "var(--en-text-2)" }}>"{answer}"</em>
+                  {inputMode === "speak" ? "Dijiste:" : "Escribiste:"} <em style={{ color: "var(--en-text-2)" }}>"{answer}"</em>
                 </p>
               )}
 
-              {/* Respuesta de referencia */}
               <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 16, padding: "16px" }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: "#10b981", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "1px" }}>
                   Una forma de decirlo
                 </p>
-                {/* Full example sentence */}
                 <p style={{ fontSize: 16, fontWeight: 700, color: "var(--en-text)", margin: "0 0 8px", lineHeight: 1.5 }}>
                   {card.example_en || card.phrase_en}
                 </p>
-                {/* Core phrase highlighted */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 12, color: "var(--en-text-3)" }}>Expresión clave:</span>
+                  <span style={{ fontSize: 12, color: "var(--en-text-3)" }}>Expresión:</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "var(--en-accent)", background: "rgba(99,102,241,0.12)", padding: "2px 10px", borderRadius: 8 }}>
                     {card.phrase_en}
                   </span>
@@ -206,10 +268,7 @@ export default function ContextPage() {
                   </span>
                 )}
                 <p style={{ fontSize: 13, color: "var(--en-text-2)", margin: "8px 0 0" }}>{card.phrase_es}</p>
-                <button
-                  onClick={() => speak(card.example_en || card.phrase_en)}
-                  style={{ marginTop: 10, background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: 0 }}
-                >
+                <button onClick={() => speak(card.example_en || card.phrase_en)} style={{ marginTop: 10, background: "none", border: "none", fontSize: 18, cursor: "pointer", padding: 0 }}>
                   🔊
                 </button>
               </div>
@@ -221,22 +280,68 @@ export default function ContextPage() {
           )}
         </div>
 
-        {phase === "showing" ? (
+        {/* Input area */}
+        {phase === "showing" && (
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-            <textarea
-              ref={inputRef}
-              className="en-input"
-              rows={3}
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Escribe lo que dirías en inglés..."
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reveal(); } }}
-            />
-            <button onClick={reveal} style={{ background: "linear-gradient(135deg, #10b981, #6366f1)", color: "#fff", border: "none", borderRadius: 14, padding: 15, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-              Revelar
-            </button>
+            {inputMode === "write" ? (
+              <>
+                <textarea
+                  ref={inputRef}
+                  className="en-input"
+                  rows={3}
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Escribe lo que dirías en inglés..."
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reveal(); } }}
+                />
+                <button onClick={reveal} style={{ background: "linear-gradient(135deg, #10b981, #6366f1)", color: "#fff", border: "none", borderRadius: 14, padding: 15, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  Revelar
+                </button>
+              </>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+                {/* Mic button */}
+                <button
+                  onClick={recordState === "recording" ? stopRecording : startRecording}
+                  style={{
+                    width: 80, height: 80, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 32,
+                    background: recordState === "recording"
+                      ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                      : "linear-gradient(135deg, #10b981, #6366f1)",
+                    boxShadow: recordState === "recording" ? "0 0 0 8px rgba(239,68,68,0.2)" : "0 4px 20px rgba(16,185,129,0.4)",
+                    transition: "all 0.2s",
+                    animation: recordState === "recording" ? "pulse 1s ease-in-out infinite" : "none",
+                  }}
+                >
+                  {recordState === "recording" ? "⏹" : "🎙"}
+                </button>
+                <style>{`@keyframes pulse { 0%,100%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)} 50%{box-shadow:0 0 0 16px rgba(239,68,68,0.1)} }`}</style>
+
+                <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: 0, textAlign: "center" }}>
+                  {recordState === "idle" && "Presiona el micrófono y habla en inglés"}
+                  {recordState === "recording" && "Escuchando... presiona para detener"}
+                  {recordState === "done" && `"${answer}"`}
+                </p>
+
+                {/* Reveal button — always visible in speak mode */}
+                <button
+                  onClick={reveal}
+                  style={{
+                    width: "100%", background: recordState === "done"
+                      ? "linear-gradient(135deg, #10b981, #6366f1)"
+                      : "var(--en-surface-2)",
+                    color: recordState === "done" ? "#fff" : "var(--en-text-3)",
+                    border: "none", borderRadius: 14, padding: 15, fontWeight: 700, fontSize: 15, cursor: "pointer"
+                  }}
+                >
+                  {recordState === "done" ? "Revelar" : "Saltar y revelar"}
+                </button>
+              </div>
+            )}
           </div>
-        ) : (
+        )}
+
+        {phase === "revealed" && (
           <div style={{ width: "100%" }}>
             <GradeButtons onGrade={grade} />
           </div>

@@ -104,6 +104,9 @@ export default function EnglishDashboard() {
         <Link href="/ingles/cards" style={{ flex: 1, textAlign: "center", textDecoration: "none", background: "var(--en-surface)", color: "var(--en-text)", borderRadius: 12, padding: "11px 16px", fontWeight: 600, fontSize: 13, border: "1px solid var(--en-border)" }}>
           📚 Ver todas
         </Link>
+        <Link href="/ingles/stats" style={{ flex: 1, textAlign: "center", textDecoration: "none", background: "var(--en-surface)", color: "var(--en-text)", borderRadius: 12, padding: "11px 16px", fontWeight: 600, fontSize: 13, border: "1px solid var(--en-border)" }}>
+          📊 Progreso
+        </Link>
       </div>
     </div>
   );
