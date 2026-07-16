@@ -78,6 +78,16 @@ export default function SessionPage() {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
     u.rate = 0.85;
+
+    const voices = window.speechSynthesis.getVoices();
+    const enVoices = voices.filter(v => v.lang.startsWith("en"));
+    // Prefer enhanced/premium voices, then local, then any English
+    const best =
+      enVoices.find(v => /enhanced|premium/i.test(v.name)) ||
+      enVoices.find(v => v.localService) ||
+      enVoices[0];
+    if (best) u.voice = best;
+
     window.speechSynthesis.speak(u);
   }
 
