@@ -33,18 +33,14 @@ Respond in this exact JSON format (no extra text):
       ],
     });
 
-    const raw = (msg.content[0] as { type: string; text: string }).text.trim();
-    // Strip markdown code fences if present
-    const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-    try {
-      return NextResponse.json(JSON.parse(text));
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        try { return NextResponse.json(JSON.parse(match[0])); } catch { /* fall */ }
-      }
-      return NextResponse.json({ error: "parse error", raw }, { status: 500 });
+    const raw = (msg.content[0] as { type: string; text: string }).text;
+    const match = raw.match(/\{[\s\S]*?\}/);
+    if (match) {
+      try {
+        return NextResponse.json(JSON.parse(match[0]));
+      } catch { /* fall through */ }
     }
+    return NextResponse.json({ error: "parse error", raw }, { status: 500 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
