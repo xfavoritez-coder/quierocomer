@@ -93,10 +93,6 @@ export default function SessionPage() {
 
   function reveal() {
     setPhase("revealed");
-    if (current) {
-      const enText = current.card.example_en || current.card.phrase_en;
-      setTimeout(() => speak(enText), 300);
-    }
   }
 
   function grade(quality: 0 | 1 | 2) {

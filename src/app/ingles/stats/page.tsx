@@ -8,6 +8,8 @@ type CardStat = {
   id: string;
   phrase_en: string;
   phrase_es: string;
+  example_en: string | null;
+  example_es: string | null;
   interval_en: number;
   interval_es: number;
 };
@@ -34,7 +36,7 @@ export default function StatsPage() {
       { data: progress },
       { data: reviews },
     ] = await Promise.all([
-      supabase.from("english_cards").select("id, phrase_en, phrase_es").order("created_at"),
+      supabase.from("english_cards").select("id, phrase_en, phrase_es, example_en, example_es").order("created_at"),
       supabase.from("english_progress").select("card_id, direction, interval_days"),
       supabase.from("english_reviews").select("reviewed_at").order("reviewed_at", { ascending: false }).limit(365),
     ]);
@@ -48,6 +50,8 @@ export default function StatsPage() {
       id: c.id,
       phrase_en: c.phrase_en,
       phrase_es: c.phrase_es,
+      example_en: c.example_en,
+      example_es: c.example_es,
       interval_en: progMap.get(`${c.id}__en_to_es`) ?? 0,
       interval_es: progMap.get(`${c.id}__es_to_en`) ?? 0,
     }));
@@ -62,7 +66,6 @@ export default function StatsPage() {
     ).length;
     const newCards = stats.filter(c => c.interval_en === 0 && c.interval_es === 0).length;
 
-    // Streak
     let streak = 0;
     if (reviews?.length) {
       const days = new Set(reviews.map((r) => r.reviewed_at.slice(0, 10)));
@@ -83,9 +86,8 @@ export default function StatsPage() {
   }
 
   function trackBar(interval: number, color: string) {
-    const MATURE = 21;
-    const pct = Math.min(100, (interval / MATURE) * 100);
-    const barColor = interval >= MATURE ? "var(--en-green)" : interval > 0 ? color : "var(--en-surface-2)";
+    const pct = Math.min(100, (interval / 21) * 100);
+    const barColor = interval >= 21 ? "var(--en-green)" : interval > 0 ? color : "var(--en-surface-2)";
     return (
       <div style={{ height: 4, borderRadius: 99, background: "var(--en-surface-2)", overflow: "hidden", flex: 1 }}>
         <div style={{ height: "100%", width: `${pct}%`, background: barColor, borderRadius: 99 }} />
@@ -107,7 +109,6 @@ export default function StatsPage() {
   return (
     <div style={{ minHeight: "100vh", padding: "24px 16px", maxWidth: 520, margin: "0 auto" }}>
 
-      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <Link href="/ingles" style={{ color: "var(--en-text-3)", textDecoration: "none", fontSize: 20 }}>←</Link>
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Progreso</h1>
@@ -115,7 +116,6 @@ export default function StatsPage() {
 
       {overview && (
         <>
-          {/* Streak */}
           <div style={{ borderRadius: 18, background: "var(--en-gold-dim)", border: "1px solid var(--en-gold)", padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
               <p style={{ fontSize: 11, color: "var(--en-text-3)", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "1px" }}>Racha</p>
@@ -126,7 +126,6 @@ export default function StatsPage() {
             </p>
           </div>
 
-          {/* Mastery breakdown */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
             <OverviewTile value={overview.mastered} label="Dominadas" color="var(--en-green)" emoji="⭐" onClick={() => setFilter(filter === "mastered" ? "all" : "mastered")} active={filter === "mastered"} />
             <OverviewTile value={overview.learning} label="Aprendiendo" color="var(--en-accent)" emoji="📈" onClick={() => setFilter(filter === "learning" ? "all" : "learning")} active={filter === "learning"} />
@@ -135,32 +134,34 @@ export default function StatsPage() {
         </>
       )}
 
-      {/* Legend */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 11, color: "var(--en-text-3)" }}>
-        <span>Barras: <span style={{ color: "var(--en-accent)" }}>EN→ES</span> · <span style={{ color: "#8b5cf6" }}>ES→EN</span></span>
-      </div>
-
-      {/* Card list */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filtered.map((card) => {
           const level = masteryLevel(card);
+          const frontEs = card.example_es || card.phrase_es;
+          const frontEn = card.example_en || card.phrase_en;
           return (
             <div key={card.id} style={{ borderRadius: 16, background: "var(--en-surface)", border: "1px solid var(--en-border)", padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, margin: "0 0 2px", color: "var(--en-text)" }}>{card.phrase_en}</p>
-                  <p style={{ fontSize: 12, color: "var(--en-text-3)", margin: 0 }}>{card.phrase_es}</p>
+                  {/* Key expression */}
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--en-accent)", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    {card.phrase_en}
+                  </p>
+                  {/* Example sentences */}
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "var(--en-text)", margin: "0 0 2px", lineHeight: 1.4 }}>{frontEn}</p>
+                  <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: 0, lineHeight: 1.4 }}>{frontEs}</p>
                 </div>
                 <span style={{
                   fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px",
-                  padding: "3px 8px", borderRadius: 6, flexShrink: 0,
+                  padding: "3px 8px", borderRadius: 6, flexShrink: 0, marginTop: 2,
                   background: level === "mastered" ? "rgba(16,185,129,0.15)" : level === "learning" ? "rgba(99,102,241,0.15)" : "var(--en-surface-2)",
                   color: level === "mastered" ? "var(--en-green)" : level === "learning" ? "var(--en-accent)" : "var(--en-text-3)",
                 }}>
                   {level === "mastered" ? "⭐ dominada" : level === "learning" ? "aprendiendo" : "nueva"}
                 </span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10 }}>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 10, color: "var(--en-accent)", width: 50, flexShrink: 0 }}>EN→ES</span>
                   {trackBar(card.interval_en, "var(--en-accent)")}
