@@ -5,6 +5,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getAllCards, deleteCard } from "@/lib/english-srs";
 
+function highlightPhrase(text: string, phrase: string): React.ReactNode {
+  if (!phrase || !text || text === phrase) return text;
+  const idx = text.toLowerCase().indexOf(phrase.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark style={{ background: "rgba(99,102,241,0.28)", borderRadius: 4, padding: "0 3px", color: "inherit" }}>
+        {text.slice(idx, idx + phrase.length)}
+      </mark>
+      {text.slice(idx + phrase.length)}
+    </>
+  );
+}
+
 type CardRow = Awaited<ReturnType<typeof getAllCards>>[number];
 
 export default function CardsPage() {
@@ -118,6 +133,10 @@ function CardItem({
 }) {
   const en = progressStatus(card.progress_en);
   const es = progressStatus(card.progress_es);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const frontEN = card.example_en || card.phrase_en;
+  const frontES = card.example_es || card.phrase_es;
 
   return (
     <div style={{
@@ -133,10 +152,10 @@ function CardItem({
           </p>
           {/* Example sentence (or fallback to phrase) */}
           <p style={{ fontWeight: 600, fontSize: 14, margin: 0, lineHeight: 1.4, color: "var(--en-text)" }}>
-            {card.example_en || card.phrase_en}
+            {frontEN}
           </p>
           <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: "3px 0 0", lineHeight: 1.4 }}>
-            {card.example_es || card.phrase_es}
+            {frontES}
           </p>
           {card.pronunciation_hint && (
             <p style={{ fontSize: 11, fontFamily: "monospace", color: "var(--en-text-3)", margin: "4px 0 0" }}>
@@ -170,11 +189,83 @@ function CardItem({
         </div>
       </div>
 
-      {/* Progress chips */}
-      <div style={{ display: "flex", gap: 6 }}>
+      {/* Progress chips + preview toggle */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
         <Chip label="EN→ES" status={en} />
         <Chip label="ES→EN" status={es} />
+        <button
+          onClick={() => setShowPreview(p => !p)}
+          style={{
+            marginLeft: "auto", fontSize: 11, fontWeight: 700,
+            color: showPreview ? "var(--en-accent)" : "var(--en-text-3)",
+            background: "none", border: "none", cursor: "pointer", padding: "2px 4px"
+          }}
+        >
+          {showPreview ? "▲ ocultar" : "▼ ver preview"}
+        </button>
       </div>
+
+      {/* Preview — exactly how card looks in session */}
+      {showPreview && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
+          {/* EN→ES front */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--en-text-3)", textTransform: "uppercase", letterSpacing: "1px" }}>
+            EN→ES — frente
+          </div>
+          <div style={{
+            borderRadius: 16, padding: "18px 16px",
+            background: "var(--en-surface-2)", border: "2px solid var(--en-accent)",
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase", marginBottom: 8 }}>English</div>
+            <p style={{ fontSize: frontEN.length > 45 ? 15 : 17, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+              {card.example_en ? highlightPhrase(frontEN, card.phrase_en) : frontEN}
+            </p>
+          </div>
+          {/* EN→ES back */}
+          <div style={{
+            borderRadius: 12, padding: "14px 16px",
+            background: "var(--en-surface-2)", border: "1px solid var(--en-border)",
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: 10, color: "var(--en-text-3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>En español</div>
+            <p style={{ fontSize: frontES.length > 45 ? 13 : 15, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+              {frontES}
+            </p>
+            {card.pronunciation_hint && (
+              <span style={{ display: "inline-block", marginTop: 6, fontSize: 11, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface)", padding: "3px 8px", borderRadius: 6 }}>
+                {card.pronunciation_hint}
+              </span>
+            )}
+          </div>
+
+          {/* ES→EN front */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--en-text-3)", textTransform: "uppercase", letterSpacing: "1px", marginTop: 4 }}>
+            ES→EN — frente
+          </div>
+          <div style={{
+            borderRadius: 16, padding: "18px 16px",
+            background: "var(--en-surface-2)", border: "2px solid var(--en-orange)",
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase", marginBottom: 8 }}>Español</div>
+            <p style={{ fontSize: frontES.length > 45 ? 15 : 17, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+              {card.example_es ? highlightPhrase(frontES, card.phrase_es) : frontES}
+            </p>
+          </div>
+          {/* ES→EN back */}
+          <div style={{
+            borderRadius: 12, padding: "14px 16px",
+            background: "var(--en-surface-2)", border: "1px solid var(--en-border)",
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: 10, color: "var(--en-text-3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>In English</div>
+            <p style={{ fontSize: frontEN.length > 45 ? 13 : 15, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+              {card.example_en ? highlightPhrase(frontEN, card.phrase_en) : frontEN}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
