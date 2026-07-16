@@ -232,12 +232,22 @@ function ImpactHeroSlider({
             transition: "opacity 0.8s ease",
           }}>
             {p ? (
-              <img
-                src={p} alt={dish.name}
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchPriority={i === 0 ? "high" : "auto"}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "saturate(1.1) contrast(1.08)" }}
-              />
+              <>
+                {/* Blurred background fill — prevents black bars on portrait photos */}
+                <img
+                  src={p} alt=""
+                  aria-hidden
+                  loading={i === 0 ? "eager" : "lazy"}
+                  style={{ position: "absolute", inset: "-8%", width: "116%", height: "116%", objectFit: "cover", objectPosition: "center", filter: "blur(18px) saturate(0.7) brightness(0.7)" }}
+                />
+                {/* Main image — always shows the full dish, no zoom */}
+                <img
+                  src={p} alt={dish.name}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  fetchPriority={i === 0 ? "high" : "auto"}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" }}
+                />
+              </>
             ) : (
               <div style={{
                 position: "absolute", inset: 0,
