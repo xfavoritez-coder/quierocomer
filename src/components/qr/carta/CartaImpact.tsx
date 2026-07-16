@@ -224,7 +224,7 @@ function ImpactHeroSlider({
     >
       {/* Photos or placeholder fallback */}
       {heroDishes.map((dish, i) => {
-        const p = getDishPhoto(dish);
+        const p = getDishPhoto(dish, "hero");
         return (
           <div key={dish.id} style={{
             position: "absolute", inset: 0, zIndex: -3,
@@ -254,7 +254,7 @@ function ImpactHeroSlider({
       {/* Dark overlays — always dark regardless of theme */}
       <div style={{
         position: "absolute", inset: 0, zIndex: -2,
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%), linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.18) 55%, rgba(0,0,0,0.05))",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)",
       }} />
       <div style={{
         position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: -1,
