@@ -46,10 +46,13 @@ export default function DishDetail({
   restaurantPlan,
   popularDishIds,
 }: DishDetailProps) {
+  // Freeze dish list on mount — prevents async pMap re-sorts from jumping slides mid-session
+  const [stableDishes] = useState(() => allDishes);
+
   // Compute allergens that exist across the restaurant (for "Libre de" section)
   const restaurantAllergens = useMemo(() => {
     const allergens = new Set<string>();
-    for (const d of allDishes) {
+    for (const d of stableDishes) {
       const ings = (d as any).dishIngredients || [];
       for (const di of ings) {
         for (const a of (di.ingredient?.allergens || [])) {
@@ -58,13 +61,13 @@ export default function DishDetail({
       }
     }
     return allergens;
-  }, [allDishes]);
+  }, [stableDishes]);
 
   const [visible, setVisible] = useState(true);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastTrackedRef = useRef(dish.id);
-  const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
+  const currentIndex = stableDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
   // Sync activeIdx when dish changes externally (cross-sell click)
@@ -141,7 +144,7 @@ export default function DishDetail({
         if (e.isIntersecting && e.intersectionRatio > 0.6) {
           const idx = parseInt((e.target as HTMLElement).dataset.dishSlide || "0");
           setActiveIdx(idx);
-          const d = allDishes[idx];
+          const d = stableDishes[idx];
           if (d && d.id !== lastTrackedRef.current) {
             trackDetailClose();
             trackDetailOpen(d.id);
@@ -152,17 +155,17 @@ export default function DishDetail({
     }, { root: el, threshold: [0.6] });
     slides.forEach((s) => obs.observe(s));
     return () => { if (timer) clearTimeout(timer); obs.disconnect(); };
-  }, [allDishes, dish.id, onChangeDish, activeIdx]);
+  }, [stableDishes, dish.id, onChangeDish, activeIdx]);
 
   const close = useCallback(() => {
     // Notify parent of the current dish before closing (for scroll-to)
-    const currentDish = allDishes[activeIdx];
+    const currentDish = stableDishes[activeIdx];
     if (currentDish && currentDish.id !== dish.id) {
       onChangeDish(currentDish);
     }
     setVisible(false);
     setTimeout(onClose, 200);
-  }, [onClose, allDishes, activeIdx, dish.id, onChangeDish]);
+  }, [onClose, stableDishes, activeIdx, dish.id, onChangeDish]);
 
 
   return (
@@ -183,7 +186,7 @@ export default function DishDetail({
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}
       >
-        {allDishes.map((d, idx) => {
+        {stableDishes.map((d, idx) => {
           // Only render nearby slides — far slides are lightweight placeholders
           const distance = Math.abs(idx - activeIdx);
           if (distance > 5) return <div key={d.id} data-dish-slide={idx} style={{ flex: "0 0 100%", width: "100vw", scrollSnapAlign: "start" }} />;
@@ -192,7 +195,7 @@ export default function DishDetail({
             key={d.id}
             dish={d}
             index={idx}
-            total={allDishes.length}
+            total={stableDishes.length}
             categories={categories}
             restaurantId={restaurantId}
             ratingMap={ratingMap}
@@ -205,7 +208,7 @@ export default function DishDetail({
             restaurantPlan={restaurantPlan}
             restaurantAllergens={restaurantAllergens}
             popularDishIds={popularDishIds}
-            allDishes={allDishes}
+            allDishes={stableDishes}
             onChangeDish={onChangeDish}
           />
           );
@@ -214,7 +217,7 @@ export default function DishDetail({
 
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+        @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
         @keyframes fadeToast { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         div::-webkit-scrollbar { display: none; }
       `}</style>
@@ -365,19 +368,17 @@ function DishSlide({
       }}
     >
       {/* Photo */}
-      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0 }}>
+      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0, background: "var(--carta-img-placeholder)" }}>
         {photos.length === 0 && (
-          <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <DishPlaceholderIcon size={48} />
           </div>
         )}
-        {photos.length > 0 && (
-          <img
-            src={photoUrl(photos[photoIndex], "blur")}
-            alt=""
-            loading="eager"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "blur(12px)", transform: "scale(1.08)" }}
-          />
+        {/* Shimmer skeleton while image loads */}
+        {photos.length > 0 && !imgLoaded && (
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" }} />
+          </div>
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {photos.length > 0 && (
@@ -388,7 +389,7 @@ function DishSlide({
             loading="eager"
             decoding="async"
             onLoad={() => setImgLoaded(true)}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.4s ease" }}
           />
         )}
 

@@ -147,14 +147,23 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         {/* Background image or gradient fallback */}
         {bgSrc ? (
           <>
+            {/* Blurred fill layer — covers letterbox areas when image doesn't fill container */}
+            <img
+              src={bgSrc}
+              alt=""
+              aria-hidden
+              key={`${bgSrc}-blur`}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "blur(18px)", transform: "scale(1.12)", opacity: 0.7 }}
+            />
+            {/* Main image — contain keeps the full dish visible, no cropping */}
             <img
               src={bgSrc}
               alt={dish?.name || restaurant.name}
               key={bgSrc}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
             />
-            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
+            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.15)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.65) 100%)" }} />
           </>
         ) : (
           <div className="absolute inset-0" style={{
