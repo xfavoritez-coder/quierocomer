@@ -73,22 +73,26 @@ export default function SessionPage() {
     setPhase("showing");
   }
 
-  function speak(text: string) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.85;
-
-    const voices = window.speechSynthesis.getVoices();
-    const enVoices = voices.filter(v => v.lang.startsWith("en"));
-    // Prefer enhanced/premium voices, then local, then any English
-    const best =
-      enVoices.find(v => /enhanced|premium/i.test(v.name)) ||
-      enVoices.find(v => v.localService) ||
-      enVoices[0];
-    if (best) u.voice = best;
-
-    window.speechSynthesis.speak(u);
+  async function speak(text: string) {
+    try {
+      const res = await fetch("/api/ingles/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("tts failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play();
+    } catch {
+      // Fallback to browser TTS if API fails
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    }
   }
 
   function reveal() {
