@@ -232,22 +232,12 @@ function ImpactHeroSlider({
             transition: "opacity 0.8s ease",
           }}>
             {p ? (
-              <>
-                {/* Blurred fill — covers letterbox areas when photo doesn't fill container */}
-                <img
-                  src={p} alt=""
-                  aria-hidden
-                  loading={i === 0 ? "eager" : "lazy"}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "blur(18px) saturate(1.1)", transform: "scale(1.15)", opacity: 0.7 }}
-                />
-                {/* Main image — contain keeps the full dish visible */}
-                <img
-                  src={p} alt={dish.name}
-                  loading={i === 0 ? "eager" : "lazy"}
-                  fetchPriority={i === 0 ? "high" : "auto"}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" }}
-                />
-              </>
+              <img
+                src={p} alt={dish.name}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "auto"}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: "saturate(1.1) contrast(1.08)" }}
+              />
             ) : (
               <div style={{
                 position: "absolute", inset: 0,
