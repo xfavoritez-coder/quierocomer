@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDueItems, submitReview, StudyItem } from "@/lib/english-srs";
 
@@ -37,8 +37,25 @@ export default function SessionPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [stats, setStats] = useState({ total: 0, correct: 0, failed: 0, maybe: 0 });
   const [animate, setAnimate] = useState(false);
+  const audioCache = useRef<Map<string, string>>(new Map());
 
   useEffect(() => { load(); }, []);
+
+  // Pre-fetch audio for current card (and next) so click is instant
+  useEffect(() => {
+    const toPreload = [current, queue[0]].filter(Boolean);
+    for (const item of toPreload) {
+      const text = item!.card.example_en || item!.card.phrase_en;
+      if (!text || audioCache.current.has(text)) continue;
+      fetch("/api/ingles/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      }).then(r => r.blob()).then(blob => {
+        audioCache.current.set(text, URL.createObjectURL(blob));
+      }).catch(() => {});
+    }
+  }, [current, queue[0]?.uid]);
 
   // Space/Enter to reveal
   useEffect(() => {
@@ -75,16 +92,20 @@ export default function SessionPage() {
 
   async function speak(text: string) {
     try {
-      const res = await fetch("/api/ingles/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) throw new Error("tts failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.play();
+      // Use cached blob URL if available (pre-loaded) → instant playback
+      let url = audioCache.current.get(text);
+      if (!url) {
+        const res = await fetch("/api/ingles/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error("tts failed");
+        const blob = await res.blob();
+        url = URL.createObjectURL(blob);
+        audioCache.current.set(text, url);
+      }
+      new Audio(url).play();
     } catch {
       // Fallback to browser TTS if API fails
       window.speechSynthesis.cancel();
