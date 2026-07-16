@@ -127,10 +127,19 @@ function CardItem({
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontWeight: 700, fontSize: 15, margin: 0, lineHeight: 1.3 }}>{card.phrase_en}</p>
-          <p style={{ fontSize: 13, color: "var(--en-text-2)", margin: "4px 0 0", lineHeight: 1.3 }}>{card.phrase_es}</p>
+          {/* Key expression */}
+          <p style={{ fontSize: 11, fontWeight: 700, color: "var(--en-accent)", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            {card.phrase_en}
+          </p>
+          {/* Example sentence (or fallback to phrase) */}
+          <p style={{ fontWeight: 600, fontSize: 14, margin: 0, lineHeight: 1.4, color: "var(--en-text)" }}>
+            {card.example_en || card.phrase_en}
+          </p>
+          <p style={{ fontSize: 13, color: "var(--en-text-3)", margin: "3px 0 0", lineHeight: 1.4 }}>
+            {card.example_es || card.phrase_es}
+          </p>
           {card.pronunciation_hint && (
-            <p style={{ fontSize: 12, fontFamily: "monospace", color: "var(--en-text-3)", margin: "4px 0 0" }}>
+            <p style={{ fontSize: 11, fontFamily: "monospace", color: "var(--en-text-3)", margin: "4px 0 0" }}>
               {card.pronunciation_hint}
             </p>
           )}

@@ -346,21 +346,21 @@ export async function saveCard(data: {
   phrase_es: string;
   pronunciation_hint?: string;
   notes?: string;
+  example_en?: string;
+  example_es?: string;
 }) {
-  if (data.id) {
-    return supabase.from("english_cards").update({
-      phrase_en: data.phrase_en,
-      phrase_es: data.phrase_es,
-      pronunciation_hint: data.pronunciation_hint || null,
-      notes: data.notes || null,
-    }).eq("id", data.id);
-  }
-  return supabase.from("english_cards").insert({
+  const payload = {
     phrase_en: data.phrase_en,
     phrase_es: data.phrase_es,
     pronunciation_hint: data.pronunciation_hint || null,
     notes: data.notes || null,
-  });
+    example_en: data.example_en || null,
+    example_es: data.example_es || null,
+  };
+  if (data.id) {
+    return supabase.from("english_cards").update(payload).eq("id", data.id);
+  }
+  return supabase.from("english_cards").insert(payload);
 }
 
 export async function deleteCard(id: string) {

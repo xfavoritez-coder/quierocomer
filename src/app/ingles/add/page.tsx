@@ -5,6 +5,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { saveCard } from "@/lib/english-srs";
 import { supabase } from "@/lib/supabase";
 
+function highlightPhrase(text: string, phrase: string): React.ReactNode {
+  if (!phrase || !text || text === phrase) return text;
+  const idx = text.toLowerCase().indexOf(phrase.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark style={{ background: "rgba(99,102,241,0.28)", borderRadius: 4, padding: "0 3px", color: "inherit" }}>
+        {text.slice(idx, idx + phrase.length)}
+      </mark>
+      {text.slice(idx + phrase.length)}
+    </>
+  );
+}
+
 function AddCardForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -15,61 +30,93 @@ function AddCardForm() {
     phrase_es: "",
     pronunciation_hint: "",
     notes: "",
+    example_en: "",
+    example_es: "",
   });
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [toast, setToast] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (!editId) return;
-    supabase
-      .from("english_cards")
-      .select("*")
-      .eq("id", editId)
-      .single()
-      .then(({ data }) => {
-        if (data)
-          setForm({
-            phrase_en: data.phrase_en,
-            phrase_es: data.phrase_es,
-            pronunciation_hint: data.pronunciation_hint ?? "",
-            notes: data.notes ?? "",
-          });
+    supabase.from("english_cards").select("*").eq("id", editId).single().then(({ data }) => {
+      if (data) setForm({
+        phrase_en: data.phrase_en ?? "",
+        phrase_es: data.phrase_es ?? "",
+        pronunciation_hint: data.pronunciation_hint ?? "",
+        notes: data.notes ?? "",
+        example_en: data.example_en ?? "",
+        example_es: data.example_es ?? "",
       });
+    });
   }, [editId]);
 
   function set(k: keyof typeof form, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  async function generateExample() {
+    if (!form.phrase_en.trim() || !form.phrase_es.trim()) return;
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/ingles/generate-example", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phrase_en: form.phrase_en, phrase_es: form.phrase_es }),
+      });
+      const data = await res.json();
+      if (data.example_en && data.example_es) {
+        setForm(f => ({ ...f, example_en: data.example_en, example_es: data.example_es }));
+        setShowPreview(true);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function submit(addAnother = false) {
     if (!form.phrase_en.trim() || !form.phrase_es.trim()) return;
     setSaving(true);
+
+    // Auto-generate example if missing
+    if (!form.example_en.trim() && form.phrase_en.trim() && form.phrase_es.trim()) {
+      try {
+        const res = await fetch("/api/ingles/generate-example", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phrase_en: form.phrase_en, phrase_es: form.phrase_es }),
+        });
+        const data = await res.json();
+        if (data.example_en) {
+          form.example_en = data.example_en;
+          form.example_es = data.example_es;
+        }
+      } catch { /* save without example */ }
+    }
+
     await saveCard({ id: editId ?? undefined, ...form });
     setSaving(false);
+
     if (addAnother) {
-      setForm({ phrase_en: "", phrase_es: "", pronunciation_hint: "", notes: "" });
-      setToast(true);
-      setTimeout(() => setToast(false), 2000);
+      setForm({ phrase_en: "", phrase_es: "", pronunciation_hint: "", notes: "", example_en: "", example_es: "" });
+      setShowPreview(false);
+      setToast("✓ Guardada");
+      setTimeout(() => setToast(""), 2000);
     } else {
-      router.push("/ingles");
+      router.push("/ingles/cards");
     }
   }
 
   const canSave = form.phrase_en.trim() && form.phrase_es.trim();
-
-  function speak() {
-    if (!form.phrase_en.trim()) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(form.phrase_en.trim());
-    u.lang = "en-US";
-    u.rate = 0.85;
-    window.speechSynthesis.speak(u);
-  }
+  const frontText = form.example_en || form.phrase_en;
+  const backText = form.example_es || form.phrase_es;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+    <div style={{ minHeight: "100vh", padding: "24px 16px" }}>
 
-      {/* Toast */}
       {toast && (
         <div style={{
           position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
@@ -77,18 +124,15 @@ function AddCardForm() {
           padding: "10px 20px", borderRadius: 99, fontWeight: 700, fontSize: 14,
           zIndex: 100, boxShadow: "0 4px 20px rgba(52,211,153,0.4)"
         }}>
-          ✓ Guardada
+          {toast}
         </div>
       )}
 
-      <div style={{ width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ width: "100%", maxWidth: 440, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={() => router.back()}
-            style={{ background: "var(--en-surface-2)", border: "none", borderRadius: 10, padding: "8px 12px", color: "var(--en-text)", fontSize: 18, cursor: "pointer" }}
-          >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 8 }}>
+          <button onClick={() => router.back()} style={{ background: "var(--en-surface-2)", border: "none", borderRadius: 10, padding: "8px 12px", color: "var(--en-text)", fontSize: 18, cursor: "pointer" }}>
             ←
           </button>
           <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>
@@ -96,73 +140,87 @@ function AddCardForm() {
           </h1>
         </div>
 
-        {/* Card preview */}
-        <div style={{
-          borderRadius: 20, padding: "20px",
-          background: "var(--en-surface)", border: "1px solid var(--en-border)",
-          display: "flex", flexDirection: "column", gap: 6
-        }}>
-          <p style={{ fontSize: 11, color: "var(--en-text-3)", margin: 0, textTransform: "uppercase", letterSpacing: "1px" }}>Preview</p>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "var(--en-text)", margin: 0, minHeight: 28, flex: 1 }}>
-              {form.phrase_en || <span style={{ color: "var(--en-text-3)" }}>Frase en inglés...</span>}
-            </p>
-            <button
-              onClick={speak}
-              disabled={!form.phrase_en.trim()}
-              title="Escuchar pronunciación"
-              style={{
-                background: form.phrase_en.trim() ? "var(--en-accent)" : "var(--en-surface-2)",
-                border: "none", borderRadius: 10, padding: "8px 10px",
-                fontSize: 18, cursor: form.phrase_en.trim() ? "pointer" : "default",
-                opacity: form.phrase_en.trim() ? 1 : 0.3,
-                transition: "all 0.15s", flexShrink: 0
-              }}
-            >
-              🔊
-            </button>
+        {/* Form */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Field label="Expresión en inglés *" placeholder="ej: give up" value={form.phrase_en} onChange={(v) => set("phrase_en", v)} autoFocus={!editId} />
+          <Field label="Significado en español *" placeholder="ej: rendirse / darse por vencido" value={form.phrase_es} onChange={(v) => set("phrase_es", v)} />
+          <Field label="Pronunciación (opcional)" placeholder="ej: throo · EI-sap · uh-FORD" value={form.pronunciation_hint} onChange={(v) => set("pronunciation_hint", v)} />
+
+          {/* Example section */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "var(--en-text-2)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Frase de contexto
+              </label>
+              <button
+                onClick={generateExample}
+                disabled={generating || !canSave}
+                style={{
+                  background: canSave ? "rgba(99,102,241,0.15)" : "var(--en-surface-2)",
+                  border: "1px solid rgba(99,102,241,0.3)",
+                  borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700,
+                  color: canSave ? "var(--en-accent)" : "var(--en-text-3)",
+                  cursor: canSave ? "pointer" : "default"
+                }}
+              >
+                {generating ? "Generando..." : "✨ Auto-generar"}
+              </button>
+            </div>
+            <textarea
+              className="en-input"
+              rows={2}
+              placeholder="ej: Don't give up — you're almost there"
+              value={form.example_en}
+              onChange={(e) => { set("example_en", e.target.value); setShowPreview(!!e.target.value); }}
+            />
+            <textarea
+              className="en-input"
+              rows={2}
+              placeholder="ej: No te rindas, ya casi llegas"
+              value={form.example_es}
+              onChange={(e) => set("example_es", e.target.value)}
+            />
           </div>
-          {form.pronunciation_hint && (
-            <span style={{ fontSize: 12, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface-2)", padding: "3px 8px", borderRadius: 6, alignSelf: "flex-start" }}>
-              {form.pronunciation_hint}
-            </span>
-          )}
-          <p style={{ fontSize: 15, color: "var(--en-text-2)", margin: "4px 0 0", minHeight: 22 }}>
-            {form.phrase_es || <span style={{ color: "var(--en-text-3)" }}>Significado en español...</span>}
-          </p>
         </div>
 
-        {/* Form fields */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field
-            label="Frase en inglés *"
-            placeholder="ej: Did the transfer go through?"
-            value={form.phrase_en}
-            onChange={(v) => set("phrase_en", v)}
-            multiline
-            autoFocus={!editId}
-          />
-          <Field
-            label="Significado en español *"
-            placeholder="ej: ¿Se procesó el pago?"
-            value={form.phrase_es}
-            onChange={(v) => set("phrase_es", v)}
-            multiline
-          />
-          <Field
-            label="Pronunciación (opcional)"
-            placeholder="ej: pei-shens · throo · uh-PREE-shee-ate"
-            value={form.pronunciation_hint}
-            onChange={(v) => set("pronunciation_hint", v)}
-          />
-          <Field
-            label="Contexto / notas (opcional)"
-            placeholder="ej: go through = procesarse, concretarse (depende del contexto)"
-            value={form.notes}
-            onChange={(v) => set("notes", v)}
-            multiline
-          />
-        </div>
+        {/* Preview — shows how card will look in session */}
+        {showPreview && frontText && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "var(--en-text-3)", margin: 0, textTransform: "uppercase", letterSpacing: "1px" }}>
+              Preview — así se verá en el repaso
+            </p>
+
+            {/* Front card */}
+            <div style={{
+              borderRadius: 20, padding: "24px 20px",
+              background: "var(--en-surface)", border: "2px solid var(--en-accent)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center"
+            }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "1.5px", color: "var(--en-text-3)", textTransform: "uppercase" }}>English</span>
+              <p style={{ fontSize: frontText.length > 45 ? 17 : 20, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+                {form.example_en ? highlightPhrase(frontText, form.phrase_en) : frontText}
+              </p>
+              <span style={{ fontSize: 12, background: "var(--en-surface-2)", padding: "5px 12px", borderRadius: 8, color: "var(--en-text-2)" }}>🔊 Escuchar</span>
+            </div>
+
+            {/* Back card */}
+            <div style={{
+              borderRadius: 16, padding: "16px 20px",
+              background: "var(--en-surface-2)", border: "1px solid var(--en-border)",
+              textAlign: "center"
+            }}>
+              <p style={{ fontSize: 11, color: "var(--en-text-3)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "1px" }}>En español</p>
+              <p style={{ fontSize: backText.length > 45 ? 15 : 18, fontWeight: 700, color: "var(--en-text)", margin: 0, lineHeight: 1.5 }}>
+                {backText}
+              </p>
+              {form.pronunciation_hint && (
+                <span style={{ display: "inline-block", marginTop: 8, fontSize: 12, fontFamily: "monospace", color: "var(--en-text-2)", background: "var(--en-surface)", padding: "4px 10px", borderRadius: 8 }}>
+                  {form.pronunciation_hint}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Buttons */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -174,18 +232,12 @@ function AddCardForm() {
               background: canSave ? "linear-gradient(135deg, var(--en-accent), #8b5cf6)" : "var(--en-surface-2)",
               color: canSave ? "#fff" : "var(--en-text-3)",
               border: "none", cursor: canSave ? "pointer" : "default",
-              transition: "all 0.15s"
             }}
           >
             {saving ? "Guardando..." : editId ? "Guardar cambios" : "Guardar tarjeta"}
           </button>
           {!editId && (
-            <button
-              onClick={() => submit(true)}
-              disabled={saving || !canSave}
-              className="en-btn-secondary"
-              style={{ opacity: canSave ? 1 : 0.4 }}
-            >
+            <button onClick={() => submit(true)} disabled={saving || !canSave} className="en-btn-secondary" style={{ opacity: canSave ? 1 : 0.4 }}>
               Guardar y agregar otra →
             </button>
           )}
@@ -196,53 +248,17 @@ function AddCardForm() {
 }
 
 export default function AddCardPage() {
-  return (
-    <Suspense>
-      <AddCardForm />
-    </Suspense>
-  );
+  return <Suspense><AddCardForm /></Suspense>;
 }
 
-function Field({
-  label,
-  placeholder,
-  value,
-  onChange,
-  multiline,
-  autoFocus,
-}: {
-  label: string;
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-  multiline?: boolean;
-  autoFocus?: boolean;
+function Field({ label, placeholder, value, onChange, autoFocus }: {
+  label: string; placeholder: string; value: string;
+  onChange: (v: string) => void; autoFocus?: boolean;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 12, fontWeight: 700, color: "var(--en-text-2)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
-      </label>
-      {multiline ? (
-        <textarea
-          className="en-input"
-          rows={2}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          autoFocus={autoFocus}
-        />
-      ) : (
-        <input
-          className="en-input"
-          type="text"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          autoFocus={autoFocus}
-          style={{ resize: "none" }}
-        />
-      )}
+      <label style={{ fontSize: 12, fontWeight: 700, color: "var(--en-text-2)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</label>
+      <input className="en-input" type="text" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} autoFocus={autoFocus} />
     </div>
   );
 }
