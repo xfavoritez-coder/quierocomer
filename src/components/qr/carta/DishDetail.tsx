@@ -121,12 +121,19 @@ export default function DishDetail({
     return () => { trackDetailClose(); };
   }, [dish.id, restaurantId]);
 
-  // Observe which slide is active — delay to prevent iOS false triggers on mount
+  // Track whether observer has been initialized at least once (to skip the iOS delay on re-runs)
+  const obsInitializedRef = useRef(false);
+
+  // Observe which slide is active.
+  // Re-runs when activeIdx changes because slides transition between placeholder <div> and
+  // full <DishSlide> elements (different DOM nodes), so the observer must re-query them.
+  // The 500ms iOS delay only applies on the very first mount.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    let mounted = false;
-    const timer = setTimeout(() => { mounted = true; }, 500);
+    const firstMount = !obsInitializedRef.current;
+    let mounted = !firstMount;
+    const timer = firstMount ? setTimeout(() => { mounted = true; obsInitializedRef.current = true; }, 500) : null;
     const slides = el.querySelectorAll("[data-dish-slide]");
     const obs = new IntersectionObserver((entries) => {
       if (!mounted || programmaticScrollRef.current) return;
@@ -144,8 +151,8 @@ export default function DishDetail({
       });
     }, { root: el, threshold: [0.6] });
     slides.forEach((s) => obs.observe(s));
-    return () => { clearTimeout(timer); obs.disconnect(); };
-  }, [allDishes, dish.id, onChangeDish]);
+    return () => { if (timer) clearTimeout(timer); obs.disconnect(); };
+  }, [allDishes, dish.id, onChangeDish, activeIdx]);
 
   const close = useCallback(() => {
     // Notify parent of the current dish before closing (for scroll-to)

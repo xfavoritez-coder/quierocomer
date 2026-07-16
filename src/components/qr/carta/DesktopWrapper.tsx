@@ -52,7 +52,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
   if (!isDesktop) return <>{children}</>;
 
   if (fromLanding) {
-    const qrDest = isShowcase ? `https://quierocomer.com/qr/${slug}?showcase=1` : `https://quierocomer.com/qr/${slug}`;
+    const qrDest = `https://quierocomer.com/qr/${slug}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrDest)}&bgcolor=ffffff&color=0a0908&margin=0`;
 
     return (

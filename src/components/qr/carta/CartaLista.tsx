@@ -634,7 +634,7 @@ export default function CartaLista({
         <DishDetailErrorBoundary onClose={() => { setSelectedDish(null); setDishFromHero(false); }}>
         <DishDetail
           dish={selectedDish}
-          allDishes={dishFromHero ? [selectedDish] : sortedDishes}
+          allDishes={dishFromHero ? [selectedDish] : grouped.flatMap(g => g.dishes)}
           categories={categories}
           restaurantId={restaurant.id}
           reviews={reviews}

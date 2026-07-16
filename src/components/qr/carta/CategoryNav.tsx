@@ -82,7 +82,7 @@ export default function CategoryNav({
                 whiteSpace: "nowrap",
                 padding: "7px 14px",
                 borderRadius: 999,
-                fontSize: "0.82rem",
+                fontSize: 14,
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? "var(--carta-accent, #F4A623)" : "var(--carta-text3)",
                 background: isActive ? "color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent)" : "transparent",

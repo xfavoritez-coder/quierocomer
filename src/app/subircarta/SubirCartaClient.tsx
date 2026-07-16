@@ -603,7 +603,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
               { slug: "el-menu-de-la-esquina", name: "El Menú de la Esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779594834786-i3nhsddtw68.png", color: "#2563eb" },
               { slug: "krua-thai", name: "Krua Thai", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781025353917-x9yx2cbbcrn.webp", color: "#e65100" },
             ].map((r) => (
-              <a key={r.slug} href={`/qr/${r.slug}?showcase=1`} target="_blank" rel="noopener noreferrer" className="social-proof-logo" title={`Ver carta de ${r.name}`}>
+              <a key={r.slug} href={`/qr/${r.slug}`} target="_blank" rel="noopener noreferrer" className="social-proof-logo" title={`Ver carta de ${r.name}`}>
                 <img src={r.logo} alt={r.name} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling!.removeAttribute("style"); }} />
                 <span className="social-proof-fallback" style={{ display: "none", background: r.color }}>{r.name.split(" ").map(w => w[0]).join("").slice(0, 2)}</span>
               </a>

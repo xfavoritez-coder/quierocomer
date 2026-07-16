@@ -400,6 +400,17 @@ export default function CartaPremium({
     return result;
   }, [categories, dishes, pMap, sortKey, rankings, clientAvoidsSpicyForSort]);
 
+  // Filtered dish list for DishDetail navigation — matches what's visible on screen
+  const filteredSortedDishes = useMemo(() => {
+    if (!activeFilter.length && !searchQuery) return sortedDishes;
+    let result = applyCartaFilter(sortedDishes, activeFilter, popularDishIds);
+    if (searchQuery) {
+      const q = norm(searchQuery.trim());
+      result = result.filter(d => norm(d.name || "").includes(q) || norm(d.description || "").includes(q));
+    }
+    return result;
+  }, [sortedDishes, activeFilter, searchQuery, popularDishIds]);
+
   // Reset horizontal scroll containers when personalization order changes
   useEffect(() => {
     if (!pMap) return;
@@ -789,7 +800,7 @@ export default function CartaPremium({
         <DishDetailErrorBoundary onClose={() => { setSelectedDish(null); setDishFromHero(false); }}>
         <DishDetail
           dish={selectedDish}
-          allDishes={dishFromHero ? [selectedDish] : sortedDishes}
+          allDishes={dishFromHero ? [selectedDish] : filteredSortedDishes}
           categories={categories}
           restaurantId={restaurant.id}
           reviews={reviews}

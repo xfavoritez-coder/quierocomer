@@ -155,99 +155,35 @@ export async function getStats() {
   const now = new Date().toISOString();
   const mature = progress?.filter((p) => p.interval_days >= 21).length ?? 0;
   const dueReviews = progress?.filter((p) => p.next_review_at <= now).length ?? 0;
-  // Tarjetas nuevas (sin ningún progress record) también cuentan como "para hoy"
   const reviewedPairs = progress?.length ?? 0;
   const totalPairs = (cards?.length ?? 0) * 2;
-  const newCards = Math.min(Math.max(0, totalPairs - reviewedPairs), 40); // límite 20 cards × 2 dir
+  const newCards = Math.min(Math.max(0, totalPairs - reviewedPairs), 40);
   const due = dueReviews + newCards;
 
-  // Racha: días consecutivos con al menos una revisión
   let streak = 0;
   if (reviews?.length) {
     const days = new Set(reviews.map((r) => r.reviewed_at.slice(0, 10)));
     let d = new Date();
-    // Si hoy no tiene reviews aún, empezar desde ayer para no romper racha
-    if (!days.has(d.toISOString().slice(0, 10))) {
-      d.setDate(d.getDate() - 1);
-    }
+    if (!days.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
     while (days.has(d.toISOString().slice(0, 10))) {
       streak++;
       d.setDate(d.getDate() - 1);
     }
   }
 
-  // Pronunciación stats
-  const [{ data: pronProgress }, { data: pronReviews }] = await Promise.all([
-    supabase.from("english_pronunciation_progress").select("next_review_at, interval_days"),
-    supabase.from("english_pronunciation_reviews").select("reviewed_at").order("reviewed_at", { ascending: false }).limit(365),
-  ]);
-
-  const duePron = (pronProgress?.filter((p) => p.next_review_at <= now).length ?? 0)
-    + Math.min(Math.max(0, (cards?.length ?? 0) * 2 - (pronProgress?.length ?? 0)), 40);
-
-  let streakPron = 0;
-  if (pronReviews?.length) {
-    const pronDays = new Set(pronReviews.map((r) => r.reviewed_at.slice(0, 10)));
-    let d2 = new Date();
-    if (!pronDays.has(d2.toISOString().slice(0, 10))) d2.setDate(d2.getDate() - 1);
-    while (pronDays.has(d2.toISOString().slice(0, 10))) { streakPron++; d2.setDate(d2.getDate() - 1); }
-  }
-
-  // Contexto stats
-  const [{ data: ctxProgress }, { data: ctxReviews }] = await Promise.all([
-    supabase.from("english_context_progress").select("next_review_at, interval_days"),
-    supabase.from("english_context_reviews").select("reviewed_at").order("reviewed_at", { ascending: false }).limit(365),
-  ]);
-
-  const dueCtx = (ctxProgress?.filter((p) => p.next_review_at <= now).length ?? 0)
-    + Math.min(Math.max(0, (cards?.length ?? 0) - (ctxProgress?.length ?? 0)), 20);
-
-  let streakCtx = 0;
-  if (ctxReviews?.length) {
-    const ctxDays = new Set(ctxReviews.map((r) => r.reviewed_at.slice(0, 10)));
-    let d4 = new Date();
-    if (!ctxDays.has(d4.toISOString().slice(0, 10))) d4.setDate(d4.getDate() - 1);
-    while (ctxDays.has(d4.toISOString().slice(0, 10))) { streakCtx++; d4.setDate(d4.getDate() - 1); }
-  }
-
-  // Racha combinada: días consecutivos donde se hicieron LAS TRES sesiones
-  let streakCombined = 0;
-  const mDays = new Set((reviews || []).map((r) => r.reviewed_at.slice(0, 10)));
-  const pDays = new Set((pronReviews || []).map((r) => r.reviewed_at.slice(0, 10)));
-  const cDays = new Set((ctxReviews || []).map((r) => r.reviewed_at.slice(0, 10)));
-  if (mDays.size && pDays.size && cDays.size) {
-    const today = new Date().toISOString().slice(0, 10);
-    let d3 = new Date();
-    if (!mDays.has(today) || !pDays.has(today) || !cDays.has(today)) d3.setDate(d3.getDate() - 1);
-    while (mDays.has(d3.toISOString().slice(0, 10)) && pDays.has(d3.toISOString().slice(0, 10)) && cDays.has(d3.toISOString().slice(0, 10))) {
-      streakCombined++;
-      d3.setDate(d3.getDate() - 1);
-    }
-  }
-
-  // ¿Se completaron las tres hoy?
   const todayStr = new Date().toISOString().slice(0, 10);
-  const doneMeaningToday = reviews?.some((r) => r.reviewed_at.slice(0, 10) === todayStr) ?? false;
-  const donePronToday = pronReviews?.some((r) => r.reviewed_at.slice(0, 10) === todayStr) ?? false;
-  const doneCtxToday = ctxReviews?.some((r) => r.reviewed_at.slice(0, 10) === todayStr) ?? false;
+  const doneToday = reviews?.some((r) => r.reviewed_at.slice(0, 10) === todayStr) ?? false;
 
   return {
     totalCards: cards?.length ?? 0,
     mature,
     due,
     streak,
-    duePron,
-    streakPron,
-    dueCtx,
-    streakCtx,
-    streakCombined,
-    doneMeaningToday,
-    donePronToday,
-    doneCtxToday,
+    doneToday,
   };
 }
 
-// ── PRONUNCIACIÓN ──────────────────────────────────────────
+// ── LEGACY (no longer used) ──────────────────────────────────────────
 
 export type PronunciationProgress = {
   id: string;
