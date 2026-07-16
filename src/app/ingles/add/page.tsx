@@ -80,23 +80,6 @@ function AddCardForm() {
   async function submit(addAnother = false) {
     if (!form.phrase_en.trim() || !form.phrase_es.trim()) return;
     setSaving(true);
-
-    // Auto-generate example if missing
-    if (!form.example_en.trim() && form.phrase_en.trim() && form.phrase_es.trim()) {
-      try {
-        const res = await fetch("/api/ingles/generate-example", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phrase_en: form.phrase_en, phrase_es: form.phrase_es }),
-        });
-        const data = await res.json();
-        if (data.example_en) {
-          form.example_en = data.example_en;
-          form.example_es = data.example_es;
-        }
-      } catch { /* save without example */ }
-    }
-
     await saveCard({ id: editId ?? undefined, ...form });
     setSaving(false);
 
