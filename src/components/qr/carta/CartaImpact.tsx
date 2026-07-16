@@ -1752,7 +1752,7 @@ export default function CartaImpact({
         <DishDetailErrorBoundary onClose={() => { setSelectedDish(null); setDishFromHero(false); }}>
           <DishDetail
             dish={selectedDish}
-            allDishes={dishes}
+            allDishes={dishFromHero ? [selectedDish] : sortedDishes}
             categories={categories}
             restaurantId={restaurant.id}
             reviews={reviews}

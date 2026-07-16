@@ -54,6 +54,21 @@ export default function CartaBasic({
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const showWaiter = !!(tableId || isQrScan);
   const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "basic");
+  const sortedDishesForModal = useMemo(() => {
+    const result: Dish[] = [];
+    for (const cat of categories) {
+      const catDishesRaw = dishesFiltered.filter((d) => d.categoryId === cat.id);
+      const catDishes = sortKey !== "default"
+        ? applyCartaSort(catDishesRaw, sortKey, rankings)
+        : [...catDishesRaw].sort((a, b) => {
+            const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
+            const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
+            return aRec - bRec;
+          });
+      result.push(...catDishes);
+    }
+    return result;
+  }, [categories, dishesFiltered, sortKey, rankings]);
 
   const heroDishes = useMemo(() => {
     const withPhoto = (arr: Dish[]) => arr.filter(d => d.photos?.[0]);
@@ -150,7 +165,7 @@ export default function CartaBasic({
       {selectedDish && (
         <DishDetail
           dish={selectedDish}
-          allDishes={dishes}
+          allDishes={sortedDishesForModal}
           categories={categories}
           restaurantId={restaurant.id}
           restaurantPlan={(restaurant as any).plan}
