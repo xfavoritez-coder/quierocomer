@@ -207,7 +207,6 @@ function ImpactHeroSlider({
         padding: "72px 20px 16px",
         margin: "0 14px",
         borderRadius: 28,
-        isolation: "isolate",
         overflow: "hidden",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
         cursor: "pointer",
@@ -231,10 +230,9 @@ function ImpactHeroSlider({
         const p = getDishPhoto(dish, "hero");
         return (
           <div key={dish.id} style={{
-            position: "absolute", inset: 0, zIndex: -3,
+            position: "absolute", inset: 0, zIndex: 1,
             opacity: i === current ? 1 : 0,
             transition: "opacity 0.8s ease",
-            overflow: "hidden",
           }}>
             {p ? (
               <>
@@ -243,7 +241,7 @@ function ImpactHeroSlider({
                   src={p} alt=""
                   aria-hidden
                   loading={i === 0 ? "eager" : "lazy"}
-                  style={{ position: "absolute", inset: "-8%", width: "116%", height: "116%", objectFit: "cover", objectPosition: "center", filter: "blur(18px) saturate(0.7) brightness(0.7)" }}
+                  style={{ position: "absolute", inset: "-15%", width: "130%", height: "130%", objectFit: "cover", objectPosition: "center", filter: "blur(20px) saturate(0.7) brightness(0.7)" }}
                 />
                 {/* Main image — always shows the full dish, no zoom */}
                 <img
@@ -268,18 +266,18 @@ function ImpactHeroSlider({
 
       {/* Dark overlays — always dark regardless of theme */}
       <div style={{
-        position: "absolute", inset: 0, zIndex: -2,
+        position: "absolute", inset: 0, zIndex: 2,
         background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)",
       }} />
       <div style={{
-        position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: -1,
+        position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: 3,
         background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)",
       }} />
 
       {/* Nav is now fixed outside hero */}
 
       {/* Content — clickable to open dish */}
-      <div onClick={() => onDishSelect(d)} style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 2, cursor: "pointer" }}>
+      <div onClick={() => onDishSelect(d)} style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 4, cursor: "pointer" }}>
         {badge && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 6,
