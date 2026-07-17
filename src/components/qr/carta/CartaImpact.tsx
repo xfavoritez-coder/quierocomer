@@ -234,6 +234,7 @@ function ImpactHeroSlider({
             position: "absolute", inset: 0, zIndex: -3,
             opacity: i === current ? 1 : 0,
             transition: "opacity 0.8s ease",
+            overflow: "hidden",
           }}>
             {p ? (
               <>
