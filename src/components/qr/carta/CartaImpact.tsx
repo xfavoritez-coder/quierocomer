@@ -177,6 +177,7 @@ function ImpactHeroSlider({
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const touchStartX = useRef(0);
+  const touchWasSwipe = useRef(false);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -199,7 +200,7 @@ function ImpactHeroSlider({
   return (
     <section
       style={{
-        minHeight: 420,
+        minHeight: "55vh",
         position: "relative",
         display: "flex",
         alignItems: "flex-end",
@@ -210,10 +211,12 @@ function ImpactHeroSlider({
         overflow: "hidden",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
       }}
-      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+      onClick={() => { if (!touchWasSwipe.current) { onDishSelect(d); } touchWasSwipe.current = false; }}
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchWasSwipe.current = false; }}
       onTouchEnd={(e) => {
         const diff = e.changedTouches[0].clientX - touchStartX.current;
         if (Math.abs(diff) > 50) {
+          touchWasSwipe.current = true;
           const next = diff < 0
             ? (current + 1) % heroDishes.length
             : (current - 1 + heroDishes.length) % heroDishes.length;
@@ -221,6 +224,7 @@ function ImpactHeroSlider({
           resetTimer();
         }
       }}
+      style={{ cursor: "pointer" }}
     >
       {/* Photos or placeholder fallback */}
       {heroDishes.map((dish, i) => {
