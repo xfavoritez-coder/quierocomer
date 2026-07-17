@@ -210,6 +210,7 @@ function ImpactHeroSlider({
         isolation: "isolate",
         overflow: "hidden",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+        cursor: "pointer",
       }}
       onClick={() => { if (!touchWasSwipe.current) { onDishSelect(d); } touchWasSwipe.current = false; }}
       onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchWasSwipe.current = false; }}
@@ -224,7 +225,6 @@ function ImpactHeroSlider({
           resetTimer();
         }
       }}
-      style={{ cursor: "pointer" }}
     >
       {/* Photos or placeholder fallback */}
       {heroDishes.map((dish, i) => {
