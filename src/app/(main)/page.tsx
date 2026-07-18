@@ -7,6 +7,7 @@ import LandingClient from "./LandingClient";
 const REDIRECT_TO_QR = true;
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: false },
   title: "QuieroComer.cl — Descubre qué pedir en restaurantes de Chile",
   description:
     "Encuentra los mejores platos de restaurantes en Chile. Fotos reales, precios actualizados, opciones veganas y vegetarianas. Descubre qué comer hoy.",

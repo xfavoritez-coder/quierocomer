@@ -20,14 +20,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: 'desc' },
     }),
     prisma.dish.findMany({
-      where: { isActive: true, hiddenFromFeed: false },
+      where: { isActive: true, hiddenFromFeed: false, photos: { isEmpty: false } },
       select: {
         name: true,
         updatedAt: true,
         restaurant: { select: { slug: true } },
       },
       orderBy: { updatedAt: 'desc' },
-      take: 45000,
+      take: 8000,
     }),
     // Restaurants with communes for SEO pages
     prisma.restaurant.findMany({
@@ -46,10 +46,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, changeFrequency: 'daily', priority: 1.0, lastModified: now },
+    // /qr es la homepage real (/ redirige aquí temporalmente — no listar / en sitemap)
+    { url: `${BASE}/qr`, changeFrequency: 'daily', priority: 1.0, lastModified: now },
     { url: `${BASE}/carta-qr`, changeFrequency: 'monthly', priority: 0.9, lastModified: now },
     { url: `${BASE}/subircarta`, changeFrequency: 'monthly', priority: 0.8, lastModified: now },
-    { url: `${BASE}/landing`, changeFrequency: 'monthly', priority: 0.8, lastModified: now },
     { url: `${BASE}/planes`, changeFrequency: 'monthly', priority: 0.7, lastModified: now },
     { url: `${BASE}/funciones`, changeFrequency: 'monthly', priority: 0.6, lastModified: now },
     { url: `${BASE}/descubrir`, changeFrequency: 'weekly', priority: 0.5, lastModified: now },

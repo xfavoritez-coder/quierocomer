@@ -14,10 +14,11 @@ const FALLBACK_COLORS: Record<string, string> = {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "QuieroComer | Ve demos de cartas reales funcionando",
+  title: "QuieroComer | Crea una carta QR inteligente para tu restaurante",
   description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
+  alternates: { canonical: "https://quierocomer.com/qr" },
   openGraph: {
-    title: "QuieroComer | Ve demos de cartas reales funcionando",
+    title: "QuieroComer | Crea una carta QR inteligente para tu restaurante",
     description: "Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor.",
     url: "https://quierocomer.com/qr",
     siteName: "QuieroComer",
