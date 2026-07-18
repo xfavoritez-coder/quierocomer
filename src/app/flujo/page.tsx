@@ -85,7 +85,7 @@ export default function FlujoPage() {
     <main style={{ background: BG, minHeight: "100vh", padding: "0 0 80px", fontFamily: F_BODY }}>
       {/* Header */}
       <div style={{ background: "rgba(10,5,0,0.95)", borderBottom: `1px solid ${BORDER}`, padding: "20px 20px 16px", position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(12px)" }}>
-        <p style={{ fontFamily: F_DISPLAY, fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: MUTED, margin: "0 0 2px" }}>QuieroComer</p>
+        <p style={{ fontFamily: F_DISPLAY, fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: MUTED, margin: "0 0 2px" }}>Horys Vegan</p>
         <h1 style={{ fontFamily: F_DISPLAY, fontSize: "1.4rem", color: ACCENT, margin: 0, fontWeight: 700 }}>Flujo de Caja</h1>
         {todayTotal > 0 && (
           <p style={{ fontFamily: F_BODY, fontSize: "0.8rem", color: MUTED, margin: "6px 0 0" }}>
