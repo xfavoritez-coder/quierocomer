@@ -83,7 +83,11 @@ export default function FlujoPage() {
 
   return (
     <main style={{ background: BG, minHeight: "100vh", padding: "0 0 80px", fontFamily: F_BODY }}>
-      <style>{`.flujo-input::placeholder, .flujo-textarea::placeholder { color: rgba(240,234,214,0.22); }`}</style>
+      <style>{`
+        .flujo-input::placeholder, .flujo-textarea::placeholder { color: rgba(240,234,214,0.2) !important; opacity: 1; }
+        .flujo-input::-webkit-input-placeholder, .flujo-textarea::-webkit-input-placeholder { color: rgba(240,234,214,0.2) !important; opacity: 1; }
+        .flujo-input::-moz-placeholder, .flujo-textarea::-moz-placeholder { color: rgba(240,234,214,0.2) !important; opacity: 1; }
+      `}</style>
       {/* Header */}
       <div style={{ background: "rgba(10,5,0,0.95)", borderBottom: `1px solid ${BORDER}`, padding: "20px 20px 16px", position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(12px)" }}>
         <p style={{ fontFamily: F_DISPLAY, fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: MUTED, margin: "0 0 2px" }}>HORUS</p>
