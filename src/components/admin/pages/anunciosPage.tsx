@@ -139,7 +139,10 @@ export default function AnunciosPage() {
                 </div>
               ) : (
                 <>
-                  <p onClick={() => { setEditingId(ann.id); setEditText(ann.text); setEditLink(ann.linkUrl || ""); }} style={{ fontFamily: FB, fontSize: "0.92rem", color: ann.isActive ? "var(--adm-text)" : "var(--adm-text3)", margin: "0 0 4px", lineHeight: 1.4, cursor: "pointer" }} title="Click para editar">{ann.text}</p>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                    <p style={{ fontFamily: FB, fontSize: "0.92rem", color: ann.isActive ? "var(--adm-text)" : "var(--adm-text3)", margin: 0, lineHeight: 1.4, flex: 1 }}>{ann.text}</p>
+                    <button onClick={() => { setEditingId(ann.id); setEditText(ann.text); setEditLink(ann.linkUrl || ""); }} style={{ padding: "3px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 }}>Editar</button>
+                  </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {ann.linkUrl && <span style={{ fontSize: "0.68rem", color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "2px 8px", borderRadius: 4 }}>🔗 {ann.linkUrl.replace(/^https?:\/\//, "").slice(0, 30)}</span>}
                     {ann.daysOfWeek?.length > 0 && ann.daysOfWeek.length < 7 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].filter((_: string, i: number) => ann.daysOfWeek.includes(i)).join(", ")}</span>}

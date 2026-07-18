@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
@@ -50,6 +51,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const slug = (await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } }))?.slug;
+    if (slug) revalidateTag(`qr-restaurant-${slug}`);
     logActivity(restaurantId, "announcement_create", { announcementId: announcement.id, text: text.trim() });
     return NextResponse.json({ ok: true, announcement });
   } catch (e: any) {
@@ -83,6 +86,8 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
+    const slug = (await prisma.restaurant.findUnique({ where: { id: existing.restaurantId }, select: { slug: true } }))?.slug;
+    if (slug) revalidateTag(`qr-restaurant-${slug}`);
     return NextResponse.json({ ok: true, announcement });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
@@ -104,6 +109,8 @@ export async function DELETE(req: NextRequest) {
     await requireRestaurantForOwner(req, existing.restaurantId);
 
     await prisma.announcement.delete({ where: { id } });
+    const slug = (await prisma.restaurant.findUnique({ where: { id: existing.restaurantId }, select: { slug: true } }))?.slug;
+    if (slug) revalidateTag(`qr-restaurant-${slug}`);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
