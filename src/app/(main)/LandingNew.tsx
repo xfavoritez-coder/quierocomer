@@ -24,8 +24,8 @@ const RESTAURANTS: [string, string][] = [
 ];
 
 const AB_DEFAULTS = {
-  titleText: "Mira demos de cartas {reales} funcionando",
-  subtitleText: "Elige un local y explora su carta como si fueras un cliente.",
+  titleText: "Crea una carta QR inteligente que {vende más} por ti",
+  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Crear carta",
 };
 
@@ -56,7 +56,7 @@ const I18N = {
       { icon: "🖨️", title: "Exporta tu carta impresa", desc: "Descarga tu carta como PDF con diseño profesional listo para imprimir. En español, inglés o portugués." },
     ],
     verFunciones: "Ver todas las funciones →",
-    logosEyebrow: "Ya usan QuieroComer",
+    logosEyebrow: "Mira cartas reales funcionando",
     faqEyebrow: "Lo que más nos preguntan",
     faqs: [
       { q: "¿Qué es QuieroComer?", a: "Transforma tu carta, ya sea física o digital, en una experiencia visual que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes." },
@@ -549,7 +549,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .logos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;max-width:700px;margin:0 auto}
 .logo-grid-item{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border:1px solid var(--gray-deep);border-radius:16px;background:rgba(20,18,16,.5);text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s}
 .logo-grid-item:hover{border-color:rgba(232,163,61,.3);transform:translateY(-2px)}
-.logo-grid-img,.logo-grid-init{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.logo-grid-img{width:64px;height:64px;border-radius:12px;object-fit:contain;background:#fff;flex-shrink:0;padding:4px}.logo-grid-init{width:64px;height:64px;border-radius:50%;flex-shrink:0}
 .logo-init{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
 .logo-grid-name{font-family:var(--font-display);font-size:13px;color:var(--cream-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .logo-grid-init{display:grid;place-items:center;font-size:16px;font-weight:700;color:var(--cream);border:1px solid var(--gray-deep)}
