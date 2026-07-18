@@ -83,9 +83,10 @@ export default function FlujoPage() {
 
   return (
     <main style={{ background: BG, minHeight: "100vh", padding: "0 0 80px", fontFamily: F_BODY }}>
+      <style>{`.flujo-input::placeholder, .flujo-textarea::placeholder { color: rgba(240,234,214,0.22); }`}</style>
       {/* Header */}
       <div style={{ background: "rgba(10,5,0,0.95)", borderBottom: `1px solid ${BORDER}`, padding: "20px 20px 16px", position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(12px)" }}>
-        <p style={{ fontFamily: F_DISPLAY, fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: MUTED, margin: "0 0 2px" }}>Horys Vegan</p>
+        <p style={{ fontFamily: F_DISPLAY, fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: MUTED, margin: "0 0 2px" }}>HORUS</p>
         <h1 style={{ fontFamily: F_DISPLAY, fontSize: "1.4rem", color: ACCENT, margin: 0, fontWeight: 700 }}>Flujo de Caja</h1>
         {todayTotal > 0 && (
           <p style={{ fontFamily: F_BODY, fontSize: "0.8rem", color: MUTED, margin: "6px 0 0" }}>
@@ -107,6 +108,7 @@ export default function FlujoPage() {
             onChange={handleMontoChange}
             onFocus={focusIn}
             onBlur={focusOut}
+            className="flujo-input"
             style={montoInputS}
             autoFocus
           />
@@ -119,6 +121,7 @@ export default function FlujoPage() {
             rows={3}
             onFocus={e => { e.target.style.borderColor = ACCENT; }}
             onBlur={e => { e.target.style.borderColor = BORDER; }}
+            className="flujo-textarea"
             style={textareaS}
           />
 
