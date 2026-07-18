@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { suggestPromotions } from "@/lib/genio/suggestPromotions";
 import {
@@ -9,6 +10,11 @@ import {
   isSuperAdmin,
 } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
+
+async function revalidateRestaurant(restaurantId: string) {
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
+  if (r?.slug) revalidateTag(`qr-restaurant-${r.slug}`);
+}
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -107,6 +113,7 @@ export async function POST(req: NextRequest) {
         : undefined,
     };
     const promo = await prisma.promotion.create({ data: promoData, include: { modifierTemplates: { select: { id: true, name: true } } } });
+    await revalidateRestaurant(restaurantId);
     logActivity(restaurantId, "promo_create", { promoId: promo.id, name, promoPrice, originalPrice });
     return NextResponse.json({ promotion: promo });
   } catch (e: any) {
@@ -158,6 +165,7 @@ export async function PUT(req: NextRequest) {
       },
       include: { modifierTemplates: { select: { id: true, name: true } } },
     });
+    await revalidateRestaurant(existing.restaurantId);
     logActivity(existing.restaurantId, "promo_edit", { promoId: id, name: promo.name, status: promo.status });
     return NextResponse.json({ promotion: promo });
   } catch (e: any) {
