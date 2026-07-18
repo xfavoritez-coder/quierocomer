@@ -137,7 +137,17 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
         signal: AbortSignal.timeout(8000),
       });
     }
-    if (!res.ok) return null;
+    // Last fallback: try 300px version (some Justo restaurants only have this size)
+    if (!res.ok) {
+      const url300 = externalUrl.replace(/-\d+-x\.webp$/, "-300-x.webp").replace(/-x-\d+\.webp$/, "-x-300.webp");
+      if (url300 !== externalUrl && url300 !== hdUrl) {
+        res = await fetch(url300, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+          signal: AbortSignal.timeout(8000),
+        }).catch(() => null as any);
+      }
+    }
+    if (!res || !res.ok) return null;
 
     const buffer = Buffer.from(await res.arrayBuffer());
     if (buffer.length < 500) return null;

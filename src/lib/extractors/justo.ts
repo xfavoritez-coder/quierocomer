@@ -39,9 +39,9 @@ function parsePrice(raw: string): number {
   return parseInt(cleaned, 10) || 0;
 }
 
-/** Clean image URL — upgrade to 800px for better quality */
+/** Clean image URL — keep original size, pipeline handles HD upgrade with fallback */
 function cleanImageUrl(url: string): string {
-  return url.trim().replace(/-\d+-x\.webp/, "-800-x.webp");
+  return url.trim();
 }
 
 export async function extractJusto(cartaUrl: string): Promise<ExtractionResult> {
