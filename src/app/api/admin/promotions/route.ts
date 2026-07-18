@@ -13,7 +13,7 @@ import { logActivity } from "@/lib/admin/logActivity";
 
 async function revalidateRestaurant(restaurantId: string) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
-  if (r?.slug) revalidateTag(`qr-restaurant-${r.slug}`);
+  if (r?.slug) revalidateTag(`qr-restaurant-${r.slug}`, "minutes");
 }
 
 export async function GET(req: NextRequest) {
