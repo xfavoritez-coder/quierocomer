@@ -47,7 +47,7 @@ const getCachedLifecycle = unstable_cache(
     // ── Phase 2: lightweight aggregations only (no panel activity — fetched on demand per click) ──
     const restaurantIds = restaurants.map(r => r.id);
 
-    const [sessions7dGroups, dishesWithPhotos, clientCounts] = await Promise.all([
+    const [sessions7dGroups, dishesWithPhotos, clientCounts, lastActivityGroups] = await Promise.all([
       prisma.session.groupBy({
         by: ["restaurantId"],
         where: { restaurantId: { in: restaurantIds }, startedAt: { gte: sevenDaysAgo } },
@@ -62,6 +62,11 @@ const getCachedLifecycle = unstable_cache(
         by: ["restaurantId"],
         where: { restaurantId: { in: restaurantIds } },
         _count: true,
+      }),
+      prisma.panelActivity.groupBy({
+        by: ["restaurantId"],
+        where: { restaurantId: { in: restaurantIds } },
+        _max: { createdAt: true },
       }),
     ]);
 
@@ -79,6 +84,11 @@ const getCachedLifecycle = unstable_cache(
     const clientCountMap = new Map<string, number>();
     for (const c of clientCounts) clientCountMap.set(c.restaurantId, c._count);
 
+    const lastPanelActivityMap = new Map<string, Date>();
+    for (const a of lastActivityGroups) {
+      if (a._max.createdAt) lastPanelActivityMap.set(a.restaurantId, a._max.createdAt);
+    }
+
     // ── Process each restaurant ──
     const stageCounts: Record<string, number> = {};
     let totalActivated = 0;
@@ -89,8 +99,12 @@ const getCachedLifecycle = unstable_cache(
       const sessions7d = sessions7dMap.get(r.id) || 0;
       const totalSessions = r._count.sessions;
       const lastLoginAt = r.owner?.lastLoginAt || null;
+      const lastPanelAt = lastPanelActivityMap.get(r.id) || null;
+      const lastKnownAt = lastLoginAt && lastPanelAt
+        ? new Date(Math.max(lastLoginAt.getTime(), lastPanelAt.getTime()))
+        : lastLoginAt || lastPanelAt;
 
-      // Panel activity is loaded on-demand per click — use lastLoginAt as proxy for dormancy
+      // Panel activity is loaded on-demand per click — use lastKnownAt as proxy for dormancy
       const stage = computeLifecycleStage({
         restaurant: {
           isDemo: r.isDemo,
@@ -98,7 +112,7 @@ const getCachedLifecycle = unstable_cache(
           subscriptionStatus: r.subscriptionStatus,
           trialEndsAt: r.trialEndsAt,
           billingExempt: r.billingExempt,
-          ownerLastLoginAt: lastLoginAt,
+          ownerLastLoginAt: lastKnownAt,
           hasOwner: !!r.owner,
         },
         lead: lead ? {
@@ -124,17 +138,17 @@ const getCachedLifecycle = unstable_cache(
         hasVisitorSessions: totalSessions > 0,
         has10PlusSessions: totalSessions >= 10,
         hasRegisteredClients: hasClients,
-        loggedInToPanel: !!lastLoginAt,
+        loggedInToPanel: !!lastKnownAt,
         madePayment: r.subscriptionStatus === "ACTIVE",
       });
 
       let salud: string;
       if (!r.owner && !r.isDemo) {
         salud = "gray";
-      } else if (!lastLoginAt) {
+      } else if (!lastKnownAt) {
         salud = r.isDemo ? "gray" : "red";
       } else {
-        const hoursAgo = (now.getTime() - lastLoginAt.getTime()) / (60 * 60 * 1000);
+        const hoursAgo = (now.getTime() - lastKnownAt.getTime()) / (60 * 60 * 1000);
         salud = hoursAgo < 48 ? "green" : hoursAgo < 168 ? "yellow" : "red";
       }
 
@@ -158,7 +172,7 @@ const getCachedLifecycle = unstable_cache(
         engagementChecks,
         salud,
         trialDaysLeft,
-        lastActivity: lastLoginAt?.toISOString() || null,
+        lastActivity: lastKnownAt?.toISOString() || null,
         sessions7d,
         totalSessions,
         dishes: r._count.dishes,
