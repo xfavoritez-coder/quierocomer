@@ -486,7 +486,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .logos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;max-width:700px;margin:0 auto}
 .logo-grid-item{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border:1px solid var(--gray-deep);border-radius:16px;background:rgba(20,18,16,.5);text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s}
 .logo-grid-item:hover{border-color:rgba(232,163,61,.3);transform:translateY(-2px)}
-.logo-grid-img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,.06)}.logo-grid-init{width:64px;height:64px;border-radius:50%;flex-shrink:0}
+.logo-grid-img{width:64px;height:64px;border-radius:12px;object-fit:contain;flex-shrink:0;background:rgba(255,255,255,.08);padding:4px}.logo-grid-init{width:64px;height:64px;border-radius:50%;flex-shrink:0}
 .logo-init{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
 .logo-grid-name{font-family:var(--font-display);font-size:13px;color:var(--cream-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .logo-grid-init{display:grid;place-items:center;font-size:16px;font-weight:700;color:var(--cream);border:1px solid var(--gray-deep)}
