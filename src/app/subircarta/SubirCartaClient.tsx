@@ -12,7 +12,7 @@ import { linkVisitorToLead } from "@/lib/visitorTracker";
 import { normalizePhone } from "@/lib/normalizePhone";
 import { parseAbText } from "@/lib/ab/parseAbText";
 
-type Mode = "pdf" | "link" | "photo" | "scratch" | null;
+type Mode = "link" | "photo" | "scratch" | null;
 
 // A/B test state for hero
 interface AbData { titleId: string | null; titleText: string; ctaId: string | null; ctaText: string }
@@ -121,8 +121,6 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
   // Scratch mode state
@@ -157,7 +155,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
     } catch { return false; }
   })();
 
-  const hasFile = (mode === "pdf" || mode === "photo") && !!fileName;
+  const hasFile = mode === "photo" && !!fileName;
   const scratchValid = mode === "scratch" && scratchName.trim().length > 0 && scratchEmail.includes("@");
   const ctaEnabled = mode === "link" ? isLinkValid : mode === "scratch" ? scratchValid : hasFile;
 
@@ -165,29 +163,19 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (mode === "photo") {
-      // Accumulate photos instead of replacing
-      const newFiles = Array.from(files);
-      setPhotoFiles(prev => {
-        const combined = [...prev, ...newFiles];
-        if (combined.length > 10) { setError("Máximo 10 fotos."); return prev; }
-        const totalSize = combined.reduce((sum, f) => sum + f.size, 0);
-        if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB. Intenta con menos fotos o más livianas."); return prev; }
-        const totalMB = (totalSize / 1024 / 1024).toFixed(1);
-        setFileName(combined.length === 1 ? combined[0].name : `${combined.length} fotos (${totalMB}MB)`);
-        setError("");
-        return combined;
-      });
-      // Reset input so the same file can be re-selected or camera triggered again
-      e.target.value = "";
-    } else {
-      // PDF mode — single file, replace
-      const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
-      if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB."); return; }
-      setPdfFile(files[0]);
-      setFileName(files[0].name);
+    const newFiles = Array.from(files);
+    setPhotoFiles(prev => {
+      const combined = [...prev, ...newFiles];
+      if (combined.length > 10) { setError("Máximo 10 fotos."); return prev; }
+      const totalSize = combined.reduce((sum, f) => sum + f.size, 0);
+      if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB. Intenta con menos fotos o más livianas."); return prev; }
+      const totalMB = (totalSize / 1024 / 1024).toFixed(1);
+      setFileName(combined.length === 1 ? combined[0].name : `${combined.length} fotos (${totalMB}MB)`);
       setError("");
-    }
+      return combined;
+    });
+    // Reset input so the same file can be re-selected or camera triggered again
+    e.target.value = "";
   };
 
   /** Try router.push → wait 1s → try location.href → wait 1s → show fallback form */
@@ -308,14 +296,14 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
         linkVisitorToLead(data.id);
         navigateToPaso2(data.id);
       } else {
-        const filesToUpload = mode === "photo" ? photoFiles : Array.from(fileRef.current?.files || []);
+        const filesToUpload = photoFiles;
         if (filesToUpload.length === 0) { setError("Selecciona un archivo primero."); return; }
 
         // Compress and upload files one by one with progress
         const total = Math.min(filesToUpload.length, 10);
         let leadId = "";
         for (let i = 0; i < total; i++) {
-          const label = mode === "pdf" ? "archivo" : "foto";
+          const label = "foto";
           setUploadProgress(total > 1 ? `Procesando ${label} ${i + 1} de ${total}` : `Procesando ${label}`);
           const compressed = await compressImage(filesToUpload[i]);
           const formData = new FormData();
@@ -392,17 +380,14 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
 
           <div className="form-side centered-form">
             {/* Method selector */}
-            <div className="methods" data-track="Elegir metodo (link, foto, PDF, scratch)">
-              {(["photo", "link", "pdf", "scratch"] as const).map((m) => (
+            <div className="methods" data-track="Elegir metodo (link, foto, scratch)">
+              {(["photo", "link", "scratch"] as const).map((m) => (
                 <button
                   key={m}
                   className={`method${mode === m ? " active" : ""}`}
                   type="button"
-                  onClick={() => { setMode(m); setError(""); setFileName(""); setPdfFile(null); setPhotoFiles([]); setScratchError(""); }}
+                  onClick={() => { setMode(m); setError(""); setFileName(""); setPhotoFiles([]); setScratchError(""); }}
                 >
-                  {m === "pdf" && (
-                    <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
-                  )}
                   {m === "link" && (
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo link</strong><span>de mi carta QR o web</span></>
                   )}
@@ -415,48 +400,6 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
                 </button>
               ))}
             </div>
-
-            {/* PDF panel */}
-            {mode === "pdf" && (
-              <div className="input-panel">
-                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" style={{ display: "none" }} onChange={handleFileSelect} />
-                <div className="upload-card compact-upload" role="button" tabIndex={0} onClick={() => fileRef.current?.click()} onKeyDown={(e) => { if (e.key === "Enter") fileRef.current?.click(); }}>
-                  <div>
-                    <div className="upload-icon">
-                      <svg viewBox="0 0 64 64" fill="none"><path d="M22 46H18a12 12 0 0 1-1.2-23.9A16 16 0 0 1 48 26a10 10 0 0 1-2 20h-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><path d="M32 46V26M24 34l8-8 8 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </div>
-                    {fileName ? (
-                      <>
-                        <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
-                        <div style={{ color: "var(--cream-2, #d4c8b8)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Haz clic para cambiar archivo</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="upload-title">Sube tu carta en PDF</div>
-                        <div className="upload-link">Haz clic para seleccionar archivo</div>
-                        <div className="formats">PDF, Word, Excel · Máx. 10MB</div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {/* PDF file preview */}
-                {pdfFile && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, padding: "12px 14px", background: "rgba(255,255,255,.04)", border: "1px solid var(--line)", borderRadius: 14 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(232,163,61,.1)", border: "1px solid rgba(232,163,61,.25)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                      <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M8 2h8l4 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" stroke="var(--amber-2)" strokeWidth="1.8"/><path d="M16 2v4h4M10 10h4M10 14h4" stroke="var(--amber-2)" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--cream)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pdfFile.name}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{(pdfFile.size / 1024 / 1024).toFixed(1)} MB</div>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setPdfFile(null); setFileName(""); if (fileRef.current) fileRef.current.value = ""; }}
-                      style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,.08)", border: "none", color: "var(--cream-2)", fontSize: 14, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
-                    >×</button>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Link panel */}
             {mode === "link" && (
@@ -745,7 +688,7 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .below-cta { margin: 10px auto 0; max-width: 520px; }
 .cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
 .cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 16px; } .shell { padding: 46px; } h1 { font-size: 60px; } h1 br.desktop-break { display: block; } .methods { grid-template-columns: repeat(4, 1fr); gap: 14px; } }
+@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 16px; } .shell { padding: 46px; } h1 { font-size: 60px; } h1 br.desktop-break { display: block; } .methods { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
 @media (max-width: 390px) { h1 { font-size: 40px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }

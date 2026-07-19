@@ -44,14 +44,10 @@ interface Entry {
   leadOwner: string | null;
   leadEmail: string | null;
   leadWhatsapp: string | null;
-  nurturingSent: { action: string; date: string }[];
   ownerId: string | null;
   cartaOriginalUrl: string | null;
   cartaType: string | null;
   leadTimeline: { deliveredAt: string | null; emailOpenedAt: string | null; emailClickedAt: string | null; activatedAt: string | null } | null;
-  emailsSent: { purpose: string; status: string; openedAt: string | null; clickedAt: string | null; createdAt: string }[];
-  recentActivity: { action: string; details?: any; createdAt: string }[];
-  leadEvents: any[];
 }
 
 interface Stats {
@@ -91,9 +87,6 @@ const ACTION_LABELS: Record<string, string> = {
   category_edit: "Editó categoría", category_create: "Creó categoría",
   promo_create: "Creó oferta", promo_edit: "Editó oferta", settings_change: "Cambió config",
   announcement_create: "Creó anuncio", menu_import: "Importó carta",
-  nurturing_carta_no_revisada: "WA Camila: carta no revisada",
-  nurturing_vio_no_activo: "WA Camila: vio, no activó",
-  nurturing_no_volvio: "WA Camila: no volvió",
   plan_modal_opened: "Abrió modal de planes",
   plan_tab_viewed: "Vio plan",
   plan_subscribe_clicked: "Intentó suscribirse",
@@ -428,26 +421,6 @@ export default function LifecyclePage() {
                   </div>
                 </div>
 
-                {/* Nurturing sent */}
-                {entry.nurturingSent?.length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                      WhatsApp enviados por Camila
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {entry.nurturingSent.map((n, i) => (
-                        <span key={i} style={{
-                          padding: "4px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500,
-                          background: "rgba(34,211,238,.08)", color: "#22d3ee",
-                          border: "1px solid rgba(34,211,238,.2)",
-                        }}>
-                          💬 {ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} · {new Date(n.date).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Timeline visual */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -463,7 +436,7 @@ export default function LifecyclePage() {
                 {(() => {
                   const det = detailCache[entry.id];
                   const emailsSent = det?.emailsSent || [];
-                  const hasComms = entry.leadTimeline || emailsSent.length > 0 || entry.nurturingSent?.length > 0;
+                  const hasComms = entry.leadTimeline || emailsSent.length > 0;
                   if (!hasComms) return null;
                   const purposeLabels: Record<string, string> = {
                     activation_welcome: "Bienvenida", funnel_carta_lista: "Carta lista",
@@ -477,7 +450,6 @@ export default function LifecyclePage() {
                   if (entry.leadTimeline?.emailOpenedAt) comms.push({ date: entry.leadTimeline.emailOpenedAt, node: <CommBadge key="lo" icon="👁" label="Email abierto" date={entry.leadTimeline.emailOpenedAt} color="#4ade80" /> });
                   if (entry.leadTimeline?.emailClickedAt) comms.push({ date: entry.leadTimeline.emailClickedAt, node: <CommBadge key="lc" icon="👆" label="Click en email" date={entry.leadTimeline.emailClickedAt} color="#4ade80" /> });
                   if (entry.leadTimeline?.activatedAt) comms.push({ date: entry.leadTimeline.activatedAt, node: <CommBadge key="la" icon="🟢" label="Activó" date={entry.leadTimeline.activatedAt} color="#4ade80" /> });
-                  entry.nurturingSent?.forEach((n, i) => comms.push({ date: n.date, node: <CommBadge key={`n${i}`} icon="💬" label={ACTION_LABELS[n.action] || n.action.replace("nurturing_", "")} date={n.date} color="#22d3ee" /> }));
                   emailsSent.forEach((e, i) => comms.push({ date: e.createdAt, node: <CommBadge key={`e${i}`} icon={e.openedAt ? "📬" : "📧"} label={purposeLabels[e.purpose] || e.purpose} date={e.createdAt} color={e.openedAt ? "#4ade80" : "#60a5fa"} extra={e.clickedAt ? "click" : e.openedAt ? "abierto" : ""} /> }));
                   comms.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                   return (
@@ -509,9 +481,6 @@ export default function LifecyclePage() {
                       if (res.ok) window.open("/panel", "_blank");
                       else alert("Error al entrar como owner");
                     }} />
-                  )}
-                  {ownerWa && entry.nurturingSent?.length > 0 && (
-                    <ChatModalBtn phone={ownerWa} name={entry.name} />
                   )}
                   {(ownerEmail || ownerWa) && (
                     <SendMessageBtn restaurantId={entry.id} ownerName={ownerName || "Dueño"} ownerEmail={ownerEmail} ownerWa={ownerWa} />
@@ -554,7 +523,7 @@ function TimelineSection({ entry, detail }: { entry: Entry; detail?: DetailData 
   const items: { time: string; text: string; dot: string }[] = [];
 
   // Lead events (from lazy-loaded detail)
-  const leadEvents = detail?.leadEvents || entry.leadEvents || [];
+  const leadEvents = detail?.leadEvents || [];
   if (leadEvents.length > 0) {
     for (const ev of leadEvents) {
       const action = ev.action || "";
@@ -585,21 +554,16 @@ function TimelineSection({ entry, detail }: { entry: Entry; detail?: DetailData 
   }
 
   // Panel activity (from lazy-loaded detail)
-  const recentActivity = detail?.recentActivity || entry.recentActivity || [];
+  const recentActivity = detail?.recentActivity || [];
   for (const a of recentActivity) {
     const label = ACTION_LABELS[a.action] || a.action;
     const d = a.details && typeof a.details === "object" ? a.details : {};
-    const detail = d.dishName || d.name || d.section || "";
-    items.push({ time: a.createdAt, text: `${label}${detail ? `: ${detail}` : ""}`, dot: a.action.includes("nurturing") ? "purple" : "" });
-  }
-
-  // Nurturing
-  for (const n of entry.nurturingSent || []) {
-    items.push({ time: n.date, text: ACTION_LABELS[n.action] || n.action, dot: "purple" });
+    const extra = d.dishName || d.name || d.section || "";
+    items.push({ time: a.createdAt, text: `${label}${extra ? `: ${extra}` : ""}`, dot: "" });
   }
 
   // Emails (from lazy-loaded detail)
-  const emailsSent = detail?.emailsSent || entry.emailsSent || [];
+  const emailsSent = detail?.emailsSent || [];
   for (const e of emailsSent) {
     const purposeLabels: Record<string, string> = {
       activation_welcome: "Email bienvenida", funnel_carta_lista: "Email carta lista",
@@ -989,97 +953,6 @@ const WA_TEMPLATES = [
   { key: "camila_no_volvio", label: "Camila: no volviste", desc: "Soy Camila, activaste pero no volviste" },
   { key: "camila_trial_usado", label: "Camila: trial terminó", desc: "Soy Camila, tu trial terminó" },
 ];
-
-function ChatModalBtn({ phone, name }: { phone: string; name: string }) {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<{ direction: string; body: string; createdAt: string }[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const loadChat = () => {
-    setOpen(true);
-    setLoading(true);
-    fetch(`/api/admin/whatsapp/conversations?phone=${encodeURIComponent(phone)}`).then(r => r.json()).then(data => {
-      setMessages(data.messages || []);
-    }).catch(() => {}).finally(() => setLoading(false));
-  };
-
-  return (
-    <>
-      <ActionBtn label="💬 Ver chat WA" onClick={loadChat} />
-      {open && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }} onClick={() => setOpen(false)}>
-          <style>{`
-            @media (min-width: 641px) {
-              .lc-chat-modal { max-width: 420px !important; max-height: 85vh !important; margin: auto !important; border-radius: 16px !important; }
-            }
-          `}</style>
-          <div className="lc-chat-modal" style={{ background: "#111", width: "100%", height: "100%", maxHeight: "100vh", display: "flex", flexDirection: "column", borderRadius: 0 }} onClick={e => e.stopPropagation()}>
-            {/* WhatsApp-style header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#1a1a1a", borderBottom: "1px solid #222", flexShrink: 0 }}>
-              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 18, padding: "2px 6px" }}>←</button>
-              <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#0a3d20", color: "#22c55e", fontWeight: 800, fontSize: 14, display: "grid", placeItems: "center", flexShrink: 0 }}>
-                {(name || "?").charAt(0).toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
-                <div style={{ fontSize: 11, color: "#22c55e" }}>🤖 Camila IA</div>
-              </div>
-            </div>
-            {/* Messages */}
-            <div style={{
-              flex: 1, overflowY: "auto", padding: "10px 8px 16px", display: "flex", flexDirection: "column", gap: 3,
-              background: "#0b0b0b",
-              backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-            }}>
-              {loading ? (
-                <div style={{ textAlign: "center", color: "#666", padding: 20, fontSize: 13 }}>Cargando...</div>
-              ) : messages.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#555", padding: 20, fontSize: 13 }}>Sin mensajes</div>
-              ) : (
-                messages.map((m, i) => {
-                  const isOut = m.direction === "OUTBOUND";
-                  const isNurturing = isOut && m.body.includes("Camila de QuieroComer");
-                  const isTemplate = isOut && !isNurturing && (m.body.includes("QuieroComer.cl") || m.body.includes("quierocomer.com/api/funnel"));
-                  const isAI = isOut && !isNurturing && !isTemplate;
-                  const prev = messages[i - 1];
-                  const showDate = !prev || new Date(m.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
-                  return (
-                    <div key={i}>
-                      {showDate && (
-                        <div style={{ textAlign: "center", margin: "8px 0 4px" }}>
-                          <span style={{ fontSize: 10, color: "#888", background: "#1a1a1a", padding: "3px 12px", borderRadius: 8 }}>
-                            {new Date(m.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
-                          </span>
-                        </div>
-                      )}
-                      <div style={{ display: "flex", justifyContent: isOut ? "flex-end" : "flex-start" }}>
-                        <div style={{
-                          maxWidth: "85%", padding: "6px 8px 4px", borderRadius: 8,
-                          borderTopRightRadius: isOut ? 2 : 8,
-                          borderTopLeftRadius: isOut ? 8 : 2,
-                          background: isNurturing ? "rgba(168,85,247,0.08)" : isAI ? "rgba(34,197,94,0.06)" : isOut ? "#0a3d20" : "#1a1a1a",
-                          border: isNurturing ? "1px solid rgba(168,85,247,0.15)" : isAI ? "1px solid rgba(34,197,94,0.1)" : "none",
-                        }}>
-                          {isNurturing && <div style={{ fontSize: 9, color: "#a855f7", fontWeight: 700, marginBottom: 2 }}>📨 Nurturing</div>}
-                          {isTemplate && <div style={{ fontSize: 9, color: "#888", fontWeight: 700, marginBottom: 2 }}>📋 Template</div>}
-                          {isAI && <div style={{ fontSize: 9, color: "#22c55e", fontWeight: 700, marginBottom: 2 }}>🤖 Camila IA</div>}
-                          <div style={{ fontSize: 14, color: "#e0e0e0", lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
-                          <div style={{ fontSize: 9, color: "#5a5a5a", textAlign: "right", marginTop: 1 }}>
-                            {new Date(m.createdAt).toLocaleString("es-CL", { hour: "2-digit", minute: "2-digit" })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
 
 function SendMessageBtn({ restaurantId, ownerName, ownerEmail, ownerWa }: { restaurantId: string; ownerName: string; ownerEmail: string | null; ownerWa: string | null }) {
   const [open, setOpen] = useState(false);

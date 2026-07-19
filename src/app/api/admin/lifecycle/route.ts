@@ -5,7 +5,6 @@ import { checkAdminAuth } from "@/lib/adminAuth";
 import {
   computeLifecycleStage,
   computeEngagementScore,
-  OWNER_ACTIONS,
   type LifecycleStage,
 } from "@/lib/admin/lifecycle";
 
@@ -17,7 +16,6 @@ const getCachedLifecycle = unstable_cache(
   async () => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
     // ── Phase 1: leads + restaurants (base data) ──
     const [leads, restaurants] = await Promise.all([
@@ -46,23 +44,10 @@ const getCachedLifecycle = unstable_cache(
       }),
     ]);
 
-    // ── Phase 2: secondary queries scoped to owned restaurant IDs ──
+    // ── Phase 2: lightweight aggregations only (no panel activity — fetched on demand per click) ──
     const restaurantIds = restaurants.map(r => r.id);
-    const OWNER_ACTIONS_ARRAY = [...OWNER_ACTIONS];
 
-    const [allActivity, sessions7dGroups, dishesWithPhotos, clientCounts] = await Promise.all([
-      prisma.panelActivity.findMany({
-        where: {
-          restaurantId: { in: restaurantIds },
-          createdAt: { gte: sixtyDaysAgo },
-          OR: [
-            { action: { in: OWNER_ACTIONS_ARRAY } },
-            { action: { startsWith: "nurturing_" } },
-          ],
-        },
-        select: { restaurantId: true, action: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-      }),
+    const [sessions7dGroups, dishesWithPhotos, clientCounts] = await Promise.all([
       prisma.session.groupBy({
         by: ["restaurantId"],
         where: { restaurantId: { in: restaurantIds }, startedAt: { gte: sevenDaysAgo } },
@@ -86,12 +71,6 @@ const getCachedLifecycle = unstable_cache(
       if (l.generatedSlug) leadBySlug.set(l.generatedSlug, l);
     }
 
-    const activityByRest = new Map<string, typeof allActivity>();
-    for (const a of allActivity) {
-      if (!activityByRest.has(a.restaurantId)) activityByRest.set(a.restaurantId, []);
-      activityByRest.get(a.restaurantId)!.push(a);
-    }
-
     const sessions7dMap = new Map<string, number>();
     for (const s of sessions7dGroups) sessions7dMap.set(s.restaurantId, s._count);
 
@@ -107,16 +86,11 @@ const getCachedLifecycle = unstable_cache(
 
     const entries = restaurants.map(r => {
       const lead = leadBySlug.get(r.slug);
-      const activity = activityByRest.get(r.id) || [];
       const sessions7d = sessions7dMap.get(r.id) || 0;
       const totalSessions = r._count.sessions;
+      const lastLoginAt = r.owner?.lastLoginAt || null;
 
-      const lastOwnerAct = activity.find(a => OWNER_ACTIONS.has(a.action));
-
-      const nurturingSent = activity
-        .filter(a => a.action.startsWith("nurturing_"))
-        .map(a => ({ action: a.action, date: a.createdAt.toISOString() }));
-
+      // Panel activity is loaded on-demand per click — use lastLoginAt as proxy for dormancy
       const stage = computeLifecycleStage({
         restaurant: {
           isDemo: r.isDemo,
@@ -124,7 +98,7 @@ const getCachedLifecycle = unstable_cache(
           subscriptionStatus: r.subscriptionStatus,
           trialEndsAt: r.trialEndsAt,
           billingExempt: r.billingExempt,
-          ownerLastLoginAt: r.owner?.lastLoginAt || null,
+          ownerLastLoginAt: lastLoginAt,
           hasOwner: !!r.owner,
         },
         lead: lead ? {
@@ -133,38 +107,34 @@ const getCachedLifecycle = unstable_cache(
           whatsappClickedAt: lead.whatsappClickedAt,
           activated: lead.activated,
         } : null,
-        lastOwnerActivity: lastOwnerAct?.createdAt || null,
+        lastOwnerActivity: null,
         sessions7d,
       }, now);
 
-      const hasEditedDish = activity.some(a => a.action === "dish_edit");
       const hasUploadedPhoto = hasPhotosSet.has(r.id);
       const hasClients = (clientCountMap.get(r.id) || 0) > 0;
 
+      // editedDish not available without the activity query — accurate value shown in detail panel
       const { score: engagement, checks: engagementChecks } = computeEngagementScore({
         hasDishes: r._count.dishes > 0,
         viewedCarta: !!(lead?.emailClickedAt || lead?.whatsappClickedAt),
         activated: !r.isDemo,
-        editedDish: hasEditedDish,
+        editedDish: false,
         uploadedPhoto: hasUploadedPhoto,
         hasVisitorSessions: totalSessions > 0,
         has10PlusSessions: totalSessions >= 10,
         hasRegisteredClients: hasClients,
-        loggedInToPanel: !!r.owner?.lastLoginAt,
+        loggedInToPanel: !!lastLoginAt,
         madePayment: r.subscriptionStatus === "ACTIVE",
       });
-
-      const latestSignal = [r.owner?.lastLoginAt, lastOwnerAct?.createdAt]
-        .filter(Boolean)
-        .sort((a, b) => b!.getTime() - a!.getTime())[0];
 
       let salud: string;
       if (!r.owner && !r.isDemo) {
         salud = "gray";
-      } else if (!latestSignal) {
+      } else if (!lastLoginAt) {
         salud = r.isDemo ? "gray" : "red";
       } else {
-        const hoursAgo = (now.getTime() - latestSignal.getTime()) / (60 * 60 * 1000);
+        const hoursAgo = (now.getTime() - lastLoginAt.getTime()) / (60 * 60 * 1000);
         salud = hoursAgo < 48 ? "green" : hoursAgo < 168 ? "yellow" : "red";
       }
 
@@ -188,7 +158,7 @@ const getCachedLifecycle = unstable_cache(
         engagementChecks,
         salud,
         trialDaysLeft,
-        lastActivity: latestSignal?.toISOString() || null,
+        lastActivity: lastLoginAt?.toISOString() || null,
         sessions7d,
         totalSessions,
         dishes: r._count.dishes,
@@ -202,7 +172,6 @@ const getCachedLifecycle = unstable_cache(
         cartaOriginalUrl: lead?.cartaFileUrl || lead?.cartaUrl || null,
         cartaType: lead?.cartaType || null,
         leadCreatedAt: lead?.createdAt?.toISOString() || null,
-        nurturingSent,
         billingExempt: r.billingExempt,
         subscriptionStatus: r.subscriptionStatus,
         mpPayerEmail: r.mpPayerEmail || null,
@@ -275,7 +244,6 @@ const getCachedLifecycle = unstable_cache(
         mpPayerEmail: null,
         currentPeriodEnd: null,
         lastPaymentAt: null,
-        nurturingSent: [],
         ownerId: null,
         leadTimeline: {
           deliveredAt: null,
