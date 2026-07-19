@@ -16,6 +16,7 @@ const getCachedLifecycle = unstable_cache(
   async () => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
     // ── Phase 1: leads + restaurants (base data) ──
     const [leads, restaurants] = await Promise.all([
@@ -65,7 +66,7 @@ const getCachedLifecycle = unstable_cache(
       }),
       prisma.panelActivity.groupBy({
         by: ["restaurantId"],
-        where: { restaurantId: { in: restaurantIds } },
+        where: { restaurantId: { in: restaurantIds }, createdAt: { gte: ninetyDaysAgo } },
         _max: { createdAt: true },
       }),
     ]);
