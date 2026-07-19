@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { cartaType, cartaUrl, abIds } = body;
+    const { cartaType, cartaUrl } = body;
 
     if (cartaType !== "LINK") {
       return NextResponse.json(

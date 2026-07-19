@@ -28,16 +28,6 @@ export const metadata = {
   },
 };
 
-// A/B winners hardcoded — experiment concluded
-const AB_WINNERS = {
-  titleId: null,
-  titleText: "Crea una carta QR inteligente que {vende más} por ti",
-  subtitleId: null,
-  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
-  ctaId: null,
-  ctaText: "Crear carta gratis",
-};
-
 export default async function QRLandingPage() {
   const restaurants = await Promise.race([
     prisma.restaurant.findMany({
@@ -58,5 +48,5 @@ export default async function QRLandingPage() {
     };
   });
 
-  return <LandingNew logos={logos} serverAb={AB_WINNERS} />;
+  return <LandingNew logos={logos} />;
 }

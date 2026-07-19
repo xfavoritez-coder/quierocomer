@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
 import { parseAbText } from "@/lib/ab/parseAbText";
@@ -23,11 +23,6 @@ const RESTAURANTS: [string, string][] = [
   ["el-menu-de-la-esquina", "El Menú de la Esquina"],
 ];
 
-const AB_DEFAULTS = {
-  titleText: "Crea una carta imprimible + QR inteligente que {vende más} por ti",
-  subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
-  ctaText: "Crear carta",
-};
 
 const I18N = {
   es: {
@@ -137,7 +132,7 @@ const I18N = {
   },
 } as const;
 
-export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverAb?: Record<string, any> }) {
+export default function LandingNew({ logos }: { logos: Logo[] }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [planesOpen, setPlanesOpen] = useState(false);
   const [anual, setAnual] = useState(false);
@@ -182,13 +177,6 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
     initAdTracker();
   }, []);
 
-  // A/B testing state
-  const [abTitle, setAbTitle] = useState(serverAb?.titleText || "");
-  const [abSubtitle, setAbSubtitle] = useState(serverAb?.subtitleText || "");
-  const [abCta, setAbCta] = useState(serverAb?.ctaText || AB_DEFAULTS.ctaText);
-  const abIds = useRef<{ titleId: string | null; subtitleId: string | null; ctaId: string | null }>({ titleId: null, subtitleId: null, ctaId: null });
-  const impressionSent = useRef(false);
-
   const openCarta = useCallback((slug: string) => {
     window.open(`/qr/${slug}`, "_blank");
   }, []);
@@ -197,54 +185,6 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
     const r = RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)];
     openCarta(r[0]);
   }, [openCarta]);
-
-  // Fetch A/B variants on mount (skip if server already resolved them)
-  useEffect(() => {
-    if (serverAb?.titleText) {
-      abIds.current = { titleId: serverAb.titleId || null, subtitleId: serverAb.subtitleId || null, ctaId: serverAb.ctaId || null };
-      try { localStorage.setItem("qc_ab_landing", JSON.stringify(abIds.current)); } catch {}
-      // Track impression
-      if (!impressionSent.current) {
-        impressionSent.current = true;
-        fetch("/api/qr/stat-events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            eventType: "LANDING_VIEWED",
-            metadata: { abExperiment: "landing-hero", ...abIds.current },
-          }),
-        }).catch(() => {});
-      }
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const forced = params.get("v");
-    const url = forced ? `/api/landing/ab?v=${forced}` : "/api/landing/ab";
-
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => {
-        setAbTitle(d.titleText || AB_DEFAULTS.titleText);
-        setAbSubtitle(d.subtitleText || AB_DEFAULTS.subtitleText);
-        if (d.ctaText) setAbCta(d.ctaText);
-        abIds.current = { titleId: d.titleId || null, subtitleId: d.subtitleId || null, ctaId: d.ctaId || null };
-        try { localStorage.setItem("qc_ab_landing", JSON.stringify(abIds.current)); } catch {}
-
-        if (!impressionSent.current) {
-          impressionSent.current = true;
-          fetch("/api/qr/stat-events", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              eventType: "LANDING_VIEWED",
-              metadata: { abExperiment: "landing-hero", titleId: d.titleId, subtitleId: d.subtitleId, ctaId: d.ctaId },
-            }),
-          }).catch(() => {});
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Open planes modal if #planes hash
   useEffect(() => {
@@ -255,10 +195,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
     fetch("/api/qr/stat-events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventType: "LANDING_CTA_CLICK",
-        metadata: { abExperiment: "landing-hero", ...abIds.current },
-      }),
+      body: JSON.stringify({ eventType: "LANDING_CTA_CLICK" }),
     }).catch(() => {});
   }, []);
 
@@ -304,13 +241,13 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
           <div>
             <div className="eyebrow">{t.eyebrow}</div>
             <h1 style={{ opacity: 1, transition: "opacity 0.3s ease" }}>
-              {lang === "en" ? parseAbText(t.heroTitle) : parseAbText(abTitle || t.heroTitle)}
+              {parseAbText(t.heroTitle)}
             </h1>
             <p className="hero-sub-text" style={{ opacity: 1, transition: "opacity 0.3s ease" }}>
-              {lang === "en" ? t.heroSubtitle : (abSubtitle || t.heroSubtitle)}
+              {t.heroSubtitle}
             </p>
             <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>
-              {lang === "en" ? t.heroCta : (abCta || t.heroCta)}
+              {t.heroCta}
             </a>
             {t.microcopy && <div className="microcopy">{t.microcopy}</div>}
           </div>
@@ -400,7 +337,7 @@ export default function LandingNew({ logos, serverAb }: { logos: Logo[]; serverA
             {logoChips.map((l, i) => (
               <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-grid-item">
                 {l.logoUrl ? (
-                  <img src={getOptimizedUrl(l.logoUrl, 128, 128) ?? l.logoUrl} alt={l.name} className="logo-grid-img" />
+                  <img src={getOptimizedUrl(l.logoUrl, 128, 85) ?? l.logoUrl} alt={l.name} className="logo-grid-img" />
                 ) : (
                   <div className="logo-grid-init" style={{ background: l.color }}>{l.initials}</div>
                 )}
@@ -549,7 +486,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .logos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;max-width:700px;margin:0 auto}
 .logo-grid-item{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border:1px solid var(--gray-deep);border-radius:16px;background:rgba(20,18,16,.5);text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s}
 .logo-grid-item:hover{border-color:rgba(232,163,61,.3);transform:translateY(-2px)}
-.logo-grid-img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0}.logo-grid-init{width:64px;height:64px;border-radius:50%;flex-shrink:0}
+.logo-grid-img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,.06)}.logo-grid-init{width:64px;height:64px;border-radius:50%;flex-shrink:0}
 .logo-init{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
 .logo-grid-name{font-family:var(--font-display);font-size:13px;color:var(--cream-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .logo-grid-init{display:grid;place-items:center;font-size:16px;font-weight:700;color:var(--cream);border:1px solid var(--gray-deep)}

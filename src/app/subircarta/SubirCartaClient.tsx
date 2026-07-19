@@ -10,7 +10,6 @@ import { trackFunnelEvent } from "@/lib/funnelTracker";
 import { initAdTracker, resumeAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
 import { linkVisitorToLead } from "@/lib/visitorTracker";
 import { normalizePhone } from "@/lib/normalizePhone";
-import { parseAbText } from "@/lib/ab/parseAbText";
 
 type Mode = "link" | "photo" | "scratch" | null;
 
@@ -65,22 +64,9 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
   });
 }
 
-export default function SubirCartaClient({ serverAb }: { serverAb?: Record<string, any> }) {
+export default function SubirCartaClient() {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
-  const [abTitle] = useState(serverAb?.titleText || "Sube tu carta y mira cómo queda");
-  const abIds = useRef<{ titleId: string | null; ctaId: string | null }>({
-    titleId: serverAb?.titleId || null,
-    ctaId: serverAb?.ctaId || null,
-  });
-  useEffect(() => {
-    // Track impression (server already resolved the variant)
-    fetch("/api/qr/stat-events", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "SUBIRCARTA_VIEWED", metadata: { abExperiment: "subircarta-hero", titleId: abIds.current.titleId, ctaId: abIds.current.ctaId } }),
-      keepalive: true,
-    }).catch(() => {});
-  }, []);
   useEffect(() => {
     window.scrollTo(0, 0);
     const params = new URLSearchParams(window.location.search);
@@ -285,12 +271,11 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
         const res = await fetch("/api/subircarta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cartaType: "LINK", cartaUrl: normalizedUrl, abIds: abIds.current }),
+          body: JSON.stringify({ cartaType: "LINK", cartaUrl: normalizedUrl }),
         });
         const data = await res.json();
         if (!res.ok) { trackFunnelEvent(data.id, "paso1_error", { mode, error: data.error }); setError(data.error || "Error al procesar tu carta."); return; }
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
-        if (abIds.current.titleId) fetch("/api/qr/stat-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "SUBIRCARTA_CARTA_UPLOADED", metadata: { abExperiment: "subircarta-hero", ...abIds.current } }), keepalive: true }).catch(() => {});
         trackCartaUpload();
         linkAdSessionToLead(data.id);
         linkVisitorToLead(data.id);
@@ -309,7 +294,6 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
           const formData = new FormData();
           formData.append("file", compressed);
           if (leadId) formData.append("leadId", leadId);
-          if (!leadId && abIds.current.titleId) formData.append("abIds", JSON.stringify(abIds.current));
           const res = await fetch("/api/subircarta/upload", {
             method: "POST",
             body: formData,
@@ -332,7 +316,6 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
           if (!leadId) leadId = data.id;
         }
         trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(filesToUpload.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
-        if (abIds.current.titleId) fetch("/api/qr/stat-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "SUBIRCARTA_CARTA_UPLOADED", metadata: { abExperiment: "subircarta-hero", ...abIds.current } }), keepalive: true }).catch(() => {});
         trackCartaUpload();
         linkAdSessionToLead(leadId);
         linkVisitorToLead(leadId);
@@ -375,7 +358,7 @@ export default function SubirCartaClient({ serverAb }: { serverAb?: Record<strin
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>{parseAbText(abTitle)}</h1>
+            <h1>Sube tu carta y mira cómo queda</h1>
           </div>
 
           <div className="form-side centered-form">
