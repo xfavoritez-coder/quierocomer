@@ -2271,3 +2271,15 @@ model GastoFlujo {
 
   @@index([createdAt])
 }
+
+// ═══════════════════════════════════════════════════════════════
+// CACHE DE SISTEMA — Snapshots pre-computados por crons
+// ═══════════════════════════════════════════════════════════════
+
+model SystemCache {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("system_cache")
+}
