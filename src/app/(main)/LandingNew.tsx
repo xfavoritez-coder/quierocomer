@@ -40,7 +40,7 @@ const I18N = {
       { h: "Te mostramos como queda", li: "Creamos algo único para ti y tu restaurante" },
     ],
     funcionesEyebrow: "Funciones inteligentes",
-    funcionesTitle: "Obtén una carta impresa con diseño profesional y una QR inteligente con poderosas funciones:",
+    funcionesTitle: "Tu carta imprimible + carta QR inteligente con poderosas funciones",
     funcionesTitleAccent: "",
     funciones: [
       { icon: "🔔", title: "Llamar al garzón", desc: "El cliente puede llamar al garzón directamente desde la carta QR, sin levantar la mano ni esperar." },
