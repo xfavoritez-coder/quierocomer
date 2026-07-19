@@ -74,15 +74,15 @@ function TemplateMagazine({ restaurant, sections, promotions, qrUrl }: Omit<Prop
   return (
     <div className="carta-print" style={{ fontFamily: "'Inter', sans-serif", color: "#111", maxWidth: 850, margin: "0 auto", padding: "40px 36px" }}>
       {/* Header */}
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, paddingBottom: 16, borderBottom: `3px solid ${restaurant.accent}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 48, objectFit: "contain" }} />}
-          <div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-0.5px" }}>{restaurant.name}</h1>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 32, paddingBottom: 16, borderBottom: `3px solid ${restaurant.accent}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flex: 1 }}>
+          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 48, objectFit: "contain", flexShrink: 0 }} />}
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-0.5px", wordBreak: "break-word" }}>{restaurant.name}</h1>
             {restaurant.address && <p style={{ fontSize: 11, color: "#888", margin: "2px 0 0" }}>{restaurant.address}</p>}
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: "center", flexShrink: 0 }}>
           <QRCanvas url={qrUrl} size={64} />
           <p style={{ fontSize: 8, color: "#bbb", margin: "2px 0 0", letterSpacing: 1 }}>CARTA DIGITAL</p>
         </div>
@@ -245,8 +245,8 @@ function TemplateMinimal({ restaurant, sections, promotions, qrUrl }: Omit<Props
       {/* Header */}
       <header style={{ marginBottom: 32 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 40, objectFit: "contain" }} />}
-          <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{restaurant.name}</h1>
+          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ height: 40, objectFit: "contain", flexShrink: 0 }} />}
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, wordBreak: "break-word" }}>{restaurant.name}</h1>
         </div>
         {restaurant.address && <p style={{ fontSize: 11, color: "#999", margin: 0 }}>{restaurant.address}</p>}
       </header>
