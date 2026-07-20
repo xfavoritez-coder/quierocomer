@@ -16,7 +16,6 @@ import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
-import DemoFirstViewModal from "@/components/qr/carta/DemoFirstViewModal";
 import DemoViewToast from "@/components/qr/carta/DemoViewToast";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
 import MultiMenuLanding from "@/components/qr/carta/MultiMenuLanding";
@@ -308,18 +307,10 @@ export default async function CartaPage({
           }
         `}} />
       )}
-      {!(restaurant as any).isDemo && !isShowcase && (
-        <>
-          {topDishesResult.totalSalesToday === 0 && (restaurant as any).owner && (
-            <DemoFirstViewModal restaurantSlug={slug} restaurantName={restaurant.name} />
-          )}
-        </>
-      )}
       {(restaurant as any).isDemo && !isShowcase && (
         <>
           <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
           <div style={{ height: 0 }} />
-          <DemoFirstViewModal restaurantSlug={slug} restaurantName={restaurant.name} />
           <DemoViewToast restaurantId={restaurant.id} restaurantSlug={slug} defaultView={(restaurant as any).defaultView} />
         </>
       )}
