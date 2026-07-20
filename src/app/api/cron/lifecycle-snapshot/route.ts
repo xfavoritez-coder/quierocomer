@@ -15,19 +15,20 @@ export async function GET(req: NextRequest) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-    const [leads, restaurants] = await Promise.all([
-      prisma.lead.findMany({
-        where: { generatedSlug: { not: null } },
-        select: {
-          id: true, generatedSlug: true, localName: true, ownerName: true,
-          email: true, whatsapp: true, cartaStatus: true, cartaType: true, cartaUrl: true, cartaFileUrl: true,
-          activated: true, activatedAt: true, deliveredAt: true,
-          emailClickedAt: true, whatsappClickedAt: true,
-          emailOpenedAt: true, completedAt: true,
-          events: true, createdAt: true,
-        },
-      }),
-      prisma.restaurant.findMany({
+    // Sequential to avoid opening 2 large connections simultaneously
+    const leads = await prisma.lead.findMany({
+      where: { generatedSlug: { not: null } },
+      select: {
+        id: true, generatedSlug: true, localName: true, ownerName: true,
+        email: true, whatsapp: true, cartaStatus: true, cartaType: true, cartaUrl: true, cartaFileUrl: true,
+        activated: true, activatedAt: true, deliveredAt: true,
+        emailClickedAt: true, whatsappClickedAt: true,
+        emailOpenedAt: true, completedAt: true,
+        createdAt: true,
+        // events omitted — large JSON field not needed for lifecycle computation
+      },
+    });
+    const restaurants = await prisma.restaurant.findMany({
         where: { ownerId: { not: null } },
         orderBy: { createdAt: "desc" },
         select: {
@@ -38,8 +39,7 @@ export async function GET(req: NextRequest) {
           owner: { select: { id: true, name: true, email: true, whatsapp: true, lastLoginAt: true } },
           _count: { select: { dishes: true, sessions: true, categories: true } },
         },
-      }),
-    ]);
+    });
 
     const restaurantIds = restaurants.map(r => r.id);
 

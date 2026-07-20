@@ -70,22 +70,21 @@ async function getDishSalesInRange(restaurantId: string, from: Date, to: Date): 
 
 export async function getDishRankings(restaurantId: string): Promise<DishRankings> {
   // 1. Views: count distinct sessions per dish that opened the modal in last N days.
+  // Aggregated in DB via JSONB to avoid transferring thousands of session rows.
   const viewsSince = new Date(Date.now() - VIEWS_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-  const sessions = await prisma.session.findMany({
-    where: { restaurantId, startedAt: { gte: viewsSince } },
-    select: { dishesViewed: true },
-  });
+  const viewRows = await prisma.$queryRaw<{ dishId: string; count: number }[]>`
+    SELECT elem->>'dishId' AS "dishId", COUNT(DISTINCT s.id)::int AS count
+    FROM "Session" s,
+         jsonb_array_elements(s."dishesViewed") AS elem
+    WHERE s."restaurantId" = ${restaurantId}
+      AND s."startedAt" >= ${viewsSince}
+      AND elem->>'dishId' IS NOT NULL
+      AND (elem->>'detailMs')::int >= ${VIEW_DETAIL_MS_MIN}
+    GROUP BY elem->>'dishId'
+  `;
   const views: Record<string, number> = {};
-  for (const s of sessions) {
-    const dv = s.dishesViewed as any[] | null;
-    if (!Array.isArray(dv)) continue;
-    const seen = new Set<string>();
-    for (const d of dv) {
-      if (!d?.dishId || !d.detailMs || d.detailMs < VIEW_DETAIL_MS_MIN) continue;
-      if (seen.has(d.dishId)) continue;
-      seen.add(d.dishId);
-      views[d.dishId] = (views[d.dishId] || 0) + 1;
-    }
+  for (const row of viewRows) {
+    views[row.dishId] = Number(row.count);
   }
 
   // 2. Sales: adaptive — today if ≥5, else 7d if ≥20, else not offered.
