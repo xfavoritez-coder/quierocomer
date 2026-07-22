@@ -111,6 +111,24 @@ export default function EnglishDashboard() {
         </div>
       </div>
 
+      {/* Tiempos verbales */}
+      <Link href="/ingles/tenses" style={{ width: "100%", maxWidth: 380, textDecoration: "none" }}>
+        <div style={{
+          borderRadius: 22, padding: "16px 20px",
+          background: "var(--en-surface)", border: "1px solid var(--en-border)",
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg, #0ea5e9, #6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+            📐
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>Tiempos verbales</p>
+            <p style={{ fontSize: 12, color: "var(--en-text-3)", margin: 0 }}>Present · Past · Future · Perfect</p>
+          </div>
+          <span style={{ color: "var(--en-text-3)", fontSize: 18 }}>→</span>
+        </div>
+      </Link>
+
       {/* Links secundarios */}
       <div style={{ display: "flex", gap: 10, width: "100%", maxWidth: 380 }}>
         <Link href="/ingles/add" style={{ flex: 1, textAlign: "center", textDecoration: "none", background: "var(--en-surface)", color: "var(--en-text)", borderRadius: 12, padding: "11px 16px", fontWeight: 600, fontSize: 13, border: "1px solid var(--en-border)" }}>
