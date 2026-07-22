@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ entries: [], stats: {}, total: 0, page, hasMore: false, stale: true });
   }
 
-  const { entries, stats } = cached.value as { entries: any[]; stats: any };
+  const { entries, stats, computedAt } = cached.value as { entries: any[]; stats: any; computedAt?: string };
 
   const slice = entries.slice(offset, offset + limit);
   return NextResponse.json({
@@ -26,5 +26,27 @@ export async function GET(req: NextRequest) {
     total: entries.length,
     page,
     hasMore: offset + limit < entries.length,
+    computedAt: computedAt ?? null,
+    cached: true,
   });
+}
+
+// POST: recompute lifecycle snapshot on demand (triggered by "Actualizar" button)
+export async function POST(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  const origin = new URL(req.url).origin;
+  const secret = process.env.CRON_SECRET;
+
+  const res = await fetch(`${origin}/api/cron/lifecycle-snapshot`, {
+    headers: secret ? { authorization: `Bearer ${secret}` } : {},
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    return NextResponse.json({ error: `Snapshot failed: ${text}` }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

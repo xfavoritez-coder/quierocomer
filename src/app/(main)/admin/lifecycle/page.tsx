@@ -106,20 +106,32 @@ export default function LifecyclePage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [cached, setCached] = useState(false);
+  const [computedAt, setComputedAt] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const pageRef = useRef(1);
 
-  const loadData = (bust = false) => {
+  const loadData = () => {
     setLoading(true);
     pageRef.current = 1;
-    const qs = bust ? "?bust=1&limit=20" : "?limit=20";
-    fetch(`/api/admin/lifecycle${qs}`).then(r => r.json()).then(data => {
+    fetch(`/api/admin/lifecycle?limit=20`).then(r => r.json()).then(data => {
       setEntries(data.entries || []);
       setStats(data.stats || null);
       setTotal(data.total || 0);
       setCached(!!data.cached);
+      setComputedAt(data.computedAt || null);
     }).catch(() => {}).finally(() => setLoading(false));
+  };
+
+  const refreshData = async () => {
+    setRefreshing(true);
+    try {
+      await fetch("/api/admin/lifecycle", { method: "POST" });
+      loadData();
+    } catch {} finally {
+      setRefreshing(false);
+    }
   };
 
   const loadMore = () => {
@@ -229,10 +241,13 @@ export default function LifecyclePage() {
           <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
             Lifecycle
           </h1>
-          <p style={{ color: "#888", fontSize: 13, margin: 0 }}>Vista unificada de leads, clientes y su estado actual{cached && <span style={{ color: "#F4A623", marginLeft: 8, fontSize: 11 }}>· desde caché</span>}</p>
+          <p style={{ color: "#888", fontSize: 13, margin: 0 }}>
+            Vista unificada de leads, clientes y su estado actual
+            {computedAt && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· actualizado {timeAgo(computedAt)}</span>}
+          </p>
         </div>
-        <button onClick={() => loadData(true)} disabled={loading} style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.78rem", cursor: loading ? "default" : "pointer", opacity: loading ? 0.5 : 1 }}>
-          {loading ? "Cargando..." : "↻ Actualizar"}
+        <button onClick={refreshData} disabled={refreshing || loading} style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.78rem", cursor: (refreshing || loading) ? "default" : "pointer", opacity: (refreshing || loading) ? 0.5 : 1 }}>
+          {refreshing ? "Calculando..." : "↻ Actualizar"}
         </button>
       </div>
 
