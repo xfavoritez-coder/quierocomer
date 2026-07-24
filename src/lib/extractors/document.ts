@@ -24,12 +24,22 @@ export async function extractFromDocument(fileUrl: string, config?: any): Promis
   let fullText = "";
   let pdfBuffer: Buffer | null = null; // Keep first PDF buffer for Vision fallback
 
+  // Collect image URLs separately — they go straight to Claude Vision
+  const imageUrls: string[] = [];
+
   for (const url of urls) {
     try {
+      const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "";
+
+      // Images: handle with Claude Vision, not text extraction
+      if (["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext)) {
+        imageUrls.push(url);
+        continue;
+      }
+
       const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
       if (!res.ok) continue;
       const buffer = Buffer.from(await res.arrayBuffer());
-      const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "";
 
       let text = "";
       if (ext === "pdf") {
@@ -52,6 +62,11 @@ export async function extractFromDocument(fileUrl: string, config?: any): Promis
     } catch (e) {
       console.error("[Document] Error processing URL:", (e as Error).message);
     }
+  }
+
+  // If there are images, send them to Claude Vision and return directly
+  if (imageUrls.length > 0) {
+    return extractImagesWithVision(imageUrls, apiKey);
   }
 
   // Fallback: if pdf-parse returned no/little text, send PDF directly to Claude as base64 document
@@ -443,6 +458,68 @@ async function buildResult(parsed: any): Promise<ExtractionResult> {
     logoUrl: null,
     bannerUrl: null,
   };
+}
+
+// ─── Image Vision extractor ───────────────────────────────────
+
+const IMAGE_VISION_PROMPT = `Analiza estas fotos de una carta/menú de restaurante.
+Extrae TODOS los platos que puedas identificar y organízalos por categoría.
+IMPORTANTE: Solo extrae platos reales visibles en las fotos. NO inventes platos.
+Responde SOLO con JSON:
+{"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
+Reglas:
+- Precios enteros sin puntos ($8.990→8990). Si no hay precio visible, pon 0.
+- diet: OMNIVORE por defecto. VEGETARIAN/VEGAN solo si está explícito en la carta.
+- SOLO JSON.`;
+
+async function extractImagesWithVision(imageUrls: string[], apiKey: string): Promise<ExtractionResult> {
+  // Download all images and convert to base64
+  const imageContents: any[] = [];
+  for (const url of imageUrls.slice(0, 10)) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      if (!res.ok) continue;
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "jpeg";
+      const mediaType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      imageContents.push({
+        type: "image",
+        source: { type: "base64", media_type: mediaType, data: buffer.toString("base64") },
+      });
+    } catch (e) {
+      console.error("[Document] Failed to download image:", (e as Error).message);
+    }
+  }
+
+  if (imageContents.length === 0) throw new Error("No se pudieron descargar las imágenes");
+
+  imageContents.push({ type: "text", text: IMAGE_VISION_PROMPT });
+
+  console.log(`[Document] Sending ${imageContents.length - 1} images to Claude Vision`);
+
+  const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 32000,
+      messages: [{ role: "user", content: imageContents }],
+    }),
+  });
+
+  if (!claudeRes.ok) {
+    const errBody = await claudeRes.text().catch(() => "");
+    throw new Error(`Claude Vision error: ${claudeRes.status} ${errBody.slice(0, 200)}`);
+  }
+
+  const data = await claudeRes.json();
+  const responseText = data.content?.[0]?.text || "";
+  logClaudeUsage({ model: "claude-sonnet-4-6", inputTokens: data.usage?.input_tokens || 0, outputTokens: data.usage?.output_tokens || 0, action: "image_vision_menu" });
+
+  const parsed = repairAndParseJson(responseText);
+  const result = await buildResult(parsed);
+  console.log(`[Document] Image Vision extracted ${result.dishes.length} dishes from ${imageContents.length - 1} photos`);
+  return result;
 }
 
 // ─── Parsers ─────────────────────────────────────────────────
