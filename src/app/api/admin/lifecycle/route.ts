@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
-  const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get("limit") || "20")));
+  const limit = Math.max(1, Math.min(2000, parseInt(url.searchParams.get("limit") || "20")));
   const offset = (page - 1) * limit;
 
   const cached = await prisma.systemCache.findUnique({ where: { key: "lifecycle" } });

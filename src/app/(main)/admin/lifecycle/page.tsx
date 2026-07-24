@@ -150,7 +150,7 @@ export default function LifecyclePage() {
   useEffect(() => {
     if (!search.trim() || allLoadedRef.current || entries.length >= total) return;
     allLoadedRef.current = true;
-    fetch(`/api/admin/lifecycle?limit=500`).then(r => r.json()).then(data => {
+    fetch(`/api/admin/lifecycle?limit=2000`).then(r => r.json()).then(data => {
       setEntries(data.entries || []);
       setTotal(data.total || 0);
     }).catch(() => {});
