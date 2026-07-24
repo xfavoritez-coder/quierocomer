@@ -54,10 +54,16 @@ export async function POST(req: NextRequest) {
 
     const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 
-    // Crear o encontrar owner
+    // Password basado en nombre del local (sin espacios ni tildes), nunca en el slug
+    const cleanForPassword = localName.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+    const generatedPassword = `${cleanForPassword}2026`;
+    const passwordHash = await bcrypt.hash(generatedPassword, 10);
+
+    // Crear o encontrar owner — siempre actualizar password al del local actual
     let owner = await prisma.restaurantOwner.findFirst({ where: { email: email.trim().toLowerCase() } });
     if (!owner) {
-      const passwordHash = await bcrypt.hash(`${slug}2026`, 10);
       owner = await prisma.restaurantOwner.create({
         data: {
           name: ownerName?.trim() || localName.trim(),
@@ -66,6 +72,11 @@ export async function POST(req: NextRequest) {
           role: "OWNER",
           whatsapp: whatsapp?.trim() || undefined,
         },
+      });
+    } else {
+      owner = await prisma.restaurantOwner.update({
+        where: { id: owner.id },
+        data: { passwordHash },
       });
     }
 

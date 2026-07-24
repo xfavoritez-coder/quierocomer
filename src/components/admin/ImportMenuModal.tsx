@@ -172,7 +172,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
                 width: "100%", marginTop: 16, padding: "13px 16px",
                 background: loading ? "var(--adm-input)" : "#F4A623", color: loading ? "var(--adm-text3)" : "#fff",
                 border: "none", borderRadius: 12, fontFamily: F, fontSize: "0.9rem", fontWeight: 700,
-                cursor: loading ? "wait" : "pointer", opacity: loading || (mode === "link" ? !url.trim() : !file) ? 0.5 : 1,
+                cursor: loading ? "wait" : "pointer", opacity: loading || (mode === "link" ? !url.trim() : !files.length) ? 0.5 : 1,
               }}
             >
               {loading ? "Procesando..." : "Importar carta"}
