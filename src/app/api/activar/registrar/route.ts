@@ -138,6 +138,19 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Traducir primeros 5 platos con descripción en background
+    import("@/lib/ai/translateContent").then(({ translateDish }) => {
+      (async () => {
+        const dishes = await prisma.dish.findMany({
+          where: { restaurantId: restaurant.id, description: { not: null } },
+          select: { id: true },
+          take: 5,
+          orderBy: { position: "asc" },
+        });
+        for (const d of dishes) await translateDish(d.id).catch(() => {});
+      })();
+    }).catch(() => {});
+
     // Crear Lead para que aparezca en funnel/lifecycle/clientes
     await prisma.lead.create({
       data: {

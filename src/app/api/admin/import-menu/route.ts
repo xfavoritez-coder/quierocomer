@@ -169,13 +169,27 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Mark menu as imported + update logo if extracted
+  // Mark menu as imported + update logo if extracted + queue translation
   await prisma.restaurant.update({
     where: { id: restaurantId },
     data: {
       menuImported: true,
+      needsTranslation: true,
       ...(extraction.logoUrl ? { logoUrl: extraction.logoUrl } : {}),
     },
+  }).catch(() => {});
+
+  // Traducir primeros 5 platos en background (el cron traduce el resto via needsTranslation)
+  import("@/lib/ai/translateContent").then(({ translateDish }) => {
+    (async () => {
+      const dishes = await prisma.dish.findMany({
+        where: { restaurantId, description: { not: null } },
+        select: { id: true },
+        take: 5,
+        orderBy: { position: "asc" },
+      });
+      for (const d of dishes) await translateDish(d.id).catch(() => {});
+    })();
   }).catch(() => {});
 
   // Log activity so it appears in /admin/clientes timeline
