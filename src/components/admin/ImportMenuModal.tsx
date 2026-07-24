@@ -88,7 +88,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
           </div>
         ) : (
           <>
-            <button onClick={() => { if (!loading) { setMode(null); setError(""); setFile(null); setUrl(""); } }} style={{
+            <button onClick={() => { if (!loading) { setMode(null); setError(""); setFiles([]); setUrl(""); } }} style={{
               background: "none", border: "none", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.8rem", cursor: "pointer", marginBottom: 14, padding: 0,
             }}>← Cambiar método</button>
 
