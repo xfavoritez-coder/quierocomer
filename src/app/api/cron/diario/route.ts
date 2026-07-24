@@ -243,6 +243,54 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 4.6b Correo "vence en 2 días" — aviso anticipado para planes sin auto-renovación
+    // Equivalente al trialEndingSoon pero para clientes de pago (transfer u online sin Flow/MP).
+    let expiringIn2EmailsSent = 0;
+    const twoDaysFromNowStart = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000); twoDaysFromNowStart.setHours(0, 0, 0, 0);
+    const twoDaysFromNowEnd = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000); twoDaysFromNowEnd.setHours(23, 59, 59, 999);
+    const expiringIn2 = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "ACTIVE",
+        currentPeriodEnd: { gte: twoDaysFromNowStart, lte: twoDaysFromNowEnd },
+        billingExempt: false,
+        mpSubscriptionId: null,
+        plan: { not: "FREE" },
+      },
+      select: {
+        id: true, name: true, plan: true,
+        owner: { select: { id: true, email: true, name: true } },
+      },
+    });
+    if (expiringIn2.length > 0) {
+      const { sendAdminEmail, planExpiringSoonEmailHtml } = await import("@/lib/email/sendAdminEmail");
+      const { buildAutoLoginUrl } = await import("@/lib/email/autoLoginUrl");
+      const { PLAN_LABELS } = await import("@/lib/billing/plans-config");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      const paymentMethods = await detectPaymentMethods(expiringIn2.map(r => r.id));
+      const expiryDate = twoDaysFromNowStart.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+
+      for (const r of expiringIn2) {
+        if (!r.owner?.email) continue;
+        const alreadySent = await prisma.emailLog.findFirst({
+          where: { to: r.owner.email, purpose: "expiry_in_2_days", createdAt: { gte: twoDaysFromNowStart } },
+        });
+        if (alreadySent) continue;
+
+        const paymentMethod = paymentMethods.get(r.id) ?? "online";
+        const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante%3Frenew%3D1";
+        try {
+          await sendAdminEmail({
+            to: r.owner.email,
+            subject: `${r.name} · Tu plan ${planLabel} vence en 2 días`,
+            html: planExpiringSoonEmailHtml({ restaurantName: r.name, planLabel, expiryDate, panelLink, paymentMethod }),
+            purpose: "expiry_in_2_days",
+          });
+          expiringIn2EmailsSent++;
+        } catch (e) { console.error("[diario] expiry_in_2_days email error:", e); }
+      }
+    }
+
     // Helper: detect payment method for a set of restaurant IDs
     async function detectPaymentMethods(restaurantIds: string[]): Promise<Map<string, "transfer" | "online">> {
       const manualLogs = await prisma.panelActivity.findMany({
@@ -290,7 +338,7 @@ export async function GET(req: NextRequest) {
 
         const paymentMethod = paymentMethods.get(r.id) ?? "online";
         const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
-        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante";
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante%3Frenew%3D1";
         try {
           await sendAdminEmail({
             to: r.owner.email,
@@ -361,7 +409,7 @@ export async function GET(req: NextRequest) {
 
         const paymentMethod = paymentMethods.get(r.id) ?? "online";
         const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
-        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante";
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante%3Frenew%3D1";
         try {
           await sendAdminEmail({
             to: r.owner.email,
@@ -491,6 +539,7 @@ export async function GET(req: NextRequest) {
           trialRemindersSent,
           trialsExpired,
           canceledDowngraded,
+          expiringIn2EmailsSent,
           expiryTodayEmailsSent,
           activeExpiredDowngraded,
           graceWarningEmailsSent,
@@ -514,6 +563,7 @@ export async function GET(req: NextRequest) {
       expiredTokensCleaned: expiredTokens.count,
       trialRemindersSent,
       trialsExpired,
+      expiringIn2EmailsSent,
       activeExpiredDowngraded,
       translationsBackfilled,
     });

@@ -716,6 +716,16 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+
+    // ?renew=1 → abrir modal de pago en modo renovación directo
+    if (params.get("renew") === "1") {
+      params.delete("renew");
+      const newSearch = params.toString();
+      window.history.replaceState({}, "", `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}`);
+      setTimeout(() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true } })), 400);
+      return;
+    }
+
     const billing = params.get("billing");
     if (!billing) return;
     if (billing === "success") {

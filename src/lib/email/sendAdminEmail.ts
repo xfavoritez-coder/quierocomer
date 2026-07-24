@@ -476,6 +476,41 @@ const TRANSFER_BLOCK = `
   <tr><td style="font-size:12px;color:#b8a888;text-align:center;padding-top:4px;">Una vez recibida la transferencia activamos tu plan de inmediato.</td></tr>`;
 
 /**
+ * 2-day advance expiry warning (sent when currentPeriodEnd = today + 2 days).
+ * paymentMethod: "transfer" → shows bank data so they can initiate the transfer early
+ *                "online"   → shows CTA button to renew
+ */
+export function planExpiringSoonEmailHtml({
+  restaurantName,
+  planLabel,
+  expiryDate,
+  panelLink,
+  paymentMethod,
+}: {
+  restaurantName: string;
+  planLabel: string;
+  expiryDate: string;
+  panelLink: string;
+  paymentMethod: "transfer" | "online";
+}): string {
+  const actionBlock = paymentMethod === "transfer"
+    ? TRANSFER_BLOCK
+    : `<tr><td style="padding-bottom:8px;">${btn(panelLink, "Renovar mi plan →")}</td></tr>`;
+
+  return wrap(`
+  <tr><td style="padding-bottom:8px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">
+      Tu plan vence en 2 días
+    </h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.7;padding-bottom:24px;text-align:center;">
+    El plan ${planLabel} de <strong>${restaurantName}</strong> vence el ${expiryDate}. Renueva antes para seguir sin interrupciones.
+  </td></tr>
+  ${actionBlock}
+  `);
+}
+
+/**
  * Same-day expiry email (sent when currentPeriodEnd = today).
  * paymentMethod: "transfer" → shows bank data only
  *                "online"   → shows auto-login CTA button
