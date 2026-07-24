@@ -127,6 +127,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Crear Lead para que aparezca en funnel/lifecycle/clientes
+    await prisma.lead.create({
+      data: {
+        localName: localName.trim(),
+        ownerName: ownerName || localName.trim(),
+        email: email.trim().toLowerCase(),
+        whatsapp: whatsapp?.trim() || null,
+        cartaType: "LINK",
+        cartaUrl: null,
+        cartaStatus: "DELIVERED",
+        activated: true,
+        activatedAt: new Date(),
+        completedAt: new Date(),
+        generatedSlug: restaurant.slug,
+        convertedToOwnerId: owner.id,
+      },
+    });
+
     return NextResponse.json({ ok: true, slug: restaurant.slug, plan: "PREMIUM" });
   } catch (err: any) {
     console.error("[activar/registrar] error:", err);

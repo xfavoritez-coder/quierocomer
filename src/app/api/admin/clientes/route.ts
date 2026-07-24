@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   const [restaurants, recentActivity, adSessions, emailLogs] = await Promise.all([
     prisma.restaurant.findMany({
-      where: { slug: { in: funnelSlugs } },
+      where: { OR: [{ slug: { in: funnelSlugs } }, { ownerId: { not: null } }] },
       orderBy: { createdAt: "desc" },
       select: {
         id: true, slug: true, name: true, logoUrl: true,
