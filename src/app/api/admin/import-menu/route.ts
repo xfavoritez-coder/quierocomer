@@ -162,6 +162,7 @@ export async function POST(req: NextRequest) {
           isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,
           isSoyFree: isDrinkCat ? false : detected.isSoyFree,
           isActive: true,
+          txDishType: [], txCuisine: [], txMealSlot: [], txIngredient: [], txEstilo: [],
         },
       });
       totalDishes++;
