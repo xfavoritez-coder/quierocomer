@@ -43,30 +43,38 @@ export async function POST(req: NextRequest) {
   try {
 
   if (contentType.includes("multipart/form-data")) {
-    // File upload
+    // File upload (single or multiple)
     const formData = await req.formData();
     restaurantId = formData.get("restaurantId") as string;
-    const file = formData.get("file") as File | null;
+    const files = formData.getAll("file") as File[];
 
-    if (!restaurantId || !file) {
+    if (!restaurantId || !files.length) {
       return NextResponse.json({ error: "Falta restaurantId o archivo" }, { status: 400 });
     }
 
-    // Upload to Supabase
-    const ext = file.name.split(".").pop() || "bin";
-    const fileName = `cartas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const { error: uploadError } = await supabase.storage
-      .from("fotos")
-      .upload(fileName, buffer, { contentType: file.type, upsert: true });
-    if (uploadError) {
-      return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 });
-    }
-    const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
-    const fileUrl = urlData.publicUrl;
+    // Upload each file and extract dishes, then merge
+    const allDishes: ExtractionResult["dishes"] = [];
+    let mergedLogoUrl: string | undefined;
+    let mergedRestaurantName: string | undefined;
 
-    // Extract using document extractor
-    extraction = await extractFromDocument(fileUrl);
+    for (const file of files.slice(0, 10)) {
+      const ext = file.name.split(".").pop() || "bin";
+      const fileName = `cartas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const { error: uploadError } = await supabase.storage
+        .from("fotos")
+        .upload(fileName, buffer, { contentType: file.type, upsert: true });
+      if (uploadError) continue; // skip failed uploads
+      const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+      const fileUrl = urlData.publicUrl;
+
+      const result = await extractFromDocument(fileUrl);
+      allDishes.push(...result.dishes);
+      if (!mergedLogoUrl && result.logoUrl) mergedLogoUrl = result.logoUrl;
+      if (!mergedRestaurantName && result.restaurantName) mergedRestaurantName = result.restaurantName;
+    }
+
+    extraction = { dishes: allDishes, logoUrl: mergedLogoUrl, restaurantName: mergedRestaurantName };
   } else {
     // JSON body — link mode
     const body = await req.json();

@@ -15,7 +15,7 @@ type Mode = "link" | "file" | "photo";
 export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props) {
   const [mode, setMode] = useState<Mode | null>(null);
   const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("");
@@ -37,10 +37,10 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
           body: JSON.stringify({ restaurantId, cartaUrl: url.trim() }),
         });
       } else {
-        if (!file) { setError("Selecciona un archivo"); setLoading(false); return; }
+        if (!files.length) { setError("Selecciona un archivo"); setLoading(false); return; }
         const fd = new FormData();
         fd.append("restaurantId", restaurantId);
-        fd.append("file", file);
+        for (const f of files) fd.append("file", f);
         res = await fetch("/api/admin/import-menu", { method: "POST", body: fd });
       }
 
@@ -111,25 +111,40 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
                   ref={fileRef}
                   type="file"
                   accept={mode === "photo" ? "image/jpeg,image/png,image/webp,image/heic" : ".pdf,.doc,.docx,.xls,.xlsx"}
-                  onChange={e => setFile(e.target.files?.[0] || null)}
+                  multiple={mode === "photo"}
+                  onChange={e => {
+                    if (!e.target.files) return;
+                    const selected = Array.from(e.target.files).slice(0, 10);
+                    setFiles(selected);
+                  }}
                   style={{ display: "none" }}
                 />
                 <div
                   onClick={() => { if (!loading) fileRef.current?.click(); }}
                   style={{
-                    border: "2px dashed var(--adm-card-border)", borderRadius: 14, padding: "28px 16px",
-                    textAlign: "center", cursor: loading ? "wait" : "pointer", background: file ? "rgba(244,166,35,.05)" : "transparent",
+                    border: "2px dashed var(--adm-card-border)", borderRadius: 14, padding: "20px 16px",
+                    textAlign: "center", cursor: loading ? "wait" : "pointer", background: files.length ? "rgba(244,166,35,.05)" : "transparent",
                   }}
                 >
-                  {file ? (
-                    <div style={{ fontSize: "0.85rem", color: "var(--adm-text)", fontFamily: F }}>
-                      {file.name} <span style={{ color: "var(--adm-text3)" }}>({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                  {files.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, textAlign: "left" }}>
+                      {files.map((f, i) => (
+                        <div key={i} style={{ fontSize: "0.82rem", color: "var(--adm-text)", fontFamily: F, display: "flex", justifyContent: "space-between" }}>
+                          <span>📷 {f.name}</span>
+                          <span style={{ color: "var(--adm-text3)" }}>{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                        </div>
+                      ))}
+                      {mode === "photo" && (
+                        <div style={{ fontSize: "0.75rem", color: "var(--adm-text3)", fontFamily: F, marginTop: 4 }}>
+                          Toca para agregar más (máx. 10)
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div>
                       <Upload size={24} color="var(--adm-text3)" style={{ marginBottom: 8 }} />
                       <div style={{ fontSize: "0.85rem", color: "var(--adm-text3)", fontFamily: F }}>
-                        {mode === "photo" ? "Haz clic para subir una foto de tu carta" : "Haz clic para subir tu PDF o documento"}
+                        {mode === "photo" ? "Sube hasta 10 fotos de tu carta" : "Haz clic para subir tu PDF o documento"}
                       </div>
                     </div>
                   )}
@@ -152,7 +167,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
 
             <button
               onClick={handleImport}
-              disabled={loading || (mode === "link" ? !url.trim() : !file)}
+              disabled={loading || (mode === "link" ? !url.trim() : !files.length)}
               style={{
                 width: "100%", marginTop: 16, padding: "13px 16px",
                 background: loading ? "var(--adm-input)" : "#F4A623", color: loading ? "var(--adm-text3)" : "#fff",
