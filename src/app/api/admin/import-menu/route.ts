@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       if (!mergedRestaurantName && result.restaurantName) mergedRestaurantName = result.restaurantName;
     }
 
-    extraction = { dishes: allDishes, logoUrl: mergedLogoUrl ?? null, restaurantName: mergedRestaurantName ?? null };
+    extraction = { dishes: allDishes, logoUrl: mergedLogoUrl ?? null, bannerUrl: null, restaurantName: mergedRestaurantName ?? "" };
   } else {
     // JSON body — link mode
     const body = await req.json();
