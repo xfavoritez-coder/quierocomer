@@ -229,8 +229,9 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
 
   // Activo y a punto de vencer (hoy o mañana)
   const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && (isToday || isTomorrow);
-  // Activo pero el período ya pasó (pendiente de corte, cron aún no corrió)
-  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEnd !== null && periodEnd < now;
+  // Activo pero el período ya pasó en un día anterior (pendiente de corte, cron aún no corrió)
+  // Comparamos por fecha calendario, no por hora — hoy aún está vigente hasta las 23:59
+  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEndUTC !== null && periodEndUTC < todayUTC;
   // Ya cortado (bajó a FREE después de no pagar)
   const wasDowngraded = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !!status.lastPaymentAt;
 
@@ -437,7 +438,10 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
   const isActive = status?.subscriptionStatus === "ACTIVE";
   const isCanceled = status?.subscriptionStatus === "CANCELED";
   const showCancelButton = isCurrentPlan && (inTrial || isActive) && status?.hasSubscription;
-  const isEarlyRenewal = isCurrentPlan && isActive && !!status?.currentPeriodEnd && new Date(status.currentPeriodEnd) > new Date();
+  // Comparar por fecha calendario — hoy aún permite renovar aunque la hora exacta ya pasó
+  const todayUTCStr = new Date().toISOString().slice(0, 10);
+  const isEarlyRenewal = isCurrentPlan && isActive && !!status?.currentPeriodEnd &&
+    new Date(status.currentPeriodEnd).toISOString().slice(0, 10) >= todayUTCStr;
   // Fecha en que comenzaría el nuevo período si renueva anticipadamente
   const nextPeriodStart = status?.currentPeriodEnd
     ? new Date(status.currentPeriodEnd).toLocaleDateString("es-CL", { day: "numeric", month: "long" })
