@@ -258,29 +258,47 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   }));
 
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 12,
-      padding: "10px 16px",
-      background: "#dc2626",
-      fontFamily: "var(--font-body)",
-    }}>
-      <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{title}</p>
-        <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>{sub}</p>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .qc-expiry-sticky {
+          position: sticky;
+          top: 0;
+          z-index: 99;
+          margin: -24px -32px 24px;
+        }
+        @media (max-width: 767px) {
+          .qc-expiry-sticky {
+            top: 64px;
+            margin: -20px -16px 20px;
+          }
+        }
+      `}} />
+      <div className="qc-expiry-sticky">
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "10px 16px",
+          background: "#dc2626",
+          fontFamily: "var(--font-body)",
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{title}</p>
+            <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>{sub}</p>
+          </div>
+          <button
+            onClick={handleRenew}
+            style={{
+              padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
+              background: "transparent", color: "#fff",
+              fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
+              cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            Renovar ahora
+          </button>
+        </div>
       </div>
-      <button
-        onClick={handleRenew}
-        style={{
-          padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
-          background: "transparent", color: "#fff",
-          fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
-          cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-        }}
-      >
-        Renovar ahora
-      </button>
-    </div>
+    </>
   );
 }
 
