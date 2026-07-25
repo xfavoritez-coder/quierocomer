@@ -218,14 +218,19 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
 
   if (!status || status.billingExempt) return null;
 
-  const now = Date.now();
+  const now = new Date();
   const periodEnd = status.currentPeriodEnd ? new Date(status.currentPeriodEnd) : null;
-  const daysLeft = periodEnd ? Math.ceil((periodEnd.getTime() - now) / (24 * 60 * 60 * 1000)) : null;
 
-  // Activo y a punto de vencer (≤2 días)
-  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && daysLeft !== null && daysLeft >= 0 && daysLeft <= 2;
+  // Comparar por fecha calendario UTC (no por horas) para evitar que "hoy" aparezca como "1 día"
+  const todayUTC = now.toISOString().slice(0, 10);
+  const periodEndUTC = periodEnd ? periodEnd.toISOString().slice(0, 10) : null;
+  const isToday = periodEndUTC === todayUTC;
+  const isTomorrow = periodEndUTC === new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
+
+  // Activo y a punto de vencer (hoy o mañana)
+  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && (isToday || isTomorrow);
   // Activo pero el período ya pasó (pendiente de corte, cron aún no corrió)
-  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEnd !== null && periodEnd < new Date();
+  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEnd !== null && periodEnd < now;
   // Ya cortado (bajó a FREE después de no pagar)
   const wasDowngraded = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !!status.lastPaymentAt;
 
@@ -238,15 +243,18 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   if (isExpired) {
     title = "Tu carta QR está fuera de línea";
     sub = "Renueva tu plan para que tus clientes vuelvan a verla.";
-  } else if (daysLeft === 0) {
+  } else if (isToday) {
     title = "Tu plan vence hoy";
     sub = "Tu carta QR dejará de mostrarse mañana si no renuevas.";
   } else {
-    title = `Tu plan vence en ${daysLeft} día${daysLeft === 1 ? "" : "s"}`;
+    title = "Tu plan vence mañana";
     sub = "Renueva para mantener tu carta QR activa sin interrupciones.";
   }
 
-  const handleRenew = () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true } }));
+  const currentPlan = status.plan as "FREE" | "GOLD" | "PREMIUM" | undefined;
+  const handleRenew = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
+    detail: { renew: true, initialTab: currentPlan },
+  }));
 
   return (
     <div style={{
@@ -788,12 +796,15 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
 
-    // ?renew=1 → abrir modal de pago en modo renovación directo
+    // ?renew=1&plan=PREMIUM → abrir modal de pago en modo renovación directo al plan actual
     if (params.get("renew") === "1") {
+      const planParam = params.get("plan");
       params.delete("renew");
+      params.delete("plan");
       const newSearch = params.toString();
       window.history.replaceState({}, "", `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}`);
-      setTimeout(() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true } })), 400);
+      const initialTab = (planParam === "GOLD" || planParam === "SILVER" || planParam === "PREMIUM") ? planParam as "GOLD" | "PREMIUM" : undefined;
+      setTimeout(() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab } })), 400);
       return;
     }
 

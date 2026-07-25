@@ -278,7 +278,7 @@ export async function GET(req: NextRequest) {
 
         const paymentMethod = paymentMethods.get(r.id) ?? "online";
         const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
-        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante%3Frenew%3D1";
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + `&redirect=/panel/mi-restaurante%3Frenew%3D1%26plan%3D${r.plan}`;
         try {
           await sendAdminEmail({
             to: r.owner.email,
@@ -339,7 +339,7 @@ export async function GET(req: NextRequest) {
 
         const paymentMethod = paymentMethods.get(r.id) ?? "online";
         const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
-        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + "&redirect=/panel/mi-restaurante%3Frenew%3D1";
+        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + `&redirect=/panel/mi-restaurante%3Frenew%3D1%26plan%3D${r.plan}`;
 
         // Email
         if (!alreadySentEmail) {
