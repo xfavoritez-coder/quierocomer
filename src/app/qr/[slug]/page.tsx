@@ -13,6 +13,7 @@ import { isValidLang, parseLangHeader } from "@/lib/qr/i18n";
 import type { Lang } from "@/lib/qr/i18n";
 import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
+import MenuPausedPage from "@/components/qr/MenuPausedPage";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
@@ -91,6 +92,32 @@ export default async function CartaPage({
     getWeatherCondition(),
   ]);
   if (!restaurant) return notFound();
+
+  // Verificar si el menú está activo (plan vigente)
+  // Ocultar carta si el plan venció, dejando visible solo si:
+  // - billingExempt: exento de pago (override admin)
+  // - isDemo: siempre visible (son demos de prospección)
+  // - ACTIVE con período vigente
+  // - TRIALING con período vigente
+  // - CANCELED dentro del período pagado
+  // - NONE sin historial de trial ni pago (cuenta siempre gratis)
+  {
+    const r = restaurant as any;
+    const now = new Date();
+    const periodEnd = r.currentPeriodEnd ? new Date(r.currentPeriodEnd) : null;
+    const trialEnd = r.trialEndsAt ? new Date(r.trialEndsAt) : null;
+    const isMenuLive =
+      r.billingExempt ||
+      r.isDemo ||
+      (r.subscriptionStatus === "ACTIVE" && periodEnd && periodEnd > now) ||
+      (r.subscriptionStatus === "TRIALING" && trialEnd && trialEnd > now) ||
+      (r.subscriptionStatus === "CANCELED" && periodEnd && periodEnd > now) ||
+      (r.subscriptionStatus === "NONE" && !trialEnd && !r.lastPaymentAt);
+
+    if (!isMenuLive) {
+      return <MenuPausedPage restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;
+    }
+  }
 
   // Only Premium restaurants support multilingual — override lang for others
   if ((restaurant as any).plan !== "PREMIUM" && !isValidLang(urlLang)) {

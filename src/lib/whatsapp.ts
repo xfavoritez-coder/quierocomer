@@ -10,6 +10,19 @@ const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
 // Template SID for "carta_lista_v2" (approved by Meta)
 const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 
+// Template SID for billing expiry — day plan expires (approved by Meta)
+// Variables: {{1}} = owner first name, {{2}} = restaurant name, {{3}} = renewal URL
+// Template body:
+//   Hola {{1}} 👋
+//
+//   El plan de *{{2}}* venció hoy. Tu carta QR dejará de mostrarse a partir de mañana.
+//
+//   Renueva ahora para que tus clientes sigan viendo tu carta:
+//   {{3}}
+//
+//   — Equipo QuieroComer
+export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "PENDING_APPROVAL"; // TODO: reemplazar con SID aprobado en Twilio
+
 interface SendWhatsAppOptions {
   to: string; // E.164 format: +56912345678
   body: string;

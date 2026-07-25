@@ -119,6 +119,7 @@ type BillingStatus = {
   activeFlowPlan: string | null;
   billingExempt?: boolean;
   trialUsed?: boolean;
+  lastPaymentAt?: string | null;
 };
 
 export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTrialEnds, subscriptionStatus: propStatus }: { restaurantId: string | null; plan?: string; trialEndsAt?: string | null; subscriptionStatus?: string }) {
@@ -201,6 +202,76 @@ export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTri
       </div>
     </div>
     </>
+  );
+}
+
+function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
+  const [status, setStatus] = useState<BillingStatus | null>(null);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/billing/status?restaurantId=${restaurantId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setStatus(d))
+      .catch(() => {});
+  }, [restaurantId]);
+
+  if (!status || status.billingExempt) return null;
+
+  const now = Date.now();
+  const periodEnd = status.currentPeriodEnd ? new Date(status.currentPeriodEnd) : null;
+  const daysLeft = periodEnd ? Math.ceil((periodEnd.getTime() - now) / (24 * 60 * 60 * 1000)) : null;
+
+  // Activo y a punto de vencer (≤2 días)
+  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && daysLeft !== null && daysLeft >= 0 && daysLeft <= 2;
+  // Activo pero el período ya pasó (pendiente de corte, cron aún no corrió)
+  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEnd !== null && periodEnd < new Date();
+  // Ya cortado (bajó a FREE después de no pagar)
+  const wasDowngraded = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !!status.lastPaymentAt;
+
+  if (!isExpiringSoon && !isExpiredActive && !wasDowngraded) return null;
+
+  const isExpired = isExpiredActive || wasDowngraded;
+
+  let title: string;
+  let sub: string;
+  if (isExpired) {
+    title = "Tu carta QR está fuera de línea";
+    sub = "Renueva tu plan para que tus clientes vuelvan a verla.";
+  } else if (daysLeft === 0) {
+    title = "Tu plan vence hoy";
+    sub = "Tu carta QR dejará de mostrarse mañana si no renuevas.";
+  } else {
+    title = `Tu plan vence en ${daysLeft} día${daysLeft === 1 ? "" : "s"}`;
+    sub = "Renueva para mantener tu carta QR activa sin interrupciones.";
+  }
+
+  const handleRenew = () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true } }));
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      padding: "10px 16px",
+      background: "#dc2626",
+      fontFamily: "var(--font-body)",
+    }}>
+      <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{title}</p>
+        <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>{sub}</p>
+      </div>
+      <button
+        onClick={handleRenew}
+        style={{
+          padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
+          background: "transparent", color: "#fff",
+          fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
+          cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+        }}
+      >
+        Renovar ahora
+      </button>
+    </div>
   );
 }
 
@@ -840,9 +911,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         isDemo={isDemo}
       >
         {!isDemo && (
-          <>
-            {/* UpgradeBanner removed — no plan upsell banners in panel */}
-          </>
+          <ExpiryBanner restaurantId={selectedRestaurantId || null} />
         )}
         {children}
       </AdminLayoutOwner>
