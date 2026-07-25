@@ -104,14 +104,19 @@ export default async function CartaPage({
   {
     const r = restaurant as any;
     const now = new Date();
+    // startOfToday en Chile (UTC-4 invierno / UTC-3 verano)
+    // Usamos UTC-4 como mínimo conservador para no cortar antes de tiempo
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
     const periodEnd = r.currentPeriodEnd ? new Date(r.currentPeriodEnd) : null;
     const trialEnd = r.trialEndsAt ? new Date(r.trialEndsAt) : null;
+    // Alineado con el cron 4.8: visible si periodEnd >= startOfToday (el día que vence es el último día válido)
     const isMenuLive =
       r.billingExempt ||
       r.isDemo ||
-      (r.subscriptionStatus === "ACTIVE" && periodEnd && periodEnd > now) ||
-      (r.subscriptionStatus === "TRIALING" && trialEnd && trialEnd > now) ||
-      (r.subscriptionStatus === "CANCELED" && periodEnd && periodEnd > now) ||
+      (r.subscriptionStatus === "ACTIVE" && periodEnd && periodEnd >= startOfToday) ||
+      (r.subscriptionStatus === "TRIALING" && trialEnd && trialEnd >= startOfToday) ||
+      (r.subscriptionStatus === "CANCELED" && periodEnd && periodEnd >= startOfToday) ||
       (r.subscriptionStatus === "NONE" && !trialEnd && !r.lastPaymentAt);
 
     if (!isMenuLive) {
