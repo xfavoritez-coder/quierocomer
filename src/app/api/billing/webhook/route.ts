@@ -125,8 +125,8 @@ export async function POST(req: NextRequest) {
 
   // Invalidar caché QR inmediatamente — carta vuelve a mostrarse al instante tras el pago
   try {
-    const { revalidateTag } = await import("next/cache");
-    revalidateTag(`qr-restaurant-${restaurant.slug}`);
+    const { revalidateQrCache } = await import("@/lib/qr/revalidateQrCache");
+    revalidateQrCache(restaurant.slug);
   } catch (e) {
     console.error("[webhook] revalidateTag error:", e);
   }
