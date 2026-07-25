@@ -348,7 +348,10 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [confirmTab, setConfirmTab] = useState<TabKey | null>(null);
+  // renewMode + initialTab → ir directo al overlay de pago, sin pasar por selección de plan
+  const [confirmTab, setConfirmTab] = useState<TabKey | null>(
+    renewMode && initialTab && initialTab !== "FREE" ? initialTab as TabKey : null
+  );
   const [payerEmail, setPayerEmail] = useState("");
   const [status, setStatus] = useState<BillingStatus & { customPlanPriceNet?: number | null; mpPayerEmail?: string | null } | null>(null);
   const FD = "var(--font-display)";
