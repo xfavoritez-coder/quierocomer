@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/diario",
-      "schedule": "0 11 * * *"
+      "schedule": "59 3 * * *"
     }
   ]
 }
