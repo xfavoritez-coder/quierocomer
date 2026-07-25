@@ -123,6 +123,14 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // Invalidar caché QR inmediatamente — carta vuelve a mostrarse al instante tras el pago
+  try {
+    const { revalidateTag } = await import("next/cache");
+    revalidateTag(`qr-restaurant-${restaurant.slug}`);
+  } catch (e) {
+    console.error("[webhook] revalidateTag error:", e);
+  }
+
   // Email de confirmación
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const ownerEmail = restaurant.owner?.email;
