@@ -6,8 +6,22 @@ const PUBLIC_PANEL_ROUTES = ["/panel/login", "/panel/forgot-password", "/panel/r
 const PUBLIC_PANEL_API_ROUTES = ["/api/panel/login", "/api/panel/demo-auth", "/api/panel/invite"];
 const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/api/admin/reset-password"];
 
+// Bots agresivos que no deben gatillar server functions.
+// facebookexternalhit (OG previews) se permite; meta-externalagent es el crawler masivo.
+const BLOCKED_UA_PATTERNS = [
+  "meta-externalagent",
+  "facebookbot",          // rastreador de índice FB (diferente al OG preview)
+  "AdsBot-Google",        // Google Ads bot (no necesita ver páginas de carta)
+];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // --- Bloqueo de bots agresivos (edge, sin compute) ---
+  const ua = request.headers.get("user-agent") || "";
+  if (BLOCKED_UA_PATTERNS.some(p => ua.toLowerCase().includes(p.toLowerCase()))) {
+    return new NextResponse(null, { status: 403 });
+  }
 
   // --- TEMPORAL: redirect / → /qr/ (quitar cuando se reactive el feed) ---
   if (pathname === "/") {
@@ -66,5 +80,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/panel/:path*", "/admin/:path*", "/api/admin/:path*", "/api/panel/:path*"],
+  matcher: [
+    // Bloqueo de bots aplica a todas las rutas excepto estáticos (_next, favicon, etc.)
+    "/((?!_next/static|_next/image|favicon|og\\.png|robots\\.txt|sitemap).*)",
+  ],
 };

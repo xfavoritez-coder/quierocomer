@@ -7,6 +7,16 @@ Allow: /
 User-agent: WhatsApp
 Allow: /
 
+# Bloquear bots agresivos de Meta/Facebook que no generan valor (OG previews != indexación masiva)
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: facebookbot
+Disallow: /
+
+User-agent: AdsBot-Google
+Disallow: /
+
 User-agent: *
 Allow: /
 Disallow: /panel/
