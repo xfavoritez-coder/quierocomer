@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
-import { FLOW_PLANS, grossOf, PLAN_LABELS, type PlanKey } from "@/lib/billing/plans-config";
-import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
+import { FLOW_PLANS, type PlanKey } from "@/lib/billing/plans-config";
 
 /**
  * GET /api/billing/subscribe-return?restaurantId=X&plan=Y&token=Z
  *
  * Flow redirige aquí después de que el cliente registra su tarjeta.
- *
- * 1. Obtiene el customerId desde Flow (/customer/getByRegisterToken)
- * 2. Guarda flowCustomerId en DB
- * 3a. Si el local ya tiene plan ACTIVE → solo guarda la tarjeta (el cron cobrará el próximo mes)
- * 3b. Si no tiene plan activo → cobra el primer mes inmediatamente vía /payment/createByCustomer
+ * 1. /customer/getByRegisterToken → obtiene customerId interno de Flow
+ * 2. /subscription/subscribe      → suscribe al plan existente (qc_gold_monthly, etc.)
+ * 3. Flow cobra mensualmente y envía webhook → webhook activa/renueva el plan
  */
 export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
@@ -23,7 +20,7 @@ export async function GET(req: NextRequest) {
   const planKey = searchParams.get("plan") as keyof typeof FLOW_PLANS | null;
 
   if (!token || !restaurantId || !planKey || !FLOW_PLANS[planKey]) {
-    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=par%C3%A1metros+inv%C3%A1lidos", req.url));
+    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Par%C3%A1metros+inv%C3%A1lidos", req.url));
   }
 
   const restaurant = await prisma.restaurant.findUnique({
@@ -31,74 +28,74 @@ export async function GET(req: NextRequest) {
     include: { owner: { select: { email: true, name: true } } },
   });
   if (!restaurant) {
-    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=restaurante+no+encontrado", req.url));
+    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Restaurante+no+encontrado", req.url));
   }
 
   const planConfig = FLOW_PLANS[planKey];
 
-  // 1. Obtener customerId desde el token de registro de tarjeta
+  // 1. Obtener customerId de Flow usando el token de registro
   let customerId: string;
   try {
-    const customer = await flowPost<{ customerId: string; name: string; email: string; status: number }>(
+    const customer = await flowPost<{ customerId: string; externalId: string; status: number }>(
       "/customer/getByRegisterToken",
       { token }
     );
     customerId = customer.customerId;
-    console.log(`[subscribe-return] Customer obtenido: ${customerId} para ${restaurant.name}`);
+    console.log(`[subscribe-return] Customer obtenido: customerId=${customerId} para ${restaurant.name}`);
   } catch (err: any) {
     console.error(`[subscribe-return] Error getByRegisterToken: ${err?.message}`);
-    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error al verificar la tarjeta. Intenta nuevamente.")}`, req.url));
+    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error al verificar tarjeta. Intenta nuevamente.")}`, req.url));
   }
 
-  // 2. Guardar customerId
+  // Guardar customerId
   await prisma.restaurant.update({
     where: { id: restaurantId },
-    data: { flowCustomerId: customerId, pendingFlowPlanId: null },
+    data: { flowCustomerId: customerId },
   });
 
-  // 3a. Si ya tiene plan activo → tarjeta registrada, el cron cobrará el próximo mes
-  const isActive = restaurant.subscriptionStatus === "ACTIVE" && restaurant.currentPeriodEnd && new Date(restaurant.currentPeriodEnd) >= new Date();
+  // 2. Si ya tiene plan activo → solo guardamos la tarjeta, Flow cobrará el mes que viene
+  const periodEnd = restaurant.currentPeriodEnd ? new Date(restaurant.currentPeriodEnd) : null;
+  const isActive = restaurant.subscriptionStatus === "ACTIVE" && periodEnd && periodEnd >= new Date();
   if (isActive) {
-    console.log(`[subscribe-return] ✅ Tarjeta registrada para auto-renovación: ${restaurant.name} (plan ACTIVE, cron cobrará el ${restaurant.currentPeriodEnd?.toISOString().slice(0, 10)})`);
+    // Crear suscripción que empieza cuando vence el período actual
+    const startDate = periodEnd!.toISOString().slice(0, 10); // YYYY-MM-DD
+    try {
+      const sub = await flowPost<{ subscriptionId: string; status: string }>(
+        "/subscription/subscribe",
+        { planId: planConfig.planId, customerId, startDate, trialPeriodDays: 0 }
+      );
+      await prisma.restaurant.update({
+        where: { id: restaurantId },
+        data: { flowSubscriptionId: sub.subscriptionId, pendingFlowPlanId: null },
+      });
+      console.log(`[subscribe-return] ✅ Suscripción creada (diferida): ${restaurant.name} → ${planKey} desde ${startDate} (sub: ${sub.subscriptionId})`);
+    } catch (err: any) {
+      console.error(`[subscribe-return] Error subscription/subscribe (diferida): ${err?.message}`);
+      // Tarjeta guardada aunque falle la suscripción — el cron puede cobrar igual
+    }
     return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=ok", req.url));
   }
 
-  // 3b. Sin plan activo → cobrar primer mes ahora
-  const amountNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
-  const amountGross = grossOf(amountNet);
-  const commerceOrder = `auto_${restaurantId.slice(-8)}_${Date.now().toString(36)}`;
-
-  let chargeToken: string;
-  let chargeFlowOrder: number | null = null;
+  // 3. Sin plan activo → suscribir con cobro inmediato (startDate = hoy)
+  const today = new Date().toISOString().slice(0, 10);
   try {
-    const charge = await flowPost<{ token: string; flowOrder: number; url: string }>(
-      "/payment/createByCustomer",
-      {
-        customerId,
-        commerceOrder,
-        subject: `${restaurant.name} — Plan ${PLAN_LABELS[planKey as keyof typeof PLAN_LABELS] || planKey}`,
-        amount: amountGross,
-        urlConfirmation: `${baseUrl}/api/billing/webhook`,
-        urlReturn: `${baseUrl}/panel/mi-restaurante`,
-      }
+    const sub = await flowPost<{ subscriptionId: string; status: string }>(
+      "/subscription/subscribe",
+      { planId: planConfig.planId, customerId, startDate: today, trialPeriodDays: 0 }
     );
-    chargeToken = charge.token;
-    chargeFlowOrder = charge.flowOrder || null;
-    console.log(`[subscribe-return] Cobro automático iniciado: token=${chargeToken} order=${commerceOrder} para ${restaurant.name}`);
+    await prisma.restaurant.update({
+      where: { id: restaurantId },
+      data: {
+        flowSubscriptionId: sub.subscriptionId,
+        pendingFlowPlanId: planConfig.planId,
+        flowPlanId: planConfig.planId,
+      },
+    });
+    console.log(`[subscribe-return] ✅ Suscripción con cobro inmediato: ${restaurant.name} → ${planKey} (sub: ${sub.subscriptionId})`);
   } catch (err: any) {
-    console.error(`[subscribe-return] Error payment/createByCustomer: ${err?.message}`);
-    // Tarjeta guardada pero cobro falló — el cron lo intentará luego
-    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=charge_pending&reason=${encodeURIComponent("Tarjeta registrada. El primer cobro se procesará pronto.")}`, req.url));
+    console.error(`[subscribe-return] Error subscription/subscribe: ${err?.message}`);
+    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Tarjeta registrada, pero error al crear suscripción: " + err?.message)}`, req.url));
   }
-
-  // Guardar token para que el webhook pueda encontrar este restaurant
-  await prisma.restaurant.update({
-    where: { id: restaurantId },
-    data: {
-      pendingFlowPlanId: planConfig.planId,
-      flowRegisterToken: chargeFlowOrder ? `${chargeToken}|${chargeFlowOrder}` : chargeToken,
-    },
-  });
 
   return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=charge_pending", req.url));
 }

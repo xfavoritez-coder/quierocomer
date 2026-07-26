@@ -7,14 +7,12 @@ import { FLOW_PLANS } from "@/lib/billing/plans-config";
  * POST /api/billing/subscribe
  * Body: { restaurantId, plan: "SILVER" | "GOLD" | "PREMIUM" }
  *
- * Registra la tarjeta del cliente en Flow para cobros automáticos futuros.
- * No usa el sistema de suscripciones/planes de Flow — el cron diario
- * cobra via /payment/createByCustomer cada mes.
+ * Inicia registro de tarjeta para cobro automático mensual vía Flow suscripciones.
+ * Los planes ya existen en Flow (qc_gold_monthly, qc_premium_monthly).
  *
- * Flujo:
- * 1. /customer/register → URL donde el cliente ingresa su tarjeta
- * 2. Flow redirige a /api/billing/subscribe-return con el token
- * 3. subscribe-return guarda flowCustomerId y activa si corresponde
+ * 1. /customer/create  → crear cliente en Flow (externalId = restaurantId)
+ * 2. /customer/register → URL donde el cliente ingresa su tarjeta
+ * 3. subscribe-return   → obtiene customerId, crea suscripción al plan
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -39,31 +37,28 @@ export async function POST(req: NextRequest) {
   const planConfig = FLOW_PLANS[plan];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-  const customerId = restaurantId; // nuestro ID externo para Flow
-  const customerName = owner.name || owner.email.split("@")[0];
-
   // 1. Crear cliente en Flow (idempotente — ignorar si ya existe)
   try {
     await flowPost("/customer/create", {
-      customerId,
-      name: customerName,
+      externalId: restaurantId,
+      name: owner.name || owner.email.split("@")[0],
       email: owner.email,
     });
-    console.log(`[billing/subscribe] Cliente creado en Flow: ${customerId}`);
+    console.log(`[billing/subscribe] Cliente creado en Flow: externalId=${restaurantId}`);
   } catch (err: any) {
-    const alreadyExists = err?.message?.toLowerCase().includes("already") || err?.message?.toLowerCase().includes("existe") || err?.code === 400;
+    const alreadyExists = err?.code === 400 || err?.message?.toLowerCase().includes("already") || err?.message?.toLowerCase().includes("existe");
     if (!alreadyExists) {
       console.error("[billing/subscribe] Error creando cliente en Flow:", err?.message);
-      return NextResponse.json({ error: `Error al crear cliente: ${err?.message}` }, { status: 500 });
+      return NextResponse.json({ error: `Error al crear cliente en Flow: ${err?.message}` }, { status: 500 });
     }
-    console.log(`[billing/subscribe] Cliente ya existe en Flow: ${customerId}`);
+    console.log(`[billing/subscribe] Cliente ya existe en Flow: externalId=${restaurantId}`);
   }
 
   // 2. Iniciar registro de tarjeta
   const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}`;
   try {
     const result = await flowPost<{ url: string; token: string }>("/customer/register", {
-      customerId,
+      externalId: restaurantId,
       url_return: urlReturn,
     });
     console.log(`[billing/subscribe] Card registration iniciado: token=${result.token} para ${restaurant.name}`);
@@ -75,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: `${result.url}?token=${result.token}` });
   } catch (err: any) {
-    console.error("[billing/subscribe] Error registrando tarjeta en Flow:", err?.message);
+    console.error("[billing/subscribe] Error en /customer/register:", err?.message);
     return NextResponse.json({ error: `Error al iniciar registro de tarjeta: ${err?.message}` }, { status: 500 });
   }
 }
