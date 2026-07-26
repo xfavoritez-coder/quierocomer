@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { ShoppingCart, Search, X } from "lucide-react";
 import { useCart } from "./OrderCartContext";
+import { useOrderLang } from "./OrderLangContext";
 import OrderItemModal, { type DishForOrder } from "./OrderItemModal";
 import OrderCart from "./OrderCart";
 import OrderCheckout from "./OrderCheckout";
@@ -24,7 +25,7 @@ interface Dish {
   modifierTemplates: any[];
 }
 interface Restaurant {
-  name: string; slug: string; logoUrl?: string | null;
+  name: string; slug: string; logoUrl?: string | null; bannerUrl?: string | null;
   categories: Category[]; dishes: Dish[];
 }
 
@@ -44,6 +45,7 @@ interface Props {
 
 export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
   const { items, count, addItem } = useCart();
+  const { lang, setLang, s } = useOrderLang();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedDish, setSelectedDish] = useState<DishForOrder | null>(null);
@@ -92,13 +94,44 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     setSelectedDish(null);
   };
 
+  // Pick best hero image: banner, or first dish with photo
+  const heroImg = restaurant.bannerUrl ||
+    activeDishes.find(d => d.photos?.[0])?.photos?.[0] || null;
+
   return (
     <div style={{ minHeight: "100dvh", background: CREAM, fontFamily: FB }}>
+
+      {/* HERO BANNER */}
+      {heroImg && (
+        <div style={{ position: "relative", width: "100%", height: 220, overflow: "hidden", flexShrink: 0 }}>
+          <img
+            src={heroImg}
+            alt={restaurant.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            {restaurant.logoUrl && (
+              <img
+                src={restaurant.logoUrl}
+                alt={restaurant.name}
+                style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.85)", boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}
+              />
+            )}
+            <p style={{ fontFamily: F, fontWeight: 800, fontSize: "1.3rem", color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.45)", textAlign: "center", padding: "0 20px" }}>
+              {restaurant.name}
+            </p>
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "rgba(255,255,255,0.8)", margin: 0 }}>
+              ⏱ {orderingConfig.waitTime || "30-45 min"}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* HEADER sticky */}
       <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#fff", borderBottom: "1px solid #ece9e3", padding: "0 16px" }}>
 
-        {/* Fila 1: logo + nombre + carrito */}
+        {/* Fila 1: logo + nombre + lang toggle + carrito */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0 10px" }}>
           {restaurant.logoUrl && (
             <img
@@ -111,9 +144,31 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
             <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "#111", margin: 0 }}>
               {restaurant.name}
             </p>
-            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "#aaa", margin: 0 }}>
-              ⏱ {orderingConfig.waitTime || "30-45 min"}
-            </p>
+            {!heroImg && (
+              <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "#aaa", margin: 0 }}>
+                ⏱ {orderingConfig.waitTime || "30-45 min"}
+              </p>
+            )}
+          </div>
+
+          {/* Lang toggle */}
+          <div style={{ display: "flex", background: "#f0ece6", borderRadius: 999, padding: 3, gap: 2, flexShrink: 0 }}>
+            {(["es", "en"] as const).map(l => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                style={{
+                  padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer",
+                  background: lang === l ? "#fff" : "transparent",
+                  color: lang === l ? "#111" : "#999",
+                  fontFamily: F, fontSize: "0.68rem", fontWeight: 700,
+                  boxShadow: lang === l ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
           </div>
 
           {/* Carrito */}
@@ -155,7 +210,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                 transition: "all 0.15s",
               }}
             >
-              Todo
+              {s.all}
             </button>
             {categories.map(cat => (
               <button
@@ -182,16 +237,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
         {grouped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
             <Search size={32} style={{ marginBottom: 12 }} />
-            <p style={{ fontFamily: F, fontSize: "0.9rem" }}>Sin resultados para "{search}"</p>
+            <p style={{ fontFamily: F, fontSize: "0.9rem" }}>{s.noResults(search)}</p>
           </div>
         ) : (
           grouped.map(({ category, dishes }) => (
             <div key={category.id}>
               {/* Título de categoría */}
               <p style={{
-                fontFamily: F, fontWeight: 700, fontSize: "0.68rem", color: "#c5c0b8",
-                textTransform: "uppercase", letterSpacing: "0.07em",
-                padding: "16px 14px 6px", margin: 0,
+                fontFamily: F, fontWeight: 800, fontSize: "0.82rem", color: "#7a736a",
+                textTransform: "uppercase", letterSpacing: "0.08em",
+                padding: "20px 14px 8px", margin: 0,
               }}>
                 {category.name}
               </p>
@@ -308,10 +363,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
               }}>
                 {count}
               </span>
-              <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
+              <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{s.viewCart}</span>
             </div>
             <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>
-              {formatCLP(items.reduce((s, i) => s + i.unitTotal * i.quantity, 0))}
+              {formatCLP(items.reduce((acc, i) => acc + i.unitTotal * i.quantity, 0))}
             </span>
           </button>
         </div>

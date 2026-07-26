@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propuestas de Diseño — /pedir/[slug]</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #e5e7eb;
+      min-height: 100vh;
+    }
+
+    /* ── Selector de propuesta ── */
+    .proposal-selector {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: #1f2937;
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    .proposal-selector span {
+      color: #9ca3af;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .proposal-btn {
+      padding: 6px 14px;
+      border: 1px solid #374151;
+      background: transparent;
+      color: #9ca3af;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .proposal-btn:hover { border-color: #6b7280; color: #d1d5db; }
+    .proposal-btn.active { background: #fff; color: #111; border-color: #fff; }
+
+    /* ── Contenedor móvil centrado ── */
+    .proposals-wrapper {
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-bottom: 40px;
+    }
+
+    .proposal {
+      display: none;
+      width: 100%;
+      max-width: 430px;
+      min-height: calc(100vh - 56px);
+      box-shadow: 0 0 60px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .proposal.active { display: block; }
+
+    /* ============================================================
+       PROPUESTA 1 — DARK PREMIUM
+    ============================================================ */
+    .p1 {
+      background: #111;
+      color: #fff;
+    }
+
+    /* Header P1 */
+    .p1-header {
+      padding: 20px 16px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      background: #111;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .p1-logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #25D366;
+      flex-shrink: 0;
+    }
+
+    .p1-header-info { flex: 1; }
+
+    .p1-restaurant-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .p1-wa-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #25D366;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .p1-wa-badge svg { width: 12px; height: 12px; fill: #25D366; }
+
+    .p1-wait {
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .p1-wait-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #25D366;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .p1-header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    /* Pills P1 */
+    .p1-pills-wrap {
+      padding: 14px 0;
+      background: #111;
+      position: sticky;
+      top: 91px;
+      z-index: 99;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .p1-pills {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .p1-pills::-webkit-scrollbar { display: none; }
+
+    .p1-pill {
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: #9ca3af;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .p1-pill.active {
+      background: #25D366;
+      color: #111;
+    }
+
+    .p1-pill:hover:not(.active) { background: rgba(255,255,255,0.14); color: #e5e7eb; }
+
+    /* Cards P1 */
+    .p1-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #4b5563;
+      padding: 20px 16px 10px;
+    }
+
+    .p1-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .p1-card:hover { background: rgba(255,255,255,0.03); }
+
+    .p1-card-info { flex: 1; min-width: 0; }
+
+    .p1-card-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f9fafb;
+      line-height: 1.3;
+    }
+
+    .p1-card-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .p1-card-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 8px;
+    }
+
+    .p1-card-img-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .p1-card-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 16px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .p1-add-btn {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #25D366;
+      border: none;
+      color: #111;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(37,211,102,0.5);
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+
+    .p1-add-btn:hover { transform: scale(1.1); }
+
+    /* Carrito flotante P1 */
+    .p1-cart {
+      position: sticky;
+      bottom: 20px;
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 20px;
+      pointer-events: none;
+    }
+
+    .p1-cart-btn {
+      pointer-events: all;
+      background: #25D366;
+      color: #111;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 32px rgba(37,211,102,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .p1-cart-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(37,211,102,0.55); }
+
+    .p1-cart-count {
+      background: #ef4444;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .p1-cart-total { font-size: 15px; }
+
+    /* ============================================================
+       PROPUESTA 2 — TARJETAS BLANCAS MODERNAS
+    ============================================================ */
+    .p2 {
+      background: #FAFAF8;
+      color: #1f2937;
+    }
+
+    /* Banner header P2 */
+    .p2-banner {
+      position: relative;
+      height: 180px;
+      overflow: hidden;
+    }
+
+    .p2-banner-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .p2-banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 100%);
+    }
+
+    .p2-banner-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 20px;
+      gap: 8px;
+    }
+
+    .p2-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .p2-restaurant-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      font-family: Georgia, serif;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .p2-meta {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .p2-meta-item {
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Pills P2 */
+    .p2-pills-wrap {
+      background: #FAFAF8;
+      padding: 14px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 99;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .p2-pills {
+      display: flex;
+      gap: 4px;
+      padding: 0 16px 14px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .p2-pills::-webkit-scrollbar { display: none; }
+
+    .p2-pill {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1.5px solid #e5e7eb;
+      background: #fff;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .p2-pill.active {
+      background: #F59E0B;
+      border-color: #F59E0B;
+      color: #fff;
+    }
+
+    .p2-pill:hover:not(.active) { border-color: #F59E0B; color: #F59E0B; }
+
+    /* Section title P2 */
+    .p2-section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+      font-family: Georgia, serif;
+      padding: 20px 16px 14px;
+    }
+
+    /* Grid 2 columnas P2 */
+    .p2-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+
+    .p2-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .p2-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+    }
+
+    .p2-card-img-wrap {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+    }
+
+    .p2-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s;
+    }
+
+    .p2-card:hover .p2-card-img { transform: scale(1.05); }
+
+    .p2-add-circle {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #F59E0B;
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 300;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 12px rgba(245,158,11,0.5);
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+
+    .p2-add-circle:hover { transform: scale(1.12); }
+
+    .p2-card-body {
+      padding: 10px 10px 12px;
+    }
+
+    .p2-card-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111827;
+      font-family: Georgia, serif;
+      line-height: 1.3;
+    }
+
+    .p2-card-desc {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 3px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+
+    .p2-card-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-top: 8px;
+    }
+
+    /* Carrito sticky P2 */
+    .p2-cart-bar {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #f3f4f6;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.08);
+    }
+
+    .p2-cart-info { display: flex; flex-direction: column; }
+
+    .p2-cart-count { font-size: 12px; color: #9ca3af; font-weight: 600; }
+
+    .p2-cart-total { font-size: 18px; font-weight: 700; color: #111827; margin-top: 2px; }
+
+    .p2-cart-cta {
+      background: #F59E0B;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .p2-cart-cta:hover { background: #d97706; transform: scale(1.02); }
+
+    /* ============================================================
+       PROPUESTA 3 — APP MINIMALISTA LÍNEAS
+    ============================================================ */
+    .p3 {
+      background: #fff;
+      color: #111;
+    }
+
+    /* Header P3 */
+    .p3-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 100;
+    }
+
+    .p3-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .p3-header-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #111;
+      flex: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .p3-cart-icon-btn {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .p3-cart-icon-btn:hover { border-color: #EF4444; }
+
+    .p3-cart-icon-btn svg { width: 20px; height: 20px; stroke: #111; fill: none; stroke-width: 2; }
+
+    .p3-cart-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      background: #EF4444;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Buscador P3 */
+    .p3-search-wrap {
+      padding: 12px 16px;
+      background: #fff;
+      position: sticky;
+      top: 69px;
+      z-index: 99;
+    }
+
+    .p3-search {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #111;
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .p3-search:focus { border-color: #111; background: #fff; }
+
+    .p3-search-wrap-inner {
+      position: relative;
+    }
+
+    .p3-search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      stroke: #9ca3af;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Tabs P3 */
+    .p3-tabs-wrap {
+      background: #fff;
+      position: sticky;
+      top: 129px;
+      z-index: 98;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .p3-tabs {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 0 16px;
+    }
+
+    .p3-tabs::-webkit-scrollbar { display: none; }
+
+    .p3-tab {
+      padding: 12px 16px 11px;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      background: transparent;
+      color: #9ca3af;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      margin-bottom: -1px;
+    }
+
+    .p3-tab.active {
+      color: #EF4444;
+      border-bottom-color: #EF4444;
+    }
+
+    .p3-tab:hover:not(.active) { color: #374151; }
+
+    /* Lista de platos P3 */
+    .p3-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #d1d5db;
+      padding: 20px 16px 8px;
+    }
+
+    .p3-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .p3-item:hover { background: #fafafa; }
+
+    .p3-item-info { flex: 1; min-width: 0; }
+
+    .p3-item-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.3;
+    }
+
+    .p3-item-desc {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 3px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    .p3-item-bottom {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .p3-item-price {
+      font-size: 15px;
+      font-weight: 800;
+      color: #EF4444;
+    }
+
+    .p3-add-chip {
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1.5px solid #e5e7eb;
+      background: #fff;
+      color: #111;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .p3-add-chip:hover {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    .p3-item-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    /* Carrito sticky P3 */
+    .p3-cart-bar {
+      position: sticky;
+      bottom: 0;
+      background: #111;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .p3-cart-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .p3-cart-count-box {
+      background: #EF4444;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .p3-cart-label { font-size: 14px; font-weight: 600; color: #d1d5db; }
+
+    .p3-cart-total-label { font-size: 16px; font-weight: 800; color: #fff; }
+
+    .p3-checkout-btn {
+      background: #fff;
+      color: #111;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      letter-spacing: -0.01em;
+    }
+
+    .p3-checkout-btn:hover { background: #f3f4f6; }
+
+    .p3-checkout-arrow { font-size: 16px; }
+
+    /* Espaciado al final para que el carrito no tape contenido */
+    .bottom-spacer { height: 100px; }
+
+
+    /* ============================================================
+       PROPUESTA 4 — TARJETAS CÁLIDAS HORIZONTALES (HYBRID)
+    ============================================================ */
+    .p4 {
+      background: #FAFAF8;
+      color: #111;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    /* Banner P4 */
+    .p4-banner {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+
+    .p4-banner-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .p4-banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.05) 100%);
+    }
+
+    .p4-banner-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      gap: 8px;
+    }
+
+    .p4-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.9);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    }
+
+    .p4-restaurant-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+      line-height: 1.2;
+    }
+
+    .p4-banner-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Pills P4 */
+    .p4-pills-wrap {
+      background: #FAFAF8;
+      padding: 14px 0 12px;
+      position: sticky;
+      top: 0;
+      z-index: 99;
+      border-bottom: 1px solid #f0ede8;
+    }
+
+    .p4-pills {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .p4-pills::-webkit-scrollbar { display: none; }
+
+    .p4-pill {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: transparent;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .p4-pill.active {
+      background: #F59E0B;
+      border-color: #F59E0B;
+      color: #fff;
+    }
+
+    .p4-pill:hover:not(.active) {
+      border-color: #F59E0B;
+      color: #F59E0B;
+    }
+
+    /* Sección título P4 */
+    .p4-section-title {
+      padding: 16px 16px 6px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #aaa;
+      font-weight: 700;
+    }
+
+    /* Cards horizontales P4 */
+    .p4-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 8px 16px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      padding: 12px 14px;
+      height: 96px;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.15s;
+      position: relative;
+    }
+
+    .p4-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+
+    .p4-card-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .p4-card-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .p4-card-desc {
+      font-size: 0.72rem;
+      color: #888;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .p4-card-price {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #F59E0B;
+      margin-top: 3px;
+    }
+
+    .p4-card-img-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .p4-card-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .p4-add-btn {
+      position: absolute;
+      bottom: -6px;
+      right: -6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #F59E0B;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(245,158,11,0.45);
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+
+    .p4-add-btn:hover { transform: scale(1.12); }
+
+    /* Barra carrito sticky P4 */
+    .p4-cart-bar {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding: 12px 16px;
+    }
+
+    .p4-cart-btn {
+      width: 100%;
+      background: #F59E0B;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 15px 20px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.2s;
+    }
+
+    .p4-cart-btn:hover { background: #d97706; }
+
+    .p4-cart-btn-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .p4-cart-btn-count {
+      background: rgba(255,255,255,0.25);
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .p4-cart-btn-total {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    /* ── MODAL P4 ── */
+    .p4-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .p4-modal-overlay.open {
+      display: flex;
+    }
+
+    .p4-modal {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 430px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .p4-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.4);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+
+    .p4-modal-close:hover { background: rgba(0,0,0,0.6); }
+
+    .p4-modal-img-wrap {
+      position: relative;
+      height: 220px;
+      overflow: hidden;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .p4-modal-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .p4-modal-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 55%, transparent 100%);
+    }
+
+    .p4-modal-img-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 20px 20px;
+    }
+
+    .p4-modal-dish-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .p4-modal-dish-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #F59E0B;
+      margin-bottom: 5px;
+    }
+
+    .p4-modal-dish-desc {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.45;
+    }
+
+    .p4-modal-body {
+      padding: 20px;
+    }
+
+    /* Sección opciones modal */
+    .p4-opt-section {
+      margin-bottom: 20px;
+    }
+
+    .p4-opt-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #111;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* Radio custom */
+    .p4-radio-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+      cursor: pointer;
+    }
+
+    .p4-radio-item:last-child { border-bottom: none; }
+
+    .p4-radio-input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e5e7eb;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .p4-radio-input:checked {
+      border-color: #F59E0B;
+    }
+
+    .p4-radio-input:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      background: #F59E0B;
+      border-radius: 50%;
+    }
+
+    .p4-radio-label {
+      flex: 1;
+      font-size: 0.88rem;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .p4-radio-extra {
+      font-size: 0.82rem;
+      color: #888;
+      font-weight: 500;
+    }
+
+    /* Checkbox custom */
+    .p4-check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+      cursor: pointer;
+    }
+
+    .p4-check-item:last-child { border-bottom: none; }
+
+    .p4-check-input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e5e7eb;
+      border-radius: 5px;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .p4-check-input:checked {
+      background: #F59E0B;
+      border-color: #F59E0B;
+    }
+
+    .p4-check-input:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 6px;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .p4-check-label {
+      flex: 1;
+      font-size: 0.88rem;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .p4-check-extra {
+      font-size: 0.82rem;
+      color: #888;
+      font-weight: 500;
+    }
+
+    /* Textarea nota */
+    .p4-nota-textarea {
+      width: 100%;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      color: #333;
+      resize: none;
+      height: 72px;
+      font-family: system-ui, -apple-system, sans-serif;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .p4-nota-textarea:focus { border-color: #F59E0B; }
+
+    /* Stepper cantidad */
+    .p4-stepper-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin: 20px 0;
+    }
+
+    .p4-stepper-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid #e5e7eb;
+      background: #fff;
+      font-size: 20px;
+      font-weight: 400;
+      color: #333;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s, color 0.15s;
+      line-height: 1;
+    }
+
+    .p4-stepper-btn:hover { border-color: #F59E0B; color: #F59E0B; }
+
+    .p4-stepper-qty {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #111;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    /* Botón agregar al carrito modal */
+    .p4-modal-add-btn {
+      width: 100%;
+      background: #F59E0B;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .p4-modal-add-btn:hover { background: #d97706; }
+  </style>
+</head>
+<body>
+
+<!-- ── Selector de propuesta ── -->
+<div class="proposal-selector">
+  <span>Propuesta</span>
+  <button class="proposal-btn" onclick="showProposal(1, this)">1 Dark Premium</button>
+  <button class="proposal-btn" onclick="showProposal(2, this)">2 Tarjetas Modernas</button>
+  <button class="proposal-btn" onclick="showProposal(3, this)">3 Minimalista</button>
+  <button class="proposal-btn active" onclick="showProposal(4, this)">✦ Hybrid</button>
+</div>
+
+<div class="proposals-wrapper">
+
+  <!-- ============================================================
+       PROPUESTA 1 — DARK PREMIUM
+  ============================================================ -->
+  <div class="proposal p1" id="proposal-1">
+
+    <!-- Header -->
+    <div class="p1-header">
+      <img class="p1-logo" src="https://ui-avatars.com/api/?name=GS&background=111&color=25D366&size=80&font-size=0.4&bold=true" alt="Guff Sushi">
+      <div class="p1-header-info">
+        <div class="p1-restaurant-name">Guff Sushi Nikkei</div>
+        <div class="p1-wa-badge">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Pedidos por WhatsApp
+        </div>
+        <div class="p1-wait">
+          <span class="p1-wait-dot"></span>
+          Abierto · 25–35 min espera
+        </div>
+      </div>
+    </div>
+
+    <!-- Pills -->
+    <div class="p1-pills-wrap">
+      <div class="p1-pills">
+        <button class="p1-pill active" onclick="p1SetPill(this)">Todo</button>
+        <button class="p1-pill" onclick="p1SetPill(this)">Rolls</button>
+        <button class="p1-pill" onclick="p1SetPill(this)">Sashimi</button>
+        <button class="p1-pill" onclick="p1SetPill(this)">Ramen</button>
+        <button class="p1-pill" onclick="p1SetPill(this)">Entradas</button>
+      </div>
+    </div>
+
+    <!-- Sección: Rolls -->
+    <div class="p1-section-title">Rolls</div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 8900)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Philadelphia Roll</div>
+        <div class="p1-card-desc">8 piezas · Salmón, queso crema, palta, pepino. Sésamo tostado.</div>
+        <div class="p1-card-price">$8.900</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1534482421-64566f976cfa?w=300&h=300&fit=crop" alt="Philadelphia Roll">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 12500)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Dragon Roll</div>
+        <div class="p1-card-desc">10 piezas · Langostino tempura, palta, tobiko, salsa spicy.</div>
+        <div class="p1-card-price">$12.500</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Dragon Roll">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <!-- Sección: Sashimi -->
+    <div class="p1-section-title">Sashimi</div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 9900)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Salmón Sashimi</div>
+        <div class="p1-card-desc">6 piezas · Salmón fresco premium, jengibre encurtido, wasabi.</div>
+        <div class="p1-card-price">$9.900</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Salmón Sashimi">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 10900)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Mixto Sashimi</div>
+        <div class="p1-card-desc">8 piezas · Salmón, atún, reineta y pulpo. Soja premium.</div>
+        <div class="p1-card-price">$10.900</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop" alt="Mixto Sashimi">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <!-- Sección: Ramen -->
+    <div class="p1-section-title">Ramen</div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 11900)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Ramen Tonkotsu</div>
+        <div class="p1-card-desc">Caldo de cerdo 12h, fideos ramen, huevo nitamago, chashu, nori.</div>
+        <div class="p1-card-price">$11.900</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=300&h=300&fit=crop" alt="Ramen Tonkotsu">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <!-- Sección: Entradas -->
+    <div class="p1-section-title">Entradas</div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 7500)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Gyozas de Cerdo</div>
+        <div class="p1-card-desc">6 piezas · Masa artesanal, relleno de cerdo y repollo, salsa ponzu.</div>
+        <div class="p1-card-price">$7.500</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Gyozas">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <div class="p1-card" onclick="p1AddItem(this, 10900)">
+      <div class="p1-card-info">
+        <div class="p1-card-name">Tempura Ebi</div>
+        <div class="p1-card-desc">5 piezas · Langostinos en tempura crujiente, salsa tentsuyu, jengibre.</div>
+        <div class="p1-card-price">$10.900</div>
+      </div>
+      <div class="p1-card-img-wrap">
+        <img class="p1-card-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Tempura Ebi">
+        <button class="p1-add-btn">+</button>
+      </div>
+    </div>
+
+    <div class="bottom-spacer"></div>
+
+    <!-- Carrito flotante -->
+    <div class="p1-cart" id="p1-cart" style="display:none; margin-top:-100px;">
+      <button class="p1-cart-btn" onclick="alert('¡Procedeendo al pedido por WhatsApp!')">
+        <span style="font-size:18px;">🛒</span>
+        <span class="p1-cart-count" id="p1-count">0</span>
+        <span class="p1-cart-total" id="p1-total">Ver pedido · $0</span>
+      </button>
+    </div>
+
+  </div><!-- fin propuesta 1 -->
+
+
+  <!-- ============================================================
+       PROPUESTA 2 — TARJETAS BLANCAS MODERNAS
+  ============================================================ -->
+  <div class="proposal p2" id="proposal-2">
+
+    <!-- Banner + header -->
+    <div class="p2-banner">
+      <img class="p2-banner-img" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=430&h=200&fit=crop" alt="Guff Sushi">
+      <div class="p2-banner-overlay"></div>
+      <div class="p2-banner-content">
+        <img class="p2-logo" src="https://ui-avatars.com/api/?name=GS&background=fff&color=111&size=80&font-size=0.4&bold=true" alt="Logo">
+        <div class="p2-restaurant-name">Guff Sushi Nikkei</div>
+        <div class="p2-meta">
+          <div class="p2-meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            25–35 min
+          </div>
+          <div class="p2-meta-item" style="width:3px; height:3px; background:rgba(255,255,255,0.5); border-radius:50%; padding:0;"></div>
+          <div class="p2-meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            4.8 · 312 pedidos
+          </div>
+          <div class="p2-meta-item" style="width:3px; height:3px; background:rgba(255,255,255,0.5); border-radius:50%; padding:0;"></div>
+          <div class="p2-meta-item">Envío gratis</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pills -->
+    <div class="p2-pills-wrap">
+      <div class="p2-pills">
+        <button class="p2-pill active" onclick="p2SetPill(this)">Todos</button>
+        <button class="p2-pill" onclick="p2SetPill(this)">Rolls</button>
+        <button class="p2-pill" onclick="p2SetPill(this)">Sashimi</button>
+        <button class="p2-pill" onclick="p2SetPill(this)">Ramen</button>
+        <button class="p2-pill" onclick="p2SetPill(this)">Entradas</button>
+      </div>
+    </div>
+
+    <!-- Grid Rolls -->
+    <div class="p2-section-title">Rolls</div>
+    <div class="p2-grid">
+
+      <div class="p2-card" onclick="p2AddItem(this, 8900)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1534482421-64566f976cfa?w=300&h=300&fit=crop" alt="Philadelphia Roll">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Philadelphia Roll</div>
+          <div class="p2-card-desc">8 piezas, salmón, queso crema, palta</div>
+          <div class="p2-card-price">$8.900</div>
+        </div>
+      </div>
+
+      <div class="p2-card" onclick="p2AddItem(this, 12500)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Dragon Roll">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Dragon Roll</div>
+          <div class="p2-card-desc">10 piezas, langostino, palta, tobiko</div>
+          <div class="p2-card-price">$12.500</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Grid Sashimi -->
+    <div class="p2-section-title">Sashimi</div>
+    <div class="p2-grid">
+
+      <div class="p2-card" onclick="p2AddItem(this, 9900)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Salmón Sashimi">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Salmón Sashimi</div>
+          <div class="p2-card-desc">6 piezas, salmón fresco premium</div>
+          <div class="p2-card-price">$9.900</div>
+        </div>
+      </div>
+
+      <div class="p2-card" onclick="p2AddItem(this, 10900)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop" alt="Mixto Sashimi">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Mixto Sashimi</div>
+          <div class="p2-card-desc">8 piezas, salmón, atún, reineta</div>
+          <div class="p2-card-price">$10.900</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Grid Ramen -->
+    <div class="p2-section-title">Ramen</div>
+    <div class="p2-grid">
+
+      <div class="p2-card" onclick="p2AddItem(this, 11900)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=300&h=300&fit=crop" alt="Ramen Tonkotsu">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Ramen Tonkotsu</div>
+          <div class="p2-card-desc">Caldo 12h, chashu, nitamago, nori</div>
+          <div class="p2-card-price">$11.900</div>
+        </div>
+      </div>
+
+      <div class="p2-card" onclick="p2AddItem(this, 10500)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Ramen Miso">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Ramen Miso</div>
+          <div class="p2-card-desc">Caldo miso, tofu, brotes de soya</div>
+          <div class="p2-card-price">$10.500</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Grid Entradas -->
+    <div class="p2-section-title">Entradas</div>
+    <div class="p2-grid">
+
+      <div class="p2-card" onclick="p2AddItem(this, 7500)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Gyozas">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Gyozas de Cerdo</div>
+          <div class="p2-card-desc">6 piezas, cerdo, repollo, ponzu</div>
+          <div class="p2-card-price">$7.500</div>
+        </div>
+      </div>
+
+      <div class="p2-card" onclick="p2AddItem(this, 10900)">
+        <div class="p2-card-img-wrap">
+          <img class="p2-card-img" src="https://images.unsplash.com/photo-1534482421-64566f976cfa?w=300&h=300&fit=crop" alt="Tempura Ebi">
+          <button class="p2-add-circle">+</button>
+        </div>
+        <div class="p2-card-body">
+          <div class="p2-card-name">Tempura Ebi</div>
+          <div class="p2-card-desc">5 langostinos, crujiente, tentsuyu</div>
+          <div class="p2-card-price">$10.900</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-spacer"></div>
+
+    <!-- Barra de carrito sticky -->
+    <div class="p2-cart-bar" id="p2-cart" style="display:none;">
+      <div class="p2-cart-info">
+        <div class="p2-cart-count" id="p2-count-label">0 productos</div>
+        <div class="p2-cart-total" id="p2-total">$0</div>
+      </div>
+      <button class="p2-cart-cta" onclick="alert('¡Procediendo al pago!')">
+        Ver pedido →
+      </button>
+    </div>
+
+  </div><!-- fin propuesta 2 -->
+
+
+  <!-- ============================================================
+       PROPUESTA 3 — APP MINIMALISTA LÍNEAS
+  ============================================================ -->
+  <div class="proposal p3" id="proposal-3">
+
+    <!-- Header -->
+    <div class="p3-header">
+      <img class="p3-logo" src="https://ui-avatars.com/api/?name=GS&background=111&color=fff&size=80&font-size=0.4&bold=true" alt="Logo">
+      <div class="p3-header-name">Guff Sushi Nikkei</div>
+      <button class="p3-cart-icon-btn" id="p3-cart-icon-btn" style="display:none;" onclick="alert('Ver carrito')">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <div class="p3-cart-badge" id="p3-cart-badge">0</div>
+      </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="p3-search-wrap">
+      <div class="p3-search-wrap-inner">
+        <svg class="p3-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="p3-search" type="text" placeholder="Buscar platos...">
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="p3-tabs-wrap">
+      <div class="p3-tabs">
+        <button class="p3-tab active" onclick="p3SetTab(this)">Todo</button>
+        <button class="p3-tab" onclick="p3SetTab(this)">Rolls</button>
+        <button class="p3-tab" onclick="p3SetTab(this)">Sashimi</button>
+        <button class="p3-tab" onclick="p3SetTab(this)">Ramen</button>
+        <button class="p3-tab" onclick="p3SetTab(this)">Entradas</button>
+      </div>
+    </div>
+
+    <!-- Lista: Rolls -->
+    <div class="p3-section-label">Rolls</div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 8900)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Philadelphia Roll</div>
+        <div class="p3-item-desc">8 piezas · Salmón, queso crema, palta, pepino y sésamo tostado.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$8.900</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1534482421-64566f976cfa?w=300&h=300&fit=crop" alt="Philadelphia Roll">
+    </div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 12500)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Dragon Roll</div>
+        <div class="p3-item-desc">10 piezas · Langostino tempura, palta, tobiko y salsa spicy.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$12.500</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Dragon Roll">
+    </div>
+
+    <!-- Lista: Sashimi -->
+    <div class="p3-section-label">Sashimi</div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 9900)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Salmón Sashimi</div>
+        <div class="p3-item-desc">6 piezas · Salmón fresco premium, jengibre encurtido y wasabi.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$9.900</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Salmón Sashimi">
+    </div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 10900)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Mixto Sashimi</div>
+        <div class="p3-item-desc">8 piezas · Salmón, atún, reineta y pulpo. Soja premium.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$10.900</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop" alt="Mixto Sashimi">
+    </div>
+
+    <!-- Lista: Ramen -->
+    <div class="p3-section-label">Ramen</div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 11900)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Ramen Tonkotsu</div>
+        <div class="p3-item-desc">Caldo de cerdo 12h, fideos, huevo nitamago, chashu, nori.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$11.900</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=300&h=300&fit=crop" alt="Ramen Tonkotsu">
+    </div>
+
+    <!-- Lista: Entradas -->
+    <div class="p3-section-label">Entradas</div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 7500)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Gyozas de Cerdo</div>
+        <div class="p3-item-desc">6 piezas · Masa artesanal, cerdo y repollo, salsa ponzu.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$7.500</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Gyozas">
+    </div>
+
+    <div class="p3-item" onclick="p3AddItem(this, 10900)">
+      <div class="p3-item-info">
+        <div class="p3-item-name">Tempura Ebi</div>
+        <div class="p3-item-desc">5 piezas · Langostinos en tempura crujiente, salsa tentsuyu.</div>
+        <div class="p3-item-bottom">
+          <div class="p3-item-price">$10.900</div>
+          <button class="p3-add-chip">Agregar</button>
+        </div>
+      </div>
+      <img class="p3-item-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Tempura Ebi">
+    </div>
+
+    <div class="bottom-spacer"></div>
+
+    <!-- Barra carrito sticky -->
+    <div class="p3-cart-bar" id="p3-cart" style="display:none;">
+      <div class="p3-cart-left">
+        <div class="p3-cart-count-box" id="p3-count-box">0</div>
+        <div>
+          <div class="p3-cart-label">productos</div>
+          <div class="p3-cart-total-label" id="p3-total">$0</div>
+        </div>
+      </div>
+      <button class="p3-checkout-btn" onclick="alert('¡Ir al checkout!')">
+        Pagar
+        <span class="p3-checkout-arrow">→</span>
+      </button>
+    </div>
+
+  </div><!-- fin propuesta 3 -->
+
+
+  <!-- ============================================================
+       PROPUESTA 4 — TARJETAS CÁLIDAS HORIZONTALES (HYBRID)
+  ============================================================ -->
+  <div class="proposal p4 active" id="proposal-4">
+
+    <!-- Banner -->
+    <div class="p4-banner">
+      <img class="p4-banner-img" src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&h=400&fit=crop" alt="Guff Sushi Nikkei">
+      <div class="p4-banner-overlay"></div>
+      <div class="p4-banner-content">
+        <img class="p4-logo" src="https://ui-avatars.com/api/?name=GS&background=1a1a1a&color=fff&size=80" alt="Logo">
+        <div class="p4-restaurant-name">Guff Sushi Nikkei</div>
+        <div class="p4-banner-sub">Pedidos por WhatsApp &bull; Retiro y Delivery</div>
+      </div>
+    </div>
+
+    <!-- Pills categorías -->
+    <div class="p4-pills-wrap">
+      <div class="p4-pills">
+        <button class="p4-pill active" onclick="p4SetPill(this, 'all')">Todo</button>
+        <button class="p4-pill" onclick="p4SetPill(this, 'Rolls')">Rolls</button>
+        <button class="p4-pill" onclick="p4SetPill(this, 'Sashimi')">Sashimi</button>
+        <button class="p4-pill" onclick="p4SetPill(this, 'Ramen')">Ramen</button>
+        <button class="p4-pill" onclick="p4SetPill(this, 'Entradas')">Entradas</button>
+      </div>
+    </div>
+
+    <!-- Sección: Sashimi -->
+    <div class="p4-section" data-category="Sashimi">
+      <div class="p4-section-title">Sashimi</div>
+
+      <div class="p4-card" onclick="p4OpenModal(this)" data-name="Salmón Sashimi" data-price="9900" data-desc="6 piezas · Salmón fresco premium, jengibre encurtido y wasabi al gusto." data-img="https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop">
+        <div class="p4-card-info">
+          <div class="p4-card-name">Salmón Sashimi</div>
+          <div class="p4-card-desc">6 piezas · Salmón fresco premium, jengibre encurtido y wasabi al gusto.</div>
+          <div class="p4-card-price">$9.900</div>
+        </div>
+        <div class="p4-card-img-wrap">
+          <img class="p4-card-img" src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=300&h=300&fit=crop" alt="Salmón Sashimi">
+          <button class="p4-add-btn" onclick="event.stopPropagation(); p4OpenModal(this.closest('.p4-card'))">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Rolls -->
+    <div class="p4-section" data-category="Rolls">
+      <div class="p4-section-title">Rolls</div>
+
+      <div class="p4-card" onclick="p4OpenModal(this)" data-name="Philadelphia Roll" data-price="8900" data-desc="8 piezas · Salmón, queso crema, palta y pepino. Sésamo tostado por encima." data-img="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop">
+        <div class="p4-card-info">
+          <div class="p4-card-name">Philadelphia Roll</div>
+          <div class="p4-card-desc">8 piezas · Salmón, queso crema, palta y pepino. Sésamo tostado.</div>
+          <div class="p4-card-price">$8.900</div>
+        </div>
+        <div class="p4-card-img-wrap">
+          <img class="p4-card-img" src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop" alt="Philadelphia Roll">
+          <button class="p4-add-btn" onclick="event.stopPropagation(); p4OpenModal(this.closest('.p4-card'))">+</button>
+        </div>
+      </div>
+
+      <div class="p4-card" onclick="p4OpenModal(this)" data-name="Dragon Roll" data-price="12500" data-desc="10 piezas · Langostino tempura, palta, tobiko y salsa spicy de la casa." data-img="https://images.unsplash.com/photo-1534482421-64566f976cfa?w=300&h=300&fit=crop">
+        <div class="p4-card-info">
+          <div class="p4-card-name">Dragon Roll</div>
+          <div class="p4-card-desc">10 piezas · Langostino tempura, palta, tobiko y salsa spicy.</div>
+          <div class="p4-card-price">$12.500</div>
+        </div>
+        <div class="p4-card-img-wrap">
+          <img class="p4-card-img" src="https://images.unsplash.com/photo-1534482421-64566f976cfa?w=300&h=300&fit=crop" alt="Dragon Roll">
+          <button class="p4-add-btn" onclick="event.stopPropagation(); p4OpenModal(this.closest('.p4-card'))">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Ramen -->
+    <div class="p4-section" data-category="Ramen">
+      <div class="p4-section-title">Ramen</div>
+
+      <div class="p4-card" onclick="p4OpenModal(this)" data-name="Ramen Tonkotsu" data-price="11900" data-desc="Caldo de cerdo cocido 12 horas, fideos ramen, huevo nitamago, chashu y nori." data-img="https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=300&h=300&fit=crop">
+        <div class="p4-card-info">
+          <div class="p4-card-name">Ramen Tonkotsu</div>
+          <div class="p4-card-desc">Caldo de cerdo 12h, fideos ramen, huevo nitamago, chashu, nori.</div>
+          <div class="p4-card-price">$11.900</div>
+        </div>
+        <div class="p4-card-img-wrap">
+          <img class="p4-card-img" src="https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=300&h=300&fit=crop" alt="Ramen Tonkotsu">
+          <button class="p4-add-btn" onclick="event.stopPropagation(); p4OpenModal(this.closest('.p4-card'))">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Entradas -->
+    <div class="p4-section" data-category="Entradas">
+      <div class="p4-section-title">Entradas</div>
+
+      <div class="p4-card" onclick="p4OpenModal(this)" data-name="Gyozas" data-price="7500" data-desc="6 piezas · Masa artesanal con relleno de cerdo y repollo, salsa ponzu para mojar." data-img="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop">
+        <div class="p4-card-info">
+          <div class="p4-card-name">Gyozas</div>
+          <div class="p4-card-desc">6 piezas · Masa artesanal, cerdo y repollo, salsa ponzu.</div>
+          <div class="p4-card-price">$7.500</div>
+        </div>
+        <div class="p4-card-img-wrap">
+          <img class="p4-card-img" src="https://images.unsplash.com/photo-1562802378-063ec186a863?w=300&h=300&fit=crop" alt="Gyozas">
+          <button class="p4-add-btn" onclick="event.stopPropagation(); p4OpenModal(this.closest('.p4-card'))">+</button>
+        </div>
+      </div>
+
+      <div class="p4-card" onclick="p4OpenModal(this)" data-name="Tempura Ebi" data-price="10900" data-desc="5 piezas · Langostinos en tempura crujiente dorada, salsa tentsuyu y jengibre." data-img="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop">
+        <div class="p4-card-info">
+          <div class="p4-card-name">Tempura Ebi</div>
+          <div class="p4-card-desc">5 piezas · Langostinos en tempura crujiente, salsa tentsuyu.</div>
+          <div class="p4-card-price">$10.900</div>
+        </div>
+        <div class="p4-card-img-wrap">
+          <img class="p4-card-img" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop" alt="Tempura Ebi">
+          <button class="p4-add-btn" onclick="event.stopPropagation(); p4OpenModal(this.closest('.p4-card'))">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-spacer"></div>
+
+    <!-- Barra de carrito sticky -->
+    <div class="p4-cart-bar" id="p4-cart" style="display:none;">
+      <button class="p4-cart-btn" onclick="alert('¡Procediendo al pedido por WhatsApp!')">
+        <div class="p4-cart-btn-left">
+          <span>Ver carrito</span>
+          <span class="p4-cart-btn-count" id="p4-count">0 items</span>
+        </div>
+        <span class="p4-cart-btn-total" id="p4-total">$0</span>
+      </button>
+    </div>
+
+  </div><!-- fin propuesta 4 -->
+
+</div><!-- fin proposals-wrapper -->
+
+
+<!-- ============================================================
+     MODAL PROPUESTA 4
+============================================================ -->
+<div class="p4-modal-overlay" id="p4-modal-overlay" onclick="p4CloseModal(event)">
+  <div class="p4-modal" id="p4-modal">
+
+    <button class="p4-modal-close" onclick="p4CloseModalDirect()">✕</button>
+
+    <!-- Imagen con info superpuesta -->
+    <div class="p4-modal-img-wrap">
+      <img class="p4-modal-img" id="p4-modal-img" src="" alt="">
+      <div class="p4-modal-img-overlay"></div>
+      <div class="p4-modal-img-info">
+        <div class="p4-modal-dish-name" id="p4-modal-name"></div>
+        <div class="p4-modal-dish-price" id="p4-modal-price"></div>
+        <div class="p4-modal-dish-desc" id="p4-modal-desc"></div>
+      </div>
+    </div>
+
+    <!-- Body del modal -->
+    <div class="p4-modal-body">
+
+      <!-- Tamaño -->
+      <div class="p4-opt-section">
+        <div class="p4-opt-title">Tamaño</div>
+        <label class="p4-radio-item">
+          <input class="p4-radio-input" type="radio" name="p4-size" value="0" checked onchange="p4UpdateTotal()">
+          <span class="p4-radio-label">Regular</span>
+          <span class="p4-radio-extra">Incluido</span>
+        </label>
+        <label class="p4-radio-item">
+          <input class="p4-radio-input" type="radio" name="p4-size" value="2000" onchange="p4UpdateTotal()">
+          <span class="p4-radio-label">Grande</span>
+          <span class="p4-radio-extra">+$2.000</span>
+        </label>
+        <label class="p4-radio-item">
+          <input class="p4-radio-input" type="radio" name="p4-size" value="4500" onchange="p4UpdateTotal()">
+          <span class="p4-radio-label">Familiar</span>
+          <span class="p4-radio-extra">+$4.500</span>
+        </label>
+      </div>
+
+      <!-- Extras -->
+      <div class="p4-opt-section">
+        <div class="p4-opt-title">Extras</div>
+        <label class="p4-check-item">
+          <input class="p4-check-input" type="checkbox" value="500" onchange="p4UpdateTotal()">
+          <span class="p4-check-label">Wasabi extra</span>
+          <span class="p4-check-extra">+$500</span>
+        </label>
+        <label class="p4-check-item">
+          <input class="p4-check-input" type="checkbox" value="0" onchange="p4UpdateTotal()">
+          <span class="p4-check-label">Jengibre extra</span>
+          <span class="p4-check-extra">Gratis</span>
+        </label>
+        <label class="p4-check-item">
+          <input class="p4-check-input" type="checkbox" value="800" onchange="p4UpdateTotal()">
+          <span class="p4-check-label">Salsa ponzu</span>
+          <span class="p4-check-extra">+$800</span>
+        </label>
+      </div>
+
+      <!-- Nota -->
+      <div class="p4-opt-section">
+        <div class="p4-opt-title">Nota</div>
+        <textarea class="p4-nota-textarea" placeholder="¿Alguna indicación especial?"></textarea>
+      </div>
+
+      <!-- Stepper cantidad -->
+      <div class="p4-stepper-row">
+        <button class="p4-stepper-btn" onclick="p4Decrement()">−</button>
+        <span class="p4-stepper-qty" id="p4-qty">1</span>
+        <button class="p4-stepper-btn" onclick="p4Increment()">+</button>
+      </div>
+
+      <!-- Botón agregar al carrito -->
+      <button class="p4-modal-add-btn" id="p4-modal-add-btn" onclick="p4AddToCart()">
+        Agregar al carrito · <span id="p4-modal-total">$0</span>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // ── Navegación entre propuestas ──
+  function showProposal(n, btn) {
+    document.querySelectorAll('.proposal').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.proposal-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('proposal-' + n).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── Formateo CLP ──
+  function formatCLP(n) {
+    return '$' + n.toLocaleString('es-CL');
+  }
+
+  // ── PROPUESTA 1 ──
+  var p1Items = 0, p1Total = 0;
+
+  function p1AddItem(card, price) {
+    p1Items++;
+    p1Total += price;
+    document.getElementById('p1-count').textContent = p1Items;
+    document.getElementById('p1-total').textContent = 'Ver pedido · ' + formatCLP(p1Total);
+    var cart = document.getElementById('p1-cart');
+    cart.style.display = 'flex';
+
+    // Animación al botón +
+    var btn = card.querySelector('.p1-add-btn');
+    if (btn) {
+      btn.style.background = '#fff';
+      btn.style.color = '#25D366';
+      btn.textContent = '✓';
+      setTimeout(function() {
+        btn.style.background = '#25D366';
+        btn.style.color = '#111';
+        btn.textContent = '+';
+      }, 800);
+    }
+  }
+
+  function p1SetPill(btn) {
+    document.querySelectorAll('.p1-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── PROPUESTA 2 ──
+  var p2Items = 0, p2Total = 0;
+
+  function p2AddItem(card, price) {
+    p2Items++;
+    p2Total += price;
+    document.getElementById('p2-count-label').textContent = p2Items + (p2Items === 1 ? ' producto' : ' productos');
+    document.getElementById('p2-total').textContent = formatCLP(p2Total);
+    var cart = document.getElementById('p2-cart');
+    cart.style.display = 'flex';
+
+    var btn = card.querySelector('.p2-add-circle');
+    if (btn) {
+      btn.textContent = '✓';
+      btn.style.background = '#10b981';
+      setTimeout(function() {
+        btn.textContent = '+';
+        btn.style.background = '#F59E0B';
+      }, 800);
+    }
+  }
+
+  function p2SetPill(btn) {
+    document.querySelectorAll('.p2-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── PROPUESTA 3 ──
+  var p3Items = 0, p3Total = 0;
+
+  function p3AddItem(row, price) {
+    p3Items++;
+    p3Total += price;
+    document.getElementById('p3-count-box').textContent = p3Items;
+    document.getElementById('p3-total').textContent = formatCLP(p3Total);
+    document.getElementById('p3-cart-badge').textContent = p3Items;
+
+    var cart = document.getElementById('p3-cart');
+    var iconBtn = document.getElementById('p3-cart-icon-btn');
+    cart.style.display = 'flex';
+    iconBtn.style.display = 'flex';
+
+    var chip = row.querySelector('.p3-add-chip');
+    if (chip) {
+      chip.textContent = '✓ Agregado';
+      chip.style.background = '#111';
+      chip.style.color = '#fff';
+      chip.style.borderColor = '#111';
+      setTimeout(function() {
+        chip.textContent = 'Agregar';
+        chip.style.background = '#fff';
+        chip.style.color = '#111';
+        chip.style.borderColor = '#e5e7eb';
+      }, 1000);
+    }
+  }
+
+  function p3SetTab(btn) {
+    document.querySelectorAll('.p3-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── PROPUESTA 4 ──
+  var p4CartItems = 0;
+  var p4CartTotal = 0;
+  var p4CurrentBasePrice = 0;
+  var p4CurrentQty = 1;
+
+  // Filtrado por categoría
+  function p4SetPill(btn, category) {
+    document.querySelectorAll('.p4-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+
+    var sections = document.querySelectorAll('#proposal-4 .p4-section');
+    sections.forEach(function(sec) {
+      if (category === 'all' || sec.dataset.category === category) {
+        sec.style.display = 'block';
+      } else {
+        sec.style.display = 'none';
+      }
+    });
+  }
+
+  // Abrir modal con datos del plato
+  function p4OpenModal(card) {
+    var name = card.dataset.name;
+    var price = parseInt(card.dataset.price, 10);
+    var desc = card.dataset.desc;
+    var img = card.dataset.img;
+
+    p4CurrentBasePrice = price;
+    p4CurrentQty = 1;
+
+    document.getElementById('p4-modal-img').src = img;
+    document.getElementById('p4-modal-img').alt = name;
+    document.getElementById('p4-modal-name').textContent = name;
+    document.getElementById('p4-modal-price').textContent = formatCLP(price);
+    document.getElementById('p4-modal-desc').textContent = desc;
+    document.getElementById('p4-qty').textContent = '1';
+
+    // Reset opciones
+    document.querySelectorAll('input[name="p4-size"]')[0].checked = true;
+    document.querySelectorAll('.p4-check-input').forEach(function(cb) { cb.checked = false; });
+    document.querySelector('.p4-nota-textarea').value = '';
+
+    p4UpdateTotal();
+
+    document.getElementById('p4-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Cerrar modal al click en overlay (fuera del sheet)
+  function p4CloseModal(event) {
+    if (event.target === document.getElementById('p4-modal-overlay')) {
+      p4CloseModalDirect();
+    }
+  }
+
+  function p4CloseModalDirect() {
+    document.getElementById('p4-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Stepper
+  function p4Increment() {
+    p4CurrentQty++;
+    document.getElementById('p4-qty').textContent = p4CurrentQty;
+    p4UpdateTotal();
+  }
+
+  function p4Decrement() {
+    if (p4CurrentQty > 1) {
+      p4CurrentQty--;
+      document.getElementById('p4-qty').textContent = p4CurrentQty;
+      p4UpdateTotal();
+    }
+  }
+
+  // Calcular y mostrar total del modal
+  function p4UpdateTotal() {
+    var sizeExtra = 0;
+    var selectedSize = document.querySelector('input[name="p4-size"]:checked');
+    if (selectedSize) sizeExtra = parseInt(selectedSize.value, 10);
+
+    var extrasTotal = 0;
+    document.querySelectorAll('.p4-check-input:checked').forEach(function(cb) {
+      extrasTotal += parseInt(cb.value, 10);
+    });
+
+    var lineTotal = (p4CurrentBasePrice + sizeExtra + extrasTotal) * p4CurrentQty;
+    document.getElementById('p4-modal-total').textContent = formatCLP(lineTotal);
+  }
+
+  // Agregar al carrito
+  function p4AddToCart() {
+    var sizeExtra = 0;
+    var selectedSize = document.querySelector('input[name="p4-size"]:checked');
+    if (selectedSize) sizeExtra = parseInt(selectedSize.value, 10);
+
+    var extrasTotal = 0;
+    document.querySelectorAll('.p4-check-input:checked').forEach(function(cb) {
+      extrasTotal += parseInt(cb.value, 10);
+    });
+
+    var lineTotal = (p4CurrentBasePrice + sizeExtra + extrasTotal) * p4CurrentQty;
+    p4CartItems += p4CurrentQty;
+    p4CartTotal += lineTotal;
+
+    document.getElementById('p4-count').textContent = p4CartItems + (p4CartItems === 1 ? ' item' : ' items');
+    document.getElementById('p4-total').textContent = formatCLP(p4CartTotal);
+
+    var cartBar = document.getElementById('p4-cart');
+    cartBar.style.display = 'block';
+
+    p4CloseModalDirect();
+  }
+</script>
+
+</body>
+</html>

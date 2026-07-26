@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import type { SelectedOption } from "./OrderCartContext";
+import { useOrderLang } from "./OrderLangContext";
 
 const F = "var(--font-display, 'Inter', sans-serif)";
 const FB = "var(--font-body, 'Inter', sans-serif)";
@@ -48,9 +49,9 @@ function formatCLP(n: number) {
 }
 
 export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
+  const { s } = useOrderLang();
   const groups: ModifierGroup[] = dish.modifierTemplates.flatMap(t => t.groups);
 
-  // Build initial selection state: { [groupId]: Set<optionId> }
   const [selections, setSelections] = useState<Record<string, Set<string>>>(() => {
     const init: Record<string, Set<string>> = {};
     for (const g of groups) {
@@ -62,7 +63,6 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
 
-  // Close on escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -78,7 +78,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
         if (group.maxSelect === 1) {
           cur.clear();
         } else if (cur.size >= group.maxSelect) {
-          return prev; // max reached
+          return prev;
         }
         cur.add(optionId);
       }
@@ -86,16 +86,14 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
     });
   };
 
-  // Validate: all required groups have >= minSelect selections
   const isValid = groups.every(g => {
     if (!g.required && g.minSelect === 0) return true;
     return (selections[g.id]?.size ?? 0) >= Math.max(g.minSelect, g.required ? 1 : 0);
   });
 
-  // Calculate price adjustment total
   const priceAdjustment = groups.reduce((sum, g) => {
     const sel = selections[g.id] ?? new Set();
-    return sum + g.options.filter(o => sel.has(o.id)).reduce((s, o) => s + o.priceAdjustment, 0);
+    return sum + g.options.filter(o => sel.has(o.id)).reduce((acc, o) => acc + o.priceAdjustment, 0);
   }, 0);
   const unitTotal = dish.price + priceAdjustment;
 
@@ -158,7 +156,6 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
 
         {/* Scrollable content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "18px 18px 0" }}>
-          {/* Dish info */}
           <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--carta-text, #111)", margin: "0 0 4px" }}>
             {dish.name}
           </h2>
@@ -181,14 +178,13 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                   <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--carta-text, #111)", margin: 0 }}>
                     {group.name}
                   </p>
-                  {group.required && (
+                  {group.required ? (
                     <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "#fff", background: "var(--carta-accent, #F4A623)", borderRadius: 99, padding: "2px 7px", fontWeight: 600 }}>
-                      Obligatorio
+                      {s.required}
                     </span>
-                  )}
-                  {!group.required && (
+                  ) : (
                     <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--carta-text2, #777)", background: "var(--carta-surface, #f2f2f2)", borderRadius: 99, padding: "2px 7px" }}>
-                      Opcional{group.maxSelect > 1 ? ` (máx. ${group.maxSelect})` : ""}
+                      {s.optional}{group.maxSelect > 1 ? ` (${s.maxN(group.maxSelect)})` : ""}
                     </span>
                   )}
                 </div>
@@ -207,7 +203,6 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                           transition: "all 0.15s", textAlign: "left",
                         }}
                       >
-                        {/* Checkbox / radio indicator */}
                         <span style={{
                           width: 18, height: 18, borderRadius: isMulti ? 4 : "50%", flexShrink: 0,
                           border: active ? "none" : "2px solid var(--carta-border, #ccc)",
@@ -243,12 +238,12 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
           {/* Notes */}
           <div style={{ marginBottom: 18 }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-text2, #777)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: ".04em" }}>
-              Notas del plato (opcional)
+              {s.dishNotes}
             </p>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Ej: Sin cebolla, bien cocido..."
+              placeholder={s.dishNotesPlaceholder}
               style={{
                 width: "100%", padding: "10px 12px", borderRadius: 10, resize: "none",
                 border: "1.5px solid var(--carta-border, #e5e5e5)", fontFamily: FB, fontSize: "0.83rem",
@@ -263,7 +258,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
         <div style={{ padding: "14px 18px", borderTop: "1px solid var(--carta-border, #eee)", background: "var(--carta-bg, #fff)", flexShrink: 0, paddingBottom: "max(14px, env(safe-area-inset-bottom, 14px))" }}>
           {!isValid && (
             <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "#ef4444", margin: "0 0 10px", textAlign: "center" }}>
-              Selecciona las opciones obligatorias para continuar
+              {s.selectRequired}
             </p>
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -299,7 +294,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
             >
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <ShoppingBag size={16} />
-                Agregar al carrito
+                {s.addToCart}
               </div>
               <span>{formatCLP(unitTotal * quantity)}</span>
             </button>
