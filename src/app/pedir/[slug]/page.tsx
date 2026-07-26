@@ -39,8 +39,9 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
 
   if (!restaurant || !config) return notFound();
 
-  // Only PREMIUM can use ordering
-  if (config.plan !== "PREMIUM") {
+  // Only PREMIUM can use ordering (excepción: el-menu-de-la-esquina con plan GOLD)
+  const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
+  if (config.plan !== "PREMIUM" && !ORDERING_EXCEPTIONS.includes(slug)) {
     return (
       <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-body, sans-serif)", background: "#fafafa" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>

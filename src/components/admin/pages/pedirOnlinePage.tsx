@@ -149,8 +149,9 @@ export default function PedirOnlinePage() {
 
   if (loading) return <SkeletonLoading />;
 
-  // Premium gate
-  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM");
+  // Premium gate (excepción: el-menu-de-la-esquina tiene acceso con plan GOLD)
+  const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
+  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM") || ORDERING_EXCEPTIONS.includes(data?.slug ?? "");
   if (!data || !isPremium) {
     return (
       <div style={{ padding: "32px 20px", textAlign: "center" }}>
