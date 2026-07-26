@@ -114,7 +114,6 @@ export default async function CartaPage({
     const isMenuLive =
       r.billingExempt ||
       r.isDemo ||
-      r.plan === "FREE" ||   // plan gratis siempre visible (incluye downgrade desde plan pago)
       (r.subscriptionStatus === "ACTIVE" && periodEnd && periodEnd >= startOfToday) ||
       (r.subscriptionStatus === "TRIALING" && trialEnd && trialEnd >= startOfToday) ||
       (r.subscriptionStatus === "CANCELED" && periodEnd && periodEnd >= startOfToday);
