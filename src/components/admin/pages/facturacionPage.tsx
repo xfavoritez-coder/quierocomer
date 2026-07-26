@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useContext } from "react";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import { toast } from "sonner";
-import { Receipt, FileText } from "lucide-react";
+import { Receipt, ChevronDown } from "lucide-react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
@@ -54,6 +54,7 @@ export default function FacturacionPage() {
   const ctx = useContext(SessionContext);
   const rid = ctx?.selectedRestaurantId || null;
 
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState<BillingInfo | null>(null);
@@ -124,52 +125,68 @@ export default function FacturacionPage() {
     setSaving(false);
   };
 
-  if (loading) return <SkeletonLoading type="form" />;
-  if (!rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
+  if (loading) return null;
+  if (!rid) return null;
+
+  const isComplete = info?.isComplete;
 
   return (
-    <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "24px 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Receipt size={20} color="var(--adm-text3)" /> Datos facturación</h1>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>
-        Estos datos los usamos para emitir tu factura electrónica cada mes
-      </p>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
+      {/* Header toggle */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "16px 20px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+      >
+        <Receipt size={18} color={GOLD} />
+        <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", flex: 1 }}>
+          Datos de facturación
+        </span>
+        {isComplete !== undefined && (
+          <span style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: isComplete ? "rgba(22,163,74,0.1)" : "rgba(234,179,8,0.1)", color: isComplete ? "#16a34a" : "#a16207", border: `1px solid ${isComplete ? "rgba(22,163,74,0.25)" : "rgba(234,179,8,0.25)"}` }}>
+            {isComplete ? "Completo" : "Incompleto"}
+          </span>
+        )}
+        <ChevronDown size={16} color="var(--adm-text3)" style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }} />
+      </button>
 
-
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20 }}>
-        <Field label="Razón social" required>
-          <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={inputStyle} placeholder="Restaurantes SpA" />
-        </Field>
-        <Field label="RUT" required>
-          <input value={rut} onChange={(e) => setRut(e.target.value)} style={inputStyle} placeholder="76.123.456-7" />
-        </Field>
-        <Field label="Giro">
-          <input value={giro} onChange={(e) => setGiro(e.target.value)} style={inputStyle} placeholder="Restaurante / Servicio de comida" />
-        </Field>
-
-        <Field label="Dirección" required>
-          <input value={address} onChange={(e) => setAddress(e.target.value)} style={inputStyle} placeholder="Av. Providencia 1234, oficina 502" />
-        </Field>
-        <Field label="Comuna / Ciudad" required>
-          <input value={city} onChange={(e) => setCity(e.target.value)} style={inputStyle} placeholder="Providencia, Santiago" />
-        </Field>
-
-        <Field label="Email facturación" required>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} placeholder="contabilidad@tu-empresa.cl" type="email" />
-        </Field>
-        <Field label="Nombre responsable">
-          <input value={contactName} onChange={(e) => setContactName(e.target.value)} style={inputStyle} placeholder="Juan Pérez" />
-        </Field>
-        <Field label="Teléfono">
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} style={inputStyle} placeholder="+56 2 1234 5678" type="tel" />
-        </Field>
-
-        <button onClick={handleSave} disabled={saving} style={{
-          width: "100%", padding: 12, background: GOLD, color: "white", border: "none", borderRadius: 8,
-          fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: saving ? "wait" : "pointer", marginTop: 12,
-        }}>
-          {saving ? "Guardando..." : "Guardar datos de facturación"}
-        </button>
-      </div>
+      {/* Collapsible content */}
+      {open && (
+        <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--adm-card-border)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", margin: "14px 0 16px" }}>
+            Estos datos los usamos para emitir tu factura electrónica cada mes.
+          </p>
+          <Field label="Razón social" required>
+            <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={inputStyle} placeholder="Restaurantes SpA" />
+          </Field>
+          <Field label="RUT" required>
+            <input value={rut} onChange={(e) => setRut(e.target.value)} style={inputStyle} placeholder="76.123.456-7" />
+          </Field>
+          <Field label="Giro">
+            <input value={giro} onChange={(e) => setGiro(e.target.value)} style={inputStyle} placeholder="Restaurante / Servicio de comida" />
+          </Field>
+          <Field label="Dirección" required>
+            <input value={address} onChange={(e) => setAddress(e.target.value)} style={inputStyle} placeholder="Av. Providencia 1234, oficina 502" />
+          </Field>
+          <Field label="Comuna / Ciudad" required>
+            <input value={city} onChange={(e) => setCity(e.target.value)} style={inputStyle} placeholder="Providencia, Santiago" />
+          </Field>
+          <Field label="Email facturación" required>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} placeholder="contabilidad@tu-empresa.cl" type="email" />
+          </Field>
+          <Field label="Nombre responsable">
+            <input value={contactName} onChange={(e) => setContactName(e.target.value)} style={inputStyle} placeholder="Juan Pérez" />
+          </Field>
+          <Field label="Teléfono">
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} style={inputStyle} placeholder="+56 2 1234 5678" type="tel" />
+          </Field>
+          <button onClick={handleSave} disabled={saving} style={{
+            width: "100%", padding: 12, background: GOLD, color: "white", border: "none", borderRadius: 8,
+            fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: saving ? "wait" : "pointer", marginTop: 4,
+          }}>
+            {saving ? "Guardando..." : "Guardar datos de facturación"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
