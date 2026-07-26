@@ -284,14 +284,14 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                   }}>
                     <div>
                       <p style={{
-                        fontFamily: F, fontWeight: 700, fontSize: "0.88rem",
+                        fontFamily: F, fontWeight: 700, fontSize: "1.1rem",
                         color: "var(--carta-text)", lineHeight: 1.3, margin: "0 0 4px",
                       }}>
                         {dish.name}
                       </p>
                       {dish.description && (
                         <p style={{
-                          fontFamily: FB, fontSize: "0.8rem", color: "var(--carta-text2)", margin: 0,
+                          fontFamily: FB, fontSize: "0.95rem", color: "var(--carta-text2)", margin: 0,
                           display: "-webkit-box", WebkitLineClamp: 3,
                           WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5,
                         }}>
