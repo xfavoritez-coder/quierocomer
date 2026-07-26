@@ -36,6 +36,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
   const showLive = opts.hasToteat && opts.plan === "PREMIUM";
   const SIDEBAR_NAV = [
     { icon: Home, labelKey: "nav_home", href: base },
+    ...(opts.plan === "PREMIUM" ? [{ icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" }] : []),
     ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
     { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
     { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
@@ -47,7 +48,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
     { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
     { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
-    ...(opts.plan === "PREMIUM" ? [{ icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online` }] : []),
     { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
     { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
   ];
@@ -171,6 +171,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           {SIDEBAR_NAV.map(item => {
             const active = isActive(item.href);
             const Icon = item.icon;
+            const badge = (item as any).badge;
             return (
               <Link key={item.href} href={item.href} onClick={() => { if (active) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
                 display: "flex", alignItems: "center", gap: 10, padding: "0 16px", height: 44, textDecoration: "none",
@@ -178,7 +179,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 fontFamily: FB, fontSize: "0.84rem", fontWeight: 500, borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
               }}>
                 <Icon size={18} strokeWidth={active ? 2.2 : 1.6} />
-                <span>{t(item.labelKey)}</span>
+                <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
+                {badge && <span style={{ fontSize: "0.6rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>{badge}</span>}
               </Link>
             );
           })}
@@ -271,10 +273,12 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <div style={{ padding: "8px 16px 16px" }}>
             {MORE_ITEMS.map((item) => {
               const Icon = item.icon;
+              const badge = (item as any).badge;
               return (
                 <Link key={item.href} href={item.href} onClick={closeMore} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 4px", textDecoration: "none", borderBottom: "1px solid var(--adm-card-border)" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     <Icon size={18} color={GOLD} />
+                    {badge && <span style={{ position: "absolute", top: -4, right: -4, fontSize: "0.55rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.5 }}>{badge}</span>}
                   </div>
                   <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{t(item.labelKey)}</span>
                   <ChevronRight size={16} color="var(--adm-text3)" />

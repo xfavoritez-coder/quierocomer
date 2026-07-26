@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { ShoppingCart, Copy, Check, ExternalLink, Truck, Package, Layers, Phone, Clock, FileText, DollarSign, Lock } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
@@ -49,6 +50,7 @@ const DELIVERY_OPTIONS = [
 
 export default function PedirOnlinePage() {
   const { selectedRestaurantId } = useAdminSession();
+  const { activePlan } = usePanelSession();
   const rid = selectedRestaurantId;
 
   const [loading, setLoading] = useState(true);
@@ -83,6 +85,31 @@ export default function PedirOnlinePage() {
       .finally(() => setLoading(false));
   }, [rid]);
 
+  const [togglingEnabled, setTogglingEnabled] = useState(false);
+
+  const toggleEnabled = async () => {
+    if (!rid || togglingEnabled) return;
+    const newVal = !enabled;
+    setEnabled(newVal);
+    setTogglingEnabled(true);
+    try {
+      const res = await fetch(`/api/admin/locales/${rid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderingEnabled: newVal }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setData(updated);
+        toast.success(newVal ? "Pedidos online activados" : "Pedidos online desactivados");
+      } else {
+        setEnabled(!newVal);
+        toast.error("Error al guardar");
+      }
+    } catch { setEnabled(!newVal); toast.error("Error de conexión"); }
+    setTogglingEnabled(false);
+  };
+
   const save = async () => {
     if (!rid) return;
     setSaving(true);
@@ -91,7 +118,6 @@ export default function PedirOnlinePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderingEnabled: enabled,
           orderingPhone: phone.trim() || null,
           orderingDelivery: delivery,
           orderingMinAmount: minAmount ? parseInt(minAmount, 10) : null,
@@ -124,7 +150,8 @@ export default function PedirOnlinePage() {
   if (loading) return <SkeletonLoading />;
 
   // Premium gate
-  if (!data || data.plan !== "PREMIUM") {
+  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM");
+  if (!data || !isPremium) {
     return (
       <div style={{ padding: "32px 20px", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
@@ -171,7 +198,8 @@ export default function PedirOnlinePage() {
             </p>
           </div>
           <button
-            onClick={() => setEnabled(!enabled)}
+            onClick={toggleEnabled}
+            disabled={togglingEnabled}
             style={{
               width: 48, height: 28, borderRadius: 999, border: "none", cursor: "pointer",
               background: enabled ? "#16a34a" : "var(--adm-input-border)",
