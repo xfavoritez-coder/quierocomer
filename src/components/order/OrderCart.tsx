@@ -1,7 +1,6 @@
 "use client";
 import { X, Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { useCart } from "./OrderCartContext";
-import { useOrderLang } from "./OrderLangContext";
 
 const F = "var(--font-display, 'Inter', sans-serif)";
 const FB = "var(--font-body, 'Inter', sans-serif)";
@@ -17,7 +16,6 @@ interface Props {
 
 export default function OrderCart({ onClose, onCheckout }: Props) {
   const { items, updateQuantity, removeItem, total } = useCart();
-  const { s } = useOrderLang();
 
   return (
     <div
@@ -41,7 +39,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <ShoppingCart size={18} color="var(--carta-accent, #F4A623)" />
             <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.95rem", color: "var(--carta-text, #111)" }}>
-              {s.myOrder}
+              Mi pedido
             </span>
           </div>
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -55,7 +53,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
             <div style={{ textAlign: "center", padding: "40px 0" }}>
               <ShoppingCart size={36} color="var(--carta-border, #ddd)" style={{ margin: "0 auto 12px", display: "block" }} />
               <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--carta-text2, #777)", margin: 0 }}>
-                {s.emptyCart}
+                Tu carrito está vacío
               </p>
             </div>
           ) : (
@@ -118,14 +116,14 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
         {items.length > 0 && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid var(--carta-border, #eee)", background: "var(--carta-bg, #fff)", flexShrink: 0, paddingBottom: "max(14px, env(safe-area-inset-bottom, 14px))" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-              <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--carta-text2, #666)" }}>{s.orderTotal}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--carta-text2, #666)" }}>Total del pedido</span>
               <span style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--carta-text, #111)" }}>{formatCLP(total)}</span>
             </div>
             <button
               onClick={onCheckout}
               style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "none", background: "var(--carta-accent, #F4A623)", color: "#fff", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}
             >
-              {s.goCheckout}
+              Ir al checkout →
             </button>
           </div>
         )}

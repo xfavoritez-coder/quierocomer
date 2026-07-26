@@ -4,7 +4,6 @@ import { getRestaurantBySlug } from "@/lib/qr/queries/getRestaurant";
 import { prisma } from "@/lib/prisma";
 import OrderMenuPage from "@/components/order/OrderMenuPage";
 import { OrderCartProvider } from "@/components/order/OrderCartContext";
-import { OrderLangProvider } from "@/components/order/OrderLangContext";
 
 export const dynamic = "force-dynamic";
 
@@ -76,13 +75,11 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   };
 
   return (
-    <OrderLangProvider>
-      <OrderCartProvider>
-        <OrderMenuPage
-          restaurant={restaurant as any}
-          orderingConfig={orderingConfig}
-        />
-      </OrderCartProvider>
-    </OrderLangProvider>
+    <OrderCartProvider>
+      <OrderMenuPage
+        restaurant={restaurant as any}
+        orderingConfig={orderingConfig}
+      />
+    </OrderCartProvider>
   );
 }

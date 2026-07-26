@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck } from "lucide-react";
 import { useCart } from "./OrderCartContext";
-import { useOrderLang } from "./OrderLangContext";
 
 const F = "var(--font-display, 'Inter', sans-serif)";
 const FB = "var(--font-body, 'Inter', sans-serif)";
@@ -39,7 +38,6 @@ const inputStyle: React.CSSProperties = {
 
 export default function OrderCheckout({ restaurantName, restaurantSlug, orderingConfig, onBack, onClose }: Props) {
   const { items, total, clearCart } = useCart();
-  const { s } = useOrderLang();
   const { delivery, minAmount, waitTime, note, address, phone } = orderingConfig;
 
   const showPickup = delivery === "PICKUP" || delivery === "BOTH";
@@ -61,35 +59,35 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
   const buildWhatsAppMessage = () => {
     const lines: string[] = [];
-    lines.push(s.waMsgTitle(restaurantName));
+    lines.push(`*Pedido - ${restaurantName}*`);
     lines.push("");
-    lines.push(`*${s.waMsgName}* ${name.trim()}`);
-    lines.push(`*${s.waMsgPhone}* ${clientPhone.trim()}`);
-    lines.push(`*${s.waMsgType}* ${orderType === "PICKUP" ? s.waMsgPickup : s.waMsgDelivery}`);
+    lines.push(`*Nombre:* ${name.trim()}`);
+    lines.push(`*Telefono:* ${clientPhone.trim()}`);
+    lines.push(`*Tipo:* ${orderType === "PICKUP" ? "Retiro en local" : "Delivery"}`);
     if (orderType === "DELIVERY" && clientAddress.trim()) {
-      lines.push(`*${s.waMsgAddress}* ${clientAddress.trim()}`);
+      lines.push(`*Direccion:* ${clientAddress.trim()}`);
     }
     if (orderType === "PICKUP" && address) {
-      lines.push(`*${s.waMsgLocal}* ${address}`);
+      lines.push(`*Local:* ${address}`);
     }
     lines.push("");
-    lines.push(s.waMsgProducts);
+    lines.push("*Productos:*");
     for (const item of items) {
       const optText = item.selectedOptions.length > 0
         ? item.selectedOptions.map(o => `  - ${o.optionName}${o.priceAdjustment !== 0 ? ` (${o.priceAdjustment > 0 ? "+" : ""}${formatCLP(o.priceAdjustment)})` : ""}`).join("\n")
         : null;
       lines.push(`- ${item.quantity}x ${item.dishName} - ${formatCLP(item.unitTotal * item.quantity)}`);
       if (optText) lines.push(optText);
-      if (item.notes) lines.push(`  ${s.itemNote} ${item.notes}`);
+      if (item.notes) lines.push(`  Nota: ${item.notes}`);
     }
     lines.push("");
-    lines.push(s.waMsgTotal(formatCLP(total)));
+    lines.push(`*Total: ${formatCLP(total)}*`);
     if (orderNotes.trim()) {
       lines.push("");
-      lines.push(`*${s.waMsgNotes}* ${orderNotes.trim()}`);
+      lines.push(`*Notas:* ${orderNotes.trim()}`);
     }
     lines.push("");
-    lines.push(s.waMsgFooter(restaurantSlug));
+    lines.push(`_Pedido enviado desde quierocomer.com/pedir/${restaurantSlug}_`);
     return lines.join("\n");
   };
 
@@ -99,7 +97,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     const waPhone = phone.replace(/\D/g, "");
     if (!waPhone) {
       navigator.clipboard?.writeText(msg).catch(() => {});
-      alert(s.noPhone);
+      alert("El local no tiene número de WhatsApp configurado. Se copió el pedido al portapapeles.");
       return;
     }
     const url = `https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`;
@@ -131,7 +129,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <ChevronLeft size={18} color="var(--carta-text2, #666)" />
           </button>
           <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.95rem", color: "var(--carta-text, #111)", flex: 1 }}>
-            {s.checkoutTitle}
+            Finalizar pedido
           </span>
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <X size={15} color="var(--carta-text2, #666)" />
@@ -145,7 +143,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
           {delivery === "BOTH" && (
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
-                {s.howReceive}
+                ¿Cómo quieres recibir tu pedido?
               </p>
               <div style={{ display: "flex", gap: 8 }}>
                 {showPickup && (
@@ -159,7 +157,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                     }}
                   >
                     <Package size={18} color={orderType === "PICKUP" ? "#F4A623" : "var(--carta-text2, #999)"} />
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "PICKUP" ? "#F4A623" : "var(--carta-text2, #777)" }}>{s.pickupLabel}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "PICKUP" ? "#F4A623" : "var(--carta-text2, #777)" }}>Retiro</span>
                   </button>
                 )}
                 {showDelivery && (
@@ -173,7 +171,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                     }}
                   >
                     <Truck size={18} color={orderType === "DELIVERY" ? "#F4A623" : "var(--carta-text2, #999)"} />
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "DELIVERY" ? "#F4A623" : "var(--carta-text2, #777)" }}>{s.deliveryLabel}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "DELIVERY" ? "#F4A623" : "var(--carta-text2, #777)" }}>Delivery</span>
                   </button>
                 )}
               </div>
@@ -185,7 +183,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <div style={{ background: "var(--carta-surface, #f5f5f5)", borderRadius: 10, padding: "10px 12px", marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 8 }}>
               <MapPin size={15} color={ACCENT} style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #777)", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: ".04em" }}>{s.pickupAt}</p>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #777)", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: ".04em" }}>Retira en</p>
                 <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--carta-text, #111)", margin: 0 }}>{address}</p>
               </div>
             </div>
@@ -196,14 +194,14 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <div style={{ background: "rgba(244,166,35,0.07)", borderRadius: 10, padding: "10px 12px", marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
               <Clock size={15} color={ACCENT} />
               <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--carta-text, #111)", margin: 0 }}>
-                {s.estimatedTime} <strong>{waitTime}</strong>
+                Tiempo estimado: <strong>{waitTime}</strong>
               </p>
             </div>
           )}
 
           {/* Your data */}
           <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 10px" }}>
-            {s.yourDetails}
+            Tus datos
           </p>
 
           <div style={{ marginBottom: 12 }}>
@@ -211,7 +209,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               value={name}
               onChange={e => setName(e.target.value)}
               style={inputStyle}
-              placeholder={s.namePlaceholder}
+              placeholder="Tu nombre *"
               autoComplete="name"
             />
           </div>
@@ -220,7 +218,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               value={clientPhone}
               onChange={e => setClientPhone(e.target.value)}
               style={inputStyle}
-              placeholder={s.phonePlaceholder}
+              placeholder="Tu teléfono *"
               type="tel"
               autoComplete="tel"
             />
@@ -233,7 +231,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                 value={clientAddress}
                 onChange={e => setClientAddress(e.target.value)}
                 style={inputStyle}
-                placeholder={s.addressPlaceholder}
+                placeholder="Dirección de delivery *"
                 autoComplete="street-address"
               />
             </div>
@@ -244,7 +242,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <div style={{ display: "flex", gap: 8, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
               <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
               <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>
-                {s.belowMin(formatCLP(minAmount), formatCLP(total))}
+                El monto mínimo para delivery es {formatCLP(minAmount)}. Tu pedido va en {formatCLP(total)}.
               </p>
             </div>
           )}
@@ -255,14 +253,14 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               value={orderNotes}
               onChange={e => setOrderNotes(e.target.value)}
               style={{ ...inputStyle, resize: "none", minHeight: 64 }}
-              placeholder={s.orderNotes}
+              placeholder="Notas del pedido (opcional)"
             />
           </div>
 
           {/* Order summary */}
           <div style={{ borderTop: "1px solid var(--carta-border, #eee)", paddingTop: 16, marginBottom: 18 }}>
             <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 10px" }}>
-              {s.summary}
+              Resumen
             </p>
             {items.map(item => (
               <div key={item.key} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -280,7 +278,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               </div>
             ))}
             <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--carta-border, #eee)", paddingTop: 10, marginTop: 10 }}>
-              <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: "var(--carta-text, #111)" }}>{s.total}</span>
+              <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: "var(--carta-text, #111)" }}>Total</span>
               <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.95rem", color: ACCENT }}>{formatCLP(total)}</span>
             </div>
           </div>
@@ -309,10 +307,10 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             }}
           >
             <MessageCircle size={20} />
-            {s.sendWhatsApp}
+            Enviar pedido por WhatsApp
           </button>
           <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text2, #999)", textAlign: "center", margin: "8px 0 0" }}>
-            {s.whatsAppHint}
+            Se abrirá WhatsApp con tu pedido listo para enviar
           </p>
         </div>
       </div>
