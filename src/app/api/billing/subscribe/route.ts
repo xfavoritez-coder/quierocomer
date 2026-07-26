@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   const planConfig = FLOW_PLANS[plan];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-  // 1. Obtener o crear cliente en Flow para obtener su customerId interno
+  // 1. Obtener customerId de Flow (guardado en DB, o buscar en Flow, o crear nuevo)
   const currentRestaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
     select: { flowCustomerId: true },
@@ -46,6 +46,25 @@ export async function POST(req: NextRequest) {
   let flowCustomerId = currentRestaurant?.flowCustomerId || null;
 
   if (!flowCustomerId) {
+    // Buscar cliente existente en Flow por externalId antes de intentar crear
+    try {
+      const list = await flowPost<{ data: Array<{ customerId: string }> }>("/customer/getList", {
+        filter: restaurantId,
+        start: 0,
+        limit: 1,
+      });
+      flowCustomerId = list?.data?.[0]?.customerId || null;
+      if (flowCustomerId) {
+        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+        console.log(`[billing/subscribe] Cliente encontrado en Flow: customerId=${flowCustomerId}`);
+      }
+    } catch (listErr: any) {
+      console.log(`[billing/subscribe] getList sin resultado: ${listErr?.message}`);
+    }
+  }
+
+  if (!flowCustomerId) {
+    // Crear cliente nuevo en Flow
     try {
       const created = await flowPost<{ customerId: string }>("/customer/create", {
         externalId: restaurantId,
@@ -56,25 +75,11 @@ export async function POST(req: NextRequest) {
       await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
       console.log(`[billing/subscribe] Cliente creado en Flow: customerId=${flowCustomerId}`);
     } catch (err: any) {
-      // Si ya existe, intentar obtenerlo por externalId
-      try {
-        const existing = await flowPost<{ data: Array<{ customerId: string }> }>("/customer/getList", {
-          externalId: restaurantId,
-          start: 0,
-          limit: 1,
-        });
-        flowCustomerId = existing?.data?.[0]?.customerId || null;
-        if (flowCustomerId) {
-          await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-          console.log(`[billing/subscribe] Cliente existente recuperado: customerId=${flowCustomerId}`);
-        }
-      } catch (listErr: any) {
-        console.error("[billing/subscribe] Error recuperando cliente existente:", listErr?.message);
-      }
-      if (!flowCustomerId) {
-        console.error("[billing/subscribe] No se pudo obtener customerId de Flow:", err?.message);
-        return NextResponse.json({ error: `Error al crear cliente en Flow: ${err?.message}` }, { status: 500 });
-      }
+      // Flow devuelve 401 cuando el externalId ya existe — extraer customerId del mensaje si viene
+      const msg = err?.message || "";
+      const match = msg.match(/externalId[:\s]+([a-z0-9]+)/i);
+      console.error(`[billing/subscribe] Error en /customer/create: ${msg}`);
+      return NextResponse.json({ error: `No se pudo obtener el cliente de Flow. Intenta nuevamente.` }, { status: 500 });
     }
   }
 
