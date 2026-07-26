@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
           mpCustomerId: true, mpSubscriptionId: true, mpPlanId: true,
           subscriptionStatus: true, trialEndsAt: true, trialReminderSentAt: true, currentPeriodEnd: true, lastPaymentAt: true,
           billingExempt: true, customPlanPriceNet: true, mpPayerEmail: true,
+          flowCustomerId: true, flowSubscriptionId: true,
           billingCompanyName: true,
           billingRut: true,
           billingGiro: true,
@@ -80,6 +81,8 @@ export async function GET(req: NextRequest) {
     currentPeriodEnd: restaurant.currentPeriodEnd,
     lastPaymentAt: restaurant.lastPaymentAt,
     hasSubscription: !!restaurant.mpSubscriptionId,
+    hasAutoRenewal: !!restaurant.flowSubscriptionId,
+    flowCustomerId: restaurant.flowCustomerId,
     trialUsed: !!(restaurant.trialReminderSentAt || restaurant.trialEndsAt),
     activePlan,
     activeFlowPlan: activePlan, // backward-compat con panel pages

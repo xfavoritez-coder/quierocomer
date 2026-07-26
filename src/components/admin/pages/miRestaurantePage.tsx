@@ -34,6 +34,8 @@ type BillingStatus = {
   currentPeriodEnd: string | null;
   lastPaymentAt: string | null;
   hasSubscription: boolean;
+  hasAutoRenewal: boolean;
+  flowCustomerId: string | null;
   activeFlowPlan: string | null;
   billingExempt: boolean;
   trialUsed?: boolean;
@@ -103,6 +105,7 @@ export default function MiRestaurantePage() {
   const [actioning, setActioning] = useState(false);
   const plan = (activePlan || "FREE").toUpperCase();
   const [subscribing, setSubscribing] = useState(false);
+  const [activatingAutoRenew, setActivatingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [plansTab, setPlansTab] = useState<"FREE" | "GOLD" | "PREMIUM">("GOLD");
@@ -300,6 +303,33 @@ export default function MiRestaurantePage() {
       if (!res.ok || !d.url) { toast.error(d.error || "No se pudo iniciar la suscripción"); setSubscribing(false); return; }
       window.location.href = d.url;
     } catch { toast.error("Error de conexión"); setSubscribing(false); }
+  };
+
+  const handleActivateAutoRenew = async () => {
+    if (!rid || activatingAutoRenew) return;
+    const planKey = plan as "GOLD" | "PREMIUM" | "SILVER";
+    if (planKey === "FREE" as any || !billingStatus?.hasSubscription) {
+      toast.error("Primero necesitas tener un plan activo");
+      return;
+    }
+    setActivatingAutoRenew(true);
+    try {
+      const res = await fetch("/api/billing/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: rid, plan: planKey }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.url) {
+        toast.error(d.error || "No se pudo iniciar el registro de tarjeta");
+        setActivatingAutoRenew(false);
+        return;
+      }
+      window.location.href = d.url;
+    } catch {
+      toast.error("Error de conexión");
+      setActivatingAutoRenew(false);
+    }
   };
 
   if (loading) return <SkeletonLoading type="form" />;
@@ -663,6 +693,51 @@ export default function MiRestaurantePage() {
 
 
 
+
+      {/* ── Cobro automático ── */}
+      {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
+        const hasAutoRenew = billingStatus.hasAutoRenewal;
+        const planName = plan === "PREMIUM" ? "Premium" : plan === "GOLD" ? "Gold" : plan === "SILVER" ? "Silver" : plan;
+        return (
+          <div style={{ background: "var(--adm-card)", border: `1px solid ${hasAutoRenew ? "rgba(22,163,74,0.25)" : "var(--adm-card-border)"}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: hasAutoRenew ? "rgba(22,163,74,0.1)" : "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <RefreshCw size={18} color={hasAutoRenew ? "#16a34a" : "var(--adm-text3)"} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
+                    Cobro automático mensual
+                  </p>
+                  {hasAutoRenew && (
+                    <span style={{ padding: "2px 8px", background: "rgba(22,163,74,0.12)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 99, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, color: "#16a34a" }}>
+                      Activo
+                    </span>
+                  )}
+                </div>
+                {hasAutoRenew ? (
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                    Tu plan {planName} se renueva automáticamente cada mes con la tarjeta registrada en Flow. No necesitas hacer nada.
+                  </p>
+                ) : (
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                    Activa el cobro automático para que tu plan {planName} se renueve cada mes sin que tengas que acordarte. Se cobra automáticamente con tu tarjeta.
+                  </p>
+                )}
+                {!hasAutoRenew && (
+                  <button
+                    onClick={handleActivateAutoRenew}
+                    disabled={activatingAutoRenew}
+                    style={{ padding: "9px 18px", border: "none", borderRadius: 999, background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: activatingAutoRenew ? "wait" : "pointer", opacity: activatingAutoRenew ? 0.7 : 1 }}
+                  >
+                    {activatingAutoRenew ? "Iniciando…" : "Activar cobro automático"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* QR Modal */}
       {qrModalOpen && selectedRestaurant && (

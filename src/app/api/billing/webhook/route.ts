@@ -17,30 +17,45 @@ export async function POST(req: NextRequest) {
   }
 
   const token = (formData.get("token") as string | null) || null;
-  if (!token) {
+  // Flow envía subscriptionId en webhooks de cobro automático
+  const flowSubscriptionId = (formData.get("subscriptionId") as string | null) || null;
+
+  if (!token && !flowSubscriptionId) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  console.log(`[billing/webhook] Recibido token: ${token}`);
+  console.log(`[billing/webhook] Recibido token: ${token}, subscriptionId: ${flowSubscriptionId}`);
 
-  // Buscar restaurant — flowRegisterToken puede ser "token|flowOrder"
-  let restaurant = await prisma.restaurant.findFirst({
-    where: { flowRegisterToken: { startsWith: token } },
-    include: { owner: { select: { email: true, name: true } } },
-  });
-  if (!restaurant) {
+  // Buscar restaurant — primero por flowRegisterToken (pago manual), luego por flowSubscriptionId (suscripción)
+  let restaurant = token
+    ? await prisma.restaurant.findFirst({
+        where: { flowRegisterToken: { startsWith: token } },
+        include: { owner: { select: { email: true, name: true } } },
+      })
+    : null;
+  if (!restaurant && token) {
     restaurant = await prisma.restaurant.findFirst({
       where: { flowRegisterToken: token },
       include: { owner: { select: { email: true, name: true } } },
     });
   }
+  // Cobro automático de suscripción — buscar por subscriptionId
+  if (!restaurant && flowSubscriptionId) {
+    restaurant = await prisma.restaurant.findFirst({
+      where: { flowSubscriptionId },
+      include: { owner: { select: { email: true, name: true } } },
+    });
+    if (restaurant) {
+      console.log(`[billing/webhook] Cobro automático de suscripción ${flowSubscriptionId} para ${restaurant.name}`);
+    }
+  }
 
   if (!restaurant) {
-    console.log(`[billing/webhook] No se encontró restaurant para token ${token}`);
+    console.log(`[billing/webhook] No se encontró restaurant para token=${token} subscriptionId=${flowSubscriptionId}`);
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  // Extraer flowOrder si está guardado
+  // Extraer flowOrder si está guardado (solo pagos manuales)
   const savedToken = restaurant.flowRegisterToken || "";
   const [savedFlowToken, flowOrderStr] = savedToken.split("|");
   const flowOrder = flowOrderStr ? Number(flowOrderStr) : null;
@@ -103,7 +118,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ✅ Pago confirmado — activar plan
-  const appPlan = planFromFlowId(restaurant.pendingFlowPlanId || "") || restaurant.plan;
+  // Para suscripciones automáticas, pendingFlowPlanId es null → usar flowPlanId guardado
+  const appPlan = planFromFlowId(restaurant.pendingFlowPlanId || "") || planFromFlowId(restaurant.flowPlanId || "") || restaurant.plan;
   // Early renewal: si el plan está activo y el período aún no vence, extender desde currentPeriodEnd
   const existingEnd = restaurant.currentPeriodEnd ? new Date(restaurant.currentPeriodEnd) : null;
   const isEarlyRenewal = restaurant.subscriptionStatus === "ACTIVE" && !!existingEnd && existingEnd > new Date();
