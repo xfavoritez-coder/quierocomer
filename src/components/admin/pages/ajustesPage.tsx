@@ -5,6 +5,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -27,19 +28,19 @@ interface SettingsData {
   showCategoryLobby: boolean;
 }
 
-const ACCENT_OPTIONS = [
-  { value: null, label: "Amber", color: "#F4A623" },
-  { value: "#ef4444", label: "Rojo", color: "#ef4444" },
-  { value: "#22c55e", label: "Verde", color: "#22c55e" },
-  { value: "#3b82f6", label: "Azul", color: "#3b82f6" },
-  { value: "#a855f7", label: "Morado", color: "#a855f7" },
-  { value: "#ec4899", label: "Rosa", color: "#ec4899" },
+const ACCENT_OPTIONS_ES = [
+  { value: null, label: "Amber", labelEn: "Amber", color: "#F4A623" },
+  { value: "#ef4444", label: "Rojo", labelEn: "Red", color: "#ef4444" },
+  { value: "#22c55e", label: "Verde", labelEn: "Green", color: "#22c55e" },
+  { value: "#3b82f6", label: "Azul", labelEn: "Blue", color: "#3b82f6" },
+  { value: "#a855f7", label: "Morado", labelEn: "Purple", color: "#a855f7" },
+  { value: "#ec4899", label: "Rosa", labelEn: "Pink", color: "#ec4899" },
 ];
 
-const VIEW_OPTIONS = [
-  { value: "premium", label: "Galería", icon: LayoutGrid },
-  { value: "lista", label: "Lista", icon: List },
-  { value: "impact", label: "Impact", icon: Rocket },
+const VIEW_OPTIONS_KEYS = [
+  { value: "premium", labelKey: "view_gallery", icon: LayoutGrid },
+  { value: "lista", labelKey: "view_list", icon: List },
+  { value: "impact", labelKey: "view_impact", icon: Rocket },
 ];
 
 function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
@@ -66,6 +67,7 @@ export default function AjustesPage() {
   const { selectedRestaurantId, restaurants } = useAdminSession();
   const currentRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
   const { activePlan } = usePanelSession();
+  const { lang, setLang, t } = usePanelLang();
   const [data, setData] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -73,6 +75,9 @@ export default function AjustesPage() {
   const [panelTheme, setPanelTheme] = useState("light");
   const [customColor, setPersonalizadoColor] = useState("#F4A623");
   const [customDirty, setPersonalizadoDirty] = useState(false);
+
+  const ACCENT_OPTIONS = ACCENT_OPTIONS_ES.map(o => ({ ...o, label: lang === "en" ? o.labelEn : o.label }));
+  const VIEW_OPTIONS = VIEW_OPTIONS_KEYS.map(o => ({ ...o, label: t(o.labelKey) }));
 
   useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "dark"); }, []);
 
@@ -116,12 +121,12 @@ export default function AjustesPage() {
         const updated = await res.json();
         setData((prev: any) => ({ ...prev, ...updated }));
         trackSetting("settings_change", fields);
-        toast.success("Guardado");
+        toast.success(t("saved"));
       } else {
         const err = await res.json();
-        toast.error(err.error || "Error al guardar");
+        toast.error(err.error || t("save_error"));
       }
-    } catch { toast.error("Error de conexion"); }
+    } catch { toast.error(t("save_error")); }
     setSaving(false);
   };
 
@@ -129,12 +134,12 @@ export default function AjustesPage() {
   const showPlanModal = () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "SILVER" } }));
 
   if (loading) return <SkeletonLoading type="form" />;
-  if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
+  if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("select_restaurant")}</p></div>;
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Settings size={20} color="var(--adm-text3)" /> Ajustes</h1>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura las opciones de tu carta y local</p>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Settings size={20} color="var(--adm-text3)" /> {t("settings_title")}</h1>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>{t("settings_subtitle")}</p>
 
       {/* Link de la carta */}
       {currentRestaurant?.slug && (
@@ -154,7 +159,7 @@ export default function AjustesPage() {
             </svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>Tu carta</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>{t("your_menu")}</p>
             <a
               href={`https://quierocomer.com/qr/${currentRestaurant.slug}`}
               target="_blank"
@@ -167,7 +172,7 @@ export default function AjustesPage() {
           <button
             onClick={() => {
               navigator.clipboard.writeText(`https://quierocomer.com/qr/${currentRestaurant.slug}`);
-              toast.success("Link copiado");
+              toast.success(t("link_copied"));
             }}
             style={{
               padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
@@ -175,16 +180,16 @@ export default function AjustesPage() {
               flexShrink: 0, whiteSpace: "nowrap",
             }}
           >
-            Copiar
+            {t("copy")}
           </button>
         </div>
       )}
 
       {/* Vista por defecto — FIRST */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Layout size={16} color="var(--adm-text3)" /> Vista de la carta por defecto</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>La vista que veran tus clientes al abrir la carta</p>
-        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible desde el plan Gold →</button>}
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Layout size={16} color="var(--adm-text3)" /> {t("default_view")}</h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>{t("default_view_desc")}</p>
+        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{t("available_from_gold")}</button>}
         <div style={{ display: "flex", gap: 8, position: "relative" }}>
           {VIEW_OPTIONS.map(opt => {
             const active = (data.defaultView || "lista") === opt.value;
@@ -219,20 +224,20 @@ export default function AjustesPage() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🗂️ Índice de categorías</h3>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🗂️ {t("category_index")}</h3>
             <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 0" }}>
               {!canEnableLobby
-                ? `Necesitas al menos 3 categorías para activar esta función (tienes ${catCount})`
+                ? t("category_index_need").replace("{count}", String(catCount))
                 : data.showCategoryLobby
-                ? "Tus clientes ven una pantalla de bienvenida con todas las secciones antes de la carta"
-                : "Ideal si tu carta tiene muchas secciones. Muestra una pantalla de inicio con todas las categorías para que el cliente navegue fácil"}
+                ? t("category_index_active")
+                : t("category_index_inactive")}
             </p>
           </div>
           <Toggle
             active={data.showCategoryLobby}
             onToggle={() => {
               if (!canEnableLobby && !data.showCategoryLobby) {
-                toast.error(`Necesitas al menos 3 categorías (tienes ${catCount})`);
+                toast.error(t("category_index_need").replace("{count}", String(catCount)));
                 return;
               }
               save({ showCategoryLobby: !data.showCategoryLobby });
@@ -252,7 +257,7 @@ export default function AjustesPage() {
               textDecoration: "none", cursor: "pointer",
             }}
           >
-            👁 Ver cómo se ve
+            👁 {t("preview")}
           </a>
         )}
       </div>
@@ -261,8 +266,8 @@ export default function AjustesPage() {
 
       {/* Tema de la carta — Gold+ */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasDesign ? 1 : 0.5 }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Moon size={16} color="var(--adm-text3)" /> Modo por defecto de la carta</h3>
-        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible desde el plan Gold →</button>}
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Moon size={16} color="var(--adm-text3)" /> {t("menu_mode")}</h3>
+        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{t("available_from_gold")}</button>}
         <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4, pointerEvents: hasDesign ? "auto" : "none" }}>
           <button onClick={() => save({ cartaColorMode: "LIGHT" })} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
@@ -271,7 +276,7 @@ export default function AjustesPage() {
             color: data.cartaColorMode !== "DARK" ? "#e6a817" : "var(--adm-text3)",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
           }}>
-            <Sun size={16} strokeWidth={data.cartaColorMode !== "DARK" ? 2.5 : 1.5} /> Claro
+            <Sun size={16} strokeWidth={data.cartaColorMode !== "DARK" ? 2.5 : 1.5} /> {t("light")}
           </button>
           <button onClick={() => save({ cartaColorMode: "DARK" })} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
@@ -280,14 +285,14 @@ export default function AjustesPage() {
             color: data.cartaColorMode === "DARK" ? "#8b9fda" : "var(--adm-text3)",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
           }}>
-            <Moon size={16} strokeWidth={data.cartaColorMode === "DARK" ? 2.5 : 1.5} /> Oscuro
+            <Moon size={16} strokeWidth={data.cartaColorMode === "DARK" ? 2.5 : 1.5} /> {t("dark")}
           </button>
         </div>
       </div>
 
       {/* Modo del panel */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Settings size={16} color="var(--adm-text3)" /> Modo del panel</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Settings size={16} color="var(--adm-text3)" /> {t("panel_mode")}</h3>
         <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
           <button onClick={() => { trackSetting("settings_change", { panelTheme: "light" }); localStorage.setItem("qc_panel_theme", "light"); window.location.reload(); }} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
@@ -296,7 +301,7 @@ export default function AjustesPage() {
             color: panelTheme !== "dark" ? "#e6a817" : "var(--adm-text3)",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
           }}>
-            <Sun size={16} strokeWidth={panelTheme !== "dark" ? 2.5 : 1.5} /> Claro
+            <Sun size={16} strokeWidth={panelTheme !== "dark" ? 2.5 : 1.5} /> {t("light")}
           </button>
           <button onClick={() => { trackSetting("settings_change", { panelTheme: "dark" }); localStorage.setItem("qc_panel_theme", "dark"); window.location.reload(); }} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
@@ -305,16 +310,44 @@ export default function AjustesPage() {
             color: panelTheme === "dark" ? "#8b9fda" : "var(--adm-text3)",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
           }}>
-            <Moon size={16} strokeWidth={panelTheme === "dark" ? 2.5 : 1.5} /> Oscuro
+            <Moon size={16} strokeWidth={panelTheme === "dark" ? 2.5 : 1.5} /> {t("dark")}
+          </button>
+        </div>
+      </div>
+
+      {/* Idioma del panel */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>
+          🌐 {t("language")}
+        </h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>{t("language_desc")}</p>
+        <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
+          <button onClick={() => setLang("es")} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: lang === "es" ? "rgba(255,210,80,0.15)" : "transparent",
+            color: lang === "es" ? "#e6a817" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+          }}>
+            🇨🇱 Español
+          </button>
+          <button onClick={() => setLang("en")} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: lang === "en" ? "rgba(100,120,180,0.12)" : "transparent",
+            color: lang === "en" ? "#8b9fda" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+          }}>
+            🇺🇸 English
           </button>
         </div>
       </div>
 
       {/* Color de diseño — Gold+ */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasDesign ? 1 : 0.5 }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Palette size={16} color="var(--adm-text3)" /> Diseño</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>Color de tu carta: precios, botones y detalles</p>
-        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible desde el plan Gold →</button>}
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Palette size={16} color="var(--adm-text3)" /> {t("design")}</h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>{t("design_desc")}</p>
+        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{t("available_from_gold")}</button>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, pointerEvents: hasDesign ? "auto" : "none" }}>
           {ACCENT_OPTIONS.map((opt) => {
             const isActive = (data.cartaAccentColor || null) === opt.value;
@@ -357,7 +390,7 @@ export default function AjustesPage() {
             onClick={() => { save({ cartaAccentColor: customColor }); setPersonalizadoDirty(false); }}
             style={{ marginTop: 12, padding: "8px 20px", background: customColor, color: "#0a0a0a", border: "none", borderRadius: 10, fontSize: "0.78rem", fontWeight: 800, fontFamily: F, cursor: "pointer" }}
           >
-            Aplicar color
+            {t("apply_color")}
           </button>
         )}
       </div>
@@ -368,11 +401,11 @@ export default function AjustesPage() {
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasWaiter ? 1 : 0.5 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <div>
-                <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Bell size={16} color="var(--adm-text3)" /> Campanita garzón</h3>
+                <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Bell size={16} color="var(--adm-text3)" /> {t("waiter_bell")}</h3>
                 {!hasWaiter
-                  ? <button onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))} style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9333ea", margin: 0, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Disponible en el plan Premium →</button>
+                  ? <button onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }))} style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9333ea", margin: 0, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{t("available_premium")}</button>
                   : <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-                      {data.waiterPanelActive ? "Activada. Los clientes pueden llamar al garzón" : "Desactivada. Los clientes no pueden llamar al garzón"}
+                      {data.waiterPanelActive ? t("waiter_active") : t("waiter_inactive")}
                     </p>
                 }
               </div>

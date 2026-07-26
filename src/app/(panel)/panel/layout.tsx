@@ -14,12 +14,14 @@ import {
   ivaOf,
   grossOf,
 } from "@/lib/billing/plans-config";
+import { PanelLangProvider, usePanelLang } from "@/lib/i18n/panel";
 
 const PUBLIC_PATHS = ["/panel/login", "/panel/forgot-password", "/panel/reset-password", "/panel/invite", "/panel/suscripcion/exito"];
 
 function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
   const F = "var(--font-display)";
   const GOLD = "#F4A623";
+  const { t } = usePanelLang();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,10 +36,10 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
 
   const handleSubmit = async () => {
     setError("");
-    if (!currentPassword || !newPassword || !confirmPassword) { setError("Todos los campos son requeridos"); return; }
-    if (newPassword.length < 8) { setError("La nueva contraseña debe tener al menos 8 caracteres"); return; }
-    if (!/\d/.test(newPassword)) { setError("La nueva contraseña debe contener al menos 1 número"); return; }
-    if (newPassword !== confirmPassword) { setError("Las contraseñas no coinciden"); return; }
+    if (!currentPassword || !newPassword || !confirmPassword) { setError(t("pw_all_required")); return; }
+    if (newPassword.length < 8) { setError(t("pw_min_length")); return; }
+    if (!/\d/.test(newPassword)) { setError(t("pw_need_number")); return; }
+    if (newPassword !== confirmPassword) { setError(t("passwords_mismatch")); return; }
     setSaving(true);
     try {
       const res = await fetch("/api/panel/change-password", {
@@ -46,10 +48,10 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al cambiar contraseña"); setSaving(false); return; }
-      toast.success("Contraseña actualizada");
+      if (!res.ok) { setError(data.error || t("pw_change_error")); setSaving(false); return; }
+      toast.success(t("pw_updated"));
       onDone();
-    } catch { setError("Error de conexión"); }
+    } catch { setError(t("connection_error")); }
     setSaving(false);
   };
 
@@ -58,8 +60,8 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
       <div style={{ background: "white", borderRadius: 16, padding: 28, width: "100%", maxWidth: 380, boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <span style={{ fontSize: 40 }}>🔐</span>
-          <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#1a1a1a", margin: "8px 0 4px" }}>Cambio de contraseña requerido</h2>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#8a7550", margin: 0 }}>Por seguridad, debes cambiar tu contraseña temporal antes de continuar.</p>
+          <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#1a1a1a", margin: "8px 0 4px" }}>{t("pw_required_title")}</h2>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#8a7550", margin: 0 }}>{t("pw_required_desc")}</p>
         </div>
 
         {error && (
@@ -70,16 +72,16 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Contraseña actual</label>
-            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="Tu contraseña temporal" style={inputStyle} />
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>{t("current_password")}</label>
+            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={t("pw_temp_placeholder")} style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Nueva contraseña</label>
-            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mín. 8 caracteres, 1 número" style={inputStyle} />
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>{t("new_password")}</label>
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t("pw_new_placeholder")} style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Confirmar contraseña</label>
-            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repite la nueva contraseña" style={inputStyle} />
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>{t("confirm_password")}</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t("pw_confirm_placeholder")} style={inputStyle} />
           </div>
           <button onClick={handleSubmit} disabled={saving} style={{
             width: "100%", height: 44, marginTop: 4,
@@ -87,7 +89,7 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
             color: "white", fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
             border: "none", borderRadius: 8, cursor: saving ? "wait" : "pointer",
           }}>
-            {saving ? "Guardando..." : "Cambiar contraseña"}
+            {saving ? t("saving") : t("change_password")}
           </button>
         </div>
       </div>
@@ -207,6 +209,7 @@ export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTri
 
 function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   const [status, setStatus] = useState<BillingStatus | null>(null);
+  const { t } = usePanelLang();
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -245,25 +248,25 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   let bannerColor: string;
   let btnLabel: string;
   if (isFreePlan) {
-    title = "Tu carta QR no está activa";
-    sub = "Activa un plan para que tus clientes puedan ver tu carta digital.";
+    title = t("menu_inactive");
+    sub = t("menu_inactive_sub");
     bannerColor = "#dc2626";
-    btnLabel = "Ver planes";
+    btnLabel = t("see_plans");
   } else if (isExpired) {
-    title = "Tu carta QR está fuera de línea";
-    sub = "Renueva tu plan para que tus clientes vuelvan a verla.";
+    title = t("menu_offline");
+    sub = t("menu_offline_sub");
     bannerColor = "#dc2626";
-    btnLabel = "Renovar ahora";
+    btnLabel = t("renew_now");
   } else if (isToday) {
-    title = "Tu plan vence hoy";
-    sub = "Tu carta QR dejará de mostrarse mañana si no renuevas.";
+    title = t("plan_expires_today");
+    sub = t("plan_expires_today_sub");
     bannerColor = "#dc2626";
-    btnLabel = "Renovar ahora";
+    btnLabel = t("renew_now");
   } else {
-    title = "Tu plan vence mañana";
-    sub = "Renueva para mantener tu carta QR activa sin interrupciones.";
+    title = t("plan_expires_tomorrow");
+    sub = t("plan_expires_tomorrow_sub");
     bannerColor = "#dc2626";
-    btnLabel = "Renovar ahora";
+    btnLabel = t("renew_now");
   }
 
   const currentPlan = status.plan as "FREE" | "GOLD" | "PREMIUM" | undefined;
@@ -319,6 +322,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
 function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const { t } = usePanelLang();
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -348,14 +352,14 @@ function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
     }}>
       <span style={{ fontSize: 18 }}>🎁</span>
       <span style={{ flex: 1 }}>
-        Mejora tu carta con <strong>Gold desde $29.900/mes</strong> y desbloquea estadísticas, ofertas, vistas y más.
+        {t("upgrade_mejora")} <strong>Gold desde $29.900/mes</strong> {t("upgrade_banner").replace("Gold desde $29.900/mes y ", "")}
       </span>
       <button onClick={handleClick} style={{
         padding: "6px 14px", border: "none", borderRadius: 999,
         background: "#F4A623", color: "#fff", fontFamily: "var(--font-display)",
         fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
-      }}>Probar ahora</button>
-      <button onClick={handleDismiss} aria-label="Cerrar" style={{
+      }}>{t("try_now")}</button>
+      <button onClick={handleDismiss} aria-label={t("close")} style={{
         background: "none", border: "none", color: "#92400e", fontSize: 18, cursor: "pointer", padding: 0, lineHeight: 1,
       }}>×</button>
     </div>
@@ -369,6 +373,7 @@ function formatDateCL(d: string | null) {
 }
 
 function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; renewMode?: boolean; context?: string; onClose: () => void }) {
+  const { t } = usePanelLang();
   const ALL_TABS = ["GOLD", "PREMIUM"] as const;
   type TabKey = typeof ALL_TABS[number];
   // renewMode: abrir directo en el plan actual (sin swap a otro plan)
@@ -630,17 +635,17 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                   boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
                 }}
               >
-                Renovar por otro mes
+                {t("renew_month")}
               </button>
               {nextPeriodStart && (
                 <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#888", textAlign: "center", margin: 0, lineHeight: 1.4 }}>
-                  Tu nuevo período comenzará el <strong>{nextPeriodStart}</strong> · Pagas hoy y no pierdes días
+                  {t("new_period_starts")} <strong>{nextPeriodStart}</strong> · {t("pay_today")}
                 </p>
               )}
             </div>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
-              <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#999", margin: 0 }}>Estás disfrutando de este plan</p>
+              <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#999", margin: 0 }}>{t("enjoying_plan")}</p>
             </div>
           )}
           {showCancelButton && (
@@ -653,11 +658,11 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 padding: "10px 0", border: "1px solid #fca5a5", borderRadius: 999, marginBottom: 8,
               }}
             >
-              {cancelling ? "Cancelando…" : "Cancelar plan"}
+              {cancelling ? t("cancelling") : t("cancel_plan")}
             </button>
           )}
           <button onClick={onClose} style={{ display: "block", width: "100%", background: "none", border: "none", color: "#999", fontFamily: FD, fontSize: "0.82rem", cursor: "pointer", padding: "8px 0" }}>
-            Cerrar
+            {t("close")}
           </button>
         </div>
 
@@ -682,22 +687,22 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 {isPremiumTrial ? (
                   <>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 16, color: "#7c3aed", fontWeight: 800 }}>
-                      <span>7 días gratis</span>
+                      <span>{t("trial_days")}</span>
                       <span>$0</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "var(--adm-text, #333)" }}>
-                      <span>Mensualidad</span>
+                      <span>{t("monthly")}</span>
                       <span style={{ fontWeight: 700 }}>{fmt(net)}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "var(--adm-text2, #555)" }}>
-                      <span>IVA (19%)</span>
+                      <span>{t("vat")}</span>
                       <span>{fmt(iva)}</span>
                     </div>
                     <div style={{ borderTop: "1px solid var(--adm-card-border, #ddd)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "var(--adm-text, #1a1a1a)" }}>
-                      <span>Total mensual</span>
+                      <span>{t("total_monthly")}</span>
                       <span>{fmt(gross)}</span>
                     </div>
                   </>
@@ -706,10 +711,10 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
 
               <div style={{ fontSize: 13, color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 16, lineHeight: 1.5, fontFamily: FB2 }}>
                 {isPremiumTrial
-                  ? "No se te cobra nada. Tu periodo de prueba de 7 días se activa de inmediato."
+                  ? t("trial_info")
                   : isEarlyRenewal && nextPeriodStart
-                  ? <>Serás redirigido a Webpay. Tu nuevo período comenzará el <strong>{nextPeriodStart}</strong> — pagas hoy y no pierdes días del período actual.</>
-                  : "Serás redirigido a Webpay para completar tu pago con tarjeta de débito o crédito."
+                  ? <>{t("payment_redirect")} <strong>{nextPeriodStart}</strong> — {t("no_days_lost")}</>
+                  : t("payment_info")
                 }
               </div>
 
@@ -723,13 +728,13 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                   cursor: submitting ? "wait" : "pointer",
                 }}
               >
-                {submitting ? (isPremiumTrial ? "Activando..." : "Redirigiendo...") : isPremiumTrial ? "Activar 7 días gratis" : `Pagar ${fmt(gross)}`}
+                {submitting ? (isPremiumTrial ? t("activating") : t("redirecting")) : isPremiumTrial ? t("start_trial") : `${t("pay")} ${fmt(gross)}`}
               </button>
 
               {!isPremiumTrial && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "var(--adm-text3, #888)" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                Pago seguro vía Webpay
+                {t("secure_payment")}
               </div>
               )}
             </div>
@@ -740,8 +745,9 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
   );
 }
 
-export default function PanelLayout({ children }: { children: React.ReactNode }) {
+function PanelLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = usePanelLang();
   const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [demoScrolled, setDemoScrolled] = useState(false);
@@ -855,10 +861,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     if (!billing) return;
     if (billing === "success") {
       const plan = params.get("plan");
-      toast.success(`Suscripción activada${plan ? ` (${plan})` : ""}`);
+      toast.success(`${t("subscription_activated")}${plan ? ` (${plan})` : ""}`);
     } else if (billing === "error") {
       const reason = params.get("reason");
-      toast.error(`No se pudo completar la inscripción${reason ? ` (${reason})` : ""}. Intenta de nuevo.`);
+      toast.error(`${t("subscription_error")}${reason ? ` (${reason})` : ""}. ${t("try_again")}`);
     }
     params.delete("billing");
     params.delete("plan");
@@ -877,7 +883,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             🧞
             <span style={{ position: "absolute", top: -6, right: -14, fontSize: "0.9rem", opacity: 0.5, animation: "panelStarPulse 2s ease-in-out infinite" }}>✨</span>
           </div>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text3, #555)", fontWeight: 500 }}>Cargando tu panel...</p>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text3, #555)", fontWeight: 500 }}>{t("loading_panel")}</p>
         </div>
         <style>{`
           @keyframes panelLoadFloat { 0%,100% { transform: translateY(0) scale(1); opacity: 0.7; } 50% { transform: translateY(-8px) scale(1.1); opacity: 1; } }
@@ -918,7 +924,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
               ) : (
                 <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontSize: 10 }}>🍽</span>
               )}
-              PANEL DEMO
+              {t("demo_badge")}
               {demoTip && (
                 <>
                   <div onClick={(e) => { e.stopPropagation(); setDemoTip(false); }} style={{ position: "fixed", inset: 0, zIndex: 69 }} />
@@ -934,20 +940,20 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
                       transform: "rotate(45deg)",
                     }} />
                     <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: 0, lineHeight: 1.5, fontWeight: 400, letterSpacing: 0 }}>
-                      Este es un panel de ejemplo con datos ficticios. Al activar tu carta verás tus estadísticas reales.
+                      {t("demo_tooltip")}
                     </p>
                   </div>
                 </>
               )}
             </span>
             <div style={{ display: "flex", gap: 7 }}>
-              <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.2)", borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Ver mi carta</a>
-              <a href={`/activar/${selectedRest.slug}`} className="demo-activar-btn" style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", transition: "transform 0.1s ease" }}>Activar →</a>
+              <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.2)", borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>{t("view_menu")}</a>
+              <a href={`/activar/${selectedRest.slug}`} className="demo-activar-btn" style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", transition: "transform 0.1s ease" }}>{t("activate")}</a>
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "7px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center", lineHeight: 1.4 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#fff", display: "block" }}>Así se verá tu panel</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.85)", display: "block" }}>(datos ficticios, al activar queda en cero)</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#fff", display: "block" }}>{t("demo_title")}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.85)", display: "block" }}>{t("demo_subtitle")}</span>
             <style>{`.demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #d97706" }} />
           </div>
@@ -976,5 +982,13 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} initialTab={planModalInitialTab} renewMode={planModalRenewMode} context={planModalContext} onClose={() => { setPlanModalOpen(false); setPlanModalRenewMode(false); setPlanModalContext(undefined); }} />
       )}
     </SessionContext.Provider>
+  );
+}
+
+export default function PanelLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <PanelLangProvider>
+      <PanelLayoutInner>{children}</PanelLayoutInner>
+    </PanelLangProvider>
   );
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle } from "lucide-react";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -34,33 +35,34 @@ function LiveIcon({ size = 18 }: { size?: number }) {
 function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM";
   const SIDEBAR_NAV = [
-    { icon: Home, label: "Inicio", href: base },
-    ...(showLive ? [{ icon: LiveIcon, label: "Venta en vivo", href: `${base}/live` }] : []),
-    { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
-    { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
-    { icon: ContactRound, label: "Clientes", href: `${base}/clientes` },
-    { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
-    { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
-    ...(opts.hasControl ? [{ icon: Calculator, label: "Control", href: `${base}/control` }] : []),
-    { icon: Printer, label: "Exportar carta", href: `${base}/exportar` },
-    { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
-    { icon: UsersRound, label: "Usuarios", href: `${base}/usuarios` },
-    { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
-    { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
-    { icon: HelpCircle, label: "Soporte", href: `${base}/ayuda` },
+    { icon: Home, labelKey: "nav_home", href: base },
+    ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
+    { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
+    { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
+    { icon: ContactRound, labelKey: "nav_clients", href: `${base}/clientes` },
+    { icon: Tag, labelKey: "nav_offers", href: `${base}/promociones` },
+    { icon: Megaphone, labelKey: "nav_announcements", href: `${base}/anuncios` },
+    ...(opts.hasControl ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
+    { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
+    { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
+    { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
+    { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
+    { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
+    { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
   ];
-  const BOTTOM_TABS = [
-    { icon: Home, label: "Inicio", href: base },
-    { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
-    { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
-    { icon: Menu, label: "Más", href: "__more__" },
+  const BOTTOM_TABS_RAW = [
+    { icon: Home, labelKey: "nav_home", href: base },
+    { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
+    { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
+    { icon: Menu, labelKey: "nav_more", href: "__more__" },
   ] as const;
-  const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS.some(t => t.href === n.href));
-  return { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS };
+  const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS_RAW.some(tb => tb.href === n.href));
+  return { SIDEBAR_NAV, BOTTOM_TABS: BOTTOM_TABS_RAW, MORE_ITEMS };
 }
 
 export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, children }: Props) {
   const pathname = usePathname();
+  const { t } = usePanelLang();
   const selected = restaurants.find((r: any) => r.id === selectedRestaurantId);
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
@@ -107,9 +109,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
   const handleChangePassword = async () => {
     setPwError("");
-    if (pwNew.length < 8) { setPwError("Mínimo 8 caracteres"); return; }
-    if (!/\d/.test(pwNew)) { setPwError("Debe contener al menos 1 número"); return; }
-    if (pwNew !== pwConfirm) { setPwError("Las contraseñas no coinciden"); return; }
+    if (pwNew.length < 8) { setPwError(t("password_min")); return; }
+    if (!/\d/.test(pwNew)) { setPwError(t("password_number")); return; }
+    if (pwNew !== pwConfirm) { setPwError(t("passwords_mismatch")); return; }
     setPwLoading(true);
     try {
       const pwEndpoint = basePath === "/panel" ? "/api/panel/change-password" : "/api/admin/me/change-password";
@@ -121,7 +123,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       if (!res.ok) { setPwError(data.error); setPwLoading(false); return; }
       setPwSuccess(true);
       setTimeout(() => { setPwOpen(false); setPwSuccess(false); setPwCurrent(""); setPwNew(""); setPwConfirm(""); }, 2000);
-    } catch { setPwError("Error de conexión"); }
+    } catch { setPwError(t("connection_error")); }
     setPwLoading(false);
   };
 
@@ -175,7 +177,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 fontFamily: FB, fontSize: "0.84rem", fontWeight: 500, borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
               }}>
                 <Icon size={18} strokeWidth={active ? 2.2 : 1.6} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </Link>
             );
           })}
@@ -242,7 +244,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 background: "none", border: "none", cursor: "pointer", padding: "8px 12px", minWidth: 64, minHeight: 44,
               }}>
                 <Icon size={22} color={active ? GOLD : "var(--adm-text2)"} strokeWidth={active ? 2.5 : 1.8} />
-                <span style={{ fontFamily: FB, fontSize: "0.65rem", fontWeight: 500, color: active ? GOLD : "var(--adm-text2)" }}>{tab.label}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.65rem", fontWeight: 500, color: active ? GOLD : "var(--adm-text2)" }}>{t(tab.labelKey)}</span>
               </button>
             );
           }
@@ -252,7 +254,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               textDecoration: "none", padding: "8px 12px", minWidth: 64, minHeight: 44,
             }}>
               <Icon size={22} color={active ? GOLD : "var(--adm-text2)"} strokeWidth={active ? 2.5 : 1.8} />
-              <span style={{ fontFamily: FB, fontSize: "0.65rem", fontWeight: 500, color: active ? GOLD : "var(--adm-text2)" }}>{tab.label}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.65rem", fontWeight: 500, color: active ? GOLD : "var(--adm-text2)" }}>{t(tab.labelKey)}</span>
             </Link>
           );
         })}
@@ -273,7 +275,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Icon size={18} color={GOLD} />
                   </div>
-                  <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{item.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{t(item.labelKey)}</span>
                   <ChevronRight size={16} color="var(--adm-text3)" />
                 </Link>
               );
@@ -309,11 +311,11 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           )}
           <div style={{ padding: "8px 20px", flex: 1 }}>
             <a href="/panel/perfil" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
-              <UserCog size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi perfil</span>
+              <UserCog size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>{t("my_profile")}</span>
             </a>
           </div>
           <button onClick={logout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", width: "100%" }}>
-            <LogOut size={18} color="#ef4444" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#ef4444" }}>Cerrar sesión</span>
+            <LogOut size={18} color="#ef4444" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#ef4444" }}>{t("logout")}</span>
           </button>
         </div>
       </>)}
@@ -323,17 +325,17 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ background: "var(--adm-card)", borderRadius: 16, padding: 24, width: "100%", maxWidth: 360, position: "relative" }}>
             <button onClick={() => { setPwOpen(false); setPwError(""); setPwSuccess(false); }} style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", cursor: "pointer" }}><X size={18} color="#999" /></button>
-            <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", margin: "0 0 16px" }}>Cambiar contraseña</h3>
+            <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", margin: "0 0 16px" }}>{t("change_password")}</h3>
             {pwSuccess ? (
-              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#16a34a", textAlign: "center", padding: "20px 0" }}>¡Contraseña actualizada!</p>
+              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#16a34a", textAlign: "center", padding: "20px 0" }}>{t("password_updated")}</p>
             ) : (<>
               {pwError && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#ef4444", margin: "0 0 12px", background: "#FEF2F2", padding: "8px 12px", borderRadius: 6 }}>{pwError}</p>}
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <input type="password" placeholder="Contraseña actual" value={pwCurrent} onChange={e => setPwCurrent(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
-                <input type="password" placeholder="Nueva contraseña (mín. 8 chars, 1 número)" value={pwNew} onChange={e => setPwNew(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
-                <input type="password" placeholder="Confirmar nueva contraseña" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+                <input type="password" placeholder={t("current_password")} value={pwCurrent} onChange={e => setPwCurrent(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+                <input type="password" placeholder={t("new_password")} value={pwNew} onChange={e => setPwNew(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+                <input type="password" placeholder={t("confirm_password")} value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
                 <button onClick={handleChangePassword} disabled={pwLoading} style={{ width: "100%", padding: 12, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
-                  {pwLoading ? "Guardando..." : "Guardar"}
+                  {pwLoading ? t("saving") : t("save")}
                 </button>
               </div>
             </>)}
