@@ -31,13 +31,16 @@ interface HeroDishProps {
   stickyNav?: boolean;
   /** Ref para medir el alto del nav bar desde el componente padre */
   navRef?: React.RefObject<HTMLDivElement | null>;
+  /** Si el restaurante tiene pedidos online activos, muestra ícono de carrito verde */
+  orderingEnabled?: boolean;
+  restaurantSlug?: string;
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, enabledLangs, variant = "full", onSearchClick, belowNavSlot, stickyNav, navRef }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, enabledLangs, variant = "full", onSearchClick, belowNavSlot, stickyNav, navRef, orderingEnabled, restaurantSlug }: HeroDishProps) {
   const lang = useLang();
   const isCompact = variant === "compact";
   const [current, setCurrent] = useState(0);
@@ -131,6 +134,25 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
             >
               <Search size={18} color="var(--carta-text2)" />
             </button>
+          )}
+          {orderingEnabled && restaurantSlug && (
+            <a
+              href={`/pedir/${restaurantSlug}`}
+              aria-label="Pedir online"
+              style={{
+                width: 42, height: 42, borderRadius: "50%",
+                background: "#25D366",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, textDecoration: "none",
+                boxShadow: "0 2px 8px rgba(37,211,102,0.4)",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="21" r="1" fill="#fff"/>
+                <circle cx="20" cy="21" r="1" fill="#fff"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </a>
           )}
           <LangSelector enabledLangs={enabledLangs} />
         </div>

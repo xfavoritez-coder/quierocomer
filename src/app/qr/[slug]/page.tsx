@@ -350,28 +350,6 @@ export default async function CartaPage({
       {isShowcase && !isEmbed && (
         <ShowcaseMobileOnly restaurantSlug={slug} restaurantName={restaurant.name} />
       )}
-      {/* Botón "Pedir online" — solo si PREMIUM y ordering activo, y no en showcase/embed */}
-      {!isShowcase && !isEmbed && plan === "PREMIUM" && (restaurant as any).orderingEnabled && (
-        <a
-          href={`/pedir/${slug}`}
-          style={{
-            position: "fixed", bottom: "max(20px, env(safe-area-inset-bottom, 20px))", right: 16, zIndex: 200,
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "11px 18px 11px 14px",
-            background: "#25D366", color: "#fff",
-            borderRadius: 999, textDecoration: "none",
-            boxShadow: "0 4px 16px rgba(37,211,102,0.45)",
-            fontFamily: "var(--font-display, sans-serif)", fontSize: "0.85rem", fontWeight: 700,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="9" cy="21" r="1" fill="currentColor"/>
-            <circle cx="20" cy="21" r="1" fill="currentColor"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Pedir online
-        </a>
-      )}
       {showMultiMenuLanding ? (
         <MultiMenuLanding
           menuGroups={menuGroups}
