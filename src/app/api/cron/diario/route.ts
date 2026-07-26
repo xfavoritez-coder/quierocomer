@@ -381,7 +381,70 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 4.7c Cobro automático — locales con tarjeta registrada (flowCustomerId) que vencen HOY
+    let autoChargesInitiated = 0;
+    const toAutoCharge = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "ACTIVE",
+        currentPeriodEnd: { gte: startOfToday, lte: endOfToday },
+        flowCustomerId: { not: null },
+        billingExempt: false,
+        plan: { not: "FREE" },
+      },
+      select: {
+        id: true, name: true, slug: true, plan: true,
+        flowCustomerId: true, customPlanPriceNet: true, flowPlanId: true,
+      },
+    });
+    if (toAutoCharge.length > 0) {
+      const { flowPost } = await import("@/lib/billing/flow");
+      const { FLOW_PLANS, grossOf, PLAN_LABELS } = await import("@/lib/billing/plans-config");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      for (const r of toAutoCharge) {
+        // Saltar si ya tiene un cobro en curso (flowRegisterToken activo)
+        const current = await prisma.restaurant.findUnique({ where: { id: r.id }, select: { flowRegisterToken: true } });
+        if (current?.flowRegisterToken) {
+          console.log(`[diario] Skip auto-charge ${r.name} — ya tiene token pendiente`);
+          continue;
+        }
+        const planKey = (r.plan as keyof typeof FLOW_PLANS);
+        const planConfig = FLOW_PLANS[planKey];
+        if (!planConfig) continue;
+        const amountNet = r.customPlanPriceNet ?? planConfig.amountNet;
+        const amountGross = grossOf(amountNet);
+        const commerceOrder = `auto_${r.id.slice(-8)}_${Date.now().toString(36)}`;
+        try {
+          const charge = await flowPost<{ token: string; flowOrder: number }>(
+            "/payment/createByCustomer",
+            {
+              customerId: r.flowCustomerId!,
+              commerceOrder,
+              subject: `${r.name} — Plan ${PLAN_LABELS[planKey as keyof typeof PLAN_LABELS] || planKey} (renovación)`,
+              amount: amountGross,
+              urlConfirmation: `${baseUrl}/api/billing/webhook`,
+              urlReturn: `${baseUrl}/panel/mi-restaurante`,
+            }
+          );
+          // Guardar token para que el webhook pueda identificar este restaurant
+          const savedToken = charge.flowOrder ? `${charge.token}|${charge.flowOrder}` : charge.token;
+          await prisma.restaurant.update({
+            where: { id: r.id },
+            data: {
+              pendingFlowPlanId: r.flowPlanId || planConfig.planId,
+              flowRegisterToken: savedToken,
+            },
+          });
+          autoChargesInitiated++;
+          console.log(`[diario] Auto-charge iniciado: ${r.name} → ${amountGross} CLP (order=${commerceOrder})`);
+        } catch (chargeErr: any) {
+          console.error(`[diario] Auto-charge falló para ${r.name}: ${chargeErr?.message}`);
+        }
+      }
+    }
+
     // 4.8 Downgrade planes ACTIVE cuyo período ya venció (sin gracia — se corta al día siguiente)
+    // Excluir locales con flowCustomerId: el auto-charge del cron les da 1 día extra para que
+    // llegue el webhook de confirmación antes de bajarlos.
     let activeExpiredDowngraded = 0;
     const expiredActive = await prisma.restaurant.findMany({
       where: {
@@ -389,6 +452,7 @@ export async function GET(req: NextRequest) {
         currentPeriodEnd: { lt: startOfToday },
         billingExempt: false,
         mpSubscriptionId: null,
+        flowCustomerId: null,    // locales con tarjeta registrada se manejan por 4.7c
         plan: { not: "FREE" },
       },
       select: { id: true, name: true, slug: true },
@@ -524,6 +588,7 @@ export async function GET(req: NextRequest) {
           expiringIn2EmailsSent,
           expiryTodayEmailsSent,
           expiryTodayWaSent,
+          autoChargesInitiated,
           activeExpiredDowngraded,
           translationsBackfilled,
           automations: automationResults,
@@ -548,6 +613,7 @@ export async function GET(req: NextRequest) {
       expiringIn2EmailsSent,
       expiryTodayEmailsSent,
       expiryTodayWaSent,
+      autoChargesInitiated,
       activeExpiredDowngraded,
       translationsBackfilled,
     });
