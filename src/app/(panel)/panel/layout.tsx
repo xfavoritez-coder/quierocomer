@@ -245,9 +245,9 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   let bannerColor: string;
   let btnLabel: string;
   if (isFreePlan) {
-    title = "Estás en el plan Gratis";
-    sub = "Activa Gold o Premium para mostrar fotos, recibir más clientes y destacar tus platos.";
-    bannerColor = "#b45309";
+    title = "Tu carta QR no está activa";
+    sub = "Activa un plan para que tus clientes puedan ver tu carta digital.";
+    bannerColor = "#dc2626";
     btnLabel = "Ver planes";
   } else if (isExpired) {
     title = "Tu carta QR está fuera de línea";
@@ -294,7 +294,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
           background: bannerColor,
           fontFamily: "var(--font-body)",
         }}>
-          <span style={{ fontSize: 16, flexShrink: 0 }}>{isFreePlan ? "⭐" : "⚠️"}</span>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{title}</p>
             <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>{sub}</p>
