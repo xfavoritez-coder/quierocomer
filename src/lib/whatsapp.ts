@@ -21,7 +21,7 @@ const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 //   {{3}}
 //
 //   — Equipo QuieroComer
-export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "PENDING_APPROVAL"; // TODO: reemplazar con SID aprobado en Twilio
+export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "HXa16f16927b2160d70e6d3b3e81dc9848"; // billing_expiry_today_v1 — pendiente aprobación Meta
 
 interface SendWhatsAppOptions {
   to: string; // E.164 format: +56912345678
