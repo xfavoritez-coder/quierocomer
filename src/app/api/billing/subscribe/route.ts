@@ -103,6 +103,22 @@ export async function POST(req: NextRequest) {
         console.log(`[billing/subscribe] customerId extraído del error 401: ${flowCustomerId}`);
       }
 
+      // Si el error es "externalId ya existe", crear sin externalId para evitar el conflicto
+      if (!flowCustomerId && (createErr as any).status === 401) {
+        try {
+          console.log(`[billing/subscribe] Intentando create sin externalId (conflicto detectado)`);
+          const created2 = await flowPost<{ customerId: string }>("/customer/create", {
+            name: owner.name || owner.email.split("@")[0],
+            email: owner.email,
+          });
+          flowCustomerId = created2.customerId;
+          await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+          console.log(`[billing/subscribe] Cliente creado sin externalId: customerId=${flowCustomerId}`);
+        } catch (create2Err: any) {
+          console.error(`[billing/subscribe] Error create sin externalId: ${create2Err?.message}`);
+        }
+      }
+
       if (!flowCustomerId) {
         return NextResponse.json({
           error: `Error Flow (create): ${msg}`,
