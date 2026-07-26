@@ -34,14 +34,180 @@ interface OrderingConfig {
   note: string | null;
   address: string | null;
   paymentMethods?: string[];
-  theme?: string;
-  accentColor?: string | null;
   orderingBannerUrl?: string | null;
+  cartaView?: string;
+  cartaColorMode?: string;
+  cartaAccentColor?: string | null;
 }
 
 interface Props {
   restaurant: Restaurant;
   orderingConfig: OrderingConfig;
+}
+
+// ── Impact dish card (dark glass style) ──────────────────────────────────────
+function ImpactCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
+  const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
+  const discountPct = dish.discountPrice != null && dish.discountPrice < dish.price
+    ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : 0;
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%", display: "grid", gridTemplateColumns: "118px 1fr",
+        gap: 16, padding: 10, marginBottom: 11, borderRadius: 26,
+        background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
+        border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
+        position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer",
+        fontFamily: "inherit",
+      }}
+    >
+      {/* Photo */}
+      <div style={{
+        position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden",
+        background: dish.photos?.[0] ? "var(--carta-photo-bg, #222)" : "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))",
+        flexShrink: 0,
+      }}>
+        {dish.photos?.[0] ? (
+          <img src={dish.photos[0]} alt={dish.name} loading="lazy"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>
+            🍽️
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
+        <h4 style={{
+          margin: "0 0 4px", fontSize: 18, fontWeight: 700,
+          color: "var(--carta-text)",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
+          {dish.name}
+        </h4>
+        {dish.description && (
+          <p style={{
+            margin: "0 0 8px", color: "var(--carta-text2)", fontSize: 14, lineHeight: 1.42,
+            overflow: "hidden", textOverflow: "ellipsis",
+            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+          }}>{dish.description}</p>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {discountPct > 0 && (
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>
+              -{discountPct}%
+            </span>
+          )}
+          <b style={{ color: "var(--carta-accent)", fontSize: 16 }}>{formatCLP(effectivePrice)}</b>
+          {discountPct > 0 && (
+            <span style={{ fontSize: "0.78rem", color: "var(--carta-text2)", textDecoration: "line-through" }}>
+              {formatCLP(dish.price)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Add button */}
+      <div style={{
+        position: "absolute", bottom: 10, right: 10,
+        width: 28, height: 28, borderRadius: "50%",
+        background: "var(--carta-accent)", color: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+        fontSize: 18, fontWeight: 700, pointerEvents: "none",
+      }}>+</div>
+    </button>
+  );
+}
+
+// ── Lista dish card (light horizontal style) ──────────────────────────────────
+function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
+  const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        margin: "0 12px 10px",
+        background: "var(--carta-card-bg)",
+        borderRadius: 16,
+        boxShadow: "var(--carta-card-shadow)",
+        display: "flex",
+        alignItems: "stretch",
+        overflow: "hidden",
+        minHeight: 108,
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+        width: "calc(100% - 24px)",
+        padding: 0,
+      }}
+    >
+      {/* Izquierda: texto */}
+      <div style={{
+        flex: 1, padding: "14px 10px 14px 14px",
+        display: "flex", flexDirection: "column", justifyContent: "space-between",
+      }}>
+        <div>
+          <p style={{
+            fontFamily: F, fontWeight: 700, fontSize: "1.1rem",
+            color: "var(--carta-text)", lineHeight: 1.3, margin: "0 0 4px",
+          }}>
+            {dish.name}
+          </p>
+          {dish.description && (
+            <p style={{
+              fontFamily: FB, fontSize: "0.95rem", color: "var(--carta-text2)", margin: 0,
+              display: "-webkit-box", WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5,
+            }}>
+              {dish.description}
+            </p>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 8 }}>
+          <p style={{ fontFamily: F, fontWeight: 800, fontSize: "0.92rem", color: "var(--carta-accent)", margin: 0 }}>
+            {formatCLP(effectivePrice)}
+          </p>
+          {dish.discountPrice != null && dish.discountPrice < dish.price && (
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--carta-text3)", margin: 0, textDecoration: "line-through" }}>
+              {formatCLP(dish.price)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Derecha: foto */}
+      <div style={{ width: 120, flexShrink: 0, position: "relative", background: "var(--carta-photo-bg)" }}>
+        {dish.photos?.[0] ? (
+          <img
+            src={dish.photos[0]}
+            alt={dish.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: "2rem" }}>🍽️</span>
+          </div>
+        )}
+        {/* Botón + */}
+        <div style={{
+          position: "absolute", bottom: 8, right: 8,
+          width: 28, height: 28, borderRadius: "50%",
+          background: "var(--carta-accent)", color: "#fff",
+          border: "none",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          fontSize: 18, fontWeight: 700, pointerEvents: "none",
+        }}>
+          +
+        </div>
+      </div>
+    </button>
+  );
 }
 
 export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
@@ -52,8 +218,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
-  const isDark = orderingConfig.theme === "dark";
-  const accent = orderingConfig.accentColor || (isDark ? "#fe0001" : "#F59E0B");
+  const isImpact = (orderingConfig.cartaView || "lista") === "impact";
+  const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
+  const accent = orderingConfig.cartaAccentColor || (isDark ? "#fe0001" : "#F59E0B");
 
   const themeVars: React.CSSProperties = isDark ? {
     "--carta-bg": "#0e0e0e",
@@ -123,9 +290,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     setSelectedDish(null);
   };
 
-  const firstDishPhoto = activeDishes.find(d => d.photos?.[0])?.photos?.[0] || null;
-  const heroImg = orderingConfig.orderingBannerUrl || restaurant.bannerUrl || firstDishPhoto;
-
   return (
     <div style={{ minHeight: "100dvh", background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
 
@@ -133,25 +297,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
         .order-search-input::placeholder { color: var(--carta-text3); }
         .order-search-input { color: var(--carta-text); background: var(--carta-surface); border-color: var(--carta-border); }
       `}</style>
-
-      {/* HERO BANNER */}
-      {heroImg && (
-        <div style={{ position: "relative", width: "100%", height: 220, overflow: "hidden", flexShrink: 0 }}>
-          <img src={heroImg} alt={restaurant.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)" }} />
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            {restaurant.logoUrl && (
-              <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.85)", boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
-            )}
-            <p style={{ fontFamily: F, fontWeight: 800, fontSize: "1.3rem", color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.45)", textAlign: "center", padding: "0 20px" }}>
-              {restaurant.name}
-            </p>
-            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "rgba(255,255,255,0.8)", margin: 0 }}>
-              ⏱ {orderingConfig.waitTime || "30-45 min"}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* HEADER sticky */}
       <div style={{ position: "sticky", top: 0, zIndex: 100, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", padding: "0 16px" }}>
@@ -169,11 +314,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
             <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "var(--carta-text)", margin: 0 }}>
               {restaurant.name}
             </p>
-            {!heroImg && (
-              <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text3)", margin: 0 }}>
-                ⏱ {orderingConfig.waitTime || "30-45 min"}
-              </p>
-            )}
+            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text3)", margin: 0 }}>
+              ⏱ {orderingConfig.waitTime || "30-45 min"}
+            </p>
           </div>
 
           {/* Carrito */}
@@ -238,7 +381,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
       </div>
 
       {/* LISTA DE PLATOS */}
-      <div style={{ padding: "8px 0 120px" }}>
+      <div style={{ padding: isImpact ? "8px 12px 120px" : "8px 0 120px" }}>
         {grouped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--carta-text3)" }}>
             <Search size={32} style={{ marginBottom: 12 }} />
@@ -257,87 +400,18 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
               </p>
 
               {/* Platos */}
-              {dishes.map(dish => (
-                <button
+              {dishes.map(dish => isImpact ? (
+                <ImpactCard
                   key={dish.id}
+                  dish={dish}
                   onClick={() => setSelectedDish(dish as unknown as DishForOrder)}
-                  style={{
-                    margin: "0 12px 10px",
-                    background: "var(--carta-card-bg)",
-                    borderRadius: 16,
-                    boxShadow: "var(--carta-card-shadow)",
-                    display: "flex",
-                    alignItems: "stretch",
-                    overflow: "hidden",
-                    minHeight: 108,
-                    border: "none",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    width: "calc(100% - 24px)",
-                    padding: 0,
-                  }}
-                >
-                  {/* Izquierda: texto */}
-                  <div style={{
-                    flex: 1, padding: "14px 10px 14px 14px",
-                    display: "flex", flexDirection: "column", justifyContent: "space-between",
-                  }}>
-                    <div>
-                      <p style={{
-                        fontFamily: F, fontWeight: 700, fontSize: "1.1rem",
-                        color: "var(--carta-text)", lineHeight: 1.3, margin: "0 0 4px",
-                      }}>
-                        {dish.name}
-                      </p>
-                      {dish.description && (
-                        <p style={{
-                          fontFamily: FB, fontSize: "0.95rem", color: "var(--carta-text2)", margin: 0,
-                          display: "-webkit-box", WebkitLineClamp: 3,
-                          WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5,
-                        }}>
-                          {dish.description}
-                        </p>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 8 }}>
-                      <p style={{ fontFamily: F, fontWeight: 800, fontSize: "0.92rem", color: "var(--carta-accent)", margin: 0 }}>
-                        {formatCLP(dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price)}
-                      </p>
-                      {dish.discountPrice != null && dish.discountPrice < dish.price && (
-                        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--carta-text3)", margin: 0, textDecoration: "line-through" }}>
-                          {formatCLP(dish.price)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Derecha: foto */}
-                  <div style={{ width: 120, flexShrink: 0, position: "relative", background: "var(--carta-photo-bg)" }}>
-                    {dish.photos?.[0] ? (
-                      <img
-                        src={dish.photos[0]}
-                        alt={dish.name}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontSize: "2rem" }}>🍽️</span>
-                      </div>
-                    )}
-                    {/* Botón + */}
-                    <div style={{
-                      position: "absolute", bottom: 8, right: 8,
-                      width: 28, height: 28, borderRadius: "50%",
-                      background: "var(--carta-accent)", color: "#fff",
-                      border: "none", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                      fontSize: 18, fontWeight: 700,
-                    }}>
-                      +
-                    </div>
-                  </div>
-                </button>
+                />
+              ) : (
+                <ListaCard
+                  key={dish.id}
+                  dish={dish}
+                  onClick={() => setSelectedDish(dish as unknown as DishForOrder)}
+                />
               ))}
             </div>
           ))

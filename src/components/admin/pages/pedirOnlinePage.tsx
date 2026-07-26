@@ -28,8 +28,6 @@ interface OrderingData {
   orderingNote: string | null;
   orderingPaymentMethods: string;
   orderingBannerUrl: string | null;
-  orderingTheme: string;
-  orderingAccentColor: string | null;
   whatsapp: string | null;
   owner?: { whatsapp?: string | null } | null;
 }
@@ -71,9 +69,7 @@ export default function PedirOnlinePage() {
   const [note, setNote] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["efectivo", "transferencia", "tarjeta"]);
   const [orderingBannerUrl, setOrderingBannerUrl] = useState<string>("");
-  const [orderingTheme, setOrderingTheme] = useState<"light" | "dark">("light");
-  const [orderingAccentColor, setOrderingAccentColor] = useState<string>("#F59E0B");
-  const [uploadingBanner, setUploadingBanner] = useState(false);
+const [uploadingBanner, setUploadingBanner] = useState(false);
   const [showDishPicker, setShowDishPicker] = useState(false);
   const [dishPhotos, setDishPhotos] = useState<{ id: string; name: string; photo: string }[]>([]);
 
@@ -93,8 +89,6 @@ export default function PedirOnlinePage() {
         setNote(d.orderingNote || "");
         setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
         setOrderingBannerUrl(d.orderingBannerUrl || "");
-        setOrderingTheme((d.orderingTheme as "light" | "dark") || "light");
-        setOrderingAccentColor(d.orderingAccentColor || (d.orderingTheme === "dark" ? "#fe0001" : "#F59E0B"));
       })
       .catch(() => toast.error("Error al cargar configuración"))
       .finally(() => setLoading(false));
@@ -164,8 +158,6 @@ export default function PedirOnlinePage() {
           orderingNote: note.trim() || null,
           orderingPaymentMethods: paymentMethods.join(",") || "efectivo,transferencia,tarjeta",
           orderingBannerUrl: orderingBannerUrl.trim() || null,
-          orderingTheme,
-          orderingAccentColor: orderingAccentColor || null,
         }),
       });
       if (res.ok) {
@@ -394,69 +386,6 @@ export default function PedirOnlinePage() {
                 </button>
               );
             })}
-          </div>
-        </Field>
-
-        {/* Diseño: light / dark */}
-        <Field label="Modo de diseño">
-          <div style={{ display: "flex", gap: 8 }}>
-            {([
-              { value: "light" as const, label: "☀️ Claro", desc: "Fondo blanco" },
-              { value: "dark" as const, label: "🌙 Oscuro", desc: "Fondo negro" },
-            ]).map(({ value, label, desc }) => {
-              const active = orderingTheme === value;
-              return (
-                <button
-                  key={value}
-                  onClick={() => {
-                    setOrderingTheme(value);
-                    if (value === "dark" && orderingAccentColor === "#F59E0B") setOrderingAccentColor("#fe0001");
-                    if (value === "light" && orderingAccentColor === "#fe0001") setOrderingAccentColor("#F59E0B");
-                  }}
-                  style={{
-                    flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
-                    background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
-                    border: active ? `1px solid rgba(244,166,35,0.4)` : "1px solid transparent",
-                    color: active ? GOLD : "var(--adm-text3)",
-                    fontFamily: F, fontSize: "0.8rem", fontWeight: active ? 700 : 500,
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <span>{label}</span>
-                  <span style={{ fontSize: "0.68rem", opacity: 0.75 }}>{desc}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-
-        {/* Color de acento */}
-        <Field label="Color de acento" hint="El color de botones, precios y destacados en la página de pedidos.">
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            {["#F59E0B","#fe0001","#16a34a","#3b82f6","#8b5cf6","#f97316","#ec4899","#14b8a6"].map(color => (
-              <button
-                key={color}
-                onClick={() => setOrderingAccentColor(color)}
-                style={{
-                  width: 32, height: 32, borderRadius: "50%", border: orderingAccentColor === color ? "3px solid var(--adm-text)" : "3px solid transparent",
-                  background: color, cursor: "pointer", flexShrink: 0,
-                  boxShadow: orderingAccentColor === color ? "0 0 0 2px var(--adm-bg), 0 0 0 4px var(--adm-text)" : "none",
-                  transition: "all 0.15s",
-                }}
-              />
-            ))}
-            <input
-              type="color"
-              value={orderingAccentColor}
-              onChange={e => setOrderingAccentColor(e.target.value)}
-              style={{ width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, background: "none" }}
-              title="Color personalizado"
-            />
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-            <div style={{ width: 20, height: 20, borderRadius: "50%", background: orderingAccentColor, flexShrink: 0 }} />
-            <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{orderingAccentColor}</span>
           </div>
         </Field>
 

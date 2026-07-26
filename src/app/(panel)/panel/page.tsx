@@ -309,6 +309,12 @@ export default function PanelDashboard() {
 
       {/* ═══ Quick actions ═══ */}
       <div className="quick-actions-grid" style={{ display: "grid", gridTemplateColumns: showOrdering ? "1fr 1fr 1fr" : "1fr 1fr", gap: 10, marginBottom: 16 }}>
+        {showOrdering && (
+          <Link href="/panel/pedir-online" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 18, padding: "14px 12px", display: "flex", alignItems: "center", gap: 10, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
+            <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}><ShoppingCart size={16} color={GOLD} /></div>
+            <div style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Pedidos<br/>online</div>
+          </Link>
+        )}
         <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 18, padding: "14px 12px", display: "flex", alignItems: "center", gap: 10, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}><Eye size={16} color={GOLD} /></div>
           <div style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Ver mi<br/>carta QR</div>
@@ -317,12 +323,6 @@ export default function PanelDashboard() {
           <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}><QrCode size={16} color={GOLD} /></div>
           <div style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Generar<br/>código QR</div>
         </Link>
-        {showOrdering && (
-          <Link href="/panel/pedir-online" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 18, padding: "14px 12px", display: "flex", alignItems: "center", gap: 10, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
-            <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}><ShoppingCart size={16} color={GOLD} /></div>
-            <div style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Pedidos<br/>online</div>
-          </Link>
-        )}
       </div>
 
       {/* ═══ HERO — En vivo ═══ */}

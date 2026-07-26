@@ -42,8 +42,9 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         id: true, slug: true, name: true, logoUrl: true, plan: true,
         orderingEnabled: true, orderingPhone: true, orderingDelivery: true,
         orderingMinAmount: true, orderingWaitTime: true, orderingNote: true, orderingPaymentMethods: true,
-        orderingTheme: true, orderingAccentColor: true, orderingBannerUrl: true,
+        orderingBannerUrl: true,
         whatsapp: true, address: true, phone: true,
+        defaultView: true, cartaColorMode: true, cartaAccentColor: true,
       },
     }),
   ]);
@@ -85,9 +86,10 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     note: config.orderingNote ?? null,
     address: config.address ?? null,
     paymentMethods: ((config as any).orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean) as string[],
-    theme: (config as any).orderingTheme || "light",
-    accentColor: (config as any).orderingAccentColor || null,
     orderingBannerUrl: (config as any).orderingBannerUrl || null,
+    cartaView: (config as any).defaultView || "lista",
+    cartaColorMode: (config as any).cartaColorMode || "LIGHT",
+    cartaAccentColor: (config as any).cartaAccentColor || null,
   };
 
   return (
