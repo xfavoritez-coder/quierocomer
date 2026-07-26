@@ -308,7 +308,7 @@ export default function MiRestaurantePage() {
   const handleActivateAutoRenew = async () => {
     if (!rid || activatingAutoRenew) return;
     const planKey = plan as "GOLD" | "PREMIUM" | "SILVER";
-    if (planKey === "FREE" as any || !billingStatus?.hasSubscription) {
+    if (plan === "FREE" || billingStatus?.subscriptionStatus !== "ACTIVE") {
       toast.error("Primero necesitas tener un plan activo");
       return;
     }
