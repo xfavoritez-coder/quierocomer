@@ -13,10 +13,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!restaurant) return {};
   return {
     title: `Pedir en ${restaurant.name} | QuieroComer`,
-    description: `Arma tu pedido de ${restaurant.name} y envíalo por WhatsApp. Sin apps, sin comisiones.`,
+    description: `Arma tu pedido de ${restaurant.name} y envíalo directo por WhatsApp. Sin apps, sin comisiones.`,
     openGraph: {
-      title: `Pedir en ${restaurant.name}`,
-      images: restaurant.logoUrl ? [{ url: restaurant.logoUrl }] : [],
+      title: `🛍️ Pide en ${restaurant.name}`,
+      description: `Elige tus platos y envía tu pedido por WhatsApp. Rápido, sin apps.`,
+      images: restaurant.logoUrl
+        ? [{ url: restaurant.logoUrl, width: 400, height: 400, alt: restaurant.name }]
+        : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `🛍️ Pide en ${restaurant.name}`,
+      description: `Elige tus platos y envía tu pedido por WhatsApp. Rápido, sin apps.`,
+      images: restaurant.logoUrl ? [restaurant.logoUrl] : [],
     },
   };
 }
@@ -32,7 +42,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         id: true, slug: true, name: true, logoUrl: true, plan: true,
         orderingEnabled: true, orderingPhone: true, orderingDelivery: true,
         orderingMinAmount: true, orderingWaitTime: true, orderingNote: true,
-        whatsapp: true, address: true,
+        whatsapp: true, address: true, phone: true,
       },
     }),
   ]);
@@ -67,7 +77,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   }
 
   const orderingConfig = {
-    phone: config.orderingPhone || config.whatsapp || "",
+    phone: config.orderingPhone || config.whatsapp || config.phone || "",
     delivery: config.orderingDelivery as "PICKUP" | "DELIVERY" | "BOTH",
     minAmount: config.orderingMinAmount ?? null,
     waitTime: config.orderingWaitTime ?? null,
