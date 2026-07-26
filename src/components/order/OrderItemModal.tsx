@@ -33,6 +33,7 @@ export interface DishForOrder {
   name: string;
   description?: string | null;
   price: number;
+  discountPrice?: number | null;
   photos?: string[];
   modifierTemplates: ModifierTemplate[];
 }
@@ -97,7 +98,8 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
     const sel = selections[g.id] ?? new Set();
     return sum + g.options.filter(o => sel.has(o.id)).reduce((s, o) => s + o.priceAdjustment, 0);
   }, 0);
-  const unitTotal = dish.price + priceAdjustment;
+  const basePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
+  const unitTotal = basePrice + priceAdjustment;
 
   const handleAdd = () => {
     if (!isValid) return;
@@ -167,9 +169,16 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
               {dish.description}
             </p>
           )}
-          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--carta-accent, #F4A623)", margin: "0 0 18px" }}>
-            {formatCLP(dish.price)}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 18px" }}>
+            <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--carta-accent, #F4A623)", margin: 0 }}>
+              {formatCLP(basePrice)}
+            </p>
+            {dish.discountPrice != null && dish.discountPrice < dish.price && (
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--carta-text3, #999)", margin: 0, textDecoration: "line-through" }}>
+                {formatCLP(dish.price)}
+              </p>
+            )}
+          </div>
 
           {/* Modifier groups */}
           {groups.map(group => {

@@ -17,7 +17,7 @@ function formatCLP(n: number) {
 interface Category { id: string; name: string; }
 interface Dish {
   id: string; name: string; description?: string | null;
-  price: number; photos?: string[]; categoryId: string;
+  price: number; discountPrice?: number | null; photos?: string[]; categoryId: string;
   isActive: boolean; deletedAt?: Date | null;
   modifierTemplates: any[];
 }
@@ -108,14 +108,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
   const handleAddItem = ({ selectedOptions, quantity, notes }: { selectedOptions: SelectedOption[]; quantity: number; notes: string }) => {
     if (!selectedDish) return;
     const priceAdj = selectedOptions.reduce((s, o) => s + o.priceAdjustment, 0);
+    const effectivePrice = selectedDish.discountPrice != null && selectedDish.discountPrice < selectedDish.price
+      ? selectedDish.discountPrice : selectedDish.price;
     addItem({
       dishId: selectedDish.id,
       dishName: selectedDish.name,
-      dishPrice: selectedDish.price,
+      dishPrice: effectivePrice,
       imageUrl: selectedDish.photos?.[0] || null,
       quantity,
       selectedOptions,
-      unitTotal: selectedDish.price + priceAdj,
+      unitTotal: effectivePrice + priceAdj,
       notes,
     });
     setSelectedDish(null);
@@ -297,12 +299,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                         </p>
                       )}
                     </div>
-                    <p style={{
-                      fontFamily: F, fontWeight: 800, fontSize: "0.92rem",
-                      color: "var(--carta-accent)", margin: "8px 0 0",
-                    }}>
-                      {formatCLP(dish.price)}
-                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 8 }}>
+                      <p style={{ fontFamily: F, fontWeight: 800, fontSize: "0.92rem", color: "var(--carta-accent)", margin: 0 }}>
+                        {formatCLP(dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price)}
+                      </p>
+                      {dish.discountPrice != null && dish.discountPrice < dish.price && (
+                        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--carta-text3)", margin: 0, textDecoration: "line-through" }}>
+                          {formatCLP(dish.price)}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Derecha: foto */}
