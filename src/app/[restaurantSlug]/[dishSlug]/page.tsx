@@ -499,7 +499,10 @@ const findDishCached = unstable_cache(
 // generateStaticParams — both dish entries AND commune+restaurant combos
 // ---------------------------------------------------------------------------
 
-// Empty — pages generated on-demand via ISR (avoids connection pool exhaustion at build time)
+// Forzar render dinámico: esta página usa cookies() en el path de dish page
+export const dynamic = 'force-dynamic'
+
+// Empty — pages generated on-demand (avoids connection pool exhaustion at build time)
 export async function generateStaticParams() {
   return []
 }
