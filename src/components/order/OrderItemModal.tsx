@@ -33,7 +33,7 @@ export interface DishForOrder {
   name: string;
   description?: string | null;
   price: number;
-  imageUrl?: string | null;
+  photos?: string[];
   modifierTemplates: ModifierTemplate[];
 }
 
@@ -139,8 +139,8 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
       >
         {/* Image / header */}
         <div style={{ position: "relative", flexShrink: 0 }}>
-          {dish.imageUrl ? (
-            <img src={dish.imageUrl} alt={dish.name} style={{ width: "100%", height: 220, objectFit: "cover", display: "block" }} />
+          {dish.photos?.[0] ? (
+            <img src={dish.photos[0]} alt={dish.name} style={{ width: "100%", height: 220, objectFit: "cover", display: "block" }} />
           ) : (
             <div style={{ width: "100%", height: 80, background: "var(--carta-surface, #f5f5f5)" }} />
           )}
