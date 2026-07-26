@@ -355,14 +355,14 @@ function formatDateCL(d: string | null) {
 }
 
 function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; renewMode?: boolean; context?: string; onClose: () => void }) {
-  const ALL_TABS = ["FREE", "GOLD", "PREMIUM"] as const;
+  const ALL_TABS = ["GOLD", "PREMIUM"] as const;
   type TabKey = typeof ALL_TABS[number];
   // renewMode: abrir directo en el plan actual (sin swap a otro plan)
-  const defaultTab: TabKey = renewMode && initialTab
+  const defaultTab: TabKey = renewMode && initialTab && initialTab !== "FREE"
     ? initialTab as TabKey
-    : initialTab
-    ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab) as TabKey
-    : "FREE";
+    : initialTab && initialTab !== "FREE"
+    ? (initialTab === plan ? "PREMIUM" : initialTab) as TabKey
+    : "GOLD";
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -482,7 +482,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
             const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : "#22c55e";
             const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : "#F0FDF4";
             const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🆓";
-            const tabLabel = t === "FREE" ? "Gratis" : t.charAt(0) + t.slice(1).toLowerCase();
+            const tabLabel = t.charAt(0) + t.slice(1).toLowerCase();
             return (
               <button key={t} onClick={() => {
                 setTab(t); setConfirmTab(null);
@@ -601,7 +601,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {tab === "FREE" ? "Volver a Gratis" : tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : isEarlyRenewal ? (
             <div style={{ marginBottom: 8 }}>
