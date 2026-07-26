@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck } from "lucide-react";
+import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck, Banknote, CreditCard, ArrowLeftRight } from "lucide-react";
 import { useCart } from "./OrderCartContext";
 
 const F = "var(--font-display, 'Inter', sans-serif)";
@@ -18,6 +18,7 @@ interface OrderingConfig {
   waitTime: string | null;
   note: string | null;
   address: string | null;
+  paymentMethods?: string[];
 }
 
 interface Props {
@@ -38,7 +39,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function OrderCheckout({ restaurantName, restaurantSlug, orderingConfig, onBack, onClose }: Props) {
   const { items, total, clearCart } = useCart();
-  const { delivery, minAmount, waitTime, note, address, phone } = orderingConfig;
+  const { delivery, minAmount, waitTime, note, address, phone, paymentMethods = ["efectivo", "transferencia", "tarjeta"] } = orderingConfig;
 
   const showPickup = delivery === "PICKUP" || delivery === "BOTH";
   const showDelivery = delivery === "DELIVERY" || delivery === "BOTH";
@@ -48,6 +49,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [orderType, setOrderType] = useState<"PICKUP" | "DELIVERY">(showPickup ? "PICKUP" : "DELIVERY");
   const [clientAddress, setClientAddress] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
 
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
 
@@ -55,6 +57,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     name.trim().length >= 2 &&
     clientPhone.trim().length >= 8 &&
     (orderType === "PICKUP" || clientAddress.trim().length >= 5) &&
+    paymentMethod !== null &&
     !belowMin;
 
   const buildWhatsAppMessage = () => {
@@ -70,6 +73,8 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     if (orderType === "PICKUP" && address) {
       lines.push(`*Local:* ${address}`);
     }
+    const payLabels = { efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta (presencial)" };
+    if (paymentMethod) lines.push(`*Pago:* ${payLabels[paymentMethod]}`);
     lines.push("");
     lines.push("*Productos:*");
     for (const item of items) {
@@ -222,6 +227,37 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               type="tel"
               autoComplete="tel"
             />
+          </div>
+
+          {/* Payment method */}
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
+              Forma de pago
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              {([
+                { value: "efectivo", label: "Efectivo", Icon: Banknote },
+                { value: "transferencia", label: "Transferencia", Icon: ArrowLeftRight },
+                { value: "tarjeta", label: "Tarjeta", Icon: CreditCard },
+              ] as const).filter(opt => paymentMethods.includes(opt.value)).map(({ value, label, Icon }) => {
+                const active = paymentMethod === value;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setPaymentMethod(value)}
+                    style={{
+                      flex: 1, padding: "11px 6px", borderRadius: 10, cursor: "pointer",
+                      border: `1.5px solid ${active ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
+                      background: active ? "rgba(244,166,35,0.08)" : "var(--carta-surface, #fafafa)",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                    }}
+                  >
+                    <Icon size={17} color={active ? "#F4A623" : "var(--carta-text2, #999)"} />
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: active ? "#F4A623" : "var(--carta-text2, #777)" }}>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Address for delivery */}

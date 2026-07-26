@@ -41,7 +41,8 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
       select: {
         id: true, slug: true, name: true, logoUrl: true, plan: true,
         orderingEnabled: true, orderingPhone: true, orderingDelivery: true,
-        orderingMinAmount: true, orderingWaitTime: true, orderingNote: true,
+        orderingMinAmount: true, orderingWaitTime: true, orderingNote: true, orderingPaymentMethods: true,
+        orderingTheme: true, orderingAccentColor: true, orderingBannerUrl: true,
         whatsapp: true, address: true, phone: true,
       },
     }),
@@ -83,6 +84,10 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     waitTime: config.orderingWaitTime ?? null,
     note: config.orderingNote ?? null,
     address: config.address ?? null,
+    paymentMethods: ((config as any).orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean) as string[],
+    theme: (config as any).orderingTheme || "light",
+    accentColor: (config as any).orderingAccentColor || null,
+    orderingBannerUrl: (config as any).orderingBannerUrl || null,
   };
 
   return (

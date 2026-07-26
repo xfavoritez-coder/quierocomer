@@ -27,7 +27,11 @@
 
   /* ---------- idioma ---------- */
   body.en .es{display:none!important}
-  body:not(.en) .en{display:none!important}
+  body.en .pt{display:none!important}
+  body.pt .es{display:none!important}
+  body.pt .en{display:none!important}
+  body:not(.en):not(.pt) .en{display:none!important}
+  body:not(.en):not(.pt) .pt{display:none!important}
 
   .lang-toggle{
     position:fixed;top:18px;right:18px;z-index:50;
@@ -188,6 +192,16 @@
   .place-meta a{color:var(--papel);text-decoration:none;border-bottom:1px solid var(--atardecer-a);padding-bottom:1px}
   .place-meta a:hover{color:var(--atardecer-a)}
 
+  @media(max-width:760px){
+    section{padding:56px 20px}
+    .casa{padding-bottom:24px}
+    .como{padding-top:32px}
+    .secrets{margin-top:24px}
+    .how-grid{margin-top:24px}
+    .places{margin-top:32px}
+    .story-grid{margin-top:28px}
+  }
+
   /* cierre */
   .cierre{background:var(--selva);color:var(--papel);text-align:center;padding-bottom:70px}
   .cierre h2{font-size:clamp(34px,6vw,58px)}
@@ -209,19 +223,21 @@
 
 <!-- toggle idioma -->
 <div class="lang-toggle" role="group" aria-label="Idioma / Language">
-  <button id="btn-es" class="active" onclick="setLang('es')">ES</button>
+  <button id="btn-es" onclick="setLang('es')">ES</button>
+  <button id="btn-pt" onclick="setLang('pt')">PT</button>
   <button id="btn-en" onclick="setLang('en')">EN</button>
 </div>
 
 <!-- ══════════ HERO ══════════ -->
 <header class="hero">
-  <p class="eyebrow"><span class="es">Barrio Italia · Santiago de Chile</span><span class="en">Barrio Italia · Santiago, Chile</span></p>
-  <h1><span class="es">Bienvenido a<br>Vista Cordillera</span><span class="en">Welcome to<br>Vista Cordillera</span></h1>
+  <p class="eyebrow"><span class="es">Barrio Italia · Santiago de Chile</span><span class="pt">Barrio Italia · Santiago, Chile</span><span class="en">Barrio Italia · Santiago, Chile</span></p>
+  <h1><span class="es">Bienvenido a<br>Vista Cordillera</span><span class="pt">Bem-vindo à<br>Vista Cordillera</span><span class="en">Welcome to<br>Vista Cordillera</span></h1>
   <p class="sub">
     <span class="es">Deja las maletas donde quieras. Esta página es un pequeño viaje por la casa y el barrio.</span>
+    <span class="pt">Deixe as malas onde quiser. Esta página é uma pequena viagem pela casa e pelo bairro.</span>
     <span class="en">Drop your bags anywhere. This page is a little journey through the home and the neighborhood.</span>
   </p>
-  <p class="scroll-hint"><span class="es">Desliza</span><span class="en">Scroll</span></p>
+  <p class="scroll-hint"><span class="es">Desliza</span><span class="pt">Role</span><span class="en">Scroll</span></p>
   <div class="ridge" aria-hidden="true">
     <svg viewBox="0 0 1440 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0,90 L0,55 L140,30 L260,52 L400,14 L520,44 L660,8 L800,40 L930,20 L1080,48 L1220,26 L1340,50 L1440,38 L1440,90 Z" fill="#14231C"/>
@@ -232,31 +248,33 @@
 <!-- ══════════ WIFI ══════════ -->
 <section class="wifi">
   <div class="wrap reveal">
-    <p class="kicker"><span class="es">Primero lo primero</span><span class="en">First things first</span></p>
-    <h2><span class="es">Conéctate y respira</span><span class="en">Connect &amp; breathe</span></h2>
+    <p class="kicker"><span class="es">Primero lo primero</span><span class="pt">Primeiro as coisas importantes</span><span class="en">First things first</span></p>
+    <h2><span class="es">Conéctate y respira</span><span class="pt">Conecte-se e respire</span><span class="en">Connect &amp; breathe</span></h2>
     <p class="lead">
       <span class="es">Sabemos que es lo primero que buscas después de un viaje. Aquí está, sin vueltas.</span>
+      <span class="pt">Sabemos que é a primeira coisa que você procura depois de uma viagem. Aqui está, sem rodeios.</span>
       <span class="en">We know it's the first thing you look for after a trip. Here it is, no fuss.</span>
     </p>
     <div class="wifi-card">
       <div class="wifi-row">
         <div>
-          <div class="wifi-label"><span class="es">Red</span><span class="en">Network</span></div>
+          <div class="wifi-label"><span class="es">Red</span><span class="pt">Rede</span><span class="en">Network</span></div>
           <div class="wifi-value" id="wifi-name">LIB-8579634</div>
         </div>
       </div>
       <div class="wifi-row">
         <div>
-          <div class="wifi-label"><span class="es">Contraseña</span><span class="en">Password</span></div>
+          <div class="wifi-label"><span class="es">Contraseña</span><span class="pt">Senha</span><span class="en">Password</span></div>
           <div class="wifi-value" id="wifi-pass">nstNycFgbt6x</div>
         </div>
         <button class="copy-btn" onclick="copyPass(this)">
-          <span class="es">Copiar</span><span class="en">Copy</span>
+          <span class="es">Copiar</span><span class="pt">Copiar</span><span class="en">Copy</span>
         </button>
       </div>
     </div>
     <p class="checkout-note">
       <span class="es">Check-out: hasta las 11:00 · Solo cierra la puerta al salir.</span>
+      <span class="pt">Check-out: até as 11h · Basta fechar a porta ao sair.</span>
       <span class="en">Check-out: by 11:00 AM · Just close the door behind you.</span>
     </p>
   </div>
@@ -266,18 +284,20 @@
 <section class="casa">
   <div class="wrap">
     <div class="reveal">
-      <p class="kicker"><span class="es">La casa</span><span class="en">The home</span></p>
-      <h2><span class="es">Una pequeña selva con vista a los Andes</span><span class="en">A little jungle with a view of the Andes</span></h2>
+      <p class="kicker"><span class="es">La casa</span><span class="pt">O apartamento</span><span class="en">The home</span></p>
+      <h2><span class="es">Una pequeña selva con vista a los Andes</span><span class="pt">Uma pequena selva com vista para os Andes</span><span class="en">A little jungle with a view of the Andes</span></h2>
     </div>
     <div class="story-grid reveal">
       <div class="photo-ph" style="padding:0;background:#1C3526"><img src="/plantas.jpeg" alt="Las plantas" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:20px"/></div>
       <div>
         <p class="lead" style="margin-bottom:18px">
           <span class="es">Cuando llegué a este departamento, todas las plantas cabían en una sola caja. Eran pequeñitas, casi tímidas. Con los años fueron creciendo con la luz de la tarde que entra por los ventanales, y hoy la casa es más de ellas que mía.</span>
+          <span class="pt">Quando me mudei para este apartamento, todas as plantas cabiam em uma única caixa. Eram pequeninas, quase tímidas. Com os anos foram crescendo com a luz da tarde que entra pelas janelas, e hoje a casa pertence mais a elas do que a mim.</span>
           <span class="en">When I moved into this apartment, every plant fit in a single box. They were tiny, almost shy. Over the years they grew with the afternoon light that pours through the windows, and today this home belongs more to them than to me.</span>
         </p>
         <p class="lead">
           <span class="es">Disfruta del verde y de su compañía — son parte de lo que hace especial este espacio.</span>
+          <span class="pt">Aproveite o verde e a companhia delas — fazem parte do que torna este espaço especial.</span>
           <span class="en">Enjoy the greenery and their quiet company — they're part of what makes this place special.</span>
         </p>
       </div>
@@ -285,17 +305,19 @@
     <div class="secrets reveal">
       <div class="secret-card">
         <div class="icon">🖥️</div>
-        <h3><span class="es">¿Vienes a trabajar?</span><span class="en">Working remotely?</span></h3>
+        <h3><span class="es">¿Vienes a trabajar?</span><span class="pt">Veio para trabalhar?</span><span class="en">Working remotely?</span></h3>
         <p>
           <span class="es">En la oficina hay una pantalla lista para tu computador. El cable HDMI está conectado — solo enchufa y listo.</span>
+          <span class="pt">No escritório há um monitor pronto para o seu laptop. O cabo HDMI já está conectado — é só plugar e pronto.</span>
           <span class="en">The office has a monitor ready for your laptop. The HDMI cable is already connected — just plug in and go.</span>
         </p>
       </div>
       <div class="secret-card">
         <div class="icon">🧘</div>
-        <h3><span class="es">¿Ganas de moverte?</span><span class="en">Feel like moving?</span></h3>
+        <h3><span class="es">¿Ganas de moverte?</span><span class="pt">Vontade de se mover?</span><span class="en">Feel like moving?</span></h3>
         <p>
           <span class="es">En el clóset encontrarás pesas de distintos kilos, un mat de yoga y cuerdas para estirar. La luz de la mañana en el living es perfecta para eso.</span>
+          <span class="pt">No armário você encontrará halteres de diferentes pesos, um mat de yoga e faixas elásticas. A luz da manhã na sala é perfeita para isso.</span>
           <span class="en">In the closet you'll find dumbbells in different weights, a yoga mat, and stretching ropes. The morning light in the living room is perfect for it.</span>
         </p>
       </div>
@@ -307,29 +329,29 @@
 <section class="como">
   <div class="wrap">
     <div class="reveal">
-      <p class="kicker"><span class="es">Cómo funciona todo</span><span class="en">How everything works</span></p>
-      <h2><span class="es">Todo listo para ti</span><span class="en">Everything set for you</span></h2>
+      <p class="kicker"><span class="es">Cómo funciona todo</span><span class="pt">Como tudo funciona</span><span class="en">How everything works</span></p>
+      <h2><span class="es">Todo listo para ti</span><span class="pt">Tudo pronto para você</span><span class="en">Everything set for you</span></h2>
     </div>
 
     <div class="how-grid reveal">
       <div class="how-card">
         <div class="how-icon">📺</div>
-        <h3><span class="es">La tele</span><span class="en">The TV</span></h3>
+        <h3><span class="es">La tele</span><span class="pt">A TV</span><span class="en">The TV</span></h3>
         <ol class="steps">
-          <li><span class="es">Toma el control remoto junto a la tele y presiona el botón de encendido.</span><span class="en">Grab the remote next to the TV and press the power button.</span></li>
-          <li><span class="es">YouTube ya está con sesión lista — entra directo desde el menú.</span><span class="en">YouTube is already signed in — open it right from the menu.</span></li>
-          <li><span class="es">¿Netflix o algo más? Entra con tu propia cuenta sin problema.</span><span class="en">Netflix or something else? Sign in with your own account.</span></li>
+          <li><span class="es">Toma el control remoto junto a la tele y presiona el botón de encendido.</span><span class="pt">Pegue o controle remoto ao lado da TV e pressione o botão de ligar.</span><span class="en">Grab the remote next to the TV and press the power button.</span></li>
+          <li><span class="es">YouTube ya está con sesión lista — entra directo desde el menú.</span><span class="pt">O YouTube já está logado — acesse direto pelo menu.</span><span class="en">YouTube is already signed in — open it right from the menu.</span></li>
+          <li><span class="es">¿Netflix o algo más? Entra con tu propia cuenta sin problema.</span><span class="pt">Netflix ou outro app? Entre com a sua própria conta, sem problema.</span><span class="en">Netflix or something else? Sign in with your own account.</span></li>
         </ol>
       </div>
       <div class="how-card">
         <div class="how-icon">❄️</div>
-        <h3><span class="es">El aire acondicionado</span><span class="en">Air conditioning</span></h3>
+        <h3><span class="es">El aire acondicionado</span><span class="pt">O ar-condicionado</span><span class="en">Air conditioning</span></h3>
         <ol class="steps">
-          <li><span class="es">Usa el control blanco que está sobre el velador.</span><span class="en">Use the white remote on the nightstand.</span></li>
-          <li><span class="es">Presiona ON/OFF apuntando al equipo, elige frío ❄️ o calor ☀️.</span><span class="en">Press ON/OFF pointing at the unit, choose cool ❄️ or heat ☀️.</span></li>
-          <li><span class="es">Ajusta con las flechas. 23° es el punto feliz de la casa.</span><span class="en">Adjust with the arrows. 23°C is this home's sweet spot.</span></li>
+          <li><span class="es">Usa el control blanco que está sobre el velador.</span><span class="pt">Use o controle branco que fica sobre o criado-mudo.</span><span class="en">Use the white remote on the nightstand.</span></li>
+          <li><span class="es">Presiona ON/OFF apuntando al equipo, elige frío ❄️ o calor ☀️.</span><span class="pt">Pressione ON/OFF apontando para o aparelho, escolha frio ❄️ ou calor ☀️.</span><span class="en">Press ON/OFF pointing at the unit, choose cool ❄️ or heat ☀️.</span></li>
+          <li><span class="es">Ajusta con las flechas. 23° es el punto feliz de la casa.</span><span class="pt">Ajuste com as setas. 23°C é a temperatura ideal do apartamento.</span><span class="en">Adjust with the arrows. 23°C is this home's sweet spot.</span></li>
         </ol>
-        <p class="tip"><span class="es">Al salir, apágalo — las plantas prefieren el clima de Santiago.</span><span class="en">Turn it off when you head out — the plants prefer Santiago's natural climate.</span></p>
+        <p class="tip"><span class="es">Al salir, apágalo — las plantas prefieren el clima de Santiago.</span><span class="pt">Ao sair, desligue — as plantas preferem o clima natural de Santiago.</span><span class="en">Turn it off when you head out — the plants prefer Santiago's natural climate.</span></p>
       </div>
     </div>
   </div>
@@ -339,10 +361,11 @@
 <section class="barrio">
   <div class="wrap">
     <div class="reveal">
-      <p class="kicker"><span class="es">El barrio, recomendado por tu anfitriona</span><span class="en">The neighborhood, recommended by your host</span></p>
-      <h2><span class="es">Lugares recomendados para comer</span><span class="en">Recommended places to eat</span></h2>
+      <p class="kicker"><span class="es">El barrio, recomendado por tu anfitriona</span><span class="pt">O bairro, recomendado pela sua anfitriã</span><span class="en">The neighborhood, recommended by your host</span></p>
+      <h2><span class="es">Lugares recomendados para comer</span><span class="pt">Lugares recomendados para comer</span><span class="en">Recommended places to eat</span></h2>
       <p class="lead">
         <span class="es">Barrio Italia está lleno de lugares, pero estos son a los que vuelvo siempre. Todos a pocos minutos caminando.</span>
+        <span class="pt">O Barrio Italia está cheio de opções, mas esses são os que eu sempre volto. Todos a poucos minutos a pé.</span>
         <span class="en">Barrio Italia is full of spots, but these are the ones I always come back to. All just a few minutes' walk away.</span>
       </p>
     </div>
@@ -356,14 +379,15 @@
             <h3>Krua Thai</h3>
             <div class="rating">★ 4.9 <small>(329)</small></div>
           </div>
-          <div class="place-tag"><span class="es">Tailandés auténtico · Terraza rooftop</span><span class="en">Authentic Thai · Rooftop terrace</span></div>
+          <div class="place-tag"><span class="es">Tailandés auténtico · Terraza rooftop</span><span class="pt">Tailandês autêntico · Terraço rooftop</span><span class="en">Authentic Thai · Rooftop terrace</span></div>
           <p>
             <span class="es">Cocina tailandesa de verdad, atendido por tailandeses. Sube a la terraza si el día acompaña — y respeta los niveles de picante, no son decorativos.</span>
+            <span class="pt">Culinária tailandesa de verdade, administrado por tailandeses. Suba ao terraço se o dia estiver bom — e respeite os níveis de picância, não são decorativos.</span>
             <span class="en">The real deal, run by a Thai family. Head up to the rooftop if the weather's nice — and respect the spice levels, they're not decorative.</span>
           </p>
           <div class="place-meta">
-            <span><span class="es">Cierra lunes</span><span class="en">Closed Mondays</span></span>
-            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante%20Krua%20Thai%20Girardi%201349%20Providencia&query_place_id=ChIJg5gxBgDFYpYR_kZh2z2YOH0" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="en">Directions →</span></a>
+            <span><span class="es">Cierra lunes</span><span class="pt">Fecha segundas</span><span class="en">Closed Mondays</span></span>
+            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante%20Krua%20Thai%20Girardi%201349%20Providencia&query_place_id=ChIJg5gxBgDFYpYR_kZh2z2YOH0" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="pt">Como chegar →</span><span class="en">Directions →</span></a>
           </div>
         </div>
       </article>
@@ -375,14 +399,15 @@
             <h3>Noriko</h3>
             <div class="rating">★ 4.9 <small>(207)</small></div>
           </div>
-          <div class="place-tag"><span class="es">Sushi tradicional · Íntimo</span><span class="en">Traditional sushi · Intimate</span></div>
+          <div class="place-tag"><span class="es">Sushi tradicional · Íntimo</span><span class="pt">Sushi tradicional · Íntimo</span><span class="en">Traditional sushi · Intimate</span></div>
           <p>
             <span class="es">Un lugar chico y honesto donde el sushi se hace como se debe. Pocos asientos, mucha dedicación. Llega temprano al almuerzo.</span>
+            <span class="pt">Um lugar pequeno e honesto onde o sushi é feito como deve ser. Poucos lugares, muita dedicação. Chegue cedo no almoço.</span>
             <span class="en">A small, honest spot where sushi is made the way it should be. Few seats, lots of care. Arrive early for lunch.</span>
           </p>
           <div class="place-meta">
-            <span><span class="es">Cierra lun y mar</span><span class="en">Closed Mon &amp; Tue</span></span>
-            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante%20Noriko%20sushi%20Malaqu%C3%ADas%20Concha%200390%20Providencia&query_place_id=ChIJUdjDTGvFYpYRv14XPVnT0Ec" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="en">Directions →</span></a>
+            <span><span class="es">Cierra lun y mar</span><span class="pt">Fecha seg e ter</span><span class="en">Closed Mon &amp; Tue</span></span>
+            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante%20Noriko%20sushi%20Malaqu%C3%ADas%20Concha%200390%20Providencia&query_place_id=ChIJUdjDTGvFYpYRv14XPVnT0Ec" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="pt">Como chegar →</span><span class="en">Directions →</span></a>
           </div>
         </div>
       </article>
@@ -394,14 +419,15 @@
             <h3>Caléndula</h3>
             <div class="rating">★ 4.9 <small>(324)</small></div>
           </div>
-          <div class="place-tag"><span class="es">Peruano · Almuerzo con patio</span><span class="en">Peruvian · Lunch with a patio</span></div>
+          <div class="place-tag"><span class="es">Peruano · Almuerzo con patio</span><span class="pt">Peruano · Almoço com pátio</span><span class="en">Peruvian · Lunch with a patio</span></div>
           <p>
             <span class="es">Cocina peruana en una calle tranquila, con un patio donde dan ganas de quedarse toda la tarde. Para un almuerzo rico y sin apuro.</span>
+            <span class="pt">Culinária peruana em uma rua tranquila, com um pátio onde dá vontade de ficar a tarde toda. Para um almoço gostoso e sem pressa.</span>
             <span class="en">Peruvian food on a quiet street, with a patio you'll want to linger in all afternoon. For a proper, unhurried lunch.</span>
           </p>
           <div class="place-meta">
-            <span><span class="es">Todos los días 9–22</span><span class="en">Daily 9 AM–10 PM</span></span>
-            <a href="https://www.google.com/maps/search/?api=1&query=Cal%C3%A9ndula%20Restaurante%20Malaqu%C3%ADas%20Concha%200345%20%C3%91u%C3%B1oa&query_place_id=ChIJFT14BjzFYpYRvrkN76aPD3w" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="en">Directions →</span></a>
+            <span><span class="es">Todos los días 9–22</span><span class="pt">Todos os dias 9–22h</span><span class="en">Daily 9 AM–10 PM</span></span>
+            <a href="https://www.google.com/maps/search/?api=1&query=Cal%C3%A9ndula%20Restaurante%20Malaqu%C3%ADas%20Concha%200345%20%C3%91u%C3%B1oa&query_place_id=ChIJFT14BjzFYpYRvrkN76aPD3w" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="pt">Como chegar →</span><span class="en">Directions →</span></a>
           </div>
         </div>
       </article>
@@ -413,14 +439,15 @@
             <h3>Nana's Fruit</h3>
             <div class="rating">★ 4.8 <small>(2.134)</small></div>
           </div>
-          <div class="place-tag"><span class="es">Desayuno y merienda · Acogedor</span><span class="en">Breakfast &amp; brunch · Cozy</span></div>
+          <div class="place-tag"><span class="es">Desayuno y merienda · Acogedor</span><span class="pt">Café da manhã e lanche · Aconchegante</span><span class="en">Breakfast &amp; brunch · Cozy</span></div>
           <p>
             <span class="es">Mi lugar para partir el día o para la merienda de la tarde. Jugos frescos, waffles y un ambiente donde hasta te ofrecen una mantita si refresca.</span>
+            <span class="pt">Meu lugar para começar o dia ou para o lanche da tarde. Sucos frescos, waffles e um ambiente tão acolhedor que até oferecem um cobertor se esfriar.</span>
             <span class="en">My spot to start the day or for an afternoon treat. Fresh juices, waffles, and a place so cozy they'll offer you a blanket if it gets chilly.</span>
           </p>
           <div class="place-meta">
-            <span><span class="es">Todos los días 9–21</span><span class="en">Daily 9 AM–9 PM</span></span>
-            <a href="https://www.google.com/maps/search/?api=1&query=Nana%27s%20Fruit%20Emilio%20Vaisse%20608%20Providencia&query_place_id=ChIJZWNy6GTFYpYR_DsmxMxgIyg" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="en">Directions →</span></a>
+            <span><span class="es">Todos los días 9–21</span><span class="pt">Todos os dias 9–21h</span><span class="en">Daily 9 AM–9 PM</span></span>
+            <a href="https://www.google.com/maps/search/?api=1&query=Nana%27s%20Fruit%20Emilio%20Vaisse%20608%20Providencia&query_place_id=ChIJZWNy6GTFYpYR_DsmxMxgIyg" target="_blank" rel="noopener"><span class="es">Cómo llegar →</span><span class="pt">Como chegar →</span><span class="en">Directions →</span></a>
           </div>
         </div>
       </article>
@@ -432,31 +459,43 @@
 <!-- ══════════ CIERRE ══════════ -->
 <section class="cierre">
   <div class="wrap reveal">
-    <p class="kicker"><span class="es">Antes de que partas a explorar</span><span class="en">Before you head out to explore</span></p>
-    <h2><span class="es">Que tengas un gran viaje</span><span class="en">Have a wonderful trip</span></h2>
+    <p class="kicker"><span class="es">Antes de que partas a explorar</span><span class="pt">Antes de sair para explorar</span><span class="en">Before you head out to explore</span></p>
+    <h2><span class="es">Que tengas un gran viaje</span><span class="pt">Que você tenha uma ótima viagem</span><span class="en">Have a wonderful trip</span></h2>
     <p class="lead">
       <span class="es">Esta casa se ha llenado de historias de gente de todo el mundo. Ahora te toca a ti escribir la tuya. Si necesitas cualquier cosa, estoy a un mensaje de distancia.</span>
+      <span class="pt">Esta casa se encheu de histórias de pessoas de todo o mundo. Agora é a sua vez de escrever a sua. Se precisar de qualquer coisa, estou a uma mensagem de distância.</span>
       <span class="en">This home is full of stories from people all over the world. Now it's your turn to write yours. If you need anything at all, I'm just a message away.</span>
     </p>
-    <p class="firma"><span class="es">— María Paz, tu anfitriona</span><span class="en">— María Paz, your host</span></p>
+    <p class="firma"><span class="es">— María Paz, tu anfitriona</span><span class="pt">— María Paz, sua anfitriã</span><span class="en">— María Paz, your host</span></p>
     <p class="mini">Vista Cordillera · Barrio Italia · Santiago de Chile</p>
   </div>
 </section>
 
 <script>
-  // idioma (en memoria, sin persistencia)
+  // idioma
   function setLang(lang){
-    document.body.classList.toggle('en', lang === 'en');
+    document.body.classList.remove('en','pt');
+    if(lang === 'en') document.body.classList.add('en');
+    if(lang === 'pt') document.body.classList.add('pt');
     document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+    document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
     document.getElementById('btn-en').classList.toggle('active', lang === 'en');
     document.documentElement.lang = lang;
   }
+  // auto-detectar idioma del navegador
+  (function(){
+    const nav = (navigator.language || navigator.userLanguage || 'es').toLowerCase();
+    if(nav.startsWith('pt')) setLang('pt');
+    else if(nav.startsWith('en')) setLang('en');
+    else setLang('es');
+  })();
 
   // copiar contraseña
   function copyPass(btn){
     const pass = document.getElementById('wifi-pass').textContent.trim();
     const isEn = document.body.classList.contains('en');
-    const done = isEn ? 'Copied ✓' : 'Copiado ✓';
+    const isPt = document.body.classList.contains('pt');
+    const done = isEn ? 'Copied ✓' : isPt ? 'Copiado ✓' : 'Copiado ✓';
     const fallback = () => {
       const ta = document.createElement('textarea');
       ta.value = pass; document.body.appendChild(ta); ta.select();

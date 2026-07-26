@@ -26,6 +26,10 @@ interface OrderingData {
   orderingMinAmount: number | null;
   orderingWaitTime: string | null;
   orderingNote: string | null;
+  orderingPaymentMethods: string;
+  orderingBannerUrl: string | null;
+  orderingTheme: string;
+  orderingAccentColor: string | null;
   whatsapp: string | null;
   owner?: { whatsapp?: string | null } | null;
 }
@@ -65,6 +69,13 @@ export default function PedirOnlinePage() {
   const [minAmount, setMinAmount] = useState("");
   const [waitTime, setWaitTime] = useState("");
   const [note, setNote] = useState("");
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(["efectivo", "transferencia", "tarjeta"]);
+  const [orderingBannerUrl, setOrderingBannerUrl] = useState<string>("");
+  const [orderingTheme, setOrderingTheme] = useState<"light" | "dark">("light");
+  const [orderingAccentColor, setOrderingAccentColor] = useState<string>("#F59E0B");
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [showDishPicker, setShowDishPicker] = useState(false);
+  const [dishPhotos, setDishPhotos] = useState<{ id: string; name: string; photo: string }[]>([]);
 
   useEffect(() => {
     if (!rid) return;
@@ -80,10 +91,38 @@ export default function PedirOnlinePage() {
         setMinAmount(d.orderingMinAmount != null ? String(d.orderingMinAmount) : "");
         setWaitTime(d.orderingWaitTime || "");
         setNote(d.orderingNote || "");
+        setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
+        setOrderingBannerUrl(d.orderingBannerUrl || "");
+        setOrderingTheme((d.orderingTheme as "light" | "dark") || "light");
+        setOrderingAccentColor(d.orderingAccentColor || (d.orderingTheme === "dark" ? "#fe0001" : "#F59E0B"));
       })
       .catch(() => toast.error("Error al cargar configuración"))
       .finally(() => setLoading(false));
   }, [rid]);
+
+  const uploadBanner = async (file: File) => {
+    setUploadingBanner(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "ordering-banners");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) setOrderingBannerUrl(data.url);
+      else toast.error("Error al subir imagen");
+    } catch { toast.error("Error al subir imagen"); }
+    setUploadingBanner(false);
+  };
+
+  useEffect(() => {
+    if (!showDishPicker || !rid || dishPhotos.length > 0) return;
+    fetch(`/api/admin/locales/${rid}/dishes-demo`)
+      .then(r => r.json())
+      .then(d => {
+        const photos = (d.dishes || []).filter((dd: any) => dd.photo).map((dd: any) => ({ id: dd.id, name: dd.name, photo: dd.photo }));
+        setDishPhotos(photos);
+      }).catch(() => {});
+  }, [showDishPicker, rid]);
 
   const [togglingEnabled, setTogglingEnabled] = useState(false);
 
@@ -123,6 +162,10 @@ export default function PedirOnlinePage() {
           orderingMinAmount: minAmount ? parseInt(minAmount, 10) : null,
           orderingWaitTime: waitTime.trim() || null,
           orderingNote: note.trim() || null,
+          orderingPaymentMethods: paymentMethods.join(",") || "efectivo,transferencia,tarjeta",
+          orderingBannerUrl: orderingBannerUrl.trim() || null,
+          orderingTheme,
+          orderingAccentColor: orderingAccentColor || null,
         }),
       });
       if (res.ok) {
@@ -260,6 +303,72 @@ export default function PedirOnlinePage() {
           </div>
         </Field>
 
+        {/* Portada / Banner */}
+        <Field label="Foto de portada">
+          <div>
+            {orderingBannerUrl && (
+              <div style={{ position: "relative", marginBottom: 10, borderRadius: 10, overflow: "hidden", height: 100 }}>
+                <img src={orderingBannerUrl} alt="Portada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <button
+                  onClick={() => setOrderingBannerUrl("")}
+                  style={{ position: "absolute", top: 6, right: 6, width: 24, height: 24, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >×</button>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <label style={{
+                flex: 1, padding: "9px 12px", borderRadius: 8, cursor: uploadingBanner ? "wait" : "pointer",
+                background: "var(--adm-input)", border: "1px solid var(--adm-input-border)",
+                fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}>
+                {uploadingBanner ? "Subiendo..." : "Subir foto"}
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadBanner(f); e.target.value = ""; }} />
+              </label>
+              <button
+                onClick={() => setShowDishPicker(true)}
+                style={{
+                  flex: 1, padding: "9px 12px", borderRadius: 8, cursor: "pointer",
+                  background: "var(--adm-input)", border: "1px solid var(--adm-input-border)",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)",
+                }}
+              >
+                Elegir de mi carta
+              </button>
+            </div>
+          </div>
+        </Field>
+
+        {/* Dish picker modal */}
+        {showDishPicker && (
+          <div
+            onClick={() => setShowDishPicker(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ background: "var(--adm-bg)", borderRadius: "16px 16px 0 0", width: "100%", maxWidth: 520, maxHeight: "60dvh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid var(--adm-card-border)" }}>
+                <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "var(--adm-text)" }}>Elegir foto de portada</span>
+                <button onClick={() => setShowDishPicker(false)} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 20, color: "var(--adm-text2)" }}>×</button>
+              </div>
+              <div style={{ overflowY: "auto", padding: 12, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                {dishPhotos.length === 0 && <p style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.8rem", padding: "20px 0" }}>No hay fotos en tu carta</p>}
+                {dishPhotos.map(dp => (
+                  <button
+                    key={dp.id}
+                    onClick={() => { setOrderingBannerUrl(dp.photo); setShowDishPicker(false); }}
+                    style={{ border: "none", cursor: "pointer", padding: 0, borderRadius: 10, overflow: "hidden", aspectRatio: "1", position: "relative" }}
+                  >
+                    <img src={dp.photo} alt={dp.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tipo de entrega */}
         <Field label="Tipo de entrega disponible">
           <div style={{ display: "flex", gap: 8 }}>
@@ -282,6 +391,100 @@ export default function PedirOnlinePage() {
                 >
                   <Icon size={16} />
                   {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {/* Diseño: light / dark */}
+        <Field label="Modo de diseño">
+          <div style={{ display: "flex", gap: 8 }}>
+            {([
+              { value: "light" as const, label: "☀️ Claro", desc: "Fondo blanco" },
+              { value: "dark" as const, label: "🌙 Oscuro", desc: "Fondo negro" },
+            ]).map(({ value, label, desc }) => {
+              const active = orderingTheme === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => {
+                    setOrderingTheme(value);
+                    if (value === "dark" && orderingAccentColor === "#F59E0B") setOrderingAccentColor("#fe0001");
+                    if (value === "light" && orderingAccentColor === "#fe0001") setOrderingAccentColor("#F59E0B");
+                  }}
+                  style={{
+                    flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
+                    background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                    border: active ? `1px solid rgba(244,166,35,0.4)` : "1px solid transparent",
+                    color: active ? GOLD : "var(--adm-text3)",
+                    fontFamily: F, fontSize: "0.8rem", fontWeight: active ? 700 : 500,
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <span>{label}</span>
+                  <span style={{ fontSize: "0.68rem", opacity: 0.75 }}>{desc}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {/* Color de acento */}
+        <Field label="Color de acento" hint="El color de botones, precios y destacados en la página de pedidos.">
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {["#F59E0B","#fe0001","#16a34a","#3b82f6","#8b5cf6","#f97316","#ec4899","#14b8a6"].map(color => (
+              <button
+                key={color}
+                onClick={() => setOrderingAccentColor(color)}
+                style={{
+                  width: 32, height: 32, borderRadius: "50%", border: orderingAccentColor === color ? "3px solid var(--adm-text)" : "3px solid transparent",
+                  background: color, cursor: "pointer", flexShrink: 0,
+                  boxShadow: orderingAccentColor === color ? "0 0 0 2px var(--adm-bg), 0 0 0 4px var(--adm-text)" : "none",
+                  transition: "all 0.15s",
+                }}
+              />
+            ))}
+            <input
+              type="color"
+              value={orderingAccentColor}
+              onChange={e => setOrderingAccentColor(e.target.value)}
+              style={{ width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, background: "none" }}
+              title="Color personalizado"
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+            <div style={{ width: 20, height: 20, borderRadius: "50%", background: orderingAccentColor, flexShrink: 0 }} />
+            <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{orderingAccentColor}</span>
+          </div>
+        </Field>
+
+        {/* Métodos de pago */}
+        <Field label="Métodos de pago aceptados" hint="El cliente debe elegir uno al hacer el pedido.">
+          <div style={{ display: "flex", gap: 8 }}>
+            {([
+              { value: "efectivo", label: "Efectivo" },
+              { value: "transferencia", label: "Transferencia" },
+              { value: "tarjeta", label: "Tarjeta" },
+            ] as const).map(({ value, label }) => {
+              const active = paymentMethods.includes(value);
+              return (
+                <button
+                  key={value}
+                  onClick={() => setPaymentMethods(prev =>
+                    active ? prev.filter(m => m !== value) : [...prev, value]
+                  )}
+                  style={{
+                    flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
+                    background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                    border: active ? `1px solid rgba(244,166,35,0.4)` : "1px solid transparent",
+                    color: active ? GOLD : "var(--adm-text3)",
+                    fontFamily: F, fontSize: "0.75rem", fontWeight: active ? 700 : 500,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {active ? "✓ " : ""}{label}
                 </button>
               );
             })}
