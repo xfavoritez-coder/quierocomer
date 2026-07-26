@@ -93,10 +93,21 @@ export async function POST(req: NextRequest) {
       console.log(`[billing/subscribe] Cliente creado en Flow: customerId=${flowCustomerId}`);
     } catch (createErr: any) {
       const msg = createErr?.message || "";
-      console.error(`[billing/subscribe] Error en /customer/create: ${msg}`);
-      return NextResponse.json({
-        error: `Error Flow: ${msg}`,
-      }, { status: 500 });
+      const errData = (createErr as any).data;
+      console.error(`[billing/subscribe] Error en /customer/create: ${msg} | data: ${JSON.stringify(errData)}`);
+
+      // Si Flow devuelve el customerId del cliente existente en el error body, lo usamos
+      if (errData?.customerId) {
+        flowCustomerId = errData.customerId;
+        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+        console.log(`[billing/subscribe] customerId extraído del error 401: ${flowCustomerId}`);
+      }
+
+      if (!flowCustomerId) {
+        return NextResponse.json({
+          error: `Error Flow (create): ${msg}`,
+        }, { status: 500 });
+      }
     }
   }
 
