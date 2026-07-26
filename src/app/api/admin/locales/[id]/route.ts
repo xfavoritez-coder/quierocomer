@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id },
     include: {
-      owner: { select: { id: true, name: true, email: true } },
+      owner: { select: { id: true, name: true, email: true, whatsapp: true } },
       categories: { orderBy: { position: "asc" }, select: { id: true, name: true, position: true, isActive: true } },
       _count: { select: { dishes: true, statEvents: true, sessions: true, waiterCalls: true, categories: true } },
     },

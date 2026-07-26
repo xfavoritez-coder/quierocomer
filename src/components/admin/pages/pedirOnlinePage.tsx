@@ -26,6 +26,7 @@ interface OrderingData {
   orderingWaitTime: string | null;
   orderingNote: string | null;
   whatsapp: string | null;
+  owner?: { whatsapp?: string | null } | null;
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
@@ -71,8 +72,9 @@ export default function PedirOnlinePage() {
       .then((d: OrderingData) => {
         setData(d);
         setEnabled(d.orderingEnabled ?? false);
-        setPhone(d.orderingPhone || d.whatsapp || "");
-        setDelivery((d.orderingDelivery as "PICKUP" | "DELIVERY" | "BOTH") || "PICKUP");
+        // Prioridad: número guardado → whatsapp del restaurante → whatsapp del dueño
+        setPhone(d.orderingPhone || d.whatsapp || d.owner?.whatsapp || "");
+        setDelivery((d.orderingDelivery as "PICKUP" | "DELIVERY" | "BOTH") || "BOTH");
         setMinAmount(d.orderingMinAmount != null ? String(d.orderingMinAmount) : "");
         setWaitTime(d.orderingWaitTime || "");
         setNote(d.orderingNote || "");
