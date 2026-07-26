@@ -291,9 +291,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                       </p>
                       {dish.description && (
                         <p style={{
-                          fontFamily: FB, fontSize: "0.72rem", color: "var(--carta-text2)", margin: 0,
-                          display: "-webkit-box", WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.45,
+                          fontFamily: FB, fontSize: "0.8rem", color: "var(--carta-text2)", margin: 0,
+                          display: "-webkit-box", WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5,
                         }}>
                           {dish.description}
                         </p>
