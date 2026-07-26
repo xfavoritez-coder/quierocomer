@@ -24,6 +24,9 @@ const OWNER_EDITABLE_FIELDS = [
   "billingCompanyName", "billingRut", "billingGiro",
   "billingAddress", "billingCity", "billingEmail",
   "billingContactName", "billingPhone",
+  // Pedidos online
+  "orderingEnabled", "orderingPhone", "orderingDelivery",
+  "orderingMinAmount", "orderingWaitTime", "orderingNote",
 ];
 
 function pickFields(body: Record<string, any>, allowed: string[]): Record<string, any> {

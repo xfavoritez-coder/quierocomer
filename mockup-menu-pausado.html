@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mockup — Menú pausado</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fafaf8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── Card principal ── */
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+      max-width: 380px;
+      width: 100%;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    /* ── Franja superior ámbar ── */
+    .top-band {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      padding: 36px 24px 40px;
+    }
+
+    /* ── Logo del restaurante ── */
+    .logo-wrap {
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      background: #fff;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      overflow: hidden;
+    }
+    .logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 18px;
+    }
+    /* Fallback: inicial del nombre si no hay logo */
+    .logo-initial {
+      font-size: 32px;
+      font-weight: 800;
+      color: #f97316;
+      line-height: 1;
+    }
+
+    .restaurant-name {
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Body ── */
+    .body {
+      padding: 28px 28px 32px;
+    }
+
+    .title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    /* ── Footer del dueño ── */
+    .owner-link {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px dashed #e5e7eb;
+    }
+    .owner-link p {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+    .owner-link a {
+      font-size: 12px;
+      color: #f97316;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .owner-link a:hover { text-decoration: underline; }
+
+    /* ── Toggle demo variante logo ── */
+    .toggle-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 999px;
+      padding: 10px 20px;
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      white-space: nowrap;
+    }
+    .toggle-bar button {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .toggle-bar button.active {
+      background: #f97316;
+      color: #fff;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <!-- Franja superior con logo -->
+    <div class="top-band">
+      <div class="logo-wrap" id="logo-wrap">
+        <!-- CON LOGO: una imagen real del restaurante -->
+        <img id="logo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg" alt="logo" style="display:none" />
+        <!-- SIN LOGO: inicial del nombre -->
+        <span class="logo-initial" id="logo-initial">P</span>
+      </div>
+      <div class="restaurant-name">La Pizzería de Mario</div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="body">
+      <div class="title">Este menú está temporalmente fuera de línea</div>
+      <div class="subtitle">
+        El local está actualizando su carta digital.<br/>
+        Intenta nuevamente más tarde.
+      </div>
+
+      <!-- Footer dueño -->
+      <div class="owner-link">
+        <p>¿Eres el dueño de este local?</p>
+        <a href="#">Renueva tu plan en QuieroComer →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de demo para alternar variante logo -->
+  <div class="toggle-bar">
+    <span style="color:#fff; align-self:center">Logo:</span>
+    <button onclick="setLogo('inicial')" class="active">Solo inicial</button>
+    <button onclick="setLogo('imagen')">Con imagen</button>
+  </div>
+
+  <script>
+    function setLogo(v) {
+      document.querySelectorAll('.toggle-bar button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      const img = document.getElementById('logo-img');
+      const initial = document.getElementById('logo-initial');
+      if (v === 'imagen') {
+        // Usa logo de ejemplo (cualquier imagen cuadrada)
+        img.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=160&h=160&fit=crop';
+        img.style.display = 'block';
+        initial.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        initial.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

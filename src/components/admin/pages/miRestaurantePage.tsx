@@ -214,6 +214,7 @@ export default function MiRestaurantePage() {
   };
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => {
+    save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
     let w = website?.trim() || null;
     if (w && !w.startsWith("http")) w = `https://${w}`;
     save({ instagram: instagram || null, website: w });
@@ -602,6 +603,10 @@ export default function MiRestaurantePage() {
         </Field>
         <Field label="Sitio web">
           <input value={website} onChange={e => setWebsite(e.target.value)} style={inputStyle} placeholder="https://tu-sitio.cl" type="url" />
+        </Field>
+
+        <Field label="Dirección (para retiro en local)">
+          <input value={address} onChange={e => setAddress(e.target.value)} style={inputStyle} placeholder="Ej: Av. Providencia 1234, Santiago" />
         </Field>
 
         <button onClick={() => { saveInfo(); saveSocial(); }} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>

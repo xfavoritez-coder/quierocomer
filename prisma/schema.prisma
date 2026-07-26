@@ -315,6 +315,13 @@ model Restaurant {
   googleRating               Float?
   googleRatingCount          Int?
   primaryCategory            String?
+  // Pedidos online (wa.me) — solo plan PREMIUM
+  orderingEnabled            Boolean                  @default(false)
+  orderingPhone              String?                  // WA destino (override del whatsapp del local)
+  orderingDelivery           String                   @default("PICKUP") // PICKUP | DELIVERY | BOTH
+  orderingMinAmount          Int?                     // Monto mínimo en pesos CLP
+  orderingWaitTime           String?                  // Ej: "30-45 min"
+  orderingNote               String?                  // Mensaje custom visible en checkout
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]

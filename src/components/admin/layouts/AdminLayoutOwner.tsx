@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -47,6 +47,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
     { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
     { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
+    ...(opts.plan === "PREMIUM" ? [{ icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online` }] : []),
     { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
     { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
   ];
