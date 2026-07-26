@@ -143,26 +143,22 @@
 
   /* cómo funciona */
   .como{background:linear-gradient(180deg,var(--papel),#EAEBE0)}
-  .device{display:grid;grid-template-columns:1fr 1.2fr;gap:40px;align-items:center;margin-top:56px}
-  .device.flip{grid-template-columns:1.2fr 1fr}
-  .device.flip .device-photo{order:2}
-  @media(max-width:760px){.device,.device.flip{grid-template-columns:1fr}.device.flip .device-photo{order:0}}
-  .device-photo{
-    aspect-ratio:1;border-radius:20px;background:#DADCCE;display:flex;align-items:center;
-    justify-content:center;font-size:52px;
-  }
+  .how-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
+  @media(max-width:760px){.how-grid{grid-template-columns:1fr}}
+  .how-card{background:#fff;border:1px solid rgba(28,43,34,.08);border-radius:20px;padding:28px 30px}
+  .how-icon{font-size:26px;margin-bottom:14px}
+  .how-card h3{font-family:var(--display);font-weight:500;font-size:21px;margin-bottom:14px;color:var(--tinta)}
   .steps{list-style:none;counter-reset:paso}
   .steps li{
-    counter-increment:paso;position:relative;padding:14px 0 14px 52px;font-size:16px;
+    counter-increment:paso;position:relative;padding:11px 0 11px 44px;font-size:15px;
   }
-  .steps li + li{border-top:1px solid rgba(28,43,34,.08)}
+  .steps li + li{border-top:1px solid rgba(28,43,34,.07)}
   .steps li::before{
-    content:counter(paso);position:absolute;left:0;top:12px;width:32px;height:32px;
-    border-radius:50%;background:var(--grad-atardecer);color:#fff;font-weight:600;font-size:14px;
+    content:counter(paso);position:absolute;left:0;top:9px;width:28px;height:28px;
+    border-radius:50%;background:var(--grad-atardecer);color:#fff;font-weight:600;font-size:13px;
     display:flex;align-items:center;justify-content:center;
   }
-  .device h3{font-family:var(--display);font-weight:500;font-size:26px;margin-bottom:6px}
-  .device .tip{margin-top:14px;font-size:13px;color:rgba(28,43,34,.55);font-style:italic}
+  .how-card .tip{margin-top:14px;font-size:13px;color:rgba(28,43,34,.5);font-style:italic;border-top:1px solid rgba(28,43,34,.07);padding-top:12px}
 
   /* barrio */
   .barrio{background:var(--selva);color:var(--papel)}
@@ -312,31 +308,28 @@
   <div class="wrap">
     <div class="reveal">
       <p class="kicker"><span class="es">Cómo funciona todo</span><span class="en">How everything works</span></p>
-      <h2><span class="es">Dos controles, cero misterio</span><span class="en">Two remotes, zero mystery</span></h2>
+      <h2><span class="es">Todo listo para ti</span><span class="en">Everything set for you</span></h2>
     </div>
 
-    <div class="device reveal">
-      <div class="device-photo" aria-hidden="true">📺</div>
-      <div>
+    <div class="how-grid reveal">
+      <div class="how-card">
+        <div class="how-icon">📺</div>
         <h3><span class="es">La tele</span><span class="en">The TV</span></h3>
         <ol class="steps">
-          <li><span class="es">Toma el control remoto que está junto a la tele y presiona el botón de encendido.</span><span class="en">Grab the remote next to the TV and press the power button.</span></li>
-          <li><span class="es">YouTube ya está activado y con sesión lista — entra directo desde el menú.</span><span class="en">YouTube is already set up and signed in — open it right from the menu.</span></li>
-          <li><span class="es">¿Netflix o algo más? Puedes entrar con tu propia cuenta sin problema.</span><span class="en">Netflix or something else? Feel free to sign in with your own account.</span></li>
+          <li><span class="es">Toma el control remoto junto a la tele y presiona el botón de encendido.</span><span class="en">Grab the remote next to the TV and press the power button.</span></li>
+          <li><span class="es">YouTube ya está con sesión lista — entra directo desde el menú.</span><span class="en">YouTube is already signed in — open it right from the menu.</span></li>
+          <li><span class="es">¿Netflix o algo más? Entra con tu propia cuenta sin problema.</span><span class="en">Netflix or something else? Sign in with your own account.</span></li>
         </ol>
       </div>
-    </div>
-
-    <div class="device flip reveal">
-      <div class="device-photo" aria-hidden="true">❄️</div>
-      <div>
-        <h3><span class="es">El aire acondicionado</span><span class="en">The air conditioning</span></h3>
+      <div class="how-card">
+        <div class="how-icon">❄️</div>
+        <h3><span class="es">El aire acondicionado</span><span class="en">Air conditioning</span></h3>
         <ol class="steps">
-          <li><span class="es">Usa el control universal blanco que está sobre el velador.</span><span class="en">Use the white universal remote on the nightstand.</span></li>
-          <li><span class="es">Presiona ON/OFF apuntando al equipo, y elige modo frío ❄️ o calor ☀️.</span><span class="en">Press ON/OFF pointing at the unit, and choose cool ❄️ or heat ☀️ mode.</span></li>
-          <li><span class="es">Ajusta la temperatura con las flechas. 23° es el punto feliz de la casa.</span><span class="en">Adjust the temperature with the arrows. 23°C is this home's happy place.</span></li>
+          <li><span class="es">Usa el control blanco que está sobre el velador.</span><span class="en">Use the white remote on the nightstand.</span></li>
+          <li><span class="es">Presiona ON/OFF apuntando al equipo, elige frío ❄️ o calor ☀️.</span><span class="en">Press ON/OFF pointing at the unit, choose cool ❄️ or heat ☀️.</span></li>
+          <li><span class="es">Ajusta con las flechas. 23° es el punto feliz de la casa.</span><span class="en">Adjust with the arrows. 23°C is this home's sweet spot.</span></li>
         </ol>
-        <p class="tip"><span class="es">Tip: al salir, apágalo — las plantas prefieren el clima de Santiago.</span><span class="en">Tip: turn it off when you head out — the plants prefer Santiago's natural climate.</span></p>
+        <p class="tip"><span class="es">Al salir, apágalo — las plantas prefieren el clima de Santiago.</span><span class="en">Turn it off when you head out — the plants prefer Santiago's natural climate.</span></p>
       </div>
     </div>
   </div>
