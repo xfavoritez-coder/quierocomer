@@ -61,7 +61,7 @@ export default function PedirOnlinePage() {
   // form state
   const [enabled, setEnabled] = useState(false);
   const [phone, setPhone] = useState("");
-  const [delivery, setDelivery] = useState<"PICKUP" | "DELIVERY" | "BOTH">("PICKUP");
+  const [delivery, setDelivery] = useState<"PICKUP" | "DELIVERY" | "BOTH">("BOTH");
   const [minAmount, setMinAmount] = useState("");
   const [waitTime, setWaitTime] = useState("");
   const [note, setNote] = useState("");
