@@ -32,11 +32,14 @@ function LiveIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean } = {}) {
+const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
+
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM";
+  const showOrdering = opts.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes(opts.slug ?? "");
   const SIDEBAR_NAV = [
     { icon: Home, labelKey: "nav_home", href: base },
-    ...(opts.plan === "PREMIUM" ? [{ icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" }] : []),
+    ...(showOrdering ? [{ icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" }] : []),
     ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
     { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
     { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
@@ -68,7 +71,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
   const hasControl = !!(selected as any)?.hasControl;
-  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl });
+  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug });
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [moreVisible, setMoreVisible] = useState(false);
