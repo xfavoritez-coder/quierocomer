@@ -232,29 +232,43 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   // Activo pero el período ya pasó en un día anterior (pendiente de corte, cron aún no corrió)
   // Comparamos por fecha calendario, no por hora — hoy aún está vigente hasta las 23:59
   const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEndUTC !== null && periodEndUTC < todayUTC;
-  // Ya cortado (bajó a FREE después de no pagar)
+  // Ya cortado (bajó a FREE después de no pagar) o siempre fue gratis
   const wasDowngraded = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !!status.lastPaymentAt;
+  const isFreePlan = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !status.lastPaymentAt;
 
-  if (!isExpiringSoon && !isExpiredActive && !wasDowngraded) return null;
+  if (!isExpiringSoon && !isExpiredActive && !wasDowngraded && !isFreePlan) return null;
 
   const isExpired = isExpiredActive || wasDowngraded;
 
   let title: string;
   let sub: string;
-  if (isExpired) {
+  let bannerColor: string;
+  let btnLabel: string;
+  if (isFreePlan) {
+    title = "Estás en el plan Gratis";
+    sub = "Activa Gold o Premium para mostrar fotos, recibir más clientes y destacar tus platos.";
+    bannerColor = "#b45309";
+    btnLabel = "Ver planes";
+  } else if (isExpired) {
     title = "Tu carta QR está fuera de línea";
     sub = "Renueva tu plan para que tus clientes vuelvan a verla.";
+    bannerColor = "#dc2626";
+    btnLabel = "Renovar ahora";
   } else if (isToday) {
     title = "Tu plan vence hoy";
     sub = "Tu carta QR dejará de mostrarse mañana si no renuevas.";
+    bannerColor = "#dc2626";
+    btnLabel = "Renovar ahora";
   } else {
     title = "Tu plan vence mañana";
     sub = "Renueva para mantener tu carta QR activa sin interrupciones.";
+    bannerColor = "#dc2626";
+    btnLabel = "Renovar ahora";
   }
 
   const currentPlan = status.plan as "FREE" | "GOLD" | "PREMIUM" | undefined;
   const handleRenew = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
-    detail: { renew: true, initialTab: currentPlan },
+    detail: { renew: !isFreePlan, initialTab: isFreePlan ? "GOLD" : currentPlan },
   }));
 
   return (
@@ -277,10 +291,10 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "10px 16px",
-          background: "#dc2626",
+          background: bannerColor,
           fontFamily: "var(--font-body)",
         }}>
-          <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>{isFreePlan ? "⭐" : "⚠️"}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{title}</p>
             <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>{sub}</p>
@@ -294,7 +308,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
               cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
-            Renovar ahora
+            {btnLabel}
           </button>
         </div>
       </div>
