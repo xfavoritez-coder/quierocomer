@@ -160,7 +160,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const feedFields = ['name','phone','website','websiteIsOrderUrl','cartaProvider','instagram','googleMapsUrl','address','logoUrl','isActive'];
     if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes', { expire: 0 });
     // Invalidar cache QR si cambiaron ajustes de la carta
-    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','multiMenuEnabled','bannerUrl','logoUrl','name','description'];
+    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','multiMenuEnabled','bannerUrl','logoUrl','name','description','orderingEnabled','orderingPhone','orderingDelivery','orderingMinAmount','orderingWaitTime','orderingNote'];
     if (qrFields.some(f => data[f] !== undefined)) {
       revalidateTag(`qr-restaurant-${restaurant.slug}`, { expire: 0 });
     }
