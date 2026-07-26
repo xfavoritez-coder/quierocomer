@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
+import { flowPost, flowGet } from "@/lib/billing/flow";
 import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
@@ -10,7 +10,7 @@ import { FLOW_PLANS } from "@/lib/billing/plans-config";
  * Inicia registro de tarjeta para cobro automático mensual vía Flow suscripciones.
  * Los planes ya existen en Flow (qc_gold_monthly, qc_premium_monthly).
  *
- * 1. Obtener customerId: getByExternalId → getList(email) → customer/create
+ * 1. Obtener customerId: getByExternalId(GET) → getList(GET, email) → customer/create(POST)
  * 2. /customer/register → URL donde el cliente ingresa su tarjeta
  * 3. subscribe-return   → obtiene customerId, crea suscripción al plan
  */
@@ -45,26 +45,26 @@ export async function POST(req: NextRequest) {
 
   let flowCustomerId = currentRestaurant?.flowCustomerId || null;
 
-  // Opción 1: buscar por externalId (restaurantId) — endpoint directo de Flow
+  // Opción 1: GET /customer/getByExternalId
   if (!flowCustomerId) {
     try {
-      const existing = await flowPost<{ customerId: string; externalId: string }>("/customer/getByExternalId", {
+      const existing = await flowGet<{ customerId: string; externalId: string }>("/customer/getByExternalId", {
         externalId: restaurantId,
       });
       if (existing?.customerId) {
         flowCustomerId = existing.customerId;
         await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        console.log(`[billing/subscribe] Cliente encontrado por externalId: customerId=${flowCustomerId}`);
+        console.log(`[billing/subscribe] Cliente encontrado por externalId (GET): customerId=${flowCustomerId}`);
       }
     } catch (extErr: any) {
       console.log(`[billing/subscribe] getByExternalId sin resultado: ${extErr?.message}`);
     }
   }
 
-  // Opción 2: buscar por email del owner
+  // Opción 2: GET /customer/getList filtrado por email
   if (!flowCustomerId) {
     try {
-      const list = await flowPost<{ data: Array<{ customerId: string; email: string }> }>("/customer/getList", {
+      const list = await flowGet<{ data: Array<{ customerId: string; email: string }> }>("/customer/getList", {
         filter: owner.email,
         start: 0,
         limit: 25,
@@ -73,14 +73,14 @@ export async function POST(req: NextRequest) {
       flowCustomerId = match?.customerId || null;
       if (flowCustomerId) {
         await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        console.log(`[billing/subscribe] Cliente encontrado por email: customerId=${flowCustomerId}`);
+        console.log(`[billing/subscribe] Cliente encontrado por email (GET getList): customerId=${flowCustomerId}`);
       }
     } catch (listErr: any) {
-      console.log(`[billing/subscribe] getList por email sin resultado: ${listErr?.message}`);
+      console.log(`[billing/subscribe] getList GET sin resultado: ${listErr?.message}`);
     }
   }
 
-  // Opción 3: crear cliente nuevo
+  // Opción 3: POST /customer/create
   if (!flowCustomerId) {
     try {
       const created = await flowPost<{ customerId: string }>("/customer/create", {
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       const msg = createErr?.message || "";
       console.error(`[billing/subscribe] Error en /customer/create: ${msg}`);
       return NextResponse.json({
-        error: `No se pudo crear ni recuperar el cliente en Flow. Contacta soporte@quierocomer.com`,
+        error: `Error Flow: ${msg}`,
       }, { status: 500 });
     }
   }
