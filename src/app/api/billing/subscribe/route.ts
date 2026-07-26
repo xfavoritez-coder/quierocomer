@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
   const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}`;
   try {
     const result = await flowPost<{ url: string; token: string }>("/customer/register", {
+      customerId: restaurantId,
       name: owner.name || owner.email.split("@")[0],
       email: owner.email,
-      externalId: restaurantId,
-      urlReturn,
+      url_return: urlReturn,
     });
     console.log(`[billing/subscribe] Customer registration iniciado: token=${result.token} para ${restaurant.name}`);
 
