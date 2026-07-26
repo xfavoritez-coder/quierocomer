@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { ShoppingCart, Search, X, Plus } from "lucide-react";
 import { useCart } from "./OrderCartContext";
 import OrderItemModal, { type DishForOrder } from "./OrderItemModal";
@@ -39,7 +39,200 @@ interface OrderingConfig {
 }
 interface Props { restaurant: Restaurant; orderingConfig: OrderingConfig; }
 
-// ── Impact card (replica exacta de ImpactDishCard) ───────────────────────────
+// ── Impact Hero (replica de ImpactHeroSlider) ─────────────────────────────────
+function ImpactHero({
+  heroDishes,
+  restaurantName,
+  accent,
+  onDishSelect,
+}: {
+  heroDishes: Dish[];
+  restaurantName: string;
+  accent: string;
+  onDishSelect: (d: Dish) => void;
+}) {
+  const [current, setCurrent] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const touchStartX = useRef(0);
+  const touchWasSwipe = useRef(false);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setCurrent(c => (c + 1) % heroDishes.length), 5000);
+  }, [heroDishes.length]);
+
+  useEffect(() => {
+    if (heroDishes.length <= 1) return;
+    resetTimer();
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [heroDishes.length, resetTimer]);
+
+  if (heroDishes.length === 0) return null;
+  const d = heroDishes[current];
+  const effectivePrice = d.discountPrice != null && d.discountPrice < d.price ? d.discountPrice : d.price;
+  const discountPct = d.discountPrice != null && d.discountPrice < d.price
+    ? Math.round(((d.price - d.discountPrice) / d.price) * 100) : 0;
+
+  return (
+    <section
+      style={{
+        minHeight: "55vh", position: "relative", display: "flex",
+        alignItems: "flex-end", padding: "72px 20px 16px",
+        margin: "0 14px", borderRadius: 28, overflow: "hidden",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.2)", cursor: "pointer",
+      }}
+      onClick={() => { if (!touchWasSwipe.current) onDishSelect(d); touchWasSwipe.current = false; }}
+      onTouchStart={e => { touchStartX.current = e.touches[0].clientX; touchWasSwipe.current = false; }}
+      onTouchEnd={e => {
+        const diff = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(diff) > 50) {
+          touchWasSwipe.current = true;
+          setCurrent(c => diff < 0 ? (c + 1) % heroDishes.length : (c - 1 + heroDishes.length) % heroDishes.length);
+          resetTimer();
+        }
+      }}
+    >
+      {/* Slides */}
+      {heroDishes.map((dish, i) => (
+        <div key={dish.id} style={{ position: "absolute", inset: 0, zIndex: 1, opacity: i === current ? 1 : 0, transition: "opacity 0.8s ease" }}>
+          {dish.photos?.[0] ? (
+            <img src={dish.photos[0]} alt={dish.name} loading={i === 0 ? "eager" : "lazy"}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+          ) : (
+            <div style={{ position: "absolute", inset: 0, background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 18%, #1a1a2e), color-mix(in srgb, ${accent} 6%, #0f3460))`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: "5rem", opacity: 0.35 }}>🍽️</span>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Overlays */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: 3, background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)" }} />
+
+      {/* Content */}
+      <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 4 }}>
+        <h1 style={{ margin: 0, fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 62, lineHeight: 0.82, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "white" }}>
+          {d.name.split(" ").map((w, i, arr) =>
+            i === arr.length - 1
+              ? <span key={i} style={{ display: "inline-block", color: accent, fontSize: 58, fontWeight: 900, textShadow: `0 0 20px color-mix(in srgb, ${accent} 50%, transparent)` }}>{w}</span>
+              : <span key={i}>{w} </span>
+          )}
+        </h1>
+        {d.description && (
+          <p style={{ maxWidth: 300, margin: "15px 0 16px", color: "#b0a89e", fontSize: 15, lineHeight: 1.52, textShadow: "0 1px 8px rgba(0,0,0,0.6)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {d.description}
+          </p>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {discountPct > 0 && (
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", background: accent, padding: "4px 11px", borderRadius: 50 }}>-{discountPct}%</span>
+          )}
+          <span style={{ fontSize: 22, fontWeight: 800, color: accent, letterSpacing: "-0.8px" }}>{formatCLP(effectivePrice)}</span>
+          {discountPct > 0 && (
+            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>{formatCLP(d.price)}</span>
+          )}
+        </div>
+        {heroDishes.length > 1 && (
+          <div style={{ display: "flex", gap: 7, marginTop: 17 }}>
+            {heroDishes.map((_, i) => (
+              <button key={i} onClick={e => { e.stopPropagation(); setCurrent(i); resetTimer(); }}
+                style={{ width: i === current ? 22 : 7, height: 7, borderRadius: 50, background: i === current ? accent : "rgba(255,255,255,0.38)", border: "none", cursor: "pointer", transition: "all 0.3s ease", padding: 0 }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ── Lista Hero (replica de HeroSlim) ─────────────────────────────────────────
+function ListaHero({
+  heroDishes,
+  restaurant,
+  accent,
+  onDishSelect,
+}: {
+  heroDishes: Dish[];
+  restaurant: Restaurant;
+  accent: string;
+  onDishSelect: (d: Dish) => void;
+}) {
+  const [current, setCurrent] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (heroDishes.length <= 1) return;
+    const t = setInterval(() => setCurrent(c => (c + 1) % heroDishes.length), 5000);
+    return () => clearInterval(t);
+  }, [heroDishes.length]);
+
+  const dish = heroDishes[current] ?? null;
+  const bgSrc = dish?.photos?.[0] || restaurant.bannerUrl || null;
+  const logoSrc = restaurant.logoUrl;
+
+  return (
+    <>
+      <style>{`@keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }`}</style>
+      <section
+        style={{ height: "32vh", maxHeight: 260, position: "relative", width: "100%", overflow: "hidden", cursor: dish ? "pointer" : undefined }}
+        onClick={() => { if (dish) onDishSelect(dish); }}
+        onTouchStart={e => setTouchStart(e.touches[0].clientX)}
+        onTouchEnd={e => {
+          if (touchStart === null) return;
+          const diff = touchStart - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) setCurrent(c => diff > 0 ? (c + 1) % heroDishes.length : (c - 1 + heroDishes.length) % heroDishes.length);
+          setTouchStart(null);
+        }}
+      >
+        {bgSrc ? (
+          <>
+            <img src={bgSrc} alt={dish?.name || restaurant.name} key={bgSrc}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", animation: "heroKenBurns 12s ease-in-out infinite alternate" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }} />
+          </>
+        ) : (
+          <div style={{ position: "absolute", inset: 0, background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 18%, #1a1a2e), color-mix(in srgb, ${accent} 6%, #0f3460))`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: "5rem", opacity: 0.35 }}>🍽️</span>
+          </div>
+        )}
+
+        {/* Logo + nombre */}
+        <div style={{ position: "absolute", top: 10, left: 14, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          {logoSrc ? (
+            <img src={logoSrc} alt={restaurant.name} style={{ width: 28, height: 28, borderRadius: "50%" }} />
+          ) : (
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e" }}>
+              {restaurant.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span style={{ color: "white", fontSize: "1.17rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}>{restaurant.name}</span>
+        </div>
+
+        {/* Dish info */}
+        {dish && (
+          <div style={{ position: "absolute", bottom: 28, left: 16, right: "30%", zIndex: 10 }}>
+            <h2 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", color: "white", fontSize: "1.36rem", fontWeight: 800, lineHeight: 1.15, textShadow: "0 2px 6px rgba(0,0,0,0.5)", margin: 0 }}>{dish.name}</h2>
+            {dish.description && (
+              <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "1rem", marginTop: 6, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{dish.description}</p>
+            )}
+          </div>
+        )}
+
+        {/* Dots */}
+        {heroDishes.length > 1 && (
+          <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, zIndex: 10, display: "flex", justifyContent: "center", gap: 5 }}>
+            {heroDishes.map((_, i) => (
+              <div key={i} style={{ width: i === current ? 16 : 6, height: 6, borderRadius: 3, background: i === current ? accent : "rgba(255,255,255,0.4)", transition: "all 0.35s ease" }} />
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ── Impact card ───────────────────────────────────────────────────────────────
 function ImpactCard({
   dish, onClick, onDirectAdd,
 }: { dish: Dish; onClick: () => void; onDirectAdd: (e: React.MouseEvent) => void }) {
@@ -59,60 +252,32 @@ function ImpactCard({
         position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer", fontFamily: "inherit",
       }}
     >
-      {/* Photo */}
-      <div style={{
-        position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden", flexShrink: 0,
-        background: dish.photos?.[0] ? "#222" : "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))",
-      }}>
+      <div style={{ position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: dish.photos?.[0] ? "#222" : "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))" }}>
         {dish.photos?.[0] ? (
-          <img src={dish.photos[0]} alt={dish.name} loading="lazy"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={dish.photos[0]} alt={dish.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>
         )}
       </div>
-
-      {/* Info */}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
-        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {dish.name}
-        </h4>
+        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h4>
         {dish.description && (
-          <p style={{ margin: "0 0 8px", color: "var(--carta-text-muted, #888)", fontSize: 14, lineHeight: 1.42, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-            {dish.description}
-          </p>
+          <p style={{ margin: "0 0 8px", color: "var(--carta-text-muted, #888)", fontSize: 14, lineHeight: 1.42, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          {discountPct > 0 && (
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>
-              -{discountPct}%
-            </span>
-          )}
+          {discountPct > 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>-{discountPct}%</span>}
           <b style={{ color: "var(--carta-accent)", fontSize: 16 }}>{formatCLP(effectivePrice)}</b>
-          {discountPct > 0 && (
-            <span style={{ fontSize: "0.78rem", color: "var(--carta-text3, #666)", textDecoration: "line-through" }}>
-              {formatCLP(dish.price)}
-            </span>
-          )}
+          {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3, #666)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
         </div>
       </div>
-
-      {/* + button */}
-      <div
-        onClick={hasModifiers ? undefined : onDirectAdd}
-        style={{
-          position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%",
-          background: "var(--carta-accent)", display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.35)", pointerEvents: hasModifiers ? "none" : "auto",
-        }}
-      >
+      <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "var(--carta-accent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.35)", pointerEvents: hasModifiers ? "none" : "auto" }}>
         <Plus size={16} color="#fff" />
       </div>
     </button>
   );
 }
 
-// ── Lista card (replica exacta de DishListCard) ───────────────────────────────
+// ── Lista card (replica DishListCard) ─────────────────────────────────────────
 function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
   const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
   const discountPct = dish.discountPrice != null && dish.discountPrice < dish.price
@@ -123,14 +288,9 @@ function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      style={{
-        width: "100%", display: "flex", gap: 0, padding: 0, overflow: "hidden",
-        background: "var(--carta-surface)", borderRadius: 14,
-        border: "1px solid var(--carta-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-        textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-      }}
+      style={{ width: "100%", display: "flex", gap: 0, padding: 0, overflow: "hidden", background: "var(--carta-surface)", borderRadius: 14, border: "1px solid var(--carta-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}
     >
-      {/* Foto — IZQUIERDA */}
+      {/* Foto IZQUIERDA */}
       <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "var(--carta-photo-bg)" : "linear-gradient(135deg, var(--carta-bg), var(--carta-photo-bg))" }}>
         {photo ? (
           <>
@@ -140,32 +300,17 @@ function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🍽️</div>
         )}
-        {discountPct > 0 && (
-          <span style={{ position: "absolute", top: 6, left: 6, fontSize: "11px", fontWeight: 800, color: "white", background: "var(--carta-accent)", padding: "3px 9px", borderRadius: 50 }}>
-            -{discountPct}%
-          </span>
-        )}
+        {discountPct > 0 && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "11px", fontWeight: 800, color: "white", background: "var(--carta-accent)", padding: "3px 9px", borderRadius: 50 }}>-{discountPct}%</span>}
       </div>
-
-      {/* Texto — DERECHA */}
+      {/* Texto DERECHA */}
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px" }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--carta-text)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {dish.name}
-        </h3>
+        <h3 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.1rem", fontWeight: 600, color: "var(--carta-text)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h3>
         {dish.description && (
-          <p style={{ fontSize: "1rem", color: "var(--carta-text2)", lineHeight: 1.4, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-            {dish.description}
-          </p>
+          <p style={{ fontSize: "1rem", color: "var(--carta-text2)", lineHeight: 1.4, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{dish.description}</p>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontSize: "0.94rem", fontWeight: 700, color: "var(--carta-accent)" }}>
-            {formatCLP(effectivePrice)}
-          </span>
-          {discountPct > 0 && (
-            <span style={{ fontSize: "0.78rem", color: "var(--carta-text3)", textDecoration: "line-through" }}>
-              {formatCLP(dish.price)}
-            </span>
-          )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: "0.94rem", fontWeight: 700, color: "var(--carta-accent)" }}>{formatCLP(effectivePrice)}</span>
+          {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
         </div>
       </div>
     </button>
@@ -202,6 +347,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
   const activeCatIds = new Set(activeDishes.map(d => d.categoryId));
   const categories = restaurant.categories.filter(c => activeCatIds.has(c.id));
 
+  // Hero dishes: primeros 3 platos con foto
+  const heroDishes = useMemo(() => activeDishes.filter(d => d.photos?.[0]).slice(0, 3), [activeDishes]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return activeDishes.filter(d => {
@@ -222,7 +370,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
 
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
 
-  // Impact: fixed header height + slide-in category chips
+  // Impact refs
   const impactHeaderRef = useRef<HTMLDivElement>(null);
   const [impactHeaderH, setImpactHeaderH] = useState(65);
   const menuAnchorRef = useRef<HTMLDivElement>(null);
@@ -232,7 +380,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
   const fixedChipsRef = useRef<HTMLDivElement>(null);
   const fixedActiveChipRef = useRef<HTMLButtonElement>(null);
 
-  // Lista: sticky nav height + auto-scroll
+  // Lista refs
   const stickyNavRef = useRef<HTMLDivElement>(null);
   const [stickyNavH, setStickyNavH] = useState(50);
   const catScrollRef = useRef<HTMLDivElement>(null);
@@ -272,33 +420,25 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     return () => { clearTimeout(tid); window.removeEventListener("scroll", check); };
   }, [isImpact]);
 
-  // Auto-scroll category chips
   useEffect(() => {
     if (isImpact) {
-      const chip = activeChipRef.current;
-      const cont = chipsRef.current;
+      const chip = activeChipRef.current; const cont = chipsRef.current;
       if (chip && cont) cont.scrollTo({ left: chip.offsetLeft - cont.offsetWidth / 2 + chip.offsetWidth / 2, behavior: "smooth" });
-      const fchip = fixedActiveChipRef.current;
-      const fcont = fixedChipsRef.current;
+      const fchip = fixedActiveChipRef.current; const fcont = fixedChipsRef.current;
       if (fchip && fcont) fcont.scrollTo({ left: fchip.offsetLeft - fcont.offsetWidth / 2 + fchip.offsetWidth / 2, behavior: "smooth" });
     } else {
-      const chip = activeCatRef.current;
-      const cont = catScrollRef.current;
+      const chip = activeCatRef.current; const cont = catScrollRef.current;
       if (chip && cont) cont.scrollTo({ left: chip.offsetLeft - cont.offsetWidth / 2 + chip.offsetWidth / 2, behavior: "smooth" });
     }
   }, [activeCategory, isImpact]);
 
-  // IntersectionObserver
   useEffect(() => {
     const prefix = isImpact ? "impact-cat" : "lista-cat";
     const observers: IntersectionObserver[] = [];
     for (const { category } of grouped) {
       const el = document.getElementById(`${prefix}-${category.id}`);
       if (!el) continue;
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveCategory(category.id); },
-        { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
-      );
+      const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setActiveCategory(category.id); }, { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
       obs.observe(el);
       observers.push(obs);
     }
@@ -312,8 +452,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     const offset = isImpact ? impactHeaderH + 10 : stickyNavH + 8;
     window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset, behavior: "smooth" });
   };
-
-  const heroImg = orderingConfig.orderingBannerUrl || restaurant.bannerUrl || null;
 
   const addDirectly = (dish: Dish) => {
     const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
@@ -330,31 +468,26 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
 
   const cartTotal = formatCLP(items.reduce((s, i) => s + i.unitTotal * i.quantity, 0));
 
+  const chipStyle = (isActive: boolean): React.CSSProperties => ({
+    whiteSpace: "nowrap", flexShrink: 0,
+    border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)" : `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`,
+    background: isActive ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)" : (isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.04)"),
+    borderRadius: 999, color: isActive ? accent : (isDark ? "#777" : "#999"),
+    fontWeight: 800, cursor: "pointer",
+  });
+
   // ─── IMPACT LAYOUT ────────────────────────────────────────────────────────
   if (isImpact) {
-    const chipStyle = (isActive: boolean): React.CSSProperties => ({
-      whiteSpace: "nowrap", flexShrink: 0,
-      border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)" : `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`,
-      background: isActive ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)" : (isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.04)"),
-      borderRadius: 999,
-      color: isActive ? accent : (isDark ? "#777" : "#999"),
-      fontWeight: 800, cursor: "pointer",
-    });
-
     return (
       <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
-
         {/* Ambient bg */}
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} ${isDark ? "28%" : "18%"}, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} ${isDark ? "15%" : "10%"}, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
-        {/* Grid texture */}
         <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: isDark ? 0.22 : 0.12, backgroundImage: `linear-gradient(rgba(${isDark ? "255,255,255" : "0,0,0"},0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(${isDark ? "255,255,255" : "0,0,0"},0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
-        {/* Smoke glow */}
         <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: isDark ? 0.5 : 0.35, background: `radial-gradient(ellipse at 50% 8%, color-mix(in srgb, ${accent} 16%, transparent), transparent 32%), radial-gradient(ellipse at 70% 24%, color-mix(in srgb, ${accent} 10%, transparent), transparent 28%)`, filter: "blur(10px)" }} />
 
         {/* Fixed glass header */}
         <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
-          <header style={{ padding: "calc(10px + env(safe-area-inset-top)) 16px 0", pointerEvents: "auto" }}>
-            {/* Logo + name + cart */}
+          <header style={{ padding: "calc(10px + env(safe-area-inset-top)) 16px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {restaurant.logoUrl ? (
@@ -364,64 +497,33 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                     {restaurant.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span style={{ fontWeight: 800, fontSize: 18, color: isDark ? "#fff" : "var(--carta-text)", letterSpacing: "-0.3px" }}>
-                  {restaurant.name}
-                </span>
+                <span style={{ fontWeight: 800, fontSize: 18, color: isDark ? "#fff" : "var(--carta-text)", letterSpacing: "-0.3px" }}>{restaurant.name}</span>
               </div>
-              <button
-                onClick={() => setCartOpen(true)}
-                style={{
-                  position: "relative", width: 40, height: 40, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`,
-                  background: count > 0 ? accent : (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"),
-                  display: "grid", placeItems: "center", cursor: "pointer",
-                }}
-              >
+              <button onClick={() => setCartOpen(true)} style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`, background: count > 0 ? accent : (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"), display: "grid", placeItems: "center", cursor: "pointer" }}>
                 <ShoppingCart size={17} color={count > 0 ? "#fff" : (isDark ? "#aaa" : "#666")} />
-                {count > 0 && (
-                  <span style={{ position: "absolute", top: -3, right: -3, width: 17, height: 17, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.6rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
-                )}
+                {count > 0 && <span style={{ position: "absolute", top: -3, right: -3, width: 17, height: 17, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.6rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
               </button>
             </div>
-
-            {/* Slide-in fixed category chips */}
+            {/* Slide-in fixed chips */}
             <div style={{ overflow: "hidden", maxHeight: showFixedCatNav ? 50 : 0, transition: "max-height 0.25s ease" }}>
               <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
                 {grouped.map(({ category: cat }) => {
                   const isActive = cat.id === activeCategory;
-                  return (
-                    <button
-                      key={cat.id}
-                      ref={isActive ? fixedActiveChipRef : null}
-                      onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }}
-                      style={{ ...chipStyle(isActive), padding: "7px 12px", fontSize: 13 }}
-                    >{cat.name}</button>
-                  );
+                  return <button key={cat.id} ref={isActive ? fixedActiveChipRef : null} onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }} style={{ ...chipStyle(isActive), padding: "7px 12px", fontSize: 13 }}>{cat.name}</button>;
                 })}
               </div>
             </div>
           </header>
         </div>
 
-        {/* Spacer */}
         <div style={{ height: impactHeaderH }} />
 
-        {/* Hero (si hay imagen) */}
-        {heroImg && (
-          <div style={{ position: "relative", width: "100%", height: 220, overflow: "hidden", zIndex: 1 }}>
-            <img src={heroImg} alt={restaurant.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.65) 100%)" }} />
-            <div style={{ position: "absolute", left: 16, right: 16, bottom: 20 }}>
-              <p style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 36, color: "#fff", margin: 0, letterSpacing: "0.6px", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
-                {restaurant.name}
-              </p>
-              {orderingConfig.waitTime && (
-                <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.8)", margin: "4px 0 0" }}>⏱ {orderingConfig.waitTime}</p>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Hero con fotos de platos */}
+        <div style={{ position: "relative", zIndex: 1, paddingTop: 14, paddingBottom: 14 }}>
+          <ImpactHero heroDishes={heroDishes} restaurantName={restaurant.name} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} />
+        </div>
 
-        {/* Menu section */}
+        {/* Título MENÚ + search */}
         <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
           <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "#ddd" : "#333", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
             MENÚ
@@ -429,20 +531,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
           <div style={{ flex: searchOpen ? 1 : "0 0 0", overflow: "hidden", opacity: searchOpen ? 1 : 0, transition: "flex 0.22s ease, opacity 0.18s ease", display: "flex", alignItems: "center", minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)", borderRadius: 999, padding: "0 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, width: "100%" }}>
               <Search size={14} color={isDark ? "rgba(255,255,255,0.5)" : "#999"} style={{ flexShrink: 0 }} />
-              <input
-                id="impact-search"
-                type="search"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar..."
-                style={{ flex: 1, border: "none", outline: "none", fontSize: "15px", color: isDark ? "#fff" : "#111", background: "transparent", minWidth: 0 }}
-              />
+              <input id="impact-search" type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ flex: 1, border: "none", outline: "none", fontSize: "15px", color: isDark ? "#fff" : "#111", background: "transparent", minWidth: 0 }} />
             </div>
           </div>
-          <button
-            onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search")?.focus(), 250); } }}
-            style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
-          >
+          <button onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search")?.focus(), 250); } }} style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
             {searchOpen ? <X size={15} color={isDark ? "#fff" : "#333"} /> : <Search size={15} color={isDark ? "#fff" : "#333"} />}
           </button>
         </div>
@@ -452,21 +544,13 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
           <div ref={chipsRef} style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", padding: "4px 0" }}>
             {grouped.map(({ category: cat }) => {
               const isActive = cat.id === activeCategory;
-              return (
-                <button
-                  key={cat.id}
-                  ref={isActive ? activeChipRef : null}
-                  onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }}
-                  style={{ ...chipStyle(isActive), padding: "10px 16px", fontSize: 15, transition: "all 0.2s ease" }}
-                >{cat.name}</button>
-              );
+              return <button key={cat.id} ref={isActive ? activeChipRef : null} onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }} style={{ ...chipStyle(isActive), padding: "10px 16px", fontSize: 15, transition: "all 0.2s ease" }}>{cat.name}</button>;
             })}
           </div>
-          {/* Fade right */}
           <div style={{ position: "absolute", top: 0, right: 14, bottom: 0, width: 24, background: "linear-gradient(to right, transparent, var(--carta-bg))", pointerEvents: "none" }} />
         </div>
 
-        {/* Dishes */}
+        {/* Platos */}
         <div style={{ position: "relative", zIndex: 1, padding: "0 14px 120px" }}>
           {grouped.length === 0 ? (
             <div style={{ padding: "64px 28px", textAlign: "center" }}>
@@ -477,16 +561,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
           ) : (
             grouped.map(({ category, dishes }) => (
               <div key={category.id} id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
-                <h3 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 26, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>
-                  {category.name}
-                </h3>
+                <h3 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 26, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{category.name}</h3>
                 {dishes.map(dish => (
-                  <ImpactCard
-                    key={dish.id}
-                    dish={dish}
-                    onClick={() => setSelectedDish(dish as unknown as DishForOrder)}
-                    onDirectAdd={(e) => { e.stopPropagation(); addDirectly(dish); }}
-                  />
+                  <ImpactCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />
                 ))}
               </div>
             ))
@@ -506,7 +583,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
           </div>
         )}
 
-        {/* Modales */}
         {selectedDish && <OrderItemModal dish={selectedDish} onClose={() => setSelectedDish(null)} onAdd={handleAddItem} />}
         {cartOpen && !checkoutOpen && <OrderCart onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
         {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
@@ -519,43 +595,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
       <style>{`@keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
 
-      {/* Hero */}
-      {heroImg && (
-        <div style={{ position: "relative", width: "100%", height: 220, overflow: "hidden" }}>
-          <img src={heroImg} alt={restaurant.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%)" }} />
-          <div style={{ position: "absolute", left: 16, right: 16, bottom: 18, display: "flex", alignItems: "center", gap: 12 }}>
-            {restaurant.logoUrl && <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.8)", flexShrink: 0 }} />}
-            <div>
-              <p style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontWeight: 600, fontSize: "1.3rem", color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{restaurant.name}</p>
-              {orderingConfig.waitTime && <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", margin: "2px 0 0" }}>⏱ {orderingConfig.waitTime}</p>}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Hero con fotos de platos */}
+      <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} />
 
       {/* Sticky nav */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
-        {/* Logo + cart row (only if no hero) */}
-        {!heroImg && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px 0" }}>
-            {restaurant.logoUrl && <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--carta-border)", flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontWeight: 700, fontSize: "0.95rem", color: "var(--carta-text)" }}>{restaurant.name}</span>
-            <button onClick={() => setCartOpen(true)} style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", border: "none", background: count > 0 ? accent : "var(--carta-photo-bg)", display: "grid", placeItems: "center", cursor: "pointer" }}>
-              <ShoppingCart size={16} color={count > 0 ? "#fff" : "#888"} />
-              {count > 0 && <span style={{ position: "absolute", top: -3, right: -3, width: 16, height: 16, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.6rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
-            </button>
-          </div>
-        )}
-
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text2)" style={{ flexShrink: 0 }} />
-            <input autoFocus type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar platos..."
-              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent" }} />
-            <button onClick={() => { setSearchOpen(false); setSearch(""); }} style={{ background: "none", border: "none", padding: 4, cursor: "pointer" }}>
-              <X size={18} color="var(--carta-text2)" />
-            </button>
+            <input autoFocus type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar platos..." style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent" }} />
+            <button onClick={() => { setSearchOpen(false); setSearch(""); }} style={{ background: "none", border: "none", padding: 4, cursor: "pointer" }}><X size={18} color="var(--carta-text2)" /></button>
           </div>
         ) : (
           <nav style={{ display: "flex", alignItems: "center" }}>
@@ -563,30 +612,18 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
               {grouped.map(({ category: cat }) => {
                 const isActive = cat.id === activeCategory;
                 return (
-                  <button
-                    key={cat.id}
-                    ref={isActive ? activeCatRef : null}
+                  <button key={cat.id} ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }}
-                    style={{
-                      whiteSpace: "nowrap", flexShrink: 0, padding: "7px 14px", borderRadius: 999,
-                      fontSize: 14, fontWeight: isActive ? 700 : 500,
-                      color: isActive ? accent : "var(--carta-text3)",
-                      background: isActive ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent",
-                      border: isActive ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)",
-                      cursor: "pointer", transition: "all 0.15s ease",
-                    }}
+                    style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "7px 14px", borderRadius: 999, fontSize: 14, fontWeight: isActive ? 700 : 500, color: isActive ? accent : "var(--carta-text3)", background: isActive ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent", border: isActive ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", cursor: "pointer", transition: "all 0.15s ease" }}
                   >{cat.name}</button>
                 );
               })}
             </div>
-            {/* Cart icon + Search icon on right (only if hero shown) */}
             <div style={{ flexShrink: 0, paddingRight: 8, paddingLeft: 4, display: "flex", alignItems: "center", gap: 4 }}>
-              {heroImg && (
-                <button onClick={() => setCartOpen(true)} style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", background: count > 0 ? accent : "transparent", display: "grid", placeItems: "center", cursor: "pointer" }}>
-                  <ShoppingCart size={16} color={count > 0 ? "#fff" : "var(--carta-text2)"} />
-                  {count > 0 && <span style={{ position: "absolute", top: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
-                </button>
-              )}
+              <button onClick={() => setCartOpen(true)} style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", background: count > 0 ? accent : "transparent", display: "grid", placeItems: "center", cursor: "pointer" }}>
+                <ShoppingCart size={16} color={count > 0 ? "#fff" : "var(--carta-text2)"} />
+                {count > 0 && <span style={{ position: "absolute", top: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
+              </button>
               <button onClick={() => setSearchOpen(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: 4, cursor: "pointer" }}>
                 <Search size={17} color="var(--carta-text2)" />
               </button>
@@ -605,19 +642,14 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
         grouped.map(({ category, dishes }, index) => (
           <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: `${index === 0 ? 4 : 12}px 12px 0` }}>
             <div style={{ padding: "0 8px", margin: "14px 0 10px" }}>
-              <h2 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.3rem", fontWeight: 600, color: "var(--carta-text2)" }}>
-                {category.name}
-              </h2>
+              <h2 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.3rem", fontWeight: 600, color: "var(--carta-text2)" }}>{category.name}</h2>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {dishes.map(dish => (
-                <ListaCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} />
-              ))}
+              {dishes.map(dish => <ListaCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} />)}
             </div>
           </section>
         ))
       )}
-
       <div style={{ height: 120 }} />
 
       {/* Cart bar */}
@@ -633,7 +665,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
         </div>
       )}
 
-      {/* Modales */}
       {selectedDish && <OrderItemModal dish={selectedDish} onClose={() => setSelectedDish(null)} onAdd={handleAddItem} />}
       {cartOpen && !checkoutOpen && <OrderCart onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
       {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
