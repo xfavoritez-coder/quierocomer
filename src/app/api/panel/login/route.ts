@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 import { logActivity } from "@/lib/admin/logActivity";
 
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 40; // 40 days
 const IS_PROD = process.env.NODE_ENV === "production";
 
 function setPanelCookies(

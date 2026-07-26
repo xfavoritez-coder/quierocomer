@@ -415,7 +415,11 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        toast.error(data.error || "No se pudo iniciar la suscripción");
+        if (res.status === 401 || res.status === 403) {
+          toast.error("Tu sesión expiró. Recarga la página e inicia sesión de nuevo.");
+        } else {
+          toast.error(data.error || "No se pudo iniciar la suscripción");
+        }
         setSubmitting(false);
         return;
       }

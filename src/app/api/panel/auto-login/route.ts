@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 40; // 40 days — cubre ciclo mensual + margen
 const IS_PROD = process.env.NODE_ENV === "production";
 const SECRET = process.env.AUTO_LOGIN_SECRET || "qc-auto-login-secret-2026";
 
@@ -52,7 +52,11 @@ export async function GET(req: NextRequest) {
 
   const token = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
-  const response = NextResponse.redirect(new URL("/panel", req.url));
+
+  // Respetar redirect param (ej. desde emails con ?renew=1&plan=PREMIUM)
+  const redirect = searchParams.get("redirect");
+  const destination = redirect && redirect.startsWith("/panel") ? redirect : "/panel";
+  const response = NextResponse.redirect(new URL(destination, req.url));
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
   response.cookies.set("panel_role", owner.role, { ...base, httpOnly: true });
   response.cookies.set("panel_id", owner.id, { ...base, httpOnly: true });
