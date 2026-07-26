@@ -1,7 +1,8 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import SubirCartaClient from "./SubirCartaClient";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic"; // necesario para leer x-vercel-ip-country
 
 export const metadata: Metadata = {
   title: "Crear carta QR para mi restaurante gratis | QuieroComer",
@@ -17,5 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default async function SubirCartaPage() {
-  return <SubirCartaClient />;
+  const h = await headers();
+  // Vercel inyecta el país del visitante en este header automáticamente
+  const ipCountry = h.get("x-vercel-ip-country") || null;
+  const defaultCountry: "CL" | "US" = ipCountry === "US" ? "US" : "CL";
+  return <SubirCartaClient defaultCountry={defaultCountry} />;
 }

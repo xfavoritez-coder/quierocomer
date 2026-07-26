@@ -64,7 +64,134 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
   });
 }
 
-export default function SubirCartaClient() {
+// ─── Country phone config ───────────────────────────────────────────────────
+const PHONE_COUNTRIES = [
+  {
+    code: "CL",
+    dial: "+56",
+    placeholder: "9 1234 5678",
+    maxDigits: 9,
+    flag: (
+      <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}>
+        <rect width="20" height="7" fill="#fff"/>
+        <rect y="7" width="20" height="7" fill="#D52B1E"/>
+        <rect width="7" height="7" fill="#0039A6"/>
+        <polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/>
+      </svg>
+    ),
+  },
+  {
+    code: "US",
+    dial: "+1",
+    placeholder: "555 123 4567",
+    maxDigits: 10,
+    flag: (
+      <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}>
+        <rect width="20" height="14" fill="#B22234"/>
+        <rect y="1.08" width="20" height="1.08" fill="#fff"/>
+        <rect y="3.23" width="20" height="1.08" fill="#fff"/>
+        <rect y="5.38" width="20" height="1.08" fill="#fff"/>
+        <rect y="7.54" width="20" height="1.08" fill="#fff"/>
+        <rect y="9.69" width="20" height="1.08" fill="#fff"/>
+        <rect y="11.85" width="20" height="1.08" fill="#fff"/>
+        <rect width="8" height="7.54" fill="#3C3B6E"/>
+        <g fill="#fff">
+          {[0,1,2,3,4,5].map(row =>
+            [0,1,2,3,4,5,6,7].filter((_, i) => (row % 2 === 0 ? i % 2 === 0 : i % 2 === 1) && i < (row % 2 === 0 ? 6 : 5)).slice(0, row % 2 === 0 ? 6 : 5).map((col, ci) => (
+              <circle key={`${row}-${ci}`} cx={(row % 2 === 0 ? ci * 1.33 + 0.67 : ci * 1.33 + 1.33)} cy={row * 1.26 + 0.63} r="0.35"/>
+            ))
+          )}
+        </g>
+      </svg>
+    ),
+  },
+] as const;
+
+type CountryCode = "CL" | "US";
+
+function formatPhone(v: string, country: CountryCode) {
+  const c = PHONE_COUNTRIES.find(p => p.code === country)!;
+  const d = v.replace(/\D/g, "").slice(0, c.maxDigits);
+  if (country === "US") {
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
+    return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+  }
+  // CL: 9 1234 5678
+  if (d.length <= 1) return d;
+  if (d.length <= 5) return `${d[0]} ${d.slice(1)}`;
+  return `${d[0]} ${d.slice(1, 5)} ${d.slice(5)}`;
+}
+
+function buildFullPhone(local: string, country: CountryCode): string | undefined {
+  const digits = local.replace(/\D/g, "");
+  if (!digits) return undefined;
+  const dial = PHONE_COUNTRIES.find(p => p.code === country)!.dial;
+  return `${dial}${digits}`;
+}
+
+interface PhoneSelectorProps {
+  country: CountryCode;
+  onChange: (c: CountryCode) => void;
+  style?: React.CSSProperties;
+}
+
+function PhoneCountrySelector({ country, onChange, style }: PhoneSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const current = PHONE_COUNTRIES.find(p => p.code === country)!;
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: "flex", alignItems: "center", gap: 5,
+          padding: "0 10px", height: "100%", minHeight: 44,
+          background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)",
+          borderRadius: 12, color: "#E8DDC8", fontSize: 14, cursor: "pointer",
+          whiteSpace: "nowrap", ...style,
+        }}
+      >
+        {current.flag}
+        <span style={{ fontWeight: 600 }}>{current.dial}</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: 2 }}>
+          <path d="M1 1l4 4 4-4" stroke="#E8DDC8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9 }} />
+          <div style={{
+            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 10,
+            background: "#1a1a2e", border: "1px solid rgba(255,255,255,.12)",
+            borderRadius: 12, overflow: "hidden", minWidth: 140,
+            boxShadow: "0 8px 24px rgba(0,0,0,.5)",
+          }}>
+            {PHONE_COUNTRIES.map(c => (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => { onChange(c.code); setOpen(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  width: "100%", padding: "10px 14px", border: "none", cursor: "pointer",
+                  background: c.code === country ? "rgba(255,255,255,.08)" : "transparent",
+                  color: "#E8DDC8", fontSize: 14, fontWeight: c.code === country ? 600 : 400,
+                }}
+              >
+                {c.flag}
+                <span>{c.dial}</span>
+                <span style={{ color: "rgba(232,221,200,.5)", fontSize: 12 }}>{c.code}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCountry?: CountryCode }) {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
   useEffect(() => {
@@ -109,6 +236,16 @@ export default function SubirCartaClient() {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const photoRef = useRef<HTMLInputElement>(null);
 
+  // Country dial code — server sends IP country, client can upgrade via navigator.language
+  const [dialCountry, setDialCountry] = useState<CountryCode>(defaultCountry);
+  useEffect(() => {
+    // If server already detected US, keep it.
+    // If server detected CL but browser language is English, switch to US.
+    if (defaultCountry === "CL" && navigator.language?.startsWith("en")) {
+      setDialCountry("US");
+    }
+  }, [defaultCountry]);
+
   // Scratch mode state
   const [scratchName, setScratchName] = useState("");
   const [scratchOwner, setScratchOwner] = useState("");
@@ -125,12 +262,7 @@ export default function SubirCartaClient() {
   const [fbLoading, setFbLoading] = useState(false);
   const [fbError, setFbError] = useState("");
   const [fbDone, setFbDone] = useState(false);
-  const formatFbPhone = (v: string) => {
-    const d = v.replace(/\D/g, "").slice(0, 9);
-    if (d.length <= 1) return d;
-    if (d.length <= 5) return `${d[0]} ${d.slice(1)}`;
-    return `${d[0]} ${d.slice(1, 5)} ${d.slice(5)}`;
-  };
+  const formatFbPhone = (v: string) => formatPhone(v, dialCountry);
 
   const normalizedUrl = linkUrl.trim() && !linkUrl.trim().match(/^https?:\/\//) ? `https://${linkUrl.trim()}` : linkUrl.trim();
   const isLinkValid = mode === "link" && (() => {
@@ -203,7 +335,7 @@ export default function SubirCartaClient() {
           localName: fbLocalName.trim(),
           ownerName: fbOwnerName.trim(),
           email: fbEmail.trim(),
-          whatsapp: fbWhatsapp.trim() || null,
+          whatsapp: buildFullPhone(fbWhatsapp, dialCountry) || null,
         }),
       });
       if (!res.ok) {
@@ -242,7 +374,7 @@ export default function SubirCartaClient() {
             localName: scratchName.trim(),
             ownerName: scratchOwner.trim() || undefined,
             email: scratchEmail.trim(),
-            whatsapp: scratchWA.trim() ? `+56${scratchWA.replace(/\s/g, "").replace(/^\+?56/, "")}` : undefined,
+            whatsapp: buildFullPhone(scratchWA, dialCountry),
           }),
         });
         let data: any;
@@ -479,11 +611,8 @@ export default function SubirCartaClient() {
                       <div>
                         <label className="field-label">WhatsApp</label>
                         <div style={{ display: "flex", gap: 6 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
-                            <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
-                            <span style={{ fontWeight: 600 }}>+56</span>
-                          </div>
-                          <input type="tel" placeholder="9 1234 5678" value={scratchWA} onChange={(e) => setScratchWA(formatFbPhone(e.target.value))} style={{ flex: 1 }} />
+                          <PhoneCountrySelector country={dialCountry} onChange={c => { setDialCountry(c); setScratchWA(""); setFbWhatsapp(""); }} />
+                          <input type="tel" placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder} value={scratchWA} onChange={(e) => setScratchWA(formatPhone(e.target.value, dialCountry))} style={{ flex: 1 }} />
                         </div>
                       </div>
                     </div>
@@ -570,11 +699,8 @@ export default function SubirCartaClient() {
                 <div>
                   <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>WhatsApp</label>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
-                      <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
-                      <span style={{ fontWeight: 600 }}>+56</span>
-                    </div>
-                    <input type="tel" placeholder="9 1234 5678" value={fbWhatsapp} onChange={(e) => { setFbWhatsapp(formatFbPhone(e.target.value)); setFbError(""); }} style={{ flex: 1 }} />
+                    <PhoneCountrySelector country={dialCountry} onChange={c => { setDialCountry(c); setScratchWA(""); setFbWhatsapp(""); }} />
+                    <input type="tel" placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder} value={fbWhatsapp} onChange={(e) => { setFbWhatsapp(formatPhone(e.target.value, dialCountry)); setFbError(""); }} style={{ flex: 1 }} />
                   </div>
                 </div>
               </div>
