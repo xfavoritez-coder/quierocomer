@@ -90,61 +90,65 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     setSelectedDish(null);
   };
 
+  const CREAM = "#FAFAF8";
+  const AMBER = "#F59E0B";
+
   return (
-    <div style={{ minHeight: "100dvh", background: "var(--carta-bg, #fff)", fontFamily: FB }}>
+    <div style={{ minHeight: "100dvh", background: CREAM, fontFamily: FB }}>
 
       {/* Top bar */}
-      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "var(--carta-bg, #fff)", borderBottom: "1px solid var(--carta-border, #eee)", padding: "0 16px" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 100, background: CREAM, borderBottom: "1px solid #ece9e3", padding: "0 16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0 10px" }}>
           {restaurant.logoUrl && (
-            <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+            <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid #fff", boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }} />
           )}
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "var(--carta-text, #111)", margin: 0 }}>{restaurant.name}</p>
+            <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "#111", margin: 0 }}>{restaurant.name}</p>
             {orderingConfig.waitTime && (
-              <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text2, #777)", margin: 0 }}>⏱ {orderingConfig.waitTime}</p>
+              <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "#999", margin: 0 }}>⏱ {orderingConfig.waitTime}</p>
+            )}
+          </div>
+          {/* Search */}
+          <div style={{ position: "relative" }}>
+            <Search size={15} color="#aaa" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar..."
+              style={{
+                width: search ? 140 : 36, height: 36, padding: search ? "0 28px 0 30px" : "0 0 0 30px",
+                borderRadius: 999, border: "1.5px solid #ece9e3",
+                fontFamily: FB, fontSize: "0.8rem", color: "#111",
+                background: "#fff", outline: "none", transition: "width 0.2s",
+                overflow: "hidden",
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", cursor: "pointer", display: "flex", padding: 0 }}>
+                <X size={13} color="#aaa" />
+              </button>
             )}
           </div>
           {/* Cart button */}
           <button
             onClick={() => setCartOpen(true)}
-            style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer", background: count > 0 ? "var(--carta-accent, #F4A623)" : "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.2s" }}
+            style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", border: "none", cursor: "pointer", background: count > 0 ? AMBER : "#f0ece6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.2s" }}
           >
-            <ShoppingCart size={18} color={count > 0 ? "#fff" : "var(--carta-text2, #888)"} />
+            <ShoppingCart size={16} color={count > 0 ? "#fff" : "#888"} />
             {count > 0 && (
-              <span style={{ position: "absolute", top: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#111", color: "#fff", fontFamily: F, fontWeight: 700, fontSize: "0.65rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ position: "absolute", top: -3, right: -3, width: 17, height: 17, borderRadius: "50%", background: "#111", color: "#fff", fontFamily: F, fontWeight: 700, fontSize: "0.6rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {count}
               </span>
             )}
           </button>
         </div>
 
-        {/* Search */}
-        <div style={{ position: "relative", marginBottom: 10 }}>
-          <Search size={15} color="var(--carta-text2, #999)" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar plato..."
-            style={{
-              width: "100%", padding: "9px 36px 9px 34px", borderRadius: 10, border: "1.5px solid var(--carta-border, #eee)",
-              fontFamily: FB, fontSize: "0.83rem", color: "var(--carta-text, #111)",
-              background: "var(--carta-surface, #f5f5f5)", outline: "none", boxSizing: "border-box",
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", cursor: "pointer", display: "flex" }}>
-              <X size={14} color="var(--carta-text2, #999)" />
-            </button>
-          )}
-        </div>
-
         {/* Category pills */}
         {categories.length > 1 && (
-          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}>
             <button
               onClick={() => setActiveCategory(null)}
-              style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 99, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: !activeCategory ? "var(--carta-accent, #F4A623)" : "var(--carta-surface, #f2f2f2)", color: !activeCategory ? "#fff" : "var(--carta-text2, #666)", transition: "all 0.15s" }}
+              style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 99, border: `1.5px solid ${!activeCategory ? AMBER : "#ddd"}`, cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: !activeCategory ? AMBER : "transparent", color: !activeCategory ? "#fff" : "#888", transition: "all 0.15s" }}
             >
               Todo
             </button>
@@ -152,7 +156,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 99, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: activeCategory === cat.id ? "var(--carta-accent, #F4A623)" : "var(--carta-surface, #f2f2f2)", color: activeCategory === cat.id ? "#fff" : "var(--carta-text2, #666)", transition: "all 0.15s", whiteSpace: "nowrap" }}
+                style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 99, border: `1.5px solid ${activeCategory === cat.id ? AMBER : "#ddd"}`, cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: activeCategory === cat.id ? AMBER : "transparent", color: activeCategory === cat.id ? "#fff" : "#888", transition: "all 0.15s", whiteSpace: "nowrap" }}
               >
                 {cat.name}
               </button>
@@ -162,16 +166,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
       </div>
 
       {/* Dishes */}
-      <div style={{ padding: "8px 0 120px" }}>
+      <div style={{ padding: "6px 12px 120px" }}>
         {grouped.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--carta-text2, #999)" }}>
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
             <Search size={32} style={{ marginBottom: 12 }} />
             <p style={{ fontFamily: F, fontSize: "0.9rem" }}>Sin resultados para "{search}"</p>
           </div>
         ) : (
           grouped.map(({ category, dishes }) => (
             <div key={category.id}>
-              <h2 style={{ fontFamily: F, fontWeight: 700, fontSize: "0.85rem", color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".05em", padding: "18px 16px 8px", margin: 0 }}>
+              <h2 style={{ fontFamily: F, fontWeight: 700, fontSize: "0.68rem", color: "#bbb", textTransform: "uppercase", letterSpacing: ".07em", padding: "18px 16px 6px", margin: 0 }}>
                 {category.name}
               </h2>
               {dishes.map(dish => (
@@ -179,37 +183,44 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                   key={dish.id}
                   onClick={() => setSelectedDish(dish as DishForOrder)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 14, width: "100%",
-                    padding: "12px 16px", border: "none", cursor: "pointer",
-                    background: "none", borderBottom: "1px solid var(--carta-border, #f0f0f0)",
-                    textAlign: "left",
+                    display: "flex", alignItems: "stretch", width: "100%",
+                    margin: "0 0 10px", padding: 0, border: "none", cursor: "pointer",
+                    background: "#fff", borderRadius: 16,
+                    boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+                    overflow: "hidden", textAlign: "left",
+                    minHeight: 110,
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: F, fontWeight: 600, fontSize: "0.9rem", color: "var(--carta-text, #111)", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {dish.name}
-                    </p>
-                    {dish.description && (
-                      <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--carta-text2, #777)", margin: "0 0 6px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {dish.description}
+                  {/* Text */}
+                  <div style={{ flex: 1, minWidth: 0, padding: "14px 12px 14px 16px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                    <div>
+                      <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "#111", margin: "0 0 4px", lineHeight: 1.3 }}>
+                        {dish.name}
                       </p>
-                    )}
-                    <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: "var(--carta-accent, #F4A623)", margin: 0 }}>
+                      {dish.description && (
+                        <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#999", margin: 0, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.45 }}>
+                          {dish.description}
+                        </p>
+                      )}
+                    </div>
+                    <p style={{ fontFamily: F, fontWeight: 800, fontSize: "0.9rem", color: AMBER, margin: "8px 0 0" }}>
                       {formatCLP(dish.price)}
                     </p>
                   </div>
-                  {dish.imageUrl ? (
-                    <div style={{ position: "relative", flexShrink: 0 }}>
-                      <img src={dish.imageUrl} alt={dish.name} style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover" }} />
-                      <div style={{ position: "absolute", bottom: -6, right: -6, width: 24, height: 24, borderRadius: "50%", background: "var(--carta-accent, #F4A623)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>
-                        <span style={{ color: "#fff", fontSize: "1rem", lineHeight: 1, fontWeight: 700, marginTop: -1 }}>+</span>
+                  {/* Photo */}
+                  <div style={{ width: 120, flexShrink: 0, position: "relative", background: "#f0ece6" }}>
+                    {dish.imageUrl ? (
+                      <img src={dish.imageUrl} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: "2rem" }}>🍽️</span>
                       </div>
+                    )}
+                    {/* + badge */}
+                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: AMBER, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(245,158,11,0.5)" }}>
+                      <span style={{ color: "#fff", fontSize: "1.1rem", lineHeight: 1, fontWeight: 700, marginTop: -1 }}>+</span>
                     </div>
-                  ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ fontSize: "1.2rem" }}>🍽️</span>
-                    </div>
-                  )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -219,10 +230,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
 
       {/* Sticky cart bar (when has items) */}
       {count > 0 && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "12px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))", background: "var(--carta-bg, #fff)", borderTop: "1px solid var(--carta-border, #eee)" }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "12px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))", background: CREAM, borderTop: "1px solid #ece9e3" }}>
           <button
             onClick={() => setCartOpen(true)}
-            style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: "none", background: "var(--carta-accent, #F4A623)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 520, margin: "0 auto" }}
+            style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: "none", background: AMBER, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 520, margin: "0 auto", boxShadow: "0 4px 16px rgba(245,158,11,0.35)" }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.2)", fontFamily: F, fontWeight: 700, fontSize: "0.78rem", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
