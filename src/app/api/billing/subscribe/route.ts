@@ -39,18 +39,35 @@ export async function POST(req: NextRequest) {
   const planConfig = FLOW_PLANS[plan];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-  // Registrar tarjeta del cliente en Flow
+  const customerId = restaurantId; // nuestro ID externo para Flow
+  const customerName = owner.name || owner.email.split("@")[0];
+
+  // 1. Crear cliente en Flow (idempotente — ignorar si ya existe)
+  try {
+    await flowPost("/customer/create", {
+      customerId,
+      name: customerName,
+      email: owner.email,
+    });
+    console.log(`[billing/subscribe] Cliente creado en Flow: ${customerId}`);
+  } catch (err: any) {
+    const alreadyExists = err?.message?.toLowerCase().includes("already") || err?.message?.toLowerCase().includes("existe") || err?.code === 400;
+    if (!alreadyExists) {
+      console.error("[billing/subscribe] Error creando cliente en Flow:", err?.message);
+      return NextResponse.json({ error: `Error al crear cliente: ${err?.message}` }, { status: 500 });
+    }
+    console.log(`[billing/subscribe] Cliente ya existe en Flow: ${customerId}`);
+  }
+
+  // 2. Iniciar registro de tarjeta
   const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}`;
   try {
     const result = await flowPost<{ url: string; token: string }>("/customer/register", {
-      customerId: restaurantId,
-      name: owner.name || owner.email.split("@")[0],
-      email: owner.email,
+      customerId,
       url_return: urlReturn,
     });
-    console.log(`[billing/subscribe] Customer registration iniciado: token=${result.token} para ${restaurant.name}`);
+    console.log(`[billing/subscribe] Card registration iniciado: token=${result.token} para ${restaurant.name}`);
 
-    // Guardar plan pendiente
     await prisma.restaurant.update({
       where: { id: restaurantId },
       data: { pendingFlowPlanId: planConfig.planId },
@@ -58,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: `${result.url}?token=${result.token}` });
   } catch (err: any) {
-    console.error("[billing/subscribe] Error registrando cliente en Flow:", err?.message);
+    console.error("[billing/subscribe] Error registrando tarjeta en Flow:", err?.message);
     return NextResponse.json({ error: `Error al iniciar registro de tarjeta: ${err?.message}` }, { status: 500 });
   }
 }
