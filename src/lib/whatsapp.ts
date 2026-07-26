@@ -21,7 +21,7 @@ const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 //   {{3}}
 //
 //   — Equipo QuieroComer
-export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "HXa16f16927b2160d70e6d3b3e81dc9848"; // billing_expiry_today_v1 — pendiente aprobación Meta
+export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "HX43db1bcacc9506f6f37f09258e549d27"; // billing_expiry_today_v2 — pendiente aprobación Meta
 
 interface SendWhatsAppOptions {
   to: string; // E.164 format: +56912345678
