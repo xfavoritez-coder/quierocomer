@@ -104,19 +104,21 @@ export default async function CartaPage({
   {
     const r = restaurant as any;
     const now = new Date();
-    // startOfToday en Chile (UTC-4 invierno / UTC-3 verano)
-    // Usamos UTC-4 como mínimo conservador para no cortar antes de tiempo
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
+    // Comparar fechas en zona horaria Chile (America/Santiago) para que la carta
+    // se corte a las 23:59 Chile del día que vence, no a las 20:00 Chile (= midnight UTC).
+    const chileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Santiago",
+    }).format(d); // "YYYY-MM-DD"
+    const todayChile = chileDate(now);
     const periodEnd = r.currentPeriodEnd ? new Date(r.currentPeriodEnd) : null;
     const trialEnd = r.trialEndsAt ? new Date(r.trialEndsAt) : null;
-    // Alineado con el cron 4.8: visible si periodEnd >= startOfToday (el día que vence es el último día válido)
+    // El día que vence (en hora Chile) es el último día válido
     const isMenuLive =
       r.billingExempt ||
       r.isDemo ||
-      (r.subscriptionStatus === "ACTIVE" && periodEnd && periodEnd >= startOfToday) ||
-      (r.subscriptionStatus === "TRIALING" && trialEnd && trialEnd >= startOfToday) ||
-      (r.subscriptionStatus === "CANCELED" && periodEnd && periodEnd >= startOfToday);
+      (r.subscriptionStatus === "ACTIVE" && periodEnd && chileDate(periodEnd) >= todayChile) ||
+      (r.subscriptionStatus === "TRIALING" && trialEnd && chileDate(trialEnd) >= todayChile) ||
+      (r.subscriptionStatus === "CANCELED" && periodEnd && chileDate(periodEnd) >= todayChile);
 
     if (!isMenuLive) {
       return <MenuPausedPage restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;

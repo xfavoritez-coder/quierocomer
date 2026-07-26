@@ -354,8 +354,8 @@ export async function GET(req: NextRequest) {
           } catch (e) { console.error("[diario] expiry_today email error:", e); }
         }
 
-        // WhatsApp — solo si el dueño tiene número y el template está aprobado
-        if (r.owner.whatsapp && BILLING_EXPIRY_TODAY_WA_TEMPLATE !== "PENDING_APPROVAL") {
+        // WhatsApp — solo si el dueño tiene número
+        if (r.owner.whatsapp) {
           try {
             const alreadySentWa = await prisma.panelActivity.findFirst({
               where: { restaurantId: r.id, action: "wa_expiry_today", createdAt: { gte: startOfToday } },
