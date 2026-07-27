@@ -1,20 +1,23 @@
 export default function MenuPausedPage({
   restaurantName,
   logoUrl,
+  mode = "qr",
 }: {
   restaurantName: string;
   logoUrl?: string | null;
+  mode?: "qr" | "ordering";
 }) {
   const initial = restaurantName.charAt(0).toUpperCase();
+  const modeLabel = mode === "ordering" ? "Pedidos online" : "Carta QR";
 
   return (
     <div style={{
       position: "fixed",
       inset: 0,
       zIndex: 9999,
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
-      background: "rgba(0,0,0,0.55)",
+      backdropFilter: "blur(3px)",
+      WebkitBackdropFilter: "blur(3px)",
+      background: "rgba(0,0,0,0.45)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -30,18 +33,19 @@ export default function MenuPausedPage({
         overflow: "hidden",
         textAlign: "center",
       }}>
-        {/* Franja superior */}
+        {/* Franja superior — centrada */}
         <div style={{
           background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
           padding: "20px 20px 22px",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          gap: 12,
+          gap: 10,
         }}>
           <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: 10,
+            width: 52,
+            height: 52,
+            borderRadius: 12,
             background: "#fff",
             flexShrink: 0,
             display: "flex",
@@ -58,17 +62,17 @@ export default function MenuPausedPage({
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <span style={{ fontSize: 20, fontWeight: 800, color: "#f97316", lineHeight: 1 }}>
+              <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316", lineHeight: 1 }}>
                 {initial}
               </span>
             )}
           </div>
-          <div style={{ textAlign: "left" }}>
+          <div style={{ textAlign: "center" }}>
             <div style={{ color: "#fff", fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
               {restaurantName}
             </div>
             <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, marginTop: 2 }}>
-              Carta digital
+              {modeLabel}
             </div>
           </div>
         </div>
@@ -84,7 +88,7 @@ export default function MenuPausedPage({
           </div>
 
           <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px dashed #e5e7eb" }}>
-            <p style={{ fontSize: 11, color: "#9ca3af", margin: "0 0 5px" }}>
+            <p style={{ fontSize: 11, color: "#9ca3af", margin: "0 0 2px" }}>
               ¿Eres el dueño de este local?
             </p>
             <a

@@ -132,7 +132,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
 
   return (
     <OrderCartProvider>
-      {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} />}
+      {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} mode="ordering" />}
       <OrderMenuPage
         restaurant={scheduledRestaurant as any}
         orderingConfig={orderingConfig}
