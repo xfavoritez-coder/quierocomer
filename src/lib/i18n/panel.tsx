@@ -17,7 +17,7 @@ const translations = {
     nav_export: "Exportar carta",
     nav_waiter: "Llamar garzón",
     nav_users: "Usuarios",
-    nav_restaurant: "Mi Restaurante",
+    nav_restaurant: "Mi Suscripción",
     nav_ordering: "Pedidos online",
     nav_settings: "Ajustes",
     nav_support: "Soporte",

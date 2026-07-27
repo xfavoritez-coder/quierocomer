@@ -340,8 +340,8 @@ export default function MiRestaurantePage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Store size={20} color="var(--adm-text3)" /> Mi Restaurante</h1>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura la información y apariencia de tu local</p>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color="var(--adm-text3)" /> Mi Suscripción</h1>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Gestiona tu plan y facturación</p>
 
       {/* ── Bloque plan activo ── */}
       {(() => {
@@ -552,70 +552,6 @@ export default function MiRestaurantePage() {
       })()}
 
 
-      {/* ── Info básica ── */}
-      <Card title="Información básica" icon={Camera}>
-        {/* Logo */}
-        <Field label="Logo">
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: `2px solid ${GOLD}` }} />
-            ) : (
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--adm-input)", display: "flex", alignItems: "center", justifyContent: "center", border: "2px dashed var(--adm-card-border)" }}>
-                <Camera size={20} color="var(--adm-text3)" />
-              </div>
-            )}
-            <SubirFoto folder="logos" label="Cambiar logo" circular height="64px" onUpload={(url: string) => setLogoUrl(url)} />
-          </div>
-        </Field>
-
-        <Field label="Nombre del local">
-          <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Nombre del restaurant" />
-        </Field>
-
-        <Field label="Tipo de cocina">
-          <div ref={dietRef} style={{ display: "flex", gap: 8 }}>
-            {([
-              { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️" },
-              { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
-              { value: "VEGAN", label: "Vegano", icon: "🌿" },
-            ] as const).map(opt => {
-              const active = dietType === opt.value;
-              return (
-                <button key={opt.value} onClick={() => setDietType(opt.value)} style={{
-                  flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
-                  background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
-                  border: active ? "1px solid rgba(244,166,35,0.3)" : "1px solid transparent",
-                  color: active ? GOLD : "var(--adm-text3)",
-                  fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                  transition: "all 0.2s",
-                }}>
-                  <span style={{ fontSize: "0.9rem" }}>{opt.icon}</span> {opt.label}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-
-        <Field label="Instagram">
-          <div ref={igRef} style={{ display: "flex", alignItems: "center", animation: highlightIg ? "dietPulse 0.8s ease-in-out infinite" : "none", borderRadius: 8 }}>
-            {highlightIg && <style>{`@keyframes dietPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 12px rgba(244,166,35,0.3); } }`}</style>}
-            <span style={{ padding: "10px 10px 10px 14px", background: "var(--adm-input)", border: highlightIg ? "1px solid rgba(244,166,35,0.3)" : "1px solid var(--adm-input-border)", borderRight: "none", borderRadius: "8px 0 0 8px", fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)" }}>@</span>
-            <input value={instagram} onChange={e => setInstagram(e.target.value.replace(/^@/, ""))} style={{ ...inputStyle, borderRadius: "0 8px 8px 0", ...(highlightIg ? { borderColor: "rgba(244,166,35,0.3)" } : {}) }} placeholder="tu_usuario" />
-          </div>
-        </Field>
-        <Field label="Sitio web">
-          <input value={website} onChange={e => setWebsite(e.target.value)} style={inputStyle} placeholder="https://tu-sitio.cl" type="url" />
-        </Field>
-
-        <Field label="Dirección (para retiro en local)">
-          <input value={address} onChange={e => setAddress(e.target.value)} style={inputStyle} placeholder="Ej: Av. Providencia 1234, Santiago" />
-        </Field>
-
-        <button onClick={() => { saveInfo(); saveSocial(); }} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-          {saving ? "Guardando..." : "Guardar información"}
-        </button>
-      </Card>
 
 
 
