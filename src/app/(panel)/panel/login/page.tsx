@@ -217,8 +217,8 @@ export default function PanelLogin() {
             {loading ? "Entrando..." : "Frotar lámpara"}
           </button>
 
-          <div style={{ textAlign: "center", marginTop: 10 }}>
-            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.75rem", color: night ? "#888" : "#8a7550", textDecoration: "none" }}>
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "#f97316", textDecoration: "underline" }}>
               ¿Olvidaste tu contraseña?
             </a>
           </div>
