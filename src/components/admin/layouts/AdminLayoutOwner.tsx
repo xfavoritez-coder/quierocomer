@@ -50,8 +50,8 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
     { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
     { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
-    { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
     { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
+    { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
     { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
   ];
   const BOTTOM_TABS_RAW = [

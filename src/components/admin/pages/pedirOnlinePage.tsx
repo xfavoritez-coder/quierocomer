@@ -203,6 +203,12 @@ export default function PedirOnlinePage() {
       .then((d: OrderingData) => {
         setData(d);
         setEnabled(d.orderingEnabled ?? false);
+        // Track section visit
+        fetch("/api/panel/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: rid, action: "pedidos_online_visit", details: { orderingEnabled: d.orderingEnabled ?? false } }),
+        }).catch(() => {});
         const rawPhone = d.orderingPhone || d.whatsapp || d.owner?.whatsapp || "";
         const { country, local } = parseStoredPhone(rawPhone);
         setPhoneCountry(country);
@@ -238,6 +244,11 @@ export default function PedirOnlinePage() {
         const updated = await res.json();
         setData(updated);
         toast.success(newVal ? "Pedidos online activados" : "Pedidos online desactivados");
+        fetch("/api/panel/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: rid, action: newVal ? "pedidos_online_activated" : "pedidos_online_deactivated" }),
+        }).catch(() => {});
       } else {
         setEnabled(!newVal);
         toast.error("Error al guardar");

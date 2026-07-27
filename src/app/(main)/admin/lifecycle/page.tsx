@@ -91,6 +91,9 @@ const ACTION_LABELS: Record<string, string> = {
   plan_tab_viewed: "Vio plan",
   plan_subscribe_clicked: "Intentó suscribirse",
   plan_page_visited: "Visitó suscripción",
+  pedidos_online_visit: "Entró a Pedidos Online",
+  pedidos_online_activated: "✅ Activó pedidos online",
+  pedidos_online_deactivated: "Desactivó pedidos online",
 };
 
 export default function LifecyclePage() {
@@ -573,8 +576,12 @@ function TimelineSection({ entry, detail }: { entry: Entry; detail?: DetailData 
   for (const a of recentActivity) {
     const label = ACTION_LABELS[a.action] || a.action;
     const d = a.details && typeof a.details === "object" ? a.details : {};
-    const extra = d.dishName || d.name || d.section || "";
-    items.push({ time: a.createdAt, text: `${label}${extra ? `: ${extra}` : ""}`, dot: "" });
+    let extra = d.dishName || d.name || d.section || "";
+    if (a.action === "pedidos_online_visit") {
+      extra = d.orderingEnabled ? "ya activado" : "no activado aún";
+    }
+    const dot = a.action === "pedidos_online_activated" ? "green" : a.action === "pedidos_online_deactivated" ? "red" : "";
+    items.push({ time: a.createdAt, text: `${label}${extra ? `: ${extra}` : ""}`, dot });
   }
 
   // Emails (from lazy-loaded detail)
