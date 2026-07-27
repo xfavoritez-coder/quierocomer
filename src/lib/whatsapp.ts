@@ -5,7 +5,7 @@
 
 const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+56962183197";
 
 // Template SID for "carta_lista_v2" (approved by Meta)
 const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";

@@ -25,7 +25,7 @@ loadEnv(".env.prod");
 
 const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+56962183197";
 const TEMPLATE_SID = process.env.WA_TEMPLATE_PEDIDOS_ONLINE;
 
 const BLACKLIST = new Set(["+56976485972", "+56977940643", "+56971204150"]);

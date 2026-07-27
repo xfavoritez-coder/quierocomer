@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
     try {
       const SID = process.env.TWILIO_ACCOUNT_SID;
       const TOKEN = process.env.TWILIO_AUTH_TOKEN;
-      const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+      const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+56962183197";
 
       if (SID && TOKEN) {
         const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
     if (shouldEscalate) {
       const SID = process.env.TWILIO_ACCOUNT_SID;
       const TOKEN = process.env.TWILIO_AUTH_TOKEN;
-      const FROM_WA = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+      const FROM_WA = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+56962183197";
       const OWNER_PHONE = "whatsapp:+56999946208";
       if (SID && TOKEN) {
         const alertMsg = `⚠️ Cliente necesita ayuda humana\n\nRestaurante: ${context.restaurantName || "Desconocido"}\nTeléfono: ${phone}\nÚltimo mensaje: ${body.trim().slice(0, 200)}\n\nhttps://quierocomer.cl/admin/whatsapp`;
