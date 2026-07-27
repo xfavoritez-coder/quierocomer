@@ -42,8 +42,8 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
               Mi pedido
             </span>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <X size={16} color="var(--carta-text2, #666)" />
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X size={16} color="var(--carta-text, #333)" />
           </button>
         </div>
 
@@ -80,9 +80,9 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <button
                         onClick={() => updateQuantity(item.key, item.quantity - 1)}
-                        style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: "pointer", background: "var(--carta-surface, #f2f2f2)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}
                       >
-                        <Minus size={12} color="var(--carta-text2, #666)" />
+                        <Minus size={12} color="var(--carta-text, #333)" />
                       </button>
                       <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.85rem", color: "var(--carta-text, #111)", minWidth: 16, textAlign: "center" }}>
                         {item.quantity}
