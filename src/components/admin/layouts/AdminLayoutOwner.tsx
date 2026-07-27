@@ -165,12 +165,15 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                 {activePlan && basePath === "/panel" && (
-                  <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px",
-                    background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
-                    color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
-                  }}>
-                    {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : activePlan === "SILVER" ? "Silver" : "Free"}
-                  </span>
+                  <button
+                    onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: activePlan === "FREE" ? undefined : activePlan, source: "plan_badge" } })); }}
+                    style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px", border: "none", cursor: "pointer",
+                      background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
+                      color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
+                    }}
+                  >
+                    {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : activePlan === "SILVER" ? "Silver" : "Ver planes"}
+                  </button>
                 )}
               </div>
             </div>
@@ -220,13 +223,15 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <p style={{ fontFamily: F, fontSize: "17px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
               {activePlan && basePath === "/panel" && (
-                <span style={{ fontFamily: F, fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.3px",
-                  background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
-                  color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
-                  flexShrink: 0,
-                }}>
+                <button
+                  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: activePlan === "FREE" ? undefined : activePlan, source: "plan_badge_mobile" } })); }}
+                  style={{ fontFamily: F, fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.3px", border: "none", cursor: "pointer", flexShrink: 0,
+                    background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
+                    color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
+                  }}
+                >
                   {activePlan === "PREMIUM" ? "PRO" : activePlan === "GOLD" ? "GOLD" : activePlan === "SILVER" ? "SILVER" : "GRATIS"}
-                </span>
+                </button>
               )}
             </div>
             <p style={{ fontFamily: F, fontSize: "12px", color: "var(--adm-text3)", fontWeight: 500, margin: "2px 0 0" }}>QuieroComer</p>

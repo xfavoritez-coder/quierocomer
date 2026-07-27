@@ -151,6 +151,7 @@ export default function PlanesClient() {
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700, marginBottom: 4 }}>Prueba 7 días sin costo</div>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
+              <div>✓ Página web de pedidos online <span className="qc-tip">i<span className="qc-tip-text">Tus clientes arman su pedido desde el celular y te lo envían por WhatsApp. Sin comisiones ni apps de terceros</span></span></div>
               <div>✓ Platos estrella ilimitados <span className="qc-tip">i<span className="qc-tip-text">Sin límite de platos destacados. Resalta todos los que quieras</span></span></div>
               <div>✓ Cross-selling <span className="qc-tip">i<span className="qc-tip-text">Sugiere acompañamientos para subir el ticket de cada mesa</span></span></div>
               <div>✓ Estadísticas avanzadas <span className="qc-tip">i<span className="qc-tip-text">Sesiones en vivo, recorrido de cada cliente, búsquedas</span></span></div>

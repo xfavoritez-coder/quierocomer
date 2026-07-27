@@ -543,6 +543,28 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
             </div>
           )}
 
+          {/* Quick plan switch CTAs (solo cuando viendo el plan actual) */}
+          {isCurrentPlan && tab === "GOLD" && (
+            <button onClick={() => setTab("PREMIUM")} style={{
+              display: "block", width: "100%", padding: "11px 0", marginBottom: 14,
+              background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)",
+              borderRadius: 999, fontFamily: FD, fontSize: "0.82rem", fontWeight: 700,
+              color: "#7c3aed", cursor: "pointer",
+            }}>
+              💎 Mejorar a Premium →
+            </button>
+          )}
+          {isCurrentPlan && tab === "PREMIUM" && (
+            <button onClick={() => setTab("GOLD")} style={{
+              display: "block", width: "100%", padding: "11px 0", marginBottom: 14,
+              background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)",
+              borderRadius: 999, fontFamily: FD, fontSize: "0.82rem", fontWeight: 700,
+              color: "#92400e", cursor: "pointer",
+            }}>
+              ⭐ Bajar a Gold →
+            </button>
+          )}
+
           {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             {PLAN_TAGLINES[tab] && <p style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
