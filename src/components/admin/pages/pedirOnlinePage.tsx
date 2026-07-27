@@ -224,7 +224,7 @@ export default function PedirOnlinePage() {
   }, [rid]);
 
   const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
-  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM") || ORDERING_EXCEPTIONS.includes(data?.slug ?? "");
+  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM") || ORDERING_EXCEPTIONS.includes(data?.slug ?? "") || (data as any)?.subscriptionStatus === "TRIALING";
 
   const [togglingEnabled, setTogglingEnabled] = useState(false);
 
