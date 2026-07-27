@@ -572,8 +572,24 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           <ImpactHero heroDishes={heroDishes} restaurantName={restaurant.name} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
         </div>
 
+        {/* Título MENÚ + search */}
+        <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "#ddd" : "#333", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
+            MENÚ
+          </h2>
+          <div style={{ flex: searchOpen ? 1 : "0 0 0", overflow: "hidden", opacity: searchOpen ? 1 : 0, transition: "flex 0.22s ease, opacity 0.18s ease", display: "flex", alignItems: "center", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)", borderRadius: 999, padding: "0 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, width: "100%" }}>
+              <Search size={14} color={isDark ? "rgba(255,255,255,0.5)" : "#999"} style={{ flexShrink: 0 }} />
+              <input id="impact-search" type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ flex: 1, border: "none", outline: "none", fontSize: "15px", color: isDark ? "#fff" : "#111", background: "transparent", minWidth: 0 }} />
+            </div>
+          </div>
+          <button onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search")?.focus(), 250); } }} style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
+            {searchOpen ? <X size={15} color={isDark ? "#fff" : "#333"} /> : <Search size={15} color={isDark ? "#fff" : "#333"} />}
+          </button>
+        </div>
+
         {/* Filter bar */}
-        <div style={{ position: "relative", zIndex: 1, padding: "18px 14px 0", overflowX: "auto", scrollbarWidth: "none" }}>
+        <div style={{ position: "relative", zIndex: 1, padding: "0 14px 10px", overflowX: "auto", scrollbarWidth: "none" }}>
           <div style={{ display: "flex", gap: 8 }}>
             {FILTER_OPTS.map(f => {
               const isActive = activeFilters.includes(f.key);
@@ -590,22 +606,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
               );
             })}
           </div>
-        </div>
-
-        {/* Título MENÚ + search */}
-        <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-          <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "#ddd" : "#333", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
-            MENÚ
-          </h2>
-          <div style={{ flex: searchOpen ? 1 : "0 0 0", overflow: "hidden", opacity: searchOpen ? 1 : 0, transition: "flex 0.22s ease, opacity 0.18s ease", display: "flex", alignItems: "center", minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)", borderRadius: 999, padding: "0 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, width: "100%" }}>
-              <Search size={14} color={isDark ? "rgba(255,255,255,0.5)" : "#999"} style={{ flexShrink: 0 }} />
-              <input id="impact-search" type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ flex: 1, border: "none", outline: "none", fontSize: "15px", color: isDark ? "#fff" : "#111", background: "transparent", minWidth: 0 }} />
-            </div>
-          </div>
-          <button onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search")?.focus(), 250); } }} style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
-            {searchOpen ? <X size={15} color={isDark ? "#fff" : "#333"} /> : <Search size={15} color={isDark ? "#fff" : "#333"} />}
-          </button>
         </div>
 
         {/* Category chips */}
