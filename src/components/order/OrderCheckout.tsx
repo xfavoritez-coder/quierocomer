@@ -11,6 +11,122 @@ function formatCLP(n: number) {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
+// ─── Phone country selector ──────────────────────────────────────────────────
+const PHONE_COUNTRIES = [
+  {
+    code: "CL",
+    dial: "+56",
+    placeholder: "9 1234 5678",
+    maxDigits: 9,
+    flag: (
+      <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}>
+        <rect width="20" height="7" fill="#fff"/>
+        <rect y="7" width="20" height="7" fill="#D52B1E"/>
+        <rect width="7" height="7" fill="#0039A6"/>
+        <polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/>
+      </svg>
+    ),
+  },
+  {
+    code: "US",
+    dial: "+1",
+    placeholder: "555 123 4567",
+    maxDigits: 10,
+    flag: (
+      <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}>
+        <rect width="20" height="14" fill="#B22234"/>
+        <rect y="1.08" width="20" height="1.08" fill="#fff"/>
+        <rect y="3.23" width="20" height="1.08" fill="#fff"/>
+        <rect y="5.38" width="20" height="1.08" fill="#fff"/>
+        <rect y="7.54" width="20" height="1.08" fill="#fff"/>
+        <rect y="9.69" width="20" height="1.08" fill="#fff"/>
+        <rect y="11.85" width="20" height="1.08" fill="#fff"/>
+        <rect width="8" height="7.54" fill="#3C3B6E"/>
+      </svg>
+    ),
+  },
+] as const;
+
+type CountryCode = "CL" | "US";
+
+function formatPhone(v: string, country: CountryCode) {
+  const c = PHONE_COUNTRIES.find(p => p.code === country)!;
+  const d = v.replace(/\D/g, "").slice(0, c.maxDigits);
+  if (country === "US") {
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
+    return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+  }
+  if (d.length <= 1) return d;
+  if (d.length <= 5) return `${d[0]} ${d.slice(1)}`;
+  return `${d[0]} ${d.slice(1, 5)} ${d.slice(5)}`;
+}
+
+function buildFullPhone(local: string, country: CountryCode): string {
+  const digits = local.replace(/\D/g, "");
+  const dial = PHONE_COUNTRIES.find(p => p.code === country)!.dial;
+  return `${dial}${digits}`;
+}
+
+function PhoneCountrySelector({ country, onChange }: { country: CountryCode; onChange: (c: CountryCode) => void }) {
+  const [open, setOpen] = useState(false);
+  const current = PHONE_COUNTRIES.find(p => p.code === country)!;
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: "flex", alignItems: "center", gap: 5,
+          padding: "0 10px", height: "100%", minHeight: 42,
+          background: "var(--carta-surface, #f0f0f0)",
+          border: "1.5px solid var(--carta-border, #e5e5e5)",
+          borderRadius: 10, color: "var(--carta-text, #111)",
+          fontSize: 13, cursor: "pointer", whiteSpace: "nowrap",
+        }}
+      >
+        {current.flag}
+        <span style={{ fontWeight: 600 }}>{current.dial}</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: 2 }}>
+          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9 }} />
+          <div style={{
+            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 100,
+            background: "var(--carta-bg, #fff)",
+            border: "1.5px solid var(--carta-border, #e5e5e5)",
+            borderRadius: 12, overflow: "hidden", minWidth: 150,
+            boxShadow: "0 8px 24px rgba(0,0,0,.15)",
+          }}>
+            {PHONE_COUNTRIES.map(c => (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => { onChange(c.code); setOpen(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  width: "100%", padding: "10px 14px", border: "none", cursor: "pointer",
+                  background: c.code === country ? "var(--carta-surface, #f5f5f5)" : "transparent",
+                  color: "var(--carta-text, #111)", fontSize: 14,
+                  fontWeight: c.code === country ? 700 : 400,
+                }}
+              >
+                {c.flag}
+                <span>{c.dial}</span>
+                <span style={{ color: "var(--carta-text2, #999)", fontSize: 12 }}>{c.code}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Main types & styles ─────────────────────────────────────────────────────
 interface OrderingConfig {
   phone: string;
   delivery: "PICKUP" | "DELIVERY" | "BOTH";
@@ -45,6 +161,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const showDelivery = delivery === "DELIVERY" || delivery === "BOTH";
 
   const [name, setName] = useState("");
+  const [dialCountry, setDialCountry] = useState<CountryCode>("CL");
   const [clientPhone, setClientPhone] = useState("");
   const [orderType, setOrderType] = useState<"PICKUP" | "DELIVERY">(showPickup ? "PICKUP" : "DELIVERY");
   const [clientAddress, setClientAddress] = useState("");
@@ -52,10 +169,11 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
 
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
+  const phoneDigits = clientPhone.replace(/\D/g, "");
 
   const isValid =
     name.trim().length >= 2 &&
-    clientPhone.trim().length >= 8 &&
+    phoneDigits.length >= 8 &&
     (orderType === "PICKUP" || clientAddress.trim().length >= 5) &&
     paymentMethod !== null &&
     !belowMin;
@@ -65,7 +183,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     lines.push(`*Pedido - ${restaurantName}*`);
     lines.push("");
     lines.push(`*Nombre:* ${name.trim()}`);
-    lines.push(`*Telefono:* ${clientPhone.trim()}`);
+    lines.push(`*Telefono:* ${buildFullPhone(clientPhone, dialCountry)}`);
     lines.push(`*Tipo:* ${orderType === "PICKUP" ? "Retiro en local" : "Delivery"}`);
     if (orderType === "DELIVERY" && clientAddress.trim()) {
       lines.push(`*Direccion:* ${clientAddress.trim()}`);
@@ -98,14 +216,13 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
   const sendOrder = async () => {
     if (!isValid) return;
-    // Save order to DB (fire-and-forget — don't block WhatsApp on API failure)
     fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         restaurantSlug,
         customerName: name.trim(),
-        customerPhone: clientPhone.trim(),
+        customerPhone: buildFullPhone(clientPhone, dialCountry),
         orderType,
         deliveryAddress: orderType === "DELIVERY" ? clientAddress.trim() : null,
         paymentMethod,
@@ -137,7 +254,12 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
         display: "flex", justifyContent: "center", alignItems: "flex-end",
       }}
     >
-      <style>{`.oc-input::placeholder { color: var(--carta-text2, #888); opacity: 1; }`}</style>
+      <style>{`
+        .oc-input::placeholder { color: var(--carta-text2, #999); opacity: 0.45; }
+        .oc-phone-input { flex: 1; padding: 11px 14px; border: 1.5px solid var(--carta-border, #e5e5e5); border-left: none; border-radius: 0 10px 10px 0; font-family: ${FB}; font-size: 0.85rem; color: var(--carta-text, #111); background: var(--carta-surface, #fafafa); outline: none; box-sizing: border-box; min-width: 0; }
+        .oc-phone-input::placeholder { color: var(--carta-text2, #999); opacity: 0.45; }
+        .oc-phone-selector { border-radius: 10px 0 0 10px !important; border-right: none !important; }
+      `}</style>
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -237,13 +359,20 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               autoComplete="name"
             />
           </div>
-          <div style={{ marginBottom: 12 }}>
+
+          {/* Phone with country selector */}
+          <div style={{ marginBottom: 12, display: "flex" }}>
+            <div className="oc-phone-selector" style={{ flexShrink: 0 }}>
+              <PhoneCountrySelector
+                country={dialCountry}
+                onChange={(c) => { setDialCountry(c); setClientPhone(""); }}
+              />
+            </div>
             <input
               value={clientPhone}
-              onChange={e => setClientPhone(e.target.value)}
-              className="oc-input"
-              style={inputStyle}
-              placeholder="Tu teléfono *"
+              onChange={e => setClientPhone(formatPhone(e.target.value, dialCountry))}
+              className="oc-phone-input"
+              placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder + " *"}
               type="tel"
               autoComplete="tel"
             />
@@ -272,8 +401,8 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                     }}
                   >
-                    <Icon size={17} color={active ? "#F4A623" : "var(--carta-text2, #999)"} />
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: active ? "#F4A623" : "var(--carta-text2, #777)" }}>{label}</span>
+                    <Icon size={17} color={active ? "var(--carta-accent, #F4A623)" : "var(--carta-text2, #999)"} />
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: active ? 700 : 500, color: active ? ACCENT : "var(--carta-text2, #999)" }}>{label}</span>
                   </button>
                 );
               })}
@@ -357,7 +486,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             style={{
               width: "100%", padding: "15px 16px", borderRadius: 14, border: "none",
               background: isValid ? "#25D366" : "var(--carta-border, #ddd)",
-              color: isValid ? "#fff" : "#aaa",
+              color: isValid ? "#fff" : "var(--carta-text2, #aaa)",
               fontFamily: F, fontSize: "0.92rem", fontWeight: 700,
               cursor: isValid ? "pointer" : "not-allowed",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
