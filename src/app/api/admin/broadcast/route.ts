@@ -28,7 +28,7 @@ export const maxDuration = 300;
  */
 
 // ── Fill after Meta approval ─────────────────────────────────────────────────
-const TEMPLATE_SID_PEDIDOS_ONLINE = "HX70cb42cbfe969452ed23ad669d8729f2"; // nueva_funcion_pedidos_online — pendiente aprobación Meta
+const TEMPLATE_SID_PEDIDOS_ONLINE = "HXf7034de15d10ac844db1b1883bd92edb"; // nueva_funcion_pedidos_online — pendiente aprobación Meta
 
 const CAMPAIGNS: Record<string, {
   sid: string;
