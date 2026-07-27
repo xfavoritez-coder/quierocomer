@@ -44,14 +44,14 @@ function discountPct(monthly: number, annual: number): string | undefined {
   return pct > 0 ? `-${pct}%` : undefined;
 }
 
-function PlanCard({ planKey, anual }: { planKey: PlanKey; anual: boolean }) {
+function PlanCard({ planKey, anual, highlighted }: { planKey: PlanKey; anual: boolean; highlighted?: boolean }) {
   const plan = PLANS[planKey];
   const price = anual ? plan.priceAnnualMonthly : plan.priceMonthly;
   const discount = anual ? discountPct(plan.priceMonthly, plan.priceAnnualMonthly) : undefined;
   const annualTotal = plan.priceAnnualMonthly * 12;
 
   return (
-    <div className={`pm-card${plan.isFeatured ? " pm-featured" : ""}`}>
+    <div className={`pm-card${plan.isFeatured ? " pm-featured" : ""}`} style={highlighted ? { borderColor: "#E8A33D", boxShadow: "0 0 0 2px #E8A33D, 0 0 40px rgba(232,163,61,.2)" } : undefined}>
       {plan.isFeatured && <div className="pm-badge">Popular</div>}
       <div className="pm-name">{plan.label}</div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-start" }}>
@@ -81,7 +81,7 @@ function PlanCard({ planKey, anual }: { planKey: PlanKey; anual: boolean }) {
   );
 }
 
-export default function PlanesModal({ onClose }: { onClose: () => void }) {
+export default function PlanesModal({ onClose, highlightPlan }: { onClose: () => void; highlightPlan?: PlanKey }) {
   const [anual, setAnual] = useState(true);
 
   return (
@@ -109,7 +109,7 @@ export default function PlanesModal({ onClose }: { onClose: () => void }) {
             </div>
             <div className="pm-grid">
               {PLAN_ORDER.map((key) => (
-                <PlanCard key={key} planKey={key} anual={anual} />
+                <PlanCard key={key} planKey={key} anual={anual} highlighted={highlightPlan === key} />
               ))}
             </div>
           </div>

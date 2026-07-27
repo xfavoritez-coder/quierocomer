@@ -268,7 +268,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                         }}>
                           {active && (
                             <svg width="11" height="9" viewBox="0 0 10 8" fill="none">
-                              <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M1 4L3.5 6.5L9 1" stroke="var(--carta-accent-fg, #fff)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </span>
@@ -330,7 +330,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                 style={{ width: 32, height: 32, borderRadius: 9, border: "none", cursor: "pointer", background: quantity > 1 ? "var(--carta-accent, #F4A623)" : "var(--carta-border, #ddd)", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                <Minus size={15} color={quantity > 1 ? "#fff" : "#aaa"} />
+                <Minus size={15} color={quantity > 1 ? "var(--carta-accent-fg, #fff)" : "#aaa"} />
               </button>
               <span style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--carta-text, #111)", minWidth: 22, textAlign: "center" }}>{quantity}</span>
               <button
@@ -347,7 +347,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
               style={{
                 flex: 1, padding: "14px 18px", borderRadius: 14, border: "none",
                 background: isValid ? "var(--carta-accent, #F4A623)" : "var(--carta-border, #ddd)",
-                color: isValid ? "#fff" : "#aaa", cursor: isValid ? "pointer" : "not-allowed",
+                color: isValid ? "var(--carta-accent-fg, #fff)" : "#aaa", cursor: isValid ? "pointer" : "not-allowed",
                 fontFamily: F, fontSize: "0.95rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 transition: "all 0.15s",

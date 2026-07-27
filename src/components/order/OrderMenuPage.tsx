@@ -84,6 +84,7 @@ function ImpactHero({
 
   if (heroDishes.length === 0) return null;
   const d = heroDishes[current];
+  const accentFg = accentContrast(accent);
   const effectivePrice = d.discountPrice != null && d.discountPrice < d.price ? d.discountPrice : d.price;
   const discountPct = d.discountPrice != null && d.discountPrice < d.price
     ? Math.round(((d.price - d.discountPrice) / d.price) * 100) : 0;
@@ -197,6 +198,7 @@ function ListaHero({
   }, [heroDishes.length]);
 
   const dish = heroDishes[current] ?? null;
+  const accentFg = accentContrast(accent);
   const bgSrc = dish?.photos?.[0] || restaurant.bannerUrl || null;
   const logoSrc = restaurant.logoUrl;
 
@@ -314,7 +316,7 @@ function ImpactCard({
         </div>
       </div>
       <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "var(--carta-accent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.35)", pointerEvents: hasModifiers ? "none" : "auto" }}>
-        <Plus size={16} color={accentFg} />
+        <Plus size={16} color="var(--carta-accent-fg, #fff)" />
       </div>
     </button>
   );

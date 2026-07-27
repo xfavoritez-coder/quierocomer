@@ -39,7 +39,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
   const showOrdering = opts.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes(opts.slug ?? "");
   const SIDEBAR_NAV = [
     { icon: Home, labelKey: "nav_home", href: base },
-    ...(showOrdering ? [{ icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" }] : []),
+    { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
     ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
     { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
     { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
@@ -73,6 +73,20 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasControl = !!(selected as any)?.hasControl;
   const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug });
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // localStorage-based "seen" badge for ordering nav
+  const [seenOrdering, setSeenOrdering] = useState(true); // assume seen until loaded
+  useEffect(() => {
+    const key = `qc_ordering_seen_${selectedRestaurantId}`;
+    setSeenOrdering(localStorage.getItem(key) === "1");
+  }, [selectedRestaurantId]);
+  useEffect(() => {
+    if (pathname.includes("/pedir-online") && !seenOrdering) {
+      const key = `qc_ordering_seen_${selectedRestaurantId}`;
+      localStorage.setItem(key, "1");
+      setSeenOrdering(true);
+    }
+  }, [pathname, selectedRestaurantId, seenOrdering]);
   const [accountOpen, setAccountOpen] = useState(false);
   const [moreVisible, setMoreVisible] = useState(false);
   const [accountVisible, setAccountVisible] = useState(false);
@@ -183,7 +197,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               }}>
                 <Icon size={18} strokeWidth={active ? 2.2 : 1.6} />
                 <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
-                {badge && <span style={{ fontSize: "0.6rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>{badge}</span>}
+                {badge && !seenOrdering && <span style={{ fontSize: "0.6rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>{badge}</span>}
               </Link>
             );
           })}
@@ -281,7 +295,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 <Link key={item.href} href={item.href} onClick={closeMore} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 4px", textDecoration: "none", borderBottom: "1px solid var(--adm-card-border)" }}>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     <Icon size={18} color={GOLD} />
-                    {badge && <span style={{ position: "absolute", top: -4, right: -4, fontSize: "0.55rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.5 }}>{badge}</span>}
+                    {badge && !seenOrdering && <span style={{ position: "absolute", top: -4, right: -4, fontSize: "0.55rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.5 }}>{badge}</span>}
                   </div>
                   <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{t(item.labelKey)}</span>
                   <ChevronRight size={16} color="var(--adm-text3)" />

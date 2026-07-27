@@ -32,7 +32,8 @@ export type Feature =
   | "genio"               // Genio IA
   | "modifiers"           // Modificadores de platos
   | "multi_menu"          // Multi-menú (un QR, múltiples cartas)
-  | "print_menu";         // Exportar carta imprimible (PDF)
+  | "print_menu"          // Exportar carta imprimible (PDF)
+  | "online_ordering";    // Página web de pedidos online (carta + checkout + WhatsApp)
 
 // --- Plan definitions ---
 
@@ -138,9 +139,10 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "multilang", "suggestions",
       "waiter", "campaigns", "automations", "clients_full", "clients_export",
       "toteat_integration", "live_dashboard", "multi_menu", "print_menu",
+      "online_ordering",
     ]),
     featureDisplay: [
-      { text: "Destacar platos estrella", tip: "Destaca ilimitados platos estrella sin ningún límite." },
+      { text: "Página web de pedidos online", tip: "Tus clientes arman su pedido desde el celular y te lo envían por WhatsApp. Sin comisiones ni apps de terceros." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente a inglés y portugués." },
       { text: "Cross-selling", tip: "Sugiere acompañamientos para subir el ticket de cada mesa." },
       { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas." },
