@@ -46,7 +46,7 @@ const CAMPAIGNS: Record<string, {
 };
 
 const BLACKLIST = new Set([
-  "+56976485972", "+56977940643", "+56971204150", "+56999946208",
+  "+56976485972", "+56977940643", "+56971204150",
 ]);
 
 export async function POST(req: NextRequest) {
