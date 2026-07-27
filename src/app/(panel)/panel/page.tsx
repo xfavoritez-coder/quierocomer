@@ -190,7 +190,7 @@ export default function PanelDashboard() {
   const cartaUrl = rest ? `https://quierocomer.com/qr/${rest.slug}` : "#";
   const delta = data.visitsDelta;
   const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
-  const showOrdering = (rest as any)?.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes((rest as any)?.slug ?? "");
+  const showOrdering = ((rest as any)?.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes((rest as any)?.slug ?? "")) && !!(rest as any)?.orderingEnabled;
 
   return (
     <div style={{ maxWidth: 640 }}>
