@@ -304,27 +304,6 @@ export default function PedirOnlinePage() {
         </p>
       </div>
 
-      {/* ¿Cómo funciona? */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
-        <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: ".05em", margin: "0 0 10px" }}>
-          ¿Cómo funciona?
-        </p>
-        {[
-          "El cliente abre tu link de pedidos y ve toda tu carta",
-          "Elige los platos, cantidad y modificadores (tamaño, extras, etc.)",
-          "Completa el checkout con su nombre, teléfono y dirección si es delivery",
-          "Con un tap se abre WhatsApp con el pedido listo para enviarte",
-          "Tú recibes el mensaje en tu WhatsApp y coordinas directamente con el cliente",
-        ].map((step, i) => (
-          <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-            <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(244,166,35,0.15)", color: GOLD, fontFamily: F, fontSize: "0.7rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-              {i + 1}
-            </span>
-            <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>{step}</p>
-          </div>
-        ))}
-      </div>
-
       {/* Activar / desactivar */}
       <div style={{ background: "var(--adm-card)", border: `1px solid ${enabled ? "rgba(22,163,74,0.3)" : "var(--adm-card-border)"}`, borderRadius: 16, padding: "16px 18px", marginBottom: 16, transition: "border-color 0.2s" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

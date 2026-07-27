@@ -33,11 +33,13 @@ export async function POST(req: NextRequest) {
   const dry = !!body.dry;
 
   // 1. Get all owners that have a restaurant (non-demo, non-exempt optional)
-  const owners = await prisma.restaurantOwner.findMany({
-    where: { email: { not: null } },
+  const allOwners = await prisma.restaurantOwner.findMany({
     select: { id: true, email: true, name: true },
     orderBy: { createdAt: "asc" },
   });
+  const owners = allOwners.filter((o): o is typeof o & { email: string } =>
+    o.email !== null && o.email.trim() !== ""
+  );
 
   // 2. Filter out already-sent
   const alreadySent = await prisma.emailLog.findMany({
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
       if (res.ok) {
         // Log to emailLog
         await prisma.emailLog.create({
-          data: { to: owner.email, subject: "pedidos_online_email", purpose: CAMPAIGN_PURPOSE },
+          data: { to: owner.email, subject: "pedidos_online_email", purpose: CAMPAIGN_PURPOSE, status: "sent" },
         });
         sent++;
       } else {
