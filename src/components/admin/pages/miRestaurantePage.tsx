@@ -434,15 +434,18 @@ export default function MiRestaurantePage() {
                 )}
 
                 {/* Botones */}
-                {!isExempt && (plan as string) !== "PREMIUM" && (
+                {!isExempt && (
                   <div style={{ display: "flex", gap: 8 }}>
                     {(inGrace || cycleEndsToday) ? (
                       <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
                         <RefreshCw size={14} /> Renovar plan
                       </button>
                     ) : (
-                      <button onClick={() => setShowPlansModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: accent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
-                        <Sparkles size={14} /> Mejorar plan
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: plan, source: "mi_restaurante_plan_box" } }))}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: `1.5px solid ${accent}55`, borderRadius: 999, background: "transparent", color: accent, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                      >
+                        <Sparkles size={14} /> Ver planes
                       </button>
                     )}
                   </div>
