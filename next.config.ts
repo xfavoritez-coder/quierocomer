@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/localesfeed/mapa', destination: '/localesfeed?tab=mapa', permanent: false },
+      // WhatsApp truncó la URL y la mostró como "...quina" — redirige al local correcto
+      { source: '/...quina', destination: 'https://quierocomer.com/pedir/el-menu-de-la-esquina', permanent: false },
+      { source: '/%E2%80%A6quina', destination: 'https://quierocomer.com/pedir/el-menu-de-la-esquina', permanent: false },
     ]
   },
   images: {

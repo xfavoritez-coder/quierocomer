@@ -33,9 +33,10 @@ function LiveIcon({ size = 18 }: { size?: number }) {
 }
 
 const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
+const LIVE_HIDDEN = ["horusvegan"];
 
 function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string } = {}) {
-  const showLive = opts.hasToteat && opts.plan === "PREMIUM";
+  const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const showOrdering = opts.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes(opts.slug ?? "");
   const SIDEBAR_NAV = [
     { icon: Home, labelKey: "nav_home", href: base },
