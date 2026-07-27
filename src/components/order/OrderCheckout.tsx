@@ -120,6 +120,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
         display: "flex", justifyContent: "center", alignItems: "flex-end",
       }}
     >
+      <style>{`.oc-input::placeholder { color: var(--carta-text2, #888); opacity: 1; }`}</style>
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -157,12 +158,12 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                     style={{
                       flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
                       border: `1.5px solid ${orderType === "PICKUP" ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
-                      background: orderType === "PICKUP" ? "rgba(244,166,35,0.08)" : "var(--carta-surface, #fafafa)",
+                      background: orderType === "PICKUP" ? "var(--carta-bg, #fff)" : "var(--carta-surface, #fafafa)",
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                     }}
                   >
-                    <Package size={18} color={orderType === "PICKUP" ? "#F4A623" : "var(--carta-text2, #999)"} />
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "PICKUP" ? "#F4A623" : "var(--carta-text2, #777)" }}>Retiro</span>
+                    <Package size={18} color={orderType === "PICKUP" ? ACCENT : "var(--carta-text2, #999)"} />
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "PICKUP" ? ACCENT : "var(--carta-text2, #777)" }}>Retiro</span>
                   </button>
                 )}
                 {showDelivery && (
@@ -171,12 +172,12 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                     style={{
                       flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
                       border: `1.5px solid ${orderType === "DELIVERY" ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
-                      background: orderType === "DELIVERY" ? "rgba(244,166,35,0.08)" : "var(--carta-surface, #fafafa)",
+                      background: orderType === "DELIVERY" ? "var(--carta-bg, #fff)" : "var(--carta-surface, #fafafa)",
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                     }}
                   >
-                    <Truck size={18} color={orderType === "DELIVERY" ? "#F4A623" : "var(--carta-text2, #999)"} />
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "DELIVERY" ? "#F4A623" : "var(--carta-text2, #777)" }}>Delivery</span>
+                    <Truck size={18} color={orderType === "DELIVERY" ? ACCENT : "var(--carta-text2, #999)"} />
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "DELIVERY" ? ACCENT : "var(--carta-text2, #777)" }}>Delivery</span>
                   </button>
                 )}
               </div>
@@ -213,6 +214,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <input
               value={name}
               onChange={e => setName(e.target.value)}
+              className="oc-input"
               style={inputStyle}
               placeholder="Tu nombre *"
               autoComplete="name"
@@ -222,6 +224,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <input
               value={clientPhone}
               onChange={e => setClientPhone(e.target.value)}
+              className="oc-input"
               style={inputStyle}
               placeholder="Tu teléfono *"
               type="tel"
@@ -248,7 +251,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                     style={{
                       flex: 1, padding: "11px 6px", borderRadius: 10, cursor: "pointer",
                       border: `1.5px solid ${active ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
-                      background: active ? "rgba(244,166,35,0.08)" : "var(--carta-surface, #fafafa)",
+                      background: active ? "var(--carta-bg, #fff)" : "var(--carta-surface, #fafafa)",
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                     }}
                   >
@@ -266,6 +269,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               <input
                 value={clientAddress}
                 onChange={e => setClientAddress(e.target.value)}
+                className="oc-input"
                 style={inputStyle}
                 placeholder="Dirección de delivery *"
                 autoComplete="street-address"
@@ -288,6 +292,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             <textarea
               value={orderNotes}
               onChange={e => setOrderNotes(e.target.value)}
+              className="oc-input"
               style={{ ...inputStyle, resize: "none", minHeight: 64 }}
               placeholder="Notas del pedido (opcional)"
             />
