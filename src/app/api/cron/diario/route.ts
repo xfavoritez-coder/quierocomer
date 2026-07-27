@@ -304,84 +304,11 @@ export async function GET(req: NextRequest) {
       return map;
     }
 
-    // 4.7 Correo + WhatsApp "vence hoy" — enviado el mismo día que expira el período
-    let expiryTodayEmailsSent = 0;
-    let expiryTodayWaSent = 0;
-    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(now); endOfToday.setHours(23, 59, 59, 999);
-    const expiringToday = await prisma.restaurant.findMany({
-      where: {
-        subscriptionStatus: "ACTIVE",
-        currentPeriodEnd: { gte: startOfToday, lte: endOfToday },
-        billingExempt: false,
-        mpSubscriptionId: null,
-        plan: { not: "FREE" },
-      },
-      select: {
-        id: true, name: true, plan: true,
-        owner: { select: { id: true, email: true, name: true, whatsapp: true } },
-      },
-    });
-    if (expiringToday.length > 0) {
-      const { sendAdminEmail, planExpiryTodayEmailHtml } = await import("@/lib/email/sendAdminEmail");
-      const { buildAutoLoginUrl } = await import("@/lib/email/autoLoginUrl");
-      const { PLAN_LABELS } = await import("@/lib/billing/plans-config");
-      const { sendWhatsApp, BILLING_EXPIRY_TODAY_WA_TEMPLATE } = await import("@/lib/whatsapp");
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-      const paymentMethods = await detectPaymentMethods(expiringToday.map(r => r.id));
-      const expiryDate = now.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
-
-      for (const r of expiringToday) {
-        if (!r.owner?.email) continue;
-        const alreadySentEmail = await prisma.emailLog.findFirst({
-          where: { to: r.owner.email, purpose: "expiry_today", createdAt: { gte: startOfToday } },
-        });
-
-        const paymentMethod = paymentMethods.get(r.id) ?? "online";
-        const planLabel = PLAN_LABELS[r.plan as "GOLD" | "SILVER" | "PREMIUM"] || r.plan;
-        const panelLink = buildAutoLoginUrl(baseUrl, r.owner.id) + `&redirect=/panel/mi-restaurante%3Frenew%3D1%26plan%3D${r.plan}`;
-
-        // Email
-        if (!alreadySentEmail) {
-          try {
-            await sendAdminEmail({
-              to: r.owner.email,
-              subject: `${r.name} · Tu plan ${planLabel} vence hoy, ${expiryDate}`,
-              html: planExpiryTodayEmailHtml({ restaurantName: r.name, planLabel, expiryDate, panelLink, paymentMethod }),
-              purpose: "expiry_today",
-            });
-            expiryTodayEmailsSent++;
-          } catch (e) { console.error("[diario] expiry_today email error:", e); }
-        }
-
-        // WhatsApp — solo si el dueño tiene número
-        if (r.owner.whatsapp) {
-          try {
-            const alreadySentWa = await prisma.panelActivity.findFirst({
-              where: { restaurantId: r.id, action: "wa_expiry_today", createdAt: { gte: startOfToday } },
-            });
-            if (!alreadySentWa) {
-              const ownerName = (r.owner.name || "").split(" ")[0] || "Hola";
-              const sid = await sendWhatsApp({
-                to: r.owner.whatsapp,
-                body: "",
-                contentSid: BILLING_EXPIRY_TODAY_WA_TEMPLATE,
-                contentVariables: { "1": ownerName, "2": r.name, "3": panelLink },
-              });
-              if (sid) {
-                await prisma.panelActivity.create({
-                  data: { restaurantId: r.id, action: "wa_expiry_today", details: { sid } as any },
-                });
-                expiryTodayWaSent++;
-                console.log(`[diario] WA expiry_today sent to ${r.owner.whatsapp} (${r.name})`);
-              }
-            }
-          } catch (waErr) { console.error("[diario] WA expiry_today error:", waErr); }
-        }
-      }
-    }
+    // 4.7 Correo + WA "vence hoy" movido a /api/cron/expiry-notify (corre a las 16:00 Chile)
 
     // 4.7c Cobro automático — locales con tarjeta registrada (flowCustomerId) que vencen HOY
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(now); endOfToday.setHours(23, 59, 59, 999);
     let autoChargesInitiated = 0;
     const toAutoCharge = await prisma.restaurant.findMany({
       where: {
@@ -586,8 +513,6 @@ export async function GET(req: NextRequest) {
           trialsExpired,
           canceledDowngraded,
           expiringIn2EmailsSent,
-          expiryTodayEmailsSent,
-          expiryTodayWaSent,
           autoChargesInitiated,
           activeExpiredDowngraded,
           translationsBackfilled,
@@ -611,8 +536,6 @@ export async function GET(req: NextRequest) {
       trialRemindersSent,
       trialsExpired,
       expiringIn2EmailsSent,
-      expiryTodayEmailsSent,
-      expiryTodayWaSent,
       autoChargesInitiated,
       activeExpiredDowngraded,
       translationsBackfilled,
