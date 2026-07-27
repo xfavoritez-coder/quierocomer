@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getRestaurantBySlug } from "@/lib/qr/queries/getRestaurant";
 import { prisma } from "@/lib/prisma";
+import { getCachedTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 import OrderMenuPage from "@/components/order/OrderMenuPage";
 import { OrderCartProvider } from "@/components/order/OrderCartContext";
 
@@ -78,6 +79,8 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     );
   }
 
+  const topDishes = await getCachedTopDishIds(config.id).catch(() => ({ dishIds: [] as string[] }));
+
   const orderingConfig = {
     phone: config.orderingPhone || config.whatsapp || config.phone || "",
     delivery: config.orderingDelivery as "PICKUP" | "DELIVERY" | "BOTH",
@@ -97,6 +100,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
       <OrderMenuPage
         restaurant={restaurant as any}
         orderingConfig={orderingConfig}
+        popularDishIds={topDishes.dishIds}
       />
     </OrderCartProvider>
   );

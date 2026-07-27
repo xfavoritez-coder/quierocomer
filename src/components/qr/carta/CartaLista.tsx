@@ -423,8 +423,8 @@ export default function CartaLista({
                     onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 50, behavior: "smooth" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
                     style={{
-                      whiteSpace: "nowrap", padding: "7px 14px", borderRadius: 999,
-                      fontSize: 14, fontWeight: isActive ? 700 : 500,
+                      whiteSpace: "nowrap", padding: "9px 18px", borderRadius: 999,
+                      fontSize: 15, fontWeight: isActive ? 700 : 500,
                       color: isActive ? "var(--carta-accent, #F4A623)" : "var(--carta-text3)",
                       background: isActive ? "color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent)" : "transparent",
                       border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" : "1px solid var(--carta-border)",
@@ -449,8 +449,8 @@ export default function CartaLista({
                     }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
                     style={{
-                      whiteSpace: "nowrap", padding: "7px 14px", borderRadius: 999,
-                      fontSize: 14, fontWeight: isActive ? 700 : 500,
+                      whiteSpace: "nowrap", padding: "9px 18px", borderRadius: 999,
+                      fontSize: 15, fontWeight: isActive ? 700 : 500,
                       color: isActive ? "var(--carta-accent, #F4A623)" : "var(--carta-text3)",
                       background: isActive ? "color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent)" : "transparent",
                       border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" : "1px solid var(--carta-border)",

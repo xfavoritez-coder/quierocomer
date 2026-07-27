@@ -19,6 +19,9 @@ interface Dish {
   price: number; discountPrice?: number | null; photos?: string[]; categoryId: string;
   isActive: boolean; deletedAt?: Date | null;
   modifierTemplates: any[];
+  tags?: string[];
+  dishDiet?: string | null;
+  isGlutenFree?: boolean;
 }
 interface Restaurant {
   name: string; slug: string; logoUrl?: string | null; bannerUrl?: string | null;
@@ -37,7 +40,7 @@ interface OrderingConfig {
   cartaColorMode?: string;
   cartaAccentColor?: string | null;
 }
-interface Props { restaurant: Restaurant; orderingConfig: OrderingConfig; }
+interface Props { restaurant: Restaurant; orderingConfig: OrderingConfig; popularDishIds?: string[]; }
 
 // ── Impact Hero (replica de ImpactHeroSlider) ─────────────────────────────────
 function ImpactHero({
@@ -347,13 +350,24 @@ function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
   );
 }
 
-export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
+type FilterKey = "popular" | "estrella" | "veggie" | "gluten-free";
+const FILTER_OPTS: { key: FilterKey; emoji: string; label: string }[] = [
+  { key: "popular", emoji: "🔥", label: "Popular" },
+  { key: "estrella", emoji: "⭐", label: "Recomendado" },
+  { key: "veggie", emoji: "🌿", label: "Vegano" },
+  { key: "gluten-free", emoji: "🌾", label: "Sin gluten" },
+];
+
+export default function OrderMenuPage({ restaurant, orderingConfig, popularDishIds }: Props) {
   const { items, count, addItem } = useCart();
   const [selectedDish, setSelectedDish] = useState<DishForOrder | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+  const popularSet = useMemo(() => new Set(popularDishIds || []), [popularDishIds]);
+  const toggleFilter = (k: FilterKey) => setActiveFilters(f => f.includes(k) ? f.filter(x => x !== k) : [...f, k]);
 
   const isImpact = (orderingConfig.cartaView || "lista") === "impact";
   const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
@@ -382,11 +396,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return activeDishes.filter(d => {
+    let result = activeDishes.filter(d => {
       if (q && !d.name.toLowerCase().includes(q) && !(d.description || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [activeDishes, search]);
+    if (activeFilters.includes("popular")) result = result.filter(d => popularSet.has(d.id));
+    if (activeFilters.includes("estrella")) result = result.filter(d => (d.tags || []).includes("RECOMMENDED"));
+    if (activeFilters.includes("veggie")) result = result.filter(d => d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN");
+    if (activeFilters.includes("gluten-free")) result = result.filter(d => d.isGlutenFree === true);
+    return result;
+  }, [activeDishes, search, activeFilters, popularSet]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Dish[]>();
@@ -502,7 +521,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
     whiteSpace: "nowrap", flexShrink: 0,
     border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)" : `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`,
     background: isActive ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)" : (isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.04)"),
-    borderRadius: 999, color: isActive ? accent : (isDark ? "#777" : "#999"),
+    borderRadius: 999, color: isActive ? "#fff" : (isDark ? "#777" : "#999"),
     fontWeight: 800, cursor: "pointer",
   });
 
@@ -539,7 +558,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
               <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
                 {grouped.map(({ category: cat }) => {
                   const isActive = cat.id === activeCategory;
-                  return <button key={cat.id} ref={isActive ? fixedActiveChipRef : null} onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }} style={{ ...chipStyle(isActive), padding: "7px 12px", fontSize: 13 }}>{cat.name}</button>;
+                  return <button key={cat.id} ref={isActive ? fixedActiveChipRef : null} onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }} style={{ ...chipStyle(isActive), padding: "9px 14px", fontSize: 14 }}>{cat.name}</button>;
                 })}
               </div>
             </div>
@@ -551,6 +570,26 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
         {/* Hero con fotos de platos */}
         <div style={{ position: "relative", zIndex: 1, paddingTop: 14, paddingBottom: 14 }}>
           <ImpactHero heroDishes={heroDishes} restaurantName={restaurant.name} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
+        </div>
+
+        {/* Filter bar */}
+        <div style={{ position: "relative", zIndex: 1, padding: "18px 14px 0", overflowX: "auto", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            {FILTER_OPTS.map(f => {
+              const isActive = activeFilters.includes(f.key);
+              const activeColor = f.key === "popular" ? "#ef4444" : f.key === "veggie" ? "#16a34a" : f.key === "gluten-free" ? "#ca8a04" : accent;
+              return (
+                <button key={f.key} onClick={() => toggleFilter(f.key)} style={{
+                  flexShrink: 0, display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 999, fontSize: 14, fontWeight: isActive ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
+                  background: isActive ? (f.key === "popular" ? "color-mix(in srgb, #ef4444 14%, rgba(255,255,255,0.08))" : f.key === "veggie" ? "color-mix(in srgb, #16a34a 14%, rgba(255,255,255,0.08))" : f.key === "gluten-free" ? "color-mix(in srgb, #ca8a04 14%, rgba(255,255,255,0.08))" : `color-mix(in srgb, ${accent} 15%, rgba(255,255,255,0.08))`) : "rgba(255,255,255,0.08)",
+                  border: isActive ? (f.key === "popular" ? "1px solid rgba(239,68,68,0.45)" : f.key === "veggie" ? "1px solid rgba(22,163,74,0.45)" : f.key === "gluten-free" ? "1px solid rgba(202,138,4,0.45)" : `1px solid color-mix(in srgb, ${accent} 50%, transparent)`) : "1px solid rgba(255,255,255,0.18)",
+                  color: isActive ? activeColor : "rgba(255,255,255,0.65)",
+                }}>
+                  <span>{f.emoji}</span>{f.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Título MENÚ + search */}
@@ -574,7 +613,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
           <div ref={chipsRef} style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", padding: "4px 0" }}>
             {grouped.map(({ category: cat }) => {
               const isActive = cat.id === activeCategory;
-              return <button key={cat.id} ref={isActive ? activeChipRef : null} onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }} style={{ ...chipStyle(isActive), padding: "10px 16px", fontSize: 15, transition: "all 0.2s ease" }}>{cat.name}</button>;
+              return <button key={cat.id} ref={isActive ? activeChipRef : null} onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }} style={{ ...chipStyle(isActive), padding: "11px 20px", fontSize: 15, transition: "all 0.2s ease" }}>{cat.name}</button>;
             })}
           </div>
           <div style={{ position: "absolute", top: 0, right: 14, bottom: 0, width: 24, background: "linear-gradient(to right, transparent, var(--carta-bg))", pointerEvents: "none" }} />
@@ -586,7 +625,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
             <div style={{ padding: "64px 28px", textAlign: "center" }}>
               <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
               <p style={{ color: isDark ? "#aaa" : "#999", fontSize: "0.95rem" }}>No encontramos platos con &ldquo;{search}&rdquo;</p>
-              <button onClick={() => setSearch("")} style={{ marginTop: 12, fontSize: "0.88rem", color: accent, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}>Limpiar búsqueda</button>
+              <button onClick={() => { setSearch(""); setActiveFilters([]); }} style={{ marginTop: 12, fontSize: "0.88rem", color: accent, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}>Limpiar filtros</button>
             </div>
           ) : (
             grouped.map(({ category, dishes }) => (
@@ -644,7 +683,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
                 return (
                   <button key={cat.id} ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }}
-                    style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "7px 14px", borderRadius: 999, fontSize: 14, fontWeight: isActive ? 700 : 500, color: isActive ? accent : "var(--carta-text3)", background: isActive ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent", border: isActive ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", cursor: "pointer", transition: "all 0.15s ease" }}
+                    style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "9px 18px", borderRadius: 999, fontSize: 15, fontWeight: isActive ? 700 : 500, color: isActive ? accent : "var(--carta-text3)", background: isActive ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent", border: isActive ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", cursor: "pointer", transition: "all 0.15s ease" }}
                   >{cat.name}</button>
                 );
               })}
@@ -662,11 +701,29 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
         )}
       </div>
 
+      {/* Filter bar */}
+      <div style={{ padding: "10px 12px 4px", overflowX: "auto", scrollbarWidth: "none", display: "flex", gap: 7, borderBottom: "1px solid var(--carta-border)" }}>
+        {FILTER_OPTS.map(f => {
+          const isActive = activeFilters.includes(f.key);
+          const activeColor = f.key === "popular" ? "#ef4444" : f.key === "veggie" ? "#16a34a" : f.key === "gluten-free" ? "#ca8a04" : accent;
+          return (
+            <button key={f.key} onClick={() => toggleFilter(f.key)} style={{
+              flexShrink: 0, display: "flex", alignItems: "center", gap: 5, padding: "7px 11px", borderRadius: 999, fontSize: 14, fontWeight: isActive ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
+              background: isActive ? (f.key === "popular" ? "color-mix(in srgb, #ef4444 14%, var(--carta-bg))" : f.key === "veggie" ? "color-mix(in srgb, #16a34a 14%, var(--carta-bg))" : f.key === "gluten-free" ? "color-mix(in srgb, #ca8a04 14%, var(--carta-bg))" : `color-mix(in srgb, ${accent} 15%, var(--carta-bg))`) : `color-mix(in srgb, var(--carta-text) 6%, var(--carta-bg))`,
+              border: isActive ? (f.key === "popular" ? "1px solid rgba(239,68,68,0.45)" : f.key === "veggie" ? "1px solid rgba(22,163,74,0.45)" : f.key === "gluten-free" ? "1px solid rgba(202,138,4,0.45)" : `1px solid color-mix(in srgb, ${accent} 50%, transparent)`) : `1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)`,
+              color: isActive ? activeColor : "var(--carta-text2)",
+            }}>
+              <span>{f.emoji}</span>{f.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Categories */}
       {grouped.length === 0 ? (
         <div style={{ padding: "64px 28px", textAlign: "center" }}>
           <p style={{ color: "var(--carta-text2)", fontSize: "0.9rem" }}>No encontramos platos que coincidan.</p>
-          <button onClick={() => setSearch("")} style={{ marginTop: 12, fontSize: "0.88rem", color: accent, fontWeight: 600, background: `color-mix(in srgb, ${accent} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${accent} 30%, transparent)`, padding: "8px 18px", borderRadius: 999, cursor: "pointer" }}>Ver todos los platos</button>
+          <button onClick={() => { setSearch(""); setActiveFilters([]); }} style={{ marginTop: 12, fontSize: "0.88rem", color: accent, fontWeight: 600, background: `color-mix(in srgb, ${accent} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${accent} 30%, transparent)`, padding: "8px 18px", borderRadius: 999, cursor: "pointer" }}>Ver todos los platos</button>
         </div>
       ) : (
         grouped.map(({ category, dishes }, index) => (

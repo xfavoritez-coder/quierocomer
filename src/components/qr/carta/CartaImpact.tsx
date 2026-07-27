@@ -1304,9 +1304,9 @@ export default function CartaImpact({
                       background: isActive
                         ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
                         : "var(--impact-chip-inactive-bg)",
-                      borderRadius: 999, padding: "7px 12px",
+                      borderRadius: 999, padding: "9px 14px",
                       color: isActive ? "var(--impact-chip-active-text, var(--carta-accent))" : "var(--impact-chip-inactive-text)",
-                      fontSize: 13, fontWeight: 800, cursor: "pointer",
+                      fontSize: 14, fontWeight: 800, cursor: "pointer",
                     }}
                   >{cat.name}</button>
                 );
@@ -1553,7 +1553,7 @@ export default function CartaImpact({
                         background: isActive
                           ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
                           : "var(--impact-chip-inactive-bg)",
-                        borderRadius: 999, padding: "10px 16px",
+                        borderRadius: 999, padding: "11px 20px",
                         color: isActive ? "var(--impact-chip-active-text, var(--carta-accent))" : "var(--impact-chip-inactive-text)",
                         fontSize: 15, fontWeight: 800, cursor: "pointer",
                         transition: "all 0.2s ease",
