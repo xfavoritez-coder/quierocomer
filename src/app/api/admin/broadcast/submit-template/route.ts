@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const templateName = "nueva_funcion_pedidos_online";
   const templateBody =
-    "Hola {{1}} 👋 Tenemos una novedad en QuieroComer.\n\nAhora tus clientes pueden ver tu carta y hacerte pedidos en línea, directo a tu WhatsApp. Sin comisiones ni apps de terceros.\n\n👉 Ve el demo: quierocomer.cl/pedir/el-menu-de-la-esquina\n🔧 Actívalo en tu panel: quierocomer.cl/panel";
+    "Hola {{1}}, desde ahora puedes recibir pedidos online con tu nueva página de pedidos. Tus clientes podrán pedir para retiro o delivery y el pedido te llegará a tu Whatsapp. Sin comisiones ni app de terceros.\n\n👉 Ve el demo: quierocomer.cl/pedir/el-menu-de-la-esquina\n🔧 Actívalo en tu panel: quierocomer.cl/panel";
 
   // Create content template
   const createRes = await fetch("https://content.twilio.com/v1/Content", {

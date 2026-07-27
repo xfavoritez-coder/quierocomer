@@ -40,7 +40,7 @@ const CAMPAIGNS: Record<string, {
     sid: TEMPLATE_SID_PEDIDOS_ONLINE,
     vars: (name) => ({ "1": name }),
     text: (name) =>
-      `Hola ${name} 👋 Tenemos una novedad en QuieroComer.\n\nAhora tus clientes pueden ver tu carta y hacerte pedidos en línea, directo a tu WhatsApp. Sin comisiones ni apps de terceros.\n\n👉 Ve el demo: quierocomer.cl/pedir/el-menu-de-la-esquina\n🔧 Actívalo en tu panel: quierocomer.cl/panel`,
+      `Hola ${name}, desde ahora puedes recibir pedidos online con tu nueva página de pedidos. Tus clientes podrán pedir para retiro o delivery y el pedido te llegará a tu Whatsapp. Sin comisiones ni app de terceros.\n\n👉 Ve el demo: quierocomer.cl/pedir/el-menu-de-la-esquina\n🔧 Actívalo en tu panel: quierocomer.cl/panel`,
     category: "MARKETING",
   },
 };
