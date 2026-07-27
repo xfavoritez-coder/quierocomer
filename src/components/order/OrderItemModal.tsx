@@ -138,7 +138,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
 
   return (
     <>
-      <style>{`@keyframes modalSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }`}</style>
+      <style>{`@keyframes modalSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } } #order-notes::placeholder { color: var(--carta-text2, #888); opacity: 1; }`}</style>
 
       {/* Full-screen modal — same structure as DishDetail */}
       <div
@@ -297,6 +297,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
               Notas del plato (opcional)
             </p>
             <textarea
+              id="order-notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Ej: Sin cebolla, bien cocido..."
