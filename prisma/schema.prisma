@@ -358,6 +358,7 @@ model Restaurant {
   teamMembers                TeamMember[]
   toteatSales                ToteatSale[]
   waiterCalls                WaiterCall[]
+  onlineOrders               OnlineOrder[]
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
   invoices                   Invoice[]
@@ -375,6 +376,29 @@ model Restaurant {
 
   @@index([ownerId])
   @@index([communeSlug])
+}
+
+model OnlineOrder {
+  id              String     @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  customerName    String
+  customerPhone   String
+  orderType       String     // "PICKUP" | "DELIVERY"
+  deliveryAddress String?
+  paymentMethod   String     // "efectivo" | "transferencia" | "tarjeta"
+  items           Json       // CartItem[]
+  total           Int
+  notes           String?
+
+  status          String     @default("PENDING") // "PENDING" | "CONFIRMED" | "READY" | "DONE" | "CANCELLED"
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([restaurantId])
+  @@index([restaurantId, createdAt])
 }
 
 model Invoice {

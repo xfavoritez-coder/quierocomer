@@ -81,6 +81,24 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
 
   const topDishes = await getCachedTopDishIds(config.id).catch(() => ({ dishIds: [] as string[] }));
 
+  // Filtrar categorías por horario (igual que carta QR)
+  const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+  const currentDay = chileNow.getDay();
+  const currentTime = `${String(chileNow.getHours()).padStart(2, "0")}:${String(chileNow.getMinutes()).padStart(2, "0")}`;
+  const filteredCats = (restaurant as any).categories.filter((cat: any) => {
+    if (!cat.scheduleDays || cat.scheduleDays.length === 0) return true;
+    if (!cat.scheduleDays.includes(currentDay)) return false;
+    if (cat.scheduleStart && currentTime < cat.scheduleStart) return false;
+    if (cat.scheduleEnd && currentTime > cat.scheduleEnd) return false;
+    return true;
+  });
+  const visibleCatIds = new Set(filteredCats.map((c: any) => c.id));
+  const scheduledRestaurant = {
+    ...(restaurant as any),
+    categories: filteredCats,
+    dishes: (restaurant as any).dishes.filter((d: any) => visibleCatIds.has(d.categoryId)),
+  };
+
   const orderingConfig = {
     phone: config.orderingPhone || config.whatsapp || config.phone || "",
     delivery: config.orderingDelivery as "PICKUP" | "DELIVERY" | "BOTH",
@@ -98,7 +116,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   return (
     <OrderCartProvider>
       <OrderMenuPage
-        restaurant={restaurant as any}
+        restaurant={scheduledRestaurant as any}
         orderingConfig={orderingConfig}
         popularDishIds={topDishes.dishIds}
       />

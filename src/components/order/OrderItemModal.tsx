@@ -203,7 +203,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
             </h2>
             {discountPct > 0 ? (
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ background: "var(--carta-accent, #F4A623)", color: "#fff", fontSize: "0.78rem", fontWeight: 800, padding: "5px 12px", borderRadius: 8 }}>
+                <span style={{ background: "var(--carta-accent, #F4A623)", color: "var(--carta-accent-fg, #fff)", fontSize: "0.78rem", fontWeight: 800, padding: "5px 12px", borderRadius: 8 }}>
                   -{discountPct}% OFERTA
                 </span>
                 <span style={{ color: "var(--carta-text3, #999)", fontSize: 14, textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>
@@ -235,7 +235,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                     {group.name}
                   </p>
                   {group.required ? (
-                    <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "#fff", background: "var(--carta-accent, #F4A623)", borderRadius: 99, padding: "2px 8px", fontWeight: 600 }}>
+                    <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--carta-accent-fg, #fff)", background: "var(--carta-accent, #F4A623)", borderRadius: 99, padding: "2px 8px", fontWeight: 600 }}>
                       Obligatorio
                     </span>
                   ) : (
@@ -337,7 +337,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                 onClick={() => setQuantity(q => q + 1)}
                 style={{ width: 32, height: 32, borderRadius: 9, border: "none", cursor: "pointer", background: "var(--carta-accent, #F4A623)", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                <Plus size={15} color="#fff" />
+                <Plus size={15} color="var(--carta-accent-fg, #fff)" />
               </button>
             </div>
             {/* Add button */}

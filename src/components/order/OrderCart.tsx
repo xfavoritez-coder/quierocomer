@@ -91,7 +91,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
                         onClick={() => updateQuantity(item.key, item.quantity + 1)}
                         style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: "pointer", background: "var(--carta-accent, #F4A623)", display: "flex", alignItems: "center", justifyContent: "center" }}
                       >
-                        <Plus size={12} color="#fff" />
+                        <Plus size={12} color="var(--carta-accent-fg, #fff)" />
                       </button>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -121,7 +121,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
             </div>
             <button
               onClick={onCheckout}
-              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "none", background: "var(--carta-accent, #F4A623)", color: "#fff", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}
+              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "none", background: "var(--carta-accent, #F4A623)", color: "var(--carta-accent-fg, #fff)", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}
             >
               Ir al checkout →
             </button>

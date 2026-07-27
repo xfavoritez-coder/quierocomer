@@ -96,8 +96,25 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     return lines.join("\n");
   };
 
-  const sendOrder = () => {
+  const sendOrder = async () => {
     if (!isValid) return;
+    // Save order to DB (fire-and-forget — don't block WhatsApp on API failure)
+    fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        restaurantSlug,
+        customerName: name.trim(),
+        customerPhone: clientPhone.trim(),
+        orderType,
+        deliveryAddress: orderType === "DELIVERY" ? clientAddress.trim() : null,
+        paymentMethod,
+        items,
+        total,
+        notes: orderNotes.trim() || null,
+      }),
+    }).catch(() => {});
+
     const msg = buildWhatsAppMessage();
     const waPhone = phone.replace(/\D/g, "");
     if (!waPhone) {

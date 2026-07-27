@@ -9,6 +9,16 @@ import type { SelectedOption } from "./OrderCartContext";
 
 const FB = "var(--font-body, system-ui)";
 
+/** Returns #111 for light accent colors, #fff for dark ones */
+function accentContrast(hex: string): string {
+  const h = hex.replace("#", "");
+  if (h.length !== 6) return "#fff";
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#111" : "#fff";
+}
+
 function formatCLP(n: number) {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
@@ -132,7 +142,7 @@ function ImpactHero({
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {discountPct > 0 && (
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", background: accent, padding: "4px 11px", borderRadius: 50 }}>-{discountPct}%</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: accentFg, background: accent, padding: "4px 11px", borderRadius: 50 }}>-{discountPct}%</span>
             )}
             <span style={{ fontSize: 22, fontWeight: 800, color: accent, letterSpacing: "-0.8px" }}>{formatCLP(effectivePrice)}</span>
             {discountPct > 0 && (
@@ -147,7 +157,7 @@ function ImpactHero({
             }}
             style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: accent, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 3px 14px rgba(0,0,0,0.5)", flexShrink: 0 }}
           >
-            <Plus size={20} color="#fff" />
+            <Plus size={20} color={accentFg} />
           </button>
         </div>
         {heroDishes.length > 1 && (
@@ -248,7 +258,7 @@ function ListaHero({
             }}
             style={{ position: "absolute", bottom: 14, right: 14, zIndex: 11, width: 40, height: 40, borderRadius: "50%", border: "none", background: accent, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 3px 12px rgba(0,0,0,0.45)" }}
           >
-            <Plus size={18} color="#fff" />
+            <Plus size={18} color={accentFg} />
           </button>
         )}
 
@@ -304,7 +314,7 @@ function ImpactCard({
         </div>
       </div>
       <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "var(--carta-accent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.35)", pointerEvents: hasModifiers ? "none" : "auto" }}>
-        <Plus size={16} color="#fff" />
+        <Plus size={16} color={accentFg} />
       </div>
     </button>
   );
@@ -372,17 +382,18 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const isImpact = (orderingConfig.cartaView || "lista") === "impact";
   const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
   const accent = orderingConfig.cartaAccentColor || (isDark ? "#fe0001" : "#F59E0B");
+  const accentFg = accentContrast(accent);
 
   const themeVars: React.CSSProperties = isDark ? {
     "--carta-bg": "#0e0e0e", "--carta-surface": "#1a1a1a",
     "--carta-text": "#f0f0f0", "--carta-text2": "#aaa", "--carta-text3": "#555",
-    "--carta-border": "#262626", "--carta-accent": accent,
+    "--carta-border": "#262626", "--carta-accent": accent, "--carta-accent-fg": accentFg,
     "--carta-card-bg": "#1a1a1a", "--carta-card-shadow": "0 1px 8px rgba(0,0,0,0.4)",
     "--carta-photo-bg": "#222",
   } as React.CSSProperties : {
     "--carta-bg": "#FAFAF8", "--carta-surface": "#fff",
     "--carta-text": "#111", "--carta-text2": "#666", "--carta-text3": "#999",
-    "--carta-border": "#ece9e3", "--carta-accent": accent,
+    "--carta-border": "#ece9e3", "--carta-accent": accent, "--carta-accent-fg": accentFg,
     "--carta-card-bg": "#fff", "--carta-card-shadow": "0 1px 8px rgba(0,0,0,0.07)",
     "--carta-photo-bg": "#f0ece6",
   } as React.CSSProperties;
@@ -642,7 +653,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         {/* Cart bar */}
         {count > 0 && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: isDark ? "rgba(3,3,3,0.8)" : "rgba(250,250,248,0.9)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
-            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: "none", background: accent, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 20px color-mix(in srgb, ${accent} 40%, transparent)`, fontFamily: FB }}>
+            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: "none", background: accent, color: accentFg, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 20px color-mix(in srgb, ${accent} 40%, transparent)`, fontFamily: FB }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.2)", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
                 <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
@@ -742,7 +753,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {/* Cart bar */}
       {count > 0 && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: "var(--carta-bg)", borderTop: "1px solid var(--carta-border)" }}>
-          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: "none", background: accent, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", fontFamily: FB }}>
+          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: "none", background: accent, color: accentFg, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", fontFamily: FB }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.2)", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
               <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
