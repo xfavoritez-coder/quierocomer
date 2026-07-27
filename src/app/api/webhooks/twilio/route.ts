@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
 import { generateWhatsAppReplyWithInsight, compareCartaWithDishes } from "@/lib/ai/whatsappAgent";
 
 export const maxDuration = 25;
@@ -196,19 +195,23 @@ export async function POST(req: NextRequest) {
       },
     }).catch((e: any) => console.error("[WA Webhook] Save outbound failed:", e));
 
-    // Escalation: notify team when AI detects frustrated customer
-    if (shouldEscalate && resend) {
-      resend.emails.send({
-        from: "QuieroComer <hola@quierocomer.com>",
-        to: "hola@quierocomer.com",
-        subject: `⚠️ Escalar: ${context.restaurantName || phone} necesita atención humana`,
-        html: `<p><strong>Cliente frustrado detectado por Camila IA</strong></p>
-<p>Teléfono: ${phone}</p>
-<p>Restaurante: ${context.restaurantName || "Desconocido"}</p>
-<p>Último mensaje: ${body.trim()}</p>
-<p>Última respuesta de Camila: ${reply}</p>
-<p><a href="https://quierocomer.com/admin/whatsapp">Ver conversación</a></p>`,
-      }).catch(() => {});
+    // Escalation: notify owner via WhatsApp when AI detects frustrated customer
+    if (shouldEscalate) {
+      const SID = process.env.TWILIO_ACCOUNT_SID;
+      const TOKEN = process.env.TWILIO_AUTH_TOKEN;
+      const FROM_WA = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+      const OWNER_PHONE = "whatsapp:+56999946208";
+      if (SID && TOKEN) {
+        const alertMsg = `⚠️ Cliente necesita ayuda humana\n\nRestaurante: ${context.restaurantName || "Desconocido"}\nTeléfono: ${phone}\nÚltimo mensaje: ${body.trim().slice(0, 200)}\n\nhttps://quierocomer.cl/admin/whatsapp`;
+        fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+          method: "POST",
+          headers: {
+            "Authorization": "Basic " + Buffer.from(`${SID}:${TOKEN}`).toString("base64"),
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({ From: FROM_WA, To: OWNER_PHONE, Body: alertMsg }),
+        }).catch(() => {});
+      }
     }
 
     return TWIML_OK;
