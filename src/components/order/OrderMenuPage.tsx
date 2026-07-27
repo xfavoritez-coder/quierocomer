@@ -45,11 +45,13 @@ function ImpactHero({
   restaurantName,
   accent,
   onDishSelect,
+  onDirectAdd,
 }: {
   heroDishes: Dish[];
   restaurantName: string;
   accent: string;
   onDishSelect: (d: Dish) => void;
+  onDirectAdd: (d: Dish) => void;
 }) {
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -124,14 +126,26 @@ function ImpactHero({
             {d.description}
           </p>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {discountPct > 0 && (
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", background: accent, padding: "4px 11px", borderRadius: 50 }}>-{discountPct}%</span>
-          )}
-          <span style={{ fontSize: 22, fontWeight: 800, color: accent, letterSpacing: "-0.8px" }}>{formatCLP(effectivePrice)}</span>
-          {discountPct > 0 && (
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>{formatCLP(d.price)}</span>
-          )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {discountPct > 0 && (
+              <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", background: accent, padding: "4px 11px", borderRadius: 50 }}>-{discountPct}%</span>
+            )}
+            <span style={{ fontSize: 22, fontWeight: 800, color: accent, letterSpacing: "-0.8px" }}>{formatCLP(effectivePrice)}</span>
+            {discountPct > 0 && (
+              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>{formatCLP(d.price)}</span>
+            )}
+          </div>
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              const hasModifiers = d.modifierTemplates?.some((t: any) => t.groups?.length > 0);
+              if (hasModifiers) onDishSelect(d); else onDirectAdd(d);
+            }}
+            style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: accent, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 3px 14px rgba(0,0,0,0.5)", flexShrink: 0 }}
+          >
+            <Plus size={20} color="#fff" />
+          </button>
         </div>
         {heroDishes.length > 1 && (
           <div style={{ display: "flex", gap: 7, marginTop: 17 }}>
@@ -152,11 +166,13 @@ function ListaHero({
   restaurant,
   accent,
   onDishSelect,
+  onDirectAdd,
 }: {
   heroDishes: Dish[];
   restaurant: Restaurant;
   accent: string;
   onDishSelect: (d: Dish) => void;
+  onDirectAdd: (d: Dish) => void;
 }) {
   const [current, setCurrent] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -219,6 +235,20 @@ function ListaHero({
           </div>
         )}
 
+        {/* Add button */}
+        {dish && (
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              const hasModifiers = dish.modifierTemplates?.some((t: any) => t.groups?.length > 0);
+              if (hasModifiers) onDishSelect(dish); else onDirectAdd(dish);
+            }}
+            style={{ position: "absolute", bottom: 14, right: 14, zIndex: 11, width: 40, height: 40, borderRadius: "50%", border: "none", background: accent, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 3px 12px rgba(0,0,0,0.45)" }}
+          >
+            <Plus size={18} color="#fff" />
+          </button>
+        )}
+
         {/* Dots */}
         {heroDishes.length > 1 && (
           <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, zIndex: 10, display: "flex", justifyContent: "center", gap: 5 }}>
@@ -262,7 +292,7 @@ function ImpactCard({
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
         <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h4>
         {dish.description && (
-          <p style={{ margin: "0 0 8px", color: "var(--carta-text-muted, #888)", fontSize: 14, lineHeight: 1.42, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
+          <p style={{ margin: "0 0 8px", color: "var(--carta-text2)", fontSize: 13, lineHeight: 1.42, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {discountPct > 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>-{discountPct}%</span>}
@@ -306,7 +336,7 @@ function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px" }}>
         <h3 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.1rem", fontWeight: 600, color: "var(--carta-text)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h3>
         {dish.description && (
-          <p style={{ fontSize: "1rem", color: "var(--carta-text2)", lineHeight: 1.4, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{dish.description}</p>
+          <p style={{ fontSize: "0.82rem", color: "var(--carta-text2)", lineHeight: 1.45, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: "0.94rem", fontWeight: 700, color: "var(--carta-accent)" }}>{formatCLP(effectivePrice)}</span>
@@ -520,7 +550,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
 
         {/* Hero con fotos de platos */}
         <div style={{ position: "relative", zIndex: 1, paddingTop: 14, paddingBottom: 14 }}>
-          <ImpactHero heroDishes={heroDishes} restaurantName={restaurant.name} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} />
+          <ImpactHero heroDishes={heroDishes} restaurantName={restaurant.name} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
         </div>
 
         {/* Título MENÚ + search */}
@@ -596,7 +626,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig }: Props) {
       <style>{`@keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
 
       {/* Hero con fotos de platos */}
-      <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} />
+      <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
 
       {/* Sticky nav */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
