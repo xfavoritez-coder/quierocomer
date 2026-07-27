@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { TRIAL_DAYS } from "@/lib/billing/plans-central";
 
 /**
- * Activates a 7-day Premium trial directly — no MercadoPago, no card.
- * Only for restaurants that haven't had a trial before.
+ * Activates a 7-day Premium trial directly — no payment required.
+ * Available to all FREE plan restaurants, even if they've trialed before.
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -25,12 +25,13 @@ export async function POST(req: NextRequest) {
   const restaurant = owner.restaurants[0];
   if (!restaurant) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
-  // Prevent double trial
-  if (restaurant.trialEndsAt || restaurant.subscriptionStatus === "TRIALING" || restaurant.trialReminderSentAt) {
-    return NextResponse.json({ error: "Ya usaste tu periodo de prueba" }, { status: 409 });
-  }
+  // Block if already on an active paid plan
   if (restaurant.plan === "PREMIUM" && restaurant.subscriptionStatus === "ACTIVE") {
     return NextResponse.json({ error: "Ya tienes Premium activo" }, { status: 409 });
+  }
+  // Block if currently in a trial
+  if (restaurant.subscriptionStatus === "TRIALING") {
+    return NextResponse.json({ error: "Ya tienes un periodo de prueba activo" }, { status: 409 });
   }
 
   const trialEndsAt = new Date();

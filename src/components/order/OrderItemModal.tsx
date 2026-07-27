@@ -296,6 +296,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
             <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--carta-text2, #777)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".05em" }}>
               Notas del plato (opcional)
             </p>
+            <style>{`#order-notes::placeholder { color: var(--carta-text, #111); opacity: 0.38; }`}</style>
             <textarea
               id="order-notes"
               value={notes}

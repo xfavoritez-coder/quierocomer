@@ -122,6 +122,7 @@ type BillingStatus = {
   billingExempt?: boolean;
   trialUsed?: boolean;
   lastPaymentAt?: string | null;
+  sessions30d?: number;
 };
 
 export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTrialEnds, subscriptionStatus: propStatus }: { restaurantId: string | null; plan?: string; trialEndsAt?: string | null; subscriptionStatus?: string }) {
@@ -243,16 +244,45 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
 
   const isExpired = isExpiredActive || wasDowngraded;
 
+  // FREE sin plan pago previo → invitar al trial Premium
+  if (isFreePlan) {
+    const handleTrial = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
+      detail: { initialTab: "PREMIUM", source: "expiry_banner_trial" },
+    }));
+    return (
+      <div className="qc-expiry-sticky">
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "10px 16px",
+          background: "linear-gradient(90deg, #6d28d9, #7c3aed)",
+          fontFamily: "var(--font-body)",
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>Prueba Premium 7 días gratis</p>
+            <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.8)" }}>Pedidos online, estadísticas avanzadas y más. Sin tarjeta.</p>
+          </div>
+          <button
+            onClick={handleTrial}
+            style={{
+              padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
+              background: "transparent", color: "#fff",
+              fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
+              cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            Empezar gratis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   let title: string;
   let sub: string;
   let bannerColor: string;
   let btnLabel: string;
-  if (isFreePlan) {
-    title = t("menu_inactive");
-    sub = t("menu_inactive_sub");
-    bannerColor = "#dc2626";
-    btnLabel = t("see_plans");
-  } else if (isExpired) {
+  if (isExpired) {
     title = t("menu_offline");
     sub = t("menu_offline_sub");
     bannerColor = "#dc2626";
@@ -409,8 +439,8 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
     setSubmitting(true);
     fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, action: "plan_subscribe_clicked", details: { plan: tab, currentPlan: plan } }) }).catch(() => {});
     try {
-      // Premium: activate 14-day trial directly (no MercadoPago) — only if trial not used
-      if (tab === "PREMIUM" && !trialUsed) {
+      // Premium: activate 7-day trial directly — available to all FREE plan users
+      if (tab === "PREMIUM" && plan !== "PREMIUM") {
         const res = await fetch("/api/billing/start-trial", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -578,8 +608,8 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                   <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{net === 0 ? "$0" : fmt(net)}</span>
                   <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>{net === 0 ? "para siempre" : "+ IVA /mes"}</span>
                   {net > 0 && <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>}
-                  {tab === "PREMIUM" && !inTrial && !trialUsed && plan !== "PREMIUM" && (
-                    <div style={{ marginTop: 10, padding: "8px 14px", background: "#dc2626", borderRadius: 8 }}>
+                  {tab === "PREMIUM" && !inTrial && plan !== "PREMIUM" && (
+                    <div style={{ marginTop: 10, padding: "8px 14px", background: "#7c3aed", borderRadius: 8 }}>
                       <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>7 días gratis para probar</span>
                     </div>
                   )}
@@ -642,7 +672,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
               }}
             >
-              {tab === "PREMIUM" && !inTrial && !trialUsed ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {tab === "PREMIUM" && !inTrial ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
             </button>
           ) : isEarlyRenewal ? (
             <div style={{ marginBottom: 8 }}>
@@ -694,7 +724,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
           const iva = ivaOf(net);
           const gross = grossOf(net);
           const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
-          const isPremiumTrial = confirmTab === "PREMIUM" && !trialUsed;
+          const isPremiumTrial = confirmTab === "PREMIUM" && !inTrial && plan !== "PREMIUM";
           const planLabel = confirmTab.charAt(0) + confirmTab.slice(1).toLowerCase();
           return (
             <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "var(--adm-bg, #fff)", borderRadius: 24, display: "flex", flexDirection: "column", justifyContent: "center", padding: "28px 24px" }}>
