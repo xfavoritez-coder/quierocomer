@@ -102,8 +102,8 @@ const translations = {
     new_period_starts: "Tu nuevo período comenzará el",
     pay_today: "Pagas hoy y no pierdes días",
     // Expiry banners
-    menu_inactive: "Tu carta QR no está activa",
-    menu_inactive_sub: "Activa un plan para que tus clientes puedan ver tu carta digital.",
+    menu_inactive: "Activa un plan para que tus clientes puedan ver tus cartas",
+    menu_inactive_sub: "Sin plan activo tus cartas QR y de pedidos online no son visibles.",
     see_plans: "Ver planes",
     menu_offline: "Tu carta QR está fuera de línea",
     menu_offline_sub: "Renueva tu plan para que tus clientes vuelvan a verla.",

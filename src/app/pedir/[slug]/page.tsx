@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCachedTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 import OrderMenuPage from "@/components/order/OrderMenuPage";
 import { OrderCartProvider } from "@/components/order/OrderCartContext";
+import MenuPausedPage from "@/components/qr/MenuPausedPage";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,8 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         orderingBannerUrl: true,
         whatsapp: true, address: true, phone: true,
         defaultView: true, cartaColorMode: true, cartaAccentColor: true,
+        billingExempt: true, isDemo: true,
+        subscriptionStatus: true, currentPeriodEnd: true, trialEndsAt: true,
       },
     }),
   ]);
@@ -64,6 +67,24 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         </div>
       </div>
     );
+  }
+
+  // Verificar si el plan está vigente (igual que carta QR)
+  {
+    const chileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
+    const todayChile = chileDate(new Date());
+    const periodEnd = config.currentPeriodEnd ? new Date(config.currentPeriodEnd) : null;
+    const trialEnd = config.trialEndsAt ? new Date(config.trialEndsAt) : null;
+    const isMenuLive =
+      config.billingExempt ||
+      config.isDemo ||
+      (config.subscriptionStatus === "ACTIVE" && periodEnd && chileDate(periodEnd) >= todayChile) ||
+      (config.subscriptionStatus === "TRIALING" && trialEnd && chileDate(trialEnd) >= todayChile) ||
+      (config.subscriptionStatus === "CANCELED" && periodEnd && chileDate(periodEnd) >= todayChile);
+
+    if (!isMenuLive) {
+      return <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} />;
+    }
   }
 
   // Ordering is disabled
