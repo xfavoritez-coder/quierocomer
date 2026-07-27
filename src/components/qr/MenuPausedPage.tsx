@@ -9,8 +9,12 @@ export default function MenuPausedPage({
 
   return (
     <div style={{
-      minHeight: "100dvh",
-      background: "#fafaf8",
+      position: "fixed",
+      inset: 0,
+      zIndex: 9999,
+      backdropFilter: "blur(10px)",
+      WebkitBackdropFilter: "blur(10px)",
+      background: "rgba(0,0,0,0.55)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -19,29 +23,31 @@ export default function MenuPausedPage({
     }}>
       <div style={{
         background: "#fff",
-        borderRadius: 24,
-        boxShadow: "0 4px 32px rgba(0,0,0,0.08)",
-        maxWidth: 380,
+        borderRadius: 20,
+        boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+        maxWidth: 320,
         width: "100%",
         overflow: "hidden",
         textAlign: "center",
       }}>
-        {/* Franja superior ámbar */}
+        {/* Franja superior */}
         <div style={{
           background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-          padding: "36px 24px 40px",
+          padding: "20px 20px 22px",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
         }}>
-          {/* Logo o inicial */}
           <div style={{
-            width: 80,
-            height: 80,
-            borderRadius: 18,
+            width: 44,
+            height: 44,
+            borderRadius: 10,
             background: "#fff",
-            margin: "0 auto 16px",
+            flexShrink: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.18)",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
             overflow: "hidden",
           }}>
             {logoUrl ? (
@@ -52,29 +58,33 @@ export default function MenuPausedPage({
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <span style={{ fontSize: 32, fontWeight: 800, color: "#f97316", lineHeight: 1 }}>
+              <span style={{ fontSize: 20, fontWeight: 800, color: "#f97316", lineHeight: 1 }}>
                 {initial}
               </span>
             )}
           </div>
-          <div style={{ color: "#fff", fontSize: 20, fontWeight: 700, letterSpacing: "-0.3px" }}>
-            {restaurantName}
+          <div style={{ textAlign: "left" }}>
+            <div style={{ color: "#fff", fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
+              {restaurantName}
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, marginTop: 2 }}>
+              Carta digital
+            </div>
           </div>
         </div>
 
         {/* Contenido */}
-        <div style={{ padding: "28px 28px 32px" }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a1a", marginBottom: 10, lineHeight: 1.35 }}>
+        <div style={{ padding: "18px 20px 20px" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a", marginBottom: 6, lineHeight: 1.35 }}>
             Este menú está temporalmente fuera de línea
           </div>
-          <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6 }}>
-            El local está actualizando su carta digital.<br />
+          <div style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.55 }}>
+            El local está actualizando su carta digital.
             Intenta nuevamente más tarde.
           </div>
 
-          {/* Footer dueño */}
-          <div style={{ marginTop: 28, paddingTop: 20, borderTop: "1px dashed #e5e7eb" }}>
-            <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 6px" }}>
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px dashed #e5e7eb" }}>
+            <p style={{ fontSize: 11, color: "#9ca3af", margin: "0 0 5px" }}>
               ¿Eres el dueño de este local?
             </p>
             <a

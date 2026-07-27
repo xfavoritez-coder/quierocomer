@@ -69,26 +69,21 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     );
   }
 
-  // Verificar si el plan está vigente (igual que carta QR)
-  {
-    const chileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
-    const todayChile = chileDate(new Date());
-    const periodEnd = config.currentPeriodEnd ? new Date(config.currentPeriodEnd) : null;
-    const trialEnd = config.trialEndsAt ? new Date(config.trialEndsAt) : null;
-    const isMenuLive =
-      config.billingExempt ||
-      config.isDemo ||
-      (config.subscriptionStatus === "ACTIVE" && periodEnd && chileDate(periodEnd) >= todayChile) ||
-      (config.subscriptionStatus === "TRIALING" && trialEnd && chileDate(trialEnd) >= todayChile) ||
-      (config.subscriptionStatus === "CANCELED" && periodEnd && chileDate(periodEnd) >= todayChile);
+  // Verificar si el plan está vigente
+  const chileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
+  const todayChile = chileDate(new Date());
+  const periodEnd = config.currentPeriodEnd ? new Date(config.currentPeriodEnd) : null;
+  const trialEnd = config.trialEndsAt ? new Date(config.trialEndsAt) : null;
+  const isMenuLive =
+    config.billingExempt ||
+    config.isDemo ||
+    (config.subscriptionStatus === "ACTIVE" && periodEnd && chileDate(periodEnd) >= todayChile) ||
+    (config.subscriptionStatus === "TRIALING" && trialEnd && chileDate(trialEnd) >= todayChile) ||
+    (config.subscriptionStatus === "CANCELED" && periodEnd && chileDate(periodEnd) >= todayChile);
+  const isPaused = !isMenuLive;
 
-    if (!isMenuLive) {
-      return <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} />;
-    }
-  }
-
-  // Ordering is disabled
-  if (!config.orderingEnabled) {
+  // Ordering is disabled (only block if not paused — paused shows overlay over menu)
+  if (!config.orderingEnabled && !isPaused) {
     return (
       <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-body, sans-serif)", background: "#fafafa" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
@@ -136,6 +131,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
 
   return (
     <OrderCartProvider>
+      {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} />}
       <OrderMenuPage
         restaurant={scheduledRestaurant as any}
         orderingConfig={orderingConfig}

@@ -94,36 +94,19 @@ export default async function CartaPage({
   if (!restaurant) return notFound();
 
   // Verificar si el menú está activo (plan vigente)
-  // Ocultar carta si el plan venció, dejando visible solo si:
-  // - billingExempt: exento de pago (override admin)
-  // - isDemo: siempre visible (son demos de prospección)
-  // - ACTIVE con período vigente
-  // - TRIALING con período vigente
-  // - CANCELED dentro del período pagado
-  // - NONE sin historial de trial ni pago (cuenta siempre gratis)
-  {
-    const r = restaurant as any;
-    const now = new Date();
-    // Comparar fechas en zona horaria Chile (America/Santiago) para que la carta
-    // se corte a las 23:59 Chile del día que vence, no a las 20:00 Chile (= midnight UTC).
-    const chileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", {
-      timeZone: "America/Santiago",
-    }).format(d); // "YYYY-MM-DD"
-    const todayChile = chileDate(now);
-    const periodEnd = r.currentPeriodEnd ? new Date(r.currentPeriodEnd) : null;
-    const trialEnd = r.trialEndsAt ? new Date(r.trialEndsAt) : null;
-    // El día que vence (en hora Chile) es el último día válido
-    const isMenuLive =
-      r.billingExempt ||
-      r.isDemo ||
-      (r.subscriptionStatus === "ACTIVE" && periodEnd && chileDate(periodEnd) >= todayChile) ||
-      (r.subscriptionStatus === "TRIALING" && trialEnd && chileDate(trialEnd) >= todayChile) ||
-      (r.subscriptionStatus === "CANCELED" && periodEnd && chileDate(periodEnd) >= todayChile);
-
-    if (!isMenuLive) {
-      return <MenuPausedPage restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;
-    }
-  }
+  const _r = restaurant as any;
+  const _now = new Date();
+  const _chileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
+  const _todayChile = _chileDate(_now);
+  const _periodEnd = _r.currentPeriodEnd ? new Date(_r.currentPeriodEnd) : null;
+  const _trialEnd = _r.trialEndsAt ? new Date(_r.trialEndsAt) : null;
+  const isMenuLive =
+    _r.billingExempt ||
+    _r.isDemo ||
+    (_r.subscriptionStatus === "ACTIVE" && _periodEnd && _chileDate(_periodEnd) >= _todayChile) ||
+    (_r.subscriptionStatus === "TRIALING" && _trialEnd && _chileDate(_trialEnd) >= _todayChile) ||
+    (_r.subscriptionStatus === "CANCELED" && _periodEnd && _chileDate(_periodEnd) >= _todayChile);
+  const isPaused = !isMenuLive;
 
   // Only Premium restaurants support multilingual — override lang for others
   if ((restaurant as any).plan !== "PREMIUM" && !isValidLang(urlLang)) {
@@ -382,6 +365,7 @@ export default async function CartaPage({
         </DesktopWrapper>
       )}
     </div>
+    {isPaused && <MenuPausedPage restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />}
     </>
   );
 }
