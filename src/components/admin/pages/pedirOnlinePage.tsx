@@ -5,7 +5,6 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
-import PlanesModal from "@/components/PlanesModal";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -185,7 +184,6 @@ export default function PedirOnlinePage() {
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<OrderingData | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showPlans, setShowPlans] = useState(false);
 
   // form state
   const [enabled, setEnabled] = useState(false);
@@ -226,7 +224,7 @@ export default function PedirOnlinePage() {
 
   const toggleEnabled = async () => {
     if (!rid || togglingEnabled) return;
-    if (!isPremium) { setShowPlans(true); return; }
+    if (!isPremium) { window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM", source: "pedidos_online" } })); return; }
     const newVal = !enabled;
     setEnabled(newVal);
     setTogglingEnabled(true);
@@ -291,7 +289,6 @@ export default function PedirOnlinePage() {
 
   return (
     <>
-    {showPlans && <PlanesModal onClose={() => setShowPlans(false)} highlightPlan="PREMIUM" />}
     <div style={{ padding: "0 0 40px" }}>
 
       {/* Header */}
