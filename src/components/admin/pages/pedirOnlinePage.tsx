@@ -235,14 +235,12 @@ export default function PedirOnlinePage() {
     setEnabled(newVal);
     setTogglingEnabled(true);
     try {
-      const res = await fetch(`/api/admin/locales/${rid}`, {
-        method: "PUT",
+      const res = await fetch("/api/panel/ordering-enabled", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderingEnabled: newVal }),
+        body: JSON.stringify({ restaurantId: rid, orderingEnabled: newVal }),
       });
       if (res.ok) {
-        const updated = await res.json();
-        setData(updated);
         toast.success(newVal ? "Pedidos online activados" : "Pedidos online desactivados");
         fetch("/api/panel/activity", {
           method: "POST",
@@ -250,8 +248,9 @@ export default function PedirOnlinePage() {
           body: JSON.stringify({ restaurantId: rid, action: newVal ? "pedidos_online_activated" : "pedidos_online_deactivated" }),
         }).catch(() => {});
       } else {
+        const err = await res.json().catch(() => ({}));
         setEnabled(!newVal);
-        toast.error("Error al guardar");
+        toast.error(err.error || "Error al guardar");
       }
     } catch { setEnabled(!newVal); toast.error("Error de conexión"); }
     setTogglingEnabled(false);
