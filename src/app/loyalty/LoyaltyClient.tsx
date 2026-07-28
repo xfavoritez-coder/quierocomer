@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
+import LoyaltyNav from "./LoyaltyNav";
 
 interface LoyaltyProgram {
   id: string;
@@ -125,6 +126,8 @@ export default function LoyaltyClient() {
             Junta sellos, gana recompensas.
           </p>
         </header>
+
+        <LoyaltyNav />
 
         {/* Selector de restaurante (solo si hay varios) */}
         {restaurants.length > 1 && (
