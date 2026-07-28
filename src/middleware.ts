@@ -28,16 +28,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/qr/", request.url));
   }
 
-  // --- Loyalty (servicio de tarjetas de membresía) ---
-  // Visible solo para dueños de restaurante (panel_token) y administración (admin_token).
-  // Cualquiera sin sesión se redirige al login del panel.
+  // --- Loyalty: ahora es sección nativa del panel en /panel/loyalty ---
+  // Redirige los enlaces antiguos /loyalty → /panel/loyalty (el gate de /panel maneja el acceso).
   if (pathname === "/loyalty" || pathname.startsWith("/loyalty/")) {
-    const panelToken = request.cookies.get("panel_token")?.value;
-    const adminToken = request.cookies.get("admin_token")?.value;
-    if (!panelToken && !adminToken) {
-      return NextResponse.redirect(new URL("/panel/login", request.url));
-    }
-    return NextResponse.next();
+    const rest = pathname.slice("/loyalty".length); // "" o "/miembros"
+    return NextResponse.redirect(new URL(`/panel/loyalty${rest}`, request.url));
   }
 
   // --- Panel page routes (owner panel) ---
