@@ -188,7 +188,6 @@ model UserTasteProfile {
   fitnessUpdatedAt    DateTime?
 }
 
-
 model RestaurantOwner {
   id                 String             @id @default(cuid())
   email              String             @unique
@@ -317,15 +316,15 @@ model Restaurant {
   primaryCategory            String?
   // Pedidos online (wa.me) — solo plan PREMIUM
   orderingEnabled            Boolean                  @default(false)
-  orderingPhone              String?                  // WA destino (override del whatsapp del local)
+  orderingPhone              String? // WA destino (override del whatsapp del local)
   orderingDelivery           String                   @default("BOTH") // PICKUP | DELIVERY | BOTH
-  orderingMinAmount          Int?                     // Monto mínimo en pesos CLP
-  orderingWaitTime           String?                  // Ej: "30-45 min"
-  orderingNote               String?                  // Mensaje custom visible en checkout
+  orderingMinAmount          Int? // Monto mínimo en pesos CLP
+  orderingWaitTime           String? // Ej: "30-45 min"
+  orderingNote               String? // Mensaje custom visible en checkout
   orderingPaymentMethods     String                   @default("efectivo,transferencia,tarjeta") // métodos disponibles
-  orderingBannerUrl          String?                  // banner personalizado para /pedir
+  orderingBannerUrl          String? // banner personalizado para /pedir
   orderingTheme              String                   @default("light") // light | dark
-  orderingAccentColor        String?                  // color de acento hex
+  orderingAccentColor        String? // color de acento hex
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]
@@ -371,31 +370,31 @@ model Restaurant {
   ventasDia                  VentaDia[]
   hojasImpresas              HojaImpresa[]
 
-  commune      String?
-  communeSlug  String?
+  commune     String?
+  communeSlug String?
 
   @@index([ownerId])
   @@index([communeSlug])
 }
 
 model OnlineOrder {
-  id              String     @id @default(cuid())
-  restaurantId    String
-  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   customerName    String
   customerPhone   String
-  orderType       String     // "PICKUP" | "DELIVERY"
+  orderType       String // "PICKUP" | "DELIVERY"
   deliveryAddress String?
-  paymentMethod   String     // "efectivo" | "transferencia" | "tarjeta"
-  items           Json       // CartItem[]
+  paymentMethod   String // "efectivo" | "transferencia" | "tarjeta"
+  items           Json // CartItem[]
   total           Int
   notes           String?
 
-  status          String     @default("PENDING") // "PENDING" | "CONFIRMED" | "READY" | "DONE" | "CANCELLED"
+  status String @default("PENDING") // "PENDING" | "CONFIRMED" | "READY" | "DONE" | "CANCELLED"
 
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
@@ -553,10 +552,10 @@ model Category {
   scheduleDays  Int[]
   scheduleStart String?
   scheduleEnd   String?
-  menuGroup    MenuGroup?            @relation(fields: [menuGroupId], references: [id])
-  restaurant   Restaurant            @relation(fields: [restaurantId], references: [id])
-  translations CategoryTranslation[]
-  dishes       Dish[]
+  menuGroup     MenuGroup?            @relation(fields: [menuGroupId], references: [id])
+  restaurant    Restaurant            @relation(fields: [restaurantId], references: [id])
+  translations  CategoryTranslation[]
+  dishes        Dish[]
 
   @@index([restaurantId])
   @@index([menuGroupId])
@@ -1847,7 +1846,6 @@ enum RiskProfile {
   EXPLORER
 }
 
-
 enum RestaurantPlan {
   FREE
   GOLD
@@ -2317,4 +2315,84 @@ model SystemCache {
   updatedAt DateTime @updatedAt
 
   @@map("system_cache")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOYALTY — Tarjetas de membresía (Apple / Google Wallet)
+// Mecánica de SELLOS (junta X sellos → recompensa).
+// Tablas autocontenidas: no modifican modelos existentes.
+// ═══════════════════════════════════════════════════════════════
+
+model LoyaltyProgram {
+  id           String  @id @default(cuid())
+  restaurantId String  @unique
+  name         String  @default("Tarjeta de fidelidad")
+  active       Boolean @default(false)
+
+  // Mecánica de sellos
+  stampsRequired Int    @default(10) // sellos para ganar la recompensa
+  rewardText     String @default("Un producto gratis") // qué gana al completar
+
+  // Diseño de la tarjeta en el wallet
+  cardColorHex String  @default("#111111")
+  logoUrl      String?
+  description  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members LoyaltyMember[]
+
+  @@index([restaurantId])
+}
+
+model LoyaltyMember {
+  id           String @id @default(cuid())
+  programId    String
+  restaurantId String
+
+  name  String?
+  email String?
+  phone String?
+
+  stamps          Int @default(0) // sellos en la tarjeta vigente
+  rewardsEarned   Int @default(0) // recompensas completadas (histórico)
+  rewardsRedeemed Int @default(0) // recompensas ya canjeadas
+
+  // Identificadores de wallet para poder actualizar la tarjeta en el teléfono
+  appleSerial    String? @unique // serialNumber del .pkpass (Apple)
+  googleObjectId String? @unique // object id (Google Wallet)
+  authToken      String  @default(cuid()) // token del web service de Apple Wallet
+
+  enrolledAt  DateTime  @default(now())
+  lastStampAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  program      LoyaltyProgram       @relation(fields: [programId], references: [id])
+  transactions LoyaltyTransaction[]
+
+  @@index([programId])
+  @@index([restaurantId])
+  @@index([email])
+}
+
+model LoyaltyTransaction {
+  id        String        @id @default(cuid())
+  memberId  String
+  type      LoyaltyTxType
+  amount    Int           @default(1)
+  note      String?
+  createdAt DateTime      @default(now())
+
+  member LoyaltyMember @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+}
+
+enum LoyaltyTxType {
+  STAMP_ADD // se agregó un sello
+  STAMP_REMOVE // se quitó un sello (corrección)
+  REWARD_EARN // se completó la tarjeta → recompensa ganada
+  REWARD_REDEEM // el cliente canjeó la recompensa
 }
