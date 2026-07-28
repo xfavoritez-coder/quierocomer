@@ -45,6 +45,8 @@ interface FormState {
   stampIcon: string;
   rewards: RewardTier[];
   cardColorHex: string;
+  stampColorHex: string;
+  bgImageUrl: string;
   description: string;
 }
 
@@ -55,6 +57,8 @@ const DEFAULTS: FormState = {
   stampIcon: "★",
   rewards: [],
   cardColorHex: "#111111",
+  stampColorHex: "#FFFFFF",
+  bgImageUrl: "",
   description: "",
 };
 
@@ -66,8 +70,18 @@ export default function LoyaltyConfigPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [dishPhotos, setDishPhotos] = useState<{ name: string; url: string }[]>([]);
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
+
+  // Fotos de platos para elegir fondo de la tarjeta
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    fetch(`/api/loyalty/dish-photos?restaurantId=${selectedRestaurantId}`)
+      .then((r) => r.json())
+      .then((d) => setDishPhotos(Array.isArray(d.photos) ? d.photos : []))
+      .catch(() => setDishPhotos([]));
+  }, [selectedRestaurantId]);
 
   useEffect(() => {
     if (!selectedRestaurantId) return;
@@ -87,6 +101,8 @@ export default function LoyaltyConfigPage() {
                 stampIcon: p.stampIcon || "★",
                 rewards: Array.isArray(p.rewards) ? p.rewards : [],
                 cardColorHex: p.cardColorHex,
+                stampColorHex: p.stampColorHex || "#FFFFFF",
+                bgImageUrl: p.bgImageUrl || "",
                 description: p.description || "",
               }
             : { ...DEFAULTS },
@@ -300,13 +316,78 @@ export default function LoyaltyConfigPage() {
               />
             </div>
 
-            {/* Color */}
-            <div>
-              <label style={labelStyle}>Color de la tarjeta</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <input type="color" value={form.cardColorHex} onChange={(e) => update({ cardColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
-                <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.cardColorHex}</span>
+            {/* Colores */}
+            <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
+              <div>
+                <label style={labelStyle}>Color de la tarjeta</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <input type="color" value={form.cardColorHex} onChange={(e) => update({ cardColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
+                  <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.cardColorHex}</span>
+                </div>
               </div>
+              <div>
+                <label style={labelStyle}>Color de fondo de los sellos</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <input type="color" value={form.stampColorHex} onChange={(e) => update({ stampColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
+                  <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.stampColorHex}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Imagen de fondo (plato de la carta) */}
+            <div>
+              <label style={labelStyle}>Imagen de fondo <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(un plato de tu carta, opcional)</span></label>
+              {dishPhotos.length === 0 ? (
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+                  No encontramos fotos de platos en tu carta para usar de fondo.
+                </p>
+              ) : (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {/* Opción: sin imagen */}
+                  <button
+                    type="button"
+                    onClick={() => update({ bgImageUrl: "" })}
+                    title="Sin imagen de fondo"
+                    style={{
+                      height: 56,
+                      width: 56,
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      background: "var(--adm-hover)",
+                      border: `2px solid ${!form.bgImageUrl ? GOLD : "var(--adm-card-border)"}`,
+                      color: "var(--adm-text3)",
+                      fontFamily: F,
+                      fontSize: "0.62rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Ninguna
+                  </button>
+                  {dishPhotos.map((ph) => {
+                    const active = form.bgImageUrl === ph.url;
+                    return (
+                      <button
+                        key={ph.url}
+                        type="button"
+                        onClick={() => update({ bgImageUrl: ph.url })}
+                        title={ph.name}
+                        style={{
+                          height: 56,
+                          width: 56,
+                          borderRadius: 10,
+                          cursor: "pointer",
+                          padding: 0,
+                          overflow: "hidden",
+                          border: `2px solid ${active ? GOLD : "var(--adm-card-border)"}`,
+                          backgroundImage: `url(${ph.url})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Guardar */}
@@ -329,6 +410,8 @@ export default function LoyaltyConfigPage() {
             <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Vista previa</p>
             <CardPreview
               color={form.cardColorHex}
+              stampColor={form.stampColorHex}
+              bgImage={form.bgImageUrl}
               restaurantName={restaurant?.name || "Tu restaurante"}
               stampGoal={form.stampGoal}
               stampIcon={form.stampIcon}
@@ -347,8 +430,10 @@ export default function LoyaltyConfigPage() {
   );
 }
 
-function CardPreview({ color, restaurantName, stampGoal, stampIcon, rewards, description }: {
+function CardPreview({ color, stampColor, bgImage, restaurantName, stampGoal, stampIcon, rewards, description }: {
   color: string;
+  stampColor: string;
+  bgImage: string;
   restaurantName: string;
   stampGoal: number;
   stampIcon: string;
@@ -356,67 +441,80 @@ function CardPreview({ color, restaurantName, stampGoal, stampIcon, rewards, des
   description: string;
 }) {
   const demoStamps = Math.min(3, stampGoal);
-  const textColor = isLight(color) ? "#111111" : "#ffffff";
-  const subColor = isLight(color) ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  // Con imagen de fondo forzamos texto claro (hay overlay oscuro); si no, según el color de la tarjeta.
+  const textColor = bgImage ? "#ffffff" : isLight(color) ? "#111111" : "#ffffff";
+  const subColor = bgImage ? "rgba(255,255,255,0.75)" : isLight(color) ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const stampGlyphColor = isLight(stampColor) ? "#111111" : "#ffffff";
   const cols = Math.min(5, Math.max(1, stampGoal));
   const tierStamps = new Set(rewards.map((r) => r.stamp));
   const sortedRewards = [...rewards].filter((r) => r.reward.trim()).sort((a, b) => a.stamp - b.stamp);
 
   return (
-    <div style={{ borderRadius: 18, padding: 20, background: color, color: textColor, boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{restaurantName}</span>
-        <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Fidelidad</span>
-      </div>
+    <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: color, color: textColor, boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
+      {/* Fondo: imagen del plato + overlay para legibilidad */}
+      {bgImage && (
+        <>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.68) 100%)" }} />
+        </>
+      )}
 
-      <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "22px 0 8px", letterSpacing: "0.1em" }}>
-        SELLOS · {demoStamps}/{stampGoal}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 7 }}>
-        {Array.from({ length: Math.max(stampGoal, 1) }).map((_, i) => {
-          const filled = i < demoStamps;
-          const isTier = tierStamps.has(i + 1);
-          return (
-            <div
-              key={i}
-              style={{
-                aspectRatio: "1",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "50%",
-                fontSize: "0.85rem",
-                border: `1.5px solid ${isTier ? GOLD : textColor}`,
-                background: filled ? textColor : "transparent",
-                color: filled ? color : textColor,
-                opacity: filled ? 1 : isTier ? 0.9 : 0.4,
-              }}
-              title={isTier ? "Nivel con recompensa" : undefined}
-            >
-              {filled ? stampIcon : isTier ? "🎁" : ""}
-            </div>
-          );
-        })}
-      </div>
+      <div style={{ position: "relative", padding: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", textShadow: bgImage ? "0 1px 3px rgba(0,0,0,0.5)" : undefined }}>{restaurantName}</span>
+          <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Fidelidad</span>
+        </div>
 
-      {/* Condiciones al pie */}
-      <div style={{ marginTop: 20, borderTop: `1px solid ${subColor}`, paddingTop: 12 }}>
-        <div style={{ fontFamily: F, fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Recompensas</div>
-        {sortedRewards.length === 0 ? (
-          <div style={{ fontFamily: FB, fontSize: "0.72rem", color: subColor, marginTop: 4 }}>Aún sin recompensas configuradas.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 5 }}>
-            {sortedRewards.map((r, i) => (
-              <div key={i} style={{ fontFamily: FB, fontSize: "0.72rem", display: "flex", gap: 6 }}>
-                <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{r.stamp} {stampIcon}</span>
-                <span style={{ color: subColor }}>→ {r.reward}</span>
+        <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "22px 0 10px", letterSpacing: "0.1em" }}>
+          SELLOS · {demoStamps}/{stampGoal}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
+          {Array.from({ length: Math.max(stampGoal, 1) }).map((_, i) => {
+            const filled = i < demoStamps;
+            const isTier = tierStamps.has(i + 1);
+            return (
+              <div
+                key={i}
+                style={{
+                  aspectRatio: "1",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "50%",
+                  fontSize: "2.55rem",
+                  lineHeight: 1,
+                  border: `1.5px solid ${isTier ? GOLD : textColor}`,
+                  background: filled ? stampColor : "transparent",
+                  color: filled ? stampGlyphColor : textColor,
+                  opacity: filled ? 1 : isTier ? 0.9 : 0.4,
+                }}
+                title={isTier ? "Nivel con recompensa" : undefined}
+              >
+                {filled ? stampIcon : isTier ? "🎁" : ""}
               </div>
-            ))}
-          </div>
-        )}
-        {description && (
-          <div style={{ fontFamily: FB, fontSize: "0.64rem", color: subColor, marginTop: 8, lineHeight: 1.45 }}>{description}</div>
-        )}
+            );
+          })}
+        </div>
+
+        {/* Condiciones al pie */}
+        <div style={{ marginTop: 20, borderTop: `1px solid ${subColor}`, paddingTop: 12 }}>
+          <div style={{ fontFamily: F, fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Recompensas</div>
+          {sortedRewards.length === 0 ? (
+            <div style={{ fontFamily: FB, fontSize: "0.72rem", color: subColor, marginTop: 4 }}>Aún sin recompensas configuradas.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 5 }}>
+              {sortedRewards.map((r, i) => (
+                <div key={i} style={{ fontFamily: FB, fontSize: "0.72rem", display: "flex", gap: 6 }}>
+                  <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{r.stamp} {stampIcon}</span>
+                  <span style={{ color: subColor }}>→ {r.reward}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {description && (
+            <div style={{ fontFamily: FB, fontSize: "0.64rem", color: subColor, marginTop: 8, lineHeight: 1.45 }}>{description}</div>
+          )}
+        </div>
       </div>
     </div>
   );

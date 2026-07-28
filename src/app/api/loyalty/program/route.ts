@@ -85,6 +85,19 @@ export async function POST(req: NextRequest) {
       data.cardColorHex = hex;
     }
 
+    if (typeof body.stampColorHex === "string") {
+      const hex = body.stampColorHex.trim();
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex)) {
+        return NextResponse.json({ error: "Color de sello inválido (usa formato #RRGGBB)" }, { status: 400 });
+      }
+      data.stampColorHex = hex;
+    }
+
+    if (body.bgImageUrl !== undefined) {
+      data.bgImageUrl =
+        typeof body.bgImageUrl === "string" && body.bgImageUrl.trim() ? body.bgImageUrl.trim().slice(0, 500) : null;
+    }
+
     if (typeof body.logoUrl === "string") data.logoUrl = body.logoUrl.trim().slice(0, 500) || null;
 
     // Niveles de recompensa. Si no viene stampGoal en el body, usamos el guardado.

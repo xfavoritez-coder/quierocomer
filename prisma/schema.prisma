@@ -2337,9 +2337,11 @@ model LoyaltyProgram {
   rewards Json @default("[]")
 
   // Diseño de la tarjeta en el wallet
-  cardColorHex String  @default("#111111")
-  logoUrl      String?
-  description  String? // condiciones/letra chica que se muestra al pie de la tarjeta
+  cardColorHex  String  @default("#111111") // color de fondo de la tarjeta
+  stampColorHex String  @default("#FFFFFF") // color de fondo de los sellos
+  bgImageUrl    String? // imagen de fondo de la tarjeta (foto de un plato de la carta)
+  logoUrl       String?
+  description   String? // condiciones/letra chica que se muestra al pie de la tarjeta
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
