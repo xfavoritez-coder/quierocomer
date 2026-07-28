@@ -152,24 +152,38 @@ interface MemberLike {
   id: string;
   name: string | null;
   stamps: number;
+  redeemedTiers?: number[];
 }
 
-function nextRewardText(member: MemberLike, program: ProgramLike): string {
+/**
+ * Campo dinámico según el estado del cliente:
+ *  - Si tiene recompensa(s) ganada(s) sin canjear → "¡Puedes canjear! X"
+ *  - Si no → "Próxima recompensa: Y a los N sellos"
+ */
+function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
   const rewards = parseRewards(program.rewards);
+  const redeemed = member.redeemedTiers || [];
+  const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
+  if (available.length) {
+    return { label: "🎁 ¡Puedes canjear!", value: available.map((r) => r.reward).join(" · ") };
+  }
   const next = rewards.find((r) => r.stamp > member.stamps);
-  if (next) return `${next.reward} · a los ${next.stamp} ${program.stampIcon}`;
-  return rewards.length ? "¡Todas las recompensas alcanzadas!" : "—";
+  if (next) {
+    return { label: "Próxima recompensa", value: `${next.reward} · a los ${next.stamp} ${program.stampIcon}` };
+  }
+  return { label: "Recompensas", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
 }
 
 function pointsBody(member: MemberLike, program: ProgramLike) {
+  const status = rewardStatus(member, program);
   return {
     loyaltyPoints: {
       label: "Sellos",
       balance: { string: `${member.stamps}/${program.stampGoal}` },
     },
     secondaryLoyaltyPoints: {
-      label: "Próxima recompensa",
-      balance: { string: nextRewardText(member, program) },
+      label: status.label,
+      balance: { string: status.value },
     },
   };
 }

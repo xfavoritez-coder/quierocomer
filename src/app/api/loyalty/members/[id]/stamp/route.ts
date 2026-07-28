@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Actualiza la tarjeta ya guardada en el wallet (best-effort, no bloquea).
     if (member.googleObjectId && isGoogleWalletConfigured()) {
       try {
-        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps }, member.program);
+        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps, redeemedTiers: updated.redeemedTiers }, member.program);
       } catch (err) {
         console.error("[Loyalty stamp] fallo al sincronizar Google Wallet:", err);
       }

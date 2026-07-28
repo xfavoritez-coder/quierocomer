@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (member.googleObjectId && isGoogleWalletConfigured()) {
       try {
-        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps }, member.program);
+        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps, redeemedTiers: updated.redeemedTiers }, member.program);
       } catch (err) {
         console.error("[Loyalty reset] fallo al sincronizar Google Wallet:", err);
       }
