@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, authErrorResponse } from "@/lib/adminAuth";
 import { getMemberForOwner, parseRewards } from "@/lib/loyalty";
+import { isGoogleWalletConfigured, updateGooglePoints } from "@/lib/wallet/google";
 
 // POST /api/loyalty/members/:id/stamp   body: { delta: 1 | -1 }
 // Suma o resta un sello (0..stampGoal). Al alcanzar el número de sello de un
@@ -63,6 +64,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         select: memberSelect,
       });
     });
+
+    // Actualiza la tarjeta ya guardada en el wallet (best-effort, no bloquea).
+    if (member.googleObjectId && isGoogleWalletConfigured()) {
+      try {
+        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps }, member.program);
+      } catch (err) {
+        console.error("[Loyalty stamp] fallo al sincronizar Google Wallet:", err);
+      }
+    }
 
     return NextResponse.json({
       member: updated,

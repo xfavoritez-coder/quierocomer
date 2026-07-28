@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Plus, Search, Gift, RotateCcw } from "lucide-react";
+import { CreditCard, Plus, Search, Gift, RotateCcw, Wallet } from "lucide-react";
 import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -117,6 +117,20 @@ export default function LoyaltyMembersPage() {
   const availableTiers = (m: Member) =>
     rewards.filter((t) => t.stamp <= m.stamps && !m.redeemedTiers.includes(t.stamp)).sort((a, b) => a.stamp - b.stamp);
 
+  const googleWallet = async (member: Member) => {
+    setBusyId(member.id);
+    try {
+      const res = await fetch(`/api/loyalty/members/${member.id}/wallet/google`);
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Error");
+      window.open(d.saveUrl, "_blank");
+    } catch (e: any) {
+      toast.error(e.message || "Error al generar la tarjeta");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 760 }}>
       {/* Header */}
@@ -200,6 +214,7 @@ export default function LoyaltyMembersPage() {
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <button type="button" disabled={busy} onClick={() => googleWallet(m)} title="Generar tarjeta de Google Wallet" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Wallet size={16} /></button>
                     <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.1rem", cursor: "pointer", opacity: busy ? 0.4 : 1 }}>−</button>
                     {cardFull ? (
                       <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, authErrorResponse } from "@/lib/adminAuth";
 import { getMemberForOwner } from "@/lib/loyalty";
+import { isGoogleWalletConfigured, updateGooglePoints } from "@/lib/wallet/google";
 
 // POST /api/loyalty/members/:id/reset
 // Reinicia la tarjeta del cliente: sellos a 0, niveles canjeados a vacío,
@@ -40,6 +41,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         },
       });
     });
+
+    if (member.googleObjectId && isGoogleWalletConfigured()) {
+      try {
+        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps }, member.program);
+      } catch (err) {
+        console.error("[Loyalty reset] fallo al sincronizar Google Wallet:", err);
+      }
+    }
 
     return NextResponse.json({ member: updated });
   } catch (e: any) {

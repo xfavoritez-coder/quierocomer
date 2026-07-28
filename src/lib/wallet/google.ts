@@ -1,0 +1,198 @@
+import crypto from "crypto";
+import { parseRewards } from "@/lib/loyalty";
+
+/**
+ * Integración con Google Wallet (sin dependencias externas: firma con `crypto`).
+ *
+ * Env vars requeridas:
+ *   GOOGLE_WALLET_ISSUER_ID     — el Issuer ID (número) de la Wallet Console
+ *   GOOGLE_WALLET_SA_EMAIL      — client_email de la service account
+ *   GOOGLE_WALLET_SA_PRIVATE_KEY — private_key de la service account (PEM, con \n)
+ */
+
+const WALLET_API = "https://walletobjects.googleapis.com/walletobjects/v1";
+const SCOPE = "https://www.googleapis.com/auth/wallet_object.issuer";
+const DEFAULT_LOGO = "https://quierocomer.com/logo.png";
+
+function config() {
+  const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID;
+  const saEmail = process.env.GOOGLE_WALLET_SA_EMAIL;
+  const privateKey = (process.env.GOOGLE_WALLET_SA_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+  if (!issuerId || !saEmail || !privateKey) return null;
+  return { issuerId, saEmail, privateKey };
+}
+
+/** ¿Está configurado Google Wallet en este entorno? */
+export function isGoogleWalletConfigured(): boolean {
+  return config() !== null;
+}
+
+// ── Firma JWT RS256 (sin librerías) ──
+function base64url(input: Buffer | string): string {
+  return Buffer.from(input).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function signJwtRS256(payload: Record<string, unknown>, privateKey: string): string {
+  const header = { alg: "RS256", typ: "JWT" };
+  const encHeader = base64url(JSON.stringify(header));
+  const encPayload = base64url(JSON.stringify(payload));
+  const signingInput = `${encHeader}.${encPayload}`;
+  const signature = crypto.createSign("RSA-SHA256").update(signingInput).sign(privateKey);
+  return `${signingInput}.${base64url(signature)}`;
+}
+
+// ── Access token (cache en memoria) ──
+let tokenCache: { token: string; exp: number } | null = null;
+
+async function getAccessToken(): Promise<string> {
+  const cfg = config();
+  if (!cfg) throw new Error("Google Wallet no está configurado");
+
+  if (tokenCache && Date.now() < tokenCache.exp - 60_000) return tokenCache.token;
+
+  const now = Math.floor(Date.now() / 1000);
+  const assertion = signJwtRS256(
+    {
+      iss: cfg.saEmail,
+      scope: SCOPE,
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600,
+    },
+    cfg.privateKey,
+  );
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion,
+    }),
+  });
+  if (!res.ok) throw new Error(`Token Google Wallet falló: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  tokenCache = { token: data.access_token, exp: Date.now() + data.expires_in * 1000 };
+  return data.access_token;
+}
+
+async function walletApi(method: string, path: string, body?: unknown): Promise<Response> {
+  const token = await getAccessToken();
+  return fetch(`${WALLET_API}${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+// ── IDs (deben empezar con el issuerId y ser alfanuméricos) ──
+export function googleClassId(programId: string): string {
+  return `${config()!.issuerId}.qc_prog_${programId}`;
+}
+export function googleObjectId(memberId: string): string {
+  return `${config()!.issuerId}.qc_mem_${memberId}`;
+}
+
+interface ProgramLike {
+  id: string;
+  name: string;
+  stampGoal: number;
+  stampIcon: string;
+  rewards: unknown;
+  cardColorHex: string;
+  logoUrl: string | null;
+  description: string | null;
+}
+
+// ── Clase de fidelidad (plantilla por programa/restaurante) ──
+export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: string, restaurantLogo?: string | null) {
+  const classId = googleClassId(program.id);
+  const rewards = parseRewards(program.rewards);
+  const rewardsText = rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—";
+
+  const body = {
+    id: classId,
+    issuerName: "QuieroComer",
+    programName: program.name,
+    reviewStatus: "UNDER_REVIEW",
+    hexBackgroundColor: program.cardColorHex,
+    programLogo: { sourceUri: { uri: program.logoUrl || restaurantLogo || DEFAULT_LOGO } },
+    textModulesData: [
+      { id: "recompensas", header: "Recompensas", body: rewardsText },
+      ...(program.description ? [{ id: "condiciones", header: "Condiciones", body: program.description }] : []),
+    ],
+  };
+
+  const post = await walletApi("POST", "/loyaltyClass", body);
+  if (post.status === 409) {
+    // ya existe → actualizar
+    const patch = await walletApi("PATCH", `/loyaltyClass/${classId}`, body);
+    if (!patch.ok) throw new Error(`upsertLoyaltyClass PATCH ${patch.status}: ${await patch.text()}`);
+  } else if (!post.ok) {
+    throw new Error(`upsertLoyaltyClass POST ${post.status}: ${await post.text()}`);
+  }
+  return classId;
+}
+
+interface MemberLike {
+  id: string;
+  name: string | null;
+  stamps: number;
+}
+
+function pointsBody(member: MemberLike, program: ProgramLike) {
+  return {
+    loyaltyPoints: {
+      label: "Sellos",
+      balance: { string: `${member.stamps}/${program.stampGoal}` },
+    },
+  };
+}
+
+// ── Objeto de fidelidad (tarjeta de un miembro) ──
+export async function upsertLoyaltyObject(member: MemberLike, program: ProgramLike, restaurantName: string) {
+  const objectId = googleObjectId(member.id);
+  const classId = googleClassId(program.id);
+
+  const body = {
+    id: objectId,
+    classId,
+    state: "ACTIVE",
+    accountName: member.name || "Cliente",
+    accountId: member.id,
+    hexBackgroundColor: program.cardColorHex,
+    ...pointsBody(member, program),
+    barcode: { type: "QR_CODE", value: member.id, alternateText: (member.name || "").slice(0, 20) },
+  };
+
+  const post = await walletApi("POST", "/loyaltyObject", body);
+  if (post.status === 409) {
+    const patch = await walletApi("PATCH", `/loyaltyObject/${objectId}`, body);
+    if (!patch.ok) throw new Error(`upsertLoyaltyObject PATCH ${patch.status}: ${await patch.text()}`);
+  } else if (!post.ok) {
+    throw new Error(`upsertLoyaltyObject POST ${post.status}: ${await post.text()}`);
+  }
+  return objectId;
+}
+
+/** Solo actualiza los sellos (para reflejar cambios en la tarjeta ya guardada). */
+export async function updateGooglePoints(member: MemberLike, program: ProgramLike) {
+  const objectId = googleObjectId(member.id);
+  const patch = await walletApi("PATCH", `/loyaltyObject/${objectId}`, pointsBody(member, program));
+  if (!patch.ok) throw new Error(`updateGooglePoints ${patch.status}: ${await patch.text()}`);
+}
+
+/** Genera el link "Guardar en Google Wallet" (JWT firmado). */
+export function generateSaveUrl(objectId: string): string {
+  const cfg = config();
+  if (!cfg) throw new Error("Google Wallet no está configurado");
+  const claims = {
+    iss: cfg.saEmail,
+    aud: "google",
+    typ: "savetowallet",
+    iat: Math.floor(Date.now() / 1000),
+    payload: { loyaltyObjects: [{ id: objectId }] },
+  };
+  const jwt = signJwtRS256(claims, cfg.privateKey);
+  return `https://pay.google.com/gp/v/save/${jwt}`;
+}
