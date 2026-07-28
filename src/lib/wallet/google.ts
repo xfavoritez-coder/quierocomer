@@ -14,6 +14,17 @@ const WALLET_API = "https://walletobjects.googleapis.com/walletobjects/v1";
 const SCOPE = "https://www.googleapis.com/auth/wallet_object.issuer";
 const DEFAULT_LOGO = "https://quierocomer.com/logo.png";
 
+/**
+ * Recorta una imagen de Supabase a un banner ancho (para el heroImage de Google Wallet,
+ * que si no sale muy alto y alarga el pase). Usa la transformación de imágenes de Supabase.
+ * URLs que no son de Supabase se devuelven sin cambios.
+ */
+function wideBanner(url: string): string {
+  if (!url.includes("/storage/v1/object/public/")) return url;
+  const base = url.split("?")[0].replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  return `${base}?width=1032&height=336&resize=cover&quality=80`;
+}
+
 function config() {
   const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID;
   const saEmail = process.env.GOOGLE_WALLET_SA_EMAIL;
@@ -118,8 +129,8 @@ export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: s
     reviewStatus: "UNDER_REVIEW",
     hexBackgroundColor: program.cardColorHex,
     programLogo: { sourceUri: { uri: program.logoUrl || restaurantLogo || DEFAULT_LOGO } },
-    // La imagen "hero" es el banner de la tarjeta (lo más parecido a un fondo en Google Wallet).
-    ...(program.bgImageUrl && { heroImage: { sourceUri: { uri: program.bgImageUrl } } }),
+    // La imagen "hero" es el banner de la tarjeta (recortado ancho para no alargar el pase).
+    ...(program.bgImageUrl && { heroImage: { sourceUri: { uri: wideBanner(program.bgImageUrl) } } }),
     textModulesData: [
       { id: "recompensas", header: "Recompensas", body: rewardsText },
       ...(program.description ? [{ id: "condiciones", header: "Condiciones", body: program.description }] : []),
