@@ -100,6 +100,7 @@ interface ProgramLike {
   stampIcon: string;
   rewards: unknown;
   cardColorHex: string;
+  bgImageUrl: string | null;
   logoUrl: string | null;
   description: string | null;
 }
@@ -110,13 +111,15 @@ export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: s
   const rewards = parseRewards(program.rewards);
   const rewardsText = rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—";
 
-  const body = {
+  const body: Record<string, unknown> = {
     id: classId,
-    issuerName: "QuieroComer",
+    issuerName: restaurantName || "QuieroComer",
     programName: program.name,
     reviewStatus: "UNDER_REVIEW",
     hexBackgroundColor: program.cardColorHex,
     programLogo: { sourceUri: { uri: program.logoUrl || restaurantLogo || DEFAULT_LOGO } },
+    // La imagen "hero" es el banner de la tarjeta (lo más parecido a un fondo en Google Wallet).
+    ...(program.bgImageUrl && { heroImage: { sourceUri: { uri: program.bgImageUrl } } }),
     textModulesData: [
       { id: "recompensas", header: "Recompensas", body: rewardsText },
       ...(program.description ? [{ id: "condiciones", header: "Condiciones", body: program.description }] : []),
