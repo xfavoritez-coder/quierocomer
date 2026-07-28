@@ -28,6 +28,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/qr/", request.url));
   }
 
+  // --- Loyalty (servicio de tarjetas de membresía) ---
+  // Visible solo para dueños de restaurante (panel_token) y administración (admin_token).
+  // Cualquiera sin sesión se redirige al login del panel.
+  if (pathname === "/loyalty" || pathname.startsWith("/loyalty/")) {
+    const panelToken = request.cookies.get("panel_token")?.value;
+    const adminToken = request.cookies.get("admin_token")?.value;
+    if (!panelToken && !adminToken) {
+      return NextResponse.redirect(new URL("/panel/login", request.url));
+    }
+    return NextResponse.next();
+  }
+
   // --- Panel page routes (owner panel) ---
   if (pathname.startsWith("/panel")) {
     if (PUBLIC_PANEL_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
