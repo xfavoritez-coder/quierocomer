@@ -2330,13 +2330,16 @@ model LoyaltyProgram {
   active       Boolean @default(false)
 
   // Mecánica de sellos
-  stampsRequired Int    @default(10) // sellos para ganar la recompensa
-  rewardText     String @default("Un producto gratis") // qué gana al completar
+  stampGoal Int    @default(8) // cantidad total de sellos de la tarjeta
+  stampIcon String @default("★") // símbolo/emoji del sello (elegido por el restaurante)
+  // Niveles de recompensa: array JSON de { stamp: number, reward: string }
+  // Ej: [{ "stamp": 3, "reward": "Un café gratis" }, { "stamp": 8, "reward": "Un combo gratis" }]
+  rewards Json @default("[]")
 
   // Diseño de la tarjeta en el wallet
   cardColorHex String  @default("#111111")
   logoUrl      String?
-  description  String?
+  description  String? // condiciones/letra chica que se muestra al pie de la tarjeta
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2355,9 +2358,9 @@ model LoyaltyMember {
   email String?
   phone String?
 
-  stamps          Int @default(0) // sellos en la tarjeta vigente
-  rewardsEarned   Int @default(0) // recompensas completadas (histórico)
-  rewardsRedeemed Int @default(0) // recompensas ya canjeadas
+  stamps         Int   @default(0) // sellos en la tarjeta vigente (0..stampGoal)
+  redeemedTiers  Int[] @default([]) // números de sello ya canjeados en el ciclo actual
+  completedCards Int   @default(0) // tarjetas completadas (histórico)
 
   // Identificadores de wallet para poder actualizar la tarjeta en el teléfono
   appleSerial    String? @unique // serialNumber del .pkpass (Apple)

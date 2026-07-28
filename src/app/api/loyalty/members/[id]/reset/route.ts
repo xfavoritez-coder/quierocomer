@@ -1,38 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, authErrorResponse } from "@/lib/adminAuth";
-import { getMemberForOwner, parseRewards } from "@/lib/loyalty";
+import { getMemberForOwner } from "@/lib/loyalty";
 
-// POST /api/loyalty/members/:id/redeem   body: { stamp: number }
-// Canjea la recompensa de un nivel ya ganado (stamp <= sellos actuales) y no canjeado.
+// POST /api/loyalty/members/:id/reset
+// Reinicia la tarjeta del cliente: sellos a 0, niveles canjeados a vacío,
+// e incrementa el contador de tarjetas completadas.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
   try {
     const { id } = await params;
-    const body = await req.json().catch(() => ({}));
-    const stamp = Math.round(Number(body.stamp));
-
     const member = await getMemberForOwner(req, id);
-    const rewards = parseRewards(member.program.rewards);
 
-    const tier = rewards.find((t) => t.stamp === stamp);
-    if (!tier) return NextResponse.json({ error: "Ese nivel de recompensa no existe" }, { status: 400 });
-    if (member.stamps < stamp) {
-      return NextResponse.json({ error: "El cliente aún no alcanza ese nivel" }, { status: 400 });
-    }
-    if (member.redeemedTiers.includes(stamp)) {
-      return NextResponse.json({ error: "Esa recompensa ya fue canjeada" }, { status: 400 });
-    }
+    const wasComplete = member.stamps >= member.program.stampGoal;
 
     const updated = await prisma.$transaction(async (tx) => {
       await tx.loyaltyTransaction.create({
-        data: { memberId: id, type: "REWARD_REDEEM", amount: 1, note: `Sello ${tier.stamp}: ${tier.reward}` },
+        data: { memberId: id, type: "STAMP_REMOVE", amount: member.stamps, note: "Reinicio de tarjeta" },
       });
       return tx.loyaltyMember.update({
         where: { id },
-        data: { redeemedTiers: { push: stamp } },
+        data: {
+          stamps: 0,
+          redeemedTiers: [],
+          ...(wasComplete && { completedCards: { increment: 1 } }),
+        },
         select: {
           id: true,
           name: true,
@@ -50,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ member: updated });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
-    console.error("[Loyalty redeem POST]", e);
+    console.error("[Loyalty reset POST]", e);
     return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }

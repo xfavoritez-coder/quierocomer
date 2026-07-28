@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Plus, Trash2 } from "lucide-react";
 import LoyaltyNav from "./LoyaltyNav";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
+
+const STAMP_ICONS = ["★", "☕", "🍕", "🍔", "🍣", "🍩", "🍺", "🎁", "❤️", "🌮", "🍦", "🥐"];
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -31,28 +33,35 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
 };
 
-const DEFAULTS = {
+interface RewardTier {
+  stamp: number;
+  reward: string;
+}
+
+interface FormState {
+  name: string;
+  active: boolean;
+  stampGoal: number;
+  stampIcon: string;
+  rewards: RewardTier[];
+  cardColorHex: string;
+  description: string;
+}
+
+const DEFAULTS: FormState = {
   name: "Tarjeta de fidelidad",
   active: false,
-  stampsRequired: 10,
-  rewardText: "Un producto gratis",
+  stampGoal: 8,
+  stampIcon: "★",
+  rewards: [],
   cardColorHex: "#111111",
   description: "",
 };
 
-interface LoyaltyProgram {
-  name: string;
-  active: boolean;
-  stampsRequired: number;
-  rewardText: string;
-  cardColorHex: string;
-  description: string | null;
-}
-
 export default function LoyaltyConfigPage() {
   const { restaurants, selectedRestaurantId, loading } = usePanelSession();
 
-  const [form, setForm] = useState({ ...DEFAULTS });
+  const [form, setForm] = useState<FormState>({ ...DEFAULTS });
   const [loadingProgram, setLoadingProgram] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -68,14 +77,15 @@ export default function LoyaltyConfigPage() {
     fetch(`/api/loyalty/program?restaurantId=${selectedRestaurantId}`)
       .then((r) => r.json())
       .then((data) => {
-        const p: LoyaltyProgram | null = data.program;
+        const p = data.program;
         setForm(
           p
             ? {
                 name: p.name,
                 active: p.active,
-                stampsRequired: p.stampsRequired,
-                rewardText: p.rewardText,
+                stampGoal: p.stampGoal,
+                stampIcon: p.stampIcon || "★",
+                rewards: Array.isArray(p.rewards) ? p.rewards : [],
                 cardColorHex: p.cardColorHex,
                 description: p.description || "",
               }
@@ -86,25 +96,45 @@ export default function LoyaltyConfigPage() {
       .finally(() => setLoadingProgram(false));
   }, [selectedRestaurantId]);
 
-  const update = useCallback((patch: Partial<typeof form>) => {
+  const update = useCallback((patch: Partial<FormState>) => {
     setForm((f) => ({ ...f, ...patch }));
     setSaved(false);
   }, []);
 
+  // ── Niveles de recompensa ──
+  const addTier = () => {
+    const used = new Set(form.rewards.map((r) => r.stamp));
+    let next = 1;
+    while (used.has(next) && next < form.stampGoal) next++;
+    if (used.has(next)) next = form.stampGoal;
+    update({ rewards: [...form.rewards, { stamp: Math.min(next, form.stampGoal), reward: "" }] });
+  };
+  const updateTier = (i: number, patch: Partial<RewardTier>) => {
+    update({ rewards: form.rewards.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) });
+  };
+  const removeTier = (i: number) => update({ rewards: form.rewards.filter((_, idx) => idx !== i) });
+
   const handleSave = async () => {
     if (!selectedRestaurantId) return;
+    // Limpia niveles vacíos o fuera de rango antes de enviar
+    const cleanRewards = form.rewards
+      .filter((r) => r.reward.trim() && r.stamp >= 1 && r.stamp <= form.stampGoal)
+      .map((r) => ({ stamp: Number(r.stamp), reward: r.reward.trim() }));
+
     setSaving(true);
     setSaveError("");
     try {
       const res = await fetch("/api/loyalty/program", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form }),
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, rewards: cleanRewards }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error || "Error al guardar");
       }
+      const d = await res.json();
+      if (d.program?.rewards) update({ rewards: d.program.rewards });
       setSaved(true);
     } catch (e: any) {
       setSaveError(e.message || "Error al guardar");
@@ -114,21 +144,10 @@ export default function LoyaltyConfigPage() {
   };
 
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div style={{ maxWidth: 820 }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1
-          style={{
-            fontFamily: F,
-            fontSize: "1.2rem",
-            fontWeight: 700,
-            color: "var(--adm-text)",
-            margin: "0 0 4px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
+        <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
           <CreditCard size={20} color="var(--adm-text3)" /> Fidelidad
         </h1>
         <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
@@ -145,22 +164,9 @@ export default function LoyaltyConfigPage() {
           {/* ── Formulario ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {/* Activar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 16,
-                padding: 14,
-                background: "var(--adm-card)",
-                border: "1px solid var(--adm-card-border)",
-                borderRadius: 12,
-              }}
-            >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <div>
-                <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>
-                  Programa activo
-                </p>
+                <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Programa activo</p>
                 <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
                   Cuando esté activo, tus clientes podrán inscribirse y recibir su tarjeta.
                 </p>
@@ -169,84 +175,126 @@ export default function LoyaltyConfigPage() {
                 type="button"
                 onClick={() => update({ active: !form.active })}
                 aria-pressed={form.active}
-                style={{
-                  position: "relative",
-                  height: 26,
-                  width: 46,
-                  flexShrink: 0,
-                  borderRadius: 999,
-                  border: "none",
-                  cursor: "pointer",
-                  background: form.active ? "#16a34a" : "var(--adm-card-border)",
-                  transition: "background 0.15s",
-                }}
+                style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: form.active ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
               >
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 3,
-                    left: form.active ? 23 : 3,
-                    height: 20,
-                    width: 20,
-                    borderRadius: "50%",
-                    background: "#fff",
-                    transition: "left 0.15s",
-                  }}
-                />
+                <span style={{ position: "absolute", top: 3, left: form.active ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
               </button>
             </div>
 
             {/* Nombre */}
             <div>
               <label style={labelStyle}>Nombre del programa</label>
-              <input
-                type="text"
-                value={form.name}
-                maxLength={80}
-                onChange={(e) => update({ name: e.target.value })}
-                style={inputStyle}
-              />
+              <input type="text" value={form.name} maxLength={80} onChange={(e) => update({ name: e.target.value })} style={inputStyle} />
             </div>
 
-            {/* Sellos requeridos */}
+            {/* Cantidad de sellos */}
             <div>
-              <label style={labelStyle}>Sellos para ganar la recompensa</label>
+              <label style={labelStyle}>Cantidad de sellos de la tarjeta</label>
               <input
                 type="number"
                 min={1}
                 max={50}
-                value={form.stampsRequired}
-                onChange={(e) => update({ stampsRequired: Number(e.target.value) })}
+                value={form.stampGoal}
+                onChange={(e) => update({ stampGoal: Math.max(1, Math.min(50, Number(e.target.value) || 1)) })}
                 style={{ ...inputStyle, width: 120 }}
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
-                Entre 1 y 50 sellos.
+                Cuántos espacios de sello tiene la tarjeta (entre 1 y 50).
               </p>
             </div>
 
-            {/* Recompensa */}
+            {/* Icono del sello */}
             <div>
-              <label style={labelStyle}>Recompensa</label>
-              <input
-                type="text"
-                value={form.rewardText}
-                maxLength={120}
-                placeholder="Ej: Un producto gratis"
-                onChange={(e) => update({ rewardText: e.target.value })}
-                style={inputStyle}
-              />
+              <label style={labelStyle}>Icono del sello</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {STAMP_ICONS.map((icon) => {
+                  const active = form.stampIcon === icon;
+                  return (
+                    <button
+                      key={icon}
+                      type="button"
+                      onClick={() => update({ stampIcon: icon })}
+                      style={{
+                        height: 42,
+                        width: 42,
+                        borderRadius: 10,
+                        fontSize: "1.2rem",
+                        cursor: "pointer",
+                        background: active ? "rgba(244,166,35,0.14)" : "var(--adm-card)",
+                        border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`,
+                      }}
+                    >
+                      {icon}
+                    </button>
+                  );
+                })}
+                <input
+                  type="text"
+                  value={form.stampIcon}
+                  onChange={(e) => update({ stampIcon: [...e.target.value.trim()][0] || "★" })}
+                  title="O escribe tu propio símbolo/emoji"
+                  style={{ ...inputStyle, width: 60, textAlign: "center", fontSize: "1.1rem" }}
+                />
+              </div>
             </div>
 
-            {/* Descripción */}
+            {/* Niveles de recompensa */}
             <div>
-              <label style={labelStyle}>
-                Descripción <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(opcional)</span>
-              </label>
+              <label style={labelStyle}>Recompensas por nivel</label>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "-2px 0 10px" }}>
+                Define qué gana el cliente al llegar a cierto número de sellos. Puedes poner varias (ej: sello 3 y sello {form.stampGoal}).
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {form.rewards.map((tier, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Al sello</span>
+                      <select
+                        value={tier.stamp}
+                        onChange={(e) => updateTier(i, { stamp: Number(e.target.value) })}
+                        style={{ ...inputStyle, width: 64, padding: "8px 6px" }}
+                      >
+                        {Array.from({ length: form.stampGoal }, (_, k) => k + 1).map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <input
+                      type="text"
+                      value={tier.reward}
+                      maxLength={120}
+                      placeholder="Ej: Un café gratis"
+                      onChange={(e) => updateTier(i, { reward: e.target.value })}
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeTier(i)}
+                      title="Quitar nivel"
+                      style={{ height: 38, width: 38, flexShrink: 0, borderRadius: 8, border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.06)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addTier}
+                  style={{ display: "flex", alignItems: "center", gap: 6, alignSelf: "flex-start", padding: "8px 12px", borderRadius: 8, border: "1px dashed var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
+                >
+                  <Plus size={14} /> Agregar recompensa
+                </button>
+              </div>
+            </div>
+
+            {/* Condiciones (pie de tarjeta) */}
+            <div>
+              <label style={labelStyle}>Condiciones <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(se muestran al pie de la tarjeta)</span></label>
               <textarea
                 value={form.description}
-                maxLength={200}
+                maxLength={300}
                 rows={2}
-                placeholder="Ej: Válido de lunes a viernes."
+                placeholder="Ej: Válido de lunes a viernes. No acumulable con otras promociones."
                 onChange={(e) => update({ description: e.target.value })}
                 style={{ ...inputStyle, resize: "none" }}
               />
@@ -256,23 +304,8 @@ export default function LoyaltyConfigPage() {
             <div>
               <label style={labelStyle}>Color de la tarjeta</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <input
-                  type="color"
-                  value={form.cardColorHex}
-                  onChange={(e) => update({ cardColorHex: e.target.value })}
-                  style={{
-                    height: 40,
-                    width: 56,
-                    padding: 2,
-                    cursor: "pointer",
-                    borderRadius: 8,
-                    border: "1px solid var(--adm-card-border)",
-                    background: "var(--adm-card)",
-                  }}
-                />
-                <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>
-                  {form.cardColorHex}
-                </span>
+                <input type="color" value={form.cardColorHex} onChange={(e) => update({ cardColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
+                <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.cardColorHex}</span>
               </div>
             </div>
 
@@ -282,18 +315,7 @@ export default function LoyaltyConfigPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: 8,
-                  border: `1.5px solid ${GOLD}`,
-                  background: GOLD,
-                  color: "#1a1a1a",
-                  fontFamily: F,
-                  fontSize: "0.82rem",
-                  fontWeight: 700,
-                  cursor: saving ? "default" : "pointer",
-                  opacity: saving ? 0.6 : 1,
-                }}
+                style={{ padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? "Guardando…" : "Guardar cambios"}
               </button>
@@ -304,60 +326,56 @@ export default function LoyaltyConfigPage() {
 
           {/* ── Vista previa ── */}
           <div style={{ height: "fit-content" }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Vista previa
-            </p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Vista previa</p>
             <CardPreview
               color={form.cardColorHex}
               restaurantName={restaurant?.name || "Tu restaurante"}
-              stampsRequired={form.stampsRequired}
-              rewardText={form.rewardText}
+              stampGoal={form.stampGoal}
+              stampIcon={form.stampIcon}
+              rewards={form.rewards}
               description={form.description}
             />
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.5 }}>
-              Así se verá aproximadamente en el teléfono del cliente. Ejemplo con 3 sellos.
+              Así se verá aproximadamente en el teléfono del cliente. Ejemplo con algunos sellos.
             </p>
           </div>
         </div>
       )}
 
-      <style>{`@media (max-width: 720px){ .loyalty-grid{ grid-template-columns: 1fr !important; } }`}</style>
+      <style>{`@media (max-width: 760px){ .loyalty-grid{ grid-template-columns: 1fr !important; } }`}</style>
     </div>
   );
 }
 
-function CardPreview({
-  color,
-  restaurantName,
-  stampsRequired,
-  rewardText,
-  description,
-}: {
+function CardPreview({ color, restaurantName, stampGoal, stampIcon, rewards, description }: {
   color: string;
   restaurantName: string;
-  stampsRequired: number;
-  rewardText: string;
+  stampGoal: number;
+  stampIcon: string;
+  rewards: RewardTier[];
   description: string;
 }) {
-  const demoStamps = Math.min(3, stampsRequired);
+  const demoStamps = Math.min(3, stampGoal);
   const textColor = isLight(color) ? "#111111" : "#ffffff";
   const subColor = isLight(color) ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const cols = Math.min(5, Math.max(1, stampGoal));
+  const tierStamps = new Set(rewards.map((r) => r.stamp));
+  const sortedRewards = [...rewards].filter((r) => r.reward.trim()).sort((a, b) => a.stamp - b.stamp);
 
   return (
     <div style={{ borderRadius: 18, padding: 20, background: color, color: textColor, boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-          {restaurantName}
-        </span>
-        <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>
-          Fidelidad
-        </span>
+        <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{restaurantName}</span>
+        <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Fidelidad</span>
       </div>
 
-      <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "24px 0 8px", letterSpacing: "0.1em" }}>SELLOS</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
-        {Array.from({ length: Math.max(stampsRequired, 1) }).map((_, i) => {
+      <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "22px 0 8px", letterSpacing: "0.1em" }}>
+        SELLOS · {demoStamps}/{stampGoal}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 7 }}>
+        {Array.from({ length: Math.max(stampGoal, 1) }).map((_, i) => {
           const filled = i < demoStamps;
+          const isTier = tierStamps.has(i + 1);
           return (
             <div
               key={i}
@@ -367,25 +385,38 @@ function CardPreview({
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: "50%",
-                fontSize: "0.8rem",
-                border: `1.5px solid ${textColor}`,
+                fontSize: "0.85rem",
+                border: `1.5px solid ${isTier ? GOLD : textColor}`,
                 background: filled ? textColor : "transparent",
                 color: filled ? color : textColor,
-                opacity: filled ? 1 : 0.45,
+                opacity: filled ? 1 : isTier ? 0.9 : 0.4,
               }}
+              title={isTier ? "Nivel con recompensa" : undefined}
             >
-              {filled ? "★" : ""}
+              {filled ? stampIcon : isTier ? "🎁" : ""}
             </div>
           );
         })}
       </div>
 
-      <div style={{ marginTop: 22, borderTop: `1px solid ${subColor}`, paddingTop: 12 }}>
-        <div style={{ fontFamily: F, fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>
-          Recompensa
-        </div>
-        <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, marginTop: 2 }}>{rewardText || "—"}</div>
-        {description && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: subColor, marginTop: 4 }}>{description}</div>}
+      {/* Condiciones al pie */}
+      <div style={{ marginTop: 20, borderTop: `1px solid ${subColor}`, paddingTop: 12 }}>
+        <div style={{ fontFamily: F, fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Recompensas</div>
+        {sortedRewards.length === 0 ? (
+          <div style={{ fontFamily: FB, fontSize: "0.72rem", color: subColor, marginTop: 4 }}>Aún sin recompensas configuradas.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 5 }}>
+            {sortedRewards.map((r, i) => (
+              <div key={i} style={{ fontFamily: FB, fontSize: "0.72rem", display: "flex", gap: 6 }}>
+                <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{r.stamp} {stampIcon}</span>
+                <span style={{ color: subColor }}>→ {r.reward}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {description && (
+          <div style={{ fontFamily: FB, fontSize: "0.64rem", color: subColor, marginTop: 8, lineHeight: 1.45 }}>{description}</div>
+        )}
       </div>
     </div>
   );
