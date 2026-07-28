@@ -6,6 +6,7 @@ interface PanelRestaurant {
   id: string;
   name: string;
   slug: string;
+  logoUrl?: string | null;
   qrToken?: string | null;
   plan?: string;
   hasToteat?: boolean;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { CreditCard, Plus, Trash2 } from "lucide-react";
+import { CreditCard, Plus, Trash2, ChevronDown } from "lucide-react";
 import LoyaltyNav from "./LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -71,6 +71,7 @@ export default function LoyaltyConfigPage() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [dishPhotos, setDishPhotos] = useState<{ name: string; url: string }[]>([]);
+  const [showPhotos, setShowPhotos] = useState(false);
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
 
@@ -334,7 +335,7 @@ export default function LoyaltyConfigPage() {
               </div>
             </div>
 
-            {/* Imagen de fondo (plato de la carta) */}
+            {/* Imagen de fondo (plato de la carta) — desplegable */}
             <div>
               <label style={labelStyle}>Imagen de fondo <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(un plato de tu carta, opcional)</span></label>
               {dishPhotos.length === 0 ? (
@@ -342,50 +343,86 @@ export default function LoyaltyConfigPage() {
                   No encontramos fotos de platos en tu carta para usar de fondo.
                 </p>
               ) : (
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {/* Opción: sin imagen */}
+                <div>
+                  {/* Botón que abre/cierra el desplegable, con miniatura de lo elegido */}
                   <button
                     type="button"
-                    onClick={() => update({ bgImageUrl: "" })}
-                    title="Sin imagen de fondo"
+                    onClick={() => setShowPhotos((s) => !s)}
                     style={{
-                      height: 56,
-                      width: 56,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: 8,
                       borderRadius: 10,
                       cursor: "pointer",
-                      background: "var(--adm-hover)",
-                      border: `2px solid ${!form.bgImageUrl ? GOLD : "var(--adm-card-border)"}`,
-                      color: "var(--adm-text3)",
+                      background: "var(--adm-card)",
+                      border: "1px solid var(--adm-card-border)",
+                      color: "var(--adm-text2)",
                       fontFamily: F,
-                      fontSize: "0.62rem",
+                      fontSize: "0.82rem",
                       fontWeight: 600,
                     }}
                   >
-                    Ninguna
+                    <span
+                      style={{
+                        height: 38,
+                        width: 38,
+                        borderRadius: 8,
+                        flexShrink: 0,
+                        background: form.bgImageUrl ? `center/cover url(${form.bgImageUrl})` : "var(--adm-hover)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.58rem",
+                        color: "var(--adm-text3)",
+                      }}
+                    >
+                      {!form.bgImageUrl && "Sin"}
+                    </span>
+                    <span style={{ flex: 1, textAlign: "left" }}>
+                      {form.bgImageUrl ? "Imagen seleccionada" : "Elegir una foto de fondo"}
+                    </span>
+                    <ChevronDown size={16} style={{ transform: showPhotos ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
                   </button>
-                  {dishPhotos.map((ph) => {
-                    const active = form.bgImageUrl === ph.url;
-                    return (
+
+                  {showPhotos && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        maxHeight: 220,
+                        overflowY: "auto",
+                        padding: 10,
+                        borderRadius: 10,
+                        border: "1px solid var(--adm-card-border)",
+                        background: "var(--adm-card)",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
+                        gap: 8,
+                      }}
+                    >
                       <button
-                        key={ph.url}
                         type="button"
-                        onClick={() => update({ bgImageUrl: ph.url })}
-                        title={ph.name}
-                        style={{
-                          height: 56,
-                          width: 56,
-                          borderRadius: 10,
-                          cursor: "pointer",
-                          padding: 0,
-                          overflow: "hidden",
-                          border: `2px solid ${active ? GOLD : "var(--adm-card-border)"}`,
-                          backgroundImage: `url(${ph.url})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
-                    );
-                  })}
+                        onClick={() => update({ bgImageUrl: "" })}
+                        title="Sin imagen de fondo"
+                        style={{ aspectRatio: "1", borderRadius: 8, cursor: "pointer", background: "var(--adm-hover)", border: `2px solid ${!form.bgImageUrl ? GOLD : "var(--adm-card-border)"}`, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.6rem", fontWeight: 600 }}
+                      >
+                        Ninguna
+                      </button>
+                      {dishPhotos.map((ph) => {
+                        const active = form.bgImageUrl === ph.url;
+                        return (
+                          <button
+                            key={ph.url}
+                            type="button"
+                            onClick={() => update({ bgImageUrl: ph.url })}
+                            title={ph.name}
+                            style={{ aspectRatio: "1", borderRadius: 8, cursor: "pointer", padding: 0, overflow: "hidden", border: `2px solid ${active ? GOLD : "var(--adm-card-border)"}`, backgroundImage: `url(${ph.url})`, backgroundSize: "cover", backgroundPosition: "center" }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -412,7 +449,9 @@ export default function LoyaltyConfigPage() {
               color={form.cardColorHex}
               stampColor={form.stampColorHex}
               bgImage={form.bgImageUrl}
+              logoUrl={restaurant?.logoUrl || ""}
               restaurantName={restaurant?.name || "Tu restaurante"}
+              programName={form.name}
               stampGoal={form.stampGoal}
               stampIcon={form.stampIcon}
               rewards={form.rewards}
@@ -430,11 +469,13 @@ export default function LoyaltyConfigPage() {
   );
 }
 
-function CardPreview({ color, stampColor, bgImage, restaurantName, stampGoal, stampIcon, rewards, description }: {
+function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, programName, stampGoal, stampIcon, rewards, description }: {
   color: string;
   stampColor: string;
   bgImage: string;
+  logoUrl: string;
   restaurantName: string;
+  programName: string;
   stampGoal: number;
   stampIcon: string;
   rewards: RewardTier[];
@@ -460,9 +501,22 @@ function CardPreview({ color, stampColor, bgImage, restaurantName, stampGoal, st
       )}
 
       <div style={{ position: "relative", padding: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", textShadow: bgImage ? "0 1px 3px rgba(0,0,0,0.5)" : undefined }}>{restaurantName}</span>
-          <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Fidelidad</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt=""
+                style={{ height: 26, width: 26, borderRadius: 6, objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.15)" }}
+              />
+            )}
+            <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", textShadow: bgImage ? "0 1px 3px rgba(0,0,0,0.5)" : undefined, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {restaurantName}
+            </span>
+          </div>
+          <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: subColor, textAlign: "right", flexShrink: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {programName}
+          </span>
         </div>
 
         <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "22px 0 10px", letterSpacing: "0.1em" }}>

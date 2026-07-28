@@ -16,15 +16,20 @@ export async function GET(req: NextRequest) {
     const dishes = await prisma.dish.findMany({
       where: { restaurantId, isPhotoReferential: false, photos: { isEmpty: false } },
       select: { name: true, photos: true },
-      take: 120,
+      orderBy: { name: "asc" },
     });
 
-    // Una entrada por foto (la primera de cada plato), con el nombre del plato.
+    // Todas las fotos de todos los platos (evitando duplicados por URL).
     const photos: { name: string; url: string }[] = [];
+    const seen = new Set<string>();
     for (const d of dishes) {
-      const url = d.photos.find((p) => typeof p === "string" && p.startsWith("http"));
-      if (url) photos.push({ name: d.name, url });
-      if (photos.length >= 60) break;
+      for (const url of d.photos) {
+        if (typeof url !== "string" || !url.startsWith("http") || seen.has(url)) continue;
+        seen.add(url);
+        photos.push({ name: d.name, url });
+        if (photos.length >= 300) break;
+      }
+      if (photos.length >= 300) break;
     }
 
     return NextResponse.json({ photos });
