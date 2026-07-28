@@ -154,11 +154,22 @@ interface MemberLike {
   stamps: number;
 }
 
+function nextRewardText(member: MemberLike, program: ProgramLike): string {
+  const rewards = parseRewards(program.rewards);
+  const next = rewards.find((r) => r.stamp > member.stamps);
+  if (next) return `${next.reward} · a los ${next.stamp} ${program.stampIcon}`;
+  return rewards.length ? "¡Todas las recompensas alcanzadas!" : "—";
+}
+
 function pointsBody(member: MemberLike, program: ProgramLike) {
   return {
     loyaltyPoints: {
       label: "Sellos",
       balance: { string: `${member.stamps}/${program.stampGoal}` },
+    },
+    secondaryLoyaltyPoints: {
+      label: "Próxima recompensa",
+      balance: { string: nextRewardText(member, program) },
     },
   };
 }
