@@ -162,15 +162,13 @@ interface MemberLike {
  */
 function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
   const rewards = parseRewards(program.rewards);
-  const redeemed = member.redeemedTiers || [];
-  const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
-  if (available.length) {
-    // Solo el último premio alcanzado (los anteriores se asume ya canjeados)
-    return { label: "🎁 ¡Puedes canjear!", value: available[available.length - 1].reward };
-  }
+  // "Puedes canjear" solo cuando está justo en un nivel de recompensa (cumplió el requisito)
+  const atTier = rewards.find((r) => r.stamp === member.stamps);
+  if (atTier) return { label: "🎁 ¡Puedes canjear!", value: atTier.reward };
   const next = rewards.find((r) => r.stamp > member.stamps);
   if (next) {
-    return { label: "Próxima recompensa", value: `${next.reward} · a los ${next.stamp} ${program.stampIcon}` };
+    const faltan = next.stamp - member.stamps;
+    return { label: `Te falta${faltan > 1 ? "n" : ""} ${faltan} sello${faltan > 1 ? "s" : ""} para`, value: next.reward };
   }
   return { label: "Recompensas", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
 }

@@ -119,14 +119,13 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
   const rewards = parseRewards(program.rewards);
-  const redeemed = member.redeemedTiers || [];
-  const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
-  // Solo el último premio alcanzado (los anteriores se asume ya canjeados)
-  if (available.length) return { label: "🎁 PUEDES CANJEAR", value: available[available.length - 1].reward };
+  // "Puedes canjear" solo cuando está justo en un nivel de recompensa
+  const atTier = rewards.find((r) => r.stamp === member.stamps);
+  if (atTier) return { label: "🎁 PUEDES CANJEAR", value: atTier.reward };
   const next = rewards.find((r) => r.stamp > member.stamps);
   if (next) {
     const faltan = next.stamp - member.stamps;
-    return { label: `PRÓXIMA (faltan ${faltan})`, value: next.reward };
+    return { label: `TE FALTA${faltan > 1 ? "N" : ""} ${faltan} SELLO${faltan > 1 ? "S" : ""}`, value: next.reward };
   }
   return { label: "RECOMPENSAS", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
 }
