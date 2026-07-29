@@ -93,14 +93,84 @@ interface MemberLike {
   redeemedTiers?: number[];
 }
 
-function rewardStatus(member: MemberLike, program: ProgramLike): string {
+function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
   const rewards = parseRewards(program.rewards);
   const redeemed = member.redeemedTiers || [];
   const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
-  if (available.length) return `🎁 ${available.map((r) => r.reward).join(" · ")}`;
+  if (available.length) return { label: "🎁 PUEDES CANJEAR", value: available.map((r) => r.reward).join(" · ") };
   const next = rewards.find((r) => r.stamp > member.stamps);
-  if (next) return `${next.reward} · a los ${next.stamp} ${program.stampIcon}`;
-  return rewards.length ? "¡Todas alcanzadas!" : "—";
+  if (next) return { label: "PRÓXIMA RECOMPENSA", value: `${next.reward} · a los ${next.stamp} ${program.stampIcon}` };
+  return { label: "RECOMPENSAS", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
+}
+
+// ── Strip image: la grilla de sellos sobre la foto/color (lo que hace lucir la tarjeta) ──
+async function stripImage(program: ProgramLike, member: MemberLike, scale: number): Promise<Buffer> {
+  const W = 375 * scale;
+  const H = 123 * scale;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext("2d");
+
+  // Fondo: foto del plato (cover) + overlay oscuro, o el color de la tarjeta
+  if (program.bgImageUrl) {
+    try {
+      const res = await fetch(program.bgImageUrl);
+      const img = await loadImage(Buffer.from(await res.arrayBuffer()));
+      const s = Math.max(W / img.width, H / img.height);
+      const w = img.width * s;
+      const h = img.height * s;
+      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      ctx.fillStyle = "rgba(0,0,0,0.62)";
+      ctx.fillRect(0, 0, W, H);
+    } catch {
+      ctx.fillStyle = program.cardColorHex;
+      ctx.fillRect(0, 0, W, H);
+    }
+  } else {
+    ctx.fillStyle = program.cardColorHex;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Grilla de sellos
+  const goal = Math.max(1, program.stampGoal);
+  const cols = goal <= 5 ? goal : Math.ceil(goal / 2);
+  const rows = Math.ceil(goal / cols);
+  const pad = 12 * scale;
+  const cellW = (W - 2 * pad) / cols;
+  const cellH = (H - 2 * pad) / rows;
+  const r = (Math.min(cellW, cellH) / 2) * 0.72;
+
+  for (let i = 0; i < goal; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = pad + cellW * (col + 0.5);
+    const cy = pad + cellH * (row + 0.5);
+    const filled = i < member.stamps;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    if (filled) {
+      // Sello puesto: círculo relleno + una marca ✓ (glifo básico, se ve en todos lados)
+      ctx.fillStyle = program.stampColorHex;
+      ctx.fill();
+      ctx.fillStyle = isLight(program.stampColorHex) ? "#111" : "#fff";
+      ctx.font = `bold ${r * 1.1}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("✓", cx, cy + r * 0.08);
+    } else {
+      // Pendiente: contorno + número del sello
+      ctx.lineWidth = 2 * scale;
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.font = `${r * 0.85}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(i + 1), cx, cy + r * 0.05);
+    }
+  }
+
+  return canvas.toBuffer("image/png");
 }
 
 // ── Imágenes: normaliza a PNG del tamaño pedido (contain sobre el color de la tarjeta) ──
@@ -159,6 +229,7 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
   const rewards = parseRewards(program.rewards);
   const bg = program.cardColorHex;
   const logoSrc = program.logoUrl || restaurantLogo || null;
+  const status = rewardStatus(member, program);
 
   const pass = {
     formatVersion: 1,
@@ -174,7 +245,7 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     barcodes: [{ format: "PKBarcodeFormatQR", message: member.id, messageEncoding: "iso-8859-1" }],
     storeCard: {
       headerFields: [{ key: "sellos", label: "SELLOS", value: `${member.stamps}/${program.stampGoal}` }],
-      secondaryFields: [{ key: "next", label: "PRÓXIMA RECOMPENSA", value: rewardStatus(member, program) }],
+      secondaryFields: [{ key: "next", label: status.label, value: status.value }],
       auxiliaryFields: [{ key: "member", label: "MIEMBRO", value: member.name || "Cliente" }],
       backFields: [
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—" },
@@ -190,6 +261,9 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     "icon@2x.png": await logoPng(logoSrc, 116, bg),
     "logo.png": await logoPng(logoSrc, 50, bg),
     "logo@2x.png": await logoPng(logoSrc, 100, bg),
+    "strip.png": await stripImage(program, member, 1),
+    "strip@2x.png": await stripImage(program, member, 2),
+    "strip@3x.png": await stripImage(program, member, 3),
   };
 
   // manifest.json (SHA1 de cada archivo)
