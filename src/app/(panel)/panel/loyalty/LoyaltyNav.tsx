@@ -8,6 +8,7 @@ const F = "var(--font-display)";
 const TABS = [
   { href: "/panel/loyalty", label: "Configuración" },
   { href: "/panel/loyalty/miembros", label: "Miembros" },
+  { href: "/panel/loyalty/escanear", label: "Escanear" },
 ];
 
 export default function LoyaltyNav() {
