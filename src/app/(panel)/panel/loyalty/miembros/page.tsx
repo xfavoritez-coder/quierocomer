@@ -131,17 +131,6 @@ export default function LoyaltyMembersPage() {
     }
   };
 
-  // Apple Wallet: enlace normal en la misma pestaña. iOS Safari muestra la hoja
-  // "Agregar a Wallet" encima del panel y vuelve aquí (sin pestaña en negro).
-  const appleWallet = (member: Member) => {
-    const a = document.createElement("a");
-    a.href = `/api/loyalty/members/${member.id}/wallet/apple`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    toast("Abriendo Apple Wallet…");
-  };
-
   return (
     <div style={{ maxWidth: 760 }}>
       {/* Header */}
@@ -201,43 +190,44 @@ export default function LoyaltyMembersPage() {
             const busy = busyId === m.id;
             return (
               <li key={m.id} style={{ padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {m.name || "Sin nombre"}
-                      {m.completedCards > 0 && (
-                        <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 700, marginLeft: 8, padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.12)", color: GOLD }}>
-                          {m.completedCards} completada{m.completedCards > 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </p>
-                    <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>
-                      {[m.email, m.phone].filter(Boolean).join(" · ") || "Sin contacto"}
-                    </p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                      <div style={{ height: 6, width: 110, borderRadius: 999, overflow: "hidden", background: "var(--adm-hover)" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, background: cardFull ? "#16a34a" : GOLD, borderRadius: 999, transition: "width 0.2s" }} />
-                      </div>
-                      <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                        {m.stamps}/{stampGoal} {stampIcon}
-                      </span>
-                    </div>
-                  </div>
+                {/* Info del cliente */}
+                <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 600, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{m.name || "Sin nombre"}</span>
+                  {m.completedCards > 0 && (
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.12)", color: GOLD }}>
+                      {m.completedCards} completada{m.completedCards > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {[m.email, m.phone].filter(Boolean).join(" · ") || "Sin contacto"}
+                </p>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    <button type="button" disabled={busy} onClick={() => appleWallet(m)} title="Tarjeta Apple Wallet (iPhone)" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Apple size={16} /></button>
-                    <button type="button" disabled={busy} onClick={() => googleWallet(m)} title="Tarjeta Google Wallet (Android)" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Wallet size={16} /></button>
-                    <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.1rem", cursor: "pointer", opacity: busy ? 0.4 : 1 }}>−</button>
-                    {cardFull ? (
-                      <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
-                        <RotateCcw size={13} /> Reiniciar
-                      </button>
-                    ) : (
-                      <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: 1 })} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "var(--adm-text)", color: "var(--adm-bg)", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
-                        +1 sello
-                      </button>
-                    )}
+                {/* Progreso */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+                  <div style={{ height: 6, flex: 1, maxWidth: 160, borderRadius: 999, overflow: "hidden", background: "var(--adm-hover)" }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: cardFull ? "#16a34a" : GOLD, borderRadius: 999, transition: "width 0.2s" }} />
                   </div>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                    {m.stamps}/{stampGoal} {stampIcon}
+                  </span>
+                </div>
+
+                {/* Acciones (su propia línea, con espacio) */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                  <a href={`/api/loyalty/members/${m.id}/wallet/apple`} title="Tarjeta Apple Wallet (iPhone)" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Apple size={16} /></a>
+                  <button type="button" disabled={busy} onClick={() => googleWallet(m)} title="Tarjeta Google Wallet (Android)" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Wallet size={16} /></button>
+                  <span style={{ width: 1, height: 22, background: "var(--adm-card-border)", margin: "0 2px" }} />
+                  <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.1rem", cursor: "pointer", opacity: busy ? 0.4 : 1 }}>−</button>
+                  {cardFull ? (
+                    <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
+                      <RotateCcw size={13} /> Reiniciar
+                    </button>
+                  ) : (
+                    <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: 1 })} style={{ padding: "9px 18px", borderRadius: 8, border: "none", background: "var(--adm-text)", color: "var(--adm-bg)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
+                      +1 sello
+                    </button>
+                  )}
                 </div>
 
                 {/* Recompensas disponibles para canjear */}

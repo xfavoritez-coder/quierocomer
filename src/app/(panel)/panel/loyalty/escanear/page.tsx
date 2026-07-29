@@ -77,7 +77,7 @@ export default function LoyaltyScanPage() {
   const tick = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA && !busyRef.current) {
+    if (video && canvas && video.videoWidth > 0 && !busyRef.current) {
       const w = video.videoWidth;
       const h = video.videoHeight;
       canvas.width = w;
@@ -119,11 +119,18 @@ export default function LoyaltyScanPage() {
       }
     }
     streamRef.current = stream;
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.setAttribute("playsinline", "true");
+    const v = videoRef.current;
+    if (v) {
+      v.srcObject = stream;
+      v.setAttribute("playsinline", "true");
+      // Esperar a que el video tenga dimensiones antes de escanear (clave en Android)
+      await new Promise<void>((res) => {
+        if (v.videoWidth > 0) return res();
+        v.onloadedmetadata = () => res();
+        setTimeout(res, 2000);
+      });
       try {
-        await videoRef.current.play();
+        await v.play();
       } catch {
         /* algunos navegadores reproducen solo, ignoramos */
       }
@@ -230,7 +237,10 @@ export default function LoyaltyScanPage() {
           </div>
 
           {camError && (
-            <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#ef4444", textAlign: "center", marginTop: 12 }}>{camError}</p>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)" }}>
+              <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#ef4444", margin: 0, lineHeight: 1.4 }}>{camError}</p>
+            </div>
           )}
 
           {/* Botón */}
