@@ -75,6 +75,26 @@ function isLight(hex: string): boolean {
   return lum > 0.6;
 }
 
+// URL del PNG del emoji (Twemoji) para dibujarlo en la imagen — funciona igual en Linux/Vercel.
+function twemojiUrl(icon: string): string | null {
+  const cps = [...icon].map((c) => c.codePointAt(0)!).filter((cp) => cp !== 0xfe0f && cp !== 0x200d);
+  if (!cps.length) return null;
+  const name = cps.map((cp) => cp.toString(16)).join("-");
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${name}.png`;
+}
+
+async function loadEmoji(icon: string) {
+  const url = twemojiUrl(icon);
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await loadImage(Buffer.from(await res.arrayBuffer()));
+  } catch {
+    return null;
+  }
+}
+
 interface ProgramLike {
   id: string;
   name: string;
@@ -140,6 +160,10 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
   const cellH = (H - 2 * pad) / rows;
   const r = (Math.min(cellW, cellH) / 2) * 0.72;
 
+  // Emoji del sello (una sola descarga, reutilizada en todos los círculos)
+  const emoji = await loadEmoji(program.stampIcon || "");
+  const glyphSize = r * 1.35;
+
   for (let i = 0; i < goal; i++) {
     const col = i % cols;
     const row = Math.floor(i / cols);
@@ -150,25 +174,26 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     if (filled) {
-      // Sello puesto: círculo relleno + una marca ✓ (glifo básico, se ve en todos lados)
       ctx.fillStyle = program.stampColorHex;
       ctx.fill();
-      ctx.fillStyle = isLight(program.stampColorHex) ? "#111" : "#fff";
-      ctx.font = `bold ${r * 1.1}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("✓", cx, cy + r * 0.08);
     } else {
-      // Pendiente: contorno + número del sello
       ctx.lineWidth = 2 * scale;
       ctx.strokeStyle = "rgba(255,255,255,0.8)";
       ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.65)";
-      ctx.font = `${r * 0.85}px sans-serif`;
+    }
+
+    // Icono dentro del círculo: emoji (Twemoji) si existe, si no el símbolo/✓
+    ctx.globalAlpha = filled ? 1 : 0.5;
+    if (emoji) {
+      ctx.drawImage(emoji, cx - glyphSize / 2, cy - glyphSize / 2, glyphSize, glyphSize);
+    } else {
+      ctx.fillStyle = filled ? (isLight(program.stampColorHex) ? "#111" : "#fff") : "rgba(255,255,255,0.9)";
+      ctx.font = `${r * 1.05}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(i + 1), cx, cy + r * 0.05);
+      ctx.fillText(program.stampIcon || "★", cx, cy + r * 0.05);
     }
+    ctx.globalAlpha = 1;
   }
 
   return canvas.toBuffer("image/png");
