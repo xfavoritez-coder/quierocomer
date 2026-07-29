@@ -202,13 +202,13 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.fill();
     } else {
       ctx.lineWidth = 2 * scale;
-      // Las casillas con recompensa se resaltan en dorado
-      ctx.strokeStyle = isTier ? "#F4A623" : "rgba(255,255,255,0.8)";
+      // Casillas con recompensa en dorado tenue; las demás casi imperceptibles
+      ctx.strokeStyle = isTier ? "rgba(244,166,35,0.55)" : "rgba(255,255,255,0.18)";
       ctx.stroke();
     }
 
-    // Icono dentro del círculo (los vacíos, más opacos que antes para que se vean mejor)
-    ctx.globalAlpha = filled ? 1 : 0.8;
+    // Icono dentro del círculo (los vacíos casi transparentes, apenas se distinguen)
+    ctx.globalAlpha = filled ? 1 : 0.13;
     if (emoji) {
       ctx.drawImage(emoji, cx - glyphSize / 2, cy - glyphSize / 2, glyphSize, glyphSize);
     } else {

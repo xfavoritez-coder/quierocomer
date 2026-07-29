@@ -613,7 +613,17 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
                   borderRadius: "50%",
                   fontSize: "2.2rem",
                   lineHeight: 1,
-                  border: `1.5px solid ${isTier ? GOLD : textColor}`,
+                  border: `1.5px solid ${
+                    filled
+                      ? isTier
+                        ? GOLD
+                        : textColor
+                      : isTier
+                        ? "rgba(244,166,35,0.55)"
+                        : isLight(color)
+                          ? "rgba(0,0,0,0.18)"
+                          : "rgba(255,255,255,0.18)"
+                  }`,
                   background: filled ? stampColor : "transparent",
                   color: filled ? stampGlyphColor : textColor,
                 }}
@@ -621,9 +631,9 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
               >
                 {logoMode ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.72 }} />
+                  <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.13 }} />
                 ) : (
-                  <span style={{ opacity: filled ? 1 : 0.72 }}>{stampIcon}</span>
+                  <span style={{ opacity: filled ? 1 : 0.13 }}>{stampIcon}</span>
                 )}
               </div>
             );
