@@ -112,7 +112,10 @@ interface MemberLike {
   name: string | null;
   stamps: number;
   redeemedTiers?: number[];
+  authToken?: string;
 }
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
   const rewards = parseRewards(program.rewards);
@@ -269,6 +272,11 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     backgroundColor: hexToRgb(bg),
     labelColor: isLight(bg) ? "rgb(80,80,80)" : "rgb(220,220,220)",
     barcodes: [{ format: "PKBarcodeFormatQR", message: member.id, messageEncoding: "iso-8859-1" }],
+    // Servicio de actualización (APNs) — permite que el pase se refresque solo
+    ...(member.authToken && {
+      webServiceURL: `${BASE_URL}/api/loyalty/wallet/apple`,
+      authenticationToken: member.authToken,
+    }),
     storeCard: {
       headerFields: [{ key: "sellos", label: "SELLOS", value: `${member.stamps}/${program.stampGoal}` }],
       secondaryFields: [{ key: "next", label: status.label, value: status.value }],

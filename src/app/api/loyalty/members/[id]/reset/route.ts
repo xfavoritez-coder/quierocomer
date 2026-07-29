@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, authErrorResponse } from "@/lib/adminAuth";
 import { getMemberForOwner } from "@/lib/loyalty";
 import { isGoogleWalletConfigured, updateGooglePoints } from "@/lib/wallet/google";
+import { notifyAppleDevices } from "@/lib/wallet/apns";
 
 // POST /api/loyalty/members/:id/reset
 // Reinicia la tarjeta del cliente: sellos a 0, niveles canjeados a vacío,
@@ -49,6 +50,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         console.error("[Loyalty reset] fallo al sincronizar Google Wallet:", err);
       }
     }
+
+    await notifyAppleDevices(id);
 
     return NextResponse.json({ member: updated });
   } catch (e: any) {

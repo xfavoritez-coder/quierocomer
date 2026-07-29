@@ -2401,3 +2401,16 @@ enum LoyaltyTxType {
   REWARD_EARN // se completó la tarjeta → recompensa ganada
   REWARD_REDEEM // el cliente canjeó la recompensa
 }
+
+// Dispositivos iOS registrados para recibir actualizaciones del pase (PassKit Web Service).
+model LoyaltyDevice {
+  id                      String   @id @default(cuid())
+  deviceLibraryIdentifier String
+  pushToken               String
+  passTypeIdentifier      String
+  serialNumber            String // = LoyaltyMember.id
+  createdAt               DateTime @default(now())
+
+  @@unique([deviceLibraryIdentifier, serialNumber])
+  @@index([serialNumber])
+}

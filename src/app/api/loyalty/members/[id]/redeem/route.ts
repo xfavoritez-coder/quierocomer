@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, authErrorResponse } from "@/lib/adminAuth";
 import { getMemberForOwner, parseRewards } from "@/lib/loyalty";
+import { isGoogleWalletConfigured, updateGooglePoints } from "@/lib/wallet/google";
+import { notifyAppleDevices } from "@/lib/wallet/apns";
 
 // POST /api/loyalty/members/:id/redeem   body: { stamp: number }
 // Canjea la recompensa de un nivel ya ganado (stamp <= sellos actuales) y no canjeado.
@@ -46,6 +48,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         },
       });
     });
+
+    // Refresca la tarjeta en ambos wallets (best-effort)
+    if (member.googleObjectId && isGoogleWalletConfigured()) {
+      try {
+        await updateGooglePoints({ id: updated.id, name: updated.name, stamps: updated.stamps, redeemedTiers: updated.redeemedTiers }, member.program);
+      } catch (err) {
+        console.error("[Loyalty redeem] fallo al sincronizar Google Wallet:", err);
+      }
+    }
+    await notifyAppleDevices(id);
 
     return NextResponse.json({ member: updated });
   } catch (e: any) {
