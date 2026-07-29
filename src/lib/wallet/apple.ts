@@ -207,8 +207,8 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.stroke();
     }
 
-    // Icono dentro del círculo (los vacíos casi transparentes, apenas se distinguen)
-    ctx.globalAlpha = filled ? 1 : 0.13;
+    // Icono dentro del círculo (los vacíos muy tenues)
+    ctx.globalAlpha = filled ? 1 : 0.23;
     if (emoji) {
       ctx.drawImage(emoji, cx - glyphSize / 2, cy - glyphSize / 2, glyphSize, glyphSize);
     } else {

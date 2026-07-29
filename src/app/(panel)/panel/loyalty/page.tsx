@@ -631,9 +631,9 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
               >
                 {logoMode ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.13 }} />
+                  <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.23 }} />
                 ) : (
-                  <span style={{ opacity: filled ? 1 : 0.13 }}>{stampIcon}</span>
+                  <span style={{ opacity: filled ? 1 : 0.23 }}>{stampIcon}</span>
                 )}
               </div>
             );
