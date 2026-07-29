@@ -9,10 +9,25 @@ import {
 } from "@/lib/wallet/google";
 import { isAppleWalletConfigured } from "@/lib/wallet/apple";
 
-export const metadata: Metadata = {
-  title: "Tu tarjeta de fidelidad",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const member = await prisma.loyaltyMember.findUnique({ where: { id }, select: { restaurantId: true } });
+  const restaurant = member
+    ? await prisma.restaurant.findUnique({ where: { id: member.restaurantId }, select: { name: true, logoUrl: true } })
+    : null;
+  const name = restaurant?.name || "tu restaurante";
+  const title = `Tarjeta de fidelidad · ${restaurant?.name || "Fidelidad"}`;
+  return {
+    title,
+    robots: { index: false, follow: false },
+    openGraph: {
+      title,
+      description: `Agrega tu tarjeta de fidelidad de ${name} a tu teléfono y junta sellos.`,
+      siteName: restaurant?.name || "QuieroComer",
+      ...(restaurant?.logoUrl && { images: [{ url: restaurant.logoUrl }] }),
+    },
+  };
+}
 
 export default async function PasePage({
   params,

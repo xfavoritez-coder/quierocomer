@@ -3,10 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { parseRewards } from "@/lib/loyalty";
 import EnrollClient from "./EnrollClient";
 
-export const metadata: Metadata = {
-  title: "Únete al programa de fidelidad",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const restaurant = await prisma.restaurant.findUnique({ where: { slug }, select: { name: true, logoUrl: true } });
+  const name = restaurant?.name || "tu restaurante";
+  const title = `Programa de fidelidad · ${restaurant?.name || "Fidelidad"}`;
+  return {
+    title,
+    robots: { index: false, follow: false },
+    openGraph: {
+      title,
+      description: `Únete al programa de fidelidad de ${name}: junta sellos y gana recompensas.`,
+      siteName: restaurant?.name || "QuieroComer",
+      ...(restaurant?.logoUrl && { images: [{ url: restaurant.logoUrl }] }),
+    },
+  };
+}
 
 export default async function FidelidadPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

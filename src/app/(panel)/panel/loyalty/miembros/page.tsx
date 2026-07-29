@@ -41,7 +41,8 @@ interface Member {
 }
 
 export default function LoyaltyMembersPage() {
-  const { selectedRestaurantId, loading } = usePanelSession();
+  const { restaurants, selectedRestaurantId, loading } = usePanelSession();
+  const restaurantName = restaurants.find((r) => r.id === selectedRestaurantId)?.name || "";
 
   const [members, setMembers] = useState<Member[]>([]);
   const [stampGoal, setStampGoal] = useState(8);
@@ -142,7 +143,11 @@ export default function LoyaltyMembersPage() {
       const shared = typeof navigator !== "undefined" && (navigator as any).share;
       if (shared) {
         try {
-          await (navigator as any).share({ title: "Tu tarjeta de fidelidad", url: d.url });
+          await (navigator as any).share({
+            title: restaurantName ? `Tarjeta de fidelidad · ${restaurantName}` : "Tu tarjeta de fidelidad",
+            text: restaurantName ? `Agrega tu tarjeta de fidelidad de ${restaurantName} a tu teléfono` : undefined,
+            url: d.url,
+          });
         } catch {
           /* el usuario canceló */
         }
