@@ -157,25 +157,29 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Grilla de sellos
+  // Grilla de sellos — con márgenes generosos para que "respire"
   const goal = Math.max(1, program.stampGoal);
   const cols = goal <= 5 ? goal : Math.ceil(goal / 2);
   const rows = Math.ceil(goal / cols);
-  const pad = 12 * scale;
-  const cellW = (W - 2 * pad) / cols;
-  const cellH = (H - 2 * pad) / rows;
-  const r = (Math.min(cellW, cellH) / 2) * 0.72;
+  const padX = 26 * scale;
+  const padY = 18 * scale;
+  const cellW = (W - 2 * padX) / cols;
+  const cellH = (H - 2 * padY) / rows;
+  const r = (Math.min(cellW, cellH) / 2) * 0.66;
 
-  // Emoji del sello (una sola descarga, reutilizada en todos los círculos)
+  // Emojis (una sola descarga cada uno)
   const emoji = await loadEmoji(program.stampIcon || "");
+  const gift = await loadEmoji("🎁");
   const glyphSize = r * 1.35;
+  const tierStamps = new Set(parseRewards(program.rewards).map((t) => t.stamp));
 
   for (let i = 0; i < goal; i++) {
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const cx = pad + cellW * (col + 0.5);
-    const cy = pad + cellH * (row + 0.5);
+    const cx = padX + cellW * (col + 0.5);
+    const cy = padY + cellH * (row + 0.5);
     const filled = i < member.stamps;
+    const isTier = tierStamps.has(i + 1);
 
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -184,11 +188,12 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.fill();
     } else {
       ctx.lineWidth = 2 * scale;
-      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      // Las casillas con recompensa se resaltan en dorado
+      ctx.strokeStyle = isTier ? "#F4A623" : "rgba(255,255,255,0.8)";
       ctx.stroke();
     }
 
-    // Icono dentro del círculo: emoji (Twemoji) si existe, si no el símbolo/✓
+    // Icono dentro del círculo
     ctx.globalAlpha = filled ? 1 : 0.5;
     if (emoji) {
       ctx.drawImage(emoji, cx - glyphSize / 2, cy - glyphSize / 2, glyphSize, glyphSize);
@@ -200,6 +205,18 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.fillText(program.stampIcon || "★", cx, cy + r * 0.05);
     }
     ctx.globalAlpha = 1;
+
+    // Casilla de recompensa: badge de regalo 🎁 en la esquina superior derecha
+    if (isTier) {
+      const bs = r * 0.95;
+      const bx = cx + r * 0.5;
+      const by = cy - r * 0.55;
+      ctx.beginPath();
+      ctx.arc(bx, by, bs * 0.62, 0, Math.PI * 2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      if (gift) ctx.drawImage(gift, bx - bs / 2, by - bs / 2, bs, bs);
+    }
   }
 
   return canvas.toBuffer("image/png");
