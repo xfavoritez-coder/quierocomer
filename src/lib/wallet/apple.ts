@@ -82,6 +82,7 @@ interface ProgramLike {
   stampIcon: string;
   rewards: unknown;
   cardColorHex: string;
+  stampColorHex: string;
   bgImageUrl: string | null;
   logoUrl: string | null;
   description: string | null;
