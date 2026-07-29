@@ -67,3 +67,22 @@ export async function notifyAppleDevices(memberId: string): Promise<void> {
     console.error("[notifyAppleDevices]", e);
   }
 }
+
+/** Notifica a TODOS los dispositivos iOS de los miembros del restaurante. Devuelve cuántos. */
+export async function notifyRestaurantDevices(restaurantId: string): Promise<number> {
+  if (!apnsConfig()) return 0;
+  try {
+    const members = await prisma.loyaltyMember.findMany({ where: { restaurantId }, select: { id: true } });
+    if (!members.length) return 0;
+    const devices = await prisma.loyaltyDevice.findMany({
+      where: { serialNumber: { in: members.map((m) => m.id) } },
+      select: { pushToken: true },
+    });
+    if (!devices.length) return 0;
+    await pushToTokens(devices.map((d) => d.pushToken));
+    return devices.length;
+  } catch (e) {
+    console.error("[notifyRestaurantDevices]", e);
+    return 0;
+  }
+}

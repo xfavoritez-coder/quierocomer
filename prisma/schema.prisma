@@ -2343,6 +2343,9 @@ model LoyaltyProgram {
   logoUrl       String?
   description   String? // condiciones/letra chica que se muestra al pie de la tarjeta
 
+  // Última notificación enviada (se muestra como "Novedades" en el pase de Apple)
+  pushMessage String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2413,4 +2416,16 @@ model LoyaltyDevice {
 
   @@unique([deviceLibraryIdentifier, serialNumber])
   @@index([serialNumber])
+}
+
+// Historial de notificaciones push enviadas a las tarjetas.
+model LoyaltyBroadcast {
+  id           String   @id @default(cuid())
+  restaurantId String
+  title        String
+  body         String
+  recipients   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
 }

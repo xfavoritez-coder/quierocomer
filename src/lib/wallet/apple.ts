@@ -106,6 +106,7 @@ interface ProgramLike {
   bgImageUrl: string | null;
   logoUrl: string | null;
   description: string | null;
+  pushMessage?: string | null;
 }
 interface MemberLike {
   id: string;
@@ -305,6 +306,8 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
       secondaryFields: [{ key: "next", label: status.label, value: status.value }],
       auxiliaryFields: [{ key: "member", label: "Cliente", value: member.name || "Cliente" }],
       backFields: [
+        // Campo de novedades: su changeMessage dispara la notificación push al cambiar
+        { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí.", changeMessage: "%@" },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
       ],

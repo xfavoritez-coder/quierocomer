@@ -220,6 +220,21 @@ export async function updateGooglePoints(member: MemberLike, program: ProgramLik
   if (!patch.ok) throw new Error(`updateGooglePoints ${patch.status}: ${await patch.text()}`);
 }
 
+/**
+ * Envía un mensaje/notificación a TODOS los que tienen la tarjeta de este programa
+ * (se agrega a la clase → llega a todos los objetos). Devuelve true si se envió.
+ */
+export async function sendGoogleClassMessage(programId: string, header: string, body: string): Promise<boolean> {
+  if (!isGoogleWalletConfigured()) return false;
+  const classId = googleClassId(programId);
+  const res = await walletApi("POST", `/loyaltyClass/${classId}/addMessage`, {
+    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000) },
+  });
+  if (res.status === 404) return false; // la clase aún no existe (sin tarjetas Google)
+  if (!res.ok) throw new Error(`sendGoogleClassMessage ${res.status}: ${await res.text()}`);
+  return true;
+}
+
 /** Genera el link "Guardar en Google Wallet" (JWT firmado). */
 export function generateSaveUrl(objectId: string): string {
   const cfg = config();

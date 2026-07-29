@@ -9,6 +9,7 @@ const TABS = [
   { href: "/panel/loyalty", label: "Configuración" },
   { href: "/panel/loyalty/miembros", label: "Miembros" },
   { href: "/panel/loyalty/escanear", label: "Escanear" },
+  { href: "/panel/loyalty/notificaciones", label: "Notificaciones" },
 ];
 
 export default function LoyaltyNav() {
