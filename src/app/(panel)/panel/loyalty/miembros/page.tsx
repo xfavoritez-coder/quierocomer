@@ -230,6 +230,13 @@ export default function LoyaltyMembersPage() {
                   </span>
                 </div>
 
+                {/* Última compra (último sello escaneado) */}
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
+                  {m.lastStampAt
+                    ? `Última compra: ${new Date(m.lastStampAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`
+                    : "Sin compras aún"}
+                </p>
+
                 {/* Acciones (su propia línea, con espacio) */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                   <a href={`/api/loyalty/members/${m.id}/wallet/apple`} title="Tarjeta Apple Wallet (iPhone)" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Apple size={16} /></a>
