@@ -240,6 +240,29 @@ export default function LoyaltyConfigPage() {
             <div>
               <label style={labelStyle}>Icono del sello</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {restaurant?.logoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => update({ stampIcon: "logo" })}
+                    title="Usar el logo del restaurante"
+                    style={{
+                      height: 42,
+                      minWidth: 42,
+                      padding: "0 8px",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: form.stampIcon === "logo" ? "rgba(244,166,35,0.14)" : "var(--adm-card)",
+                      border: `1.5px solid ${form.stampIcon === "logo" ? GOLD : "var(--adm-card-border)"}`,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={restaurant.logoUrl} alt="" style={{ width: 24, height: 24, borderRadius: 5, objectFit: "cover" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text2)" }}>Logo</span>
+                  </button>
+                )}
                 {STAMP_ICONS.map((icon) => {
                   const active = form.stampIcon === icon;
                   return (
@@ -578,6 +601,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
           {Array.from({ length: Math.max(stampGoal, 1) }).map((_, i) => {
             const filled = i < demoStamps;
             const isTier = tierStamps.has(i + 1);
+            const logoMode = stampIcon === "logo" && !!logoUrl;
             return (
               <div
                 key={i}
@@ -587,16 +611,20 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: "50%",
-                  fontSize: "2.55rem",
+                  fontSize: "2.2rem",
                   lineHeight: 1,
                   border: `1.5px solid ${isTier ? GOLD : textColor}`,
                   background: filled ? stampColor : "transparent",
                   color: filled ? stampGlyphColor : textColor,
-                  opacity: filled ? 1 : isTier ? 0.9 : 0.4,
                 }}
                 title={isTier ? "Nivel con recompensa" : undefined}
               >
-                {filled ? stampIcon : isTier ? "🎁" : ""}
+                {logoMode ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.72 }} />
+                ) : (
+                  <span style={{ opacity: filled ? 1 : 0.72 }}>{stampIcon}</span>
+                )}
               </div>
             );
           })}
@@ -611,7 +639,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
             <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 5 }}>
               {sortedRewards.map((r, i) => (
                 <div key={i} style={{ fontFamily: FB, fontSize: "0.72rem", display: "flex", gap: 6 }}>
-                  <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{r.stamp} {stampIcon}</span>
+                  <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{r.stamp} {stampIcon === "logo" ? "•" : stampIcon}</span>
                   <span style={{ color: subColor }}>→ {r.reward}</span>
                 </div>
               ))}

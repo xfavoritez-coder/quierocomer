@@ -120,7 +120,8 @@ interface ProgramLike {
 export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: string, restaurantLogo?: string | null) {
   const classId = googleClassId(program.id);
   const rewards = parseRewards(program.rewards);
-  const rewardsText = rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—";
+  const icon = program.stampIcon === "logo" ? "•" : program.stampIcon;
+  const rewardsText = rewards.map((r) => `${r.stamp} ${icon} → ${r.reward}`).join("\n") || "—";
 
   const body: Record<string, unknown> = {
     id: classId,

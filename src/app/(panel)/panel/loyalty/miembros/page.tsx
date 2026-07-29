@@ -256,7 +256,7 @@ export default function LoyaltyMembersPage() {
                     <div style={{ height: "100%", width: `${pct}%`, background: cardFull ? "#16a34a" : GOLD, borderRadius: 999, transition: "width 0.2s" }} />
                   </div>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                    {m.stamps}/{stampGoal} {stampIcon}
+                    {m.stamps}/{stampGoal} {stampIcon === "logo" ? "•" : stampIcon}
                   </span>
                 </div>
 
@@ -276,7 +276,7 @@ export default function LoyaltyMembersPage() {
                         <div key={t.stamp} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                           {won ? <Check size={14} color="#16a34a" /> : <Circle size={13} color="var(--adm-card-border)" />}
                           <span style={{ fontFamily: FB, fontSize: "0.75rem", color: won ? "var(--adm-text2)" : "var(--adm-text3)", textDecoration: won ? "none" : "none" }}>
-                            <span style={{ fontWeight: 700 }}>{t.stamp} {stampIcon}</span> · {t.reward}
+                            <span style={{ fontWeight: 700 }}>{t.stamp} {stampIcon === "logo" ? "•" : stampIcon}</span> · {t.reward}
                             {won && <span style={{ color: "#16a34a", fontWeight: 700 }}> ✓ ganada</span>}
                           </span>
                         </div>

@@ -37,6 +37,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
 
   const accent = program.cardColorHex;
   const onAccentText = isLight(accent) ? "#111" : "#fff";
+  const iconText = program.stampIcon === "logo" ? "sellos" : program.stampIcon;
 
   const submit = async () => {
     setError("");
@@ -101,12 +102,12 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
         {program.rewards.length > 0 && (
           <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 16, marginBottom: 22 }}>
             <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.5)", margin: "0 0 10px" }}>
-              Junta {program.stampIcon} y gana
+              Junta {iconText} y gana
             </p>
             {program.rewards.map((r) => (
               <div key={r.stamp} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
                 <span style={{ minWidth: 44, height: 28, borderRadius: 8, background: accent, color: onAccentText, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.85rem" }}>
-                  {r.stamp} {program.stampIcon}
+                  {r.stamp} {iconText}
                 </span>
                 <span style={{ fontSize: "0.95rem" }}>{r.reward}</span>
               </div>
@@ -142,7 +143,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
             <div style={{ textAlign: "center", marginBottom: 20 }}>
               <div style={{ fontSize: "2.4rem" }}>🎉</div>
               <p style={{ fontWeight: 800, fontSize: "1.15rem", margin: "6px 0 4px" }}>¡Tu tarjeta está lista{name ? `, ${name}` : ""}!</p>
-              <p style={{ color: "rgba(255,255,255,0.6)", margin: 0 }}>Agrégala a tu teléfono para empezar a juntar {program.stampIcon}.</p>
+              <p style={{ color: "rgba(255,255,255,0.6)", margin: 0 }}>Agrégala a tu teléfono para empezar a juntar {iconText}.</p>
             </div>
 
             {done.appleUrl && (

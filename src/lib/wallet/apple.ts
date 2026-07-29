@@ -134,7 +134,7 @@ function rewardStatus(member: MemberLike, program: ProgramLike): { label: string
 }
 
 // ── Strip image: la grilla de sellos sobre la foto/color (lo que hace lucir la tarjeta) ──
-async function stripImage(program: ProgramLike, member: MemberLike, scale: number): Promise<Buffer> {
+async function stripImage(program: ProgramLike, member: MemberLike, scale: number, logoSrc: string | null): Promise<Buffer> {
   const W = 375 * scale;
   const H = 123 * scale;
   const canvas = createCanvas(W, H);
@@ -170,10 +170,21 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
   const cellH = (H - 2 * padY) / rows;
   const r = (Math.min(cellW, cellH) / 2) * 0.66;
 
-  // Emojis (una sola descarga cada uno)
-  const emoji = await loadEmoji(program.stampIcon || "");
+  // Icono del sello: logo del restaurante o emoji (una sola descarga)
+  const useLogo = program.stampIcon === "logo" && !!logoSrc;
+  let emoji = null;
+  if (useLogo) {
+    try {
+      const res = await fetch(logoSrc!);
+      emoji = await loadImage(Buffer.from(await res.arrayBuffer()));
+    } catch {
+      emoji = null;
+    }
+  } else {
+    emoji = await loadEmoji(program.stampIcon || "");
+  }
   const gift = await loadEmoji("🎁");
-  const glyphSize = r * 1.35;
+  const glyphSize = useLogo ? r * 1.5 : r * 1.35;
   const tierStamps = new Set(parseRewards(program.rewards).map((t) => t.stamp));
 
   for (let i = 0; i < goal; i++) {
@@ -196,8 +207,8 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.stroke();
     }
 
-    // Icono dentro del círculo
-    ctx.globalAlpha = filled ? 1 : 0.5;
+    // Icono dentro del círculo (los vacíos, más opacos que antes para que se vean mejor)
+    ctx.globalAlpha = filled ? 1 : 0.8;
     if (emoji) {
       ctx.drawImage(emoji, cx - glyphSize / 2, cy - glyphSize / 2, glyphSize, glyphSize);
     } else {
@@ -205,7 +216,7 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.font = `${r * 1.05}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(program.stampIcon || "★", cx, cy + r * 0.05);
+      ctx.fillText(program.stampIcon && program.stampIcon !== "logo" ? program.stampIcon : "★", cx, cy + r * 0.05);
     }
     ctx.globalAlpha = 1;
 
@@ -310,7 +321,7 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
       backFields: [
         // Campo de novedades: su changeMessage dispara la notificación push al cambiar
         { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí.", changeMessage: "%@" },
-        { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—" },
+        { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon === "logo" ? "•" : program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
       ],
     },
@@ -323,9 +334,9 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     "icon@2x.png": await logoPng(logoSrc, 116, bg),
     "logo.png": await logoPng(logoSrc, 50, bg),
     "logo@2x.png": await logoPng(logoSrc, 100, bg),
-    "strip.png": await stripImage(program, member, 1),
-    "strip@2x.png": await stripImage(program, member, 2),
-    "strip@3x.png": await stripImage(program, member, 3),
+    "strip.png": await stripImage(program, member, 1, logoSrc),
+    "strip@2x.png": await stripImage(program, member, 2, logoSrc),
+    "strip@3x.png": await stripImage(program, member, 3, logoSrc),
   };
 
   // manifest.json (SHA1 de cada archivo)

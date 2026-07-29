@@ -62,8 +62,9 @@ export async function POST(req: NextRequest) {
     if (typeof body.active === "boolean") data.active = body.active;
     if (typeof body.description === "string") data.description = body.description.trim().slice(0, 300);
     if (typeof body.stampIcon === "string" && body.stampIcon.trim()) {
-      // Un solo carácter/emoji visible
-      data.stampIcon = [...body.stampIcon.trim()][0] ?? "★";
+      const raw = body.stampIcon.trim();
+      // "logo" = usar el logo del restaurante; si no, un solo carácter/emoji
+      data.stampIcon = raw === "logo" ? "logo" : [...raw][0] ?? "★";
     }
 
     // Meta de sellos (1..50). Necesaria para validar los niveles.
