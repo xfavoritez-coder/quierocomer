@@ -11,7 +11,12 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
-const STAMP_ICONS = ["★", "☕", "🍕", "🍔", "🍣", "🍩", "🍺", "🎁", "❤️", "🌮", "🍦", "🥐"];
+const STAMP_ICONS = [
+  "★", "⭐", "🍀", "☘️", "❤️", "🔥", "✨", "👑", "💎", "🎁",
+  "☕", "🧋", "🍺", "🍷", "🥤", "🍕", "🍔", "🍟", "🌭", "🌮",
+  "🌯", "🥟", "🍣", "🍤", "🍜", "🍩", "🍦", "🍰", "🍫", "🧁",
+  "🥐", "🥗", "🍎", "🍪",
+];
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
