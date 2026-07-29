@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Plus, Search, Gift, RotateCcw, Wallet, Apple, Trash2 } from "lucide-react";
+import { CreditCard, Plus, Search, RotateCcw, Wallet, Apple, Trash2 } from "lucide-react";
 import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -46,7 +46,6 @@ export default function LoyaltyMembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [stampGoal, setStampGoal] = useState(8);
   const [stampIcon, setStampIcon] = useState("★");
-  const [rewards, setRewards] = useState<RewardTier[]>([]);
   const [query, setQuery] = useState("");
   const [loadingList, setLoadingList] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -61,7 +60,6 @@ export default function LoyaltyMembersPage() {
         if (d.program) {
           setStampGoal(d.program.stampGoal);
           setStampIcon(d.program.stampIcon || "★");
-          setRewards(Array.isArray(d.program.rewards) ? d.program.rewards : []);
         }
       })
       .catch(() => {});
@@ -113,9 +111,6 @@ export default function LoyaltyMembersPage() {
       setBusyId(null);
     }
   };
-
-  const availableTiers = (m: Member) =>
-    rewards.filter((t) => t.stamp <= m.stamps && !m.redeemedTiers.includes(t.stamp)).sort((a, b) => a.stamp - b.stamp);
 
   const googleWallet = async (member: Member) => {
     setBusyId(member.id);
@@ -202,7 +197,6 @@ export default function LoyaltyMembersPage() {
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
           {members.map((m) => {
             const pct = stampGoal > 0 ? Math.min(100, (m.stamps / stampGoal) * 100) : 0;
-            const avail = availableTiers(m);
             const cardFull = m.stamps >= stampGoal;
             const busy = busyId === m.id;
             return (
@@ -258,22 +252,6 @@ export default function LoyaltyMembersPage() {
                   </button>
                 </div>
 
-                {/* Recompensas disponibles para canjear */}
-                {avail.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
-                    {avail.map((t) => (
-                      <button
-                        key={t.stamp}
-                        type="button"
-                        disabled={busy}
-                        onClick={() => post(m, "redeem", { stamp: t.stamp }, `✓ Canjeado: ${t.reward}`)}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, border: "1px solid rgba(22,163,74,0.3)", background: "rgba(22,163,74,0.1)", color: "#16a34a", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}
-                      >
-                        <Gift size={13} /> Canjear · {t.reward}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </li>
             );
           })}
