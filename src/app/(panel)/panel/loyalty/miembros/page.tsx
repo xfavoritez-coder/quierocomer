@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Plus, Search, RotateCcw, Wallet, Apple, Trash2 } from "lucide-react";
+import { CreditCard, Plus, Search, RotateCcw, Wallet, Apple, Trash2, Check, Circle } from "lucide-react";
 import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -46,6 +46,7 @@ export default function LoyaltyMembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [stampGoal, setStampGoal] = useState(8);
   const [stampIcon, setStampIcon] = useState("★");
+  const [rewards, setRewards] = useState<RewardTier[]>([]);
   const [query, setQuery] = useState("");
   const [loadingList, setLoadingList] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -60,6 +61,11 @@ export default function LoyaltyMembersPage() {
         if (d.program) {
           setStampGoal(d.program.stampGoal);
           setStampIcon(d.program.stampIcon || "★");
+          setRewards(
+            Array.isArray(d.program.rewards)
+              ? [...d.program.rewards].sort((a: RewardTier, b: RewardTier) => a.stamp - b.stamp)
+              : [],
+          );
         }
       })
       .catch(() => {});
@@ -230,6 +236,24 @@ export default function LoyaltyMembersPage() {
                     ? `Última compra: ${new Date(m.lastStampAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`
                     : "Sin compras aún"}
                 </p>
+
+                {/* Checklist de recompensas ganadas (informativo) */}
+                {rewards.length > 0 && (
+                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+                    {rewards.map((t) => {
+                      const won = m.stamps >= t.stamp;
+                      return (
+                        <div key={t.stamp} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          {won ? <Check size={14} color="#16a34a" /> : <Circle size={13} color="var(--adm-card-border)" />}
+                          <span style={{ fontFamily: FB, fontSize: "0.75rem", color: won ? "var(--adm-text2)" : "var(--adm-text3)", textDecoration: won ? "none" : "none" }}>
+                            <span style={{ fontWeight: 700 }}>{t.stamp} {stampIcon}</span> · {t.reward}
+                            {won && <span style={{ color: "#16a34a", fontWeight: 700 }}> ✓ ganada</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Acciones (su propia línea, con espacio) */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
