@@ -235,6 +235,20 @@ export async function sendGoogleClassMessage(programId: string, header: string, 
   return true;
 }
 
+/**
+ * Envía un mensaje/notificación a UN objeto (tarjeta de un miembro). Más confiable
+ * para disparar la notificación en Android que hacerlo a la clase. Devuelve true si OK.
+ */
+export async function sendGoogleObjectMessage(objectId: string, header: string, body: string): Promise<boolean> {
+  if (!isGoogleWalletConfigured()) return false;
+  const res = await walletApi("POST", `/loyaltyObject/${objectId}/addMessage`, {
+    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000) },
+  });
+  if (res.status === 404) return false;
+  if (!res.ok) throw new Error(`sendGoogleObjectMessage ${res.status}: ${await res.text()}`);
+  return true;
+}
+
 /** Genera el link "Guardar en Google Wallet" (JWT firmado). */
 export function generateSaveUrl(objectId: string): string {
   const cfg = config();

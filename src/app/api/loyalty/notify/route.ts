@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { ensureProgram } from "@/lib/loyalty";
-import { sendGoogleClassMessage } from "@/lib/wallet/google";
+import { sendGoogleObjectMessage } from "@/lib/wallet/google";
 import { notifyRestaurantDevices } from "@/lib/wallet/apns";
 
 export const runtime = "nodejs";
@@ -30,17 +30,20 @@ export async function POST(req: NextRequest) {
     await prisma.$executeRaw`UPDATE "LoyaltyMember" SET "updatedAt" = NOW() WHERE "restaurantId" = ${restaurantId}`;
     const appleDevices = await notifyRestaurantDevices(restaurantId);
 
-    // 2) Google: un mensaje a la clase llega a todos los Android
-    let google = false;
-    try {
-      google = await sendGoogleClassMessage(program.id, title || "Novedad", message);
-    } catch (e) {
-      console.error("[Loyalty notify] Google:", e);
+    // 2) Google: un mensaje a cada objeto (tarjeta) → notificación en Android
+    const googleCards = await prisma.loyaltyMember.findMany({
+      where: { restaurantId, googleObjectId: { not: null } },
+      select: { googleObjectId: true },
+    });
+    let googleMembers = 0;
+    for (const c of googleCards) {
+      try {
+        if (await sendGoogleObjectMessage(c.googleObjectId!, title || "Novedad", message)) googleMembers++;
+      } catch (e) {
+        console.error("[Loyalty notify] Google objeto:", e);
+      }
     }
-
-    const googleMembers = google
-      ? await prisma.loyaltyMember.count({ where: { restaurantId, googleObjectId: { not: null } } })
-      : 0;
+    const google = googleMembers > 0;
 
     const recipients = appleDevices + googleMembers;
     await prisma.loyaltyBroadcast.create({
