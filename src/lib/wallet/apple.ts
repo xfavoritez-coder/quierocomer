@@ -114,6 +114,7 @@ interface MemberLike {
   stamps: number;
   redeemedTiers?: number[];
   authToken?: string;
+  revoked?: boolean;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
@@ -291,6 +292,7 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     serialNumber: member.id,
     description: program.name,
     logoText: restaurantName,
+    ...(member.revoked && { voided: true }),
     foregroundColor: isLight(bg) ? "rgb(17,17,17)" : "rgb(255,255,255)",
     backgroundColor: hexToRgb(bg),
     labelColor: isLight(bg) ? "rgb(80,80,80)" : "rgb(220,220,220)",

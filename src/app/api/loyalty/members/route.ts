@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const members = await prisma.loyaltyMember.findMany({
       where: {
         restaurantId,
+        revoked: false,
         ...(q && {
           OR: [
             { name: { contains: q, mode: "insensitive" } },

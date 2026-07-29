@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Plus, Search, Gift, RotateCcw, Wallet, Apple } from "lucide-react";
+import { CreditCard, Plus, Search, Gift, RotateCcw, Wallet, Apple, Trash2 } from "lucide-react";
 import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -131,6 +131,23 @@ export default function LoyaltyMembersPage() {
     }
   };
 
+  // Revocar (eliminar) el pase del cliente
+  const removeMember = async (member: Member) => {
+    if (!window.confirm(`¿Revocar el pase de ${member.name || "este cliente"}? Su tarjeta quedará anulada y saldrá de la lista.`)) return;
+    setBusyId(member.id);
+    try {
+      const res = await fetch(`/api/loyalty/members/${member.id}`, { method: "DELETE" });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Error");
+      setMembers((prev) => prev.filter((x) => x.id !== member.id));
+      toast.success("Pase revocado");
+    } catch (e: any) {
+      toast.error(e.message || "Error al revocar");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 760 }}>
       {/* Header */}
@@ -228,6 +245,10 @@ export default function LoyaltyMembersPage() {
                       +1 sello
                     </button>
                   )}
+                  <span style={{ flex: 1 }} />
+                  <button type="button" disabled={busy} onClick={() => removeMember(m)} title="Revocar pase" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.06)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}>
+                    <Trash2 size={15} />
+                  </button>
                 </div>
 
                 {/* Recompensas disponibles para canjear */}

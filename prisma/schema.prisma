@@ -2363,9 +2363,10 @@ model LoyaltyMember {
   email String?
   phone String?
 
-  stamps         Int   @default(0) // sellos en la tarjeta vigente (0..stampGoal)
-  redeemedTiers  Int[] @default([]) // números de sello ya canjeados en el ciclo actual
-  completedCards Int   @default(0) // tarjetas completadas (histórico)
+  stamps         Int     @default(0) // sellos en la tarjeta vigente (0..stampGoal)
+  redeemedTiers  Int[]   @default([]) // números de sello ya canjeados en el ciclo actual
+  completedCards Int     @default(0) // tarjetas completadas (histórico)
+  revoked        Boolean @default(false) // pase revocado (anulado en Apple, expirado en Google)
 
   // Identificadores de wallet para poder actualizar la tarjeta en el teléfono
   appleSerial    String? @unique // serialNumber del .pkpass (Apple)

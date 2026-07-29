@@ -213,6 +213,15 @@ export async function upsertLoyaltyObject(member: MemberLike, program: ProgramLi
   return objectId;
 }
 
+/** Expira (revoca) el pase de Google del miembro. */
+export async function expireGoogleObject(objectId: string): Promise<void> {
+  if (!isGoogleWalletConfigured()) return;
+  const patch = await walletApi("PATCH", `/loyaltyObject/${objectId}`, { state: "EXPIRED" });
+  if (!patch.ok && patch.status !== 404) {
+    throw new Error(`expireGoogleObject ${patch.status}: ${await patch.text()}`);
+  }
+}
+
 /** Solo actualiza los sellos (para reflejar cambios en la tarjeta ya guardada). */
 export async function updateGooglePoints(member: MemberLike, program: ProgramLike) {
   const objectId = googleObjectId(member.id);
