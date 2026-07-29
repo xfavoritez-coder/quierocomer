@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Plus, Search, Gift, RotateCcw, Wallet } from "lucide-react";
+import { CreditCard, Plus, Search, Gift, RotateCcw, Wallet, Apple } from "lucide-react";
 import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -131,6 +131,11 @@ export default function LoyaltyMembersPage() {
     }
   };
 
+  // Apple Wallet: abre el .pkpass (en iPhone dispara "Agregar a Apple Wallet").
+  const appleWallet = (member: Member) => {
+    window.open(`/api/loyalty/members/${member.id}/wallet/apple`, "_blank");
+  };
+
   return (
     <div style={{ maxWidth: 760 }}>
       {/* Header */}
@@ -214,7 +219,8 @@ export default function LoyaltyMembersPage() {
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    <button type="button" disabled={busy} onClick={() => googleWallet(m)} title="Generar tarjeta de Google Wallet" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Wallet size={16} /></button>
+                    <button type="button" disabled={busy} onClick={() => appleWallet(m)} title="Tarjeta Apple Wallet (iPhone)" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Apple size={16} /></button>
+                    <button type="button" disabled={busy} onClick={() => googleWallet(m)} title="Tarjeta Google Wallet (Android)" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Wallet size={16} /></button>
                     <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 34, width: 34, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.1rem", cursor: "pointer", opacity: busy ? 0.4 : 1 }}>−</button>
                     {cardFull ? (
                       <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
