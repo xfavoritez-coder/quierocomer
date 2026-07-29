@@ -123,7 +123,10 @@ function rewardStatus(member: MemberLike, program: ProgramLike): { label: string
   const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
   if (available.length) return { label: "🎁 PUEDES CANJEAR", value: available.map((r) => r.reward).join(" · ") };
   const next = rewards.find((r) => r.stamp > member.stamps);
-  if (next) return { label: "PRÓXIMA RECOMPENSA", value: `${next.reward} · a los ${next.stamp} ${program.stampIcon}` };
+  if (next) {
+    const faltan = next.stamp - member.stamps;
+    return { label: `PRÓXIMA (faltan ${faltan})`, value: next.reward };
+  }
   return { label: "RECOMPENSAS", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
 }
 
