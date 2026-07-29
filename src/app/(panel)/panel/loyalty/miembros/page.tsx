@@ -131,14 +131,15 @@ export default function LoyaltyMembersPage() {
     }
   };
 
-  // Apple Wallet: dispara el .pkpass vía iframe oculto (evita la pestaña en negro en iOS).
+  // Apple Wallet: enlace normal en la misma pestaña. iOS Safari muestra la hoja
+  // "Agregar a Wallet" encima del panel y vuelve aquí (sin pestaña en negro).
   const appleWallet = (member: Member) => {
-    const url = `/api/loyalty/members/${member.id}/wallet/apple`;
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    setTimeout(() => iframe.remove(), 15000);
+    const a = document.createElement("a");
+    a.href = `/api/loyalty/members/${member.id}/wallet/apple`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast("Abriendo Apple Wallet…");
   };
 
   return (
