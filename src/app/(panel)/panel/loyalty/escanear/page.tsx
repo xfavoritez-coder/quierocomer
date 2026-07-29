@@ -101,21 +101,35 @@ export default function LoyaltyScanPage() {
 
   const start = useCallback(async () => {
     setCamError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setScanning(true);
-      rafRef.current = requestAnimationFrame(tick);
-    } catch (e: any) {
-      setCamError("No pudimos acceder a la cámara. Revisa los permisos del navegador.");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCamError("Tu navegador no permite la cámara aquí. Ábrelo desde https://quierocomer.com (no una IP local).");
+      return;
     }
+    let stream: MediaStream;
+    try {
+      // Cámara trasera preferida
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    } catch {
+      try {
+        // Fallback: cualquier cámara
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      } catch (e: any) {
+        setCamError(`No se pudo acceder a la cámara (${e?.name || "error"}). Revisa los permisos del sitio.`);
+        return;
+      }
+    }
+    streamRef.current = stream;
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.setAttribute("playsinline", "true");
+      try {
+        await videoRef.current.play();
+      } catch {
+        /* algunos navegadores reproducen solo, ignoramos */
+      }
+    }
+    setScanning(true);
+    rafRef.current = requestAnimationFrame(tick);
   }, [tick]);
 
   const stop = useCallback(() => {
@@ -158,7 +172,7 @@ export default function LoyaltyScanPage() {
               border: "1px solid var(--adm-card-border)",
             }}
           >
-            <video ref={videoRef} playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover", display: scanning ? "block" : "none" }} />
+            <video ref={videoRef} playsInline muted autoPlay style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             <canvas ref={canvasRef} style={{ display: "none" }} />
 
             {/* Marco de escaneo */}

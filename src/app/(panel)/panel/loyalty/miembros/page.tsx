@@ -131,9 +131,14 @@ export default function LoyaltyMembersPage() {
     }
   };
 
-  // Apple Wallet: abre el .pkpass (en iPhone dispara "Agregar a Apple Wallet").
+  // Apple Wallet: dispara el .pkpass vía iframe oculto (evita la pestaña en negro en iOS).
   const appleWallet = (member: Member) => {
-    window.open(`/api/loyalty/members/${member.id}/wallet/apple`, "_blank");
+    const url = `/api/loyalty/members/${member.id}/wallet/apple`;
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    setTimeout(() => iframe.remove(), 15000);
   };
 
   return (

@@ -121,7 +121,8 @@ function rewardStatus(member: MemberLike, program: ProgramLike): { label: string
   const rewards = parseRewards(program.rewards);
   const redeemed = member.redeemedTiers || [];
   const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
-  if (available.length) return { label: "🎁 PUEDES CANJEAR", value: available.map((r) => r.reward).join(" · ") };
+  // Solo el último premio alcanzado (los anteriores se asume ya canjeados)
+  if (available.length) return { label: "🎁 PUEDES CANJEAR", value: available[available.length - 1].reward };
   const next = rewards.find((r) => r.stamp > member.stamps);
   if (next) {
     const faltan = next.stamp - member.stamps;
@@ -206,16 +207,16 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
     }
     ctx.globalAlpha = 1;
 
-    // Casilla de recompensa: badge de regalo 🎁 en la esquina superior derecha
-    if (isTier) {
-      const bs = r * 0.95;
-      const bx = cx + r * 0.5;
-      const by = cy - r * 0.55;
+    // Casilla de recompensa: pequeño badge de regalo 🎁 en la esquina superior derecha
+    if (isTier && gift) {
+      const bs = r * 0.62;
+      const bx = cx + r * 0.62;
+      const by = cy - r * 0.62;
       ctx.beginPath();
-      ctx.arc(bx, by, bs * 0.62, 0, Math.PI * 2);
+      ctx.arc(bx, by, bs * 0.68, 0, Math.PI * 2);
       ctx.fillStyle = "#fff";
       ctx.fill();
-      if (gift) ctx.drawImage(gift, bx - bs / 2, by - bs / 2, bs, bs);
+      ctx.drawImage(gift, bx - bs / 2, by - bs / 2, bs, bs);
     }
   }
 

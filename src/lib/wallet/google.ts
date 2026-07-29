@@ -165,7 +165,8 @@ function rewardStatus(member: MemberLike, program: ProgramLike): { label: string
   const redeemed = member.redeemedTiers || [];
   const available = rewards.filter((r) => r.stamp <= member.stamps && !redeemed.includes(r.stamp));
   if (available.length) {
-    return { label: "🎁 ¡Puedes canjear!", value: available.map((r) => r.reward).join(" · ") };
+    // Solo el último premio alcanzado (los anteriores se asume ya canjeados)
+    return { label: "🎁 ¡Puedes canjear!", value: available[available.length - 1].reward };
   }
   const next = rewards.find((r) => r.stamp > member.stamps);
   if (next) {
