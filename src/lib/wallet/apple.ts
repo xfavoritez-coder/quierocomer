@@ -117,18 +117,18 @@ interface MemberLike {
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-// Frase en oración normal (va en el "value", porque iOS pone las etiquetas en mayúscula).
-function rewardStatus(member: MemberLike, program: ProgramLike): string {
+// Etiqueta (arriba) + valor con el nombre de la recompensa (abajo). Va en 2 columnas.
+function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
   const rewards = parseRewards(program.rewards);
   // "Puedes canjear" solo cuando está justo en un nivel de recompensa
   const atTier = rewards.find((r) => r.stamp === member.stamps);
-  if (atTier) return `🎁 Puedes canjear ${atTier.reward}`;
+  if (atTier) return { label: "🎁 ¡Puedes canjear!", value: atTier.reward };
   const next = rewards.find((r) => r.stamp > member.stamps);
   if (next) {
     const faltan = next.stamp - member.stamps;
-    return `Te falta${faltan > 1 ? "n" : ""} ${faltan} sello${faltan > 1 ? "s" : ""} para ${next.reward}`;
+    return { label: `Te falta${faltan > 1 ? "n" : ""} ${faltan} sello${faltan > 1 ? "s" : ""} para`, value: next.reward };
   }
-  return rewards.length ? "¡Todas las recompensas alcanzadas!" : "—";
+  return { label: "Recompensas", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
 }
 
 // ── Strip image: la grilla de sellos sobre la foto/color (lo que hace lucir la tarjeta) ──
@@ -300,12 +300,11 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
       authenticationToken: member.authToken,
     }),
     storeCard: {
-      // La recompensa va SOLA en su banda para ocupar toda la fila (si no, iOS la
-      // empareja con otro campo en 2 columnas y se corta). "Cliente" va al reverso.
+      // Dos columnas: recompensa (izq) y cliente (der)
       headerFields: [{ key: "sellos", label: "SELLOS", value: `${member.stamps}/${program.stampGoal}` }],
-      secondaryFields: [{ key: "next", label: "", value: status }],
+      secondaryFields: [{ key: "next", label: status.label, value: status.value }],
+      auxiliaryFields: [{ key: "member", label: "Cliente", value: member.name || "Cliente" }],
       backFields: [
-        { key: "cliente", label: "Cliente", value: member.name || "Cliente" },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
       ],
