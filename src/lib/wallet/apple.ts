@@ -300,10 +300,12 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
       authenticationToken: member.authToken,
     }),
     storeCard: {
+      // La recompensa va SOLA en su banda para ocupar toda la fila (si no, iOS la
+      // empareja con otro campo en 2 columnas y se corta). "Cliente" va al reverso.
       headerFields: [{ key: "sellos", label: "SELLOS", value: `${member.stamps}/${program.stampGoal}` }],
       secondaryFields: [{ key: "next", label: "", value: status }],
-      auxiliaryFields: [{ key: "member", label: "Cliente", value: member.name || "Cliente" }],
       backFields: [
+        { key: "cliente", label: "Cliente", value: member.name || "Cliente" },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
       ],
