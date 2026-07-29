@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { CreditCard, Plus, Trash2, ChevronDown } from "lucide-react";
+import { CreditCard, Plus, Trash2, ChevronDown, Link2, Copy } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { toast } from "sonner";
 import LoyaltyNav from "./LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -74,6 +76,9 @@ export default function LoyaltyConfigPage() {
   const [showPhotos, setShowPhotos] = useState(false);
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  const enrollUrl = restaurant?.slug ? `${baseUrl}/fidelidad/${restaurant.slug}` : "";
 
   // Fotos de platos para elegir fondo de la tarjeta
   useEffect(() => {
@@ -460,6 +465,42 @@ export default function LoyaltyConfigPage() {
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.5 }}>
               Así se verá aproximadamente en el teléfono del cliente. Ejemplo con algunos sellos.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Inscripción de clientes: link + QR */}
+      {enrollUrl && (
+        <div style={{ marginTop: 28, padding: 18, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+          <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
+            <Link2 size={17} color="var(--adm-text3)" /> Inscripción de clientes
+          </h2>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+            Comparte este link o QR (imprímelo en el local) para que tus clientes creen su tarjeta solos.
+            {!form.active && <span style={{ color: "#e0a020" }}> Activa el programa arriba para que funcione.</span>}
+          </p>
+
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ background: "#fff", padding: 10, borderRadius: 10, flexShrink: 0 }}>
+              <QRCodeSVG value={enrollUrl} size={128} />
+            </div>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <label style={{ ...labelStyle, marginBottom: 6 }}>Link de inscripción</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input readOnly value={enrollUrl} onFocus={(e) => e.target.select()} style={{ ...inputStyle, fontSize: "0.8rem" }} />
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard?.writeText(enrollUrl); toast.success("Link copiado"); }}
+                  title="Copiar"
+                  style={{ flexShrink: 0, width: 42, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+              <a href={enrollUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 10, fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: GOLD, textDecoration: "none" }}>
+                Abrir vista del cliente →
+              </a>
+            </div>
           </div>
         </div>
       )}
