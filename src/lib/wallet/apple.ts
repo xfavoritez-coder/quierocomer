@@ -117,17 +117,18 @@ interface MemberLike {
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-function rewardStatus(member: MemberLike, program: ProgramLike): { label: string; value: string } {
+// Frase en oración normal (va en el "value", porque iOS pone las etiquetas en mayúscula).
+function rewardStatus(member: MemberLike, program: ProgramLike): string {
   const rewards = parseRewards(program.rewards);
   // "Puedes canjear" solo cuando está justo en un nivel de recompensa
   const atTier = rewards.find((r) => r.stamp === member.stamps);
-  if (atTier) return { label: "🎁 PUEDES CANJEAR", value: atTier.reward };
+  if (atTier) return `🎁 Puedes canjear ${atTier.reward}`;
   const next = rewards.find((r) => r.stamp > member.stamps);
   if (next) {
     const faltan = next.stamp - member.stamps;
-    return { label: `TE FALTA${faltan > 1 ? "N" : ""} ${faltan} SELLO${faltan > 1 ? "S" : ""}`, value: next.reward };
+    return `Te falta${faltan > 1 ? "n" : ""} ${faltan} sello${faltan > 1 ? "s" : ""} para ${next.reward}`;
   }
-  return { label: "RECOMPENSAS", value: rewards.length ? "¡Todas alcanzadas!" : "—" };
+  return rewards.length ? "¡Todas las recompensas alcanzadas!" : "—";
 }
 
 // ── Strip image: la grilla de sellos sobre la foto/color (lo que hace lucir la tarjeta) ──
@@ -206,16 +207,17 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
     }
     ctx.globalAlpha = 1;
 
-    // Casilla de recompensa: pequeño badge de regalo 🎁 en la esquina superior derecha
+    // Casilla de recompensa: regalo 🎁 en la esquina superior derecha (sin círculo, más grande)
     if (isTier && gift) {
-      const bs = r * 0.62;
-      const bx = cx + r * 0.62;
-      const by = cy - r * 0.62;
-      ctx.beginPath();
-      ctx.arc(bx, by, bs * 0.68, 0, Math.PI * 2);
-      ctx.fillStyle = "#fff";
-      ctx.fill();
+      const bs = r * 1.0;
+      const bx = cx + r * 0.55;
+      const by = cy - r * 0.55;
+      // Sombra suave para que resalte sobre la foto (ya que no lleva círculo)
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.45)";
+      ctx.shadowBlur = 4 * scale;
       ctx.drawImage(gift, bx - bs / 2, by - bs / 2, bs, bs);
+      ctx.restore();
     }
   }
 
@@ -299,8 +301,8 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     }),
     storeCard: {
       headerFields: [{ key: "sellos", label: "SELLOS", value: `${member.stamps}/${program.stampGoal}` }],
-      secondaryFields: [{ key: "next", label: status.label, value: status.value }],
-      auxiliaryFields: [{ key: "member", label: "MIEMBRO", value: member.name || "Cliente" }],
+      secondaryFields: [{ key: "next", label: "", value: status }],
+      auxiliaryFields: [{ key: "member", label: "Cliente", value: member.name || "Cliente" }],
       backFields: [
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
