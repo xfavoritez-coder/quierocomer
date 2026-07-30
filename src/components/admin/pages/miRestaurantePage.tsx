@@ -6,6 +6,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import { Camera, QrCode, ExternalLink, Store, CreditCard, XCircle, CheckCircle2, Clock, AlertTriangle, RefreshCw, Sparkles, X } from "lucide-react";
+import { usePanelLang } from "@/lib/i18n/panel";
 import { planNetAmount, ivaOf, grossOf, type PlanKey, PLAN_FEATURES_DISPLAY, PLAN_INHERITS_FROM } from "@/lib/billing/plans-config";
 import FacturacionPage from "./facturacionPage";
 import SubirFoto from "@/components/SubirFoto";
@@ -94,6 +95,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function MiRestaurantePage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId, restaurants } = useAdminSession();
   const { activePlan } = usePanelSession();
   const [data, setData] = useState<RestaurantData | null>(null);
@@ -135,7 +137,7 @@ export default function MiRestaurantePage() {
   const rid = selectedRestaurantId;
 
   const fetchData = useCallback(async () => {
-    if (!rid) return;
+    if (!rid) { setLoading(false); return; }
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/locales/${rid}`);
@@ -197,7 +199,7 @@ export default function MiRestaurantePage() {
         body: JSON.stringify(fields),
       });
       if (res.ok) {
-        toast.success("Guardado");
+        toast.success(t("mr_saved"));
         const updated = await res.json();
         setData(updated);
       } else {
@@ -336,12 +338,12 @@ export default function MiRestaurantePage() {
   };
 
   if (loading) return <SkeletonLoading type="form" />;
-  if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
+  if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("home_select_restaurant")}</p></div>;
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color="var(--adm-text3)" /> Mi Suscripción</h1>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Gestiona tu plan y facturación</p>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color="var(--adm-text3)" /> {t("nav_restaurant")}</h1>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>{t("mr_billing")}</p>
 
       {/* ── Bloque plan activo ── */}
       {(() => {
@@ -440,9 +442,16 @@ export default function MiRestaurantePage() {
                       <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
                         <RefreshCw size={14} /> Renovar plan
                       </button>
+                    ) : plan !== "FREE" ? (
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: plan, source: "mi_restaurante_plan_box" } }))}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: planAccent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                      >
+                        <RefreshCw size={14} /> Renovar
+                      </button>
                     ) : (
                       <button
-                        onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: plan, source: "mi_restaurante_plan_box" } }))}
+                        onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD", source: "mi_restaurante_plan_box" } }))}
                         style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: `1.5px solid ${accent}55`, borderRadius: 999, background: "transparent", color: accent, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                       >
                         <Sparkles size={14} /> Ver planes

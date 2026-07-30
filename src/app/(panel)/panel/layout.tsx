@@ -225,17 +225,20 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   const now = new Date();
   const periodEnd = status.currentPeriodEnd ? new Date(status.currentPeriodEnd) : null;
 
-  // Comparar por fecha calendario UTC (no por horas) para evitar que "hoy" aparezca como "1 día"
-  const todayUTC = now.toISOString().slice(0, 10);
-  const periodEndUTC = periodEnd ? periodEnd.toISOString().slice(0, 10) : null;
-  const isToday = periodEndUTC === todayUTC;
-  const isTomorrow = periodEndUTC === new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
+  // Comparar por fecha calendario Chile para que coincida con lo que ve el usuario
+  const toChileDate = (d: Date) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
+  const todayChile = toChileDate(now);
+  const periodEndChile = periodEnd ? toChileDate(periodEnd) : null;
+  const isToday = periodEndChile === todayChile;
+  const isTomorrow = periodEndChile === toChileDate(new Date(now.getTime() + 86400000));
+  const in2Days = periodEndChile === toChileDate(new Date(now.getTime() + 2 * 86400000));
 
-  // Activo y a punto de vencer (hoy o mañana)
-  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && (isToday || isTomorrow);
+  // Activo y a punto de vencer (hoy, mañana o pasado mañana)
+  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && (isToday || isTomorrow || in2Days);
   // Activo pero el período ya pasó en un día anterior (pendiente de corte, cron aún no corrió)
   // Comparamos por fecha calendario, no por hora — hoy aún está vigente hasta las 23:59
-  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEndUTC !== null && periodEndUTC < todayUTC;
+  const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEndChile !== null && periodEndChile < todayChile;
   // Ya cortado (bajó a FREE después de no pagar) o siempre fue gratis
   const wasDowngraded = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !!status.lastPaymentAt;
   const isFreePlan = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !status.lastPaymentAt;
@@ -292,10 +295,16 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
     sub = t("plan_expires_today_sub");
     bannerColor = "#dc2626";
     btnLabel = t("renew_now");
-  } else {
+  } else if (isTomorrow) {
     title = t("plan_expires_tomorrow");
     sub = t("plan_expires_tomorrow_sub");
     bannerColor = "#dc2626";
+    btnLabel = t("renew_now");
+  } else {
+    // in2Days
+    title = "Tu plan vence en 2 días";
+    sub = "Renueva ahora para no perder el acceso a tus funciones.";
+    bannerColor = "#d97706";
     btnLabel = t("renew_now");
   }
 
