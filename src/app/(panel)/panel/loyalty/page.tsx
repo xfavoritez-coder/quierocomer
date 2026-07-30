@@ -61,6 +61,7 @@ interface FormState {
   stampColorHex: string;
   bgImageUrl: string;
   description: string;
+  showGiftBadge: boolean;
 }
 
 const DEFAULTS: FormState = {
@@ -73,6 +74,7 @@ const DEFAULTS: FormState = {
   stampColorHex: "#FFFFFF",
   bgImageUrl: "",
   description: "",
+  showGiftBadge: true,
 };
 
 export default function LoyaltyConfigPage() {
@@ -121,6 +123,7 @@ export default function LoyaltyConfigPage() {
                 stampColorHex: p.stampColorHex || "#FFFFFF",
                 bgImageUrl: p.bgImageUrl || "",
                 description: p.description || "",
+                showGiftBadge: p.showGiftBadge !== false,
               }
             : { ...DEFAULTS },
         );
@@ -343,6 +346,24 @@ export default function LoyaltyConfigPage() {
               </div>
             </div>
 
+            {/* Mostrar 🎁 en las casillas de recompensa */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Mostrar 🎁 en las casillas con recompensa</p>
+                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                  Marca con un regalito los sellos que dan premio.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => update({ showGiftBadge: !form.showGiftBadge })}
+                aria-pressed={form.showGiftBadge}
+                style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: form.showGiftBadge ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
+              >
+                <span style={{ position: "absolute", top: 3, left: form.showGiftBadge ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+              </button>
+            </div>
+
             {/* Condiciones (pie de tarjeta) */}
             <div>
               <label style={labelStyle}>Condiciones <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(se muestran al pie de la tarjeta)</span></label>
@@ -495,6 +516,7 @@ export default function LoyaltyConfigPage() {
               stampIcon={form.stampIcon}
               rewards={form.rewards}
               description={form.description}
+              showGiftBadge={form.showGiftBadge}
             />
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.5 }}>
               Así se verá aproximadamente en el teléfono del cliente. Ejemplo con algunos sellos.
@@ -544,7 +566,7 @@ export default function LoyaltyConfigPage() {
   );
 }
 
-function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, programName, stampGoal, stampIcon, rewards, description }: {
+function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, programName, stampGoal, stampIcon, rewards, description, showGiftBadge }: {
   color: string;
   stampColor: string;
   bgImage: string;
@@ -555,6 +577,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
   stampIcon: string;
   rewards: RewardTier[];
   description: string;
+  showGiftBadge: boolean;
 }) {
   const demoStamps = Math.min(3, stampGoal);
   // Con imagen de fondo forzamos texto claro (hay overlay oscuro); si no, según el color de la tarjeta.
@@ -626,6 +649,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
                   }`,
                   background: filled ? stampColor : "transparent",
                   color: filled ? stampGlyphColor : textColor,
+                  position: "relative",
                 }}
                 title={isTier ? "Nivel con recompensa" : undefined}
               >
@@ -634,6 +658,9 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
                   <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.23 }} />
                 ) : (
                   <span style={{ opacity: filled ? 1 : 0.23 }}>{stampIcon}</span>
+                )}
+                {isTier && showGiftBadge && (
+                  <span style={{ position: "absolute", top: "-6%", right: "-6%", fontSize: "1.1rem", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>🎁</span>
                 )}
               </div>
             );

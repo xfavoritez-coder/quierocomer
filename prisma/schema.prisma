@@ -2343,6 +2343,8 @@ model LoyaltyProgram {
   logoUrl       String?
   description   String? // condiciones/letra chica que se muestra al pie de la tarjeta
 
+  showGiftBadge Boolean @default(true) // mostrar el 🎁 en las casillas de recompensa
+
   // Última notificación enviada (se muestra como "Novedades" en el pase de Apple)
   pushMessage String?
 

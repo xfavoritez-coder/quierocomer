@@ -107,6 +107,7 @@ interface ProgramLike {
   logoUrl: string | null;
   description: string | null;
   pushMessage?: string | null;
+  showGiftBadge?: boolean;
 }
 interface MemberLike {
   id: string;
@@ -183,7 +184,7 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
   } else {
     emoji = await loadEmoji(program.stampIcon || "");
   }
-  const gift = await loadEmoji("🎁");
+  const gift = program.showGiftBadge !== false ? await loadEmoji("🎁") : null;
   const glyphSize = useLogo ? r * 1.5 : r * 1.35;
   const tierStamps = new Set(parseRewards(program.rewards).map((t) => t.stamp));
 
@@ -221,7 +222,7 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
     ctx.globalAlpha = 1;
 
     // Casilla de recompensa: regalo 🎁 en la esquina superior derecha (sin círculo, más grande)
-    if (isTier && gift) {
+    if (isTier && gift && program.showGiftBadge !== false) {
       const bs = r * 1.0;
       const bx = cx + r * 0.55;
       const by = cy - r * 0.55;
