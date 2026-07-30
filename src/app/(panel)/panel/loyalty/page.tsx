@@ -593,18 +593,39 @@ export default function LoyaltyConfigPage() {
           {form.geoEnabled && (
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label style={labelStyle}>Radio (kilómetros)</label>
-                <input
-                  type="number"
-                  min={0.1}
-                  max={50}
-                  step={0.1}
-                  value={form.geoRadiusKm}
-                  onChange={(e) => update({ geoRadiusKm: Math.max(0.1, Math.min(50, Number(e.target.value) || 1)) })}
-                  style={{ ...inputStyle, width: 120 }}
-                />
+                <label style={labelStyle}>Distancia del aviso</label>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {[
+                    { label: "100 m", km: 0.1 },
+                    { label: "500 m", km: 0.5 },
+                    { label: "1 km", km: 1 },
+                    { label: "2 km", km: 2 },
+                  ].map((opt) => {
+                    const active = Math.abs(form.geoRadiusKm - opt.km) < 0.001;
+                    return (
+                      <button
+                        key={opt.km}
+                        type="button"
+                        onClick={() => update({ geoRadiusKm: opt.km })}
+                        style={{
+                          padding: "9px 16px",
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          fontFamily: F,
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          background: active ? "rgba(244,166,35,0.14)" : "var(--adm-card)",
+                          border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`,
+                          color: active ? GOLD : "var(--adm-text2)",
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
-                  A cuántos km del local se activa el aviso (iPhone). En Android el radio es fijo (~150 m).
+                  A qué distancia del local se activa el aviso (iPhone). En Android el radio es fijo (~150 m).
                 </p>
               </div>
               <div>
