@@ -171,7 +171,9 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
   const cols = goal <= 5 ? goal : Math.ceil(goal / 2);
   const rows = Math.ceil(goal / cols);
   const gapRatio = 0.16; // separación = 16% del diámetro
-  const padX = 14 * scale;
+  // Margen lateral generoso: Apple recorta los lados del strip (modo cover),
+  // así que dejamos ~12% de margen para que no se corten los sellos de los extremos.
+  const padX = 44 * scale;
   const padY = 12 * scale;
   const d = Math.min(
     (H - 2 * padY) / (rows + (rows - 1) * gapRatio),
