@@ -32,7 +32,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 const PRESETS = [
-  { label: "100 m", km: 0.1 },
+  { label: "150 m", km: 0.15 },
   { label: "500 m", km: 0.5 },
   { label: "1 km", km: 1 },
   { label: "2 km", km: 2 },
