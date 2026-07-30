@@ -18,11 +18,17 @@ export default function LoyaltyNav() {
 
   return (
     <nav
+      className="loyalty-nav"
       style={{
         display: "flex",
         gap: 4,
         borderBottom: "1px solid var(--adm-card-border)",
         marginBottom: 24,
+        overflowX: "auto",
+        overflowY: "hidden",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
       {TABS.map((tab) => {
@@ -34,6 +40,8 @@ export default function LoyaltyNav() {
             style={{
               padding: "8px 14px",
               marginBottom: -1,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
               borderBottom: `2px solid ${active ? "#F4A623" : "transparent"}`,
               fontFamily: F,
               fontSize: "0.85rem",
@@ -47,6 +55,7 @@ export default function LoyaltyNav() {
           </Link>
         );
       })}
+      <style>{`.loyalty-nav::-webkit-scrollbar{display:none}`}</style>
     </nav>
   );
 }
