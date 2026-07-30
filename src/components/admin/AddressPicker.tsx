@@ -67,7 +67,7 @@ export default function AddressPicker({
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(val)}`);
+        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(val)}&all=1`);
         const data = await res.json();
         setResults(Array.isArray(data) ? data : []);
         setOpen(true);
@@ -117,7 +117,7 @@ export default function AddressPicker({
           autoComplete="off"
         />
         {open && results.length > 0 && (
-          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>
+          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 1500, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
             {results.map((s) => (
               <button
                 key={s.place_id}
@@ -138,7 +138,7 @@ export default function AddressPicker({
 
       {lat != null && lng != null ? (
         <>
-          <div style={{ height: 200, marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid var(--adm-card-border)" }}>
+          <div style={{ position: "relative", zIndex: 0, height: 200, marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid var(--adm-card-border)" }}>
             <MapView lat={lat} lng={lng} onDragEnd={(la, ln) => onChange(q, la, ln)} />
           </div>
           <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
