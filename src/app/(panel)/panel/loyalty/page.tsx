@@ -656,7 +656,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
         <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "22px 0 10px", letterSpacing: "0.1em" }}>
           SELLOS · {demoStamps}/{stampGoal}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 5 }}>
           {Array.from({ length: Math.max(stampGoal, 1) }).map((_, i) => {
             const filled = i < demoStamps;
             const isTier = tierStamps.has(i + 1);

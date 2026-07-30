@@ -161,15 +161,23 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Grilla de sellos — con márgenes generosos para que "respire"
+  // Grilla de sellos — círculos grandes con poca separación, centrada
   const goal = Math.max(1, program.stampGoal);
   const cols = goal <= 5 ? goal : Math.ceil(goal / 2);
   const rows = Math.ceil(goal / cols);
-  const padX = 26 * scale;
-  const padY = 18 * scale;
-  const cellW = (W - 2 * padX) / cols;
-  const cellH = (H - 2 * padY) / rows;
-  const r = (Math.min(cellW, cellH) / 2) * 0.66;
+  const gapRatio = 0.16; // separación = 16% del diámetro
+  const padX = 14 * scale;
+  const padY = 12 * scale;
+  const d = Math.min(
+    (H - 2 * padY) / (rows + (rows - 1) * gapRatio),
+    (W - 2 * padX) / (cols + (cols - 1) * gapRatio),
+  );
+  const r = d / 2;
+  const step = d + gapRatio * d;
+  const gridW = cols * d + (cols - 1) * gapRatio * d;
+  const gridH = rows * d + (rows - 1) * gapRatio * d;
+  const startX = (W - gridW) / 2;
+  const startY = (H - gridH) / 2;
 
   // Icono del sello: logo del restaurante o emoji (una sola descarga)
   const useLogo = program.stampIcon === "logo" && !!logoSrc;
@@ -191,8 +199,8 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
   for (let i = 0; i < goal; i++) {
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const cx = padX + cellW * (col + 0.5);
-    const cy = padY + cellH * (row + 0.5);
+    const cx = startX + col * step + d / 2;
+    const cy = startY + row * step + d / 2;
     const filled = i < member.stamps;
     const isTier = tierStamps.has(i + 1);
 
