@@ -36,8 +36,16 @@ export async function GET(req: NextRequest) {
     if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
     await requireRestaurantForOwner(req, restaurantId);
 
-    const program = await prisma.loyaltyProgram.findUnique({ where: { restaurantId } });
-    return NextResponse.json({ program });
+    const [program, restaurant] = await Promise.all([
+      prisma.loyaltyProgram.findUnique({ where: { restaurantId } }),
+      prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { address: true, lat: true, lng: true } }),
+    ]);
+    return NextResponse.json({
+      program,
+      restaurant: restaurant
+        ? { address: restaurant.address, hasLocation: restaurant.lat != null && restaurant.lng != null }
+        : null,
+    });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
     console.error("[Loyalty program GET]", e);

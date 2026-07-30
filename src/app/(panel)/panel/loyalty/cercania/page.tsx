@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { MapPin } from "lucide-react";
+import { MapPin, AlertTriangle } from "lucide-react";
 import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
@@ -44,6 +44,8 @@ export default function LoyaltyGeoPage() {
   const [enabled, setEnabled] = useState(false);
   const [radiusKm, setRadiusKm] = useState(1);
   const [message, setMessage] = useState("");
+  const [address, setAddress] = useState<string | null>(null);
+  const [hasLocation, setHasLocation] = useState(false);
   const [loadingProgram, setLoadingProgram] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -61,6 +63,8 @@ export default function LoyaltyGeoPage() {
           setRadiusKm(d.program.geoRadiusKm ?? 1);
           setMessage(d.program.geoMessage || "");
         }
+        setAddress(d.restaurant?.address ?? null);
+        setHasLocation(!!d.restaurant?.hasLocation);
       })
       .catch(() => {})
       .finally(() => setLoadingProgram(false));
@@ -125,6 +129,32 @@ export default function LoyaltyGeoPage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Dirección desde donde se envían los avisos (solo lectura) */}
+          {hasLocation ? (
+            <div style={{ padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <label style={labelStyle}>Los avisos se enviarán desde:</label>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <MapPin size={16} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
+                <span style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text)" }}>
+                  {address || "Ubicación de tu local (configurada)"}
+                </span>
+              </div>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Es la dirección de tu restaurante en QuieroComer. Para cambiarla, edítala en los <b>Ajustes</b> de tu local.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: 14, background: "rgba(224,160,32,0.08)", border: "1px solid rgba(224,160,32,0.35)", borderRadius: 12 }}>
+              <AlertTriangle size={18} color="#e0a020" style={{ flexShrink: 0, marginTop: 1 }} />
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Tu local no tiene ubicación configurada</p>
+                <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "3px 0 0", lineHeight: 1.5 }}>
+                  Para enviar avisos por cercanía, configura la dirección de tu restaurante en los <b>Ajustes</b> de QuieroComer. Sin ubicación, los avisos no se enviarán.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Activar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
             <div>
