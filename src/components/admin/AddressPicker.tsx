@@ -79,6 +79,21 @@ export default function AddressPicker({
     }, 300);
   };
 
+  // Arrastrar el pin → actualizar coords y (por geocodificación inversa) la dirección
+  const handleDrag = async (la: number, ln: number) => {
+    onChange(q, la, ln);
+    try {
+      const res = await fetch(`/api/geo/reverse?lat=${la}&lng=${ln}`);
+      const d = await res.json();
+      if (d?.display_name) {
+        setQ(d.display_name);
+        onChange(d.display_name, la, ln);
+      }
+    } catch {
+      /* mantiene las coords aunque falle el texto */
+    }
+  };
+
   const select = async (s: Suggestion) => {
     setOpen(false);
     try {
@@ -139,7 +154,7 @@ export default function AddressPicker({
       {lat != null && lng != null ? (
         <>
           <div style={{ position: "relative", zIndex: 0, height: 200, marginTop: 10, borderRadius: 10, overflow: "hidden", border: "1px solid var(--adm-card-border)" }}>
-            <MapView lat={lat} lng={lng} onDragEnd={(la, ln) => onChange(q, la, ln)} />
+            <MapView lat={lat} lng={lng} onDragEnd={handleDrag} />
           </div>
           <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
             📍 Arrastra el pin para ajustar la ubicación exacta. Estas coordenadas se usan para las notificaciones por cercanía.
