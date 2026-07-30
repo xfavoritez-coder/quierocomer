@@ -210,7 +210,7 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       ctx.fillStyle = program.stampColorHex;
       ctx.fill();
     } else {
-      ctx.lineWidth = 2 * scale;
+      ctx.lineWidth = 1 * scale;
       // Casillas con recompensa en dorado tenue; las demás casi imperceptibles
       ctx.strokeStyle = isTier ? "rgba(244,166,35,0.55)" : "rgba(255,255,255,0.18)";
       ctx.stroke();

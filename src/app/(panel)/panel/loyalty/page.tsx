@@ -672,7 +672,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
                   borderRadius: "50%",
                   fontSize: "2.2rem",
                   lineHeight: 1,
-                  border: `1.5px solid ${
+                  border: `0.75px solid ${
                     filled
                       ? isTier
                         ? GOLD
