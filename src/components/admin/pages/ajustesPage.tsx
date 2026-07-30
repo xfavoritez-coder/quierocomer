@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Settings, Moon, Sun, Bell, Palette, Layout, Mail, List, BookOpen, Rocket, LayoutGrid, Camera } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
+import AddressPicker from "@/components/admin/AddressPicker";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
@@ -77,6 +78,8 @@ export default function AjustesPage() {
   const [infoLogoUrl, setInfoLogoUrl] = useState("");
   const [infoDietType, setInfoDietType] = useState("OMNIVORE");
   const [infoAddress, setInfoAddress] = useState("");
+  const [infoLat, setInfoLat] = useState<number | null>(null);
+  const [infoLng, setInfoLng] = useState<number | null>(null);
   const [infoPhone, setInfoPhone] = useState("");
   const [infoWhatsapp, setInfoWhatsapp] = useState("");
   const [panelTheme, setPanelTheme] = useState("light");
@@ -104,6 +107,8 @@ export default function AjustesPage() {
       setInfoLogoUrl(d.logoUrl || "");
       setInfoDietType(d.dietType || "OMNIVORE");
       setInfoAddress(d.address || "");
+      setInfoLat(d.lat ?? null);
+      setInfoLng(d.lng ?? null);
       setInfoPhone(d.phone || "");
       setInfoWhatsapp(d.whatsapp || "");
     } catch {}
@@ -203,10 +208,15 @@ export default function AjustesPage() {
             })}
           </div>
         </div>
-        {/* Dirección */}
+        {/* Dirección (con verificación en mapa → coordenadas para geo-notificaciones) */}
         <div style={{ marginBottom: 14 }}>
           <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Dirección</label>
-          <input value={infoAddress} onChange={e => setInfoAddress(e.target.value)} style={inputStyle} placeholder="Ej: Av. Providencia 1234, Santiago" />
+          <AddressPicker
+            address={infoAddress}
+            lat={infoLat}
+            lng={infoLng}
+            onChange={(a, la, ln) => { setInfoAddress(a); setInfoLat(la); setInfoLng(ln); }}
+          />
         </div>
         {/* Teléfono y WhatsApp */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
@@ -220,7 +230,7 @@ export default function AjustesPage() {
           </div>
         </div>
         <button
-          onClick={() => save({ name: infoName, dietType: infoDietType, address: infoAddress || null, phone: infoPhone || null, whatsapp: infoWhatsapp || null, logoUrl: infoLogoUrl || null })}
+          onClick={() => save({ name: infoName, dietType: infoDietType, address: infoAddress || null, lat: infoLat, lng: infoLng, phone: infoPhone || null, whatsapp: infoWhatsapp || null, logoUrl: infoLogoUrl || null })}
           disabled={saving}
           style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
         >
