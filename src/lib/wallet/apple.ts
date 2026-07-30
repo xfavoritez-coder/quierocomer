@@ -234,8 +234,9 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
       const bs = r * 0.5;
       const bx = cx + r * 0.62;
       const by = cy - r * 0.62;
-      // Sombra suave para que resalte sobre la foto (ya que no lleva círculo)
+      // Misma opacidad que el sello: tenue si aún no está timbrado
       ctx.save();
+      ctx.globalAlpha = filled ? 1 : 0.23;
       ctx.shadowColor = "rgba(0,0,0,0.45)";
       ctx.shadowBlur = 4 * scale;
       ctx.drawImage(gift, bx - bs / 2, by - bs / 2, bs, bs);

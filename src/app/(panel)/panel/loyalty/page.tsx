@@ -696,7 +696,7 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
                   <span style={{ opacity: filled ? 1 : 0.23 }}>{stampIcon}</span>
                 )}
                 {isTier && showGiftBadge && (
-                  <span style={{ position: "absolute", top: "0%", right: "0%", fontSize: "0.6rem", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>🎁</span>
+                  <span style={{ position: "absolute", top: "0%", right: "0%", fontSize: "0.6rem", opacity: filled ? 1 : 0.23, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>🎁</span>
                 )}
               </div>
             );
