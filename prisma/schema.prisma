@@ -2345,6 +2345,11 @@ model LoyaltyProgram {
 
   showGiftBadge Boolean @default(true) // mostrar el 🎁 en las casillas de recompensa
 
+  // Geo-notificaciones (aviso al cliente cuando está cerca del local)
+  geoEnabled  Boolean @default(false)
+  geoRadiusKm Float   @default(1) // radio en km (principalmente para Apple)
+  geoMessage  String? // texto que aparece al estar cerca
+
   // Última notificación enviada (se muestra como "Novedades" en el pase de Apple)
   pushMessage String?
 

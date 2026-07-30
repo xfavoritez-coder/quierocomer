@@ -61,6 +61,12 @@ export async function POST(req: NextRequest) {
     if (typeof body.name === "string" && body.name.trim()) data.name = body.name.trim().slice(0, 80);
     if (typeof body.active === "boolean") data.active = body.active;
     if (typeof body.showGiftBadge === "boolean") data.showGiftBadge = body.showGiftBadge;
+    if (typeof body.geoEnabled === "boolean") data.geoEnabled = body.geoEnabled;
+    if (body.geoRadiusKm != null) {
+      const n = Number(body.geoRadiusKm);
+      if (Number.isFinite(n) && n > 0 && n <= 50) data.geoRadiusKm = n;
+    }
+    if (typeof body.geoMessage === "string") data.geoMessage = body.geoMessage.trim().slice(0, 120) || null;
     if (typeof body.description === "string") data.description = body.description.trim().slice(0, 300);
     if (typeof body.stampIcon === "string" && body.stampIcon.trim()) {
       const raw = body.stampIcon.trim();

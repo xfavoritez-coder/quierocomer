@@ -3,6 +3,7 @@ import forge from "node-forge";
 import JSZip from "jszip";
 import { loadImage, createCanvas } from "@napi-rs/canvas";
 import { parseRewards } from "@/lib/loyalty";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Generación y firma de tarjetas Apple Wallet (.pkpass).
@@ -97,8 +98,12 @@ async function loadEmoji(icon: string) {
 
 interface ProgramLike {
   id: string;
+  restaurantId?: string;
   name: string;
   stampGoal: number;
+  geoEnabled?: boolean;
+  geoRadiusKm?: number;
+  geoMessage?: string | null;
   stampIcon: string;
   rewards: unknown;
   cardColorHex: string;
@@ -305,6 +310,27 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
   const logoSrc = program.logoUrl || restaurantLogo || null;
   const status = rewardStatus(member, program);
 
+  // Geo-notificaciones: aviso cuando el cliente está cerca del local
+  let geo: Record<string, unknown> = {};
+  if (program.geoEnabled && program.restaurantId) {
+    const rest = await prisma.restaurant.findUnique({
+      where: { id: program.restaurantId },
+      select: { lat: true, lng: true },
+    });
+    if (rest?.lat != null && rest?.lng != null) {
+      geo = {
+        maxDistance: Math.round((program.geoRadiusKm || 1) * 1000),
+        locations: [
+          {
+            latitude: rest.lat,
+            longitude: rest.lng,
+            relevantText: program.geoMessage || `¡Estás cerca de ${restaurantName}! Pasa a sumar sellos.`,
+          },
+        ],
+      };
+    }
+  }
+
   const pass = {
     formatVersion: 1,
     passTypeIdentifier: cfg.passTypeId,
@@ -313,6 +339,7 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
     serialNumber: member.id,
     description: program.name,
     logoText: restaurantName,
+    ...geo,
     ...(member.revoked && { voided: true }),
     foregroundColor: isLight(bg) ? "rgb(17,17,17)" : "rgb(255,255,255)",
     backgroundColor: hexToRgb(bg),

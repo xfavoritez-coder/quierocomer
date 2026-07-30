@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { parseRewards } from "@/lib/loyalty";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Integración con Google Wallet (sin dependencias externas: firma con `crypto`).
@@ -106,6 +107,7 @@ export function googleObjectId(memberId: string): string {
 
 interface ProgramLike {
   id: string;
+  restaurantId?: string;
   name: string;
   stampGoal: number;
   stampIcon: string;
@@ -114,6 +116,7 @@ interface ProgramLike {
   bgImageUrl: string | null;
   logoUrl: string | null;
   description: string | null;
+  geoEnabled?: boolean;
 }
 
 // ── Clase de fidelidad (plantilla por programa/restaurante) ──
@@ -122,6 +125,18 @@ export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: s
   const rewards = parseRewards(program.rewards);
   const icon = program.stampIcon === "logo" ? "•" : program.stampIcon;
   const rewardsText = rewards.map((r) => `${r.stamp} ${icon} → ${r.reward}`).join("\n") || "—";
+
+  // Geo-notificaciones: geofence en la clase (Google avisa cuando el cliente está cerca)
+  let locations: { latitude: number; longitude: number }[] | undefined;
+  if (program.geoEnabled && program.restaurantId) {
+    const rest = await prisma.restaurant.findUnique({
+      where: { id: program.restaurantId },
+      select: { lat: true, lng: true },
+    });
+    if (rest?.lat != null && rest?.lng != null) {
+      locations = [{ latitude: rest.lat, longitude: rest.lng }];
+    }
+  }
 
   const body: Record<string, unknown> = {
     id: classId,
@@ -132,6 +147,7 @@ export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: s
     programLogo: { sourceUri: { uri: program.logoUrl || restaurantLogo || DEFAULT_LOGO } },
     // La imagen "hero" es el banner de la tarjeta (recortado ancho para no alargar el pase).
     ...(program.bgImageUrl && { heroImage: { sourceUri: { uri: wideBanner(program.bgImageUrl) } } }),
+    ...(locations && { locations }),
     textModulesData: [
       { id: "recompensas", header: "Recompensas", body: rewardsText },
       ...(program.description ? [{ id: "condiciones", header: "Condiciones", body: program.description }] : []),
