@@ -231,9 +231,9 @@ async function stripImage(program: ProgramLike, member: MemberLike, scale: numbe
 
     // Casilla de recompensa: regalo 🎁 en la esquina superior derecha (sin círculo, más grande)
     if (isTier && gift && program.showGiftBadge !== false) {
-      const bs = r * 1.0;
-      const bx = cx + r * 0.55;
-      const by = cy - r * 0.55;
+      const bs = r * 0.5;
+      const bx = cx + r * 0.62;
+      const by = cy - r * 0.62;
       // Sombra suave para que resalte sobre la foto (ya que no lleva círculo)
       ctx.save();
       ctx.shadowColor = "rgba(0,0,0,0.45)";
