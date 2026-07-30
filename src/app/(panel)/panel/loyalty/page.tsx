@@ -84,6 +84,7 @@ export default function LoyaltyConfigPage() {
   const [loadingProgram, setLoadingProgram] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [dishPhotos, setDishPhotos] = useState<{ name: string; url: string }[]>([]);
   const [showPhotos, setShowPhotos] = useState(false);
@@ -176,6 +177,26 @@ export default function LoyaltyConfigPage() {
       setSaveError(e.message || "Error al guardar");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const refreshAll = async () => {
+    if (!selectedRestaurantId) return;
+    if (!window.confirm("¿Aplicar el diseño actual a todas las tarjetas ya instaladas de tus clientes?")) return;
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/loyalty/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Error");
+      toast.success(`Diseño enviado a las tarjetas · ${d.appleDevices} iPhone${d.google ? " + Android" : ""}`);
+    } catch (e: any) {
+      toast.error(e.message || "Error al actualizar");
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -499,6 +520,21 @@ export default function LoyaltyConfigPage() {
               </button>
               {saved && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#16a34a" }}>✓ Guardado</span>}
               {saveError && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ef4444" }}>{saveError}</span>}
+            </div>
+
+            {/* Actualizar todos los pases ya instalados */}
+            <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16 }}>
+              <button
+                type="button"
+                onClick={refreshAll}
+                disabled={refreshing}
+                style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: refreshing ? "default" : "pointer", opacity: refreshing ? 0.6 : 1 }}
+              >
+                {refreshing ? "Actualizando…" : "↻ Actualizar todos los pases"}
+              </button>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Aplica el diseño actual (colores, icono, imagen, recompensas) a las tarjetas que tus clientes <b>ya tienen</b> en el teléfono. Guarda primero tus cambios.
+              </p>
             </div>
           </div>
 
