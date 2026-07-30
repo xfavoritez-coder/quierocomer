@@ -62,9 +62,6 @@ interface FormState {
   bgImageUrl: string;
   description: string;
   showGiftBadge: boolean;
-  geoEnabled: boolean;
-  geoRadiusKm: number;
-  geoMessage: string;
 }
 
 const DEFAULTS: FormState = {
@@ -78,9 +75,6 @@ const DEFAULTS: FormState = {
   bgImageUrl: "",
   description: "",
   showGiftBadge: true,
-  geoEnabled: false,
-  geoRadiusKm: 1,
-  geoMessage: "",
 };
 
 export default function LoyaltyConfigPage() {
@@ -131,9 +125,6 @@ export default function LoyaltyConfigPage() {
                 bgImageUrl: p.bgImageUrl || "",
                 description: p.description || "",
                 showGiftBadge: p.showGiftBadge !== false,
-                geoEnabled: !!p.geoEnabled,
-                geoRadiusKm: p.geoRadiusKm ?? 1,
-                geoMessage: p.geoMessage || "",
               }
             : { ...DEFAULTS },
         );
@@ -567,83 +558,6 @@ export default function LoyaltyConfigPage() {
               Así se verá aproximadamente en el teléfono del cliente. Ejemplo con algunos sellos.
             </p>
           </div>
-        </div>
-      )}
-
-      {/* Notificaciones por cercanía (geo) */}
-      {!loading && !loadingProgram && (
-        <div style={{ marginTop: 28, padding: 18, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, maxWidth: 640 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-            <div>
-              <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>📍 Notificaciones por cercanía</h2>
-              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-                Avisa al cliente en su pantalla cuando pasa cerca de tu local. El teléfono lo detecta solo (usa la ubicación del local en QuieroComer).
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => update({ geoEnabled: !form.geoEnabled })}
-              aria-pressed={form.geoEnabled}
-              style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: form.geoEnabled ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
-            >
-              <span style={{ position: "absolute", top: 3, left: form.geoEnabled ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
-            </button>
-          </div>
-
-          {form.geoEnabled && (
-            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <label style={labelStyle}>Distancia del aviso</label>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {[
-                    { label: "100 m", km: 0.1 },
-                    { label: "500 m", km: 0.5 },
-                    { label: "1 km", km: 1 },
-                    { label: "2 km", km: 2 },
-                  ].map((opt) => {
-                    const active = Math.abs(form.geoRadiusKm - opt.km) < 0.001;
-                    return (
-                      <button
-                        key={opt.km}
-                        type="button"
-                        onClick={() => update({ geoRadiusKm: opt.km })}
-                        style={{
-                          padding: "9px 16px",
-                          borderRadius: 8,
-                          cursor: "pointer",
-                          fontFamily: F,
-                          fontSize: "0.82rem",
-                          fontWeight: 700,
-                          background: active ? "rgba(244,166,35,0.14)" : "var(--adm-card)",
-                          border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`,
-                          color: active ? GOLD : "var(--adm-text2)",
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
-                  A qué distancia del local se activa el aviso (iPhone). En Android el radio es fijo (~150 m).
-                </p>
-              </div>
-              <div>
-                <label style={labelStyle}>Mensaje del aviso</label>
-                <input
-                  type="text"
-                  value={form.geoMessage}
-                  maxLength={120}
-                  placeholder="Ej: ¡Estás cerca! Pásate por tus sellos 🍣"
-                  onChange={(e) => update({ geoMessage: e.target.value })}
-                  style={inputStyle}
-                />
-              </div>
-              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                Guarda los cambios y usa <b>“↻ Actualizar todos los pases”</b> para aplicarlo a las tarjetas ya instaladas. Requiere que tu local tenga ubicación configurada.
-              </p>
-            </div>
-          )}
         </div>
       )}
 

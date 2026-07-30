@@ -9,6 +9,7 @@ const TABS = [
   { href: "/panel/loyalty", label: "Configuración" },
   { href: "/panel/loyalty/miembros", label: "Miembros" },
   { href: "/panel/loyalty/escanear", label: "Escanear" },
+  { href: "/panel/loyalty/cercania", label: "Cercanía" },
   { href: "/panel/loyalty/notificaciones", label: "Notificaciones" },
 ];
 
