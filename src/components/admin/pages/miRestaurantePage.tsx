@@ -360,6 +360,12 @@ export default function MiRestaurantePage() {
 
         const inGrace = isPastDue || (!inTrial && !isCanceled && periodEnd && periodEnd < now && isActive);
         const cycleEndsToday = !inGrace && periodEnd && periodEnd.toDateString() === now.toDateString();
+        const toChileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
+        const todayChile = toChileDate(now);
+        const periodEndChile = periodEnd ? toChileDate(periodEnd) : null;
+        const isTomorrow = periodEndChile === toChileDate(new Date(now.getTime() + 86400000));
+        const in2Days = periodEndChile === toChileDate(new Date(now.getTime() + 2 * 86400000));
+        const isExpiringSoon = !inGrace && !cycleEndsToday && isActive && plan !== "FREE" && (isTomorrow || in2Days);
 
         const planAccent = (plan as string) === "PREMIUM" ? "#7c3aed"
           : (plan as string) === "GOLD" || (plan as string) === "SILVER" ? GOLD
@@ -442,21 +448,14 @@ export default function MiRestaurantePage() {
                       <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
                         <RefreshCw size={14} /> Renovar plan
                       </button>
-                    ) : plan !== "FREE" ? (
+                    ) : isExpiringSoon ? (
                       <button
                         onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: plan, source: "mi_restaurante_plan_box" } }))}
                         style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: planAccent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                       >
                         <RefreshCw size={14} /> Renovar
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "GOLD", source: "mi_restaurante_plan_box" } }))}
-                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: `1.5px solid ${accent}55`, borderRadius: 999, background: "transparent", color: accent, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                      >
-                        <Sparkles size={14} /> Ver planes
-                      </button>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>
