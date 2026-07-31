@@ -227,7 +227,23 @@ export default function LoyaltyCardPage() {
               </div>
               <button
                 type="button"
-                onClick={() => update({ active: !form.active })}
+                onClick={async () => {
+                  const newActive = !form.active;
+                  update({ active: newActive });
+                  if (!selectedRestaurantId) return;
+                  try {
+                    const res = await fetch("/api/loyalty/program", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, active: newActive, showGiftBadge: true }),
+                    });
+                    if (!res.ok) throw new Error();
+                    setSaved(true);
+                  } catch {
+                    update({ active: !newActive });
+                    toast.error("Error al guardar");
+                  }
+                }}
                 aria-pressed={form.active}
                 style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: form.active ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
               >
