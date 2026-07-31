@@ -180,7 +180,12 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     localStorage.setItem("qc_panel_theme", next);
   };
 
-  const isActive = (href: string) => href === basePath ? pathname === basePath : pathname.startsWith(href);
+  const isActive = (href: string) => {
+    if (href === basePath) return pathname === basePath;
+    // Si hay items hermanos que empiezan con este href, usar exact match (evita falso activo en index de sección)
+    const hasSiblings = SECTIONS.some(s => s.items.length > 1 && s.items.some(i => i.href !== href && i.href.startsWith(href + "/")));
+    return hasSiblings ? pathname === href : pathname.startsWith(href);
+  };
   const isSectionActive = (section: NavSection) => section.items.some(item => isActive(item.href));
   const initial = name?.charAt(0)?.toUpperCase() || "?";
   const activeRest = restaurants.find(r => r.id === selectedRestaurantId) || restaurants[0];
