@@ -116,7 +116,12 @@ export default function ResenaClient({ restaurant }: Props) {
 
             <Stars value={rating} onChange={setRating} />
 
-            <style>{`.resena-input::placeholder, .resena-textarea::placeholder { color: rgba(255,255,255,0.28); }`}</style>
+            <style>{`
+              .resena-input::placeholder, .resena-input::-webkit-input-placeholder,
+              .resena-textarea::placeholder, .resena-textarea::-webkit-input-placeholder,
+              .resena-input::-moz-placeholder, .resena-textarea::-moz-placeholder
+              { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+            `}</style>
 
             <div style={{ marginBottom: 12 }}>
               <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
