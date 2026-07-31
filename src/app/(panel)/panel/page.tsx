@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
 import { QrCode, Bell, ExternalLink, Copy, Cake, Users, ShoppingCart } from "lucide-react";
@@ -336,8 +335,6 @@ export default function PanelDashboard() {
         </div>
       )}
 
-<PlanGate plan={(rest as any)?.plan} feature="stats_basic">
-
       {/* ═══ VISITAS POR SECCIÓN ═══ */}
       {data.pageHitsToday && (() => {
         const today = data.pageHitsToday!;
@@ -460,8 +457,6 @@ export default function PanelDashboard() {
           </div>
         );
       })()}
-
-      </PlanGate>
 
     </div>
   );
