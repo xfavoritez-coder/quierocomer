@@ -48,6 +48,8 @@ const DEMO_DATA: DashData = {
   weekRestrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
 };
 
+interface PageHits { landing: number; carta: number; pedir: number; fidelidad: number; resena: number }
+
 interface DashData {
   visitsThisWeek: number; visitsDelta: number | null;
   avgSessionDuration: number; genioUsedThisWeek: number;
@@ -57,11 +59,12 @@ interface DashData {
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
   lastScanAt: string | null; todayUniqueVisitors: number;
   todayBirthdays?: number; weekBirthdays: number; genioToday: number; todayAvgDuration: number;
-  // Genio funnel + diet/restrictions (week-based)
   weekGenio?: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
   weekDietDistribution?: { type: string; count: number }[];
   weekRestrictionsList?: { name: string; count: number }[];
   filterUsage?: { popular: number; estrella: number; veggie: number; "gluten-free"?: number };
+  pageHitsToday?: PageHits;
+  pageHitsWeek?: PageHits;
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -353,6 +356,39 @@ export default function PanelDashboard() {
           <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>{t("home_birthdays_today")}</span>
         </div>
       </div>
+
+      {/* ═══ VISITAS POR SECCIÓN ═══ */}
+      {data.pageHitsToday && (() => {
+        const today = data.pageHitsToday!;
+        const week = data.pageHitsWeek!;
+        const sections: { key: keyof PageHits; label: string; emoji: string }[] = [
+          { key: "landing",   label: "Página del local",  emoji: "🌐" },
+          { key: "carta",     label: "Carta QR",          emoji: "📖" },
+          { key: "pedir",     label: "Pedido online",     emoji: "🛒" },
+          { key: "fidelidad", label: "Tarjeta de premios",emoji: "🎁" },
+          { key: "resena",    label: "Valoraciones",      emoji: "⭐" },
+        ];
+        return (
+          <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 20, background: "var(--adm-card)", padding: "16px 16px 12px", marginBottom: 22, boxShadow: "var(--adm-card-shadow)" }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>Visitas por sección</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "22px 1fr 52px 52px", alignItems: "center", gap: "6px 8px", marginBottom: 8 }}>
+              <span /><span />
+              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", fontWeight: 800, textAlign: "right", textTransform: "uppercase", letterSpacing: "0.06em" }}>Hoy</span>
+              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", fontWeight: 800, textAlign: "right", textTransform: "uppercase", letterSpacing: "0.06em" }}>7 días</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+              {sections.map(s => (
+                <div key={s.key} style={{ display: "grid", gridTemplateColumns: "22px 1fr 52px 52px", alignItems: "center", gap: "0 8px" }}>
+                  <span style={{ fontSize: "0.95rem", textAlign: "center" }}>{s.emoji}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)" }}>{s.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 900, color: today[s.key] > 0 ? "var(--adm-text)" : "var(--adm-text3)", textAlign: "right" }}>{today[s.key]}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: week[s.key] > 0 ? GOLD : "var(--adm-text3)", textAlign: "right" }}>{week[s.key]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ ESTA SEMANA ═══ */}
       <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_this_week")}</h3>

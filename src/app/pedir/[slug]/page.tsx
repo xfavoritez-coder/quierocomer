@@ -6,6 +6,7 @@ import { getCachedTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 import OrderMenuPage from "@/components/order/OrderMenuPage";
 import { OrderCartProvider } from "@/components/order/OrderCartContext";
 import MenuPausedPage from "@/components/qr/MenuPausedPage";
+import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -131,13 +132,16 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   };
 
   return (
-    <OrderCartProvider>
-      {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} mode="ordering" />}
-      <OrderMenuPage
-        restaurant={scheduledRestaurant as any}
-        orderingConfig={orderingConfig}
-        popularDishIds={topDishes.dishIds}
-      />
-    </OrderCartProvider>
+    <>
+      <PageHitTracker restaurantId={config.id} page="pedir" />
+      <OrderCartProvider>
+        {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} mode="ordering" />}
+        <OrderMenuPage
+          restaurant={scheduledRestaurant as any}
+          orderingConfig={orderingConfig}
+          popularDishIds={topDishes.dishIds}
+        />
+      </OrderCartProvider>
+    </>
   );
 }

@@ -193,6 +193,9 @@ export async function GET(req: NextRequest) {
       periodDurationAgg,
       // Filter usage week
       filterUsageRaw,
+      // Page hits by page type
+      pageHitsTodayRaw,
+      pageHitsWeekRaw,
     ] = await Promise.all([
       // ── Period-based (using groupBy/count/aggregate instead of findMany) ──
       prisma.session.count({ where: { ...restaurantFilter, startedAt: dateFilter } }),
@@ -257,6 +260,10 @@ export async function GET(req: NextRequest) {
       prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
       // Filter usage this week (popular, estrella/recomendados, veggie) — grouped by restaurantId + filter
       prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie", "gluten-free"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+      // Page hits today (landing / pedir / fidelidad / resena)
+      prisma.pageHit.groupBy({ by: ["page"], where: { ...restaurantFilter, createdAt: { gte: todayStart } }, _count: { id: true } }),
+      // Page hits this week
+      prisma.pageHit.groupBy({ by: ["page"], where: { ...restaurantFilter, createdAt: { gte: weekAgo } }, _count: { id: true } }),
     ]);
 
     const uniqueGuests = uniqueGuestsCount as number;
@@ -373,6 +380,15 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.total - a.total);
     const weekAvgDurationSec = Math.round((weekAvgDuration._avg?.durationMs || 0) / 1000);
 
+    // Page hits by type
+    const toHitMap = (rows: { page: string; _count: { id: number } }[]) => {
+      const m: Record<string, number> = { landing: 0, pedir: 0, fidelidad: 0, resena: 0 };
+      for (const r of rows) if (r.page in m) m[r.page] = r._count.id;
+      return m;
+    };
+    const pageHitsToday = toHitMap(pageHitsTodayRaw as any[]);
+    const pageHitsWeek = toHitMap(pageHitsWeekRaw as any[]);
+
     return NextResponse.json({
       // ── Period-based data ──
       period,
@@ -439,6 +455,9 @@ export async function GET(req: NextRequest) {
       conversionRate: 0,
       filterUsage,
       filterUsageByRestaurant,
+      // Visitas por sección (hoy y semana)
+      pageHitsToday: { ...pageHitsToday, carta: todaySessionCount },
+      pageHitsWeek: { ...pageHitsWeek, carta: visitsThisWeek },
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);

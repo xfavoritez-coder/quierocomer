@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import PageHitTracker from '@/components/PageHitTracker'
 
 const BASE = 'https://quierocomer.com'
 
@@ -50,12 +51,14 @@ const BTN = {
   minHeight: 80,
 } as const
 
-function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof getRestaurantLanding>>> }) {
+function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof getRestaurantLanding>>> & { id: string } }) {
   const initials = r.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   const hasLoyalty = !!r.loyaltyProgram?.active
   const loyaltyIcon = r.loyaltyProgram?.stampIcon || '★'
 
   return (
+    <>
+    <PageHitTracker restaurantId={r.id} page="landing" />
     <main style={{
       minHeight: '100svh',
       background: 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
@@ -151,6 +154,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         Powered by <strong style={{ color: 'rgba(255,255,255,0.55)' }}>QuieroComer</strong>
       </a>
     </main>
+    </>
   )
 }
 

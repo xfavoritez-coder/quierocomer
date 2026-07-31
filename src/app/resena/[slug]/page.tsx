@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ResenaClient from "./ResenaClient";
+import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -24,5 +25,10 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
 
   if (!restaurant || restaurant.reviewMode !== "private") return notFound();
 
-  return <ResenaClient restaurant={{ ...restaurant, slug }} />;
+  return (
+    <>
+      <PageHitTracker restaurantId={restaurant.id} page="resena" />
+      <ResenaClient restaurant={{ ...restaurant, slug }} />
+    </>
+  );
 }

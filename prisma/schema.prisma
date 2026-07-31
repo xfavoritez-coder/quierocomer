@@ -2465,3 +2465,15 @@ model LoyaltyBroadcast {
 
   @@index([restaurantId, createdAt])
 }
+
+// Visitas ligeras a páginas del local (landing, pedir, fidelidad, resena).
+// La carta QR ya se trackea en Session — aquí se registran las demás.
+model PageHit {
+  id           String   @id @default(cuid())
+  restaurantId String
+  page         String   // "landing" | "pedir" | "fidelidad" | "resena"
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, page, createdAt])
+  @@index([restaurantId, createdAt])
+}

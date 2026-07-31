@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { parseRewards } from "@/lib/loyalty";
 import EnrollClient from "./EnrollClient";
+import PageHitTracker from "@/components/PageHitTracker";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -60,19 +61,22 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
   const rewards = parseRewards(program.rewards);
 
   return (
-    <EnrollClient
-      slug={slug}
-      restaurantName={restaurant.name}
-      restaurantLogo={restaurant.logoUrl}
-      program={{
-        name: program.name,
-        cardColorHex: program.cardColorHex,
-        accentColor: restaurant.cartaAccentColor || program.cardColorHex,
-        stampIcon: program.stampIcon,
-        stampGoal: program.stampGoal,
-        description: program.description,
-        rewards,
-      }}
-    />
+    <>
+      <PageHitTracker restaurantId={restaurant.id} page="fidelidad" />
+      <EnrollClient
+        slug={slug}
+        restaurantName={restaurant.name}
+        restaurantLogo={restaurant.logoUrl}
+        program={{
+          name: program.name,
+          cardColorHex: program.cardColorHex,
+          accentColor: restaurant.cartaAccentColor || program.cardColorHex,
+          stampIcon: program.stampIcon,
+          stampGoal: program.stampGoal,
+          description: program.description,
+          rewards,
+        }}
+      />
+    </>
   );
 }
