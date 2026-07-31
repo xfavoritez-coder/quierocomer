@@ -462,9 +462,16 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                             <button onClick={() => updateGroup(template.id, group.id, { required: !group.required, minSelect: !group.required ? 1 : 0 })} style={{ padding: "2px 8px", borderRadius: 6, border: "none", fontSize: "0.62rem", fontFamily: F, fontWeight: 600, cursor: "pointer", background: group.required ? "rgba(244,166,35,0.12)" : "var(--adm-card)", color: group.required ? GOLD : "var(--adm-text3)" }}>
                               {group.required ? "Obligatorio" : "Opcional"}
                             </button>
+                            <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>máx</span>
+                            <select
+                              value={group.maxSelect}
+                              onChange={e => updateGroup(template.id, group.id, { maxSelect: Number(e.target.value) })}
+                              style={{ padding: "2px 4px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text)", cursor: "pointer", outline: "none" }}
+                            >
+                              {[1,2,3,4,5,6,7,8,10].map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
                           </>
                         )}
-                        {group.maxSelect > 1 && <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>máx {group.maxSelect}</span>}
                         <button onClick={() => deleteGroup(template.id, group.id)} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontSize: "0.62rem", fontFamily: F, color: "#ef4444", cursor: "pointer", fontWeight: 600 }}>Eliminar</button>
                       </div>
                       <div style={{ padding: "6px 12px 10px" }}>
@@ -520,7 +527,6 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                         ) : (
                           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                             <button onClick={() => setAddingOptionTo(group.id)} style={{ flex: 1, padding: "5px 12px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: GOLD, cursor: "pointer" }}>+ Agregar opción</button>
-                            <button onClick={() => openImportPicker(template.id, group.id)} style={{ padding: "5px 12px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "#7c3aed", cursor: "pointer", fontWeight: 600 }}>📥 Importar de Toteat</button>
                           </div>
                         )}
                       </div>
