@@ -333,33 +333,7 @@ export default function PanelDashboard() {
         </div>
       )}
 
-      {/* ═══ HERO — En vivo ═══ */}
-      <div style={{
-        position: "relative", overflow: "hidden", border: "1px solid var(--adm-card-border)", borderRadius: 28,
-        padding: 24, minHeight: 160, marginBottom: 24,
-        background: "linear-gradient(135deg, rgba(255,173,24,0.10), rgba(255,173,24,0.02) 46%, rgba(255,255,255,0.01)), var(--adm-card)",
-        boxShadow: "var(--adm-card-shadow)",
-      }}>
-        <div style={{ position: "absolute", width: 190, height: 190, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,173,24,0.15), transparent 62%)", right: -80, top: -70, filter: "blur(2px)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20 }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#36e982", boxShadow: "0 0 18px rgba(54,233,130,0.8)", animation: "livePulse 2s ease-in-out infinite" }} />
-          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("home_live_today")}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
-          <div>
-            <div style={{ fontFamily: F, fontSize: "3.2rem", fontWeight: 900, letterSpacing: "-0.06em", lineHeight: 0.9, color: "var(--adm-text)" }}>{data.todayUniqueVisitors}</div>
-            <div style={{ marginTop: 10, fontFamily: FB, fontSize: "0.92rem", color: "var(--adm-text2)", fontWeight: 700, lineHeight: 1.35 }}>{t("home_opened_menu")}</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, opacity: 0.9, height: 42 }}>
-            {[20, 33, 27, 40, 31].map((h, i) => (
-              <div key={i} style={{ width: 7, height: h, borderRadius: 8, background: "linear-gradient(to top, #F4A623, #ffe0a2)" }} />
-            ))}
-          </div>
-        </div>
-        <style>{`@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
-      </div>
-
-      <PlanGate plan={(rest as any)?.plan} feature="stats_basic">
+<PlanGate plan={(rest as any)?.plan} feature="stats_basic">
 
       {/* ═══ HOY ═══ */}
       <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_today")}</h3>
