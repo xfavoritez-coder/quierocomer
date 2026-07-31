@@ -62,6 +62,15 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       ],
     },
     {
+      key: "ordering",
+      label: "Pedidos Online",
+      icon: ShoppingCart,
+      items: [
+        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
+        ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
+      ],
+    },
+    {
       key: "loyalty",
       label: "Loyalty",
       icon: Gift,
@@ -71,15 +80,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: UsersRound, labelKey: "nav_loyalty_members", href: `${base}/loyalty/miembros` },
         { icon: Bell, labelKey: "nav_loyalty_notif", href: `${base}/loyalty/notificaciones` },
         { icon: Scan, labelKey: "nav_loyalty_scan", href: `${base}/loyalty/escanear` },
-      ],
-    },
-    {
-      key: "ordering",
-      label: "Pedidos Online",
-      icon: ShoppingCart,
-      items: [
-        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
-        ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
       ],
     },
     {
