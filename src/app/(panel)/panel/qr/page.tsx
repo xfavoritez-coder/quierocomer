@@ -39,6 +39,7 @@ export default function PanelQRPage() {
   const slug = restaurant?.slug || "";
   const logoUrl = (restaurant as any)?.logoUrl || null;
   const qrUrl = `${BASE_URL}/qr/${slug}`;
+  const landingUrl = `${BASE_URL}/${slug}`;
 
   // Generate QR on mount
   useEffect(() => {
@@ -159,7 +160,7 @@ export default function PanelQRPage() {
   const perPage = Math.floor((210 - 20) / cellMm) * Math.floor((297 - 20) / cellMm);
 
   const copyLink = () => {
-    navigator.clipboard.writeText(qrUrl);
+    navigator.clipboard.writeText(landingUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -213,12 +214,12 @@ export default function PanelQRPage() {
           </button>
         )}
 
-        {/* Link de la carta */}
+        {/* Link de la landing */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <a href={qrUrl} target="_blank" rel="noopener noreferrer" style={{
+          <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{
             fontFamily: FB, fontSize: "0.78rem", color: GOLD, textDecoration: "none", fontWeight: 600,
           }}>
-            {qrUrl.replace("https://", "")}
+            {landingUrl.replace("https://", "")}
           </a>
           <button onClick={copyLink} style={{
             background: "none", border: "none", cursor: "pointer", padding: 4,
