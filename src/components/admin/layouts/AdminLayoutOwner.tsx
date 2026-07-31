@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -45,11 +45,18 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
 
   const SECTIONS: NavSection[] = [
     {
+      key: "dashboard",
+      label: "Dashboard",
+      icon: Home,
+      items: [
+        { icon: Home, labelKey: "nav_home", href: base },
+      ],
+    },
+    {
       key: "carta",
       label: "Carta QR",
       icon: UtensilsCrossed,
       items: [
-        { icon: Home, labelKey: "nav_home", href: base },
         { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
         { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
         { icon: ContactRound, labelKey: "nav_clients", href: `${base}/clientes` },
@@ -59,6 +66,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
         { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
         { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
+        { icon: QrCode, labelKey: "nav_generate_qr", href: `${base}/qr` },
       ],
     },
     {

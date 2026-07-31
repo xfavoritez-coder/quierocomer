@@ -86,17 +86,31 @@ export default async function CartaPage({
     lang = parseLangHeader(headerList.get("accept-language"));
   }
 
+  // Check redirect-relevant fields with a fresh (uncached) query so toggles take effect immediately
+  if (!cartaParam && !tableId && !isEmbed && !isShowcase) {
+    const fresh = await prisma.restaurant.findUnique({
+      where: { slug },
+      select: { id: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true },
+    });
+    if (fresh) {
+      const loyaltyActive = !!(await prisma.loyaltyProgram.findUnique({
+        where: { restaurantId: fresh.id },
+        select: { active: true },
+      }))?.active;
+      const hasLanding = fresh.orderingEnabled
+        || loyaltyActive
+        || fresh.reviewMode === "private"
+        || (fresh.reviewMode !== "off" && !!fresh.googleReviewUrl);
+      if (hasLanding) redirect(`/${slug}`);
+    }
+  }
+
   // Run restaurant fetch (with translations) and weather check in parallel
   const [restaurant, weather] = await Promise.all([
     getCachedRestaurant(slug, lang),
     getWeatherCondition(),
   ]);
   if (!restaurant) return notFound();
-
-  // Si el local tiene pedidos online activos y no viene del landing (carta=1), redirigir al landing
-  if ((restaurant as any).orderingEnabled && !cartaParam && !tableId && !isEmbed && !isShowcase) {
-    redirect(`/${slug}`);
-  }
 
   // Verificar si el menú está activo (plan vigente)
   const _r = restaurant as any;

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Moon, Sun, Camera } from "lucide-react";
+import { Settings, Moon, Sun, Camera, ExternalLink, Copy } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
 import AddressPicker from "@/components/admin/AddressPicker";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
@@ -45,7 +45,8 @@ function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void })
 }
 
 export default function ConfiguracionGeneralPage() {
-  const { selectedRestaurantId } = useAdminSession();
+  const { selectedRestaurantId, restaurants } = useAdminSession();
+  const selectedRestaurant = restaurants?.find((r: any) => r.id === selectedRestaurantId);
   const { lang, setLang, t } = usePanelLang();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,11 +119,38 @@ export default function ConfiguracionGeneralPage() {
   if (loading) return <SkeletonLoading type="form" />;
   if (!loaded || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("select_restaurant")}</p></div>;
 
+  const slug = (selectedRestaurant as any)?.slug;
+  const landingUrl = slug ? `https://quierocomer.com/${slug}` : null;
+
   return (
     <div style={{ maxWidth: 640 }}>
       <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 20px", display: "flex", alignItems: "center", gap: 8 }}>
         <Settings size={20} color="var(--adm-text3)" /> Configuración General
       </h1>
+
+      {/* ── Página del local ── */}
+      {landingUrl && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página del local</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <code style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {landingUrl}
+            </code>
+            <button
+              onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }}
+              title="Copiar link"
+              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+            >
+              <Copy size={15} color="var(--adm-text3)" />
+            </button>
+            <a href={landingUrl} target="_blank" rel="noopener noreferrer"
+              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", textDecoration: "none", flexShrink: 0 }}
+            >
+              <ExternalLink size={15} color="var(--adm-text3)" />
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ── Información básica ── */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
