@@ -235,12 +235,10 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} className={inputClass} inputMode="email" />
             </label>
 
-            <div style={{ display: "block", marginBottom: 16 }}>
+            <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Fecha de cumpleaños</span>
-              <div style={{ width: "100%", overflow: "hidden" }}>
-                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} style={{ ...inputStyle, colorScheme: "dark", minWidth: 0 }} />
-              </div>
-            </div>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputClass} style={{ ...inputStyle, colorScheme: "dark", WebkitAppearance: "none", appearance: "none" as any }} />
+            </label>
 
             <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
