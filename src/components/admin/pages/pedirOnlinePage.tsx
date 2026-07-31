@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { ShoppingCart, Copy, Check, ExternalLink, Truck, Package, Layers, Clock, FileText, DollarSign } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -169,15 +171,16 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-const DELIVERY_OPTIONS = [
-  { value: "BOTH", label: "Ambos", icon: Layers },
-  { value: "PICKUP", label: "Solo retiro", icon: Package },
-  { value: "DELIVERY", label: "Solo delivery", icon: Truck },
-] as const;
-
 export default function PedirOnlinePage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId } = useAdminSession();
   const { activePlan } = usePanelSession();
+
+  const DELIVERY_OPTIONS = [
+    { value: "BOTH" as const, label: t("ordering_delivery_both"), icon: Layers },
+    { value: "PICKUP" as const, label: t("ordering_delivery_pickup"), icon: Package },
+    { value: "DELIVERY" as const, label: t("ordering_delivery_delivery"), icon: Truck },
+  ];
   const rid = selectedRestaurantId;
 
   const [loading, setLoading] = useState(true);
@@ -219,7 +222,7 @@ export default function PedirOnlinePage() {
         setNote(d.orderingNote || "");
         setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
       })
-      .catch(() => toast.error("Error al cargar configuración"))
+      .catch(() => toast.error(t("ordering_error_load")))
       .finally(() => setLoading(false));
   }, [rid]);
 
@@ -241,7 +244,7 @@ export default function PedirOnlinePage() {
         body: JSON.stringify({ restaurantId: rid, orderingEnabled: newVal }),
       });
       if (res.ok) {
-        toast.success(newVal ? "Pedidos online activados" : "Pedidos online desactivados");
+        toast.success(newVal ? t("ordering_activated") : t("ordering_deactivated"));
         fetch("/api/panel/activity", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -250,9 +253,9 @@ export default function PedirOnlinePage() {
       } else {
         const err = await res.json().catch(() => ({}));
         setEnabled(!newVal);
-        toast.error(err.error || "Error al guardar");
+        toast.error(err.error || t("ordering_error_save"));
       }
-    } catch { setEnabled(!newVal); toast.error("Error de conexión"); }
+    } catch { setEnabled(!newVal); toast.error(t("ordering_error_connection")); }
     setTogglingEnabled(false);
   };
 
@@ -276,12 +279,12 @@ export default function PedirOnlinePage() {
       if (res.ok) {
         const updated = await res.json();
         setData(updated);
-        toast.success("Configuración guardada");
+        toast.success(t("saved"));
       } else {
         const err = await res.json();
-        toast.error(err.error || "Error al guardar");
+        toast.error(err.error || t("ordering_error_save"));
       }
-    } catch { toast.error("Error de conexión"); }
+    } catch { toast.error(t("ordering_error_connection")); }
     setSaving(false);
   };
 
@@ -306,11 +309,11 @@ export default function PedirOnlinePage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <ShoppingCart size={20} color={GOLD} />
           <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-            Pedidos online
+            {t("ordering_title")}
           </h2>
         </div>
         <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-          Tus clientes eligen sus platos, arman el pedido y te lo envían por WhatsApp. Sin comisiones ni apps de terceros.
+          {t("ordering_desc")}
         </p>
       </div>
 
@@ -319,10 +322,10 @@ export default function PedirOnlinePage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 3px" }}>
-              {enabled ? "✅ Pedidos activados" : "Activar pedidos online"}
+              {enabled ? t("ordering_enabled") : t("ordering_disabled")}
             </p>
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
-              {enabled ? "Tus clientes pueden pedirte a través del link" : "Los clientes aún no pueden hacer pedidos"}
+              {enabled ? t("ordering_enabled_desc") : t("ordering_disabled_desc")}
             </p>
           </div>
           <button
@@ -347,7 +350,7 @@ export default function PedirOnlinePage() {
       {enabled && (
         <div style={{ background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
           <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: GOLD, textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 8px" }}>
-            Link carta pedidos online
+            {t("ordering_link_label")}
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <a href={orderUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0, flex: 1, wordBreak: "break-all", textDecoration: "underline", textDecorationColor: "rgba(244,166,35,0.4)" }}>
@@ -355,15 +358,25 @@ export default function PedirOnlinePage() {
             </a>
             <button onClick={copyLink} style={{ flexShrink: 0, padding: "6px 12px", border: "none", borderRadius: 8, background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
               {copied ? <Check size={13} /> : <Copy size={13} />}
-              {copied ? "Copiado" : "Copiar"}
+              {copied ? t("copied") : t("copy")}
             </button>
             <a href={orderUrl} target="_blank" rel="noopener noreferrer" style={{ flexShrink: 0, padding: "6px 10px", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", display: "flex", alignItems: "center" }}>
               <ExternalLink size={13} />
             </a>
           </div>
           <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "8px 0 0" }}>
-            Comparte este link por WhatsApp, Instagram o donde quieras. Tus clientes podrán hacer su pedido sin descargar ninguna app.
+            {t("ordering_link_share")}
           </p>
+
+          {/* QR */}
+          <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ background: "#fff", padding: 10, borderRadius: 12, flexShrink: 0 }}>
+              <QRCodeSVG value={orderUrl} size={96} />
+            </div>
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              Imprime este QR en mesas o mostrador para que tus clientes hagan su pedido directo desde el teléfono.
+            </p>
+          </div>
         </div>
       )}
 
@@ -372,8 +385,8 @@ export default function PedirOnlinePage() {
 
         {/* WhatsApp destino */}
         <Field
-          label="WhatsApp del local"
-          hint="Número donde llegará el pedido."
+          label={t("ordering_whatsapp")}
+          hint={t("ordering_whatsapp_hint")}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <PhoneCountrySelector country={phoneCountry} onChange={c => { setPhoneCountry(c); setPhoneLocal(""); }} />
@@ -388,7 +401,7 @@ export default function PedirOnlinePage() {
         </Field>
 
         {/* Tipo de entrega */}
-        <Field label="Tipo de entrega disponible">
+        <Field label={t("ordering_delivery_type")}>
           <div style={{ display: "flex", gap: 8 }}>
             {DELIVERY_OPTIONS.map(opt => {
               const active = delivery === opt.value;
@@ -416,12 +429,12 @@ export default function PedirOnlinePage() {
         </Field>
 
         {/* Métodos de pago */}
-        <Field label="Métodos de pago aceptados" hint="El cliente debe elegir uno al hacer el pedido.">
+        <Field label={t("ordering_payment_methods")} hint={t("ordering_payment_hint")}>
           <div style={{ display: "flex", gap: 8 }}>
             {([
-              { value: "efectivo", label: "Efectivo" },
-              { value: "transferencia", label: "Transferencia" },
-              { value: "tarjeta", label: "Tarjeta" },
+              { value: "efectivo", label: t("ordering_payment_cash") },
+              { value: "transferencia", label: t("ordering_payment_transfer") },
+              { value: "tarjeta", label: t("ordering_payment_card") },
             ] as const).map(({ value, label }) => {
               const active = paymentMethods.includes(value);
               return (
@@ -449,8 +462,8 @@ export default function PedirOnlinePage() {
         {/* Monto mínimo */}
         {(delivery === "DELIVERY" || delivery === "BOTH") && (
           <Field
-            label="Monto mínimo para delivery"
-            hint="Si el carrito no llega a este monto, se avisa al cliente en el checkout. Dejar vacío para sin mínimo."
+            label={t("ordering_min_amount")}
+            hint={t("ordering_min_amount_hint")}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <DollarSign size={16} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
@@ -466,20 +479,20 @@ export default function PedirOnlinePage() {
         )}
 
         {/* Tiempo de espera */}
-        <Field label="Tiempo de espera estimado" hint="Texto libre que verán los clientes en el checkout.">
+        <Field label={t("ordering_wait_time")} hint={t("ordering_wait_time_hint")}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Clock size={16} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
             <input
               value={waitTime}
               onChange={e => setWaitTime(e.target.value)}
               style={inputStyle}
-              placeholder="Ej: 30-45 min"
+              placeholder={t("ordering_wait_time_placeholder")}
             />
           </div>
         </Field>
 
         {/* Nota personalizada */}
-        <Field label="Mensaje para el cliente" hint="Aparece al final del checkout, antes de enviar el pedido.">
+        <Field label={t("ordering_note")} hint={t("ordering_note_hint")}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
             <FileText size={16} color="var(--adm-text3)" style={{ flexShrink: 0, marginTop: 12 }} />
             <textarea
@@ -496,7 +509,7 @@ export default function PedirOnlinePage() {
           disabled={saving}
           style={{ width: "100%", padding: 11, background: GOLD, color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}
         >
-          {saving ? "Guardando..." : "Guardar configuración"}
+          {saving ? t("ordering_saving") : t("ordering_save")}
         </button>
       </div>
     </div>
