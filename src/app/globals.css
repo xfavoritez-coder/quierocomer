@@ -507,16 +507,13 @@ textarea::placeholder {
 .theme-dark ::-webkit-scrollbar-track { background: #111; }
 .theme-dark ::-webkit-scrollbar-thumb { background: #333; }
 
-/* Placeholder fidelización y reseña */
-.enroll-input::placeholder,
-.enroll-input::-webkit-input-placeholder,
-.enroll-input::-moz-placeholder,
-.resena-input::placeholder,
-.resena-input::-webkit-input-placeholder,
-.resena-input::-moz-placeholder,
-.resena-textarea::placeholder,
-.resena-textarea::-webkit-input-placeholder,
-.resena-textarea::-moz-placeholder {
-  color: rgba(255,255,255,0.28) !important;
-  opacity: 1 !important;
-}
+/* Placeholder fidelización y reseña — reglas separadas (no agrupar o Safari las ignora) */
+.enroll-input::placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.enroll-input::-webkit-input-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.enroll-input::-moz-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.resena-input::placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.resena-input::-webkit-input-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.resena-input::-moz-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.resena-textarea::placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.resena-textarea::-webkit-input-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
+.resena-textarea::-moz-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
