@@ -442,11 +442,12 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
     if (activeFeatures === 0) {
       redirect(`/qr/${restaurantSlug}`)
     }
-    if (activeFeatures === 1) {
-      if (hasOrdering) redirect(`/pedir/${restaurantSlug}`)
-      if (hasLoyalty) redirect(`/fidelidad/${restaurantSlug}`)
-      // hasReview-only → show landing (carta QR siempre visible en la landing)
+    // Loyalty-only: ir directo al programa de sellos
+    if (activeFeatures === 1 && hasLoyalty) {
+      redirect(`/fidelidad/${restaurantSlug}`)
     }
+    // Cualquier otro caso (ordering, review, o combinaciones) → landing
+    // muestra siempre carta + las features activas
     return <RestaurantLanding r={rest} />
   }
 
