@@ -20,13 +20,14 @@ const translations = {
     nav_offers: "Ofertas",
     nav_announcements: "Anuncios",
     nav_control: "Control",
-    nav_export: "Exportar carta",
+    nav_export: "Exportar carta PDF",
     nav_waiter: "Llamar garzón",
     nav_users: "Usuarios",
     nav_restaurant: "Mi Suscripción",
     nav_ordering: "Pedidos online",
     nav_settings: "Ajustes",
     nav_support: "Soporte",
+    nav_config_general: "General",
     nav_more: "Más",
     // Account
     my_profile: "Mi perfil",
@@ -861,6 +862,7 @@ const translations = {
     nav_ordering: "Online Orders",
     nav_settings: "Settings",
     nav_support: "Support",
+    nav_config_general: "General",
     nav_more: "More",
     // Account
     my_profile: "My profile",

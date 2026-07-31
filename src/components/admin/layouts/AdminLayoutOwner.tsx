@@ -57,7 +57,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         ...(opts.hasControl && !CONTROL_HIDDEN.includes(opts.slug ?? "") ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
         { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
         { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
-        { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
         { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
       ],
     },
@@ -78,6 +77,14 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       items: [
         { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
+      ],
+    },
+    {
+      key: "config",
+      label: "Configuración",
+      items: [
+        { icon: Settings, labelKey: "nav_config_general", href: `${base}/configuracion/general` },
+        { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
       ],
     },
     {
