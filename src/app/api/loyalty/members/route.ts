@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
         completedCards: true,
         enrolledAt: true,
         lastStampAt: true,
+        birthDate: true,
       },
     });
 
@@ -66,6 +67,8 @@ export async function POST(req: NextRequest) {
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
     const email = typeof body.email === "string" ? body.email.trim().slice(0, 120) : "";
     const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
+    const birthDateRaw = typeof body.birthDate === "string" ? body.birthDate.trim() : "";
+    const birthDate = birthDateRaw ? new Date(birthDateRaw) : null;
 
     if (!name && !email && !phone) {
       return NextResponse.json({ error: "Ingresa al menos nombre, email o teléfono" }, { status: 400 });
@@ -80,6 +83,7 @@ export async function POST(req: NextRequest) {
         name: name || null,
         email: email || null,
         phone: phone || null,
+        birthDate: birthDate || null,
       },
       select: {
         id: true,
@@ -91,6 +95,7 @@ export async function POST(req: NextRequest) {
         completedCards: true,
         enrolledAt: true,
         lastStampAt: true,
+        birthDate: true,
       },
     });
 

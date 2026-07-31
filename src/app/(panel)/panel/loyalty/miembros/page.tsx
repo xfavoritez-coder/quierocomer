@@ -32,6 +32,7 @@ interface Member {
   name: string | null;
   email: string | null;
   phone: string | null;
+  birthDate: string | null;
   stamps: number;
   redeemedTiers: number[];
   completedCards: number;
@@ -247,6 +248,11 @@ export default function LoyaltyMembersPage() {
                 <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {[m.email, m.phone].filter(Boolean).join(" · ") || "Sin contacto"}
                 </p>
+                {m.birthDate && (
+                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                    🎂 {new Date(m.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long" })}
+                  </p>
+                )}
 
                 {/* Progreso */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
@@ -318,6 +324,7 @@ function AddMemberForm({ restaurantId, onCreated }: { restaurantId: string; onCr
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
@@ -326,7 +333,7 @@ function AddMemberForm({ restaurantId, onCreated }: { restaurantId: string; onCr
       const res = await fetch("/api/loyalty/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, name, email, phone }),
+        body: JSON.stringify({ restaurantId, name, email, phone, birthDate: birthDate || undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Error");
@@ -344,6 +351,7 @@ function AddMemberForm({ restaurantId, onCreated }: { restaurantId: string; onCr
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" style={inputStyle} />
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={inputStyle} />
         <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono" style={inputStyle} />
+        <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} title="Fecha de cumpleaños" style={{ ...inputStyle, colorScheme: "dark" }} />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
         <button type="button" onClick={submit} disabled={saving} style={{ padding: "9px 16px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1 }}>
