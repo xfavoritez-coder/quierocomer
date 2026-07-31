@@ -31,6 +31,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ appleUrl: string | null; googleSaveUrl: string | null } | null>(null);
@@ -50,7 +51,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
       const res = await fetch("/api/loyalty/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, name, email, phone }),
+        body: JSON.stringify({ slug, name, email, phone, birthDate: birthDate || undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Error");
@@ -122,6 +123,19 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={inputStyle} inputMode="email" />
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono (opcional)" style={inputStyle} inputMode="tel" />
+            <div style={{ position: "relative", marginBottom: 12 }}>
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                style={{ ...inputStyle, marginBottom: 0, colorScheme: "dark" }}
+              />
+              {!birthDate && (
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)", fontSize: "1rem", pointerEvents: "none" }}>
+                  Fecha de cumpleaños (opcional)
+                </span>
+              )}
+            </div>
 
             {error && <p style={{ color: "#ff6b6b", fontSize: "0.85rem", margin: "0 0 12px" }}>{error}</p>}
 
