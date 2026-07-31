@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
           try {
             await sendAdminEmail({
               to: r.owner.email,
-              subject: `${r.name} · Tu plan ${planLabel} vence hoy, ${expiryDate}`,
+              subject: `Tu plan ${planLabel} vence hoy, ${expiryDate}`,
               html: planExpiryTodayEmailHtml({ restaurantName: r.name, planLabel, expiryDate, panelLink, paymentMethod }),
               purpose: "expiry_today",
             });

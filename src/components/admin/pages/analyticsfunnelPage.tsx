@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 
@@ -25,6 +26,7 @@ function FunnelStep({ label, value, pctRelative, pctAbsolute, color, isFirst }: 
 }
 
 export default function FunnelPage() {
+  const { t } = usePanelLang();
   const pathname = usePathname();
   const { restaurants } = useAdminSession();
   const [restaurantId, setRestaurantId] = useState("");
@@ -42,11 +44,11 @@ export default function FunnelPage() {
     <div style={{ maxWidth: 600 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Funnel de conversión</h1>
+          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>{t("analytics_back")}</Link>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>{t("funnel_title")}</h1>
         </div>
         <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-          <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos</option>
+          <option value="" style={{ background: "var(--adm-select-bg)" }}>{t("funnel_all")}</option>
           {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
         </select>
       </div>
@@ -55,10 +57,10 @@ export default function FunnelPage() {
         <SkeletonLoading type="analytics" />
       ) : data ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <FunnelStep label="Fantasmas únicos" value={data.totalGhosts} pctRelative={100} pctAbsolute={100} color="#F4A623" isFirst />
-          <FunnelStep label="Volvieron (recurrentes)" value={data.returnedGhosts} pctRelative={data.returnedPct} pctAbsolute={data.totalGhosts > 0 ? Math.round((data.returnedGhosts / data.totalGhosts) * 100) : 0} color="#3db89e" />
-          <FunnelStep label="Se registraron" value={data.convertedUsers} pctRelative={data.convertedPct} pctAbsolute={data.totalGhosts > 0 ? Math.round((data.convertedUsers / data.totalGhosts) * 100) : 0} color="#7fbfdc" />
-          <FunnelStep label="Volvieron como registrados" value={data.activatedUsers} pctRelative={data.activatedPct} pctAbsolute={data.totalGhosts > 0 ? Math.round((data.activatedUsers / data.totalGhosts) * 100) : 0} color="#c084fc" />
+          <FunnelStep label={t("funnel_ghosts")} value={data.totalGhosts} pctRelative={100} pctAbsolute={100} color="#F4A623" isFirst />
+          <FunnelStep label={t("funnel_returned")} value={data.returnedGhosts} pctRelative={data.returnedPct} pctAbsolute={data.totalGhosts > 0 ? Math.round((data.returnedGhosts / data.totalGhosts) * 100) : 0} color="#3db89e" />
+          <FunnelStep label={t("funnel_registered")} value={data.convertedUsers} pctRelative={data.convertedPct} pctAbsolute={data.totalGhosts > 0 ? Math.round((data.convertedUsers / data.totalGhosts) * 100) : 0} color="#7fbfdc" />
+          <FunnelStep label={t("funnel_returned_registered")} value={data.activatedUsers} pctRelative={data.activatedPct} pctAbsolute={data.totalGhosts > 0 ? Math.round((data.activatedUsers / data.totalGhosts) * 100) : 0} color="#c084fc" />
         </div>
       ) : null}
     </div>

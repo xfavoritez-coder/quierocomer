@@ -809,7 +809,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
 function PanelLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { t } = usePanelLang();
-  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
+  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan, seenFeatures, markFeatureSeen } = usePanelSession();
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [demoScrolled, setDemoScrolled] = useState(false);
   const [demoTip, setDemoTip] = useState(false);
@@ -1041,6 +1041,8 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
         activePlan={activePlan}
         isDemo={isDemo}
         hasLoyalty={hasLoyalty}
+        seenFeatures={seenFeatures}
+        markFeatureSeen={markFeatureSeen}
       >
         {!isDemo && (
           <ExpiryBanner restaurantId={selectedRestaurantId || null} />

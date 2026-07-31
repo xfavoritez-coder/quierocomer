@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { PackageSearch, ShoppingCart, ClipboardList, Trash2, BarChart3, ChevronRight, Lock } from "lucide-react";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -17,9 +18,9 @@ interface HubData {
 }
 
 function ModuleCard({
-  icon: Icon, title, subtitle, href, available,
+  icon: Icon, title, subtitle, href, available, comingSoonLabel,
 }: {
-  icon: any; title: string; subtitle: string; href?: string; available: boolean;
+  icon: any; title: string; subtitle: string; href?: string; available: boolean; comingSoonLabel?: string;
 }) {
   const inner = (
     <div style={{
@@ -43,7 +44,7 @@ function ModuleCard({
           {title}
           {!available && (
             <span style={{ fontSize: "0.62rem", background: "var(--adm-hover)", color: "var(--adm-text3)", padding: "2px 6px", borderRadius: 4, fontWeight: 500 }}>
-              próximamente
+              {comingSoonLabel || "próximamente"}
             </span>
           )}
         </div>
@@ -58,6 +59,7 @@ function ModuleCard({
 }
 
 export default function ControlHubPage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId } = useAdminSession();
   const router = useRouter();
   const [data, setData] = useState<HubData | null>(null);
@@ -92,11 +94,10 @@ export default function ControlHubPage() {
       <div style={{ padding: "40px 24px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
         <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-text)", margin: "0 0 8px" }}>
-          Módulo Control no habilitado
+          {t("control_module_disabled")}
         </h2>
         <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", lineHeight: 1.5 }}>
-          El módulo de control de costos aún no está activo para este restaurante.
-          Contacta a QuieroComer para habilitarlo.
+          {t("control_module_disabled_desc")}
         </p>
       </div>
     );
@@ -110,10 +111,10 @@ export default function ControlHubPage() {
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>🧮</div>
           <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px" }}>
-            Control de Costos
+            {t("control_title")}
           </h1>
           <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>
-            Registra compras, conteos y merma. Conoce tu food cost real cada semana.
+            {t("control_subtitle")}
           </p>
         </div>
 
@@ -122,13 +123,13 @@ export default function ControlHubPage() {
           borderRadius: 16, padding: 24, marginBottom: 16,
         }}>
           <h3 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 12px" }}>
-            Antes de empezar
+            {t("control_before_start")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              "Seleccionas los insumos que usas en tu cocina",
-              "Marcas cuáles son críticos para el conteo semanal",
-              "En 5 minutos tienes el sistema listo",
+              t("control_step1"),
+              t("control_step2"),
+              t("control_step3"),
             ].map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <div style={{
@@ -151,7 +152,7 @@ export default function ControlHubPage() {
             fontWeight: 600, cursor: "pointer", letterSpacing: "0.01em",
           }}
         >
-          Configurar mis insumos →
+          {t("control_configure_btn")}
         </button>
       </div>
     );
@@ -162,44 +163,48 @@ export default function ControlHubPage() {
     <div style={{ padding: "24px", maxWidth: 680 }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
-          🧮 Control de Costos
+          🧮 {t("control_title")}
         </h1>
         <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>
-          {data.insumoCount} insumos registrados · {data.criticoCount} críticos para conteo
+          {t("control_insumos_count").replace("{n}", String(data.insumoCount)).replace("{c}", String(data.criticoCount))}
         </p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <ModuleCard
           icon={PackageSearch}
-          title="Catálogo de insumos"
-          subtitle={`${data.insumoCount} insumos · ${data.criticoCount} críticos para conteo semanal`}
+          title={t("control_module_insumos")}
+          subtitle={t("control_module_insumos_sub").replace("{n}", String(data.insumoCount)).replace("{c}", String(data.criticoCount))}
           href="/panel/control/insumos"
           available
         />
         <ModuleCard
           icon={ShoppingCart}
-          title="Registro de compras"
-          subtitle="Foto de boleta → IA extrae → tú confirmas"
+          title={t("control_module_purchases")}
+          subtitle={t("control_module_purchases_sub")}
           available={false}
+          comingSoonLabel={t("control_coming_soon")}
         />
         <ModuleCard
           icon={ClipboardList}
-          title="Conteo de inventario"
-          subtitle="Hoja imprimible → foto → IA completa el formulario"
+          title={t("control_module_inventory")}
+          subtitle={t("control_module_inventory_sub")}
           available={false}
+          comingSoonLabel={t("control_coming_soon")}
         />
         <ModuleCard
           icon={Trash2}
-          title="Registro de merma"
-          subtitle="Qué se perdió, cuánto y por qué"
+          title={t("control_module_waste")}
+          subtitle={t("control_module_waste_sub")}
           available={false}
+          comingSoonLabel={t("control_coming_soon")}
         />
         <ModuleCard
           icon={BarChart3}
-          title="Dashboard de food cost"
-          subtitle="Tu food cost % real, alertas de precio, historial"
+          title={t("control_module_dashboard")}
+          subtitle={t("control_module_dashboard_sub")}
           available={false}
+          comingSoonLabel={t("control_coming_soon")}
         />
       </div>
 
@@ -208,7 +213,7 @@ export default function ControlHubPage() {
           href="/panel/control/onboarding"
           style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textDecoration: "none" }}
         >
-          Reconfigurar insumos →
+          {t("control_reconfigure")}
         </Link>
       </div>
     </div>

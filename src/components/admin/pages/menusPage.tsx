@@ -16,6 +16,7 @@ import ImportMenuModal from "@/components/admin/ImportMenuModal";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
 import PlanGate from "@/components/admin/PlanGate";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -31,12 +32,18 @@ const GOLD = "#F4A623";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#e85530", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
 /* ── Dish translations editor ── */
-const LANG_INFO: Record<string, { label: string; flag: string }> = {
-  en: { label: "Inglés", flag: "🇺🇸" },
-  pt: { label: "Portugués", flag: "🇧🇷" },
+// LANG_INFO labels are resolved inside components using usePanelLang
+const LANG_FLAGS: Record<string, string> = {
+  en: "🇺🇸",
+  pt: "🇧🇷",
 };
 
 function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; restaurantId: string }) {
+  const { t } = usePanelLang();
+  const LANG_INFO: Record<string, { label: string; flag: string }> = {
+    en: { label: t("menu_lang_english"), flag: LANG_FLAGS["en"] },
+    pt: { label: t("menu_lang_portuguese"), flag: LANG_FLAGS["pt"] },
+  };
   const [open, setOpen] = useState(false);
   const [translations, setTranslations] = useState<Record<string, { description: string; isManual: boolean }>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -128,7 +135,7 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
         }}
       >
         <Globe size={15} />
-        Traducciones
+        {t("menu_translations_title")}
         <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--adm-text3, #999)" }}>
           {Object.values(translations).filter(t => t.description).length}/{langs.length}
         </span>
@@ -138,7 +145,7 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
       {open && (
         <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 10 }}>
           {loading ? (
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3, #999)", padding: "10px 0" }}>Cargando traducciones...</p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3, #999)", padding: "10px 0" }}>{t("menu_translations_loading")}</p>
           ) : (
             langs.map(lang => {
               const info = LANG_INFO[lang];
@@ -152,13 +159,13 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
                     <span style={{ fontSize: "1rem" }}>{info.flag}</span>
                     <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "var(--adm-text, #333)" }}>{info.label}</span>
                     {tr?.isManual && (
-                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>Manual</span>
+                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>{t("menu_translation_manual")}</span>
                     )}
                     {tr && !tr.isManual && tr.description && (
-                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Auto</span>
+                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{t("menu_translation_auto")}</span>
                     )}
                     {!tr?.description && (
-                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "var(--adm-text3, #999)" }}>Sin traducción</span>
+                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "var(--adm-text3, #999)" }}>{t("menu_translation_none")}</span>
                     )}
                   </div>
                   <textarea
@@ -185,13 +192,13 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
                           opacity: saving === lang ? 0.5 : 1,
                         }}
                       >
-                        {saving === lang ? "Guardando..." : "Guardar"}
+                        {saving === lang ? t("menu_translation_saving") : t("menu_translation_save")}
                       </button>
                     )}
                     <button
                       onClick={() => regenerate(lang)}
                       disabled={!!regenerating}
-                      title={tr?.description ? "Regenerar traducción automática" : "Generar traducción automática"}
+                      title={tr?.description ? t("menu_translation_regenerate_tooltip") : t("menu_translation_generate_tooltip")}
                       style={{
                         padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border, #eee)",
                         background: !tr?.description ? "rgba(244,166,35,0.1)" : "transparent",
@@ -202,7 +209,7 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
                       }}
                     >
                       <RefreshCw size={11} className={regenerating === lang ? "animate-spin" : ""} />
-                      {regenerating === lang ? "Generando..." : !tr?.description ? "Generar auto" : "Regenerar"}
+                      {regenerating === lang ? t("menu_translation_generating") : !tr?.description ? t("menu_translation_generate") : t("menu_translation_regenerate")}
                     </button>
                   </div>
                 </div>
@@ -217,6 +224,7 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
 
 /* ── Dish suggestions editor ("Va bien con") ── */
 function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishes: Dish[] }) {
+  const { t } = usePanelLang();
   const [suggestions, setSuggestions] = useState<{ id: string; name: string; photos: string[]; price: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -247,7 +255,7 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Sugerir con este plato</label>
+      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("menu_suggestions_label")}</label>
       <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Aparecen como sugerencia cuando alguien ve este producto. Si no agregas ninguna, el sistema sugerirá platos automáticamente según el tipo (entrada, fondo, bebida, postre).</p>
 
       {suggestions.length > 0 && (
@@ -263,7 +271,7 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
       {suggestions.length < 5 && (
         adding ? (
           <div>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar plato..." autoFocus style={{ width: "100%", padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("menu_suggestions_search")} autoFocus style={{ width: "100%", padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
             {filtered.length > 0 && (
               <div style={{ maxHeight: 150, overflowY: "auto", marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
                 {filtered.slice(0, 8).map(d => (
@@ -275,11 +283,11 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
                 ))}
               </div>
             )}
-            <button onClick={() => { setAdding(false); setSearch(""); }} style={{ marginTop: 6, background: "none", border: "none", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={() => { setAdding(false); setSearch(""); }} style={{ marginTop: 6, background: "none", border: "none", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>{t("menu_suggestions_cancel")}</button>
           </div>
         ) : (
           <button onClick={() => setAdding(true)} style={{ padding: "6px 12px", background: "var(--adm-input)", border: "none", borderRadius: 8, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>
-            + Agregar
+            {t("menu_suggestions_add")}
           </button>
         )
       )}
@@ -292,6 +300,7 @@ interface IMEOption { id: string; name: string; priceAdjustment: number; isHidde
 interface IMEGroup { id: string; name: string; required: boolean; maxSelect: number; position: number; options: IMEOption[]; }
 
 function InlineModifierEditor({ templateId, restaurantId }: { templateId: string; restaurantId: string }) {
+  const { t } = usePanelLang();
   const [groups, setGroups] = useState<IMEGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -306,28 +315,28 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
       .finally(() => setLoading(false));
   }, [templateId, restaurantId]);
 
-  if (loading) return <div style={{ padding: "8px 12px" }}><span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>Cargando...</span></div>;
+  if (loading) return <div style={{ padding: "8px 12px" }}><span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{t("menu_modifiers_loading")}</span></div>;
 
   return (
     <div style={{ padding: "8px 12px 12px", borderTop: "1px solid var(--adm-card-border)" }}>
       {groups.length === 0 && (
-        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0 }}>Sin grupos configurados. Configúralo en el tab Modificadores.</p>
+        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0 }}>{t("menu_modifiers_no_groups")}</p>
       )}
       {groups.map(g => (
         <div key={g.id} style={{ marginBottom: 8 }}>
           <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text)" }}>
-            {g.name} <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.62rem" }}>({g.required ? "obligatorio" : "opcional"}, máx {g.maxSelect})</span>
+            {g.name} <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.62rem" }}>({g.required ? t("menu_modifier_required") : t("menu_modifier_optional")}, máx {g.maxSelect})</span>
           </span>
           <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2, marginTop: 3 }}>
             {g.options.map(o => (
               <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 6, opacity: o.isHidden ? 0.4 : 1 }}>
                 <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)" }}>·</span>
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", flex: 1, textDecoration: o.isHidden ? "line-through" : "none" }}>{o.name}</span>
-                {o.isHidden && <span style={{ fontSize: "0.55rem", color: "#ef4444", fontFamily: F }}>Oculto</span>}
+                {o.isHidden && <span style={{ fontSize: "0.55rem", color: "#ef4444", fontFamily: F }}>{t("menu_modifier_hidden")}</span>}
                 {o.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623" }}>+${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}</span>}
               </div>
             ))}
-            {g.options.length === 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Sin opciones</span>}
+            {g.options.length === 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("menu_modifier_no_options")}</span>}
           </div>
         </div>
       ))}
@@ -336,6 +345,7 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
 }
 
 export default function AdminMenus() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId, restaurants, isSuper, loading: sessionLoading } = useAdminSession();
   const { activePlan } = usePanelSession();
   const canHighlight = canAccess(activePlan, "highlight_dishes");
@@ -757,7 +767,7 @@ export default function AdminMenus() {
 
   if (!selectedRestaurantId) return (
     <div style={{ padding: 40, textAlign: "center" }}>
-      <p style={{ color: "var(--adm-text2)", fontFamily: F, fontSize: "0.92rem" }}>Selecciona un local en el sidebar para ver su menu</p>
+      <p style={{ color: "var(--adm-text2)", fontFamily: F, fontSize: "0.92rem" }}>{t("menu_select_restaurant_hint")}</p>
     </div>
   );
 
@@ -833,8 +843,8 @@ export default function AdminMenus() {
   }, [ingListOpen]);
 
   const TAG_OPTIONS: { value: string; label: string }[] = [
-    { value: "RECOMMENDED", label: "Recomendado" },
-    { value: "NEW", label: "Nuevo" },
+    { value: "RECOMMENDED", label: t("menu_tag_recommended") },
+    { value: "NEW", label: t("menu_tag_new") },
   ];
   const DIET_COLORS: Record<string, { bg: string; color: string }> = {
     OMNIVORE: { bg: "rgba(139,90,43,0.1)", color: "#8b5a2b" },
@@ -842,9 +852,9 @@ export default function AdminMenus() {
     VEGETARIAN: { bg: "rgba(74,222,128,0.1)", color: "#4ade80" },
   };
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
-    { value: "OMNIVORE", label: "Carnívoro", icon: "🍖" },
-    { value: "VEGAN", label: "Vegano", icon: "🌿" },
-    { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
+    { value: "OMNIVORE", label: t("clients_diet_omnivore"), icon: "🍖" },
+    { value: "VEGAN", label: t("clients_diet_vegan"), icon: "🌿" },
+    { value: "VEGETARIAN", label: t("clients_diet_vegetarian"), icon: "🥗" },
   ];
 
   // Auto-toggle de sellos al agregar un ingrediente con alergenos
@@ -995,7 +1005,7 @@ export default function AdminMenus() {
 
   if (selectedDish && editMode) return (
     <div style={{ maxWidth: 500 }}>
-      <button onClick={() => { setSelectedDish(null); setEditMode(false); if (editFromCategoriesRef.current) { editFromCategoriesRef.current = false; handleTabChange("categorias"); } }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
+      <button onClick={() => { setSelectedDish(null); setEditMode(false); if (editFromCategoriesRef.current) { editFromCategoriesRef.current = false; handleTabChange("categorias"); } }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>{t("menu_back")}</button>
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
         {(ePhotoUrl || selectedDish.photos?.[0]) && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
@@ -1007,12 +1017,12 @@ export default function AdminMenus() {
               await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPhotoReferential: newVal }) });
               setDishes(prev => prev.map(x => x.id === selectedDish.id ? { ...x, isPhotoReferential: newVal } as any : x));
             }} style={{ position: "absolute", bottom: 10, right: 10, padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: ePhotoRef ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: ePhotoRef ? "#333" : "rgba(255,255,255,0.7)", transition: "all 0.15s", zIndex: 2 }}>
-              📷 {ePhotoRef ? "Foto referencial ✓" : "Foto referencial"}
+              📷 {ePhotoRef ? t("menu_photo_referential_checked") : t("menu_photo_referential")}
             </button>
             {/* Tags over photo */}
             <div style={{ position: "absolute", bottom: 10, left: 10, right: 10 }}>
               {canHighlight && recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
-                <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#fbbf24", margin: "0 0 6px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 6, display: "inline-block" }}>Máx. {MAX_RECOMMENDED} recomendados alcanzado</p>
+                <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#fbbf24", margin: "0 0 6px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 6, display: "inline-block" }}>{t("menu_max_recommended").replace("{n}", String(MAX_RECOMMENDED))}</p>
               )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {TAG_OPTIONS.map(t => {
@@ -1064,7 +1074,7 @@ export default function AdminMenus() {
               {selectedDish.ingredients && (
                 <div style={{ marginBottom: 9 }}>
                   <div style={{ marginBottom: 5 }}>
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Ingredientes</span>
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t("menu_ingredients_label")}</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {selectedDish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
@@ -1076,13 +1086,13 @@ export default function AdminMenus() {
               {(selectedDish as any).allergenDetails && (
                 <div style={{ marginBottom: 9 }}>
                   <div style={{ marginBottom: 5 }}>
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Alérgenos</span>
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t("menu_allergens_label")}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {Object.entries((selectedDish as any).allergenDetails as Record<string, string[]>).map(([allergen, ingredients]) => (
                       <div key={allergen} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {allergen}</span>
-                        <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)", fontFamily: F }}>por {ingredients.join(", ")}</span>
+                        <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)", fontFamily: F }}>{t("menu_allergen_via").replace("{ingredients}", ingredients.join(", "))}</span>
                       </div>
                     ))}
                   </div>
@@ -1092,7 +1102,7 @@ export default function AdminMenus() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "16px", background: "#DBEAFE", border: "none", borderRadius: 12, color: "#1E40AF", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, cursor: "pointer" }}>
-                    ✏️ Editar
+                    {t("menu_edit_btn")}
                   </button>
                   <button onClick={async () => {
                     if (!confirm(`¿Eliminar "${selectedDish.name}"?`)) return;
@@ -1105,9 +1115,9 @@ export default function AdminMenus() {
                 </div>
                 <button onClick={() => toggleDishActive(selectedDish)} style={{ padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   {selectedDish.isActive ? (
-                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
+                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> {t("menu_hide_btn")}</>
                   ) : (
-                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Mostrar</>
+                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {t("menu_show_btn")}</>
                   )}
                 </button>
               </div>
@@ -1118,15 +1128,15 @@ export default function AdminMenus() {
             <>
               {/* Full edit mode */}
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Nombre</label>
+                <label style={LBL}>{t("menu_name_edit")}</label>
                 <input value={eName} onChange={e => setEName(e.target.value)} style={INP} />
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Foto</label>
+                <label style={LBL}>{t("menu_photo_edit")}</label>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   {ePhotoUrl && <img src={ePhotoUrl} alt="" onClick={(e) => { e.preventDefault(); e.stopPropagation(); photoInputRef.current?.click(); }} style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, cursor: "pointer" }} title="Cambiar foto" />}
                   <label style={{ flex: 1, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, textAlign: "center", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)" }}>
-                    {photoUploading ? "Subiendo..." : ePhotoUrl ? "Cambiar foto" : "Subir foto"}
+                    {photoUploading ? t("menu_uploading_photo") : ePhotoUrl ? t("menu_change_photo") : t("menu_upload_photo")}
                     <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
@@ -1160,33 +1170,33 @@ export default function AdminMenus() {
                       setPhotoUploading(false);
                     }} />
                   </label>
-                  {ePhotoUrl && <button onClick={() => setEPhotoUrl("")} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ef4444", cursor: "pointer" }}>Quitar</button>}
-                  {photoSuccess && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#16a34a", fontWeight: 600 }}>✓ Foto subida</span>}
+                  {ePhotoUrl && <button onClick={() => setEPhotoUrl("")} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ef4444", cursor: "pointer" }}>{t("menu_remove_photo")}</button>}
+                  {photoSuccess && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#16a34a", fontWeight: 600 }}>{t("menu_photo_uploaded")}</span>}
                 </div>
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Categoría</label>
+                <label style={LBL}>{t("menu_category_edit")}</label>
                 <select value={eCategoryId} onChange={e => setECategoryId(e.target.value)} style={{ ...INP, cursor: "pointer" }}>
                   {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Descripción</label>
+                <label style={LBL}>{t("menu_desc_edit")}</label>
                 <textarea value={eDesc} onChange={e => setEDesc(e.target.value)} rows={4} style={{ ...INP, resize: "vertical", minHeight: 80 }} />
               </div>
               <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={LBL}>Precio</label>
+                  <label style={LBL}>{t("menu_price_edit")}</label>
                   <input type="number" value={ePrice} onChange={e => setEPrice(e.target.value)} style={INP} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={LBL}>Precio descuento</label>
+                  <label style={LBL}>{t("menu_discount_price_edit")}</label>
                   <input type="number" value={eDiscountPrice} onChange={e => setEDiscountPrice(e.target.value)} placeholder="Opcional" style={INP} />
                 </div>
               </div>
 
               <div style={{ marginBottom: 24 }}>
-                <label style={LBL}>Tipo de dieta</label>
+                <label style={LBL}>{t("menu_diet_edit")}</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {DIET_OPTIONS.map(d => (
                     <button key={d.value} onClick={() => setEDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: eDiet === d.value ? "1.5px solid rgba(74,222,128,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eDiet === d.value ? "rgba(74,222,128,0.1)" : "transparent", color: eDiet === d.value ? "#4ade80" : "var(--adm-text3)" }}>
@@ -1197,7 +1207,7 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 24 }}>
-                <label style={LBL}>Restricciones alimenticias</label>
+                <label style={LBL}>{t("menu_restrictions_edit")}</label>
                 <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.45 }}>Se ajustan automáticamente al detectar alérgenos en la descripción. Si los desmarcas manualmente, respetamos tu decisión.</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
@@ -1222,7 +1232,7 @@ export default function AdminMenus() {
 
               {/* Modificadores — inline management */}
               <div style={{ marginBottom: 24 }}>
-                <label style={LBL}>Modificadores</label>
+                <label style={LBL}>{t("menu_modifiers_edit")}</label>
 
                 {/* Assigned list with expandable preview */}
                 {assignedTemplateIds.length > 0 && (
@@ -1259,7 +1269,7 @@ export default function AdminMenus() {
                   {availableTemplates.length > 0 && (
                     <div style={{ position: "relative" }}>
                       <button onClick={() => setEditModPickerOpen(!editModPickerOpen)} style={{ padding: "7px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-                        + Agregar
+                        {t("menu_suggestions_add")}
                       </button>
                       {editModPickerOpen && (
                         <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 240, overflow: "hidden" }}>
@@ -1286,7 +1296,7 @@ export default function AdminMenus() {
                                 </button>
                               ))}
                             {availableTemplates.filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || norm(t.name).includes(norm(editModSearch)))).length === 0 && (
-                              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", padding: 10, margin: 0 }}>Sin resultados</p>
+                              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", padding: 10, margin: 0 }}>{t("menu_no_results")}</p>
                             )}
                           </div>
                         </div>
@@ -1318,12 +1328,12 @@ export default function AdminMenus() {
                           setEditModQuickName(""); setEditModQuickCreating(false);
                           setEditModExpanded(t.id);
                         }
-                      }} disabled={!editModQuickName.trim()} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: !editModQuickName.trim() ? 0.5 : 1 }}>Crear</button>
+                      }} disabled={!editModQuickName.trim()} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: !editModQuickName.trim() ? 0.5 : 1 }}>{t("menu_create_modifier")}</button>
                       <button onClick={() => { setEditModQuickCreating(false); setEditModQuickName(""); }} style={{ padding: "5px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.7rem" }}>×</button>
                     </div>
                   ) : (
                     <button onClick={() => setEditModQuickCreating(true)} style={{ padding: "7px 14px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>
-                      + Crear nuevo
+                      {t("menu_create_new")}
                     </button>
                   )}
                 </div>
@@ -1341,8 +1351,8 @@ export default function AdminMenus() {
               )}
 
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
-                <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+                <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? t("saving") : t("save")}</button>
+                <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
               </div>
             </>
           )}
@@ -1355,7 +1365,7 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><UtensilsCrossed size={20} color="var(--adm-text3)" /> Mi Carta</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><UtensilsCrossed size={20} color="var(--adm-text3)" /> {t("menu_my_menu")}</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{filtered.length} productos · {categories.length} categorías</p>
         </div>
         <RestaurantPicker />
@@ -1364,11 +1374,11 @@ export default function AdminMenus() {
       {/* Tabs — pill style */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" as any, alignItems: "center" }}>
         {([
-          { key: "productos" as const, label: "Productos" },
-          { key: "categorias" as const, label: "Categorías" },
-          { key: "modificadores" as const, label: "Modificadores" },
-          { key: "horarios" as const, label: "Horarios" },
-          ...(canAccess(activePlan, "multi_menu") ? [{ key: "multimenu" as const, label: "Multi-Menú" }] : []),
+          { key: "productos" as const, label: t("menu_products_tab") },
+          { key: "categorias" as const, label: t("menu_categories_tab") },
+          { key: "modificadores" as const, label: t("menu_modifiers_tab") },
+          { key: "horarios" as const, label: t("menu_schedules_tab") },
+          ...(canAccess(activePlan, "multi_menu") ? [{ key: "multimenu" as const, label: t("menu_multimenu_tab") }] : []),
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
             padding: "8px 14px", borderRadius: 999, border: "none", cursor: "pointer",
@@ -1387,7 +1397,7 @@ export default function AdminMenus() {
             <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Multi-Menú</span>
           </div>
           <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" as any }}>
-            {[{ id: null as string | null, name: "Todos" }, ...menuGroups.map(g => ({ id: g.id as string | null, name: g.name }))].map(item => {
+            {[{ id: null as string | null, name: t("menu_all_multimenu") }, ...menuGroups.map(g => ({ id: g.id as string | null, name: g.name }))].map(item => {
               const isActive = item.id === null ? activeMenuGroupId === null : activeMenuGroupId === item.id;
               return (
                 <button
@@ -1437,14 +1447,14 @@ export default function AdminMenus() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 2 }}>
-                ¿Ya tienes carta? Impórtala
+                {t("menu_import_banner_title")}
               </div>
               <div style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
-                Sube un link, PDF o foto de tu carta actual y reemplazamos los platos automáticamente.
+                {t("menu_import_banner_desc")}
               </div>
             </div>
             <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: GOLD, whiteSpace: "nowrap", flexShrink: 0 }}>
-              Importar →
+              {t("menu_import_banner_cta")}
             </div>
           </div>
         </div>
@@ -1455,7 +1465,7 @@ export default function AdminMenus() {
         <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
           <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#999", pointerEvents: "none" }} />
           <input
-            placeholder="Buscar plato..."
+            placeholder={t("menu_search_dish")}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ width: "100%", padding: "10px 14px 10px 36px", paddingRight: search ? 36 : 14, background: "var(--adm-input)", border: "none", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "13px", outline: "none", boxSizing: "border-box" }}
@@ -1479,13 +1489,13 @@ export default function AdminMenus() {
                 transition: "all .3s ease",
               }}
             >
-              <FileUp size={14} /> Importar
+              <FileUp size={14} /> {t("menu_import_btn")}
             </button>
             <button
               onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
               style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
             >
-              + Agregar
+              {t("menu_add_btn")}
             </button>
           </div>
         )}
@@ -1499,7 +1509,7 @@ export default function AdminMenus() {
               onChange={e => setDietFilter(e.target.value)}
               style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: dietFilter !== "all" ? "var(--adm-accent)" : "var(--adm-input)", color: dietFilter !== "all" ? "#fff" : "var(--adm-text)", outline: "none" }}
             >
-              <option value="all">Todos los tipos</option>
+              <option value="all">{t("menu_filter_all_types")}</option>
               {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
             </select>
             <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: dietFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
@@ -1510,7 +1520,7 @@ export default function AdminMenus() {
               onChange={e => setCatFilter(e.target.value)}
               style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: catFilter !== "all" ? "var(--adm-accent)" : "var(--adm-input)", color: catFilter !== "all" ? "#fff" : "var(--adm-text)", outline: "none" }}
             >
-              <option value="all">Todas las categorías</option>
+              <option value="all">{t("menu_filter_all_categories")}</option>
               {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
@@ -1529,7 +1539,7 @@ export default function AdminMenus() {
                 }}
               >
                 <EyeOff size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
-                Ocultos ({hiddenCount})
+                {t("menu_hidden_count").replace("{n}", String(hiddenCount))}
               </button>
             ) : null;
           })()}
@@ -1557,32 +1567,32 @@ export default function AdminMenus() {
       {/* Bulk actions bar */}
       {bulkSelected.size > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text)" }}>{bulkSelected.size} seleccionado{bulkSelected.size > 1 ? "s" : ""}</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text)" }}>{bulkSelected.size > 1 ? t("menu_bulk_selected_plural").replace("{n}", String(bulkSelected.size)) : t("menu_bulk_selected").replace("{n}", String(bulkSelected.size))}</span>
           <select value={bulkAction} onChange={e => { setBulkAction(e.target.value); setBulkActionValue(""); }} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
-            <option value="">Acción...</option>
-            <option value="hide">Ocultar</option>
-            <option value="show">Mostrar</option>
-            <option value="diet">Cambiar tipo dieta</option>
-            <option value="category">Cambiar categoría</option>
-            <option value="addCharacteristic">Marcar característica</option>
-            <option value="removeCharacteristic">Quitar característica</option>
-            <option value="delete">Eliminar</option>
+            <option value="">{t("menu_bulk_action_placeholder")}</option>
+            <option value="hide">{t("menu_bulk_hide")}</option>
+            <option value="show">{t("menu_bulk_show")}</option>
+            <option value="diet">{t("menu_bulk_diet")}</option>
+            <option value="category">{t("menu_bulk_category")}</option>
+            <option value="addCharacteristic">{t("menu_bulk_add_char")}</option>
+            <option value="removeCharacteristic">{t("menu_bulk_remove_char")}</option>
+            <option value="delete">{t("menu_bulk_delete")}</option>
           </select>
           {bulkAction === "diet" && (
             <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
-              <option value="">Seleccionar...</option>
+              <option value="">{t("menu_bulk_select")}</option>
               {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
             </select>
           )}
           {bulkAction === "category" && (
             <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
-              <option value="">Seleccionar...</option>
+              <option value="">{t("menu_bulk_select")}</option>
               {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
           {(bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && (
             <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
-              <option value="">Seleccionar característica...</option>
+              <option value="">{t("menu_bulk_select_char")}</option>
               <option value="isSpicy">🌶️ Picante</option>
               <option value="isGlutenFree">🌾 Sin gluten</option>
               <option value="isLactoseFree">🥛 Sin lactosa</option>
@@ -1595,35 +1605,35 @@ export default function AdminMenus() {
             disabled={!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && !bulkActionValue) || bulkProcessing}
             style={{ padding: "6px 14px", background: bulkAction === "delete" ? "#ef4444" : "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", opacity: (!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && !bulkActionValue) || bulkProcessing) ? 0.5 : 1 }}
           >
-            {bulkProcessing ? "Aplicando..." : "Aplicar"}
+            {bulkProcessing ? t("menu_bulk_applying") : t("menu_bulk_apply")}
           </button>
-          <button onClick={() => { setBulkSelected(new Set()); setBulkAction(""); setBulkActionValue(""); }} style={{ padding: "6px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={() => { setBulkSelected(new Set()); setBulkAction(""); setBulkActionValue(""); }} style={{ padding: "6px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", cursor: "pointer" }}>{t("menu_bulk_cancel")}</button>
         </div>
       )}
 
       {/* Create dish form */}
       {creatingDish && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px" }}>Nuevo producto</h3>
+          <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px" }}>{t("menu_new_product")}</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div>
-              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Nombre *</label>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>{t("menu_name_label")}</label>
               <input value={newDishName} onChange={e => setNewDishName(e.target.value)} placeholder="Ej: Roll de Salmón" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} autoFocus />
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Precio *</label>
+                <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>{t("menu_price_label")}</label>
                 <input type="number" value={newDishPrice} onChange={e => setNewDishPrice(e.target.value)} placeholder="5990" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Categoría *</label>
+                <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>{t("menu_category_label")}</label>
                 <select value={newDishCatId} onChange={e => setNewDishCatId(e.target.value)} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
                   {menuFilteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Tipo de dieta</label>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>{t("menu_diet_label")}</label>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {DIET_OPTIONS.map(d => (
                   <button key={d.value} type="button" onClick={() => setNewDishDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: newDishDiet === d.value ? "1.5px solid rgba(74,222,128,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: newDishDiet === d.value ? "rgba(74,222,128,0.1)" : "transparent", color: newDishDiet === d.value ? "#4ade80" : "var(--adm-text3)" }}>
@@ -1633,15 +1643,15 @@ export default function AdminMenus() {
               </div>
             </div>
             <div>
-              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>{t("menu_desc_label")}</label>
               <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Ej: Salmón fresco sobre arroz con palta, togarashi y salsa ponzu" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
             </div>
             <div>
-              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Foto</label>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>{t("menu_photo_label")}</label>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {newDishPhoto && <img src={newDishPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />}
                 <label style={{ padding: "8px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-                  {newDishPhotoUploading ? "Subiendo..." : newDishPhoto ? "Cambiar" : "Subir foto"}
+                  {newDishPhotoUploading ? t("menu_uploading_photo") : newDishPhoto ? t("menu_change_photo") : t("menu_upload_photo")}
                   <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -1674,8 +1684,8 @@ export default function AdminMenus() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={createDish} disabled={dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{newDishPhotoUploading ? "Subiendo foto..." : dishSaving ? "Creando..." : "Crear plato"}</button>
-              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); setNewDishPhoto(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+              <button onClick={createDish} disabled={dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{newDishPhotoUploading ? t("menu_uploading_photo_long") : dishSaving ? t("menu_creating") : t("menu_create_dish")}</button>
+              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); setNewDishPhoto(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
             </div>
           </div>
         </div>
@@ -1705,10 +1715,12 @@ export default function AdminMenus() {
             const moreInOtherPages = filtered.length > paginated.length;
             const target = moreInOtherPages ? filtered : paginated;
             const label = allFilteredSelected
-              ? "Deseleccionar todos"
+              ? t("menu_deselect_all")
               : moreInOtherPages
-                ? `Seleccionar los ${filtered.length} ${hasFilters ? "filtrados" : "de toda la carta"}`
-                : "Seleccionar todos";
+                ? hasFilters
+                  ? t("menu_select_filtered").replace("{n}", String(filtered.length))
+                  : t("menu_select_all_menu").replace("{n}", String(filtered.length))
+                : t("menu_select_all");
             return (
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 10px", flexWrap: "wrap" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
@@ -1724,7 +1736,7 @@ export default function AdminMenus() {
                 </label>
                 {hasFilters && (
                   <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-                    · <strong style={{ color: "var(--adm-text2)" }}>{filtered.length}</strong> producto{filtered.length !== 1 ? "s" : ""} filtrado{filtered.length !== 1 ? "s" : ""}
+                    · <strong style={{ color: "var(--adm-text2)" }}>{filtered.length > 1 ? t("menu_filtered_count_plural").replace("{n}", String(filtered.length)) : t("menu_filtered_count").replace("{n}", String(filtered.length))}</strong>
                   </span>
                 )}
                 <div style={{ marginLeft: "auto", position: "relative", flexShrink: 0 }}>
@@ -1733,9 +1745,9 @@ export default function AdminMenus() {
                     onChange={e => setSortMode(e.target.value as any)}
                     style={{ appearance: "none", WebkitAppearance: "none", padding: "5px 24px 5px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "var(--adm-input)", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", cursor: "pointer", outline: "none" }}
                   >
-                    <option value="category">Por categoría</option>
-                    <option value="alpha">A → Z</option>
-                    <option value="recent">Último modificado</option>
+                    <option value="category">{t("menu_sort_category")}</option>
+                    <option value="alpha">{t("menu_sort_alpha")}</option>
+                    <option value="recent">{t("menu_sort_recent")}</option>
                   </select>
                   <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontSize: "7px", color: "var(--adm-text3)", pointerEvents: "none" }}>▼</span>
                 </div>
@@ -1846,7 +1858,7 @@ export default function AdminMenus() {
                     </button>
                     {menuOpenId === d.id && (
                       <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fff", border: "1px solid #eee", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 140, overflow: "hidden" }}>
-                        <button onClick={() => { setMenuOpenId(null); setSelectedDish(d); startEditDish(d); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "var(--adm-text)", textAlign: "left" }}>Editar</button>
+                        <button onClick={() => { setMenuOpenId(null); setSelectedDish(d); startEditDish(d); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "var(--adm-text)", textAlign: "left" }}>{t("promo_action_edit")}</button>
                         <button style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#999", textAlign: "left" }}>Duplicar</button>{/* TODO: implement duplicate */}
                         <button onClick={async () => {
                           setMenuOpenId(null);
@@ -1854,7 +1866,7 @@ export default function AdminMenus() {
                           await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
                           setDishes(prev => prev.filter(x => x.id !== d.id));
                           setExpandedDishId(null);
-                        }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#A32D2D", textAlign: "left" }}>Eliminar</button>
+                        }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#A32D2D", textAlign: "left" }}>{t("promo_action_delete")}</button>
                       </div>
                     )}
                   </div>
@@ -1900,7 +1912,7 @@ export default function AdminMenus() {
                   {/* Ingredients */}
                   {d.ingredients && (
                     <div style={{ marginBottom: 7 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Ingredientes</span>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("menu_ingredients_label")}</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {d.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
                           <span key={i} style={{ fontSize: "0.63rem", padding: "2px 8px", borderRadius: 50, background: "#f3f0e8", color: "#5f5e5a", fontFamily: F }}>{i}</span>
@@ -1912,7 +1924,7 @@ export default function AdminMenus() {
                   {/* Allergens */}
                   {d.allergens && d.allergens !== "ninguno" && (
                     <div style={{ marginBottom: 7 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Alérgenos</span>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("menu_allergens_label")}</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {d.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
                           <span key={a} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F }}>⚠️ {a}</span>
@@ -1924,7 +1936,7 @@ export default function AdminMenus() {
                   {/* Modifiers */}
                   {(d as any).modifierTemplates?.length > 0 && (
                     <div style={{ marginBottom: 7 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Modificadores</span>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("menu_modifiers_edit")}</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {(d as any).modifierTemplates.map((t: any) => (
                           <span key={t.id} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: "#F4A623", fontFamily: F }}>{t.name}</span>
@@ -1940,7 +1952,7 @@ export default function AdminMenus() {
           })}
           {filtered.length === 0 && (
             <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", textAlign: "center", padding: 40 }}>
-              {dishes.length === 0 ? "Este local no tiene productos" : "No hay productos que coincidan"}
+              {dishes.length === 0 ? t("menu_no_products") : t("menu_no_match")}
             </p>
           )}
         </div>
@@ -1948,9 +1960,9 @@ export default function AdminMenus() {
 
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page <= 1 ? "transparent" : "var(--adm-hover)", color: page <= 1 ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page <= 1 ? "transparent" : "var(--adm-hover)", color: page <= 1 ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>{t("menu_previous")}</button>
           <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page >= totalPages ? "transparent" : "var(--adm-hover)", color: page >= totalPages ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page >= totalPages ? "transparent" : "var(--adm-hover)", color: page >= totalPages ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>{t("menu_next")}</button>
         </div>
       )}
       </>)}

@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
         restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: !!isDemo, hasControl: !!_ce2 }],
         selectedRestaurantId: member.restaurant.id,
         mustChangePassword: false,
+        seenFeatures: member.seenFeatures || [],
       });
     }
 
@@ -79,6 +80,7 @@ export async function GET(req: NextRequest) {
       restaurants,
       selectedRestaurantId: restaurants[0]?.id || null,
       mustChangePassword: owner.mustChangePassword,
+      seenFeatures: owner.seenFeatures || [],
     });
   } catch (error) {
     console.error("Panel me error:", error);

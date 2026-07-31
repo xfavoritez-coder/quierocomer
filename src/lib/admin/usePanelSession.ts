@@ -23,6 +23,7 @@ export interface PanelSession {
   loading: boolean;
   error: boolean;
   mustChangePassword: boolean;
+  seenFeatures: string[];
 }
 
 const SELECTED_KEY = "panel_selected_restaurant";
@@ -36,6 +37,7 @@ let _session: PanelSession = {
   loading: true,
   error: false,
   mustChangePassword: false,
+  seenFeatures: [],
 };
 let _listeners = new Set<() => void>();
 let _fetched = false;
@@ -73,6 +75,7 @@ function fetchSession() {
         loading: false,
         error: false,
         mustChangePassword: data.mustChangePassword || false,
+        seenFeatures: data.seenFeatures || [],
       };
       notify();
     })
@@ -93,6 +96,7 @@ export function resetPanelSession() {
     loading: true,
     error: false,
     mustChangePassword: false,
+    seenFeatures: [],
   };
   notify();
 }
@@ -132,7 +136,18 @@ export function usePanelSession() {
     notify();
   }, []);
 
+  const markFeatureSeen = useCallback((feature: string) => {
+    if (_session.seenFeatures.includes(feature)) return;
+    _session = { ..._session, seenFeatures: [..._session.seenFeatures, feature] };
+    notify();
+    fetch("/api/panel/seen-feature", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feature }),
+    }).catch(() => {});
+  }, []);
+
   const activePlan = session.restaurants.find(r => r.id === session.selectedRestaurantId)?.plan || "FREE";
 
-  return { ...session, setSelectedRestaurant, logout, clearMustChangePassword, activePlan };
+  return { ...session, setSelectedRestaurant, logout, clearMustChangePassword, markFeatureSeen, activePlan };
 }

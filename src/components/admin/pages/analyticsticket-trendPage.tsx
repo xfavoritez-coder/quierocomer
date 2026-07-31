@@ -4,10 +4,12 @@ import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 
 export default function TicketTrendPage() {
+  const { t } = usePanelLang();
   const pathname = usePathname();
   const { restaurants } = useAdminSession();
   const [restaurantId, setRestaurantId] = useState("");
@@ -37,12 +39,12 @@ export default function TicketTrendPage() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Ticket promedio</h1>
+          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>{t("analytics_back")}</Link>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>{t("ticket_trend_title")}</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-            <option value="" style={{ background: "var(--adm-select-bg)" }}>Seleccionar local</option>
+            <option value="" style={{ background: "var(--adm-select-bg)" }}>{t("ticket_trend_select_local")}</option>
             {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
           </select>
           {data.length > 0 && <button onClick={exportCSV} style={{ padding: "8px 14px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>CSV</button>}
@@ -50,7 +52,7 @@ export default function TicketTrendPage() {
       </div>
 
       {!restaurantId ? (
-        <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Selecciona un local para ver la tendencia</p>
+        <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("ticket_trend_no_local")}</p>
       ) : loading ? (
         <SkeletonLoading type="analytics" />
       ) : data.length > 0 ? (
@@ -80,7 +82,7 @@ export default function TicketTrendPage() {
               <div key={d.weekStart} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
                 <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", flex: 1 }}>{d.weekStart}</span>
                 <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 700 }}>${d.avgTicket.toLocaleString("es-CL")}</span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{d.ticketCount} tickets</span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{d.ticketCount} {t("tickets_title").toLowerCase()}</span>
                 {d.changePct !== null && (
                   <span style={{ fontFamily: F, fontSize: "0.78rem", color: d.changePct > 0 ? "#4ade80" : d.changePct < 0 ? "#ff6b6b" : "#888", fontWeight: 600 }}>
                     {d.changePct > 0 ? "+" : ""}{d.changePct}%
@@ -91,7 +93,7 @@ export default function TicketTrendPage() {
           </div>
         </>
       ) : (
-        <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets para este local</p>
+        <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("ticket_trend_no_data")}</p>
       )}
     </div>
   );

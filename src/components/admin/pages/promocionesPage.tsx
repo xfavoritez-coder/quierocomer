@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Tag } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
@@ -14,12 +15,6 @@ function parseCLP(v: string): number | null {
   const n = parseInt(clean, 10);
   return isNaN(n) || n <= 0 ? null : n;
 }
-const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  SUGGESTED: { label: "Sugerida", color: "#F4A623", bg: "rgba(244,166,35,0.1)" },
-  ACTIVE: { label: "Activa", color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
-  SCHEDULED: { label: "Programada", color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
-  PAUSED: { label: "Pausada", color: "var(--adm-text2)", bg: "var(--adm-hover)" },
-};
 
 function getPromoDisplayStatus(p: { status: string; validFrom: string | null; validUntil: string | null }): string {
   if (p.status === "ACTIVE" && p.validFrom && new Date(p.validFrom) > new Date()) return "SCHEDULED";
@@ -55,8 +50,16 @@ interface ModTemplate {
 }
 
 export default function AdminPromociones() {
+  const { t } = usePanelLang();
   const pathname = usePathname();
   const isPanel = pathname.startsWith("/panel");
+
+  const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+    SUGGESTED: { label: t("promo_status_suggested"), color: "#F4A623", bg: "rgba(244,166,35,0.1)" },
+    ACTIVE: { label: t("promo_status_active"), color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
+    SCHEDULED: { label: t("promo_status_scheduled"), color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
+    PAUSED: { label: t("promo_status_paused"), color: "var(--adm-text2)", bg: "var(--adm-hover)" },
+  };
   const { restaurants, loading: sessionLoading, selectedRestaurantId, isSuper } = useAdminSession();
   const [selectedLocal, setSelectedLocal] = useState<string>("");
   const [promos, setPromos] = useState<Promo[]>([]);
@@ -231,7 +234,7 @@ export default function AdminPromociones() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar esta promoción?")) return;
+    if (!confirm(t("promo_confirm_delete"))) return;
     await fetch("/api/admin/promotions", {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: "DELETED" }),
@@ -437,8 +440,8 @@ export default function AdminPromociones() {
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Tag size={20} color="var(--adm-text3)" /> {isPanel ? "Ofertas" : "Promociones"}</h1>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Crea ofertas y descuentos para atraer más clientes</p>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Tag size={20} color="var(--adm-text3)" /> {isPanel ? t("promo_title") : t("promo_title_admin")}</h1>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{t("promo_subtitle")}</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {!isPanel && (
@@ -447,7 +450,7 @@ export default function AdminPromociones() {
               onChange={e => setSelectedLocal(e.target.value)}
               style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
             >
-              <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
+              <option value="" style={{ background: "var(--adm-select-bg)" }}>{t("promo_all_restaurants")}</option>
               {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
             </select>
           )}
@@ -455,7 +458,7 @@ export default function AdminPromociones() {
             padding: "8px 16px", background: generating ? "rgba(244,166,35,0.3)" : "#F4A623",
             color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: generating ? "wait" : "pointer",
           }}>
-            {generating ? "🧞 Analizando..." : "🧞 Generar sugerencias"}
+            {generating ? t("promo_analyzing") : t("promo_generate")}
           </button>}
         </div>
       </div>
@@ -631,10 +634,10 @@ export default function AdminPromociones() {
       {/* Filters + create button */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, alignItems: "center" }}>
         {[
-          { key: "all", label: "Todas" },
-          ...(!isPanel ? [{ key: "SUGGESTED", label: "Sugeridas" }] : []),
-          { key: "ACTIVE", label: "Activas" },
-          { key: "PAUSED", label: "Pausadas" },
+          { key: "all", label: t("promo_filter_all") },
+          ...(!isPanel ? [{ key: "SUGGESTED", label: t("promo_filter_suggested") }] : []),
+          { key: "ACTIVE", label: t("promo_filter_active") },
+          { key: "PAUSED", label: t("promo_filter_paused") },
         ].map(f => (
           <button key={f.key} onClick={() => setFilter(f.key)} style={{
             padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
@@ -648,7 +651,7 @@ export default function AdminPromociones() {
         <div style={{ flex: 1 }} />
         {selectedLocal && (
           <button onClick={() => creating ? resetCreate() : setCreating(true)} style={{ padding: "8px 16px", background: creating ? "none" : "#F4A623", color: creating ? "var(--adm-text2)" : "white", border: creating ? "1px solid var(--adm-card-border)" : "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
-            {creating ? "Cancelar" : "+ Crear oferta"}
+            {creating ? t("promo_cancel") : t("promo_create")}
           </button>
         )}
       </div>
@@ -656,17 +659,17 @@ export default function AdminPromociones() {
       {/* Create new promo */}
       {creating && !createType && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>¿Qué tipo de oferta?</h3>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_type_title")}</h3>
           <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <button onClick={() => setCreateType("graphic")} style={{ padding: "20px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
               <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🖼️</span>
-              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, display: "block" }}>Gráfica propia</span>
-              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>Sube tu diseño o flyer</span>
+              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, display: "block" }}>{t("promo_type_graphic")}</span>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>{t("promo_type_graphic_desc")}</span>
             </button>
             <button onClick={() => setCreateType("product")} style={{ padding: "20px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
               <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🍽️</span>
-              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, display: "block" }}>Productos de la carta</span>
-              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>Selecciona 1 o más platos</span>
+              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, display: "block" }}>{t("promo_type_products")}</span>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>{t("promo_type_products_desc")}</span>
             </button>
           </div>
         </div>
@@ -674,9 +677,9 @@ export default function AdminPromociones() {
 
       {creating && createType === "graphic" && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>🖼️ Promoción con gráfica</h3>
-          <input placeholder="Nombre de la promoción" value={cName} onChange={e => setCName(e.target.value)} style={INP} />
-          <textarea placeholder="Descripción (opcional)" value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_graphic_title")}</h3>
+          <input placeholder={t("promo_name_label")} value={cName} onChange={e => setCName(e.target.value)} style={INP} />
+          <textarea placeholder={t("promo_desc_label")} value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
 
           {/* File upload */}
           {!cImageUrl ? (
@@ -695,8 +698,8 @@ export default function AdminPromociones() {
                 if (file) await handlePromoUpload(file);
               }} />
               <span style={{ fontSize: "2rem" }}>{uploading ? "⏳" : "📷"}</span>
-              <span style={{ fontFamily: F, fontSize: "0.85rem", color: uploading ? "#F4A623" : "var(--adm-text2)" }}>{uploading ? "Subiendo y optimizando..." : "Toca para subir imagen o arrastra aquí"}</span>
-              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>JPG, PNG o WebP · Máximo 10MB</span>
+              <span style={{ fontFamily: F, fontSize: "0.85rem", color: uploading ? "#F4A623" : "var(--adm-text2)" }}>{uploading ? t("promo_uploading") : t("promo_upload_hint")}</span>
+              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{t("promo_upload_types")}</span>
             </label>
           ) : (
             <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 180 }}>
@@ -707,19 +710,19 @@ export default function AdminPromociones() {
 
           {/* Prices (optional) */}
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <input type="text" inputMode="numeric" placeholder="Precio normal (ej: 22.900)" value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
-            <input type="text" inputMode="numeric" placeholder="Precio promo (ej: 14.900)" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
+            <input type="text" inputMode="numeric" placeholder={t("promo_normal_price_hint")} value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
+            <input type="text" inputMode="numeric" placeholder={t("promo_promo_price_hint")} value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
           </div>
 
           {/* Modifier templates */}
           {availableTemplates.length > 0 && (
             <div style={{ marginBottom: 12 }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {availableTemplates.map(t => (
-                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(t.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={cModifierTemplateIds.includes(t.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id])} style={{ accentColor: "#F4A623" }} />
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(t.id) ? "#F4A623" : "var(--adm-text)" }}>{t.name}</span>
+                {availableTemplates.map(tpl => (
+                  <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={cModifierTemplateIds.includes(tpl.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
                   </label>
                 ))}
               </div>
@@ -728,7 +731,7 @@ export default function AdminPromociones() {
 
           {/* Days of week */}
           <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_days_label")}</p>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
                 <button key={i} onClick={() => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
@@ -738,36 +741,36 @@ export default function AdminPromociones() {
 
           {/* Date range */}
           <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Rango de fechas (opcional)</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_date_range")}</p>
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Desde</label>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_from")}</label>
                 <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Hasta</label>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_to")}</label>
                 <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
               </div>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
-            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? t("promo_creating") : t("promo_create_btn")}</button>
+            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
           </div>
         </div>
       )}
 
       {creating && createType === "product" && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>🍽️ Promoción de productos</h3>
-          <input placeholder="Nombre de la promoción" value={cName} onChange={e => setCName(e.target.value)} style={INP} />
-          <textarea placeholder="Descripción (opcional)" value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_products_title")}</h3>
+          <input placeholder={t("promo_name_label")} value={cName} onChange={e => setCName(e.target.value)} style={INP} />
+          <textarea placeholder={t("promo_desc_label")} value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
 
           {/* Dish selector */}
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Selecciona platos ({cSelectedDishes.length} seleccionados)</p>
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{t("promo_select_dishes")} ({cSelectedDishes.length})</p>
           <input
-            placeholder="Buscar plato..."
+            placeholder={t("promo_search_dish")}
             value={dishSearch}
             onChange={e => setDishSearch(e.target.value)}
             style={{ ...INP, marginBottom: 0, borderRadius: "10px 10px 0 0", borderBottom: "none" }}
@@ -789,16 +792,16 @@ export default function AdminPromociones() {
           {cSelectedDishes.length > 0 && (
             <div style={{ background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Precio original (suma)</span>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{t("promo_original_price")}</span>
                 <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600 }}>${selectedDishesTotal.toLocaleString("es-CL")}</span>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>Precio promo</label>
-                  <input type="text" inputMode="numeric" placeholder="Ej: 14.900" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
+                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>{t("promo_promo_price")}</label>
+                  <input type="text" inputMode="numeric" placeholder={t("promo_promo_price_hint")} value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>% descuento</label>
+                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>{t("promo_discount_pct")}</label>
                   <input type="number" placeholder="%" value={cDiscountPct} onChange={e => setCDiscountPct(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
                 </div>
               </div>
@@ -808,12 +811,12 @@ export default function AdminPromociones() {
           {/* Modifier templates */}
           {availableTemplates.length > 0 && (
             <div style={{ marginBottom: 12 }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {availableTemplates.map(t => (
-                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(t.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={cModifierTemplateIds.includes(t.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id])} style={{ accentColor: "#F4A623" }} />
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(t.id) ? "#F4A623" : "var(--adm-text)" }}>{t.name}</span>
+                {availableTemplates.map(tpl => (
+                  <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={cModifierTemplateIds.includes(tpl.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
                   </label>
                 ))}
               </div>
@@ -822,7 +825,7 @@ export default function AdminPromociones() {
 
           {/* Days of week */}
           <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_days_label")}</p>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
                 <button key={i} onClick={() => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
@@ -832,22 +835,22 @@ export default function AdminPromociones() {
 
           {/* Date range */}
           <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Rango de fechas (opcional)</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_date_range")}</p>
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Desde</label>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_from")}</label>
                 <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Hasta</label>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_to")}</label>
                 <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
               </div>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
-            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? t("promo_creating") : t("promo_create_btn")}</button>
+            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
           </div>
         </div>
       )}
@@ -856,12 +859,12 @@ export default function AdminPromociones() {
       {/* Edit modal */}
       {editing && (
         <div ref={editRef} style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>Editar promoción</h3>
-          <input placeholder="Nombre" value={editName} onChange={e => setEditName(e.target.value)} style={I} />
-          <textarea placeholder="Descripción" value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} style={{ ...I, resize: "vertical" }} />
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_edit_title")}</h3>
+          <input placeholder={t("promo_name_label")} value={editName} onChange={e => setEditName(e.target.value)} style={I} />
+          <textarea placeholder={t("promo_desc_label")} value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} style={{ ...I, resize: "vertical" }} />
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input placeholder="Precio normal" type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
-            <input placeholder="Precio promo (ej: 14.900)" type="text" inputMode="numeric" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
+            <input placeholder={t("promo_normal_price_label")} type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
+            <input placeholder={t("promo_promo_price_hint")} type="text" inputMode="numeric" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
           </div>
           {/* Image */}
           {editing.promoType === "graphic" && (
@@ -874,7 +877,7 @@ export default function AdminPromociones() {
               ) : (
                 <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px", background: "var(--adm-hover)", border: "2px dashed var(--adm-card-border)", borderRadius: 12, cursor: editUploading ? "wait" : "pointer", marginBottom: 12 }}>
                   <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f) await handleEditUpload(f); }} />
-                  <span style={{ fontFamily: F, fontSize: "0.82rem", color: editUploading ? "#F4A623" : "var(--adm-text2)" }}>{editUploading ? "Subiendo..." : "📷 Cambiar imagen"}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.82rem", color: editUploading ? "#F4A623" : "var(--adm-text2)" }}>{editUploading ? t("promo_uploading") : "📷 " + t("promo_upload_hint")}</span>
                 </label>
               )}
             </>
@@ -882,12 +885,12 @@ export default function AdminPromociones() {
           {/* Modifier templates edit */}
           {availableTemplates.length > 0 && (
             <div style={{ marginTop: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {availableTemplates.map(t => (
-                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: editModifierTemplateIds.includes(t.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={editModifierTemplateIds.includes(t.id)} onChange={() => setEditModifierTemplateIds(prev => prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id])} style={{ accentColor: "#F4A623" }} />
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: editModifierTemplateIds.includes(t.id) ? "#F4A623" : "var(--adm-text)" }}>{t.name}</span>
+                {availableTemplates.map(tpl => (
+                  <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: editModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={editModifierTemplateIds.includes(tpl.id)} onChange={() => setEditModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: editModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
                   </label>
                 ))}
               </div>
@@ -895,7 +898,7 @@ export default function AdminPromociones() {
           )}
           {/* Days of week edit */}
           <div style={{ marginTop: 10 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_days_label")}</p>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
                 <button key={i} onClick={() => setEditDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: editDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: editDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
@@ -905,22 +908,22 @@ export default function AdminPromociones() {
 
           {/* Date range edit */}
           <div style={{ marginTop: 10 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Rango de fechas (opcional)</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_date_range")}</p>
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Desde</label>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_from")}</label>
                 <input type="date" value={editValidFrom} onChange={e => setEditValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Hasta</label>
+                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_to")}</label>
                 <input type="date" value={editValidUntil} onChange={e => setEditValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
               </div>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
-            <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>{t("save")}</button>
+            <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
           </div>
         </div>
       )}
@@ -1020,7 +1023,7 @@ export default function AdminPromociones() {
 
                     {p.aiJustification && (
                       <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Por qué el Genio lo recomienda</p>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_ai_reason")}</p>
                         <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{p.aiJustification}</p>
                       </div>
                     )}
@@ -1045,31 +1048,31 @@ export default function AdminPromociones() {
 
                     {/* Prices */}
                     <div style={{ display: "flex", gap: 12, fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", marginBottom: 14 }}>
-                      {p.originalPrice && <span>Original: ${p.originalPrice.toLocaleString("es-CL")}</span>}
-                      {p.promoPrice && <span style={{ color: "#4ade80" }}>Promo: ${p.promoPrice.toLocaleString("es-CL")}</span>}
-                      {p.discountPct && <span style={{ color: "#F4A623" }}>{p.discountPct}% descuento</span>}
+                      {p.originalPrice && <span>{t("promo_original_label")} ${p.originalPrice.toLocaleString("es-CL")}</span>}
+                      {p.promoPrice && <span style={{ color: "#4ade80" }}>{t("promo_promo_label")} ${p.promoPrice.toLocaleString("es-CL")}</span>}
+                      {p.discountPct && <span style={{ color: "#F4A623" }}>{p.discountPct}% {t("promo_discount_pct").toLowerCase()}</span>}
                     </div>
 
                     {/* Actions */}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {p.status === "SUGGESTED" && (
                         <>
-                          <button onClick={() => handleStatus(p.id, "ACTIVE")} style={btnStyle("#4ade80")}>Aprobar</button>
-                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>Descartar</button>
+                          <button onClick={() => handleStatus(p.id, "ACTIVE")} style={btnStyle("#4ade80")}>{t("promo_action_approve")}</button>
+                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_discard")}</button>
                         </>
                       )}
                       {p.status === "ACTIVE" && (
                         <>
-                          <button onClick={() => handleStatus(p.id, "PAUSED")} style={btnStyle("#888")}>Pausar</button>
-                          <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>Editar</button>
-                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>Eliminar</button>
+                          <button onClick={() => handleStatus(p.id, "PAUSED")} style={btnStyle("#888")}>{t("promo_action_pause")}</button>
+                          <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>{t("promo_action_edit")}</button>
+                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_delete")}</button>
                         </>
                       )}
                       {p.status === "PAUSED" && (
                         <>
-                          <button onClick={() => handleStatus(p.id, "ACTIVE")} style={btnStyle("#4ade80")}>Activar</button>
-                          <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>Editar</button>
-                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>Eliminar</button>
+                          <button onClick={() => handleStatus(p.id, "ACTIVE")} style={btnStyle("#4ade80")}>{t("promo_action_activate")}</button>
+                          <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>{t("promo_action_edit")}</button>
+                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_delete")}</button>
                         </>
                       )}
                     </div>
@@ -1081,8 +1084,8 @@ export default function AdminPromociones() {
           {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60 }}>
               <p style={{ fontSize: "2rem", marginBottom: 12 }}>🏷️</p>
-              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>No hay ofertas aún</p>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Crea una oferta para atraer más clientes a tu local</p>
+              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>{t("promo_empty_title")}</p>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("promo_empty_desc")}</p>
             </div>
           )}
         </div>

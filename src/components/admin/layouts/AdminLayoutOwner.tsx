@@ -21,6 +21,8 @@ interface Props {
   activePlan?: string;
   isDemo?: boolean;
   hasLoyalty?: boolean;
+  seenFeatures?: string[];
+  markFeatureSeen?: (feature: string) => void;
   children: React.ReactNode;
 }
 
@@ -38,7 +40,7 @@ const CONTROL_HIDDEN = ["horusvegan"];
 const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
-type NavSection = { key: string; label: string; icon: any; items: NavItem[] };
+type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
 function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string; hasLoyalty?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
@@ -74,7 +76,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       label: "Pedidos Online",
       icon: ShoppingCart,
       items: [
-        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
+        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online` },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
       ],
     },
@@ -82,6 +84,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "loyalty",
       label: "Loyalty",
       icon: Gift,
+      badge: "Nuevo",
       items: [
         { icon: HelpCircle, labelKey: "nav_loyalty_how", href: `${base}/loyalty` },
         { icon: CreditCard, labelKey: "nav_loyalty_card", href: `${base}/loyalty/tarjeta` },
@@ -94,6 +97,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "reviews",
       label: "Valoraciones",
       icon: Star,
+      badge: "Nuevo",
       items: [
         { icon: Settings, labelKey: "nav_reviews_config", href: `${base}/valoraciones` },
         { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
@@ -140,7 +144,7 @@ function getActiveSectionKeys(pathname: string, sections: NavSection[], base: st
   return keys;
 }
 
-export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, children }: Props) {
+export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, seenFeatures = [], markFeatureSeen, children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = usePanelLang();
@@ -186,17 +190,15 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // "seen" badge for ordering
-  const [seenOrdering, setSeenOrdering] = useState(true);
+  // Mark section as seen when user navigates to it
   useEffect(() => {
-    setSeenOrdering(localStorage.getItem(`qc_ordering_seen_${selectedRestaurantId}`) === "1");
-  }, [selectedRestaurantId]);
-  useEffect(() => {
-    if (pathname.includes("/pedir-online") && !seenOrdering) {
-      localStorage.setItem(`qc_ordering_seen_${selectedRestaurantId}`, "1");
-      setSeenOrdering(true);
+    if (pathname.includes("/loyalty") && !seenFeatures.includes("loyalty")) {
+      markFeatureSeen?.("loyalty");
     }
-  }, [pathname, selectedRestaurantId, seenOrdering]);
+    if (pathname.includes("/valoraciones") && !seenFeatures.includes("valoraciones")) {
+      markFeatureSeen?.("valoraciones");
+    }
+  }, [pathname, seenFeatures, markFeatureSeen]);
 
   // Theme
   const [theme, setTheme] = useState<"dark" | "light">("light");
@@ -263,9 +265,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                   color: singleActive ? GOLD : "var(--adm-text2)",
                   textTransform: "uppercase", letterSpacing: "0.08em",
                 }}>{section.label}</span>
-                {section.items[0].badge && !seenOrdering && (
+                {section.badge && !seenFeatures.includes(section.key) && (
                   <span style={{ fontSize: "0.58rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6 }}>
-                    {section.items[0].badge}
+                    {section.badge}
                   </span>
                 )}
                 <ChevronRight size={13} color={singleActive ? GOLD : "var(--adm-text3)"} />
@@ -287,6 +289,11 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                   color: sectionActive ? GOLD : "var(--adm-text2)",
                   textTransform: "uppercase", letterSpacing: "0.08em",
                 }}>{section.label}</span>
+                {section.badge && !seenFeatures.includes(section.key) && (
+                  <span style={{ fontSize: "0.58rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>
+                    {section.badge}
+                  </span>
+                )}
                 <ChevronDown
                   size={13}
                   color={sectionActive ? GOLD : "var(--adm-text3)"}
@@ -320,11 +327,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                     >
                       <Icon size={15} strokeWidth={active ? 2.2 : 1.6} />
                       <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
-                      {(item as any).badge && !seenOrdering && (
-                        <span style={{ fontSize: "0.58rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6 }}>
-                          {(item as any).badge}
-                        </span>
-                      )}
                     </Link>
                   );
                 })}

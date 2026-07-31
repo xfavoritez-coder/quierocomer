@@ -4,22 +4,11 @@ import { Users, UserPlus, Shield, Eye, Crown, Mail, Trash2, X, ChevronRight } fr
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
-
-const ROLE_CONFIG = {
-  OWNER: { label: "Owner", color: GOLD, bg: `rgba(244,166,35,0.12)`, icon: Crown, desc: "Control total del restaurante" },
-  ADMIN: { label: "Admin", color: GOLD, bg: "rgba(244,166,35,0.12)", icon: Shield, desc: "Edita carta, ve estadísticas" },
-  VIEWER: { label: "Visor", color: "#60a5fa", bg: "rgba(96,165,250,0.12)", icon: Eye, desc: "Solo lectura del panel" },
-};
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  ACTIVE: { label: "Activo", color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
-  PENDING: { label: "Pendiente", color: GOLD, bg: "rgba(244,166,35,0.1)" },
-  SUSPENDED: { label: "Suspendido", color: "#f87171", bg: "rgba(248,113,113,0.1)" },
-};
 
 interface Member {
   id: string;
@@ -51,8 +40,11 @@ function Toggle({ active, onToggle, size = "normal" }: { active: boolean; onTogg
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
-  const cfg = ROLE_CONFIG[role as keyof typeof ROLE_CONFIG] || ROLE_CONFIG.VIEWER;
+type RoleCfg = { label: string; color: string; bg: string; icon: any; desc: string };
+type StatusCfg = { label: string; color: string; bg: string };
+
+function RoleBadge({ role, roleConfig }: { role: string; roleConfig: Record<string, RoleCfg> }) {
+  const cfg = roleConfig[role] || roleConfig.VIEWER;
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
@@ -65,8 +57,8 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-function StatusDot({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
+function StatusDot({ status, statusConfig }: { status: string; statusConfig: Record<string, StatusCfg> }) {
+  const cfg = statusConfig[status] || statusConfig.PENDING;
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
@@ -79,7 +71,20 @@ function StatusDot({ status }: { status: string }) {
 }
 
 export default function UsuariosPage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId } = useAdminSession();
+
+  const ROLE_CONFIG: Record<string, RoleCfg> = {
+    OWNER: { label: t("users_owner"), color: GOLD, bg: `rgba(244,166,35,0.12)`, icon: Crown, desc: t("users_role_owner_desc") },
+    ADMIN: { label: t("users_admin"), color: GOLD, bg: "rgba(244,166,35,0.12)", icon: Shield, desc: t("users_role_admin_desc") },
+    VIEWER: { label: t("users_viewer"), color: "#60a5fa", bg: "rgba(96,165,250,0.12)", icon: Eye, desc: t("users_role_viewer_desc") },
+  };
+
+  const STATUS_CONFIG: Record<string, StatusCfg> = {
+    ACTIVE: { label: t("users_status_active"), color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
+    PENDING: { label: t("users_status_pending"), color: GOLD, bg: "rgba(244,166,35,0.1)" },
+    SUSPENDED: { label: t("users_status_suspended"), color: "#f87171", bg: "rgba(248,113,113,0.1)" },
+  };
   const [owner, setOwner] = useState<Member | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,9 +125,9 @@ export default function UsuariosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: editingUser.id }),
       });
-      if (res.ok) toast.success(`Invitación reenviada a ${editingUser.email}`);
-      else toast.error("Error al reenviar");
-    } catch { toast.error("Error de conexión"); }
+      if (res.ok) toast.success(t("users_invitation_resent").replace("{email}", editingUser.email));
+      else toast.error(t("users_error_resend"));
+    } catch { toast.error(t("users_error_connection")); }
     setResendingInvite(false);
   };
 
@@ -145,7 +150,7 @@ export default function UsuariosPage() {
 
   const changeMemberPassword = async () => {
     if (!editingUser || !editNewPassword.trim()) return;
-    if (editNewPassword.length < 8) { toast.error("Mínimo 8 caracteres"); return; }
+    if (editNewPassword.length < 8) { toast.error(t("users_password_min_error")); return; }
     setSavingPassword(true);
     try {
       const res = await fetch("/api/panel/team", {
@@ -153,9 +158,9 @@ export default function UsuariosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: editingUser.id, newPassword: editNewPassword }),
       });
-      if (res.ok) { toast.success("Contraseña actualizada"); setEditNewPassword(""); }
-      else toast.error("Error al cambiar");
-    } catch { toast.error("Error de conexión"); }
+      if (res.ok) { toast.success(t("users_password_updated")); setEditNewPassword(""); }
+      else toast.error(t("users_error_password"));
+    } catch { toast.error(t("users_error_connection")); }
     setSavingPassword(false);
   };
 
@@ -187,11 +192,11 @@ export default function UsuariosPage() {
         body: JSON.stringify({ restaurantId: rid, name: formName.trim(), email: formEmail.trim().toLowerCase(), role: formRole }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Error al invitar"); setSubmitting(false); return; }
+      if (!res.ok) { toast.error(data.error || t("users_error_invite")); setSubmitting(false); return; }
       setMembers(prev => [...prev, data]);
       setFormName(""); setFormEmail(""); setShowForm(false);
-      toast.success(`Invitación enviada a ${formEmail.trim()}`);
-    } catch { toast.error("Error de conexión"); }
+      toast.success(t("users_invitation_sent").replace("{email}", formEmail.trim()));
+    } catch { toast.error(t("users_error_connection")); }
     setSubmitting(false);
   };
 
@@ -205,7 +210,7 @@ export default function UsuariosPage() {
       if (res.ok) {
         const updated = await res.json();
         setMembers(prev => prev.map(m => m.id === memberId ? updated : m));
-        toast.success("Actualizado");
+        toast.success(t("users_updated"));
       }
     } catch { toast.error("Error"); }
   };
@@ -220,7 +225,7 @@ export default function UsuariosPage() {
       });
       if (res.ok) {
         setMembers(prev => prev.filter(m => m.id !== memberId));
-        toast.success("Usuario eliminado");
+        toast.success(t("users_deleted"));
       }
     } catch { toast.error("Error"); }
     setDeletingId(null);
@@ -255,10 +260,10 @@ export default function UsuariosPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={20} color="var(--adm-text3)" /> Usuarios
+            <Users size={20} color="var(--adm-text3)" /> {t("users_title")}
           </h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
-            {allUsers.length} {allUsers.length === 1 ? "usuario" : "usuarios"} con acceso al panel
+            {allUsers.length} {allUsers.length === 1 ? t("users_count") : t("users_count_plural")}
           </p>
         </div>
         <button
@@ -273,7 +278,7 @@ export default function UsuariosPage() {
             transition: "all 0.2s",
           }}
         >
-          {showForm ? <><X size={14} /> Cancelar</> : <><UserPlus size={14} /> Agregar</>}
+          {showForm ? <><X size={14} /> {t("cancel")}</> : <><UserPlus size={14} /> {t("users_add")}</>}
         </button>
       </div>
 
@@ -285,11 +290,11 @@ export default function UsuariosPage() {
           animation: "fadeSlideIn 0.25s ease-out",
         }}>
           <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 14px" }}>
-            Agregar usuario
+            {t("users_add_user")}
           </h3>
           <div style={{ display: "grid", gap: 10 }}>
             <input
-              placeholder="Nombre"
+              placeholder={t("users_name")}
               value={formName}
               onChange={e => setFormName(e.target.value)}
               style={{
@@ -299,7 +304,7 @@ export default function UsuariosPage() {
             />
             <input
               type="email"
-              placeholder="Email"
+              placeholder={t("users_email")}
               value={formEmail}
               onChange={e => setFormEmail(e.target.value)}
               style={{
@@ -331,7 +336,7 @@ export default function UsuariosPage() {
               })}
             </div>
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
-              {formRole === "ADMIN" ? "Puede editar la carta, ver estadísticas y recibir reportes" : "Solo puede ver el panel sin hacer cambios"}
+              {formRole === "ADMIN" ? t("users_admin_role_desc") : t("users_viewer_role_desc")}
             </p>
             <button
               onClick={handleInvite}
@@ -343,11 +348,11 @@ export default function UsuariosPage() {
                 transition: "opacity 0.2s",
               }}
             >
-              {submitting ? "Agregando..." : "Agregar usuario"}
+              {submitting ? t("users_adding") : t("users_add_user")}
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "10px 14px", borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)" }}>
               <Mail size={14} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
-              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>Recibirá un email con su acceso al panel</span>
+              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>{t("users_email_hint")}</span>
             </div>
           </div>
         </div>
@@ -388,8 +393,8 @@ export default function UsuariosPage() {
                     <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)" }}>
                       {user.name}
                     </span>
-                    <RoleBadge role={user.role} />
-                    {user.status !== "ACTIVE" && <StatusDot status={user.status} />}
+                    <RoleBadge role={user.role} roleConfig={ROLE_CONFIG} />
+                    {user.status !== "ACTIVE" && <StatusDot status={user.status} statusConfig={STATUS_CONFIG} />}
                   </div>
                   <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {user.email}
@@ -403,7 +408,7 @@ export default function UsuariosPage() {
 
         {allUsers.length === 0 && (
           <div style={{ padding: 40, textAlign: "center" }}>
-            <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text3)" }}>No hay usuarios</p>
+            <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text3)" }}>{t("users_no_users")}</p>
           </div>
         )}
       </div>
@@ -422,7 +427,7 @@ export default function UsuariosPage() {
           }}>
             {/* Header */}
             <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <h3 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Editar usuario</h3>
+              <h3 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{t("users_edit_user")}</h3>
               <button onClick={closeEdit} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={20} color="var(--adm-text3)" /></button>
             </div>
 
@@ -438,7 +443,7 @@ export default function UsuariosPage() {
                 {editName[0]?.toUpperCase() || "?"}
               </div>
               <div>
-                <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{editName || "Sin nombre"}</p>
+                <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{editName || t("users_no_name")}</p>
                 <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{editEmail}</p>
               </div>
             </div>
@@ -453,28 +458,28 @@ export default function UsuariosPage() {
               }}>
                 <UserPlus size={16} color="var(--adm-text3)" />
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Editar mis datos</p>
-                  <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Nombre, email y contraseña desde Mi perfil</p>
+                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>{t("users_edit_own_data")}</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{t("users_edit_own_hint")}</p>
                 </div>
                 <ChevronRight size={14} color="var(--adm-text3)" />
               </a>
               ) : (<>
               <div>
-                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Nombre</label>
+                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{t("users_name")}</label>
                 <input value={editName} onChange={e => setEditName(e.target.value)} style={{
                   width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)",
                   borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box",
                 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Email</label>
+                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{t("users_email")}</label>
                 <input value={editEmail} onChange={e => setEditEmail(e.target.value)} type="email" style={{
                   width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)",
                   borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box",
                 }} />
               </div>
               <div>
-                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Rol</label>
+                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{t("users_role")}</label>
                 <div style={{ display: "flex", gap: 8 }}>
                   {(["ADMIN", "VIEWER"] as const).map(r => {
                     const cfg = ROLE_CONFIG[r];
@@ -494,7 +499,7 @@ export default function UsuariosPage() {
                   })}
                 </div>
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>
-                  {editRole === "ADMIN" ? "Puede editar la carta, ver estadísticas y recibir reportes" : "Solo puede ver el panel sin hacer cambios"}
+                  {editRole === "ADMIN" ? t("users_admin_role_desc") : t("users_viewer_role_desc")}
                 </p>
               </div>
               </>)}
@@ -502,9 +507,9 @@ export default function UsuariosPage() {
               {/* Change password — only for non-owner */}
               {!isOwner && (
               <div style={{ paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
-                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Nueva contraseña</label>
+                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{t("users_new_password")}</label>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <input type="password" placeholder="Mín. 8 caracteres" value={editNewPassword} onChange={e => setEditNewPassword(e.target.value)} style={{
+                  <input type="password" placeholder={t("users_password_min")} value={editNewPassword} onChange={e => setEditNewPassword(e.target.value)} style={{
                     flex: 1, padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)",
                     borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box",
                   }} />
@@ -513,7 +518,7 @@ export default function UsuariosPage() {
                     background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
                     opacity: savingPassword || !editNewPassword.trim() ? 0.5 : 1, whiteSpace: "nowrap",
                   }}>
-                    {savingPassword ? "..." : "Cambiar"}
+                    {savingPassword ? "..." : t("users_change")}
                   </button>
                 </div>
               </div>
@@ -530,7 +535,7 @@ export default function UsuariosPage() {
                 border: "1px solid rgba(244,166,35,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 opacity: resendingInvite ? 0.5 : 1,
               }}>
-                <Mail size={14} /> {resendingInvite ? "Reenviando..." : "Reenviar email de activación"}
+                <Mail size={14} /> {resendingInvite ? t("users_resending") : t("users_send_activation")}
               </button>
               )}
               {!isOwner && (
@@ -539,16 +544,16 @@ export default function UsuariosPage() {
                 background: "rgba(244,166,35,0.15)", color: GOLD, fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
                 border: "1px solid rgba(244,166,35,0.25)",
               }}>
-                Guardar cambios
+                {t("users_save_changes")}
               </button>
               )}
               {!isOwner && (
-                <button onClick={() => { if (confirm(`¿Eliminar a ${editingUser.name}?`)) { deleteMember(editingUser.id); closeEdit(); } }} style={{
+                <button onClick={() => { if (confirm(t("users_confirm_delete").replace("{name}", editingUser.name))) { deleteMember(editingUser.id); closeEdit(); } }} style={{
                   width: "100%", padding: 12, borderRadius: 10, cursor: "pointer",
                   background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
                   border: "1px solid rgba(239,68,68,0.15)",
                 }}>
-                  Eliminar usuario
+                  {t("users_delete_user")}
                 </button>
               )}
             </div>

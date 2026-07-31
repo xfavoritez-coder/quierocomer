@@ -5,7 +5,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, ExternalLink, Copy, Cake, Users, ShoppingCart } from "lucide-react";
+import { QrCode, Bell, ExternalLink, Copy, Cake, Users, ShoppingCart } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import { TrialBanner } from "./layout";
 import { usePanelLang } from "@/lib/i18n/panel";
@@ -337,25 +337,6 @@ export default function PanelDashboard() {
       )}
 
 <PlanGate plan={(rest as any)?.plan} feature="stats_basic">
-
-      {/* ═══ HOY ═══ */}
-      <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_today")}</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.todayScans}</strong>
-            <Eye size={16} color="var(--adm-text3)" />
-          </div>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>{t("home_sessions")}</span>
-        </div>
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{(data as any).todayBirthdays || 0}</strong>
-            <Cake size={16} color="var(--adm-text3)" />
-          </div>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>{t("home_birthdays_today")}</span>
-        </div>
-      </div>
 
       {/* ═══ VISITAS POR SECCIÓN ═══ */}
       {data.pageHitsToday && (() => {

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
@@ -11,6 +12,7 @@ const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background
 const CONF_COLORS: Record<string, string> = { exact: "#4ade80", probable: "#7fbfdc", approximate: "#F4A623", none: "#ff6b6b" };
 
 export default function TicketsPage() {
+  const { t } = usePanelLang();
   const pathname = usePathname();
   const { restaurants } = useAdminSession();
   const [tickets, setTickets] = useState<any[]>([]);
@@ -75,15 +77,15 @@ export default function TicketsPage() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Tickets POS</h1>
+          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>{t("analytics_back")}</Link>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>{t("tickets_title")}</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => setShowForm(!showForm)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-            {showForm ? "Cancelar" : "+ Agregar"}
+            {showForm ? t("tickets_cancel") : t("tickets_add")}
           </button>
           <label style={{ padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>
-            CSV
+            {t("tickets_csv")}
             <input type="file" accept=".csv" onChange={handleCSV} style={{ display: "none" }} />
           </label>
         </div>
@@ -92,18 +94,18 @@ export default function TicketsPage() {
       {showForm && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
           <select value={formRestaurant} onChange={(e) => setFormRestaurant(e.target.value)} style={I}>
-            <option value="">Seleccionar local</option>
+            <option value="">{t("tickets_select_local")}</option>
             {restaurants.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
           <div style={{ display: "flex", gap: 10 }}>
-            <input placeholder="Mesa (opcional)" value={formMesa} onChange={(e) => setFormMesa(e.target.value)} style={{ ...I, flex: 1 }} />
-            <input type="number" placeholder="Total $" value={formTotal} onChange={(e) => setFormTotal(e.target.value)} style={{ ...I, flex: 1 }} />
-            <input type="number" placeholder="Items" value={formItems} onChange={(e) => setFormItems(e.target.value)} style={{ ...I, flex: 1 }} />
+            <input placeholder={t("tickets_table_optional")} value={formMesa} onChange={(e) => setFormMesa(e.target.value)} style={{ ...I, flex: 1 }} />
+            <input type="number" placeholder={t("tickets_total")} value={formTotal} onChange={(e) => setFormTotal(e.target.value)} style={{ ...I, flex: 1 }} />
+            <input type="number" placeholder={t("tickets_items")} value={formItems} onChange={(e) => setFormItems(e.target.value)} style={{ ...I, flex: 1 }} />
           </div>
           <input type="datetime-local" value={formPaidAt} onChange={(e) => setFormPaidAt(e.target.value)} style={I} />
-          <input placeholder="Notas (opcional)" value={formNotes} onChange={(e) => setFormNotes(e.target.value)} style={I} />
+          <input placeholder={t("tickets_notes_optional")} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} style={I} />
           <button onClick={handleSubmit} disabled={saving || !formRestaurant || !formTotal} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
-            {saving ? "Guardando..." : "Guardar y matchear"}
+            {saving ? t("tickets_saving") : t("tickets_save_match")}
           </button>
         </div>
       )}
@@ -112,7 +114,7 @@ export default function TicketsPage() {
       <div style={{ display: "flex", gap: 4, marginBottom: 16, flexWrap: "wrap" }}>
         {["", "exact", "probable", "approximate", "none"].map((c) => (
           <button key={c} onClick={() => setFilterConf(c)} style={{ padding: "6px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: filterConf === c ? "#F4A623" : "var(--adm-hover)", color: filterConf === c ? "#0a0a0a" : "var(--adm-text2)" }}>
-            {c || "Todos"}
+            {c || t("tickets_all")}
           </button>
         ))}
       </div>
@@ -135,7 +137,7 @@ export default function TicketsPage() {
               <button onClick={() => handleDelete(t.id)} style={{ background: "none", border: "none", color: "#ff6b6b", cursor: "pointer", fontFamily: F, fontSize: "0.72rem" }}>×</button>
             </div>
           ))}
-          {tickets.length === 0 && <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets</p>}
+          {tickets.length === 0 && <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("tickets_empty")}</p>}
         </div>
       )}
     </div>

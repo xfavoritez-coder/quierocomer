@@ -7,6 +7,7 @@ import { maxVisibleClients, canAccess } from "@/lib/plans";
 import PlanGate from "@/components/admin/PlanGate";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { Users, Download, Gift, Mail, Pencil, Trash2, X } from "lucide-react";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -62,6 +63,7 @@ const DEMO_CLIENTS: Client[] = [
 ];
 
 export default function ClientesPage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId, restaurants } = useAdminSession();
   const { activePlan } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === selectedRestaurantId) as any)?.isDemo;
@@ -172,10 +174,10 @@ export default function ClientesPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={20} color="var(--adm-text3)" /> Mis Clientes
+            <Users size={20} color="var(--adm-text3)" /> {t("clients_header")}
           </h1>
           <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-            Personas que se registraron desde tu carta digital. {total} cliente{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}.
+            {t("clients_desc")} {total} {total !== 1 ? t("clients_registered_plural") : t("clients_registered")}.
           </p>
         </div>
         {clients.length > 0 && (
@@ -192,7 +194,7 @@ export default function ClientesPage() {
               }}
             >
               <Download size={14} />
-              Exportar CSV
+              {t("clients_export_csv")}
             </button>
           ) : (
             <div title="Disponible en plan superior" style={{
@@ -203,7 +205,7 @@ export default function ClientesPage() {
               color: "var(--adm-text3)", opacity: 0.6, flexShrink: 0, cursor: "not-allowed",
             }}>
               <Download size={14} />
-              Exportar CSV
+              {t("clients_export_csv")}
             </div>
           )
         )}
@@ -212,8 +214,8 @@ export default function ClientesPage() {
       {clients.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 20px" }}>
           <Users size={40} color="var(--adm-card-border)" style={{ marginBottom: 12 }} />
-          <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Sin clientes registrados</p>
-          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Cuando los clientes se registren en tu carta, aparecerán aquí.</p>
+          <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>{t("clients_no_clients")}</p>
+          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("clients_no_clients_desc")}</p>
         </div>
       ) : (
         <>
@@ -318,6 +320,7 @@ export default function ClientesPage() {
 
 /* ═══════════ Modales ═══════════ */
 function EditClientModal({ client, onClose, onSave, loading }: { client: Client; onClose: () => void; onSave: (form: { name: string; email: string; birthDate: string; dietType: string }) => void; loading: boolean }) {
+  const { t } = usePanelLang();
   const [name, setName] = useState(client.name || "");
   const [email, setEmail] = useState(client.email);
   const [birthDate, setBirthDate] = useState(client.birthDate ? client.birthDate.split("T")[0] : "");
@@ -329,36 +332,36 @@ function EditClientModal({ client, onClose, onSave, loading }: { client: Client;
         <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}>
           <X size={18} />
         </button>
-        <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 18px" }}>Editar cliente</h2>
+        <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 18px" }}>{t("clients_edit")}</h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Nombre</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>{t("clients_name")}</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder={t("clients_name")} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Email</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>{t("clients_email")}</label>
             <input value={email} onChange={e => setEmail(e.target.value)} type="email" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Fecha de cumpleaños</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>{t("clients_birthday")}</label>
             <input value={birthDate} onChange={e => setBirthDate(e.target.value)} type="date" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Dieta</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>{t("clients_diet")}</label>
             <select value={dietType} onChange={e => setDietType(e.target.value)} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box", appearance: "none" }}>
-              <option value="">Sin especificar</option>
-              <option value="omnivore">Carnívoro</option>
-              <option value="vegetarian">Vegetariano</option>
-              <option value="vegan">Vegano</option>
+              <option value="">{t("clients_diet_unspecified")}</option>
+              <option value="omnivore">{t("clients_diet_omnivore")}</option>
+              <option value="vegetarian">{t("clients_diet_vegetarian")}</option>
+              <option value="vegan">{t("clients_diet_vegan")}</option>
             </select>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
-          <button onClick={onClose} disabled={loading} style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={onClose} disabled={loading} style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>{t("clients_cancel")}</button>
           <button onClick={() => onSave({ name, email, birthDate, dietType })} disabled={loading} style={{ padding: "9px 16px", background: GOLD, border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "white", cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
-            {loading ? "Guardando..." : "Guardar"}
+            {loading ? t("clients_saving") : t("clients_save")}
           </button>
         </div>
       </div>
@@ -367,20 +370,21 @@ function EditClientModal({ client, onClose, onSave, loading }: { client: Client;
 }
 
 function DeleteClientModal({ client, onClose, onConfirm, loading }: { client: Client; onClose: () => void; onConfirm: () => void; loading: boolean }) {
+  const { t } = usePanelLang();
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card)", borderRadius: 16, padding: "24px", maxWidth: 380, width: "100%", boxShadow: "0 25px 60px rgba(0,0,0,0.25)", position: "relative" }}>
         <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
           <Trash2 size={20} color="#ef4444" />
         </div>
-        <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Borrar cliente</h2>
+        <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>{t("clients_delete")}</h2>
         <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 18px", lineHeight: 1.5 }}>
-          Vas a quitar a <strong>{client.name || client.email}</strong> de la lista de clientes de este local. La cuenta del usuario sigue existiendo si tiene relación con otros locales.
+          {t("clients_delete_desc").replace("{name}", client.name || client.email)}
         </p>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button onClick={onClose} disabled={loading} style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={onClose} disabled={loading} style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>{t("clients_cancel")}</button>
           <button onClick={onConfirm} disabled={loading} style={{ padding: "9px 16px", background: "#ef4444", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "white", cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
-            {loading ? "Borrando..." : "Sí, borrar"}
+            {loading ? t("clients_deleting") : t("clients_confirm_delete")}
           </button>
         </div>
       </div>

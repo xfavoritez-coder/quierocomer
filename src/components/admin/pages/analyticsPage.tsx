@@ -7,6 +7,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
 import PlanGate from "@/components/admin/PlanGate";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
@@ -16,6 +17,7 @@ const FB = "var(--font-body)";
  * Works on both desktop and mobile (HTML `title` only triggers on mouse
  * hover so it was invisible on touch devices). */
 function InfoTip({ text }: { text: string }) {
+  const { t } = usePanelLang();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
 
@@ -42,7 +44,7 @@ function InfoTip({ text }: { text: string }) {
         onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
         role="button"
         tabIndex={0}
-        aria-label="Mostrar explicación"
+        aria-label={t("analytics_show_tip")}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -179,6 +181,7 @@ const DEMO_ANALYTICS = {
 };
 
 function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { t } = usePanelLang();
   const { activePlan, restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const hasToteatPlan = canAccess(activePlan, "toteat_integration");
@@ -223,7 +226,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   }, [rid, from, to, hasToteatPlan, isDemo]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
-  if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
+  if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_data")}</p>;
 
   const topDish = dishes?.mostViewed?.[0];
   const topCategory = dishes?.topCategories?.[0];
@@ -262,8 +265,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* ═══ Hero KPIs (2×2) ═══ */}
       <div className="adm-kpi-grid">
-        <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones`} color="var(--adm-text)" gradient="" lucideIcon={<Users size={16} color="var(--adm-text3)" />} />
-        <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="var(--adm-text)" gradient="" lucideIcon={<Cake size={16} color="var(--adm-text3)" />} />
+        <HeroKpi icon="👥" value={metrics.totalVisitors} label={t("analytics_unique_visitors")} sub={`${metrics.totalSessions} ${t("analytics_sessions_label")}`} color="var(--adm-text)" gradient="" lucideIcon={<Users size={16} color="var(--adm-text3)" />} />
+        <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label={t("analytics_registered_birthday")} sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% ${t("analytics_pct_of_visitors")}` : ""} color="var(--adm-text)" gradient="" lucideIcon={<Cake size={16} color="var(--adm-text3)" />} />
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
@@ -276,11 +279,11 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
               <div style={{ width: 70, height: 70, borderRadius: 12, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", flexShrink: 0 }}>🍽️</div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#F4A623", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>⭐ Plato estrella</p>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#F4A623", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t("analytics_star_dish")}</p>
               <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{topDish.name}</p>
               <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>
-                <strong style={{ color: "#F4A623" }}>{topDish.count} {typeof topDish.count === "number" ? "vistas" : "veces"}</strong>
-                {hasToteat && salesByName.has(topDish.name) && <> · <strong style={{ color: "#16a34a" }}>{salesByName.get(topDish.name)} ventas</strong></>}
+                <strong style={{ color: "#F4A623" }}>{topDish.count} {typeof topDish.count === "number" ? t("analytics_views") : t("analytics_times")}</strong>
+                {hasToteat && salesByName.has(topDish.name) && <> · <strong style={{ color: "#16a34a" }}>{salesByName.get(topDish.name)} {t("analytics_sales")}</strong></>}
               </p>
             </div>
           </div>
@@ -299,7 +302,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         if (filteredTod.length === 0) return null;
         return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>📊 Cuándo abren la carta</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>{t("analytics_when_open")}</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
             {filteredTod.map((t: any) => {
               const filteredPeak = [...filteredTod].sort((a: any, b: any) => b.count - a.count)[0];
@@ -332,8 +335,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         if (filteredHours.length === 0) return null;
         return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>🌟 Estrella por horario</p>
-          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato más abierto en cada momento del día.</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>{t("analytics_star_by_hour")}</p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_star_by_hour_desc")}</p>
           <div style={{ position: "relative" }}>
             <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${filteredHours.length}, minmax(0, 1fr))` }}>
               {filteredHours.map((p: any) => (
@@ -349,9 +352,9 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                   )}
                   <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                    <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} vistas</span>
+                    <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} {t("analytics_views")}</span>
                     {(p.sales || 0) > 0 && (
-                      <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} ventas</span>
+                      <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} {t("analytics_sales")}</span>
                     )}
                   </div>
                 </div>
@@ -368,7 +371,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         {/* Top 3 platos vistos */}
         {dishes?.mostViewed && dishes.mostViewed.length > 0 && (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
-            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>🏆 Top 3 más vistos</p>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>{t("analytics_top3")}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {dishes.mostViewed.slice(0, 3).map((d: any, i: number) => {
                 const medal = ["🥇", "🥈", "🥉"][i];
@@ -384,7 +387,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                       {hasToteat && sales > 0 && (
-                        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.count} vistas · <span style={{ color: "#16a34a", fontWeight: 700 }}>{sales} ventas</span></p>
+                        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.count} {t("analytics_views")} · <span style={{ color: "#16a34a", fontWeight: 700 }}>{sales} {t("analytics_sales")}</span></p>
                       )}
                     </div>
                     {!hasToteat && <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>}
@@ -400,9 +403,9 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       {/* ═══ Búsqueda top — Categoría favorita movida al HeroKpi 4 (mini) ═══ */}
       {topSearch && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>🔍 Lo más buscado</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>{t("analytics_top_searches")}</p>
           <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>&ldquo;{topSearch.query}&rdquo;</p>
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Buscado <strong style={{ color: "var(--adm-accent)" }}>{topSearch.count} {topSearch.count === 1 ? "vez" : "veces"}</strong> por {topSearch.uniqueVisitors} {topSearch.uniqueVisitors === 1 ? "persona" : "personas"}</p>
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>{t("analytics_searched_times")} <strong style={{ color: "var(--adm-accent)" }}>{topSearch.count} {topSearch.count === 1 ? t("analytics_searched_once") : t("analytics_searched_plural")}</strong> {t("analytics_searched_by")} {topSearch.uniqueVisitors} {topSearch.uniqueVisitors === 1 ? t("analytics_searched_person") : t("analytics_searched_people")}</p>
         </div>
       )}
 
@@ -413,10 +416,10 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
           {champions.length > 0 && (
             <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.06) 100%)", border: "1px solid rgba(22,163,74,0.18)", borderRadius: 14, padding: "16px 18px" }}>
               <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a", margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>🌟 Platos campeones</span>
+                <span>{t("analytics_champion_dishes")}</span>
                 <InfoTip text="Los platos que la gente abre Y compra. Estrellas del menú con mejor conversión." />
               </p>
-              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Lo abren y lo piden.</p>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_champion_desc")}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {champions.map((c: any) => (
                   <div key={c.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px dashed rgba(22,163,74,0.12)" }}>
@@ -427,7 +430,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{c.opens} vistas · <span style={{ color: "#16a34a", fontWeight: 700 }}>{c.sales} ventas</span></p>
+                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{c.opens} {t("analytics_views")} · <span style={{ color: "#16a34a", fontWeight: 700 }}>{c.sales} {t("analytics_sales")}</span></p>
                     </div>
                     <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#16a34a", flexShrink: 0 }}>{c.conversionPct}%</span>
                   </div>
@@ -439,10 +442,10 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
           {ghosts.length > 0 && (
             <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(239,68,68,0.04) 100%)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 14, padding: "16px 18px" }}>
               <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ef4444", margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>👻 Platos fantasma</span>
+                <span>{t("analytics_ghost_dishes")}</span>
                 <InfoTip text="La gente los abre pero casi nadie los pide. Revisa precio, descripción, foto, o si vale la pena tenerlos." />
               </p>
-              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Lo abren pero no lo compran.</p>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_ghost_desc")}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {ghosts.map((g: any) => (
                   <div key={g.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px dashed rgba(239,68,68,0.12)" }}>
@@ -453,7 +456,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{g.opens} vistas · <span style={{ color: "#ef4444", fontWeight: 700 }}>{g.sales} ventas</span></p>
+                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{g.opens} {t("analytics_views")} · <span style={{ color: "#ef4444", fontWeight: 700 }}>{g.sales} {t("analytics_sales")}</span></p>
                     </div>
                     <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#ef4444", flexShrink: 0 }}>{g.conversionPct ?? 0}%</span>
                   </div>
@@ -481,6 +484,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
 }
 
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { t } = usePanelLang();
   const { activePlan, restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const hasToteatAccess = canAccess(activePlan, "toteat_integration");
@@ -557,7 +561,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   }, [rid, from, to, hasToteatAccess, isDemo]);
 
   if (loading) return <SkeletonLoading type="list" />;
-  if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
+  if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_data")}</p>;
 
   const renderSection = (s: { title: string; items: any[]; icon: string; unit: string; tooltip?: string }) => (
     <div key={s.title} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -566,7 +570,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
         {s.unit && <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", fontWeight: 600 }}>{s.unit}</span>}
       </div>
       {s.items.length === 0 ? (
-        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos suficientes</p>
+        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>{t("analytics_no_enough_data")}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {s.items.slice(0, 10).map((d: any, i: number) => (
@@ -583,34 +587,34 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   );
 
   const mostViewed = {
-    title: "Más vistos en la carta",
+    title: t("analytics_most_viewed"),
     items: data.mostViewed || [],
     icon: "🏆",
-    unit: "veces abierto",
+    unit: t("analytics_times_opened"),
     tooltip: undefined,
   };
   const mostDetailed = {
-    title: "Más tiempo viéndolos",
+    title: t("analytics_most_time"),
     items: data.mostDetailed || [],
     icon: "🔍",
-    unit: "promedio",
+    unit: t("analytics_average"),
     tooltip: undefined,
   };
   const leastViewed = {
-    title: "Menos vistos",
+    title: t("analytics_least_viewed"),
     items: data.leastViewed || [],
     icon: "📉",
-    unit: "% de veces abierto",
+    unit: t("analytics_view_rate"),
     tooltip: undefined,
   };
   const topCategories = {
-    title: "Categorías más exploradas",
+    title: t("analytics_top_categories"),
     items: (data.topCategories || []).map((c: any) => ({
       name: c.name,
       count: `${c.pct}% · ${formatDuration(c.totalMs)}`,
     })),
     icon: "🗂️",
-    unit: "% del tiempo en carta",
+    unit: t("analytics_category_time_pct"),
     tooltip: undefined,
   };
 
@@ -629,9 +633,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       {popularByHour.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>
-            🌟 Estrella por horario
+            {t("analytics_star_by_hour")}
           </p>
-          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato que más se abrió en cada momento del día.</p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_star_by_hour_desc")}</p>
           <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${popularByHour.length}, minmax(0, 1fr))` }}>
             {popularByHour.map((p: any) => (
               <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
@@ -646,9 +650,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                 )}
                 <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} vistas</span>
+                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} {t("analytics_views")}</span>
                   {(p.sales || 0) > 0 && (
-                    <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} ventas</span>
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} {t("analytics_sales")}</span>
                   )}
                 </div>
               </div>
@@ -669,9 +673,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       {hasToteat && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🔀 Carta vs Caja</p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>{t("analytics_cart_vs_pos")}</p>
             <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} ventas · {cross.summary.orphanCount} fuera de carta
+              {cross.summary.mappedDishes}/{cross.summary.totalDishes} {t("analytics_mapeados")} · {cross.summary.totalOpens} {t("analytics_openings")} · {cross.summary.totalSales} {t("analytics_sales")} · {cross.summary.orphanCount} {t("analytics_out_of_menu")}
             </span>
           </div>
 
@@ -680,10 +684,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
             {cross.insights.fantasmas.length > 0 && (
               <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>👻 Platos fantasma</span>
+                  <span>{t("analytics_ghost_dishes")}</span>
                   <InfoTip text="Platos que la gente abre pero casi nadie pide. Ejemplo: 'Gran Flor: 0 ventas de 6 aperturas' = 6 clientes lo miraron, 0 lo compraron." />
                 </p>
-                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren pero no los compran.</p>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_ghost_desc2")}</p>
                 {cross.insights.fantasmas.map((p: any) => (
                   <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(239,68,68,0.15)", fontFamily: FB }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
@@ -693,8 +697,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                       </span>
                     </div>
                     <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {p.sales} {p.sales === 1 ? "venta" : "ventas"} · {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
-                      {p.avgDetailMs > 0 && ` · ${Math.round(p.avgDetailMs / 1000)}s viéndolo`}
+                      {p.sales} {p.sales === 1 ? t("analytics_sale_singular") : t("analytics_sale_plural")} · {p.opens} {p.opens === 1 ? t("analytics_opening_singular") : t("analytics_opening_plural")}
+                      {p.avgDetailMs > 0 && ` · ${Math.round(p.avgDetailMs / 1000)}${t("analytics_seeing")}`}
                     </div>
                   </div>
                 ))}
@@ -704,10 +708,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
             {cross.insights.estrellas.length > 0 && (
               <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>🎯 Estrellas</span>
+                  <span>{t("analytics_stars")}</span>
                   <InfoTip text="Platos que la gente abre y termina pidiendo. Si la conversión es mayor a 100% es porque se vendieron más unidades de las que se vieron en la carta digital (los clientes los pidieron directo al mozo)." />
                 </p>
-                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren y los piden.</p>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_stars_desc")}</p>
                 {cross.insights.estrellas.map((p: any) => (
                   <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(34,197,94,0.15)", fontFamily: FB }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
@@ -717,7 +721,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                       </span>
                     </div>
                     <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {p.sales} {p.sales === 1 ? "venta" : "ventas"} · {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
+                      {p.sales} {p.sales === 1 ? t("analytics_sale_singular") : t("analytics_sale_plural")} · {p.opens} {p.opens === 1 ? t("analytics_opening_singular") : t("analytics_opening_plural")}
                     </div>
                   </div>
                 ))}
@@ -729,10 +733,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           {cross.orphans.length > 0 && (
             <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
               <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                <span>📦 Vendidos fuera de la carta digital ({cross.orphans.length})</span>
+                <span>{t("analytics_sold_outside")} ({cross.orphans.length})</span>
                 <InfoTip text="Cosas que se vendieron en caja pero no están en tu carta digital. Suelen ser combos, salsas, extras o costos de delivery. El '×N' es cuántas unidades se vendieron." />
               </p>
-              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat sin mapeo. Probable: combos, salsas, extras o sin mapear.</p>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_sold_outside_desc")}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {(showAllOrphans ? cross.orphans : cross.orphans.slice(0, 10)).map((o: any) => (
                   <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
@@ -744,7 +748,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                     onClick={() => setShowAllOrphans(v => !v)}
                     style={{ background: "transparent", border: "1px dashed var(--adm-card-border)", color: "#F4A623", fontSize: "0.7rem", padding: "3px 10px", borderRadius: 6, fontFamily: FB, fontWeight: 600, cursor: "pointer" }}
                   >
-                    {showAllOrphans ? "Ver menos" : `+${cross.orphans.length - 10} más`}
+                    {showAllOrphans ? t("analytics_show_less") : t("analytics_show_more").replace("{n}", String(cross.orphans.length - 10))}
                   </button>
                 )}
               </div>
@@ -755,21 +759,21 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           {cross.insights.sospechosos?.length > 0 && (
             <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
               <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                <span>🟡 Sin mapear</span>
+                <span>{t("analytics_unmapped")}</span>
                 <InfoTip text="Platos con interés real que no están conectados a tu sistema de caja. No sabemos si vendieron. Andá a Carta → Toteat y conéctalos." />
               </p>
-              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Tienen interés real pero no podemos cruzarlos contra ventas. Mapéalos para confirmar.</p>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_unmapped_desc")}</p>
               {cross.insights.sospechosos.map((p: any) => (
                 <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(244,166,35,0.15)", fontFamily: FB }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                     <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                     <span style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
-                      {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
+                      {p.opens} {p.opens === 1 ? t("analytics_opening_singular") : t("analytics_opening_plural")}
                     </span>
                   </div>
                   {p.avgDetailMs > 0 && (
                     <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {Math.round(p.avgDetailMs / 1000)}s viéndolo
+                      {Math.round(p.avgDetailMs / 1000)}{t("analytics_seeing")}
                     </div>
                   )}
                 </div>
@@ -782,7 +786,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
             onClick={() => setTableOpen(!tableOpen)}
             style={{ width: "100%", padding: "8px 10px", background: "transparent", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.74rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer", textAlign: "left" }}
           >
-            {tableOpen ? "▼" : "▶"} Tabla completa por plato ({cross.rows.length})
+            {tableOpen ? "▼" : "▶"} {t("analytics_full_table").replace("{n}", String(cross.rows.length))}
           </button>
           {tableOpen && (
             <div style={{ marginTop: 10, overflowX: "auto" }}>
@@ -790,11 +794,11 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                 <thead>
                   <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
                     {([
-                      { key: "name", label: "Plato", align: "left" as const, tooltip: undefined },
-                      { key: "opens", label: "Aperturas", align: "right" as const, tooltip: "Cuántos clientes abrieron el plato para verlo" },
-                      { key: "avgDetailMs", label: "T. viendo", align: "right" as const, tooltip: "Segundos promedio que pasaron mirando el plato" },
-                      { key: "sales", label: "Ventas", align: "right" as const, tooltip: "Unidades vendidas en el período" },
-                      { key: "conversionPct", label: "Conv.", align: "right" as const, tooltip: "Porcentaje de aperturas que terminaron en venta" },
+                      { key: "name", label: t("analytics_col_dish"), align: "left" as const, tooltip: undefined },
+                      { key: "opens", label: t("analytics_col_openings"), align: "right" as const, tooltip: "Cuántos clientes abrieron el plato para verlo" },
+                      { key: "avgDetailMs", label: t("analytics_col_time"), align: "right" as const, tooltip: "Segundos promedio que pasaron mirando el plato" },
+                      { key: "sales", label: t("analytics_col_sales"), align: "right" as const, tooltip: "Unidades vendidas en el período" },
+                      { key: "conversionPct", label: t("analytics_col_conv"), align: "right" as const, tooltip: "Porcentaje de aperturas que terminaron en venta" },
                     ] as { key: CrossSortKey; label: string; align: "left" | "right"; tooltip?: string }[]).map((col) => {
                       const active = sortKey === col.key;
                       return (
@@ -830,7 +834,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                         <td style={{ padding: "6px", color: "var(--adm-text)" }}>
                           {flag && <span style={{ marginRight: 4 }}>{flag}</span>}
                           {r.name}
-                          {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>(sin mapear)</span>}
+                          {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>{t("analytics_col_unmapped")}</span>}
                         </td>
                         <td style={{ padding: "6px", textAlign: "right", color: "var(--adm-text)" }}>{r.opens}</td>
                         <td style={{ padding: "6px", textAlign: "right", color: r.avgDetailMs > 0 ? "var(--adm-text2)" : "var(--adm-text3)" }}>
@@ -856,6 +860,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
 
 /* ═══ Badge accuracy section ═══ */
 function BadgeAccuracySection({ badges }: { badges: any }) {
+  const { t } = usePanelLang();
   const renderCard = (
     title: string,
     subtitle: string,
@@ -880,7 +885,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
               {data.hitRate !== null ? `${data.hitRate}%` : "—"}
             </p>
             <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
-              <span>Acierto</span>
+              <span>{t("analytics_badge_accuracy_label")}</span>
               <InfoTip text="De los platos que mostramos con esta etiqueta, qué porcentaje también estuvo entre los más vendidos. Si dice 67%, 2 de cada 3 platos etiquetados sí vendieron bien — la etiqueta está acertando. Si dice 0%, ningún plato etiquetado fue de los más vendidos." />
             </p>
           </div>
@@ -889,7 +894,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
               {data.salesLift !== null ? (data.salesLift > 0 ? `+${data.salesLift}%` : `${data.salesLift}%`) : "—"}
             </p>
             <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
-              <span>Más ventas que el resto</span>
+              <span>{t("analytics_badge_more_sales")}</span>
               <InfoTip text="Comparación de ventas entre platos etiquetados y no etiquetados. Si dice +50%, los platos con etiqueta vendieron en promedio 50% más unidades que los que no tuvieron etiqueta. Si es negativo, los platos sin etiqueta vendieron más." />
             </p>
           </div>
@@ -899,7 +904,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
         {data.topItems?.length > 0 && (
           <div>
             <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
-              <span>Platos que se vendieron con esta etiqueta</span>
+              <span>{t("analytics_badge_sold_with")}</span>
               <InfoTip text="Top platos que tuvieron la etiqueta en el período Y vendieron. Ordenados por ventas. La estrella ⭐ marca los que además fueron de los más vendidos del local. El % indica cuánto del periodo el plato estuvo con la etiqueta." />
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -915,12 +920,12 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
                       {it.wasTopSeller && <span style={{ marginRight: 4 }}>⭐</span>}{it.name}
                     </p>
                     <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }} title={`Estuvo ${it.coveragePct}% del periodo con la etiqueta`}>
-                      {it.coveragePct}% del tiempo etiquetado
+                      {t("analytics_badge_time_pct").replace("{n}", String(it.coveragePct))}
                     </p>
                   </div>
                   <span style={{ flexShrink: 0, color: accent, fontFamily: F, fontSize: "0.92rem", fontWeight: 700 }}>
                     {it.sales}
-                    <span style={{ fontSize: "0.62rem", fontWeight: 600, marginLeft: 3, opacity: 0.85 }}>{it.sales === 1 ? "venta" : "ventas"}</span>
+                    <span style={{ fontSize: "0.62rem", fontWeight: 600, marginLeft: 3, opacity: 0.85 }}>{it.sales === 1 ? t("analytics_badge_sale") : t("analytics_badge_sales")}</span>
                   </span>
                 </div>
               ))}
@@ -934,26 +939,26 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🎖️ Acierto de las etiquetas</p>
+        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>{t("analytics_badge_accuracy")}</p>
         <InfoTip text="¿Las etiquetas que mostramos en la carta están funcionando? Comparamos los platos que tuvieron etiqueta contra los que más se vendieron." />
         <span style={{ flex: 1 }} />
         <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
-          Capturado cada 30 min · {badges.summary.popularRuns} corridas
+          {t("analytics_badge_runs").replace("{n}", String(badges.summary.popularRuns))}
         </span>
       </div>
 
       <div className="adm-cols-2" style={{ alignItems: "start" }}>
         {renderCard(
-          "🔥 Popular hoy",
-          "Calculado por algoritmo (los más abiertos en las últimas 48h).",
+          t("analytics_badge_popular_title"),
+          t("analytics_badge_popular_sub"),
           "#ef4444",
           "239,68,68",
           badges.popular,
           "Mide si los platos que destacamos automáticamente con 🔥 son los que realmente venden bien. Si el acierto es alto, el algoritmo está acertando.",
         )}
         {renderCard(
-          "⭐ Recomendado",
-          "Tu selección manual de platos a destacar.",
+          t("analytics_badge_recommended_title"),
+          t("analytics_badge_recommended_sub"),
           "#F4A623",
           "244,166,35",
           badges.recommended,
@@ -977,6 +982,7 @@ const DEMO_CLIENTES = {
 };
 
 function TabClientes({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { t } = usePanelLang();
   const { restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [funnel, setFunnel] = useState<any>(null);
@@ -1010,11 +1016,11 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Funnel */}
       {funnel && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>📊 Embudo de conversión</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>{t("analytics_funnel_title")}</p>
           {[
-            { label: "Visitantes únicos", value: funnel.totalVisitors, pct: 100, color: "var(--adm-accent)" },
-            { label: "Recurrentes", value: funnel.returningVisitors, pct: funnel.returningPct, color: "#3db89e" },
-            { label: "Se registraron", value: funnel.convertedCount, pct: funnel.conversionPct, color: "#7fbfdc" },
+            { label: t("analytics_unique_visitors"), value: funnel.totalVisitors, pct: 100, color: "var(--adm-accent)" },
+            { label: t("funnel_returned"), value: funnel.returningVisitors, pct: funnel.returningPct, color: "#3db89e" },
+            { label: t("analytics_registered"), value: funnel.convertedCount, pct: funnel.conversionPct, color: "#7fbfdc" },
           ].map((step, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -1032,7 +1038,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Cuándo vienen */}
       {clientes?.timeOfDay && clientes.totalSessions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🕐 Cuándo vienen tus clientes</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>{t("analytics_when_come")}</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 110 }}>
             {clientes.timeOfDay.map((t: any) => (
               <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -1049,12 +1055,12 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Perfil dietético */}
       {clientes?.dietProfile && (clientes.dietProfile.totalDietGuests > 0 || clientes.dietProfile.restrictions.length > 0) && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🥗 Perfil dietético de tus clientes</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>{t("analytics_diet_profile")}</p>
           <div className="adm-cols-2" style={{ gap: 14 }}>
             <div>
-              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Tipo de dieta declarado</p>
+              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>{t("analytics_declared_diet")}</p>
               {clientes.dietProfile.diets.length === 0 ? (
-                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>Aún no declaran</p>
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>{t("analytics_no_declaration")}</p>
               ) : (
                 clientes.dietProfile.diets.map((d: any) => {
                   const pct = clientes.dietProfile.totalDietGuests > 0 ? Math.round((d.count / clientes.dietProfile.totalDietGuests) * 100) : 0;
@@ -1073,9 +1079,9 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
               )}
             </div>
             <div>
-              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Restricciones más comunes</p>
+              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>{t("analytics_common_restrictions")}</p>
               {clientes.dietProfile.restrictions.length === 0 ? (
-                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>Sin restricciones declaradas</p>
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>{t("analytics_no_restrictions")}</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {clientes.dietProfile.restrictions.map((r: any, i: number) => (
@@ -1115,6 +1121,7 @@ const DEMO_GARZON = {
 };
 
 function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
+  const { t } = usePanelLang();
   const { restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [data, setData] = useState<any>(null);
@@ -1133,7 +1140,7 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
   }, [rid, isSuper, isDemo]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
-  if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos de garzón</p>;
+  if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_waiter_data")}</p>;
 
   const days = Object.entries(data.perDay || {});
   const maxDay = Math.max(...days.map(d => d[1] as number), 1);
@@ -1147,10 +1154,10 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
       {/* Summary */}
       <div className="adm-kpi-grid">
         {[
-          { label: "Llamados hoy", value: data.today, color: GOLD },
-          { label: "Llamados semana", value: data.week },
-          { label: "% Atendidos", value: `${data.answeredPct}%`, color: data.answeredPct >= 80 ? "#16a34a" : data.answeredPct >= 50 ? GOLD : "#ef4444" },
-          { label: "Tiempo resp.", value: formatTime(data.avgResponseSec), color: data.avgResponseSec <= 120 ? "#16a34a" : GOLD },
+          { label: t("analytics_waiter_today"), value: data.today, color: GOLD },
+          { label: t("analytics_waiter_week"), value: data.week },
+          { label: t("analytics_waiter_attended"), value: `${data.answeredPct}%`, color: data.answeredPct >= 80 ? "#16a34a" : data.answeredPct >= 50 ? GOLD : "#ef4444" },
+          { label: t("analytics_waiter_response"), value: formatTime(data.avgResponseSec), color: data.avgResponseSec <= 120 ? "#16a34a" : GOLD },
         ].map((c, i) => (
           <Card key={i} label={c.label} value={c.value} color={c.color} />
         ))}
@@ -1159,7 +1166,7 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
       {/* Bar chart - calls per day */}
       {days.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>Llamados por día</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>{t("analytics_waiter_calls_day")}</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 100 }}>
             {days.map(([date, count]) => {
               const dayName = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][new Date(date + "T12:00:00").getDay()];
@@ -1178,17 +1185,17 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
       {/* Two columns: top mesas + peak hours */}
       <div className="adm-cols-2">
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Mesas más activas</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{t("analytics_waiter_active_tables")}</p>
           {(data.topMesas || []).length > 0 ? data.topMesas.map((m: any, i: number) => (
             <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < data.topMesas.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
               <span style={{ fontFamily: F, fontSize: "0.75rem", color: GOLD, fontWeight: 700, width: 20 }}>{i + 1}</span>
               <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{m.name}</span>
               <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{m.count}x</span>
             </div>
-          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin datos</p>}
+          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("analytics_no_data")}</p>}
         </div>
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Horas punta</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{t("analytics_waiter_peak_hours")}</p>
           {(data.peakHours || []).length > 0 ? data.peakHours.map((h: any, i: number) => (
             <div key={h.hour} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < data.peakHours.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
               <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 600 }}>{formatHour(h.hour)}</span>
@@ -1197,14 +1204,14 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
               </div>
               <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{h.count}</span>
             </div>
-          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin datos</p>}
+          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("analytics_no_data")}</p>}
         </div>
       </div>
 
       {/* Recent calls */}
       {(data.recent || []).length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Últimos llamados</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{t("analytics_waiter_recent")}</p>
           {data.recent.map((c: any) => {
             const time = new Date(c.calledAt);
             const hhmm = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
@@ -1212,12 +1219,12 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
             return (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.answeredAt ? "#16a34a" : "#ef4444", flexShrink: 0 }} />
-                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{c.tableName || "Sin mesa"}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{c.tableName || t("analytics_waiter_no_table")}</span>
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{dateStr} {hhmm}</span>
                 {c.responseTime !== null ? (
                   <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#16a34a", fontWeight: 600 }}>{formatTime(c.responseTime)}</span>
                 ) : (
-                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444" }}>Sin atender</span>
+                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444" }}>{t("analytics_waiter_not_attended")}</span>
                 )}
               </div>
             );
@@ -1241,6 +1248,7 @@ const DEMO_BUSQUEDAS = [
 ];
 
 function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { t } = usePanelLang();
   const { restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [data, setData] = useState<any[]>([]);
@@ -1265,9 +1273,9 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
 
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-      <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>🔍 Qué buscan tus clientes</p>
+      <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>{t("analytics_search_title")}</p>
       {data.length === 0 ? (
-        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 20 }}>Sin búsquedas registradas</p>
+        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 20 }}>{t("analytics_search_empty")}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {data.slice(0, 20).map((s: any, i: number) => (
@@ -1297,6 +1305,7 @@ const DEMO_SESSIONS = {
 };
 
 function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { t } = usePanelLang();
   const { restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [data, setData] = useState<any>(null);
@@ -1356,15 +1365,15 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
           <span style={{ fontSize: "0.85rem" }}>👤</span>
           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>
-            Viendo solo sesiones de <strong>{guestFilter.name}</strong> en este local
+            {t("analytics_sessions_viewing").replace("{name}", guestFilter.name)}
           </span>
-          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 12px", fontFamily: F, fontSize: "0.72rem", background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>← Ver todas</button>
+          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 12px", fontFamily: F, fontSize: "0.72rem", background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>{t("analytics_sessions_back")}</button>
         </div>
       )}
       <div style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>
-        <p>{guestFilter ? "Este visitante no tiene sesiones en este local" : hideEmpty ? "Sin sesiones con actividad en este período" : "Sin sesiones en este período"}</p>
-        {guestFilter && <button onClick={() => setGuestFilter(null)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>← Ver todas las sesiones</button>}
-        {!guestFilter && hideEmpty && <button onClick={() => setHideEmpty(false)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>Mostrar también escaneos vacíos</button>}
+        <p>{guestFilter ? t("analytics_sessions_no_sessions_local") : hideEmpty ? t("analytics_sessions_no_activity") : t("analytics_sessions_empty")}</p>
+        {guestFilter && <button onClick={() => setGuestFilter(null)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>{t("analytics_sessions_back2")}</button>}
+        {!guestFilter && hideEmpty && <button onClick={() => setHideEmpty(false)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>{t("analytics_sessions_show_empty")}</button>}
       </div>
     </div>
   );
@@ -1380,19 +1389,19 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
           <span style={{ fontSize: "0.85rem" }}>👤</span>
           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>
-            Viendo solo sesiones de <strong>{guestFilter.name}</strong> en este local
+            {t("analytics_sessions_viewing").replace("{name}", guestFilter.name)}
           </span>
-          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 12px", fontFamily: F, fontSize: "0.72rem", background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>← Ver todas</button>
+          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 12px", fontFamily: F, fontSize: "0.72rem", background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>{t("analytics_sessions_back")}</button>
         </div>
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, margin: "0 0 4px", flexWrap: "wrap" }}>
         <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
-          {data.total} sesión{data.total !== 1 ? "es" : ""} · Página {data.page} de {data.totalPages}
+          {data.total} {data.total !== 1 ? t("analytics_session_plural") : t("analytics_session_singular")} · {t("analytics_page_of").replace("{page}", String(data.page)).replace("{total}", String(data.totalPages))}
         </p>
         {!guestFilter && !isDemo && (
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}>
             <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} style={{ cursor: "pointer" }} />
-            Ocultar escaneos vacíos
+            {t("analytics_sessions_hide_empty")}
           </label>
         )}
       </div>
@@ -1404,7 +1413,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         const visitDays = s.visitDays || 1;
         const isReturningGuest = visitDays > 1;
         // Identificador anónimo: "Fantasma #abc12345" si no es usuario registrado
-        const anonName = s.anonId ? `Fantasma #${s.anonId}` : "Visitante";
+        const anonName = s.anonId ? `${t("analytics_anon_prefix")} #${s.anonId}` : t("analytics_anon_visitor");
         const userName = s.qrUser?.name || anonName;
         const visitNumToday = s.visitNumToday || 1;
         const visitsToday = s.visitsToday || 1;
@@ -1421,20 +1430,20 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
                   {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
                   {isReturningGuest && (
-                    <span title={`Este cliente ha venido al local en ${visitDays} días distintos en total`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600, cursor: "help" }}>
-                      🔁 {visitDays} {visitDays === 1 ? "día" : "días"}
+                    <span title={t("analytics_return_guest").replace("{n}", String(visitDays))} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600, cursor: "help" }}>
+                      🔁 {visitDays} {visitDays === 1 ? t("analytics_recurrent_day") : t("analytics_recurrent_days")}
                     </span>
                   )}
                   {visitsToday > 1 && (
-                    <span title={`Hoy abrió la carta ${visitsToday} veces. Esta es la visita N° ${visitNumToday}. Reloads dentro de 1 min se cuentan como la misma sesión.`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600, cursor: "help" }}>
-                      👁 {visitNumToday} de {visitsToday} hoy
+                    <span title={t("analytics_visit_of_today").replace("{n}", String(visitsToday)).replace("{visit}", String(visitNumToday))} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600, cursor: "help" }}>
+                      👁 {t("analytics_visit_n_of_m").replace("{n}", String(visitNumToday)).replace("{m}", String(visitsToday))}
                     </span>
                   )}
                 </div>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{fmtDate(s.startedAt)} {fmtTime(s.startedAt)}</span>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{duration}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length} plato{dishes.length !== 1 ? "s" : ""}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length} {dishes.length !== 1 ? t("analytics_dish_plural") : t("analytics_dish_singular")}</span>
                   {s.viewUsed && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "var(--adm-text2)" }}>{viewLabels[s.viewUsed] || s.viewUsed}</span>}
                   {s.deviceType && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(140,140,140,0.12)", color: "var(--adm-text2)" }}>{s.deviceType === "mobile" ? "📱" : s.deviceType === "desktop" ? "💻" : "📟"} {s.deviceType}</span>}
                   {browser && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(140,140,140,0.12)", color: "var(--adm-text2)" }}>{browser}</span>}
@@ -1469,14 +1478,14 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                       style={{ fontFamily: F, fontSize: "0.72rem", padding: "5px 12px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}
                       title="Ver todas las sesiones de este visitante"
                     >
-                      Ver historial de {userName} →
+                      {t("analytics_sessions_history").replace("{name}", userName)}
                     </button>
                   </div>
                 )}
                 {/* Categories browsed */}
                 {s.categoriesViewed?.length > 0 && (
                   <div style={{ marginTop: 10 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Categorías visitadas</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_categories")}</p>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                       {s.categoriesViewed.map((c: any, i: number) => (
                         <span key={i} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>
@@ -1490,7 +1499,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 {/* Dishes viewed */}
                 {dishes.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Platos vistos (en orden)</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_dishes_seen")}</p>
                     {dishes.map((d: any, i: number) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
@@ -1505,13 +1514,13 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                     ))}
                   </div>
                 ) : (
-                  <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "10px 0 0" }}>No vio platos en detalle</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "10px 0 0" }}>{t("analytics_sessions_no_dishes")}</p>
                 )}
 
                 {/* Hero clicks */}
                 {s.heroClicks?.length > 0 && (
                   <div style={{ marginTop: 12 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Hero clicks</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_hero_clicks")}</p>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {s.heroClicks.map((hc: any, i: number) => (
                         <span key={i} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#F4A623" }}>
@@ -1525,14 +1534,14 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 {/* Cumple guardado — solo se muestra si registró fecha */}
                 {s.genioData?.birthdaySaved && (
                   <div style={{ marginTop: 12 }}>
-                    <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 6, background: "rgba(167,139,250,0.12)", color: "#a78bfa" }}>🎂 Registró su cumpleaños</span>
+                    <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 6, background: "rgba(167,139,250,0.12)", color: "#a78bfa" }}>{t("analytics_sessions_birthday")}</span>
                   </div>
                 )}
 
                 {/* Personalization */}
                 {s.personalizationData && s.personalizationData.shown > 0 && (
                   <div style={{ marginTop: 12 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>✨ Para ti ({s.personalizationData.tapped}/{s.personalizationData.shown} tocados)</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_para_ti").replace("{done}", String(s.personalizationData.tapped)).replace("{total}", String(s.personalizationData.shown))}</p>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                       {s.personalizationData.dishes.map((d: any, i: number) => (
                         <span key={i} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: d.tapped ? "rgba(74,222,128,0.1)" : "var(--adm-hover)", color: d.tapped ? "#4ade80" : "var(--adm-text3)" }}>
@@ -1546,7 +1555,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 {/* Experience submissions */}
                 {s.experienceSubmissions?.length > 0 && (
                   <div style={{ marginTop: 12 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Experiencias</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_experiences")}</p>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {s.experienceSubmissions.map((exp: any) => (
                         <span key={exp.id} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(192,132,252,0.1)", color: "#c084fc" }}>
@@ -1560,11 +1569,11 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 {/* Waiter calls */}
                 {s.waiterCalls?.length > 0 && (
                   <div style={{ marginTop: 12 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>🔔 Llamados al garzón</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_waiter_calls")}</p>
                     {s.waiterCalls.map((wc: any) => (
                       <div key={wc.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
                         <div style={{ width: 6, height: 6, borderRadius: "50%", background: wc.answeredAt ? "#16a34a" : "#ef4444", flexShrink: 0 }} />
-                        <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text)" }}>{wc.tableName || "Sin mesa"}</span>
+                        <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text)" }}>{wc.tableName || t("analytics_sessions_no_table")}</span>
                         <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{fmtTime(wc.calledAt)}</span>
                         {wc.responseTime !== null && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#16a34a", fontWeight: 600 }}>{wc.responseTime}s</span>}
                       </div>
@@ -1575,7 +1584,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 {/* Favorites */}
                 {s.dishFavorites?.length > 0 && (
                   <div style={{ marginTop: 12 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>❤️ Favoritos guardados</p>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>{t("analytics_sessions_favorites")}</p>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {s.dishFavorites.map((f: any) => (
                         <span key={f.id} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "3px 8px", borderRadius: 6, background: "rgba(239,68,68,0.1)", color: "#f87171" }}>
@@ -1590,7 +1599,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 {s.visitDays > 1 && (
                   <div style={{ marginTop: 10 }}>
                     <span style={{ fontFamily: F, fontSize: "0.68rem", padding: "2px 8px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#F4A623" }}>
-                      Visitante recurrente: {s.visitDays} días distintos
+                      {t("analytics_sessions_recurrent").replace("{n}", String(s.visitDays))}
                     </span>
                   </div>
                 )}
@@ -1603,9 +1612,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Pagination */}
       {data.totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 8 }}>
-          {page > 1 && <button onClick={() => loadPage(page - 1)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>← Anterior</button>}
+          {page > 1 && <button onClick={() => loadPage(page - 1)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{t("analytics_prev")}</button>}
           <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", padding: "6px 0" }}>{page} / {data.totalPages}</span>
-          {page < data.totalPages && <button onClick={() => loadPage(page + 1)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>Siguiente →</button>}
+          {page < data.totalPages && <button onClick={() => loadPage(page + 1)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{t("analytics_next")}</button>}
         </div>
       )}
     </div>
@@ -1636,6 +1645,7 @@ const DEMO_SUGERIDOS = {
 };
 
 function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to: string; isDemo: boolean }) {
+  const { t } = usePanelLang();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1656,9 +1666,9 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
   if (!data || data.totalShown === 0) return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "32px 20px", textAlign: "center", boxShadow: "var(--adm-card-shadow, none)" }}>
       <p style={{ fontSize: "1.5rem", marginBottom: 8 }}>💡</p>
-      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 6px", fontWeight: 600 }}>Aún no hay datos de sugeridos</p>
+      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 6px", fontWeight: 600 }}>{t("analytics_sugeridos_empty_title")}</p>
       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-        Cuando tus clientes vean y hagan click en las sugerencias de platos, aquí aparecerán las estadísticas.
+        {t("analytics_sugeridos_empty_desc")}
       </p>
     </div>
   );
@@ -1669,8 +1679,8 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
     <div style={{ display: "grid", gap: 14 }}>
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <Card label="Clicks en sugeridos" value={data.totalClicks} sub={data.totalClicks > 0 ? `${data.sessionsWithClicks} sesiones` : "aún sin clicks"} />
-        <Card label="Tasa de click" value={`${data.clickRate}%`} sub={`de ${data.totalShown} veces mostrado`} color={data.clickRate >= 10 ? "#4ade80" : "var(--adm-accent)"} />
+        <Card label={t("analytics_sugeridos_clicks")} value={data.totalClicks} sub={data.totalClicks > 0 ? t("analytics_sugeridos_sessions").replace("{n}", String(data.sessionsWithClicks)) : t("analytics_sugeridos_no_clicks")} />
+        <Card label={t("analytics_sugeridos_rate")} value={`${data.clickRate}%`} sub={t("analytics_sugeridos_shown").replace("{n}", String(data.totalShown))} color={data.clickRate >= 10 ? "#4ade80" : "var(--adm-accent)"} />
       </div>
 
       {noClicks && (
@@ -1678,8 +1688,8 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>💡</span>
             <div>
-              <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, margin: 0 }}>Se mostraron sugeridos {data.totalShown} veces</p>
-              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "4px 0 0", lineHeight: 1.5 }}>Tus clientes ven sugerencias de platos pero aún no hacen click en ellas. Cuando lo hagan, verás qué platos despiertan más curiosidad.</p>
+              <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, margin: 0 }}>{t("analytics_sugeridos_shown_n").replace("{n}", String(data.totalShown))}</p>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "4px 0 0", lineHeight: 1.5 }}>{t("analytics_sugeridos_no_clicks_desc")}</p>
             </div>
           </div>
         </div>
@@ -1690,8 +1700,8 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: data.salesFromSuggestionsDishes?.length ? 12 : 0 }}>
             <span style={{ fontSize: "1.2rem" }}>💰</span>
             <div>
-              <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: 0 }}>{data.salesFromSuggestions} ventas desde sugeridos</p>
-              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Platos que se vendieron después de ser clickeados como sugerencia</p>
+              <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: 0 }}>{t("analytics_sugeridos_sales").replace("{n}", String(data.salesFromSuggestions))}</p>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{t("analytics_sugeridos_sales_desc")}</p>
             </div>
           </div>
           {data.salesFromSuggestionsDishes?.map((d: any, i: number) => (
@@ -1711,7 +1721,7 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
       {/* Top clicked suggestions */}
       {data.topClicked?.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>💡 Sugeridos más clickeados</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>{t("analytics_sugeridos_top")}</p>
           {data.topClicked.slice(0, 5).map((d: any, i: number) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginTop: i > 0 ? 12 : 0 }}>
               {d.photo ? (
@@ -1721,7 +1731,7 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.clicks} clicks · {d.rate}% de conversión</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{t("analytics_sugeridos_clicks_rate").replace("{n}", String(d.clicks)).replace("{rate}", String(d.rate))}</p>
               </div>
               <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 900, color: "#F4A623", flexShrink: 0 }}>{d.rate}%</div>
             </div>
@@ -1732,8 +1742,8 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
       {/* Top pairs — de dónde vienen */}
       {data.topPairs?.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🔗 De dónde vienen los clicks</p>
-          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Estaban viendo un plato → clickearon el sugerido</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>{t("analytics_sugeridos_pairs")}</p>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_sugeridos_pairs_desc")}</p>
           {data.topPairs.slice(0, 5).map((p: any, i: number) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: i > 0 ? 10 : 0 }}>
               <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.fromName}</span>
@@ -1749,17 +1759,6 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
 }
 
 /* ═══ MAIN ═══ */
-const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
-  { key: "resumen", label: "Resumen", icon: "📊" },
-  { key: "platos", label: "Platos", icon: "🍽️" },
-];
-
-const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
-  { key: "sesiones", label: "Sesiones", icon: "👁️" },
-  { key: "clientes", label: "Clientes", icon: "👥" },
-  { key: "busquedas", label: "Búsquedas", icon: "🔍" },
-  { key: "garzon", label: "Garzón", icon: "🔔" },
-];
 
 type DatePreset = "hoy" | "ayer" | "semana" | "mes" | "custom";
 
@@ -1775,9 +1774,22 @@ function getDateRange(preset: DatePreset, customFrom?: string, customTo?: string
 }
 
 export default function AnalyticsDashboard() {
+  const { t } = usePanelLang();
   const { restaurants, isSuper, selectedRestaurantId } = useAdminSession();
   const { activePlan } = usePanelSession();
   const hasAdvanced = isSuper || canAccess(activePlan, "stats_advanced");
+
+  const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
+    { key: "resumen", label: t("analytics_tab_summary"), icon: "📊" },
+    { key: "platos", label: t("analytics_tab_dishes"), icon: "🍽️" },
+  ];
+
+  const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
+    { key: "sesiones", label: t("analytics_tab_sessions"), icon: "👁️" },
+    { key: "clientes", label: t("analytics_tab_clients"), icon: "👥" },
+    { key: "busquedas", label: t("analytics_tab_searches"), icon: "🔍" },
+    { key: "garzon", label: t("analytics_tab_waiter"), icon: "🔔" },
+  ];
   const router = useRouter();
   const searchParams = useSearchParams();
   const openUpgrade = () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }));
@@ -1816,12 +1828,12 @@ export default function AnalyticsDashboard() {
     <div style={{ maxWidth: 760 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><BarChart3 size={20} color="var(--adm-text3)" /> Analytics</h1>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Métricas de tu restaurante</p>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><BarChart3 size={20} color="var(--adm-text3)" /> {t("analytics_title")}</h1>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{t("analytics_metrics_subtitle")}</p>
         </div>
         {isSuper && (
           <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-            <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
+            <option value="" style={{ background: "var(--adm-select-bg)" }}>{t("analytics_all_restaurants")}</option>
             {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
           </select>
         )}
@@ -1837,7 +1849,7 @@ export default function AnalyticsDashboard() {
               background: datePreset === p ? "var(--adm-card-border)" : "transparent",
               color: datePreset === p ? "var(--adm-text)" : "var(--adm-text3)",
             }}>
-              {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : p === "semana" ? "Esta semana" : "Este mes"}
+              {p === "hoy" ? t("analytics_today") : p === "ayer" ? t("analytics_yesterday") : p === "semana" ? t("analytics_this_week") : t("analytics_this_month")}
             </button>
           ))}
           <button
@@ -1853,7 +1865,7 @@ export default function AnalyticsDashboard() {
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-            Personalizado
+            {t("analytics_custom")}
           </button>
         </div>
         {datePreset === "custom" && (
@@ -1908,16 +1920,16 @@ export default function AnalyticsDashboard() {
       {!hasAdvanced && (
         <div style={{ marginTop: 32, background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.04))", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 16, padding: "24px 28px", textAlign: "center" }}>
           <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
-            💎 Ve exactamente qué hace cada cliente en tu carta
+            {t("analytics_upgrade_title")}
           </p>
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-            Sesiones en vivo, qué platos miran, cuánto tiempo pasan en cada uno, qué buscan y más
+            {t("analytics_upgrade_desc")}
           </p>
           <button
             onClick={() => openUpgrade()}
             style={{ padding: "10px 24px", background: "#7c3aed", color: "#fff", borderRadius: 999, border: "none", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
           >
-            Pasarme a Premium →
+            {t("analytics_upgrade_cta")}
           </button>
         </div>
       )}

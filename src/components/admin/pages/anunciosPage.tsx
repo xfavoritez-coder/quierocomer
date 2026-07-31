@@ -4,6 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
 import { Check, Megaphone } from "lucide-react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -16,6 +17,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function AnunciosPage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId: rid } = useAdminSession();
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,49 +43,49 @@ export default function AnunciosPage() {
   }, [rid]);
 
   if (loading) return <SkeletonLoading type="form" />;
-  if (!rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
+  if (!rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("ann_select_restaurant")}</p></div>;
 
   return (
     <div style={{ maxWidth: 640 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Megaphone size={20} color="var(--adm-text3)" /> Anuncios</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Megaphone size={20} color="var(--adm-text3)" /> {t("ann_title")}</h1>
           <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0 }}>
-            Publica avisos que aparecen en tu carta: horarios, eventos, links a reservas.
+            {t("ann_desc")}
           </p>
         </div>
         <button onClick={() => setShowCreateForm(!showCreateForm)} style={{ padding: "8px 16px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
-          {showCreateForm ? "Cancelar" : "+ Nuevo anuncio"}
+          {showCreateForm ? t("ann_cancel_new") : t("ann_new")}
         </button>
       </div>
 
       {/* Create form — above existing */}
       {showCreateForm && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>Nuevo anuncio</h3>
+          <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>{t("ann_new_title")}</h3>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Texto del anuncio</label>
-            <input value={annText} onChange={e => setAnnText(e.target.value)} style={inputStyle} placeholder="Ej: Este viernes abrimos hasta las 2 AM" />
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>{t("ann_text_label")}</label>
+            <input value={annText} onChange={e => setAnnText(e.target.value)} style={inputStyle} placeholder={t("ann_text_placeholder")} />
           </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Link (opcional)</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>{t("ann_link_label")}</label>
             <input value={annLink} onChange={e => setAnnLink(e.target.value)} style={inputStyle} placeholder="https://..." />
           </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Días que se muestra <span style={{ textTransform: "none", fontWeight: 400, color: "var(--adm-text3)" }}>(vacío = todos los días)</span></label>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>{t("ann_days_label")} <span style={{ textTransform: "none", fontWeight: 400, color: "var(--adm-text3)" }}>{t("ann_days_hint")}</span></label>
             <div style={{ display: "flex", gap: 6 }}>
-              {["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map((d, i) => (
+              {t("ann_days_short").split(",").map((d, i) => (
                 <button key={i} onClick={() => setAnnDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 36, height: 36, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FB, fontSize: "0.75rem", fontWeight: 600, background: annDays.includes(i) ? GOLD : "var(--adm-input)", color: annDays.includes(i) ? "white" : "var(--adm-text3)", transition: "all 0.15s" }}>{d}</button>
               ))}
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Desde (opcional)</label>
+              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>{t("ann_from_label")}</label>
               <input type="date" value={annStart} onChange={e => setAnnStart(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Hasta (opcional)</label>
+              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>{t("ann_to_label")}</label>
               <input type="date" value={annEnd} onChange={e => setAnnEnd(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
             </div>
           </div>
@@ -101,12 +103,12 @@ export default function AnunciosPage() {
                 setAnnouncements(prev => [...prev, d.announcement]);
                 setAnnText(""); setAnnLink(""); setAnnDays([]); setAnnStart(""); setAnnEnd("");
                 setShowCreateForm(false);
-                toast.success("Anuncio creado");
+                toast.success(t("ann_created"));
               } catch { toast.error("Error"); } finally { setAnnSaving(false); }
             }}
             style={{ width: "100%", padding: 12, background: annText.trim() ? GOLD : "var(--adm-input)", color: annText.trim() ? "white" : "var(--adm-text3)", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 600, cursor: annText.trim() ? "pointer" : "default" }}
           >
-            {annSaving ? "Guardando..." : "Crear anuncio"}
+            {annSaving ? t("ann_creating") : t("ann_create")}
           </button>
         </div>
       )}

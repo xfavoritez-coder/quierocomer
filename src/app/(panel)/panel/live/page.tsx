@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { supabase } from "@/lib/supabase";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -30,6 +31,7 @@ interface LiveData {
 const CLP = (n: number) => "$" + Math.round(n).toLocaleString("es-CL");
 
 export default function LiveDashboard() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId } = useAdminSession();
   const [data, setData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,10 +110,10 @@ export default function LiveDashboard() {
   };
 
   if (!selectedRestaurantId) {
-    return <div style={{ padding: 24, color: "var(--adm-text2)", fontFamily: F }}>Selecciona un local en el sidebar para ver su dashboard en vivo.</div>;
+    return <div style={{ padding: 24, color: "var(--adm-text2)", fontFamily: F }}>{t("live_select_local")}</div>;
   }
 
-  if (loading) return <div style={{ padding: 24, color: "var(--adm-text3)", fontFamily: F }}>Cargando datos en vivo…</div>;
+  if (loading) return <div style={{ padding: 24, color: "var(--adm-text3)", fontFamily: F }}>{t("live_loading")}</div>;
 
   if (error || !data) {
     return (
@@ -131,44 +133,44 @@ export default function LiveDashboard() {
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "var(--adm-accent)", margin: 0 }}>
             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: "#16a34a", marginRight: 8, animation: "livePulse 2s infinite" }} />
-            Venta en vivo
+            {t("live_title")}
           </h1>
           <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-            {lastSyncAt ? `Última sincronización con Toteat: ${minutesAgo(lastSyncAt)}` : "Sincronizando con Toteat..."}
-            <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 10 min</span>
+            {lastSyncAt ? `${t("live_synced")} ${minutesAgo(lastSyncAt)}` : t("live_syncing")}
+            <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>{t("live_auto")}</span>
           </p>
         </div>
       </div>
 
       {noData && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "22px 18px", textAlign: "center", marginBottom: 16 }}>
-          <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Aún no hay ventas hoy</p>
+          <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>{t("live_no_sales")}</p>
           <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
-            Cuando llegue la primera venta vas a verla acá. Recordatorio: la sincronización con Toteat ocurre cada 30 min.
+            {t("live_no_sales_desc")}
           </p>
         </div>
       )}
 
       {/* Big KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }} className="adm-grid-2">
-        <KPI label="Ingresos hoy" value={CLP(data.today.revenue)} delta={data.deltas.revenueVsYesterday} deltaLabel="vs ayer" />
-        <KPI label="Órdenes" value={data.today.orderCount.toString()} delta={data.deltas.ordersVsYesterday} deltaLabel="vs ayer" />
-        <KPI label="Productos vendidos" value={data.today.unitsSold.toString()} />
+        <KPI label={t("live_revenue")} value={CLP(data.today.revenue)} delta={data.deltas.revenueVsYesterday} deltaLabel={t("live_yesterday").toLowerCase()} />
+        <KPI label={t("live_orders")} value={data.today.orderCount.toString()} delta={data.deltas.ordersVsYesterday} deltaLabel={t("live_yesterday").toLowerCase()} />
+        <KPI label={t("live_products_sold")} value={data.today.unitsSold.toString()} />
       </div>
 
       {/* Comparison strip */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
-        <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>Comparativa misma hora</p>
+        <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>{t("live_comparison")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <CompareRow label="Ayer" value={CLP(data.yesterday.revenue)} sub={`${data.yesterday.orderCount} órdenes`} delta={data.deltas.revenueVsYesterday} />
-          <CompareRow label="Hace 7 días" value={CLP(data.lastWeek.revenue)} sub={`${data.lastWeek.orderCount} órdenes`} delta={data.deltas.revenueVsLastWeek} />
+          <CompareRow label={t("live_yesterday")} value={CLP(data.yesterday.revenue)} sub={`${data.yesterday.orderCount} ${t("live_orders_label")}`} delta={data.deltas.revenueVsYesterday} />
+          <CompareRow label={t("live_last_week")} value={CLP(data.lastWeek.revenue)} sub={`${data.lastWeek.orderCount} ${t("live_orders_label")}`} delta={data.deltas.revenueVsLastWeek} />
         </div>
       </div>
 
       {/* Hourly bar chart */}
       {data.today.unitsSold > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
-          <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: 0.5 }}>Ventas por hora</p>
+          <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: 0.5 }}>{t("live_by_hour")}</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 100 }}>
             {data.byHour.filter((h) => h.units > 0 || (h.hour >= 11 && h.hour <= 23)).map((h) => (
               <div key={h.hour} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
@@ -184,9 +186,9 @@ export default function LiveDashboard() {
       {/* Top now + Top today */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="adm-grid-2">
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>🔥 Últimos 60 min</p>
+          <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>{t("live_last_hour")}</p>
           {data.topNow.length === 0 ? (
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin movimiento en la última hora.</p>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>{t("live_no_movement")}</p>
           ) : (
             data.topNow.map((p, i) => (
               <div key={p.toteatProductId} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < data.topNow.length - 1 ? "1px dashed var(--adm-card-border)" : "none", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>
@@ -197,9 +199,9 @@ export default function LiveDashboard() {
           )}
         </div>
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>Top del día</p>
+          <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>{t("live_top_today")}</p>
           {data.topToday.length === 0 ? (
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas hoy todavía.</p>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>{t("live_no_sales_today")}</p>
           ) : (
             data.topToday.map((p, i) => (
               <div key={p.toteatProductId} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < data.topToday.length - 1 ? "1px dashed var(--adm-card-border)" : "none", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -34,6 +35,7 @@ function formatHour(h: number): string {
 }
 
 export default function AnalyticsGarzonPage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId, isSuper, loading: sessionLoading } = useAdminSession();
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,13 +64,13 @@ export default function AnalyticsGarzonPage() {
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: 0 }}>Analytics Garzón</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Llamados, tiempos de respuesta y mesas más activas</p>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: 0 }}>{t("garzon_title")}</h1>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{t("garzon_subtitle")}</p>
         </div>
         {isSuper && (
           <div style={{ display: "flex", gap: 4, background: "var(--adm-hover)", borderRadius: 8, padding: 3 }}>
-            <button onClick={() => setView("all")} style={{ padding: "6px 12px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", background: view === "all" ? "white" : "transparent", color: view === "all" ? GOLD : "var(--adm-text3)", boxShadow: view === "all" ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>Todos</button>
-            <button onClick={() => setView("own")} style={{ padding: "6px 12px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", background: view === "own" ? "white" : "transparent", color: view === "own" ? GOLD : "var(--adm-text3)", boxShadow: view === "own" ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>Local</button>
+            <button onClick={() => setView("all")} style={{ padding: "6px 12px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", background: view === "all" ? "white" : "transparent", color: view === "all" ? GOLD : "var(--adm-text3)", boxShadow: view === "all" ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>{t("garzon_all")}</button>
+            <button onClick={() => setView("own")} style={{ padding: "6px 12px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", background: view === "own" ? "white" : "transparent", color: view === "own" ? GOLD : "var(--adm-text3)", boxShadow: view === "own" ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>{t("garzon_local")}</button>
           </div>
         )}
       </div>
@@ -76,10 +78,10 @@ export default function AnalyticsGarzonPage() {
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 20 }} className="adm-grid-2">
         {[
-          { label: "Hoy", value: data.today, color: GOLD },
-          { label: "Semana", value: data.week, color: "var(--adm-text)" },
-          { label: "% Atendidos", value: `${data.answeredPct}%`, color: data.answeredPct >= 80 ? "#16a34a" : data.answeredPct >= 50 ? GOLD : "#ef4444" },
-          { label: "Tiempo resp.", value: formatTime(data.avgResponseSec), color: data.avgResponseSec <= 120 ? "#16a34a" : GOLD },
+          { label: t("garzon_today"), value: data.today, color: GOLD },
+          { label: t("garzon_week"), value: data.week, color: "var(--adm-text)" },
+          { label: t("garzon_attended_pct"), value: `${data.answeredPct}%`, color: data.answeredPct >= 80 ? "#16a34a" : data.answeredPct >= 50 ? GOLD : "#ef4444" },
+          { label: t("garzon_response_time"), value: formatTime(data.avgResponseSec), color: data.avgResponseSec <= 120 ? "#16a34a" : GOLD },
         ].map((card, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 14px", boxShadow: "var(--adm-card-shadow, none)" }}>
             <p style={{ fontFamily: F, fontSize: "1.5rem", color: card.color, margin: "0 0 2px", fontWeight: 700 }}>{card.value}</p>
@@ -90,7 +92,7 @@ export default function AnalyticsGarzonPage() {
 
       {/* Bar chart - calls per day */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Llamados por día</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("garzon_calls_by_day")}</h3>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 100 }}>
           {days.map(([date, count]) => {
             const dayName = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][new Date(date + "T12:00:00").getDay()];
@@ -108,19 +110,19 @@ export default function AnalyticsGarzonPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }} className="adm-grid-2">
         {/* Top mesas */}
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Mesas más activas</h3>
+          <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("garzon_active_tables")}</h3>
           {data.topMesas.length > 0 ? data.topMesas.map((m, i) => (
             <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < data.topMesas.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
               <span style={{ fontFamily: F, fontSize: "0.75rem", color: GOLD, fontWeight: 700, width: 20 }}>{i + 1}</span>
               <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{m.name}</span>
               <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{m.count}x</span>
             </div>
-          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin datos esta semana</p>}
+          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("garzon_no_data")}</p>}
         </div>
 
         {/* Peak hours */}
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Horas punta</h3>
+          <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("garzon_peak_hours")}</h3>
           {data.peakHours.length > 0 ? data.peakHours.map((h, i) => (
             <div key={h.hour} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < data.peakHours.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
               <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 600 }}>{formatHour(h.hour)}</span>
@@ -129,19 +131,19 @@ export default function AnalyticsGarzonPage() {
               </div>
               <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{h.count}</span>
             </div>
-          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin datos esta semana</p>}
+          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("garzon_no_data")}</p>}
         </div>
       </div>
 
       {/* Per restaurant (superadmin) */}
       {isSuper && view === "all" && data.perRestaurant.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20, boxShadow: "var(--adm-card-shadow, none)" }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Por local</h3>
+          <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("garzon_by_local")}</h3>
           {data.perRestaurant.map(r => (
             <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
               <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, flex: 1 }}>{r.name}</span>
-              <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>{r.todayCalls} hoy</span>
-              <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>{r.weekCalls} sem</span>
+              <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>{r.todayCalls} {t("garzon_today_col")}</span>
+              <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>{r.weekCalls} {t("garzon_week_col")}</span>
               <span style={{ fontFamily: F, fontSize: "0.75rem", color: r.answeredPct >= 80 ? "#16a34a" : r.answeredPct >= 50 ? GOLD : "#ef4444", fontWeight: 600 }}>{r.answeredPct}%</span>
             </div>
           ))}
@@ -150,7 +152,7 @@ export default function AnalyticsGarzonPage() {
 
       {/* Recent calls */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Últimos llamados</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("garzon_recent_calls")}</h3>
         {data.recent.length > 0 ? data.recent.map(c => {
           const time = new Date(c.calledAt);
           const hhmm = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
@@ -158,17 +160,17 @@ export default function AnalyticsGarzonPage() {
           return (
             <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.answeredAt ? "#16a34a" : "#ef4444", flexShrink: 0 }} />
-              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{c.tableName || "Sin mesa"}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{c.tableName || t("garzon_no_table")}</span>
               {isSuper && view === "all" && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{c.restaurantName}</span>}
               <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{dateStr} {hhmm}</span>
               {c.responseTime !== null ? (
                 <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#16a34a", fontWeight: 600 }}>{formatTime(c.responseTime)}</span>
               ) : (
-                <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444" }}>Sin atender</span>
+                <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444" }}>{t("garzon_not_attended")}</span>
               )}
             </div>
           );
-        }) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin llamados recientes</p>}
+        }) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("garzon_no_recent")}</p>}
       </div>
     </div>
   );

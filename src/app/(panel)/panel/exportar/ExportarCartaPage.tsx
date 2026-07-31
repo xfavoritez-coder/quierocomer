@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import ExportarCarta from "@/components/exportar/ExportarCarta";
+import { usePanelLang } from "@/lib/i18n/panel";
 
 interface Restaurant {
   id: string;
@@ -48,6 +49,7 @@ interface CategoryTranslation {
 const F = "var(--font-display)";
 
 export default function ExportarCartaPage() {
+  const { t } = usePanelLang();
   const { selectedRestaurantId, setSelectedRestaurant, loading: sessionLoading } = useAdminSession();
   const searchParams = useSearchParams();
   const ridFromUrl = searchParams.get("rid");
@@ -91,7 +93,7 @@ export default function ExportarCartaPage() {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
         <p style={{ color: "var(--adm-text2)", fontFamily: F }}>
-          No se pudo cargar la carta. Intenta de nuevo.
+          {t("export_load_error")}
         </p>
       </div>
     );

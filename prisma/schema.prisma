@@ -202,6 +202,7 @@ model RestaurantOwner {
   status             OwnerStatus        @default(ACTIVE)
   mustChangePassword Boolean            @default(false)
   whatsapp           String?
+  seenFeatures       String[]           @default([])
   restaurants        Restaurant[]
   uploadedTickets    RestaurantTicket[]
 
@@ -216,6 +217,7 @@ model TeamMember {
   role               TeamRole         @default(VIEWER)
   status             TeamMemberStatus @default(PENDING)
   weeklyEmailEnabled Boolean          @default(true)
+  seenFeatures       String[]         @default([])
   passwordHash       String?
   inviteToken        String?          @unique
   inviteExpiresAt    DateTime?

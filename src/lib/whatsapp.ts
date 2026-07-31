@@ -10,7 +10,7 @@ const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+56962183197";
 // Template SID for "carta_lista_v2" (approved by Meta)
 const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 
-// Template SID for billing expiry — day plan expires (approved by Meta)
+// Template SID for billing expiry — day plan expires (aprobado por Meta)
 // Variables: {{1}} = owner first name, {{2}} = restaurant name, {{3}} = renewal URL
 // Template body:
 //   Hola {{1}} 👋
@@ -21,7 +21,7 @@ const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 //   {{3}}
 //
 //   — Equipo QuieroComer
-export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "HX43db1bcacc9506f6f37f09258e549d27"; // billing_expiry_today_v2 — pendiente aprobación Meta
+export const BILLING_EXPIRY_TODAY_WA_TEMPLATE = "HX43db1bcacc9506f6f37f09258e549d27"; // billing_expiry_today_v2 — aprobado
 
 interface SendWhatsAppOptions {
   to: string; // E.164 format: +56912345678
