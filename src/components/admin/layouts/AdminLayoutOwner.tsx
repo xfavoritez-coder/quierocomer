@@ -188,7 +188,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
   const RestLogo = ({ size = 36 }: { size?: number }) => (
     activeRest?.logoUrl
-      ? <img src={activeRest.logoUrl} alt="" style={{ width: size, height: size, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+      ? <img src={activeRest.logoUrl} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
       : <div style={{ width: size, height: size, borderRadius: 8, background: "#1a5f3f", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: size * 0.39, fontWeight: 700, fontFamily: F, flexShrink: 0 }}>{restInitials}</div>
   );
 
