@@ -5,7 +5,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, ExternalLink, Cake, Users, ShoppingCart } from "lucide-react";
+import { Eye, QrCode, Bell, ExternalLink, Copy, Cake, Users, ShoppingCart } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import { TrialBanner } from "./layout";
 import { usePanelLang } from "@/lib/i18n/panel";
@@ -309,19 +309,29 @@ export default function PanelDashboard() {
         );
       })()}
 
-      {/* ═══ Quick actions ═══ */}
-      <div className="quick-actions-grid" style={{ display: "grid", gridTemplateColumns: showOrdering ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 16 }}>
-        <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 18, padding: "14px 12px", display: "flex", alignItems: "center", gap: 10, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
-          <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}><ExternalLink size={16} color={GOLD} /></div>
-          <div style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Ver página<br /><span style={{ fontWeight: 500, opacity: 0.7 }}>del local</span></div>
-        </a>
-        {showOrdering && (
-          <a href={rest ? `/pedir/${rest.slug}` : "#"} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 18, padding: "14px 12px", display: "flex", alignItems: "center", gap: 10, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
-            <div style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}><ShoppingCart size={16} color={GOLD} /></div>
-            <div style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>{t("home_order_menu").split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</div>
-          </a>
-        )}
-      </div>
+      {/* ═══ Página del local ═══ */}
+      {rest?.slug && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "14px 16px", marginBottom: 16, boxShadow: "var(--adm-card-shadow)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página de mi local</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
+              {landingUrl}
+            </a>
+            <button
+              onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }}
+              title="Copiar link"
+              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+            >
+              <Copy size={15} color="var(--adm-text3)" />
+            </button>
+            <a href={landingUrl} target="_blank" rel="noopener noreferrer"
+              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "grid", placeItems: "center", flexShrink: 0 }}
+            >
+              <ExternalLink size={15} color="var(--adm-text3)" />
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ═══ HERO — En vivo ═══ */}
       <div style={{

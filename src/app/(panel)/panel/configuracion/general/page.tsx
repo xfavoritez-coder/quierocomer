@@ -133,9 +133,9 @@ export default function ConfiguracionGeneralPage() {
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página del local</p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <code style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
               {landingUrl}
-            </code>
+            </a>
             <button
               onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }}
               title="Copiar link"
