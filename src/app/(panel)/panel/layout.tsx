@@ -547,7 +547,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)", position: "relative", overflow: "hidden" }}>
         {/* Header modal */}
         <div style={{ padding: "20px 24px 0", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)" }}>
-          <p style={{ margin: "0 0 14px", fontFamily: FD, fontSize: "0.72rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "#7c3aed" }}>⚡ Plan Pro</p>
+          <p style={{ margin: "0 0 14px", fontFamily: FD, fontSize: "0.72rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "#7c3aed", textAlign: "center" }}>⚡ Plan Pro</p>
         </div>
 
         <div style={{ padding: "20px 24px 24px" }}>
@@ -589,11 +589,6 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                   <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{net === 0 ? "$0" : fmt(net)}</span>
                   <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>{net === 0 ? "para siempre" : "+ IVA /mes"}</span>
                   {net > 0 && <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>}
-                  {tab === "PREMIUM" && !inTrial && plan !== "PREMIUM" && (
-                    <div style={{ marginTop: 10, padding: "8px 14px", background: "#7c3aed", borderRadius: 8 }}>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff" }}>7 días gratis para probar</span>
-                    </div>
-                  )}
                 </>
               );
             })()}
