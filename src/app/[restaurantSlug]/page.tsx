@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
@@ -9,6 +9,117 @@ const BASE = 'https://quierocomer.com'
 export const revalidate = 3600
 
 type Props = { params: Promise<{ restaurantSlug: string }> }
+
+// ---------------------------------------------------------------------------
+// Restaurant landing data
+// ---------------------------------------------------------------------------
+
+async function getRestaurantLanding(slug: string) {
+  return prisma.restaurant.findFirst({
+    where: { slug, isActive: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      logoUrl: true,
+      orderingEnabled: true,
+      primaryCategory: true,
+      address: true,
+      commune: true,
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Restaurant landing page component
+// ---------------------------------------------------------------------------
+
+function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof getRestaurantLanding>>> }) {
+  const initials = r.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+  const subtitle = [r.primaryCategory, r.commune || r.address].filter(Boolean).join(' · ')
+
+  return (
+    <main style={{
+      minHeight: '100svh',
+      background: 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '48px 20px 60px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+    }}>
+
+      {/* Logo */}
+      <div style={{ marginBottom: 20 }}>
+        {r.logoUrl ? (
+          <img
+            src={r.logoUrl}
+            alt={r.name}
+            style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.12)', display: 'block' }}
+          />
+        ) : (
+          <div style={{
+            width: 88, height: 88, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #F4A623, #e8920f)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 30, fontWeight: 700, color: '#0a0a0a',
+          }}>{initials}</div>
+        )}
+      </div>
+
+      {/* Name + category */}
+      <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: '#fff', textAlign: 'center', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+        {r.name}
+      </h1>
+      {subtitle && (
+        <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: '0.03em' }}>
+          {subtitle}
+        </p>
+      )}
+
+      {/* Action buttons */}
+      <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320 }}>
+        <a
+          href={`/qr/${r.slug}?carta=1`}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 18, padding: '18px 22px', textDecoration: 'none',
+            color: '#fff', transition: 'background 0.15s',
+          }}
+        >
+          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>📖</span>
+          <span>
+            <span style={{ display: 'block', fontSize: '0.98rem', fontWeight: 700, lineHeight: 1.2 }}>Ver la carta</span>
+            <span style={{ display: 'block', fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Menú completo con fotos y precios</span>
+          </span>
+        </a>
+
+        <a
+          href={`/pedir/${r.slug}`}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            background: 'linear-gradient(135deg, #ffc44f, #F4A623)',
+            borderRadius: 18, padding: '18px 22px', textDecoration: 'none',
+            color: '#0a0a0a', transition: 'opacity 0.15s',
+          }}
+        >
+          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🛍️</span>
+          <span>
+            <span style={{ display: 'block', fontSize: '0.98rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer un pedido</span>
+            <span style={{ display: 'block', fontSize: '0.76rem', color: 'rgba(0,0,0,0.5)', marginTop: 2 }}>Elige y envía por WhatsApp</span>
+          </span>
+        </a>
+      </div>
+
+      {/* Footer */}
+      <p style={{ marginTop: 48, fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
+        Powered by QuieroComer
+      </p>
+    </main>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Category slug map
@@ -138,6 +249,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
+  // Check if slug is a restaurant
+  const rest = await getRestaurantLanding(restaurantSlug)
+  if (rest) {
+    const title = `${rest.name} · QuieroComer`
+    const description = rest.orderingEnabled
+      ? `Ver la carta y hacer pedidos en ${rest.name} · Rápido, sin apps.`
+      : `Ver la carta digital de ${rest.name} con fotos, precios y recomendaciones.`
+    return {
+      title,
+      description,
+      alternates: { canonical: `${BASE}/${restaurantSlug}` },
+      openGraph: {
+        title,
+        description,
+        url: `${BASE}/${restaurantSlug}`,
+        type: 'website',
+        images: rest.logoUrl ? [{ url: rest.logoUrl }] : [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
+      },
+      twitter: { card: 'summary', title, description, images: rest.logoUrl ? [rest.logoUrl] : [] },
+    }
+  }
+
   const match = await getCommuneBySlug(restaurantSlug)
   if (!match) return { title: 'QuieroComer' }
 
@@ -263,6 +396,16 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
   // Check if slug is a global category
   if (CATEGORY_SLUGS[restaurantSlug]) {
     return <GlobalCategoryPage categorySlug={restaurantSlug} />
+  }
+
+  // Check if slug is a restaurant
+  const rest = await getRestaurantLanding(restaurantSlug)
+  if (rest) {
+    if (!rest.orderingEnabled) {
+      // No ordering → send directly to carta
+      redirect(`/qr/${restaurantSlug}`)
+    }
+    return <RestaurantLanding r={rest} />
   }
 
   const match = await getCommuneBySlug(restaurantSlug)

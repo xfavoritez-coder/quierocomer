@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { headers } from "next/headers";
@@ -69,10 +69,10 @@ export default async function CartaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string; menu?: string }>;
+  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string; menu?: string; carta?: string }>;
 }) {
   const { slug } = await params;
-  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed, menu: menuSlug } = await searchParams;
+  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed, menu: menuSlug, carta: cartaParam } = await searchParams;
   const isShowcase = showcase === "1";
   const isEmbed = embed === "mobile";
   const isQrScan = !!tableId;
@@ -92,6 +92,11 @@ export default async function CartaPage({
     getWeatherCondition(),
   ]);
   if (!restaurant) return notFound();
+
+  // Si el local tiene pedidos online activos y no viene del landing (carta=1), redirigir al landing
+  if ((restaurant as any).orderingEnabled && !cartaParam && !tableId && !isEmbed && !isShowcase) {
+    redirect(`/${slug}`);
+  }
 
   // Verificar si el menú está activo (plan vigente)
   const _r = restaurant as any;

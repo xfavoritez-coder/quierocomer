@@ -38,7 +38,7 @@ const CONTROL_HIDDEN = ["horusvegan"];
 const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
-type NavSection = { key: string; label: string; items: NavItem[] };
+type NavSection = { key: string; label: string; icon: any; items: NavItem[] };
 
 function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string; hasLoyalty?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
@@ -47,6 +47,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     {
       key: "carta",
       label: "Carta QR",
+      icon: UtensilsCrossed,
       items: [
         { icon: Home, labelKey: "nav_home", href: base },
         { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
@@ -63,6 +64,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     {
       key: "loyalty",
       label: "Loyalty",
+      icon: Gift,
       items: [
         { icon: HelpCircle, labelKey: "nav_loyalty_how", href: `${base}/loyalty` },
         { icon: CreditCard, labelKey: "nav_loyalty_card", href: `${base}/loyalty/tarjeta` },
@@ -74,6 +76,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     {
       key: "ordering",
       label: "Pedidos Online",
+      icon: ShoppingCart,
       items: [
         { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
@@ -82,6 +85,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     {
       key: "config",
       label: "Configuración",
+      icon: Settings,
       items: [
         { icon: Settings, labelKey: "nav_config_general", href: `${base}/configuracion/general` },
         { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
@@ -90,6 +94,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     {
       key: "subscription",
       label: "Mi Suscripción",
+      icon: Store,
       items: [
         { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
       ],
@@ -97,6 +102,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     {
       key: "support",
       label: "Soporte",
+      icon: HelpCircle,
       items: [
         { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
       ],
@@ -214,6 +220,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         const singleHref = isSingle ? section.items[0].href : "";
         const singleActive = isSingle && isActive(singleHref);
 
+        const SectionIcon = section.icon;
         return (
           <div key={section.key}>
             {/* Section header */}
@@ -226,13 +233,14 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                   onNavClick?.();
                 }}
                 style={{
-                  display: "flex", alignItems: "center", gap: 8,
+                  display: "flex", alignItems: "center", gap: 7,
                   padding: "0 16px", height: 44, textDecoration: "none",
                   borderTop: si === 0 ? "none" : "1px solid var(--adm-card-border)",
                   background: singleActive ? "var(--adm-hover)" : "none",
                   borderLeft: singleActive ? `3px solid ${GOLD}` : "3px solid transparent",
                 }}
               >
+                <SectionIcon size={13} color={singleActive ? GOLD : "var(--adm-text3)"} strokeWidth={2.2} style={{ flexShrink: 0 }} />
                 <span style={{
                   fontFamily: FB, fontSize: "0.72rem", fontWeight: 800, flex: 1,
                   color: singleActive ? GOLD : "var(--adm-text2)",
@@ -250,12 +258,13 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <button
                 onClick={() => toggleSection(section.key)}
                 style={{
-                  width: "100%", display: "flex", alignItems: "center", gap: 8,
+                  width: "100%", display: "flex", alignItems: "center", gap: 7,
                   padding: "0 16px", height: 44, background: "none", border: "none", cursor: "pointer",
                   borderTop: si === 0 ? "none" : "1px solid var(--adm-card-border)",
                   borderLeft: "3px solid transparent",
                 }}
               >
+                <SectionIcon size={13} color={sectionActive ? GOLD : "var(--adm-text3)"} strokeWidth={2.2} style={{ flexShrink: 0 }} />
                 <span style={{
                   fontFamily: FB, fontSize: "0.72rem", fontWeight: 800, flex: 1, textAlign: "left",
                   color: sectionActive ? GOLD : "var(--adm-text2)",
