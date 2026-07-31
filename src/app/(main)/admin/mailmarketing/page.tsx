@@ -14,6 +14,14 @@ interface Campaign {
   sentAt: string | null;
 }
 
+interface Recipient {
+  id: string;
+  to: string;
+  openedAt: string | null;
+  clickedAt: string | null;
+  createdAt: string;
+}
+
 function pct(num: number, total: number) {
   if (!total) return "—";
   return `${Math.round((num / total) * 100)}%`;
@@ -24,7 +32,11 @@ function formatDate(iso: string | null) {
   return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso));
 }
 
-// Human-readable campaign name from purpose key
+function formatDateTime(iso: string | null) {
+  if (!iso) return null;
+  return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+}
+
 function campaignLabel(purpose: string) {
   const map: Record<string, string> = {
     new_features_loyalty_valoraciones_jul2026: "Novedades: Loyalty + Valoraciones + Página local",
@@ -32,9 +44,94 @@ function campaignLabel(purpose: string) {
   return map[purpose] ?? purpose.replace(/_/g, " ");
 }
 
+function RecipientsPanel({ purpose }: { purpose: string }) {
+  const [data, setData] = useState<Recipient[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "opened" | "clicked" | "unopened">("all");
+
+  useEffect(() => {
+    fetch(`/api/admin/mailmarketing/recipients?purpose=${encodeURIComponent(purpose)}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.recipients)) setData(d.recipients); })
+      .finally(() => setLoading(false));
+  }, [purpose]);
+
+  if (loading) return (
+    <div style={{ padding: "16px 0", fontFamily: FB, fontSize: "0.8rem", color: "#555" }}>Cargando destinatarios…</div>
+  );
+  if (!data) return null;
+
+  const filtered = data.filter(r => {
+    if (filter === "opened") return !!r.openedAt;
+    if (filter === "clicked") return !!r.clickedAt;
+    if (filter === "unopened") return !r.openedAt;
+    return true;
+  });
+
+  const tabs: { key: typeof filter; label: string; count: number }[] = [
+    { key: "all",      label: "Todos",        count: data.length },
+    { key: "opened",   label: "Abrieron",     count: data.filter(r => r.openedAt).length },
+    { key: "clicked",  label: "Hicieron click", count: data.filter(r => r.clickedAt).length },
+    { key: "unopened", label: "No abrieron",  count: data.filter(r => !r.openedAt).length },
+  ];
+
+  return (
+    <div style={{ marginTop: 20, borderTop: "1px solid #222", paddingTop: 16 }}>
+      {/* Filter tabs */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+        {tabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            style={{
+              padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+              fontFamily: FB, fontSize: "0.75rem", fontWeight: 600,
+              background: filter === tab.key ? "#2a2a2a" : "transparent",
+              color: filter === tab.key ? "#fff" : "#555",
+              outline: filter === tab.key ? "1px solid #444" : "none",
+            }}
+          >
+            {tab.label} <span style={{ opacity: 0.6 }}>({tab.count})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Recipients list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 360, overflowY: "auto" }}>
+        {filtered.length === 0 ? (
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#555", margin: 0 }}>Sin resultados para este filtro.</p>
+        ) : filtered.map(r => (
+          <div key={r.id} style={{
+            display: "flex", alignItems: "center", gap: 12, padding: "8px 12px",
+            borderRadius: 8, background: "#141414",
+          }}>
+            {/* Email */}
+            <span style={{ fontFamily: "monospace", fontSize: "0.78rem", color: "#bbb", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {r.to}
+            </span>
+            {/* Opened */}
+            <span style={{ fontFamily: FB, fontSize: "0.7rem", flexShrink: 0, minWidth: 100, textAlign: "right" }}>
+              {r.openedAt
+                ? <span style={{ color: "#4ade80" }}>✓ {formatDateTime(r.openedAt)}</span>
+                : <span style={{ color: "#444" }}>No abrió</span>}
+            </span>
+            {/* Clicked */}
+            <span style={{ fontFamily: FB, fontSize: "0.7rem", flexShrink: 0, minWidth: 80, textAlign: "right" }}>
+              {r.clickedAt
+                ? <span style={{ color: GOLD }}>⚡ click</span>
+                : <span style={{ color: "#333" }}>—</span>}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function MailMarketingPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/mailmarketing")
@@ -67,7 +164,7 @@ export default function MailMarketingPage() {
         </p>
       </div>
 
-      {/* Table */}
+      {/* Campaigns */}
       {loading ? (
         <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#555" }}>Cargando...</p>
       ) : campaigns.length === 0 ? (
@@ -79,6 +176,7 @@ export default function MailMarketingPage() {
             const clickRate = c.sent > 0 ? Math.round((c.clicked / c.sent) * 100) : 0;
             const openColor  = openRate  >= 30 ? "#4ade80" : openRate  >= 15 ? GOLD : "#ef4444";
             const clickColor = clickRate >= 5  ? "#4ade80" : clickRate >= 2  ? GOLD : "#888";
+            const isExpanded = expanded === c.purpose;
 
             return (
               <div key={c.purpose} style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: "20px 24px" }}>
@@ -142,10 +240,25 @@ export default function MailMarketingPage() {
                   </div>
                 </div>
 
-                {/* Purpose key */}
-                <p style={{ fontFamily: "monospace", fontSize: "0.65rem", color: "#333", margin: "12px 0 0" }}>
-                  purpose: {c.purpose}
-                </p>
+                {/* Toggle destinatarios */}
+                <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <p style={{ fontFamily: "monospace", fontSize: "0.65rem", color: "#333", margin: 0 }}>
+                    purpose: {c.purpose}
+                  </p>
+                  <button
+                    onClick={() => setExpanded(isExpanded ? null : c.purpose)}
+                    style={{
+                      padding: "5px 14px", borderRadius: 999, border: "1px solid #333",
+                      background: "transparent", color: isExpanded ? "#aaa" : "#666",
+                      fontFamily: FB, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
+                    }}
+                  >
+                    {isExpanded ? "▲ Ocultar" : "▼ Ver destinatarios"}
+                  </button>
+                </div>
+
+                {/* Lazy-loaded recipients panel */}
+                {isExpanded && <RecipientsPanel purpose={c.purpose} />}
               </div>
             );
           })}
