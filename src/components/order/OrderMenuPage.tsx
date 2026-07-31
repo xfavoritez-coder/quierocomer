@@ -602,7 +602,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         </div>
 
         {/* Filter bar */}
-        <div style={{ position: "relative", zIndex: 1, padding: "0 14px 10px", overflowX: "auto", scrollbarWidth: "none" }}>
+        {(restaurant as any).filterBarEnabled !== false && <div style={{ position: "relative", zIndex: 1, padding: "0 14px 10px", overflowX: "auto", scrollbarWidth: "none" }}>
           <div style={{ display: "flex", gap: 8 }}>
             {FILTER_OPTS.map(f => {
               const isActive = activeFilters.includes(f.key);
@@ -619,7 +619,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
               );
             })}
           </div>
-        </div>
+        </div>}
 
         {/* Category chips */}
         <div ref={menuAnchorRef} style={{ position: "relative", zIndex: 1, padding: "0 14px 6px" }}>
@@ -715,7 +715,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       </div>
 
       {/* Filter bar */}
-      <div style={{ padding: "10px 12px 4px", overflowX: "auto", scrollbarWidth: "none", display: "flex", gap: 7, borderBottom: "1px solid var(--carta-border)" }}>
+      {(restaurant as any).filterBarEnabled !== false && <div style={{ padding: "10px 12px 4px", overflowX: "auto", scrollbarWidth: "none", display: "flex", gap: 7, borderBottom: "1px solid var(--carta-border)" }}>
         {FILTER_OPTS.map(f => {
           const isActive = activeFilters.includes(f.key);
           const activeColor = f.key === "popular" ? "#ef4444" : f.key === "veggie" ? "#16a34a" : f.key === "gluten-free" ? "#ca8a04" : accent;
@@ -730,7 +730,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
             </button>
           );
         })}
-      </div>
+      </div>}
 
       {/* Categories */}
       {grouped.length === 0 ? (
