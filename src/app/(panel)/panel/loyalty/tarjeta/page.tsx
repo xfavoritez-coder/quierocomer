@@ -162,7 +162,7 @@ export default function LoyaltyCardPage() {
       const res = await fetch("/api/loyalty/program", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, rewards: cleanRewards }),
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, rewards: cleanRewards, showGiftBadge: true }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -363,24 +363,6 @@ export default function LoyaltyCardPage() {
               </div>
             </div>
 
-            {/* Mostrar 🎁 en las casillas de recompensa */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
-              <div>
-                <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Mostrar 🎁 en las casillas con recompensa</p>
-                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                  Marca con un regalito los sellos que dan premio.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => update({ showGiftBadge: !form.showGiftBadge })}
-                aria-pressed={form.showGiftBadge}
-                style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: form.showGiftBadge ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
-              >
-                <span style={{ position: "absolute", top: 3, left: form.showGiftBadge ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
-              </button>
-            </div>
-
             {/* Condiciones (pie de tarjeta) */}
             <div>
               <label style={labelStyle}>Condiciones <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(se muestran al pie de la tarjeta)</span></label>
@@ -486,7 +468,7 @@ export default function LoyaltyCardPage() {
               stampIcon={form.stampIcon}
               rewards={form.rewards}
               description={form.description}
-              showGiftBadge={form.showGiftBadge}
+              showGiftBadge={true}
             />
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.5 }}>
               Así se verá aproximadamente en el teléfono del cliente. Ejemplo con algunos sellos.
