@@ -253,31 +253,47 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
       detail: { initialTab: "PREMIUM", source: "expiry_banner_trial" },
     }));
     return (
-      <div className="qc-expiry-sticky">
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          padding: "10px 16px",
-          background: "linear-gradient(90deg, #6d28d9, #7c3aed)",
-          fontFamily: "var(--font-body)",
-        }}>
-          <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>Prueba Premium 7 días gratis</p>
-            <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.8)" }}>Pedidos online, estadísticas avanzadas y más. Sin tarjeta.</p>
+      <>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .qc-expiry-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            margin: -24px -32px 24px;
+          }
+          @media (max-width: 767px) {
+            .qc-expiry-sticky {
+              top: 58px;
+              margin: -20px -16px 20px;
+            }
+          }
+        `}} />
+        <div className="qc-expiry-sticky">
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "10px 16px",
+            background: "linear-gradient(90deg, #6d28d9, #7c3aed)",
+            fontFamily: "var(--font-body)",
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>Prueba todo 7 días gratis</p>
+              <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.8)" }}>Pedidos online, carta QR, tarjeta fidelización y más. Sin tarjeta.</p>
+            </div>
+            <button
+              onClick={handleTrial}
+              style={{
+                padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
+                background: "transparent", color: "#fff",
+                fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
+                cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              Activar gratis
+            </button>
           </div>
-          <button
-            onClick={handleTrial}
-            style={{
-              padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
-              background: "transparent", color: "#fff",
-              fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
-              cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-            }}
-          >
-            Empezar gratis
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -385,17 +401,17 @@ function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-      background: "linear-gradient(90deg, #FFF8E7 0%, #FFFCF5 100%)",
-      border: "1px solid #fde68a", borderRadius: 10, margin: "12px 16px 0",
-      fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#92400e",
+      background: "linear-gradient(90deg, #f3e8ff 0%, #faf5ff 100%)",
+      border: "1px solid #c4b5fd", borderRadius: 10, margin: "12px 16px 0",
+      fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#6d28d9",
     }}>
-      <span style={{ fontSize: 18 }}>🎁</span>
+      <span style={{ fontSize: 18 }}>⚡</span>
       <span style={{ flex: 1 }}>
-        {t("upgrade_mejora")} <strong>Gold desde $29.900/mes</strong> {t("upgrade_banner").replace("Gold desde $29.900/mes y ", "")}
+        <strong>Prueba Pro 7 días gratis</strong> — pedidos online, valoraciones, multilenguaje y más. Sin tarjeta.
       </span>
       <button onClick={handleClick} style={{
         padding: "6px 14px", border: "none", borderRadius: 999,
-        background: "#F4A623", color: "#fff", fontFamily: "var(--font-display)",
+        background: "#7c3aed", color: "#fff", fontFamily: "var(--font-display)",
         fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
       }}>{t("try_now")}</button>
       <button onClick={handleDismiss} aria-label={t("close")} style={{
@@ -413,14 +429,10 @@ function formatDateCL(d: string | null) {
 
 function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose }: { plan: string; restaurantId: string | null; initialTab?: "FREE" | "GOLD" | "PREMIUM"; renewMode?: boolean; context?: string; onClose: () => void }) {
   const { t } = usePanelLang();
-  const ALL_TABS = ["GOLD", "PREMIUM"] as const;
+  const ALL_TABS = ["PREMIUM"] as const;
   type TabKey = typeof ALL_TABS[number];
   // renewMode: abrir directo en el plan actual (sin swap a otro plan)
-  const defaultTab: TabKey = renewMode && initialTab && initialTab !== "FREE"
-    ? initialTab as TabKey
-    : initialTab && initialTab !== "FREE"
-    ? (initialTab === plan ? "PREMIUM" : initialTab) as TabKey
-    : "GOLD";
+  const defaultTab: TabKey = "PREMIUM";
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -533,28 +545,9 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)", position: "relative", overflow: "hidden" }}>
-        {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)", position: "sticky", top: 0, background: "var(--adm-bg, #fff)", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
-          {ALL_TABS.map(t => {
-            const tabColor = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#92400e" : "#22c55e";
-            const tabBorder = t === "PREMIUM" ? "#7c3aed" : t === "GOLD" ? "#F4A623" : "#22c55e";
-            const tabBg = t === "PREMIUM" ? "#F3E8FF" : t === "GOLD" ? "#FFF8E7" : "#F0FDF4";
-            const tabIcon = t === "PREMIUM" ? "💎" : t === "GOLD" ? "⭐" : "🆓";
-            const tabLabel = t.charAt(0) + t.slice(1).toLowerCase();
-            return (
-              <button key={t} onClick={() => {
-                setTab(t); setConfirmTab(null);
-                if (restaurantId) fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, action: "plan_tab_viewed", details: { plan: t } }) }).catch(() => {});
-              }} style={{
-                flex: 1, padding: "14px 0", border: "none", cursor: "pointer",
-                fontFamily: FD, fontSize: "0.75rem", fontWeight: 700, background: "transparent",
-                color: tab === t ? tabColor : "#ccc",
-                borderBottom: tab === t ? `3px solid ${tabBorder}` : "3px solid transparent",
-              }}>
-                {tabIcon} {tabLabel}
-              </button>
-            );
-          })}
+        {/* Header modal */}
+        <div style={{ padding: "20px 24px 0", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)" }}>
+          <p style={{ margin: "0 0 14px", fontFamily: FD, fontSize: "0.72rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "#7c3aed" }}>⚡ Plan Pro</p>
         </div>
 
         <div style={{ padding: "20px 24px 24px" }}>
@@ -582,27 +575,6 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
             </div>
           )}
 
-          {/* Quick plan switch CTAs (solo cuando viendo el plan actual) */}
-          {isCurrentPlan && tab === "GOLD" && (
-            <button onClick={() => setTab("PREMIUM")} style={{
-              display: "block", width: "100%", padding: "11px 0", marginBottom: 14,
-              background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)",
-              borderRadius: 999, fontFamily: FD, fontSize: "0.82rem", fontWeight: 700,
-              color: "#7c3aed", cursor: "pointer",
-            }}>
-              💎 Mejorar a Premium →
-            </button>
-          )}
-          {isCurrentPlan && tab === "PREMIUM" && (
-            <button onClick={() => setTab("GOLD")} style={{
-              display: "block", width: "100%", padding: "11px 0", marginBottom: 14,
-              background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)",
-              borderRadius: 999, fontFamily: FD, fontSize: "0.82rem", fontWeight: 700,
-              color: "#92400e", cursor: "pointer",
-            }}>
-              ⭐ Bajar a Gold →
-            </button>
-          )}
 
           {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
@@ -629,9 +601,9 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
 
           {/* Features */}
           {(() => {
-            const accentColor = tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#64748b";
-            const bgColor = tab === "PREMIUM" ? "rgba(124,58,237,0.06)" : tab === "GOLD" ? "rgba(244,166,35,0.06)" : "rgba(100,116,139,0.06)";
-            const borderColor = tab === "PREMIUM" ? "rgba(124,58,237,0.15)" : tab === "GOLD" ? "rgba(244,166,35,0.15)" : "rgba(100,116,139,0.15)";
+            const accentColor = "#7c3aed";
+            const bgColor = "rgba(124,58,237,0.06)";
+            const borderColor = "rgba(124,58,237,0.15)";
             return (
           <div style={{
             background: bgColor,
@@ -639,7 +611,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
             border: `1px solid ${borderColor}`,
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {context === "featured_dishes" && (tab === "GOLD" || tab === "PREMIUM") && (
+              {context === "featured_dishes" && (
                 <div style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "9px 12px", borderRadius: 10, marginBottom: 4,
@@ -674,14 +646,14 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
               disabled={!restaurantId}
               style={{
                 display: "block", width: "100%", padding: "14px 20px", borderRadius: 999, textAlign: "center",
-                background: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
+                background: "#7c3aed",
                 color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
                 textDecoration: "none", marginBottom: 8, border: "none",
                 cursor: "pointer",
-                boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
+                boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
               }}
             >
-              {tab === "PREMIUM" && !inTrial ? "Empezar prueba gratis 7 días" : `Activar ${tab.charAt(0) + tab.slice(1).toLowerCase()}`}
+              {!inTrial ? "Empezar prueba gratis 7 días" : "Activar Pro"}
             </button>
           ) : isEarlyRenewal ? (
             <div style={{ marginBottom: 8 }}>
@@ -690,10 +662,10 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 disabled={!restaurantId}
                 style={{
                   display: "block", width: "100%", padding: "14px 20px", borderRadius: 999, textAlign: "center",
-                  background: tab === "PREMIUM" ? "#7c3aed" : tab === "GOLD" ? "#F4A623" : "#475569",
+                  background: "#7c3aed",
                   color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
                   border: "none", cursor: "pointer", marginBottom: 8,
-                  boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : tab === "GOLD" ? "0 4px 16px rgba(244,166,35,0.3)" : "0 4px 16px rgba(100,116,139,0.3)",
+                  boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
                 }}
               >
                 {t("renew_month")}
@@ -740,8 +712,8 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
               <button onClick={() => setConfirmTab(null)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: 20, cursor: "pointer" }}>←</button>
 
               <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: confirmTab === "PREMIUM" ? "#7c3aed" : confirmTab === "GOLD" ? "#F4A623" : "#64748b", fontWeight: 700, marginBottom: 8, fontFamily: FD }}>Resumen</div>
-                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Plan {planLabel}</h3>
+                <div style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: "#7c3aed", fontWeight: 700, marginBottom: 8, fontFamily: FD }}>Resumen</div>
+                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Plan Pro</h3>
               </div>
 
               <div style={{ background: "var(--adm-input, #f5f5f5)", border: "1px solid var(--adm-card-border, #eee)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
@@ -784,7 +756,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 disabled={submitting}
                 style={{
                   width: "100%", padding: 15, border: "none", borderRadius: 999,
-                  background: submitting ? "#ccc" : confirmTab === "PREMIUM" ? "#7c3aed" : confirmTab === "GOLD" ? "#F4A623" : "#475569",
+                  background: submitting ? "#ccc" : "#7c3aed",
                   color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
                   cursor: submitting ? "wait" : "pointer",
                 }}
