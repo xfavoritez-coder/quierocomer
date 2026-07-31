@@ -110,7 +110,6 @@ export default function MiRestaurantePage() {
   const [activatingAutoRenew, setActivatingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [plansTab, setPlansTab] = useState<"FREE" | "GOLD" | "PREMIUM">("PREMIUM");
 
   // Form state
   const [name, setName] = useState("");
@@ -296,7 +295,7 @@ export default function MiRestaurantePage() {
         });
         const d = await res.json();
         if (!res.ok) { toast.error(d.error || "No se pudo activar la prueba"); setSubscribing(false); return; }
-        toast.success("¡Premium activado! 7 días gratis.");
+        toast.success("¡Plan Pro activado! 7 días gratis.");
         setTimeout(() => window.location.reload(), 1200);
         return;
       }
@@ -371,7 +370,7 @@ export default function MiRestaurantePage() {
         const accent = inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : planAccent;
 
         const planEmoji = (plan as string) === "FREE" ? "🆓" : "📋";
-        const planName = (plan as string) === "FREE" ? "Gratis" : "Carta QR";
+        const planName = (plan as string) === "FREE" ? "Gratis" : "Pro";
 
         const net = (billingStatus as any).customPlanPriceNet ?? planNetAmount(plan as PlanKey);
         const gross = grossOf(net);
@@ -388,19 +387,13 @@ export default function MiRestaurantePage() {
                   ? `Acceso hasta el ${formatDate(billingStatus.currentPeriodEnd)}`
                   : null;
 
-        // Modal de planes — datos por tab
-        const PLAN_DATA = {
-          FREE:    { accent: "#64748b", emoji: "🆓", name: "Gratis",  net: 0 },
-          GOLD:    { accent: "#7c3aed", emoji: "📋", name: "Carta QR", net: planNetAmount("GOLD") },
-          PREMIUM: { accent: "#7c3aed", emoji: "📋", name: "Carta QR", net: planNetAmount("PREMIUM") },
-        } as const;
-        const tabData = PLAN_DATA[plansTab];
-        const tabNet = tabData.net;
-        const tabGross = grossOf(tabNet);
-        const tabFeatures = PLAN_FEATURES_DISPLAY[plansTab] || [];
-        const tabInherits = PLAN_INHERITS_FROM[plansTab];
-        const isPremiumTrial = plansTab === "PREMIUM" && !trialUsed && !inTrial && plan !== "PREMIUM";
-        const isCurrentPlan = plansTab === (plan as string);
+        // Modal de planes — solo Plan Pro
+        const proAccent = "#7c3aed";
+        const proNet = planNetAmount("PREMIUM");
+        const proGross = grossOf(proNet);
+        const proFeatures = PLAN_FEATURES_DISPLAY["PREMIUM"] || [];
+        const isPremiumTrial = !trialUsed && !inTrial && plan !== "PREMIUM";
+        const isCurrentPlan = (plan as string) === "PREMIUM";
 
         return (
           <div style={{ marginBottom: 16 }}>
@@ -500,50 +493,35 @@ export default function MiRestaurantePage() {
                     <button onClick={() => setShowPlansModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={20} color="var(--adm-text3)" /></button>
                   </div>
 
-                  {/* Tabs: solo Gratis y Carta QR */}
-                  <div style={{ display: "flex", background: "var(--adm-hover)", borderRadius: 10, padding: 4, marginBottom: 16 }}>
-                    {(["FREE", "PREMIUM"] as const).map(t => {
-                      const active = plansTab === t || (t === "PREMIUM" && plansTab === "GOLD");
-                      const c = PLAN_DATA[t].accent;
-                      const isCurrentTab = t === (plan as string) || (t === "PREMIUM" && (plan as string) === "GOLD");
-                      return (
-                        <button key={t} onClick={() => setPlansTab(t === "PREMIUM" ? "PREMIUM" : t)} style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", borderRadius: 7, background: active ? "var(--adm-card)" : "transparent", color: active ? c : "var(--adm-text3)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, boxShadow: active ? "0 1px 6px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
-                          {PLAN_DATA[t].emoji} {PLAN_DATA[t].name}
-                          {isCurrentTab && <span style={{ marginLeft: 3, fontSize: "0.6rem", opacity: 0.7 }}>✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Plan card */}
-                  <div style={{ border: `1.5px solid ${tabData.accent}40`, borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
-                    <div style={{ padding: "16px 18px 14px", background: `${tabData.accent}0e`, borderBottom: "1px solid var(--adm-card-border)" }}>
-                      {isCurrentPlan && <div style={{ display: "inline-block", padding: "2px 8px", background: `${tabData.accent}20`, border: `1px solid ${tabData.accent}40`, borderRadius: 99, marginBottom: 8 }}><span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: tabData.accent }}>✓ Tu plan actual</span></div>}
+                  {/* Plan Pro card */}
+                  <div style={{ border: `1.5px solid ${proAccent}40`, borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
+                    <div style={{ padding: "16px 18px 14px", background: `${proAccent}0e`, borderBottom: "1px solid var(--adm-card-border)" }}>
+                      {isCurrentPlan && <div style={{ display: "inline-block", padding: "2px 8px", background: `${proAccent}20`, border: `1px solid ${proAccent}40`, borderRadius: 99, marginBottom: 8 }}><span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: proAccent }}>✓ Tu plan actual</span></div>}
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                        <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1 }}>{tabNet === 0 ? "$0" : formatCLP(tabNet)}</span>
-                        <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>{tabNet === 0 ? "gratis" : "+ IVA /mes"}</span>
+                        <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1 }}>Plan Pro</span>
                       </div>
-                      {tabNet > 0 && <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{formatCLP(tabGross)} con IVA · Sin contratos</p>}
-                      {isPremiumTrial && <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#7c3aed", margin: "8px 0 0" }}>✨ 7 días gratis para probar</p>}
+                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>Incluye carta QR, pedidos online y valoraciones</p>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
+                        <span style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, color: proAccent, lineHeight: 1 }}>{formatCLP(proNet)}</span>
+                        <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>+ IVA /mes</span>
+                      </div>
+                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{formatCLP(proGross)} con IVA · Sin contratos</p>
+                      {isPremiumTrial && <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: proAccent, margin: "8px 0 0" }}>✨ 7 días gratis para probar</p>}
                     </div>
                     <div style={{ padding: "12px 18px" }}>
-                      {tabInherits && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", fontStyle: "italic", margin: "0 0 8px" }}>{tabInherits}</p>}
-                      {tabFeatures.length > 0
-                        ? tabFeatures.map(f => (
-                            <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
-                              <span style={{ color: tabData.accent, fontSize: "0.85rem", flexShrink: 0 }}>✓</span>
-                              <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)" }}>{f.text}</span>
-                            </div>
-                          ))
-                        : <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>Carta QR digital · Panel autoadministrable</p>
-                      }
+                      {proFeatures.map(f => (
+                        <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
+                          <span style={{ color: proAccent, fontSize: "0.85rem", flexShrink: 0 }}>✓</span>
+                          <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)" }}>{f.text}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Acción */}
-                  {!isCurrentPlan && plansTab !== "FREE" && (
-                    <button onClick={() => handleSubscribePlan(plansTab as "GOLD" | "PREMIUM")} disabled={subscribing} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 999, background: tabData.accent, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${tabData.accent}44`, opacity: subscribing ? 0.7 : 1 }}>
-                      {subscribing ? "Redirigiendo…" : isPremiumTrial ? "Empezar 7 días gratis" : `Contratar ${tabData.name}`}
+                  {!isCurrentPlan && (
+                    <button onClick={() => handleSubscribePlan("PREMIUM")} disabled={subscribing} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 999, background: proAccent, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${proAccent}44`, opacity: subscribing ? 0.7 : 1 }}>
+                      {subscribing ? "Redirigiendo…" : isPremiumTrial ? "Empezar 7 días gratis" : "Contratar Plan Pro"}
                     </button>
                   )}
                   {isCurrentPlan && (
@@ -714,7 +692,7 @@ export default function MiRestaurantePage() {
       {/* ── Cobro automático ── */}
       {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
         const hasAutoRenew = billingStatus.hasAutoRenewal;
-        const planName = plan === "FREE" ? "Gratis" : "Carta QR";
+        const planName = plan === "FREE" ? "Gratis" : "Pro";
         return (
           <div style={{ background: "var(--adm-card)", border: `1px solid ${hasAutoRenew ? "rgba(22,163,74,0.25)" : "var(--adm-card-border)"}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>

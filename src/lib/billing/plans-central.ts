@@ -126,7 +126,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
 
   PREMIUM: {
     key: "PREMIUM",
-    label: "Premium",
+    label: "Pro",
     tagline: "",
     priceMonthly: 44900,
     priceAnnualMonthly: 35900,
@@ -223,7 +223,7 @@ export const PLAN_INFO: Record<PlanKey, { label: string; color: string; bg: stri
   FREE: { label: "Gratis", color: "#888", bg: "rgba(0,0,0,0.04)", border: "#ddd" },
   SILVER: { label: "Silver", color: "#475569", bg: "#F1F5F9", border: "#94a3b8" },
   GOLD: { label: "Gold", color: "#92400e", bg: "#FFF8E7", border: "#F4A623" },
-  PREMIUM: { label: "Premium", color: "#6d28d9", bg: "#F3E8FF", border: "#c4b5fd" },
+  PREMIUM: { label: "Pro", color: "#6d28d9", bg: "#F3E8FF", border: "#c4b5fd" },
 };
 
 /** Max visible clients per plan */
