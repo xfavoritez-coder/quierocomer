@@ -85,6 +85,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
     outline: "none",
     display: "block",
   };
+  const inputClass = "enroll-input";
 
   return (
     <main
@@ -209,7 +210,10 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
           )}
         </div>
 
-        <style>{`@keyframes stampPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
+        <style>{`
+          @keyframes stampPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+          .enroll-input::placeholder { color: rgba(255,255,255,0.28); }
+        `}</style>
       </div>
 
       <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", padding: "24px 18px 48px" }}>
@@ -221,12 +225,12 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
 
             <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Nombre</span>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} className={inputClass} />
             </label>
 
             <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Email</span>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} inputMode="email" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} className={inputClass} inputMode="email" />
             </label>
 
             <div style={{ display: "block", marginBottom: 16 }}>
@@ -238,7 +242,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
 
             <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" style={{ ...inputStyle, marginBottom: 0 }} inputMode="tel" />
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" style={{ ...inputStyle, marginBottom: 0 }} className={inputClass} inputMode="tel" />
             </label>
 
             {error && <p style={{ color: "#ff6b6b", fontSize: "0.85rem", margin: "0 0 12px" }}>{error}</p>}
