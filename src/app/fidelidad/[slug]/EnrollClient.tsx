@@ -40,6 +40,9 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
   const onAccentText = isLight(accent) ? "#111" : "#fff";
   const iconText = program.stampIcon === "logo" ? "sellos" : program.stampIcon;
 
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isAndroid = () => /android/i.test(navigator.userAgent);
+
   const submit = async () => {
     setError("");
     if (!name && !email && !phone) {
@@ -55,6 +58,18 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Error");
+
+      // Redirigir directo al wallet según dispositivo
+      if (isIOS() && d.appleUrl) {
+        window.location.href = d.appleUrl;
+        return;
+      }
+      if (isAndroid() && d.googleSaveUrl) {
+        window.location.href = d.googleSaveUrl;
+        return;
+      }
+
+      // Desktop u otro: mostrar pantalla con ambos botones
       setDone({ appleUrl: d.appleUrl, googleSaveUrl: d.googleSaveUrl });
     } catch (e: any) {
       setError(e.message || "No pudimos crear tu tarjeta.");
