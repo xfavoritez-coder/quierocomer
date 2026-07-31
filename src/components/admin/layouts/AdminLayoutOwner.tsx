@@ -337,7 +337,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         {/* Header — no borderBottom, first section provides the separator */}
         <div style={{ padding: "14px 16px 12px", flexShrink: 0 }}>
           <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-            <RestLogo size={34} />
+            <RestLogo size={28} />
             <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
           </Link>
         </div>
@@ -351,7 +351,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <MenuIcon size={18} color="var(--adm-text2)" />
         </button>
         <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, margin: "0 12px" }}>
-          <RestLogo size={32} />
+          <RestLogo size={26} />
           <div style={{ minWidth: 0 }}>
             <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
           </div>
@@ -377,7 +377,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           {/* Drawer header */}
           <div style={{ display: "flex", alignItems: "center", padding: "12px 14px", flexShrink: 0 }}>
             <Link href={basePath} onClick={closeSidebar} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
-              <RestLogo size={30} />
+              <RestLogo size={26} />
               <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
             </Link>
             <button onClick={closeSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}>
