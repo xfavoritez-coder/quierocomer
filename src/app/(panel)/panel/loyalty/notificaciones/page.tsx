@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { Bell, Send, MapPin, AlertTriangle } from "lucide-react";
+import { Bell, Send, MapPin } from "lucide-react";
+import AddressPicker from "@/components/admin/AddressPicker";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -61,12 +62,16 @@ export default function LoyaltyNotifyPage() {
   const [geoEnabled, setGeoEnabled] = useState(false);
   const [geoRadiusKm, setGeoRadiusKm] = useState(1);
   const [geoMessage, setGeoMessage] = useState("");
-  const [address, setAddress] = useState<string | null>(null);
-  const [hasLocation, setHasLocation] = useState(false);
   const [loadingGeo, setLoadingGeo] = useState(true);
   const [savingGeo, setSavingGeo] = useState(false);
   const [savedGeo, setSavedGeo] = useState(false);
   const [refreshingGeo, setRefreshingGeo] = useState(false);
+
+  // Dirección / coordenadas del local (mismo dato que Ajustes)
+  const [address, setAddress] = useState("");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [savingAddress, setSavingAddress] = useState(false);
 
   const loadHistory = useCallback(() => {
     if (!selectedRestaurantId) return;
@@ -76,27 +81,27 @@ export default function LoyaltyNotifyPage() {
       .catch(() => {});
   }, [selectedRestaurantId]);
 
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+  useEffect(() => { loadHistory(); }, [loadHistory]);
 
   useEffect(() => {
     if (!selectedRestaurantId) return;
     setLoadingGeo(true);
     setSavedGeo(false);
-    fetch(`/api/loyalty/program?restaurantId=${selectedRestaurantId}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.program) {
-          setGeoEnabled(!!d.program.geoEnabled);
-          setGeoRadiusKm(d.program.geoRadiusKm ?? 1);
-          setGeoMessage(d.program.geoMessage || "");
-        }
-        setAddress(d.restaurant?.address ?? null);
-        setHasLocation(!!d.restaurant?.hasLocation);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingGeo(false));
+
+    // Carga geo config + dirección del local en paralelo
+    Promise.all([
+      fetch(`/api/loyalty/program?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
+      fetch(`/api/admin/locales/${selectedRestaurantId}`).then(r => r.json()),
+    ]).then(([loyaltyData, localData]) => {
+      if (loyaltyData.program) {
+        setGeoEnabled(!!loyaltyData.program.geoEnabled);
+        setGeoRadiusKm(loyaltyData.program.geoRadiusKm ?? 1);
+        setGeoMessage(loyaltyData.program.geoMessage || "");
+      }
+      setAddress(localData.address || "");
+      setLat(localData.lat ?? null);
+      setLng(localData.lng ?? null);
+    }).catch(() => {}).finally(() => setLoadingGeo(false));
   }, [selectedRestaurantId]);
 
   const send = async () => {
@@ -119,6 +124,24 @@ export default function LoyaltyNotifyPage() {
       toast.error(e.message || "Error al enviar");
     } finally {
       setSending(false);
+    }
+  };
+
+  const saveAddress = async () => {
+    if (!selectedRestaurantId) return;
+    setSavingAddress(true);
+    try {
+      const res = await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: address || null, lat, lng }),
+      });
+      if (!res.ok) throw new Error("Error al guardar");
+      toast.success("Dirección guardada");
+    } catch (e: any) {
+      toast.error(e.message || "Error al guardar");
+    } finally {
+      setSavingAddress(false);
     }
   };
 
@@ -267,43 +290,41 @@ export default function LoyaltyNotifyPage() {
         loadingGeo ? (
           <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-              Avisa al cliente en su pantalla cuando pasa cerca de tu local. El teléfono lo detecta solo (usa la ubicación del local en QuieroComer).
+              Avisa al cliente en su pantalla cuando pasa cerca de tu local. El teléfono lo detecta usando la ubicación que configures aquí.
             </p>
 
-            {/* Dirección */}
-            {hasLocation ? (
-              <div style={{ padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
-                <label style={labelStyle}>Los avisos se enviarán desde:</label>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                  <MapPin size={16} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
-                  <span style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text)" }}>
-                    {address || "Ubicación de tu local (configurada)"}
-                  </span>
-                </div>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
-                  Es la dirección de tu restaurante en QuieroComer. Para cambiarla, edítala en los <b>Ajustes</b> de tu local.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: 14, background: "rgba(224,160,32,0.08)", border: "1px solid rgba(224,160,32,0.35)", borderRadius: 12 }}>
-                <AlertTriangle size={18} color="#e0a020" style={{ flexShrink: 0, marginTop: 1 }} />
-                <div>
-                  <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Tu local no tiene ubicación configurada</p>
-                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "3px 0 0", lineHeight: 1.5 }}>
-                    Para enviar avisos por cercanía, configura la dirección en los <b>Ajustes</b> de QuieroComer.
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* Dirección del local — editable directo */}
+            <div style={{ padding: 16, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <MapPin size={14} color={GOLD} /> Dirección del local
+              </label>
+              <AddressPicker
+                address={address}
+                lat={lat}
+                lng={lng}
+                onChange={(a, la, ln) => { setAddress(a); setLat(la); setLng(ln); setSavedGeo(false); }}
+              />
+              <button
+                type="button"
+                onClick={saveAddress}
+                disabled={savingAddress}
+                style={{ marginTop: 12, padding: "9px 18px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: savingAddress ? "default" : "pointer", opacity: savingAddress ? 0.6 : 1 }}
+              >
+                {savingAddress ? "Guardando…" : "Guardar dirección"}
+              </button>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Esta es la misma dirección que aparece en los Ajustes del local. Cambiarla aquí la actualiza en ambos lados.
+              </p>
+            </div>
 
-            {/* Activar */}
+            {/* Activar cercanía */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Activar avisos por cercanía</p>
                 <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                  Requiere que tu local tenga ubicación configurada.
+                  Requiere que el local tenga coordenadas configuradas arriba.
                 </p>
               </div>
               <button
@@ -344,7 +365,7 @@ export default function LoyaltyNotifyPage() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <button type="button" onClick={saveGeo} disabled={savingGeo} style={{ padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: savingGeo ? "default" : "pointer", opacity: savingGeo ? 0.6 : 1 }}>
-                {savingGeo ? "Guardando…" : "Guardar"}
+                {savingGeo ? "Guardando…" : "Guardar configuración"}
               </button>
               {savedGeo && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#16a34a" }}>✓ Guardado</span>}
             </div>
