@@ -26,6 +26,7 @@ interface SettingsData {
   birthdayPerk: string | null;
   defaultView: string | null;
   showCategoryLobby: boolean;
+  filterBarEnabled: boolean;
 }
 
 
@@ -255,6 +256,24 @@ export default function AjustesPage() {
           </div>
         );
       })()}
+
+      {/* Filtros de la carta */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🔥 Filtros de la carta</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+              {data.filterBarEnabled !== false
+                ? "Visible — tus clientes pueden filtrar por Popular, Veggie, Estrella y Sin Gluten."
+                : "Oculto — no se muestran los filtros en la carta."}
+            </p>
+          </div>
+          <Toggle
+            active={data.filterBarEnabled !== false}
+            onToggle={() => save({ filterBarEnabled: data.filterBarEnabled === false })}
+          />
+        </div>
+      </div>
 
     </div>
   );

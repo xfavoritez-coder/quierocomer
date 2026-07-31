@@ -1510,8 +1510,8 @@ export default function CartaImpact({
             : <Search size={15} color="var(--carta-text, white)" />}
         </button>
       </div>
-      {/* Filter bar — solo Gold y Premium */}
-      {(restaurant as any).plan !== "FREE" && (
+      {/* Filter bar — solo Gold y Premium, y si el dueño no lo desactivó */}
+      {(restaurant as any).plan !== "FREE" && (restaurant as any).filterBarEnabled !== false && (
         <div style={{ padding: "8px 14px 0", position: "relative", zIndex: 2 }}>
           <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
         </div>

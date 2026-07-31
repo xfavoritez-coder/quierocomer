@@ -483,8 +483,8 @@ export default function CartaPremium({
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: demoOffset }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} orderingEnabled={(restaurant as any).orderingEnabled} restaurantSlug={(restaurant as any).slug} />
 
-      {/* Filter bar — solo Gold y Premium */}
-      {(restaurant as any).plan !== "FREE" && (
+      {/* Filter bar — solo Gold y Premium, y si el dueño no lo desactivó */}
+      {(restaurant as any).plan !== "FREE" && (restaurant as any).filterBarEnabled !== false && (
         <div style={{ borderBottom: "1px solid var(--carta-border)", padding: "10px 12px" }}>
           <CartaFilterBar active={activeFilter} onToggle={toggleFilter} />
         </div>

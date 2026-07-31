@@ -317,6 +317,7 @@ model Restaurant {
   genioFabEnabled            Boolean                  @default(false)
   ownerBannerEnabled         Boolean                  @default(false)
   multiMenuEnabled           Boolean                  @default(false)
+  filterBarEnabled           Boolean                  @default(true)
   lat                        Float?
   lng                        Float?
   googleMapsUrl              String?

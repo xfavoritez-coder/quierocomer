@@ -227,8 +227,7 @@ export default function PedirOnlinePage() {
       .finally(() => setLoading(false));
   }, [rid]);
 
-  const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
-  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM") || ORDERING_EXCEPTIONS.includes(data?.slug ?? "") || (data as any)?.subscriptionStatus === "TRIALING";
+  const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM") || (data as any)?.subscriptionStatus === "TRIALING";
 
   const [togglingEnabled, setTogglingEnabled] = useState(false);
 
