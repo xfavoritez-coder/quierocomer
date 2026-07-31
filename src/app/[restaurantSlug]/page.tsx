@@ -100,7 +100,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {/* Loyalty — solo si programa activo */}
         {hasLoyalty && (
           <a href={`/fidelidad/${r.slug}`} style={BTN}>
-            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>{loyaltyIcon}</span>
+            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🎁</span>
             <span>
               <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Tarjeta de fidelidad</span>
               <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Junta sellos y gana premios</span>
