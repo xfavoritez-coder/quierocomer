@@ -94,84 +94,119 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
+      {/* Botón volver */}
+      <a href={`/${slug}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", color: "rgba(255,255,255,0.55)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Volver
+      </a>
+
       {/* ── HERO HEADER ── */}
       <div style={{
         position: "relative",
         overflow: "hidden",
-        background: `linear-gradient(145deg, ${accent}22 0%, ${accent}08 50%, #0d0d0d 100%)`,
+        background: `linear-gradient(160deg, ${accent}30 0%, ${accent}10 45%, #111 100%)`,
         borderBottom: `1px solid ${accent}30`,
-        padding: "36px 24px 28px",
+        padding: "32px 20px 28px",
         textAlign: "center",
       }}>
-        {/* Círculos decorativos de fondo */}
-        <div style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: `radial-gradient(circle, ${accent}28 0%, transparent 70%)`, top: -60, right: -60, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)`, bottom: -40, left: -40, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: `radial-gradient(circle, ${accent}25 0%, transparent 65%)`, top: -80, right: -80, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", width: 180, height: 180, borderRadius: "50%", background: `radial-gradient(circle, ${accent}15 0%, transparent 65%)`, bottom: -50, left: -50, pointerEvents: "none" }} />
 
-        {/* Logo */}
+        {/* Logo + nombre */}
         {restaurantLogo && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={restaurantLogo} alt="" style={{ width: 68, height: 68, borderRadius: "50%", objectFit: "cover", margin: "0 auto 14px", display: "block", border: `3px solid ${accent}`, boxShadow: `0 0 24px ${accent}55` }} />
+          <img src={restaurantLogo} alt="" style={{ width: 62, height: 62, borderRadius: "50%", objectFit: "cover", margin: "0 auto 10px", display: "block", border: `3px solid ${accent}`, boxShadow: `0 0 20px ${accent}66` }} />
         )}
+        <p style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 2px" }}>{restaurantName}</p>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15 }}>{program.name}</h1>
 
-        {/* Nombre del local */}
-        <p style={{ fontSize: "0.78rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 4px" }}>{restaurantName}</p>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 16px", lineHeight: 1.15 }}>{program.name}</h1>
+        {/* ── PREVIEW TARJETA ── */}
+        <div style={{
+          background: `linear-gradient(135deg, ${accent}18, rgba(255,255,255,0.04))`,
+          border: `1.5px solid ${accent}40`,
+          borderRadius: 20,
+          padding: "18px 16px",
+          marginBottom: 22,
+          position: "relative",
+          zIndex: 1,
+        }}>
+          <p style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: accent, margin: "0 0 14px" }}>
+            Junta {program.stampGoal} sellos y gana
+          </p>
 
-        {/* Sellos ilustrativos */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 18 }}>
-          {Array.from({ length: Math.min(program.stampGoal, 6) }).map((_, i) => {
-            const filled = i < 2;
+          {/* Grid de sellos */}
+          {(() => {
+            const rewardStamps = new Set(program.rewards.map((r) => r.stamp));
+            const cols = program.stampGoal <= 6 ? program.stampGoal : program.stampGoal <= 8 ? 4 : program.stampGoal <= 10 ? 5 : 6;
             return (
-              <div key={i} style={{
-                width: 40, height: 40, borderRadius: "50%",
-                border: `2.5px solid ${filled ? accent : "rgba(255,255,255,0.18)"}`,
-                background: filled ? `${accent}22` : "rgba(255,255,255,0.04)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "1.1rem",
-                boxShadow: filled ? `0 0 12px ${accent}55` : "none",
-                transition: "all 0.2s",
-              }}>
-                {filled ? <span style={{ fontSize: "1rem" }}>{iconText === "sellos" ? "★" : iconText}</span> : null}
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginBottom: 16 }}>
+                {Array.from({ length: program.stampGoal }).map((_, i) => {
+                  const num = i + 1;
+                  const isReward = rewardStamps.has(num);
+                  const isFilled = i < 1; // primer sello "lleno" como preview
+                  return (
+                    <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <div style={{
+                        width: "100%",
+                        aspectRatio: "1",
+                        borderRadius: "50%",
+                        border: `2.5px solid ${isReward ? accent : isFilled ? accent : "rgba(255,255,255,0.2)"}`,
+                        background: isFilled ? accent : isReward ? `${accent}15` : "rgba(255,255,255,0.04)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: isReward ? `0 0 14px ${accent}66` : isFilled ? `0 0 10px ${accent}88` : "none",
+                        fontSize: "1rem",
+                        color: isFilled ? onAccentText : isReward ? accent : "rgba(255,255,255,0.15)",
+                        fontWeight: 900,
+                        position: "relative",
+                      }}>
+                        {isFilled ? (iconText === "sellos" ? "★" : iconText) : isReward ? "🎁" : <span style={{ fontSize: "0.6rem", opacity: 0.4 }}>{num}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
-          })}
-          {program.stampGoal > 6 && <span style={{ color: "rgba(255,255,255,0.4)", alignSelf: "center", fontSize: "0.8rem" }}>…</span>}
-        </div>
+          })()}
 
-        {/* Badges wallet */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
-          {[
-            { icon: "🍎", label: "Apple Wallet" },
-            { icon: "▶", label: "Google Wallet" },
-            { icon: "✓", label: "Sin descargar una app" },
-          ].map((b) => (
-            <span key={b.label} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
-              <span style={{ fontSize: "0.75rem" }}>{b.icon}</span> {b.label}
-            </span>
-          ))}
+          {/* Recompensas */}
+          {program.rewards.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {program.rewards.map((r, idx) => (
+                <div key={r.stamp} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  background: "rgba(255,255,255,0.05)",
+                  borderRadius: 12, padding: "10px 14px",
+                  border: `1px solid ${accent}30`,
+                }}>
+                  {/* Círculo grande estilo imagen */}
+                  <div style={{
+                    flexShrink: 0,
+                    width: 52, height: 52, borderRadius: "50%",
+                    border: `3px solid ${accent}`,
+                    background: `${accent}12`,
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    boxShadow: `0 0 16px ${accent}55`,
+                    lineHeight: 1,
+                  }}>
+                    <span style={{ fontSize: "1.2rem", fontWeight: 900, color: accent }}>{r.stamp}</span>
+                    <span style={{ fontSize: "0.45rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.05em" }}>sellos</span>
+                  </div>
+                  <div style={{ textAlign: "left" }}>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: "0.97rem", color: "#fff" }}>{r.reward}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>
+                      Canjea tu premio al completar {r.stamp} sello{r.stamp > 1 ? "s" : ""}.
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <style>{`@keyframes stampPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
       </div>
 
       <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", padding: "24px 18px 48px" }}>
-
-        {/* Recompensas */}
-        {program.rewards.length > 0 && (
-          <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 16, marginBottom: 22 }}>
-            <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.5)", margin: "0 0 10px" }}>
-              Junta {iconText} y gana
-            </p>
-            {program.rewards.map((r) => (
-              <div key={r.stamp} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
-                <span style={{ minWidth: 44, height: 28, borderRadius: 8, background: accent, color: onAccentText, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.85rem" }}>
-                  {r.stamp} {iconText}
-                </span>
-                <span style={{ fontSize: "0.95rem" }}>{r.reward}</span>
-              </div>
-            ))}
-          </div>
-        )}
 
         {!done ? (
           <>
