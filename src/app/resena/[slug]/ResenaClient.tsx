@@ -87,7 +87,7 @@ export default function ResenaClient({ restaurant }: Props) {
       <div style={{ width: "100%", maxWidth: 360 }}>
         {done ? (
           <div style={{ textAlign: "center", padding: "24px 0" }}>
-            <CheckCircle size={48} color="#4ade80" style={{ marginBottom: 16 }} />
+            <CheckCircle size={48} color="#4ade80" style={{ display: "block", margin: "0 auto 16px" }} />
             <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 800, margin: "0 0 8px" }}>¡Gracias por tu opinión!</h2>
             {restaurant.reviewReward && (
               <div style={{ marginTop: 16, background: `${GOLD}18`, border: `1px solid ${GOLD}44`, borderRadius: 14, padding: "14px 18px" }}>
