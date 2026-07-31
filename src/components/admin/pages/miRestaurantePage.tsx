@@ -110,7 +110,7 @@ export default function MiRestaurantePage() {
   const [activatingAutoRenew, setActivatingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [plansTab, setPlansTab] = useState<"FREE" | "GOLD" | "PREMIUM">("GOLD");
+  const [plansTab, setPlansTab] = useState<"FREE" | "GOLD" | "PREMIUM">("PREMIUM");
 
   // Form state
   const [name, setName] = useState("");
@@ -367,13 +367,11 @@ export default function MiRestaurantePage() {
         const in2Days = periodEndChile === toChileDate(new Date(now.getTime() + 2 * 86400000));
         const isExpiringSoon = !inGrace && !cycleEndsToday && isActive && plan !== "FREE" && (isTomorrow || in2Days);
 
-        const planAccent = (plan as string) === "PREMIUM" ? "#7c3aed"
-          : (plan as string) === "GOLD" || (plan as string) === "SILVER" ? GOLD
-          : "#64748b";
+        const planAccent = (plan as string) === "FREE" ? "#64748b" : "#7c3aed";
         const accent = inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : planAccent;
 
-        const planEmoji = (plan as string) === "PREMIUM" ? "💎" : (plan as string) === "GOLD" ? "⭐" : (plan as string) === "SILVER" ? "🥈" : "🆓";
-        const planName = (plan as string) === "FREE" ? "Gratis" : (plan as string) === "GOLD" ? "Gold" : (plan as string) === "PREMIUM" ? "Premium" : (plan as string) === "SILVER" ? "Silver" : (plan as string);
+        const planEmoji = (plan as string) === "FREE" ? "🆓" : "📋";
+        const planName = (plan as string) === "FREE" ? "Gratis" : "Carta QR";
 
         const net = (billingStatus as any).customPlanPriceNet ?? planNetAmount(plan as PlanKey);
         const gross = grossOf(net);
@@ -393,8 +391,8 @@ export default function MiRestaurantePage() {
         // Modal de planes — datos por tab
         const PLAN_DATA = {
           FREE:    { accent: "#64748b", emoji: "🆓", name: "Gratis",  net: 0 },
-          GOLD:    { accent: GOLD,      emoji: "⭐", name: "Gold",    net: planNetAmount("GOLD") },
-          PREMIUM: { accent: "#7c3aed", emoji: "💎", name: "Premium", net: planNetAmount("PREMIUM") },
+          GOLD:    { accent: "#7c3aed", emoji: "📋", name: "Carta QR", net: planNetAmount("GOLD") },
+          PREMIUM: { accent: "#7c3aed", emoji: "📋", name: "Carta QR", net: planNetAmount("PREMIUM") },
         } as const;
         const tabData = PLAN_DATA[plansTab];
         const tabNet = tabData.net;
@@ -502,15 +500,16 @@ export default function MiRestaurantePage() {
                     <button onClick={() => setShowPlansModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={20} color="var(--adm-text3)" /></button>
                   </div>
 
-                  {/* Tabs */}
+                  {/* Tabs: solo Gratis y Carta QR */}
                   <div style={{ display: "flex", background: "var(--adm-hover)", borderRadius: 10, padding: 4, marginBottom: 16 }}>
-                    {(["FREE", "GOLD", "PREMIUM"] as const).map(t => {
-                      const active = plansTab === t;
+                    {(["FREE", "PREMIUM"] as const).map(t => {
+                      const active = plansTab === t || (t === "PREMIUM" && plansTab === "GOLD");
                       const c = PLAN_DATA[t].accent;
+                      const isCurrentTab = t === (plan as string) || (t === "PREMIUM" && (plan as string) === "GOLD");
                       return (
-                        <button key={t} onClick={() => setPlansTab(t)} style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", borderRadius: 7, background: active ? "var(--adm-card)" : "transparent", color: active ? c : "var(--adm-text3)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, boxShadow: active ? "0 1px 6px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
+                        <button key={t} onClick={() => setPlansTab(t === "PREMIUM" ? "PREMIUM" : t)} style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", borderRadius: 7, background: active ? "var(--adm-card)" : "transparent", color: active ? c : "var(--adm-text3)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, boxShadow: active ? "0 1px 6px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s" }}>
                           {PLAN_DATA[t].emoji} {PLAN_DATA[t].name}
-                          {t === (plan as string) && <span style={{ marginLeft: 3, fontSize: "0.6rem", opacity: 0.7 }}>✓</span>}
+                          {isCurrentTab && <span style={{ marginLeft: 3, fontSize: "0.6rem", opacity: 0.7 }}>✓</span>}
                         </button>
                       );
                     })}
@@ -715,7 +714,7 @@ export default function MiRestaurantePage() {
       {/* ── Cobro automático ── */}
       {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
         const hasAutoRenew = billingStatus.hasAutoRenewal;
-        const planName = plan === "PREMIUM" ? "Premium" : plan === "GOLD" ? "Gold" : plan === "SILVER" ? "Silver" : plan;
+        const planName = plan === "FREE" ? "Gratis" : "Carta QR";
         return (
           <div style={{ background: "var(--adm-card)", border: `1px solid ${hasAutoRenew ? "rgba(22,163,74,0.25)" : "var(--adm-card-border)"}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
