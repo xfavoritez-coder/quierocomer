@@ -813,6 +813,7 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [demoScrolled, setDemoScrolled] = useState(false);
   const [demoTip, setDemoTip] = useState(false);
+  const [hasLoyalty, setHasLoyalty] = useState(false);
 
   // Auto-tag gold buttons for dark mode softening
   useEffect(() => {
@@ -831,6 +832,15 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
   }, []);
+
+  // Fetch loyalty status for sidebar visibility
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    fetch(`/api/billing/status?restaurantId=${selectedRestaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setHasLoyalty(!!d.hasLoyalty); })
+      .catch(() => {});
+  }, [selectedRestaurantId]);
 
   // Demo banner scroll effect — must be before any early returns
   const selectedRestEarly = restaurants.find((r: any) => r.id === selectedRestaurantId);
@@ -1030,6 +1040,7 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
         basePath="/panel"
         activePlan={activePlan}
         isDemo={isDemo}
+        hasLoyalty={hasLoyalty}
       >
         {!isDemo && (
           <ExpiryBanner restaurantId={selectedRestaurantId || null} />

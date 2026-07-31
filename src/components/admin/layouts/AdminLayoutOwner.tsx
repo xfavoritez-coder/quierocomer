@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -20,6 +20,7 @@ interface Props {
   basePath?: string; // "/admin" or "/panel"
   activePlan?: string;
   isDemo?: boolean;
+  hasLoyalty?: boolean;
   children: React.ReactNode;
 }
 
@@ -34,45 +35,83 @@ function LiveIcon({ size = 18 }: { size?: number }) {
 
 const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 const LIVE_HIDDEN = ["horusvegan"];
+const CONTROL_HIDDEN = ["horusvegan"];
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string } = {}) {
+type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
+type NavSection = { key: string; label: string; items: NavItem[] };
+
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string; hasLoyalty?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
-  const showOrdering = opts.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes(opts.slug ?? "");
-  const SIDEBAR_NAV = [
-    { icon: Home, labelKey: "nav_home", href: base },
-    { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
-    ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
-    { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
-    { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
-    { icon: ContactRound, labelKey: "nav_clients", href: `${base}/clientes` },
-    { icon: Tag, labelKey: "nav_offers", href: `${base}/promociones` },
-    { icon: Megaphone, labelKey: "nav_announcements", href: `${base}/anuncios` },
-    ...(opts.hasControl ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
-    { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
-    { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
-    { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
-    { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
-    { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
-    { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
+
+  const SECTIONS: NavSection[] = [
+    {
+      key: "carta",
+      label: "Carta QR",
+      items: [
+        { icon: Home, labelKey: "nav_home", href: base },
+        { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
+        { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
+        { icon: ContactRound, labelKey: "nav_clients", href: `${base}/clientes` },
+        { icon: Tag, labelKey: "nav_offers", href: `${base}/promociones` },
+        { icon: Megaphone, labelKey: "nav_announcements", href: `${base}/anuncios` },
+        ...(opts.hasControl && !CONTROL_HIDDEN.includes(opts.slug ?? "") ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
+        { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
+        { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
+        { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
+        { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
+      ],
+    },
+    {
+      key: "ordering",
+      label: "Pedidos Online",
+      items: [
+        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
+        ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
+      ],
+    },
+    {
+      key: "loyalty",
+      label: "Loyalty",
+      items: [
+        { icon: Gift, labelKey: "nav_loyalty", href: `${base}/loyalty` },
+      ],
+    },
+    {
+      key: "subscription",
+      label: "Mi Suscripción",
+      items: [
+        { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
+      ],
+    },
+    {
+      key: "support",
+      label: "Soporte",
+      items: [
+        { icon: HelpCircle, labelKey: "nav_support", href: `${base}/ayuda` },
+      ],
+    },
   ];
+
+  const ALL_ITEMS = SECTIONS.flatMap(s => s.items);
+
   const BOTTOM_TABS_RAW = [
     { icon: Home, labelKey: "nav_home", href: base },
     { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
     { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
     { icon: Menu, labelKey: "nav_more", href: "__more__" },
   ] as const;
-  const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS_RAW.some(tb => tb.href === n.href));
-  return { SIDEBAR_NAV, BOTTOM_TABS: BOTTOM_TABS_RAW, MORE_ITEMS };
+  const MORE_ITEMS = ALL_ITEMS.filter(n => !BOTTOM_TABS_RAW.some(tb => tb.href === n.href));
+  return { SECTIONS, BOTTOM_TABS: BOTTOM_TABS_RAW, MORE_ITEMS };
 }
 
-export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, children }: Props) {
+export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, children }: Props) {
   const pathname = usePathname();
   const { t } = usePanelLang();
   const selected = restaurants.find((r: any) => r.id === selectedRestaurantId);
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
   const hasControl = !!(selected as any)?.hasControl;
-  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug });
+  const { SECTIONS, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug, hasLoyalty });
   const [moreOpen, setMoreOpen] = useState(false);
 
   // localStorage-based "seen" badge for ordering nav
@@ -187,24 +226,40 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             </select>
           )}
         </div>
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: "8px 0", overflowY: "auto" }}>
-          {SIDEBAR_NAV.map(item => {
-            const active = isActive(item.href);
-            const Icon = item.icon;
-            const badge = (item as any).badge;
-            return (
-              <Link key={item.href} href={item.href} onClick={() => { if (active) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "0 16px", height: 44, textDecoration: "none",
-                background: active ? "var(--adm-hover)" : "transparent", color: active ? GOLD : "var(--adm-text2)",
-                fontFamily: FB, fontSize: "0.84rem", fontWeight: 500, borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
+        {/* Nav items — grouped by section */}
+        <nav style={{ flex: 1, padding: "4px 0 8px", overflowY: "auto" }}>
+          {SECTIONS.map((section, si) => (
+            <div key={section.key}>
+              {/* Section header */}
+              <div style={{
+                padding: si === 0 ? "10px 16px 4px" : "14px 16px 4px",
+                display: "flex", alignItems: "center", gap: 6,
               }}>
-                <Icon size={18} strokeWidth={active ? 2.2 : 1.6} />
-                <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
-                {badge && !seenOrdering && <span style={{ fontSize: "0.6rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>{badge}</span>}
-              </Link>
-            );
-          })}
+                <span style={{
+                  fontFamily: FB, fontSize: "0.58rem", fontWeight: 800,
+                  color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.1em",
+                }}>{section.label}</span>
+                <div style={{ flex: 1, height: 1, background: "var(--adm-card-border)", opacity: 0.5 }} />
+              </div>
+              {/* Section items */}
+              {section.items.map(item => {
+                const active = isActive(item.href);
+                const Icon = item.icon;
+                const badge = (item as any).badge;
+                return (
+                  <Link key={item.href} href={item.href} onClick={() => { if (active) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "0 16px", height: 40, textDecoration: "none",
+                    background: active ? "var(--adm-hover)" : "transparent", color: active ? GOLD : "var(--adm-text2)",
+                    fontFamily: FB, fontSize: "0.84rem", fontWeight: 500, borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
+                  }}>
+                    <Icon size={17} strokeWidth={active ? 2.2 : 1.6} />
+                    <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
+                    {badge && !seenOrdering && <span style={{ fontSize: "0.6rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>{badge}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
         {/* Account */}
         <button onClick={openAccount} style={{
@@ -294,18 +349,27 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--adm-card-border)" }} />
           </div>
           <div style={{ padding: "8px 16px 16px" }}>
-            {MORE_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const badge = (item as any).badge;
+            {SECTIONS.map(section => {
+              const sectionMoreItems = section.items.filter(n => !BOTTOM_TABS.some((tb: any) => tb.href === n.href));
+              if (sectionMoreItems.length === 0) return null;
               return (
-                <Link key={item.href} href={item.href} onClick={closeMore} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 4px", textDecoration: "none", borderBottom: "1px solid var(--adm-card-border)" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                    <Icon size={18} color={GOLD} />
-                    {badge && !seenOrdering && <span style={{ position: "absolute", top: -4, right: -4, fontSize: "0.55rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.5 }}>{badge}</span>}
-                  </div>
-                  <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{t(item.labelKey)}</span>
-                  <ChevronRight size={16} color="var(--adm-text3)" />
-                </Link>
+                <div key={section.key}>
+                  <p style={{ fontFamily: FB, fontSize: "0.6rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "12px 4px 4px" }}>{section.label}</p>
+                  {sectionMoreItems.map((item) => {
+                    const Icon = item.icon;
+                    const badge = (item as any).badge;
+                    return (
+                      <Link key={item.href} href={item.href} onClick={closeMore} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", textDecoration: "none", borderBottom: "1px solid var(--adm-card-border)" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                          <Icon size={18} color={GOLD} />
+                          {badge && !seenOrdering && <span style={{ position: "absolute", top: -4, right: -4, fontSize: "0.55rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.5 }}>{badge}</span>}
+                        </div>
+                        <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{t(item.labelKey)}</span>
+                        <ChevronRight size={16} color="var(--adm-text3)" />
+                      </Link>
+                    );
+                  })}
+                </div>
               );
             })}
           </div>
