@@ -45,10 +45,9 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
 
   const submit = async () => {
     setError("");
-    if (!name && !email && !phone) {
-      setError("Ingresa tu nombre y un contacto.");
-      return;
-    }
+    if (!name) { setError("Ingresa tu nombre."); return; }
+    if (!email) { setError("Ingresa tu email."); return; }
+    if (!birthDate) { setError("Ingresa tu fecha de cumpleaños."); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/loyalty/enroll", {
@@ -183,9 +182,8 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
           <>
             {/* Formulario */}
             <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: "0 0 12px" }}>Crea tu tarjeta gratis</p>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={inputStyle} inputMode="email" />
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono (opcional)" style={inputStyle} inputMode="tel" />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre *" style={inputStyle} />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email *" style={inputStyle} inputMode="email" />
             <div style={{ position: "relative", marginBottom: 12 }}>
               <input
                 type="date"
@@ -195,10 +193,11 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
               />
               {!birthDate && (
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)", fontSize: "1rem", pointerEvents: "none" }}>
-                  Fecha de cumpleaños (opcional)
+                  Fecha de cumpleaños *
                 </span>
               )}
             </div>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono (opcional)" style={inputStyle} inputMode="tel" />
 
             {error && <p style={{ color: "#ff6b6b", fontSize: "0.85rem", margin: "0 0 12px" }}>{error}</p>}
 
