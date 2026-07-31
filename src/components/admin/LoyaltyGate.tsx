@@ -100,7 +100,7 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
       </button>
 
       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 20px", lineHeight: 1.5 }}>
-        Luego de los {LOYALTY_TRIAL_DAYS} días, ${net.toLocaleString("es-CL")} neto mensual · Sin contratos · Cancelas cuando quieras
+        Prueba sin compromiso
       </p>
     </div>
   );
