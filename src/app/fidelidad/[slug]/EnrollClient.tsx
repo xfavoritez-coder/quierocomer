@@ -188,14 +188,14 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
                   <div style={{
                     flexShrink: 0,
                     width: 52, height: 52, borderRadius: "50%",
-                    border: `3px solid ${accent}`,
-                    background: `${accent}12`,
+                    border: "3px solid rgba(255,255,255,0.9)",
+                    background: "rgba(255,255,255,0.08)",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    boxShadow: `0 0 16px ${accent}55`,
+                    boxShadow: "0 0 16px rgba(255,255,255,0.15)",
                     lineHeight: 1,
                   }}>
-                    <span style={{ fontSize: "1.2rem", fontWeight: 900, color: accent }}>{r.stamp}</span>
-                    <span style={{ fontSize: "0.45rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.05em" }}>sellos</span>
+                    <span style={{ fontSize: "1.2rem", fontWeight: 900, color: "#fff" }}>{r.stamp}</span>
+                    <span style={{ fontSize: "0.45rem", fontWeight: 700, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>sellos</span>
                   </div>
                   <div style={{ textAlign: "left" }}>
                     <p style={{ margin: 0, fontWeight: 800, fontSize: "0.97rem", color: "#fff" }}>{r.reward}</p>
@@ -229,10 +229,12 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} inputMode="email" />
             </label>
 
-            <label style={{ display: "block", marginBottom: 16 }}>
+            <div style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Fecha de cumpleaños</span>
-              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} style={{ ...inputStyle, marginBottom: 0, colorScheme: "dark", display: "block", width: "100%", boxSizing: "border-box" }} />
-            </label>
+              <div style={{ width: "100%", overflow: "hidden" }}>
+                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} style={{ ...inputStyle, colorScheme: "dark", minWidth: 0 }} />
+              </div>
+            </div>
 
             <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
