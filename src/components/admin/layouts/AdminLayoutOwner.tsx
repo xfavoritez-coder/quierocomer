@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -17,7 +17,7 @@ interface Props {
   selectedRestaurantId: string | null;
   setSelectedRestaurant: (id: string) => void;
   logout: () => void;
-  basePath?: string; // "/admin" or "/panel"
+  basePath?: string;
   activePlan?: string;
   isDemo?: boolean;
   hasLoyalty?: boolean;
@@ -92,16 +92,18 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     },
   ];
 
-  const ALL_ITEMS = SECTIONS.flatMap(s => s.items);
+  return { SECTIONS };
+}
 
-  const BOTTOM_TABS_RAW = [
-    { icon: Home, labelKey: "nav_home", href: base },
-    { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
-    { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
-    { icon: Menu, labelKey: "nav_more", href: "__more__" },
-  ] as const;
-  const MORE_ITEMS = ALL_ITEMS.filter(n => !BOTTOM_TABS_RAW.some(tb => tb.href === n.href));
-  return { SECTIONS, BOTTOM_TABS: BOTTOM_TABS_RAW, MORE_ITEMS };
+function getActiveSectionKeys(pathname: string, sections: NavSection[], base: string): Set<string> {
+  const keys = new Set<string>();
+  for (const section of sections) {
+    if (section.items.some(item => item.href === base ? pathname === base : pathname.startsWith(item.href + "/"))) {
+      keys.add(section.key);
+    }
+  }
+  if (keys.size === 0) keys.add(sections[0]?.key ?? "carta");
+  return keys;
 }
 
 export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, children }: Props) {
@@ -111,25 +113,62 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
   const hasControl = !!(selected as any)?.hasControl;
-  const { SECTIONS, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug, hasLoyalty });
-  const [moreOpen, setMoreOpen] = useState(false);
+  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug, hasLoyalty });
 
-  // localStorage-based "seen" badge for ordering nav
-  const [seenOrdering, setSeenOrdering] = useState(true); // assume seen until loaded
+  // Accordion state — open sections
+  const [openSections, setOpenSections] = useState<Set<string>>(() => getActiveSectionKeys(pathname, SECTIONS, basePath));
+
+  // Sync open sections when pathname changes (auto-open the active section)
   useEffect(() => {
-    const key = `qc_ordering_seen_${selectedRestaurantId}`;
-    setSeenOrdering(localStorage.getItem(key) === "1");
+    const active = getActiveSectionKeys(pathname, SECTIONS, basePath);
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      active.forEach(k => next.add(k));
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const toggleSection = (key: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  // Mobile left sidebar drawer
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const openSidebar = () => { setSidebarOpen(true); requestAnimationFrame(() => setSidebarVisible(true)); };
+  const closeSidebar = () => { setSidebarVisible(false); setTimeout(() => setSidebarOpen(false), 250); };
+
+  // Account drawer (right side)
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountVisible, setAccountVisible] = useState(false);
+  const openAccount = () => { setAccountOpen(true); requestAnimationFrame(() => setAccountVisible(true)); };
+  const closeAccount = () => { setAccountVisible(false); setTimeout(() => setAccountOpen(false), 250); };
+
+  // Auto-close mobile sidebar on desktop
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handler = () => { setSidebarOpen(false); setSidebarVisible(false); };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // "seen" badge for ordering nav
+  const [seenOrdering, setSeenOrdering] = useState(true);
+  useEffect(() => {
+    setSeenOrdering(localStorage.getItem(`qc_ordering_seen_${selectedRestaurantId}`) === "1");
   }, [selectedRestaurantId]);
   useEffect(() => {
     if (pathname.includes("/pedir-online") && !seenOrdering) {
-      const key = `qc_ordering_seen_${selectedRestaurantId}`;
-      localStorage.setItem(key, "1");
+      localStorage.setItem(`qc_ordering_seen_${selectedRestaurantId}`, "1");
       setSeenOrdering(true);
     }
   }, [pathname, selectedRestaurantId, seenOrdering]);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [moreVisible, setMoreVisible] = useState(false);
-  const [accountVisible, setAccountVisible] = useState(false);
 
   // Password change
   const [pwOpen, setPwOpen] = useState(false);
@@ -139,6 +178,13 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState(false);
+
+  // Theme
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  useEffect(() => {
+    const saved = localStorage.getItem("qc_panel_theme");
+    if (saved === "light" || saved === "dark") setTheme(saved);
+  }, []);
 
   const isActive = (href: string) => href === basePath ? pathname === basePath : pathname.startsWith(href);
   const initial = name?.charAt(0)?.toUpperCase() || "?";
@@ -151,20 +197,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       : <div style={{ width: size, height: size, borderRadius: 8, background: "#1a5f3f", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: size * 0.39, fontWeight: 700, fontFamily: F, flexShrink: 0 }}>{restInitials}</div>
   );
 
-  // Drawer helpers
-  const openMore = () => { setMoreOpen(true); requestAnimationFrame(() => setMoreVisible(true)); };
-  const closeMore = () => { setMoreVisible(false); setTimeout(() => setMoreOpen(false), 250); };
-  const openAccount = () => { setAccountOpen(true); requestAnimationFrame(() => setAccountVisible(true)); };
-  const closeAccount = () => { setAccountVisible(false); setTimeout(() => setAccountOpen(false), 250); };
-
-  // Auto-close drawers on viewport change
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const handler = () => { setMoreOpen(false); setMoreVisible(false); };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
   const handleChangePassword = async () => {
     setPwError("");
     if (pwNew.length < 8) { setPwError(t("password_min")); return; }
@@ -172,11 +204,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     if (pwNew !== pwConfirm) { setPwError(t("passwords_mismatch")); return; }
     setPwLoading(true);
     try {
-      const pwEndpoint = basePath === "/panel" ? "/api/panel/change-password" : "/api/admin/me/change-password";
-      const res = await fetch(pwEndpoint, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }),
-      });
+      const endpoint = basePath === "/panel" ? "/api/panel/change-password" : "/api/admin/me/change-password";
+      const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }) });
       const data = await res.json();
       if (!res.ok) { setPwError(data.error); setPwLoading(false); return; }
       setPwSuccess(true);
@@ -185,124 +214,140 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     setPwLoading(false);
   };
 
-  // Theme: read from localStorage, default dark
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  useEffect(() => {
-    const saved = localStorage.getItem("qc_panel_theme");
-    if (saved === "light" || saved === "dark") setTheme(saved);
-  }, []);
-
-  return (
-    <div className={theme === "dark" ? "theme-dark" : "theme-light"} style={{ minHeight: "100vh", background: "var(--adm-bg)" }}>
-      {/* ── Desktop Sidebar (≥768px) ── */}
-      <aside className="owl-sidebar">
-        {/* Header */}
-        <div style={{ padding: "16px 16px 14px", borderBottom: "1px solid var(--adm-card-border)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-            <RestLogo size={36} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                {activePlan && basePath === "/panel" && (
-                  <button
-                    onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: activePlan === "FREE" ? undefined : activePlan, source: "plan_badge" } })); }}
-                    style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px", border: "none", cursor: "pointer",
-                      background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
-                      color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
-                    }}
-                  >
-                    {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : activePlan === "SILVER" ? "Silver" : "Ver planes"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </Link>
-          </div>
-          {false && restaurants.length > 1 && (
-            <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
-              style={{ marginTop: 10, width: "100%", padding: "5px 8px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", cursor: "pointer" }}>
-              {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          )}
-        </div>
-        {/* Nav items — grouped by section */}
-        <nav style={{ flex: 1, padding: "4px 0 8px", overflowY: "auto" }}>
-          {SECTIONS.map((section, si) => (
-            <div key={section.key}>
-              {/* Section header */}
-              <div style={{
-                padding: si === 0 ? "10px 16px 4px" : "14px 16px 4px",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <span style={{
-                  fontFamily: FB, fontSize: "0.58rem", fontWeight: 800,
-                  color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.1em",
-                }}>{section.label}</span>
-                <div style={{ flex: 1, height: 1, background: "var(--adm-card-border)", opacity: 0.5 }} />
-              </div>
-              {/* Section items */}
+  // Shared accordion nav — used in both desktop sidebar and mobile drawer
+  const AccordionNav = ({ onNavClick }: { onNavClick?: () => void }) => (
+    <nav style={{ flex: 1, overflowY: "auto", padding: "4px 0 12px" }}>
+      {SECTIONS.map((section) => {
+        const isOpen = openSections.has(section.key);
+        const hasActiveItem = section.items.some(item => isActive(item.href));
+        return (
+          <div key={section.key}>
+            {/* Section header — clickable */}
+            <button
+              onClick={() => toggleSection(section.key)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 8,
+                padding: "10px 16px 8px", background: "none", border: "none", cursor: "pointer",
+                borderTop: "1px solid var(--adm-card-border)",
+              }}
+            >
+              <span style={{
+                fontFamily: FB, fontSize: "0.62rem", fontWeight: 800, flex: 1, textAlign: "left",
+                color: hasActiveItem ? GOLD : "var(--adm-text3)",
+                textTransform: "uppercase", letterSpacing: "0.1em",
+              }}>{section.label}</span>
+              <ChevronDown
+                size={13}
+                color={hasActiveItem ? GOLD : "var(--adm-text3)"}
+                style={{ transition: "transform 0.2s ease", transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)", flexShrink: 0 }}
+              />
+            </button>
+            {/* Section items */}
+            <div style={{
+              overflow: "hidden",
+              maxHeight: isOpen ? "600px" : "0",
+              transition: "max-height 0.22s ease",
+            }}>
               {section.items.map(item => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
-                const badge = (item as any).badge;
                 return (
-                  <Link key={item.href} href={item.href} onClick={() => { if (active) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: "0 16px", height: 40, textDecoration: "none",
-                    background: active ? "var(--adm-hover)" : "transparent", color: active ? GOLD : "var(--adm-text2)",
-                    fontFamily: FB, fontSize: "0.84rem", fontWeight: 500, borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
-                  }}>
-                    <Icon size={17} strokeWidth={active ? 2.2 : 1.6} />
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      if (active) window.dispatchEvent(new CustomEvent("nav-same-page"));
+                      onNavClick?.();
+                    }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "0 16px 0 20px", height: 40, textDecoration: "none",
+                      background: active ? "var(--adm-hover)" : "transparent",
+                      color: active ? GOLD : "var(--adm-text2)",
+                      fontFamily: FB, fontSize: "0.84rem", fontWeight: 500,
+                      borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
+                    }}
+                  >
+                    <Icon size={16} strokeWidth={active ? 2.2 : 1.6} />
                     <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
-                    {badge && !seenOrdering && <span style={{ fontSize: "0.6rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>{badge}</span>}
+                    {(item as any).badge && !seenOrdering && (
+                      <span style={{ fontSize: "0.58rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 5px", letterSpacing: ".03em", lineHeight: 1.6, flexShrink: 0 }}>
+                        {(item as any).badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
             </div>
-          ))}
-        </nav>
-        {/* Account */}
-        <button onClick={openAccount} style={{
-          display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", width: "100%",
-          background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left",
-        }}>
-          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.75rem", fontWeight: 700 }}>{initial}</div>
-          <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>{name}</span>
-        </button>
+          </div>
+        );
+      })}
+    </nav>
+  );
+
+  const SidebarHeader = () => (
+    <div style={{ padding: "16px 16px 14px", borderBottom: "1px solid var(--adm-card-border)" }}>
+      <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+        <RestLogo size={34} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+          {activePlan && basePath === "/panel" && (
+            <button
+              onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: activePlan === "FREE" ? undefined : activePlan, source: "plan_badge" } })); }}
+              style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px", border: "none", cursor: "pointer", marginTop: 3,
+                background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",
+                color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : "var(--adm-text3)",
+              }}
+            >
+              {activePlan === "PREMIUM" ? "Carta QR" : activePlan === "GOLD" ? "Gold" : "Ver planes"}
+            </button>
+          )}
+        </div>
+      </Link>
+    </div>
+  );
+
+  const SidebarFooter = ({ onAccountClick }: { onAccountClick: () => void }) => (
+    <div style={{ borderTop: "1px solid var(--adm-card-border)" }}>
+      {/* Theme toggle */}
+      <button
+        onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }}
+        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "11px 16px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer" }}
+      >
+        {theme === "dark" ? <Sun size={15} color="var(--adm-text3)" /> : <Moon size={15} color="var(--adm-text3)" />}
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
+      </button>
+      {/* Account */}
+      <button onClick={onAccountClick} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", width: "100%", background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{initial}</div>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, textAlign: "left" }}>{name}</span>
+      </button>
+    </div>
+  );
+
+  return (
+    <div className={theme === "dark" ? "theme-dark" : "theme-light"} style={{ minHeight: "100vh", background: "var(--adm-bg)" }}>
+
+      {/* ── Desktop Sidebar (≥768px) ── */}
+      <aside className="owl-sidebar">
+        <SidebarHeader />
+        <AccordionNav />
+        <SidebarFooter onAccountClick={openAccount} />
       </aside>
 
       {/* ── Mobile Header (<768px) ── */}
       <header className="owl-mobile-header">
-        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-          <RestLogo size={40} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <p style={{ fontFamily: F, fontSize: "17px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-              {activePlan && basePath === "/panel" && (
-                <button
-                  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: activePlan === "FREE" ? undefined : activePlan, source: "plan_badge_mobile" } })); }}
-                  style={{ fontFamily: F, fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.3px", border: "none", cursor: "pointer", flexShrink: 0,
-                    background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : activePlan === "SILVER" ? "rgba(148,163,184,0.12)" : "var(--adm-hover)",
-                    color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : activePlan === "SILVER" ? "#94a3b8" : "var(--adm-text3)",
-                  }}
-                >
-                  {activePlan === "PREMIUM" ? "PRO" : activePlan === "GOLD" ? "GOLD" : activePlan === "SILVER" ? "SILVER" : "GRATIS"}
-                </button>
-              )}
-            </div>
-            <p style={{ fontFamily: F, fontSize: "12px", color: "var(--adm-text3)", fontWeight: 500, margin: "2px 0 0" }}>QuieroComer</p>
+        <button onClick={openSidebar} style={{ width: 40, height: 40, borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <MenuIcon size={18} color="var(--adm-text2)" />
+        </button>
+        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, margin: "0 10px" }}>
+          <RestLogo size={34} />
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+            <p style={{ fontFamily: F, fontSize: "11px", color: "var(--adm-text3)", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
-        {false && restaurants.length > 1 && (
-          <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
-            style={{ padding: "6px 10px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", maxWidth: 140, cursor: "pointer", flexShrink: 0 }}>
-            {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-          </select>
-        )}
-        <button onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }} className="theme-toggle-btn" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10 }}>
-          {theme === "dark" ? <Sun size={16} color="#777" /> : <Moon size={16} color="#bbb" />}
-        </button>
-        <button onClick={openAccount} style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(244,166,35,0.15)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "1rem", fontWeight: 700, flexShrink: 0 }}>
+        <button onClick={openAccount} style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(244,166,35,0.15)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.95rem", fontWeight: 700, flexShrink: 0 }}>
           {initial}
         </button>
       </header>
@@ -311,78 +356,42 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       <main className="owl-main" style={{ animation: "panelFadeIn 0.4s ease-out", position: "relative" }}>
         {children}
       </main>
-      <style>{`@keyframes panelFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } } @media(max-width:768px){.theme-toggle-btn{display:none!important;}}`}</style>
+      <style>{`@keyframes panelFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
 
-      {/* ── Mobile Bottom Nav (<768px) ── */}
-      <nav className="owl-bottom-nav">
-        {BOTTOM_TABS.map((tab) => {
-          const active = tab.href === "__more__" ? moreOpen : isActive(tab.href);
-          const Icon = tab.icon;
-          if (tab.href === "__more__") {
-            return (
-              <button key="more" onClick={() => moreOpen ? closeMore() : openMore()} style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                background: "none", border: "none", cursor: "pointer", padding: "8px 12px", minWidth: 64, minHeight: 44,
-              }}>
-                <Icon size={22} color={active ? GOLD : "var(--adm-text2)"} strokeWidth={active ? 2.5 : 1.8} />
-                <span style={{ fontFamily: FB, fontSize: "0.65rem", fontWeight: 500, color: active ? GOLD : "var(--adm-text2)" }}>{t(tab.labelKey)}</span>
-              </button>
-            );
-          }
-          return (
-            <Link key={tab.href} href={tab.href} onClick={() => { if (isActive(tab.href)) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-              textDecoration: "none", padding: "8px 12px", minWidth: 64, minHeight: 44,
-            }}>
-              <Icon size={22} color={active ? GOLD : "var(--adm-text2)"} strokeWidth={active ? 2.5 : 1.8} />
-              <span style={{ fontFamily: FB, fontSize: "0.65rem", fontWeight: 500, color: active ? GOLD : "var(--adm-text2)" }}>{t(tab.labelKey)}</span>
+      {/* ── Mobile Left Sidebar Drawer ── */}
+      {sidebarOpen && (<>
+        <div onClick={closeSidebar} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, opacity: sidebarVisible ? 1 : 0, transition: "opacity 0.25s ease" }} />
+        <div style={{
+          position: "fixed", top: 0, left: 0, bottom: 0, width: "min(280px, 85vw)",
+          zIndex: 201, background: "var(--adm-card)", display: "flex", flexDirection: "column",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.2)",
+          transform: sidebarVisible ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.25s ease-out",
+        }}>
+          {/* Drawer header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid var(--adm-card-border)", flexShrink: 0 }}>
+            <Link href={basePath} onClick={closeSidebar} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, minWidth: 0, flex: 1 }}>
+              <RestLogo size={32} />
+              <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
             </Link>
-          );
-        })}
-      </nav>
-
-      {/* ── Drawer "Más" (bottom sheet, mobile only) ── */}
-      {moreOpen && (<>
-        <div onClick={closeMore} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 200, opacity: moreVisible ? 1 : 0, transition: "opacity 0.25s ease" }} />
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 201, background: "var(--adm-card)", borderRadius: "20px 20px 0 0", paddingBottom: "env(safe-area-inset-bottom, 16px)", transform: moreVisible ? "translateY(0)" : "translateY(100%)", transition: "transform 0.25s ease-out", maxHeight: "70vh", overflowY: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--adm-card-border)" }} />
+            <button onClick={closeSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}>
+              <X size={18} color="var(--adm-text3)" />
+            </button>
           </div>
-          <div style={{ padding: "8px 16px 16px" }}>
-            {SECTIONS.map(section => {
-              const sectionMoreItems = section.items.filter(n => !BOTTOM_TABS.some((tb: any) => tb.href === n.href));
-              if (sectionMoreItems.length === 0) return null;
-              return (
-                <div key={section.key}>
-                  <p style={{ fontFamily: FB, fontSize: "0.6rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "12px 4px 4px" }}>{section.label}</p>
-                  {sectionMoreItems.map((item) => {
-                    const Icon = item.icon;
-                    const badge = (item as any).badge;
-                    return (
-                      <Link key={item.href} href={item.href} onClick={closeMore} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", textDecoration: "none", borderBottom: "1px solid var(--adm-card-border)" }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                          <Icon size={18} color={GOLD} />
-                          {badge && !seenOrdering && <span style={{ position: "absolute", top: -4, right: -4, fontSize: "0.55rem", fontWeight: 700, fontFamily: F, background: "#ef4444", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.5 }}>{badge}</span>}
-                        </div>
-                        <span style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", flex: 1 }}>{t(item.labelKey)}</span>
-                        <ChevronRight size={16} color="var(--adm-text3)" />
-                      </Link>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
+          {/* Accordion nav */}
+          <AccordionNav onNavClick={closeSidebar} />
+          {/* Footer */}
+          <SidebarFooter onAccountClick={() => { closeSidebar(); setTimeout(openAccount, 260); }} />
         </div>
       </>)}
 
-      {/* ── Account Drawer (right slide, both mobile and desktop) ── */}
+      {/* ── Account Drawer (right slide) ── */}
       {accountOpen && (<>
         <div onClick={closeAccount} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 300, opacity: accountVisible ? 1 : 0, transition: "opacity 0.25s ease" }} />
-        <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(320px, 85vw)", zIndex: 301, background: "var(--adm-card)", boxShadow: "-4px 0 20px rgba(0,0,0,0.2)", transform: accountVisible ? "translateX(0)" : "translateX(100%)", transition: "transform 0.25s ease-out", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(300px, 85vw)", zIndex: 301, background: "var(--adm-card)", boxShadow: "-4px 0 20px rgba(0,0,0,0.2)", transform: accountVisible ? "translateX(0)" : "translateX(100%)", transition: "transform 0.25s ease-out", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--adm-card-border)" }}>
             <button onClick={closeAccount} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer" }}><X size={20} color="var(--adm-text3)" /></button>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "1.1rem", fontWeight: 700 }}>{initial}</div>
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>{name}</p>
@@ -390,19 +399,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               </div>
             </div>
           </div>
-          {false && restaurants.length > 1 && (
-            <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--adm-card-border)" }}>
-              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Mis locales</p>
-              {restaurants.map(r => (
-                <button key={r.id} onClick={() => { setSelectedRestaurant(r.id); closeAccount(); }} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 4px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: r.id === selectedRestaurantId ? GOLD : "#ddd" }} />
-                  <span style={{ fontFamily: FB, fontSize: "0.82rem", color: r.id === selectedRestaurantId ? "var(--adm-text)" : "var(--adm-text3)" }}>{r.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
           <div style={{ padding: "8px 20px", flex: 1 }}>
-            <a href="/panel/perfil" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
+            <a href="/panel/perfil" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textDecoration: "none" }}>
               <UserCog size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>{t("my_profile")}</span>
             </a>
           </div>
@@ -440,14 +438,14 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         /* Desktop ≥768px */
         .owl-sidebar {
           display: flex; flex-direction: column;
-          position: fixed; top: 0; left: 0; bottom: 0; width: 220px; z-index: 50;
+          position: fixed; top: 0; left: 0; bottom: 0; width: 224px; z-index: 50;
           background: var(--adm-card); border-right: 1px solid var(--adm-card-border);
+          overflow: hidden;
         }
-        .owl-sidebar a:hover { background: var(--adm-hover); }
+        .owl-sidebar a:hover, .owl-sidebar button:hover { background: var(--adm-hover); }
         .owl-mobile-header { display: none; }
-        .owl-bottom-nav { display: none; }
         .owl-main {
-          margin-left: 220px; padding: 24px 32px; min-height: 100vh;
+          margin-left: 224px; padding: 24px 32px; min-height: 100vh;
           zoom: 1.03;
         }
 
@@ -456,24 +454,14 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           .owl-sidebar { display: none; }
           .owl-mobile-header {
             display: flex; position: sticky; top: 0; z-index: 100;
-            height: 64px; align-items: center; justify-content: space-between;
-            padding: 0 16px; background: var(--adm-card); border-bottom: 1px solid var(--adm-card-border);
-          }
-          .owl-bottom-nav {
-            display: flex; position: fixed; bottom: 12px; left: 12px; right: 12px; z-index: 100;
-            height: 60px; padding: 0 8px; padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: var(--adm-card); border: 1px solid var(--adm-card-border);
-            border-radius: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-            align-items: center; justify-content: space-evenly;
-            gap: 12px;
+            height: 60px; align-items: center;
+            padding: 0 12px; background: var(--adm-card); border-bottom: 1px solid var(--adm-card-border);
           }
           .owl-main {
-            margin-left: 0; padding: 20px 16px 100px; min-height: calc(100vh - 56px);
+            margin-left: 0; padding: 20px 16px 40px; min-height: calc(100vh - 60px);
             zoom: 1.03;
           }
         }
-
       `}</style>
     </div>
   );
