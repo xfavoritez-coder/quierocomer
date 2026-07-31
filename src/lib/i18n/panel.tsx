@@ -160,7 +160,6 @@ const translations = {
     mr_autorenew_error_desc: "Intenta nuevamente o contacta soporte@quierocomer.com",
     // Analytics
     analytics_title: "Analytics",
-    analytics_views: "Vistas",
     analytics_scans: "Escaneos",
     analytics_dishes: "Platos más vistos",
     // Menus / Mi Carta
@@ -174,7 +173,6 @@ const translations = {
     // Offers
     offers_title: "Ofertas",
     // Users
-    users_title: "Usuarios",
     users_invite: "Invitar usuario",
     // Support
     support_title: "Soporte",
@@ -230,7 +228,7 @@ const translations = {
     clients_could_not_save: "No se pudo guardar",
     clients_could_not_delete: "No se pudo borrar",
     // Garzón page
-    garzon_title: "Llamar garzón",
+    garzon_page_title: "Llamar garzón",
     garzon_desc: "Permite a tus clientes llamar al garzón desde su celular. Tu equipo recibe la notificación al instante.",
     garzon_how_it_works: "¿Cómo funciona?",
     garzon_step1_title: "El cliente escanea tu carta por QR",
@@ -991,7 +989,6 @@ const translations = {
     mr_autorenew_error_desc: "Try again or contact support@quierocomer.com",
     // Analytics
     analytics_title: "Analytics",
-    analytics_views: "Views",
     analytics_scans: "Scans",
     analytics_dishes: "Most viewed dishes",
     // Menus / Mi Carta
@@ -1005,7 +1002,6 @@ const translations = {
     // Offers
     offers_title: "Offers",
     // Users
-    users_title: "Users",
     users_invite: "Invite user",
     // Support
     support_title: "Support",
@@ -1061,7 +1057,7 @@ const translations = {
     clients_could_not_save: "Could not save",
     clients_could_not_delete: "Could not delete",
     // Garzón page
-    garzon_title: "Call Waiter",
+    garzon_page_title: "Call Waiter",
     garzon_desc: "Let your customers call the waiter from their phone. Your team receives the notification instantly.",
     garzon_how_it_works: "How does it work?",
     garzon_step1_title: "The customer scans your QR menu",
