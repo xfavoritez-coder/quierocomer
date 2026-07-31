@@ -614,10 +614,6 @@ export default function MiRestaurantePage() {
                     Contratar
                   </button>
                 </>
-              ) : isLoyaltyTrial ? (
-                <a href="/panel/loyalty" style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none" }}>
-                  Ir a Loyalty →
-                </a>
               ) : null}
             </div>
           </div>
