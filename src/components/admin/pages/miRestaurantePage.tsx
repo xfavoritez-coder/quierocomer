@@ -369,8 +369,9 @@ export default function MiRestaurantePage() {
         const planAccent = (plan as string) === "FREE" ? "#64748b" : "#7c3aed";
         const accent = inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : planAccent;
 
-        const planEmoji = (plan as string) === "FREE" ? "🆓" : "📋";
-        const planName = (plan as string) === "FREE" ? "Gratis" : "Pro";
+        const isFree = (plan as string) === "FREE";
+        const planEmoji = "📋";
+        const planName = isFree ? "Sin plan" : "Pro";
 
         const net = (billingStatus as any).customPlanPriceNet ?? planNetAmount(plan as PlanKey);
         const gross = grossOf(net);
@@ -411,7 +412,7 @@ export default function MiRestaurantePage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: "2rem", lineHeight: 1 }}>{planEmoji}</span>
                     <div>
-                      <p style={{ fontFamily: F, fontSize: "0.65rem", color: accent, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700, margin: 0, opacity: 0.8 }}>Plan activo</p>
+                      <p style={{ fontFamily: F, fontSize: "0.65rem", color: accent, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700, margin: 0, opacity: 0.8 }}>{isFree ? "Plan actual" : "Plan activo"}</p>
                       <p style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: accent, margin: "0", lineHeight: 1, letterSpacing: "-0.5px" }}>{planName}</p>
                     </div>
                   </div>
@@ -445,6 +446,13 @@ export default function MiRestaurantePage() {
                         style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: planAccent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                       >
                         <RefreshCw size={14} /> Renovar
+                      </button>
+                    ) : isFree ? (
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM", source: "mi_restaurante_free_cta" } }))}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: "#7c3aed", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,0.3)" }}
+                      >
+                        ⚡ Probar Pro 7 días gratis
                       </button>
                     ) : null}
                   </div>
@@ -579,41 +587,27 @@ export default function MiRestaurantePage() {
             )}
             {isLoyaltyNone && (
               <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
-                Tarjeta de fidelización digital con Apple Wallet y Google Wallet. ${loyaltyGross.toLocaleString("es-CL")} con IVA/mes.
+                Tarjeta de fidelización digital con Apple Wallet y Google Wallet. ${loyaltyNet.toLocaleString("es-CL")} neto/mes.
               </p>
             )}
 
             <div style={{ display: "flex", gap: 8 }}>
               {isLoyaltyNone ? (
-                <>
-                  <button
-                    onClick={async () => {
-                      if (!rid) return;
-                      try {
-                        const res = await fetch("/api/billing/loyalty/start-trial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
-                        const d = await res.json();
-                        if (!res.ok) { toast.error(d.error || "Error"); return; }
-                        toast.success("¡Loyalty activado! 7 días gratis.");
-                        setTimeout(() => window.location.reload(), 1000);
-                      } catch { toast.error("Error de conexión"); }
-                    }}
-                    style={{ flex: 2, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                  >
-                    ✨ Probar 7 días gratis
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!rid) return;
-                      const res = await fetch("/api/billing/loyalty/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
+                <button
+                  onClick={async () => {
+                    if (!rid) return;
+                    try {
+                      const res = await fetch("/api/billing/loyalty/start-trial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
                       const d = await res.json();
-                      if (!res.ok || !d.url) { toast.error(d.error || "Error"); return; }
-                      window.location.href = d.url;
-                    }}
-                    style={{ flex: 1, padding: "10px 0", border: `1.5px solid ${PURPLE}55`, borderRadius: 999, background: "transparent", color: PURPLE, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                  >
-                    Contratar
-                  </button>
-                </>
+                      if (!res.ok) { toast.error(d.error || "Error"); return; }
+                      toast.success("¡Loyalty activado! 7 días gratis.");
+                      setTimeout(() => window.location.reload(), 1000);
+                    } catch { toast.error("Error de conexión"); }
+                  }}
+                  style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                >
+                  ✨ Probar 7 días gratis
+                </button>
               ) : null}
             </div>
           </div>
