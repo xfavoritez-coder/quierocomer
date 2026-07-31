@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="QuieroComer reúne Carta QR Inteligente y Loyalty para ayudar a los restaurantes a vender más y hacer que sus clientes vuelvan.">
+<title>QuieroComer — Carta QR Inteligente y Loyalty</title>
+<style>
+:root{
+  --orange:#ff650f;
+  --orange-2:#ff7b17;
+  --orange-soft:#fff5ef;
+  --purple:#6940d8;
+  --purple-soft:#f6f1ff;
+  --ink:#0d1523;
+  --muted:#606875;
+  --line:#e9ebef;
+  --white:#fff;
+  --dark:#07111f;
+  --shadow:0 24px 80px rgba(11,22,38,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:#f4f5f7;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,Segoe UI,Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,a,input{font:inherit}
+a{color:inherit;text-decoration:none}
+button{border:0}
+img{display:block;max-width:100%}
+.site{width:min(100%,820px);margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 55px rgba(16,24,40,.08);overflow:hidden}
+.container{width:min(100% - 38px,720px);margin-inline:auto}
+.eyebrow{margin:0 0 12px;color:var(--purple);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;text-align:center}
+.section-title{margin:0;text-align:center;font-size:clamp(29px,7vw,40px);line-height:1.02;letter-spacing:-.045em}
+.section-copy{margin:14px auto 0;max-width:520px;color:var(--muted);text-align:center;line-height:1.55}
+
+/* Navigation */
+.nav{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.86);backdrop-filter:blur(18px);border-bottom:1px solid rgba(231,233,238,.9)}
+.nav-inner{height:64px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.logo{font-size:21px;font-weight:800;letter-spacing:-.05em}
+.logo span{color:var(--orange)}
+.nav-actions{display:flex;align-items:center;gap:14px}
+.nav-cta{display:none;padding:10px 20px;border:1.5px solid #ff9a63;color:var(--orange);border-radius:999px;font-size:13px;font-weight:750;background:white}
+.menu-btn{width:40px;height:40px;display:grid;place-items:center;background:transparent;border-radius:50%;cursor:pointer}
+.menu-btn:hover{background:#f4f5f7}
+.menu-lines,.menu-lines::before,.menu-lines::after{width:24px;height:2px;background:var(--ink);display:block;border-radius:2px;transition:.25s}
+.menu-lines{position:relative}
+.menu-lines::before,.menu-lines::after{content:"";position:absolute;left:0}
+.menu-lines::before{top:-7px} .menu-lines::after{top:7px}
+.menu-open .menu-lines{background:transparent}
+.menu-open .menu-lines::before{transform:translateY(7px) rotate(45deg)}
+.menu-open .menu-lines::after{transform:translateY(-7px) rotate(-45deg)}
+.menu-panel{position:fixed;inset:64px 0 auto;z-index:35;display:none;padding:18px 20px 24px;background:rgba(255,255,255,.98);border-bottom:1px solid var(--line);box-shadow:0 20px 40px rgba(16,24,40,.08)}
+.menu-panel.open{display:block}
+.menu-panel a{display:block;padding:15px 4px;font-weight:700;border-bottom:1px solid var(--line)}
+.menu-panel .menu-start{margin-top:18px;border:0;text-align:center;background:var(--orange);color:white;border-radius:14px}
+
+/* Hero */
+.hero{position:relative;padding:46px 0 36px;background:
+radial-gradient(circle at 76% 45%,rgba(112,74,225,.10),transparent 28%),
+radial-gradient(circle at 45% 60%,rgba(255,101,15,.12),transparent 25%),#fff}
+.hero-grid{display:grid;gap:26px;align-items:center}
+.hero-copy{position:relative;z-index:2}
+.hero h1{margin:0;font-size:clamp(42px,12vw,64px);line-height:.99;letter-spacing:-.06em;max-width:560px}
+.hero h1 span{color:var(--orange)}
+.hero p{margin:20px 0 0;color:var(--muted);font-size:17px;line-height:1.55;max-width:440px}
+.primary-btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;margin-top:26px;min-height:52px;padding:0 28px;background:linear-gradient(135deg,var(--orange),var(--orange-2));color:#fff;font-weight:800;border-radius:17px;box-shadow:0 13px 28px rgba(255,101,15,.24);cursor:pointer;transition:transform .2s,box-shadow .2s}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 17px 34px rgba(255,101,15,.30)}
+.primary-btn:active{transform:none}
+.no-card{display:block;margin-top:11px;color:#747b86;font-size:13px;text-align:center;max-width:240px}
+.hero-visual{position:relative;min-height:338px;display:grid;place-items:center}
+.hero-visual::before{content:"";position:absolute;width:86%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,166,112,.27),rgba(255,255,255,0) 67%);filter:blur(2px)}
+.hero-phones{position:relative;width:min(100%,430px);filter:drop-shadow(0 25px 28px rgba(24,34,55,.12));animation:float 5.5s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+.product-tags{display:flex;align-items:center;justify-content:center;gap:10px 16px;flex-wrap:wrap;margin-top:4px;color:#303844;font-size:13px;font-weight:650}
+.tag{display:flex;align-items:center;gap:7px}
+.tag i{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;font-style:normal}
+.tag.qr i{background:var(--orange-soft);color:var(--orange)}
+.tag.loyalty i{background:var(--purple-soft);color:var(--purple)}
+
+/* Tools */
+.tools{padding:54px 0 28px}
+.tools-grid{display:grid;gap:14px;margin-top:26px}
+.tool-card{position:relative;min-height:310px;border-radius:23px;overflow:hidden;padding:28px 24px;display:grid;grid-template-columns:1fr 46%;align-items:start}
+.tool-card.qr{background:linear-gradient(135deg,#fff7f2,#f9f2ed)}
+.tool-card.loyalty{background:linear-gradient(135deg,#fbf9ff,#f4efff)}
+.tool-card h3{margin:8px 0 12px;font-size:29px;line-height:1;letter-spacing:-.045em}
+.tool-card p{margin:0;color:#3f4652;font-size:15px;line-height:1.45}
+.tool-icon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.tool-card.qr .tool-icon{background:var(--orange)}
+.tool-card.loyalty .tool-icon{background:var(--purple)}
+.checks{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:10px;font-size:14px}
+.checks li{display:flex;align-items:center;gap:8px}
+.check{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:900;flex:0 0 auto}
+.qr .check{background:var(--orange)} .loyalty .check{background:var(--purple)}
+.tool-image{position:absolute;right:-8px;bottom:-4px;width:54%;max-width:260px}
+.loyalty .tool-image{right:auto;left:-8px;width:48%;max-width:225px}
+.tool-card.loyalty{grid-template-columns:46% 1fr}
+.tool-card.loyalty .tool-content{grid-column:2}
+
+/* Journey */
+.journey{padding:42px 0 48px}
+.journey-box{margin-top:24px;border:1px solid var(--line);border-radius:23px;padding:24px 18px;background:#fff}
+.journey-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:26px 12px}
+.step{text-align:center;position:relative}
+.step-icon{width:52px;height:52px;margin:0 auto 10px;display:grid;place-items:center;color:var(--ink)}
+.step-n{width:24px;height:24px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;background:#fff1e8;color:var(--orange);font-size:12px;font-weight:900}
+.step h4{margin:0;font-size:14px}
+.step p{margin:7px auto 0;color:var(--muted);font-size:12px;line-height:1.45;max-width:145px}
+
+/* Dark benefits */
+.benefits{background:linear-gradient(135deg,#06101e,#0c1726);color:#fff;padding:42px 0}
+.benefits .section-title{font-size:32px;max-width:420px;margin-inline:auto}
+.benefit-grid{display:grid;grid-template-columns:repeat(2,1fr);margin-top:30px}
+.benefit{padding:24px 16px;text-align:center}
+.benefit:nth-child(odd){border-right:1px solid rgba(255,255,255,.16)}
+.benefit:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.16)}
+.benefit-icon{width:45px;height:45px;margin:0 auto 12px;color:var(--orange)}
+.benefit h4{margin:0;font-size:15px}
+.benefit p{margin:8px auto 0;color:#c8ced7;font-size:12px;line-height:1.45;max-width:155px}
+
+/* Pricing */
+.pricing{padding:42px 0 44px}
+.pricing-scroll{display:grid;grid-auto-flow:column;grid-auto-columns:min(82vw,260px);gap:12px;margin-top:24px;overflow-x:auto;padding:2px 19px 18px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.pricing-scroll::-webkit-scrollbar{display:none}
+.price-card{position:relative;scroll-snap-align:center;min-height:300px;border:1px solid var(--line);border-radius:19px;padding:22px 18px;display:flex;flex-direction:column;background:#fff}
+.price-card.orange{background:#fff9f5}
+.price-card.purple{background:#fbf9ff}
+.price-card.featured{border:1.5px solid var(--orange);box-shadow:0 16px 34px rgba(255,101,15,.10)}
+.most{position:absolute;top:-11px;right:14px;border-radius:999px;background:var(--orange);color:#fff;padding:5px 11px;font-size:10px;font-weight:900}
+.price-head{display:flex;align-items:center;gap:10px}
+.price-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid var(--line)}
+.price-card h3{margin:0;font-size:18px}
+.price{margin:16px 0 12px;font-size:27px;font-weight:850;letter-spacing:-.04em}
+.price small{font-size:12px;font-weight:600}
+.price-card ul{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:13px;color:#3f4652}
+.price-card li{display:flex;gap:8px;align-items:flex-start}
+.price-card li::before{content:"✓";font-size:11px;font-weight:900;color:var(--orange);margin-top:2px}
+.price-card.purple li::before{color:var(--purple)}
+.price-btn{margin-top:auto;height:44px;border-radius:12px;border:1px solid #ffb18a;background:#fff;color:var(--orange);font-weight:800;cursor:pointer}
+.price-card.purple .price-btn{border-color:#bca8ff;color:var(--purple)}
+.price-card.featured .price-btn{background:var(--orange);color:#fff;border-color:var(--orange)}
+
+/* CTA */
+.final-cta{position:relative;overflow:hidden;background:linear-gradient(135deg,#06101e,#0f1928);color:#fff;padding:44px 0 48px;text-align:center}
+.final-cta::before,.final-cta::after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;filter:blur(8px);opacity:.22}
+.final-cta::before{left:-80px;bottom:-80px;background:var(--orange)}
+.final-cta::after{right:-80px;top:-80px;background:var(--purple)}
+.final-cta h2{position:relative;margin:0 auto;font-size:31px;line-height:1.08;letter-spacing:-.045em;max-width:610px}
+.final-cta h2 span{color:var(--orange)}
+.final-cta .primary-btn{position:relative}
+.footer{padding:26px 0;color:#8a919c;font-size:12px;text-align:center;background:#fff}
+
+/* Modal onboarding */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;background:rgba(5,13,24,.55);backdrop-filter:blur(8px);padding:16px}
+.modal.open{display:flex}
+.modal-card{width:min(100%,560px);max-height:90vh;overflow:auto;background:#fff;border-radius:26px;padding:24px;box-shadow:var(--shadow);animation:slideUp .28s ease}
+@keyframes slideUp{from{transform:translateY(22px);opacity:0}}
+.modal-head{display:flex;justify-content:space-between;align-items:start;gap:18px}
+.modal-head h2{margin:0;font-size:28px;line-height:1.05;letter-spacing:-.04em}
+.close{width:38px;height:38px;border-radius:50%;background:#f2f3f5;font-size:23px;cursor:pointer}
+.modal-copy{margin:10px 0 22px;color:var(--muted);font-size:14px}
+.choices{display:grid;gap:10px}
+.choice{padding:16px;border:1.5px solid var(--line);border-radius:16px;background:#fff;text-align:left;cursor:pointer;transition:.2s}
+.choice:hover,.choice.selected{border-color:var(--orange);background:#fff8f4}
+.choice strong{display:block;font-size:16px}
+.choice span{display:block;margin-top:4px;color:var(--muted);font-size:13px;line-height:1.4}
+.form{display:none;gap:12px}
+.form.show{display:grid}
+.field{display:grid;gap:6px}
+.field label{font-size:12px;font-weight:750}
+.field input{width:100%;height:48px;border:1px solid var(--line);border-radius:12px;padding:0 14px;outline:none}
+.field input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,101,15,.10)}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.secondary{height:48px;padding:0 18px;border-radius:13px;background:#f2f3f5;color:var(--ink);font-weight:750;cursor:pointer}
+.continue{height:48px;flex:1;border-radius:13px;background:var(--orange);color:#fff;font-weight:800;cursor:pointer}
+.success{display:none;text-align:center;padding:18px 0 5px}
+.success.show{display:block}
+.success-icon{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;background:#ecfbf3;color:#159653;font-size:30px}
+
+@media (min-width:560px){
+  .nav-cta{display:inline-flex}
+  .hero{padding-top:50px}
+  .hero-grid{grid-template-columns:42% 58%;gap:4px}
+  .hero-visual{min-height:440px}
+  .hero h1{font-size:54px}
+  .tools-grid{grid-template-columns:1fr 1fr}
+  .tool-card{min-height:330px;grid-template-columns:1fr;padding:28px 22px}
+  .tool-card.loyalty{grid-template-columns:1fr}
+  .tool-card.loyalty .tool-content{grid-column:1;margin-left:44%}
+  .tool-image{width:58%;right:-32px}
+  .loyalty .tool-image{width:56%;left:-30px}
+  .journey-grid{grid-template-columns:repeat(4,1fr)}
+  .benefit-grid{grid-template-columns:repeat(4,1fr)}
+  .benefit{border-right:1px solid rgba(255,255,255,.16)!important;border-bottom:0!important}
+  .benefit:last-child{border-right:0!important}
+  .pricing-scroll{grid-template-columns:repeat(3,1fr);grid-auto-flow:initial;grid-auto-columns:auto;overflow:visible;padding:2px 0 18px}
+}
+@media (min-width:760px){
+  .container{width:min(100% - 58px,720px)}
+  .nav-inner{height:70px}
+  .hero{padding:54px 0 38px}
+  .hero-grid{grid-template-columns:41% 59%}
+  .hero h1{font-size:61px}
+  .hero p{font-size:18px}
+  .hero-phones{width:455px}
+  .tools{padding-top:58px}
+  .tool-card{min-height:340px;padding:30px 25px}
+  .tool-card h3{font-size:31px}
+  .journey-box{padding:30px 24px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="site">
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a class="logo" href="#inicio" aria-label="QuieroComer">Quiero<span>Comer</span></a>
+      <div class="nav-actions">
+        <button class="nav-cta js-start">Comenzar gratis</button>
+        <button class="menu-btn" aria-label="Abrir menú" aria-expanded="false"><span class="menu-lines"></span></button>
+      </div>
+    </div>
+  </nav>
+  <div class="menu-panel" id="menuPanel">
+    <a href="#herramientas">Herramientas</a>
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#planes">Planes</a>
+    <button class="menu-start js-start">Prueba gratis 7 días</button>
+  </div>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1>Vende más hoy.<br>Haz que vuelvan <span>mañana.</span></h1>
+          <p>QuieroComer es la plataforma todo en uno para restaurantes con Carta QR Inteligente y Loyalty.</p>
+          <button class="primary-btn js-start">Prueba gratis 7 días <span aria-hidden="true">→</span></button>
+          <span class="no-card">Sin tarjeta de crédito</span>
+        </div>
+        <div>
+          <div class="hero-visual">
+            <img class="hero-phones" src="/hero.png">
+          </div>
+          <div class="product-tags" aria-label="Productos incluidos">
+            <span class="tag qr"><i>⌁</i> Carta QR Inteligente</span>
+            <span aria-hidden="true">|</span>
+            <span class="tag loyalty"><i>★</i> Loyalty</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tools" id="herramientas">
+      <div class="container">
+        <p class="eyebrow">Dos herramientas. Un solo objetivo.</p>
+        <h2 class="section-title">Las dos herramientas que hacen crecer tu restaurante.</h2>
+        <div class="tools-grid">
+          <article class="tool-card qr">
+            <div class="tool-content">
+              <div class="tool-icon" aria-hidden="true">⌁</div>
+              <h3>Carta QR<br>Inteligente</h3>
+              <p>Una carta digital rápida, atractiva y siempre actualizada.</p>
+              <ul class="checks">
+                <li><span class="check">✓</span>Actualiza al instante</li>
+                <li><span class="check">✓</span>Presentación que enamora</li>
+                <li><span class="check">✓</span>Ayuda a vender más</li>
+              </ul>
+            </div>
+            <img class="tool-image" src="/cartaqr.png" alt="Carta QR Inteligente">
+          </article>
+
+          <article class="tool-card loyalty">
+            <img class="tool-image" src="/loyalty.png" alt="Tarjeta Loyalty">
+            <div class="tool-content">
+              <div class="tool-icon" aria-hidden="true">☆</div>
+              <h3>Loyalty</h3>
+              <p>Convierte cada visita en una relación que vuelve.</p>
+              <ul class="checks">
+                <li><span class="check">✓</span>Sellos digitales</li>
+                <li><span class="check">✓</span>Promociones y notificaciones</li>
+                <li><span class="check">✓</span>Clientes que regresan</li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="journey" id="como-funciona">
+      <div class="container">
+        <p class="eyebrow">Desde la primera visita hasta la próxima.</p>
+        <h2 class="section-title">Un viaje simple que genera lealtad.</h2>
+        <div class="journey-box">
+          <div class="journey-grid">
+            <article class="step">
+              <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="46" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 19h32l-3-9H11l-3 9Z"/><path d="M10 19v19h28V19M17 38V27h10v11M8 19c1 5 7 5 8 0 1 5 7 5 8 0 1 5 7 5 8 0 1 5 7 5 8 0"/></svg></div>
+              <div class="step-n">1</div><h4>Descubren tu local</h4><p>Te encuentran y se interesan por tu restaurante.</p>
+            </article>
+            <article class="step">
+              <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="46" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h12v12H7zM29 7h12v12H29zM7 29h12v12H7zM28 28h5v5h-5zM36 28h5v5h-5zM28 36h5v5h-5zM36 36h5v5h-5z"/></svg></div>
+              <div class="step-n">2</div><h4>Escanean tu carta</h4><p>Exploran tu menú digital y disfrutan la experiencia.</p>
+            </article>
+            <article class="step">
+              <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="46" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 10c0-4 10-4 10 0v9c0 3 3 5 7 7v5H12v-5c4-2 7-4 7-7v-9Z"/><path d="M12 35h24v5H12z"/></svg></div>
+              <div class="step-n">3</div><h4>Obtienen su sello</h4><p>Guardan su progreso y se acercan a su recompensa.</p>
+            </article>
+            <article class="step">
+              <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="46" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 20h32v21H8zM5 14h38v8H5zM24 14v27M13 14c-3-6 1-10 5-7 3 2 6 7 6 7M35 14c3-6-1-10-5-7-3 2-6 7-6 7"/></svg></div>
+              <div class="step-n">4</div><h4>Vuelven con promoción</h4><p>Reciben beneficios y regresan una y otra vez.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="benefits">
+      <div class="container">
+        <h2 class="section-title">Tecnología que trabaja<br>para tu restaurante.</h2>
+        <div class="benefit-grid">
+          <article class="benefit"><div class="benefit-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 38V25h7v13M20 38V18h7v20M33 38V10h7v28M7 16l10-8 8 5 15-9"/></svg></div><h4>Vende más</h4><p>Más ventas recurrentes y clientes satisfechos.</p></article>
+          <article class="benefit"><div class="benefit-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M24 40S7 31 7 18c0-9 11-12 17-3 6-9 17-6 17 3 0 13-17 22-17 22Z"/></svg></div><h4>Haz que vuelvan</h4><p>Clientes leales que prefieren tu restaurante.</p></article>
+          <article class="benefit"><div class="benefit-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><circle cx="24" cy="24" r="17"/><path d="M24 13v12l8 5"/></svg></div><h4>Te ahorra tiempo</h4><p>Gestiona todo desde una sola plataforma.</p></article>
+          <article class="benefit"><div class="benefit-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M24 5 40 11v12c0 10-7 17-16 20C15 40 8 33 8 23V11l16-6Z"/><path d="m17 24 5 5 10-11"/></svg></div><h4>Hecha para restaurantes</h4><p>Simple, confiable y pensada para tu día a día.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing" id="planes">
+      <div class="container"><h2 class="section-title">Planes simples.</h2></div>
+      <div class="pricing-scroll">
+        <article class="price-card orange">
+          <div class="price-head"><div class="price-icon">⌁</div><h3>Carta QR</h3></div>
+          <div class="price">$19.900<small>/mes</small></div>
+          <ul><li>Carta digital ilimitada</li><li>Actualizaciones en tiempo real</li><li>Soporte por WhatsApp</li></ul>
+          <button class="price-btn js-start" data-choice="qr">Elegir plan</button>
+        </article>
+        <article class="price-card purple">
+          <div class="price-head"><div class="price-icon">☆</div><h3>Loyalty</h3></div>
+          <div class="price">$19.900<small>/mes</small></div>
+          <ul><li>Sellos digitales</li><li>Promociones</li><li>Notificaciones</li><li>Soporte por WhatsApp</li></ul>
+          <button class="price-btn js-start" data-choice="loyalty">Elegir plan</button>
+        </article>
+        <article class="price-card featured">
+          <span class="most">MÁS ELEGIDO</span>
+          <div class="price-head"><div class="price-icon">◉</div><h3>QuieroComer Completo</h3></div>
+          <div class="price" style="color:var(--orange)">$29.900<small>/mes</small></div>
+          <ul><li>Carta QR Inteligente</li><li>Loyalty incluido</li><li>Dashboard avanzado</li><li>Soporte prioritario</li></ul>
+          <button class="price-btn js-start" data-choice="ambos">Elegir plan</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <div class="container">
+        <h2>Tu restaurante no necesita más herramientas.<br><span>Necesita herramientas que venden.</span></h2>
+        <button class="primary-btn js-start">Prueba gratis 7 días <span aria-hidden="true">→</span></button>
+        <span class="no-card" style="margin-inline:auto;color:#adb5c0">Sin tarjeta de crédito</span>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">© 2026 QuieroComer · Carta QR Inteligente + Loyalty</footer>
+</div>
+
+<div class="modal" id="onboarding" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="modalTitle">¿Qué quieres probar?</h2><button class="close" aria-label="Cerrar">×</button></div>
+    <p class="modal-copy">Crea una sola cuenta y activa la herramienta que necesitas. Puedes sumar la otra después.</p>
+    <div class="choice-step">
+      <div class="choices">
+        <button class="choice" data-choice="qr"><strong>Carta QR Inteligente</strong><span>Sube tu carta actual o créala desde cero.</span></button>
+        <button class="choice" data-choice="loyalty"><strong>Loyalty</strong><span>Crea sellos, recompensas y notificaciones.</span></button>
+        <button class="choice" data-choice="ambos"><strong>QuieroComer completo</strong><span>Activa Carta QR + Loyalty desde el mismo panel.</span></button>
+      </div>
+      <div class="modal-actions"><button class="continue" id="toForm" disabled>Continuar</button></div>
+    </div>
+    <form class="form" id="signupForm">
+      <div class="field"><label for="name">Tu nombre</label><input id="name" name="name" autocomplete="name" required></div>
+      <div class="field"><label for="restaurant">Nombre del restaurante</label><input id="restaurant" name="restaurant" required></div>
+      <div class="field"><label for="email">Correo</label><input id="email" type="email" name="email" autocomplete="email" required></div>
+      <div class="field"><label for="phone">WhatsApp</label><input id="phone" name="phone" autocomplete="tel" required></div>
+      <div class="modal-actions"><button type="button" class="secondary" id="backChoice">Atrás</button><button class="continue" type="submit">Crear prueba gratis</button></div>
+    </form>
+    <div class="success" id="success"><div class="success-icon">✓</div><h2>Tu prueba está lista</h2><p class="modal-copy" id="successText">Ahora puedes comenzar a configurar QuieroComer.</p><button class="continue close-success">Cerrar</button></div>
+  </div>
+</div>
+
+<script>
+const menuBtn=document.querySelector('.menu-btn');
+const menuPanel=document.getElementById('menuPanel');
+menuBtn.addEventListener('click',()=>{
+  const open=menuPanel.classList.toggle('open');
+  menuBtn.classList.toggle('menu-open',open);
+  menuBtn.setAttribute('aria-expanded',String(open));
+});
+menuPanel.querySelectorAll('a,button').forEach(el=>el.addEventListener('click',()=>{menuPanel.classList.remove('open');menuBtn.classList.remove('menu-open');menuBtn.setAttribute('aria-expanded','false')}));
+
+const modal=document.getElementById('onboarding');
+const closeBtn=modal.querySelector('.close');
+const choices=[...modal.querySelectorAll('.choice')];
+const toForm=document.getElementById('toForm');
+const choiceStep=modal.querySelector('.choice-step');
+const form=document.getElementById('signupForm');
+const backChoice=document.getElementById('backChoice');
+const success=document.getElementById('success');
+let selected='';
+function resetModal(){
+  selected='';choices.forEach(c=>c.classList.remove('selected'));toForm.disabled=true;
+  choiceStep.style.display='block';form.classList.remove('show');success.classList.remove('show');form.reset();
+}
+function openModal(prefill=''){
+  resetModal();modal.classList.add('open');document.body.style.overflow='hidden';
+  if(prefill){const c=choices.find(x=>x.dataset.choice===prefill);if(c)c.click();}
+}
+function closeModal(){modal.classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.js-start').forEach(btn=>btn.addEventListener('click',()=>openModal(btn.dataset.choice||'')));
+closeBtn.addEventListener('click',closeModal);
+modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal()});
+choices.forEach(c=>c.addEventListener('click',()=>{selected=c.dataset.choice;choices.forEach(x=>x.classList.toggle('selected',x===c));toForm.disabled=false}));
+toForm.addEventListener('click',()=>{if(!selected)return;choiceStep.style.display='none';form.classList.add('show');document.getElementById('name').focus()});
+backChoice.addEventListener('click',()=>{form.classList.remove('show');choiceStep.style.display='block'});
+form.addEventListener('submit',e=>{e.preventDefault();form.classList.remove('show');success.classList.add('show');const names={qr:'tu Carta QR',loyalty:'tu programa Loyalty',ambos:'Carta QR y Loyalty'};document.getElementById('successText').textContent=`Ya puedes comenzar a configurar ${names[selected]}.`});
+document.querySelector('.close-success').addEventListener('click',closeModal);
+</script>
+</body>
+</html>
