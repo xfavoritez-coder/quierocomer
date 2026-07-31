@@ -362,7 +362,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <RestLogo size={32} />
           <div style={{ minWidth: 0 }}>
             <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-            <p style={{ fontFamily: F, fontSize: "11px", color: "var(--adm-text3)", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
       </header>
