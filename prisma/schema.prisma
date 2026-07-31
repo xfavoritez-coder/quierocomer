@@ -2379,9 +2379,10 @@ model LoyaltyMember {
   programId    String
   restaurantId String
 
-  name  String?
-  email String?
-  phone String?
+  name      String?
+  email     String?
+  phone     String?
+  birthDate DateTime?
 
   stamps         Int     @default(0) // sellos en la tarjeta vigente (0..stampGoal)
   redeemedTiers  Int[]   @default([]) // números de sello ya canjeados en el ciclo actual
