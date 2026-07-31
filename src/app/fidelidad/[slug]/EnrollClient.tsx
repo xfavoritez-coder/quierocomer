@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface RewardTier {
   stamp: number;
@@ -35,13 +35,17 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ appleUrl: string | null; googleSaveUrl: string | null } | null>(null);
+  const [device, setDevice] = useState<"ios" | "android" | "other">("other");
 
   const accent = program.cardColorHex;
   const onAccentText = isLight(accent) ? "#111" : "#fff";
   const iconText = program.stampIcon === "logo" ? "sellos" : program.stampIcon;
 
-  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isAndroid = () => /android/i.test(navigator.userAgent);
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/iphone|ipad|ipod/i.test(ua)) setDevice("ios");
+    else if (/android/i.test(ua)) setDevice("android");
+  }, []);
 
   const submit = async () => {
     setError("");
@@ -58,17 +62,8 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Error");
 
-      // Redirigir directo al wallet según dispositivo
-      if (isIOS() && d.appleUrl) {
-        window.location.href = d.appleUrl;
-        return;
-      }
-      if (isAndroid() && d.googleSaveUrl) {
-        window.location.href = d.googleSaveUrl;
-        return;
-      }
-
-      // Desktop u otro: mostrar pantalla con ambos botones
+      if (device === "ios" && d.appleUrl) { window.location.href = d.appleUrl; return; }
+      if (device === "android" && d.googleSaveUrl) { window.location.href = d.googleSaveUrl; return; }
       setDone({ appleUrl: d.appleUrl, googleSaveUrl: d.googleSaveUrl });
     } catch (e: any) {
       setError(e.message || "No pudimos crear tu tarjeta.");
@@ -184,19 +179,12 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
             <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: "0 0 12px" }}>Crea tu tarjeta gratis</p>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre *" style={inputStyle} />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email *" style={inputStyle} inputMode="email" />
-            <div style={{ position: "relative", marginBottom: 12 }}>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                style={{ ...inputStyle, marginBottom: 0, colorScheme: "dark" }}
-              />
-              {!birthDate && (
-                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)", fontSize: "1rem", pointerEvents: "none" }}>
-                  Fecha de cumpleaños *
-                </span>
-              )}
-            </div>
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              style={{ ...inputStyle, colorScheme: "dark", maxWidth: "100%" }}
+            />
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono (opcional)" style={inputStyle} inputMode="tel" />
 
             {error && <p style={{ color: "#ff6b6b", fontSize: "0.85rem", margin: "0 0 12px" }}>{error}</p>}
@@ -205,13 +193,26 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
               type="button"
               onClick={submit}
               disabled={loading}
-              style={{ width: "100%", padding: "15px", borderRadius: 12, border: "none", background: accent, color: onAccentText, fontSize: "1.05rem", fontWeight: 800, cursor: "pointer", opacity: loading ? 0.6 : 1 }}
+              style={{ width: "100%", padding: "15px", borderRadius: 12, border: "none", background: accent, color: onAccentText, fontSize: "1.05rem", fontWeight: 800, cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
             >
-              {loading ? "Creando…" : "Crear mi tarjeta"}
+              {loading ? "Creando…" : (
+                <>
+                  {device === "ios" ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                  ) : device === "android" ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.56 10.738l-9.4-9.4a1.794 1.794 0 0 0-2.538 0l-1.76 1.759 2.226 2.226a2.133 2.133 0 0 1 2.7 2.72l2.145 2.146a2.133 2.133 0 1 1-1.279 1.218l-2-2v5.264a2.134 2.134 0 1 1-1.755-.062V9.157a2.134 2.134 0 0 1-1.159-2.8L6.52 4.134 2.44 8.214a1.794 1.794 0 0 0 0 2.537l9.4 9.4a1.794 1.794 0 0 0 2.537 0l7.183-7.182a1.794 1.794 0 0 0 0-2.231z"/></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                  )}
+                  {device === "ios" ? "Agregar a Apple Wallet" : device === "android" ? "Guardar en Google Wallet" : "Crear mi tarjeta"}
+                </>
+              )}
             </button>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
-              La guardarás en Apple Wallet o Google Wallet. {program.description}
-            </p>
+            {program.description && (
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
+                {program.description}
+              </p>
+            )}
           </>
         ) : (
           <>
