@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -46,6 +46,7 @@ export async function PATCH(req: NextRequest) {
 
   revalidatePath(`/${updated.slug}`);
   revalidatePath(`/qr/${updated.slug}`);
+  revalidateTag(`qr-restaurant-${updated.slug}`);
 
   return NextResponse.json({ ok: true, orderingEnabled });
 }
