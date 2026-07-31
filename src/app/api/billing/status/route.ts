@@ -94,6 +94,7 @@ export async function GET(req: NextRequest) {
     loyaltyPeriodEnd: restaurant.loyaltyPeriodEnd,
     loyaltyTrialEndsAt: restaurant.loyaltyTrialEndsAt,
     loyaltyLastPaymentAt: restaurant.loyaltyLastPaymentAt,
+    loyaltyTrialUsed: !!restaurant.loyaltyTrialEndsAt,
     hasLoyalty: restaurant.loyaltyStatus === "ACTIVE" || restaurant.loyaltyStatus === "TRIALING",
     billingInfo: {
       billingCompanyName: restaurant.billingCompanyName,

@@ -452,7 +452,7 @@ export default function MiRestaurantePage() {
                         onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM", source: "mi_restaurante_free_cta" } }))}
                         style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: "#7c3aed", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,0.3)" }}
                       >
-                        ⚡ Probar Pro 7 días gratis
+                        {trialUsed ? "⚡ Activar Pro →" : "⚡ Probar Pro 7 días gratis"}
                       </button>
                     ) : null}
                   </div>
@@ -553,6 +553,7 @@ export default function MiRestaurantePage() {
         const ls = (billingStatus as any).loyaltyStatus as string ?? "NONE";
         const lEnd = (billingStatus as any).loyaltyPeriodEnd as string | null;
         const lTrial = (billingStatus as any).loyaltyTrialEndsAt as string | null;
+        const loyaltyTrialUsed = !!(billingStatus as any).loyaltyTrialUsed;
         const isLoyaltyActive = ls === "ACTIVE";
         const isLoyaltyTrial = ls === "TRIALING";
         const isLoyaltyNone = ls === "NONE" || ls === "CANCELED";
@@ -592,7 +593,7 @@ export default function MiRestaurantePage() {
             )}
 
             <div style={{ display: "flex", gap: 8 }}>
-              {isLoyaltyNone ? (
+              {isLoyaltyNone && !loyaltyTrialUsed && (
                 <button
                   onClick={async () => {
                     if (!rid) return;
@@ -608,7 +609,21 @@ export default function MiRestaurantePage() {
                 >
                   ✨ Probar 7 días gratis
                 </button>
-              ) : null}
+              )}
+              {isLoyaltyNone && loyaltyTrialUsed && (
+                <button
+                  onClick={async () => {
+                    if (!rid) return;
+                    const res = await fetch("/api/billing/loyalty/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
+                    const d = await res.json();
+                    if (!res.ok || !d.url) { toast.error(d.error || "Error"); return; }
+                    window.location.href = d.url;
+                  }}
+                  style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                >
+                  Activar Loyalty — ${loyaltyGross.toLocaleString("es-CL")} con IVA/mes
+                </button>
+              )}
             </div>
           </div>
         );

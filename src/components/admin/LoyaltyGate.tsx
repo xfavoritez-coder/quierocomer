@@ -12,6 +12,7 @@ const PURPLE = "#6d28d9";
 interface LoyaltyStatus {
   loyaltyStatus: string;
   loyaltyTrialEndsAt: string | null;
+  loyaltyTrialUsed: boolean;
   loyaltyPeriodEnd: string | null;
   billingExempt?: boolean;
 }
@@ -40,6 +41,7 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
 
   const net = LOYALTY_PLAN_NET;
   const gross = grossOf(net);
+  const trialUsed = status.loyaltyTrialUsed;
 
   const handleTrial = async () => {
     if (!selectedRestaurantId || activating) return;
@@ -78,9 +80,12 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
       <h2 style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 8px" }}>
         Módulo Loyalty
       </h2>
-      <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "0 0 28px", lineHeight: 1.6 }}>
+      <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "0 0 8px", lineHeight: 1.6 }}>
         Sistema de tarjeta de fidelización digital con Apple Wallet y Google Wallet.
         Haz que tus clientes vuelvan con sellos, recompensas y notificaciones.
+      </p>
+      <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 24px" }}>
+        ${net.toLocaleString("es-CL")} neto/mes · Sin contratos
       </p>
 
       {/* Demo link */}
@@ -99,25 +104,49 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
         Ver demo →
       </a>
 
-      {/* Trial CTA */}
-      <button
-        onClick={handleTrial}
-        disabled={activating}
-        style={{
-          display: "block", width: "100%", padding: "15px 0", border: "none",
-          borderRadius: 14, background: PURPLE, color: "#fff",
-          fontFamily: F, fontSize: "0.95rem", fontWeight: 800,
-          cursor: activating ? "wait" : "pointer", marginBottom: 8,
-          boxShadow: "0 6px 20px rgba(109,40,217,0.3)",
-          opacity: activating ? 0.7 : 1,
-        }}
-      >
-        {activating ? "Activando…" : `✨ Probar ${LOYALTY_TRIAL_DAYS} días gratis`}
-      </button>
-
-      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 20px", lineHeight: 1.5 }}>
-        Prueba sin compromiso
-      </p>
+      {trialUsed ? (
+        /* Trial ya usado → ir directo a pago */
+        <>
+          <button
+            onClick={handleSubscribe}
+            disabled={subscribing}
+            style={{
+              display: "block", width: "100%", padding: "15px 0", border: "none",
+              borderRadius: 14, background: PURPLE, color: "#fff",
+              fontFamily: F, fontSize: "0.95rem", fontWeight: 800,
+              cursor: subscribing ? "wait" : "pointer", marginBottom: 8,
+              boxShadow: "0 6px 20px rgba(109,40,217,0.3)",
+              opacity: subscribing ? 0.7 : 1,
+            }}
+          >
+            {subscribing ? "Redirigiendo…" : `Activar Loyalty — $${gross.toLocaleString("es-CL")} con IVA/mes`}
+          </button>
+          <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 20px" }}>
+            Sin contratos · Cancelas cuando quieras
+          </p>
+        </>
+      ) : (
+        /* Sin trial previo → ofrecer prueba gratis */
+        <>
+          <button
+            onClick={handleTrial}
+            disabled={activating}
+            style={{
+              display: "block", width: "100%", padding: "15px 0", border: "none",
+              borderRadius: 14, background: PURPLE, color: "#fff",
+              fontFamily: F, fontSize: "0.95rem", fontWeight: 800,
+              cursor: activating ? "wait" : "pointer", marginBottom: 8,
+              boxShadow: "0 6px 20px rgba(109,40,217,0.3)",
+              opacity: activating ? 0.7 : 1,
+            }}
+          >
+            {activating ? "Activando…" : `✨ Probar ${LOYALTY_TRIAL_DAYS} días gratis`}
+          </button>
+          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 20px", lineHeight: 1.5 }}>
+            Prueba sin compromiso
+          </p>
+        </>
+      )}
     </div>
   );
 }
