@@ -13,6 +13,7 @@ interface Props {
   program: {
     name: string;
     cardColorHex: string;
+    accentColor: string;
     stampIcon: string;
     stampGoal: number;
     description: string | null;
@@ -37,7 +38,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
   const [done, setDone] = useState<{ appleUrl: string | null; googleSaveUrl: string | null } | null>(null);
   const [device, setDevice] = useState<"ios" | "android" | "other">("other");
 
-  const accent = program.cardColorHex;
+  const accent = program.accentColor || program.cardColorHex;
   const onAccentText = isLight(accent) ? "#111" : "#fff";
   const iconText = program.stampIcon === "logo" ? "sellos" : program.stampIcon;
 
@@ -120,6 +121,11 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
         <p style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 2px" }}>{restaurantName}</p>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15 }}>{program.name}</h1>
 
+        {/* Texto descriptivo */}
+        <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: "0 0 20px", maxWidth: 340, marginLeft: "auto", marginRight: "auto" }}>
+          Acumula sellos cada vez que compras y canjéalos por productos gratis. Tu tarjeta se guarda directamente en tu celular.
+        </p>
+
         {/* ── PREVIEW TARJETA ── */}
         <div style={{
           background: `linear-gradient(135deg, ${accent}18, rgba(255,255,255,0.04))`,
@@ -150,16 +156,16 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
                         width: "100%",
                         aspectRatio: "1",
                         borderRadius: "50%",
-                        border: `2.5px solid ${isReward ? accent : isFilled ? accent : "rgba(255,255,255,0.2)"}`,
-                        background: isFilled ? accent : isReward ? `${accent}15` : "rgba(255,255,255,0.04)",
+                        border: `2.5px solid ${isFilled || isReward ? accent : `${accent}50`}`,
+                        background: isFilled ? accent : isReward ? `${accent}20` : `${accent}08`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         boxShadow: isReward ? `0 0 14px ${accent}66` : isFilled ? `0 0 10px ${accent}88` : "none",
                         fontSize: "1rem",
-                        color: isFilled ? onAccentText : isReward ? accent : "rgba(255,255,255,0.15)",
+                        color: isFilled ? onAccentText : isReward ? accent : `${accent}60`,
                         fontWeight: 900,
                         position: "relative",
                       }}>
-                        {isFilled ? (iconText === "sellos" ? "★" : iconText) : isReward ? "🎁" : <span style={{ fontSize: "0.6rem", opacity: 0.4 }}>{num}</span>}
+                        {isFilled ? (iconText === "sellos" ? "★" : iconText) : isReward ? "🎁" : <span style={{ fontSize: "0.6rem" }}>{num}</span>}
                       </div>
                     </div>
                   );
