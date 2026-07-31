@@ -127,7 +127,7 @@ export default function ValoracionesPage() {
             onClick={() => setHasReward(v => !v)}
             style={{
               width: 44, height: 24, borderRadius: 999,
-              background: hasReward ? GOLD : "rgba(255,255,255,.12)",
+              background: hasReward ? GOLD : "var(--adm-card-border)",
               border: "none", cursor: "pointer", position: "relative", flexShrink: 0,
               transition: "background .2s",
             }}
