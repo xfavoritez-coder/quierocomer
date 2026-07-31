@@ -298,9 +298,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         url: `${BASE}/${restaurantSlug}`,
         type: 'website',
-        images: rest.logoUrl ? [{ url: rest.logoUrl }] : [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
+        // og:image viene del opengraph-image.tsx dinámico (1200×630 branded)
       },
-      twitter: { card: 'summary', title, description, images: rest.logoUrl ? [rest.logoUrl] : [] },
+      twitter: { card: 'summary_large_image', title, description },
     }
   }
 
