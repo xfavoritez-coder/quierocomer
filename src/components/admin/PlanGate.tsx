@@ -1,7 +1,7 @@
 "use client";
 
 import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan as PlanKey } from "@/lib/plans";
-import { Tag, Megaphone, BarChart3, Globe, Bell, Mail, Cake, Users, UtensilsCrossed, LayoutGrid, FileText } from "lucide-react";
+import { Tag, Megaphone, BarChart3, Globe, Bell, Mail, Cake, Users, UtensilsCrossed, LayoutGrid, FileText, ShoppingCart } from "lucide-react";
 type Plan = PlanKey;
 
 const F = "var(--font-display)";
@@ -20,6 +20,7 @@ const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; ico
   suggestions: { title: "Cross-selling", desc: "Sugiere acompañamientos para subir el ticket de cada mesa.", icon: UtensilsCrossed },
   multi_menu: { title: "Multi-carta", desc: "Un QR, múltiples cartas. Ideal para locales con más de un concepto.", icon: LayoutGrid },
   print_menu: { title: "Carta imprimible", desc: "Exporta tu carta en PDF con diseño profesional para imprimir.", icon: FileText },
+  online_ordering: { title: "Pedidos Online", desc: "Activa tu carta de pedidos online para que tus clientes hagan sus pedidos y te lo envíen listo por WhatsApp. Sin comisiones ni app de terceros.", icon: ShoppingCart },
 };
 
 interface Props {
@@ -44,7 +45,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
     window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: needed } }));
   };
 
-  const accentColor = needed === "PREMIUM" ? "#7c3aed" : needed === "GOLD" ? "#F4A623" : "#64748b";
+  const accentColor = "#7c3aed";
   const Icon = cfg?.icon || Tag;
 
   return (
@@ -82,7 +83,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem",
             border: `2px solid ${accentColor}25`,
           }}>
-            {needed === "PREMIUM" ? "💎" : needed === "GOLD" ? "⭐" : "🥈"}
+            ⚡
           </div>
           <button style={{
             padding: "10px 24px", borderRadius: 999, border: "none",
@@ -90,7 +91,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
             fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
             boxShadow: `0 4px 16px ${accentColor}40`,
           }}>
-            {`Desbloquear con ${info.label} →`}
+            Desbloquear Pro →
           </button>
         </div>
       </div>

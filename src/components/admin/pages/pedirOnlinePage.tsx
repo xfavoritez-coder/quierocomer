@@ -6,6 +6,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import PlanGate from "@/components/admin/PlanGate";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -302,6 +303,7 @@ export default function PedirOnlinePage() {
 
   return (
     <>
+    <PlanGate feature="online_ordering" plan={activePlan}>
     <div style={{ padding: "0 0 40px" }}>
 
       {/* Header */}
@@ -513,6 +515,7 @@ export default function PedirOnlinePage() {
         </button>
       </div>
     </div>
+    </PlanGate>
     </>
   );
 }
