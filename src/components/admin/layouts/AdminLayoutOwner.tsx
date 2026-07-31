@@ -338,20 +338,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         <div style={{ padding: "14px 16px 12px", flexShrink: 0 }}>
           <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
             <RestLogo size={34} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-              {activePlan && basePath === "/panel" && (
-                <button
-                  onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: activePlan === "FREE" ? undefined : activePlan, source: "plan_badge" } })); }}
-                  style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px", border: "none", cursor: "pointer", marginTop: 3, display: "inline-block",
-                    background: activePlan !== "FREE" ? "rgba(124,58,237,0.12)" : "var(--adm-hover)",
-                    color: activePlan !== "FREE" ? "#a78bfa" : "var(--adm-text3)",
-                  }}
-                >
-                  {activePlan !== "FREE" ? "Carta QR" : "Ver planes"}
-                </button>
-              )}
-            </div>
+            <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
           </Link>
         </div>
         <AccordionNav />
