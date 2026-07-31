@@ -58,6 +58,9 @@ export default function ConfiguracionGeneralPage() {
   const [infoLng, setInfoLng] = useState<number | null>(null);
   const [infoPhone, setInfoPhone] = useState("");
   const [infoWhatsapp, setInfoWhatsapp] = useState("");
+  const [infoSlug, setInfoSlug] = useState("");
+  const [slugInput, setSlugInput] = useState("");
+  const [slugSaving, setSlugSaving] = useState(false);
   const [panelTheme, setPanelTheme] = useState("light");
   const [loaded, setLoaded] = useState(false);
 
@@ -80,6 +83,8 @@ export default function ConfiguracionGeneralPage() {
       setInfoLng(d.lng ?? null);
       setInfoPhone(d.phone || "");
       setInfoWhatsapp(d.whatsapp || "");
+      setInfoSlug(d.slug || "");
+      setSlugInput(d.slug || "");
       setLoaded(true);
     } catch {}
     setLoading(false);
@@ -119,8 +124,31 @@ export default function ConfiguracionGeneralPage() {
   if (loading) return <SkeletonLoading type="form" />;
   if (!loaded || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("select_restaurant")}</p></div>;
 
-  const slug = (selectedRestaurant as any)?.slug;
+  const slug = infoSlug || (selectedRestaurant as any)?.slug;
   const landingUrl = slug ? `https://quierocomer.com/${slug}` : null;
+
+  const saveSlug = async () => {
+    const newSlug = slugInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    if (!newSlug || newSlug === infoSlug) return;
+    setSlugSaving(true);
+    try {
+      const res = await fetch(`/api/admin/locales/${rid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: newSlug }),
+      });
+      if (res.ok) {
+        setInfoSlug(newSlug);
+        setSlugInput(newSlug);
+        toast.success("Link actualizado");
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Ese link ya está en uso");
+        setSlugInput(infoSlug);
+      }
+    } catch { toast.error("Error al guardar"); setSlugInput(infoSlug); }
+    setSlugSaving(false);
+  };
 
   return (
     <div style={{ maxWidth: 640 }}>
@@ -129,28 +157,45 @@ export default function ConfiguracionGeneralPage() {
       </h1>
 
       {/* ── Página del local ── */}
-      {landingUrl && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página del local</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página del local</p>
+        {landingUrl && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
             <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
               {landingUrl}
             </a>
-            <button
-              onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }}
-              title="Copiar link"
-              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
-            >
+            <button onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }} title="Copiar link"
+              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
               <Copy size={15} color="var(--adm-text3)" />
             </button>
             <a href={landingUrl} target="_blank" rel="noopener noreferrer"
-              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", textDecoration: "none", flexShrink: 0 }}
-            >
+              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", display: "grid", placeItems: "center", textDecoration: "none", flexShrink: 0 }}>
               <ExternalLink size={15} color="var(--adm-text3)" />
             </a>
           </div>
+        )}
+        <label style={labelStyle}>Personalizar link</label>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, overflow: "hidden" }}>
+            <span style={{ padding: "10px 10px 10px 14px", fontFamily: "monospace", fontSize: "0.78rem", color: "var(--adm-text3)", whiteSpace: "nowrap" }}>quierocomer.com/</span>
+            <input
+              value={slugInput}
+              onChange={e => setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+              onBlur={saveSlug}
+              onKeyDown={e => e.key === "Enter" && saveSlug()}
+              placeholder="mi-local"
+              style={{ flex: 1, padding: "10px 12px 10px 0", background: "none", border: "none", fontFamily: "monospace", fontSize: "0.85rem", color: "var(--adm-text)", outline: "none" }}
+            />
+          </div>
+          <button onClick={saveSlug} disabled={slugSaving || slugInput.trim() === infoSlug}
+            style={{ padding: "10px 16px", background: GOLD, color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: slugSaving || slugInput.trim() === infoSlug ? "default" : "pointer", opacity: slugInput.trim() === infoSlug ? 0.4 : 1 }}>
+            {slugSaving ? "..." : "Guardar"}
+          </button>
         </div>
-      )}
+        <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>
+          Si cambias el link, actualiza los QR impresos — el link anterior dejará de funcionar.
+        </p>
+      </div>
 
       {/* ── Información básica ── */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
