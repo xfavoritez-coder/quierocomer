@@ -6,10 +6,10 @@ export async function PATCH(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
   if (!panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  let body: { restaurantId?: string; googleReviewUrl?: string | null; reviewReward?: string | null };
+  let body: { restaurantId?: string; reviewMode?: string; googleReviewUrl?: string | null; reviewReward?: string | null };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Body inválido" }, { status: 400 }); }
 
-  const { restaurantId, googleReviewUrl, reviewReward } = body;
+  const { restaurantId, reviewMode, googleReviewUrl, reviewReward } = body;
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
 
   // Verify ownership
@@ -26,6 +26,7 @@ export async function PATCH(req: NextRequest) {
   const updated = await prisma.restaurant.update({
     where: { id: restaurantId },
     data: {
+      ...(reviewMode && { reviewMode }),
       googleReviewUrl: googleReviewUrl ?? null,
       reviewReward: reviewReward ?? null,
     },

@@ -74,20 +74,21 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       ],
     },
     {
-      key: "reviews",
-      label: "Valoraciones",
-      icon: Star,
-      items: [
-        { icon: Star, labelKey: "nav_reviews", href: `${base}/valoraciones` },
-      ],
-    },
-    {
       key: "ordering",
       label: "Pedidos Online",
       icon: ShoppingCart,
       items: [
         { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
+      ],
+    },
+    {
+      key: "reviews",
+      label: "Valoraciones",
+      icon: Star,
+      items: [
+        { icon: Settings, labelKey: "nav_reviews_config", href: `${base}/valoraciones` },
+        { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
       ],
     },
     {

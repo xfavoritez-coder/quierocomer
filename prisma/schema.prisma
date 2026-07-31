@@ -333,9 +333,11 @@ model Restaurant {
   orderingBannerUrl          String? // banner personalizado para /pedir
   orderingTheme              String                   @default("light") // light | dark
   orderingAccentColor        String? // color de acento hex
-  // Valoraciones (Google Reviews)
+  // Valoraciones
+  reviewMode                 String                   @default("google") // "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
   reviewReward               String? // Descripción del premio (null = sin premio)
+  privateReviews             PrivateReview[]
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]
@@ -2435,6 +2437,20 @@ model LoyaltyDevice {
 
   @@unique([deviceLibraryIdentifier, serialNumber])
   @@index([serialNumber])
+}
+
+// Reseñas privadas (modo privado de Valoraciones)
+model PrivateReview {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  rating       Int        // 1–5
+  comment      String?
+  authorName   String?
+  isRead       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@index([restaurantId, createdAt])
 }
 
 // Historial de notificaciones push enviadas a las tarjetas.
