@@ -79,20 +79,20 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
       )}
 
       {/* Action buttons */}
-      <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320 }}>
+      <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
         <a
           href={`/qr/${r.slug}?carta=1`}
           style={{
             display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 18, padding: '18px 22px', textDecoration: 'none',
-            color: '#fff', transition: 'background 0.15s',
+            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+            borderRadius: 18, padding: '17px 22px', textDecoration: 'none',
+            color: '#fff',
           }}
         >
-          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>📖</span>
+          <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>📖</span>
           <span>
-            <span style={{ display: 'block', fontSize: '0.98rem', fontWeight: 700, lineHeight: 1.2 }}>Ver la carta</span>
-            <span style={{ display: 'block', fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Menú completo con fotos y precios</span>
+            <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
+            <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Menú completo con fotos y precios</span>
           </span>
         </a>
 
@@ -100,23 +100,28 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
           href={`/pedir/${r.slug}`}
           style={{
             display: 'flex', alignItems: 'center', gap: 14,
-            background: 'linear-gradient(135deg, #ffc44f, #F4A623)',
-            borderRadius: 18, padding: '18px 22px', textDecoration: 'none',
-            color: '#0a0a0a', transition: 'opacity 0.15s',
+            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+            borderRadius: 18, padding: '17px 22px', textDecoration: 'none',
+            color: '#fff',
           }}
         >
-          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🛍️</span>
+          <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🛍️</span>
           <span>
-            <span style={{ display: 'block', fontSize: '0.98rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer un pedido</span>
-            <span style={{ display: 'block', fontSize: '0.76rem', color: 'rgba(0,0,0,0.5)', marginTop: 2 }}>Elige y envía por WhatsApp</span>
+            <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
+            <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Elige y envía por WhatsApp</span>
           </span>
         </a>
       </div>
 
       {/* Footer */}
-      <p style={{ marginTop: 48, fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.04em' }}>
-        Powered by QuieroComer
-      </p>
+      <a
+        href="https://quierocomer.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ marginTop: 48, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textDecoration: 'none' }}
+      >
+        Powered by <strong style={{ color: 'rgba(255,255,255,0.55)' }}>QuieroComer</strong>
+      </a>
     </main>
   )
 }
