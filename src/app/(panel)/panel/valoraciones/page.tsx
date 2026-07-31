@@ -109,7 +109,7 @@ export default function ValoracionesPage() {
   const previewLabel = hasReward && reward.trim() ? "Comenta y gana" : mode === "private" ? "Déjanos tu opinión" : "Déjanos una reseña";
   const previewSub = hasReward && reward.trim() ? reward.trim()
     : mode === "google" ? "Nos ayuda mucho en Google" : "Tu opinión es privada y va directo al local";
-  const showPreview = enabled && (mode === "private" || (mode === "google" && googleUrl.trim()));
+  const showPreview = enabled;
 
   if (loading) return null;
 
@@ -168,24 +168,30 @@ export default function ValoracionesPage() {
             </div>
           )}
 
+          {/* Google Reviews — info */}
+          {mode === "google" && (
+            <div style={CARD}>
+              <h2 style={LABEL}><ExternalLink size={13} /> ¿Cómo funciona?</h2>
+              <p style={{ fontSize: "0.83rem", color: "var(--adm-text2)", margin: 0 }}>
+                Al hacer clic, el cliente es llevado directamente a Google Maps donde puede dejar su reseña pública.
+                Estas reseñas aparecen en tu ficha de Google y ayudan a tu posicionamiento.
+              </p>
+            </div>
+          )}
+
           {/* Modo privado — info */}
           {mode === "private" && (
             <div style={CARD}>
               <h2 style={LABEL}><Lock size={13} /> Reseñas privadas</h2>
               <p style={{ fontSize: "0.83rem", color: "var(--adm-text2)", margin: "0 0 10px" }}>
-                Los clientes van a <strong>quierocomer.com/resena/{slug || "tu-local"}</strong> y dejan su rating y comentario.
+                Los clientes van a tu página de local en <strong>quierocomer.com/{slug || "tu-local"}</strong> y pueden dejar su rating y comentario.
                 Solo tú puedes ver las reseñas en la sección <strong>Reseñas recibidas</strong>.
               </p>
-              {slug && savedMode === "private" && (
-                <a href={`/resena/${slug}`} target="_blank" rel="noopener noreferrer"
+              {slug && (
+                <a href={`/${slug}`} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: "0.8rem", color: GOLD, textDecoration: "none" }}>
-                  Ver página de reseña →
+                  Ver tu página →
                 </a>
-              )}
-              {slug && savedMode !== "private" && (
-                <p style={{ fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>
-                  Guarda para activar el link de reseña.
-                </p>
               )}
             </div>
           )}
@@ -195,9 +201,6 @@ export default function ValoracionesPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: hasReward ? 14 : 0 }}>
               <div>
                 <h2 style={{ ...LABEL, margin: "0 0 3px" }}><Gift size={13} /> Ofrecer un premio</h2>
-                <p style={{ fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0 }}>
-                  {hasReward ? "El botón dirá «Comenta y gana»" : "El botón dirá «Déjanos tu opinión»"}
-                </p>
               </div>
               <Toggle on={hasReward} onToggle={() => setHasReward(v => !v)} />
             </div>

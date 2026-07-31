@@ -127,6 +127,7 @@ export function usePanelSession() {
       loading: true,
       error: false,
       mustChangePassword: false,
+      seenFeatures: [],
     };
     window.location.href = "/panel/login";
   }, []);

@@ -94,7 +94,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       ],
     },
     {
-      key: "reviews",
+      key: "valoraciones",
       label: "Valoraciones",
       icon: Star,
       badge: "Nuevo",
