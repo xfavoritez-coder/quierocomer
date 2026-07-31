@@ -124,7 +124,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         )}
 
         {/* Reseña privada */}
-        {r.reviewMode === 'private' && r.reviewMode !== 'off' && (
+        {r.reviewMode === 'private' && (
           <a href={`/resena/${r.slug}`} style={BTN}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
             <span>
