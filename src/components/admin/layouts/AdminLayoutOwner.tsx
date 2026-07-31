@@ -65,8 +65,8 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         ...(opts.hasControl && !CONTROL_HIDDEN.includes(opts.slug ?? "") ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
         { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
         { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
-        { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
         { icon: QrCode, labelKey: "nav_generate_qr", href: `${base}/qr` },
+        { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
       ],
     },
     {
