@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 
@@ -130,6 +131,9 @@ export async function POST(req: NextRequest) {
       create: { restaurantId, ...data },
       update: data,
     });
+
+    const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
+    if (rest?.slug) revalidatePath(`/${rest.slug}`);
 
     return NextResponse.json({ program });
   } catch (e: any) {

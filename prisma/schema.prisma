@@ -334,7 +334,7 @@ model Restaurant {
   orderingTheme              String                   @default("light") // light | dark
   orderingAccentColor        String? // color de acento hex
   // Valoraciones
-  reviewMode                 String                   @default("google") // "google" | "private"
+  reviewMode                 String                   @default("off") // "off" | "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
   reviewReward               String? // Descripción del premio (null = sin premio)
   privateReviews             PrivateReview[]

@@ -28,6 +28,7 @@ async function getRestaurantLanding(slug: string) {
       commune: true,
       googleReviewUrl: true,
       reviewReward: true,
+      reviewMode: true,
     },
   })
   if (!r) return null
@@ -107,8 +108,8 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
           </a>
         )}
 
-        {/* Reseña Google — solo si configurado */}
-        {r.googleReviewUrl && (
+        {/* Reseña Google */}
+        {r.reviewMode !== 'private' && r.reviewMode !== 'off' && r.googleReviewUrl && (
           <a href={r.googleReviewUrl} target="_blank" rel="noopener noreferrer" style={BTN}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
             <span>
@@ -117,6 +118,21 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
               </span>
               <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
                 {r.reviewReward || 'Nos ayuda mucho en Google'}
+              </span>
+            </span>
+          </a>
+        )}
+
+        {/* Reseña privada */}
+        {r.reviewMode === 'private' && r.reviewMode !== 'off' && (
+          <a href={`/resena/${r.slug}`} style={BTN}>
+            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
+            <span>
+              <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>
+                {r.reviewReward ? 'Comenta y gana' : 'Déjanos tu opinión'}
+              </span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+                {r.reviewReward || 'Tu opinión es privada y va directo al local'}
               </span>
             </span>
           </a>
@@ -412,9 +428,21 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
   // Check if slug is a restaurant
   const rest = await getRestaurantLanding(restaurantSlug)
   if (rest) {
-    const hasLanding = rest.orderingEnabled || !!rest.loyaltyProgram?.active || !!rest.googleReviewUrl
-    if (!hasLanding) {
+    const hasOrdering = rest.orderingEnabled
+    const hasLoyalty = !!rest.loyaltyProgram?.active
+    const hasReview = rest.reviewMode !== 'off' && (rest.reviewMode === 'private' || !!rest.googleReviewUrl)
+    const activeFeatures = [hasOrdering, hasLoyalty, hasReview].filter(Boolean).length
+
+    if (activeFeatures === 0) {
       redirect(`/qr/${restaurantSlug}`)
+    }
+    if (activeFeatures === 1) {
+      if (hasOrdering) redirect(`/pedir/${restaurantSlug}`)
+      if (hasLoyalty) redirect(`/fidelidad/${restaurantSlug}`)
+      if (hasReview) {
+        if (rest.reviewMode === 'private') redirect(`/resena/${restaurantSlug}`)
+        else redirect(rest.googleReviewUrl!)
+      }
     }
     return <RestaurantLanding r={rest} />
   }
