@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { CreditCard, Plus, Trash2, ChevronDown, Link2, Copy } from "lucide-react";
+import { CreditCard, Plus, Trash2, ChevronDown, ChevronRight, Link2, Copy } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 
@@ -87,6 +87,7 @@ export default function LoyaltyCardPage() {
   const [saveError, setSaveError] = useState("");
   const [dishPhotos, setDishPhotos] = useState<{ name: string; url: string }[]>([]);
   const [showPhotos, setShowPhotos] = useState(false);
+  const [showIcons, setShowIcons] = useState(false);
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
 
@@ -256,64 +257,6 @@ export default function LoyaltyCardPage() {
               </p>
             </div>
 
-            {/* Icono del sello */}
-            <div>
-              <label style={labelStyle}>Icono del sello</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {restaurant?.logoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => update({ stampIcon: "logo" })}
-                    title="Usar el logo del restaurante"
-                    style={{
-                      height: 42,
-                      minWidth: 42,
-                      padding: "0 8px",
-                      borderRadius: 10,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: form.stampIcon === "logo" ? "rgba(244,166,35,0.14)" : "var(--adm-card)",
-                      border: `1.5px solid ${form.stampIcon === "logo" ? GOLD : "var(--adm-card-border)"}`,
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={restaurant.logoUrl} alt="" style={{ width: 24, height: 24, borderRadius: 5, objectFit: "cover" }} />
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text2)" }}>Logo</span>
-                  </button>
-                )}
-                {STAMP_ICONS.map((icon) => {
-                  const active = form.stampIcon === icon;
-                  return (
-                    <button
-                      key={icon}
-                      type="button"
-                      onClick={() => update({ stampIcon: icon })}
-                      style={{
-                        height: 42,
-                        width: 42,
-                        borderRadius: 10,
-                        fontSize: "1.2rem",
-                        cursor: "pointer",
-                        background: active ? "rgba(244,166,35,0.14)" : "var(--adm-card)",
-                        border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`,
-                      }}
-                    >
-                      {icon}
-                    </button>
-                  );
-                })}
-                <input
-                  type="text"
-                  value={form.stampIcon}
-                  onChange={(e) => update({ stampIcon: [...e.target.value.trim()][0] || "★" })}
-                  title="O escribe tu propio símbolo/emoji"
-                  style={{ ...inputStyle, width: 60, textAlign: "center", fontSize: "1.1rem" }}
-                />
-              </div>
-            </div>
-
             {/* Niveles de recompensa */}
             <div>
               <label style={labelStyle}>Recompensas por nivel</label>
@@ -374,6 +317,71 @@ export default function LoyaltyCardPage() {
                 onChange={(e) => update({ description: e.target.value })}
                 style={{ ...inputStyle, resize: "none" }}
               />
+            </div>
+
+            {/* Icono del sello — colapsable */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowIcons((s) => !s)}
+                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: 8, borderRadius: 10, cursor: "pointer", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 600 }}
+              >
+                <span style={{ height: 38, width: 38, borderRadius: 8, flexShrink: 0, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: form.stampIcon === "logo" ? "0.58rem" : "1.2rem" }}>
+                  {form.stampIcon === "logo" && restaurant?.logoUrl
+                    ? <img src={restaurant.logoUrl} alt="" style={{ width: 24, height: 24, borderRadius: 5, objectFit: "cover" }} />
+                    : form.stampIcon}
+                </span>
+                <span style={{ flex: 1, textAlign: "left" }}>Icono del sello</span>
+                {showIcons ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+
+              {showIcons && (
+                <div style={{ marginTop: 8, padding: "12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {restaurant?.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => update({ stampIcon: "logo" })}
+                        title="Usar el logo del restaurante"
+                        style={{
+                          height: 42, minWidth: 42, padding: "0 8px", borderRadius: 10, cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 6,
+                          background: form.stampIcon === "logo" ? "rgba(244,166,35,0.14)" : "var(--adm-hover)",
+                          border: `1.5px solid ${form.stampIcon === "logo" ? GOLD : "var(--adm-card-border)"}`,
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={restaurant.logoUrl} alt="" style={{ width: 24, height: 24, borderRadius: 5, objectFit: "cover" }} />
+                        <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text2)" }}>Logo</span>
+                      </button>
+                    )}
+                    {STAMP_ICONS.map((icon) => {
+                      const active = form.stampIcon === icon;
+                      return (
+                        <button
+                          key={icon}
+                          type="button"
+                          onClick={() => update({ stampIcon: icon })}
+                          style={{
+                            height: 42, width: 42, borderRadius: 10, fontSize: "1.2rem", cursor: "pointer",
+                            background: active ? "rgba(244,166,35,0.14)" : "var(--adm-hover)",
+                            border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`,
+                          }}
+                        >
+                          {icon}
+                        </button>
+                      );
+                    })}
+                    <input
+                      type="text"
+                      value={form.stampIcon}
+                      onChange={(e) => update({ stampIcon: [...e.target.value.trim()][0] || "★" })}
+                      title="O escribe tu propio símbolo/emoji"
+                      style={{ ...inputStyle, width: 60, textAlign: "center", fontSize: "1.1rem" }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Colores */}

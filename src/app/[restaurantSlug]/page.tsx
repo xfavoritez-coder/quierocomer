@@ -439,10 +439,7 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
     if (activeFeatures === 1) {
       if (hasOrdering) redirect(`/pedir/${restaurantSlug}`)
       if (hasLoyalty) redirect(`/fidelidad/${restaurantSlug}`)
-      if (hasReview) {
-        if (rest.reviewMode === 'private') redirect(`/resena/${restaurantSlug}`)
-        else redirect(rest.googleReviewUrl!)
-      }
+      // hasReview-only → show landing (carta QR siempre visible en la landing)
     }
     return <RestaurantLanding r={rest} />
   }
