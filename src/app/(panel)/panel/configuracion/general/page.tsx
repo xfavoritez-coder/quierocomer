@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Moon, Sun, Camera, ExternalLink, Copy } from "lucide-react";
+import { Settings, Moon, Sun, Camera, ExternalLink, Copy, Palette } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
 import AddressPicker from "@/components/admin/AddressPicker";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
@@ -12,6 +12,15 @@ import { usePanelLang } from "@/lib/i18n/panel";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
+
+const ACCENT_OPTIONS = [
+  { value: null,      label: "Amber",   color: "#F4A623" },
+  { value: "#ef4444", label: "Rojo",    color: "#ef4444" },
+  { value: "#22c55e", label: "Verde",   color: "#22c55e" },
+  { value: "#3b82f6", label: "Azul",    color: "#3b82f6" },
+  { value: "#a855f7", label: "Morado",  color: "#a855f7" },
+  { value: "#ec4899", label: "Rosa",    color: "#ec4899" },
+];
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)",
@@ -62,6 +71,9 @@ export default function ConfiguracionGeneralPage() {
   const [slugInput, setSlugInput] = useState("");
   const [slugSaving, setSlugSaving] = useState(false);
   const [panelTheme, setPanelTheme] = useState("light");
+  const [accentColor, setAccentColor] = useState<string | null>(null);
+  const [customColor, setCustomColor] = useState("#F4A623");
+  const [customDirty, setCustomDirty] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "light"); }, []);
@@ -85,6 +97,7 @@ export default function ConfiguracionGeneralPage() {
       setInfoWhatsapp(d.whatsapp || "");
       setInfoSlug(d.slug || "");
       setSlugInput(d.slug || "");
+      setAccentColor(d.cartaAccentColor || null);
       setLoaded(true);
     } catch {}
     setLoading(false);
@@ -274,6 +287,50 @@ export default function ConfiguracionGeneralPage() {
         >
           {saving ? "Guardando..." : "Guardar información"}
         </button>
+      </div>
+
+      {/* ── Color del local ── */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>
+          <Palette size={16} color="var(--adm-text3)" /> Color del local
+        </h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>
+          Se aplica en la tarjeta de premios, pedidos online y otros elementos de tu marca.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+          {ACCENT_OPTIONS.map((opt) => {
+            const isActive = (accentColor || null) === opt.value;
+            return (
+              <button key={opt.label} onClick={() => { setAccentColor(opt.value); setCustomDirty(false); save({ cartaAccentColor: opt.value }); }} style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                background: isActive ? "var(--adm-hover)" : "none", border: "none", cursor: "pointer",
+                padding: "8px 4px", borderRadius: 12, transition: "all 0.2s",
+              }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: opt.color, border: isActive ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: isActive ? `0 0 0 2px ${opt.color}40` : "none", transition: "all 0.2s" }} />
+                <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{opt.label}</span>
+              </button>
+            );
+          })}
+          {/* Custom */}
+          {(() => {
+            const customActive = accentColor && !ACCENT_OPTIONS.some(o => o.value === accentColor);
+            const displayColor = customDirty ? customColor : (customActive ? accentColor! : customColor);
+            return (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "8px 4px", borderRadius: 12, background: (customActive || customDirty) ? "var(--adm-hover)" : "none" }}>
+                <label style={{ width: 40, height: 40, borderRadius: "50%", background: (customActive || customDirty) ? displayColor : "linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#9b59b6)", border: (customActive || customDirty) ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: (customActive || customDirty) ? `0 0 0 2px ${displayColor}40` : "none", cursor: "pointer", display: "block", overflow: "hidden", position: "relative" }}>
+                  <input type="color" value={displayColor} onChange={(e) => { setCustomColor(e.target.value); setCustomDirty(true); }} style={{ opacity: 0, position: "absolute", inset: 0, width: "100%", height: "100%", cursor: "pointer" }} />
+                </label>
+                <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: (customActive || customDirty) ? 700 : 500, color: (customActive || customDirty) ? "var(--adm-text)" : "var(--adm-text3)" }}>Custom</span>
+              </div>
+            );
+          })()}
+        </div>
+        {customDirty && (
+          <button onClick={() => { setAccentColor(customColor); setCustomDirty(false); save({ cartaAccentColor: customColor }); }}
+            style={{ marginTop: 12, padding: "8px 20px", background: customColor, color: "#0a0a0a", border: "none", borderRadius: 10, fontSize: "0.78rem", fontWeight: 800, fontFamily: F, cursor: "pointer" }}>
+            Aplicar color
+          </button>
+        )}
       </div>
 
       {/* Modo del panel */}

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Moon, Sun, Bell, Palette, Layout, List, BookOpen, Rocket, LayoutGrid } from "lucide-react";
+import { Settings, Moon, Sun, Bell, Layout, List, BookOpen, Rocket, LayoutGrid } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
@@ -28,14 +28,6 @@ interface SettingsData {
   showCategoryLobby: boolean;
 }
 
-const ACCENT_OPTIONS_ES = [
-  { value: null, label: "Amber", labelEn: "Amber", color: "#F4A623" },
-  { value: "#ef4444", label: "Rojo", labelEn: "Red", color: "#ef4444" },
-  { value: "#22c55e", label: "Verde", labelEn: "Green", color: "#22c55e" },
-  { value: "#3b82f6", label: "Azul", labelEn: "Blue", color: "#3b82f6" },
-  { value: "#a855f7", label: "Morado", labelEn: "Purple", color: "#a855f7" },
-  { value: "#ec4899", label: "Rosa", labelEn: "Pink", color: "#ec4899" },
-];
 
 const VIEW_OPTIONS_KEYS = [
   { value: "premium", labelKey: "view_gallery", icon: LayoutGrid },
@@ -72,10 +64,6 @@ export default function AjustesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [birthdayPerk, setBirthdayPerk] = useState("");
-  const [customColor, setPersonalizadoColor] = useState("#F4A623");
-  const [customDirty, setPersonalizadoDirty] = useState(false);
-
-  const ACCENT_OPTIONS = ACCENT_OPTIONS_ES.map(o => ({ ...o, label: lang === "en" ? o.labelEn : o.label }));
   const VIEW_OPTIONS = VIEW_OPTIONS_KEYS.map(o => ({ ...o, label: t(o.labelKey) }));
 
   const rid = selectedRestaurantId;
@@ -243,59 +231,7 @@ export default function AjustesPage() {
         </div>
       </div>
 
-      {/* Color de diseño — Gold+ */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasDesign ? 1 : 0.5 }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Palette size={16} color="var(--adm-text3)" /> {t("design")}</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>{t("design_desc")}</p>
-        {!hasDesign && <button onClick={showPlanModal} style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, margin: "0 0 10px", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{t("available_from_gold")}</button>}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, pointerEvents: hasDesign ? "auto" : "none" }}>
-          {ACCENT_OPTIONS.map((opt) => {
-            const isActive = (data.cartaAccentColor || null) === opt.value;
-            return (
-              <button
-                key={opt.label}
-                onClick={() => save({ cartaAccentColor: opt.value })}
-                style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
-                  background: isActive ? "var(--adm-hover)" : "none", border: "none", cursor: "pointer",
-                  padding: "8px 4px", borderRadius: 12, transition: "all 0.2s",
-                }}
-              >
-                <div style={{
-                  width: 40, height: 40, borderRadius: "50%", background: opt.color,
-                  border: isActive ? "3px solid var(--adm-text)" : "3px solid transparent",
-                  boxShadow: isActive ? `0 0 0 2px ${opt.color}40` : "none",
-                  transition: "all 0.2s",
-                }} />
-                <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{opt.label}</span>
-              </button>
-            );
-          })}
-          {/* Personalizado color picker */}
-          {(() => {
-            const customActive = data.cartaAccentColor && !ACCENT_OPTIONS.some(o => o.value === data.cartaAccentColor);
-            const displayColor = customDirty ? customColor : (customActive ? data.cartaAccentColor! : customColor);
-            return (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "8px 4px", borderRadius: 12, background: (customActive || customDirty) ? "var(--adm-hover)" : "none", transition: "all 0.2s" }}>
-                <label style={{ width: 40, height: 40, borderRadius: "50%", background: customActive || customDirty ? displayColor : "linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#9b59b6)", border: (customActive || customDirty) ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: (customActive || customDirty) ? `0 0 0 2px ${displayColor}40` : "none", transition: "all 0.2s", cursor: "pointer", display: "block", overflow: "hidden", position: "relative" }}>
-                  <input type="color" value={displayColor} onChange={(e) => { setPersonalizadoColor(e.target.value); setPersonalizadoDirty(true); }} style={{ opacity: 0, position: "absolute", inset: 0, width: "100%", height: "100%", cursor: "pointer" }} />
-                </label>
-                <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: (customActive || customDirty) ? 700 : 500, color: (customActive || customDirty) ? "var(--adm-text)" : "var(--adm-text3)" }}>Custom</span>
-              </div>
-            );
-          })()}
-        </div>
-        {customDirty && (
-          <button
-            onClick={() => { save({ cartaAccentColor: customColor }); setPersonalizadoDirty(false); }}
-            style={{ marginTop: 12, padding: "8px 20px", background: customColor, color: "#0a0a0a", border: "none", borderRadius: 10, fontSize: "0.78rem", fontWeight: 800, fontFamily: F, cursor: "pointer" }}
-          >
-            {t("apply_color")}
-          </button>
-        )}
-      </div>
-
-      {(() => {
+{(() => {
         const hasWaiter = activePlan === "PREMIUM";
         return (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)", opacity: hasWaiter ? 1 : 0.5 }}>
