@@ -506,3 +506,17 @@ textarea::placeholder {
 /* Scrollbar dark */
 .theme-dark ::-webkit-scrollbar-track { background: #111; }
 .theme-dark ::-webkit-scrollbar-thumb { background: #333; }
+
+/* Placeholder fidelización y reseña */
+.enroll-input::placeholder,
+.enroll-input::-webkit-input-placeholder,
+.enroll-input::-moz-placeholder,
+.resena-input::placeholder,
+.resena-input::-webkit-input-placeholder,
+.resena-input::-moz-placeholder,
+.resena-textarea::placeholder,
+.resena-textarea::-webkit-input-placeholder,
+.resena-textarea::-moz-placeholder {
+  color: rgba(255,255,255,0.28) !important;
+  opacity: 1 !important;
+}

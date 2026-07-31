@@ -96,11 +96,6 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      <style>{`
-        .enroll-input::placeholder,
-        .enroll-input::-webkit-input-placeholder,
-        .enroll-input::-moz-placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1 !important; }
-      `}</style>
       {/* Botón volver */}
       <a href={`/${slug}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", color: "rgba(255,255,255,0.55)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
