@@ -83,6 +83,22 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
         Haz que tus clientes vuelvan con sellos, recompensas y notificaciones.
       </p>
 
+      {/* Demo link */}
+      <a
+        href="https://quierocomer.com/fidelidad/hand-roll"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "block", width: "100%", padding: "12px 0", marginBottom: 10,
+          border: "1px solid var(--adm-card-border, #e5e7eb)", borderRadius: 14,
+          background: "transparent", color: "var(--adm-text2, #666)",
+          fontFamily: FB, fontSize: "0.88rem", fontWeight: 600,
+          textDecoration: "none", textAlign: "center",
+        }}
+      >
+        Ver demo →
+      </a>
+
       {/* Trial CTA */}
       <button
         onClick={handleTrial}

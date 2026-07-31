@@ -7,6 +7,10 @@ type Plan = PlanKey;
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
+const DEMO_URLS: Partial<Record<Feature, string>> = {
+  online_ordering: "https://quierocomer.com/pedir/el-menu-de-la-esquina",
+};
+
 const FEATURE_CONFIG: Partial<Record<Feature, { title: string; desc: string; icon: typeof Tag }>> = {
   promotions: { title: "Ofertas y promociones", desc: "Crea ofertas temporales que aparecen directo en la carta de tus clientes.", icon: Tag },
   announcements: { title: "Anuncios en la carta", desc: "Lo primero que ven tus clientes al abrir la carta. Novedades, eventos, horarios.", icon: Megaphone },
@@ -47,6 +51,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
 
   const accentColor = "#7c3aed";
   const Icon = cfg?.icon || Tag;
+  const demoUrl = DEMO_URLS[feature];
 
   return (
     <div>
@@ -85,6 +90,23 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
           }}>
             ⚡
           </div>
+          {demoUrl && (
+            <a
+              href={demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{
+                padding: "8px 20px", borderRadius: 999,
+                border: "1px solid var(--adm-card-border, #e5e7eb)",
+                background: "transparent", color: "var(--adm-text2, #666)",
+                fontFamily: FB, fontSize: "0.8rem", fontWeight: 600,
+                cursor: "pointer", textDecoration: "none",
+              }}
+            >
+              Ver demo →
+            </a>
+          )}
           <button style={{
             padding: "10px 24px", borderRadius: 999, border: "none",
             background: accentColor, color: "#fff",

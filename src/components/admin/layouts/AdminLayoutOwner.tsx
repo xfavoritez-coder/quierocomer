@@ -364,10 +364,23 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       <aside className="owl-sidebar">
         {/* Header — no borderBottom, first section provides the separator */}
         <div style={{ padding: "14px 16px 12px", flexShrink: 0 }}>
-          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-            <RestLogo size={28} />
-            <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+              <RestLogo size={28} />
+              <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
+            </Link>
+            {activeRest?.slug && (
+              <a
+                href={`https://quierocomer.com/${activeRest.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 7, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text3)", textDecoration: "none" }}
+                title="Ver mi página"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+            )}
+          </div>
         </div>
         <AccordionNav />
         <SidebarFooter />
@@ -384,6 +397,17 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
           </div>
         </Link>
+        {activeRest?.slug && (
+          <a
+            href={`https://quierocomer.com/${activeRest.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text2)", textDecoration: "none" }}
+            title="Ver mi página"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        )}
       </header>
 
       {/* ── Content ── */}
