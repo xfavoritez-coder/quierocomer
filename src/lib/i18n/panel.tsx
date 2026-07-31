@@ -6,7 +6,7 @@ type Lang = "es" | "en";
 const translations = {
   es: {
     // Nav
-    nav_home: "Inicio",
+    nav_home: "Dashboard",
     nav_live: "Venta en vivo",
     nav_menu: "Mi Carta",
     nav_analytics: "Analytics",
@@ -835,7 +835,7 @@ const translations = {
   },
   en: {
     // Nav
-    nav_home: "Home",
+    nav_home: "Dashboard",
     nav_live: "Live Sales",
     nav_menu: "My Menu",
     nav_analytics: "Analytics",
