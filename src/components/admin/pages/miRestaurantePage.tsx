@@ -563,6 +563,90 @@ export default function MiRestaurantePage() {
 
 
 
+      {/* ── Módulo Loyalty ── */}
+      {billingStatus && !billingStatus.billingExempt && (() => {
+        const ls = (billingStatus as any).loyaltyStatus as string ?? "NONE";
+        const lEnd = (billingStatus as any).loyaltyPeriodEnd as string | null;
+        const lTrial = (billingStatus as any).loyaltyTrialEndsAt as string | null;
+        const isLoyaltyActive = ls === "ACTIVE";
+        const isLoyaltyTrial = ls === "TRIALING";
+        const isLoyaltyNone = ls === "NONE" || ls === "CANCELED";
+        const loyaltyNet = 29900;
+        const loyaltyGross = loyaltyNet + ivaOf(loyaltyNet);
+        const PURPLE = "#6d28d9";
+
+        return (
+          <div style={{ background: "var(--adm-card)", border: `1.5px solid ${isLoyaltyActive || isLoyaltyTrial ? PURPLE + "55" : "var(--adm-card-border)"}`, borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: isLoyaltyActive || isLoyaltyTrial ? `0 4px 20px ${PURPLE}15` : "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: "1.6rem" }}>🎁</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: F, fontSize: "0.75rem", color: PURPLE, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 700, margin: 0, opacity: 0.8 }}>Módulo adicional</p>
+                <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>Loyalty Fidelización</p>
+              </div>
+              {(isLoyaltyActive || isLoyaltyTrial) && (
+                <span style={{ padding: "3px 10px", borderRadius: 99, background: isLoyaltyTrial ? "rgba(109,40,217,0.1)" : "rgba(22,163,74,0.1)", border: `1px solid ${isLoyaltyTrial ? "rgba(109,40,217,0.3)" : "rgba(22,163,74,0.3)"}`, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, color: isLoyaltyTrial ? PURPLE : "#16a34a" }}>
+                  {isLoyaltyTrial ? "En prueba" : "Activo"}
+                </span>
+              )}
+            </div>
+
+            {isLoyaltyActive && lEnd && (
+              <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 14px" }}>
+                Vigente hasta el {formatDate(lEnd)} · ${loyaltyGross.toLocaleString("es-CL")} con IVA/mes
+              </p>
+            )}
+            {isLoyaltyTrial && lTrial && (
+              <p style={{ fontFamily: FB, fontSize: "0.8rem", color: PURPLE, margin: "0 0 14px", fontWeight: 600 }}>
+                Prueba hasta el {formatDate(lTrial)}
+              </p>
+            )}
+            {isLoyaltyNone && (
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+                Tarjeta de fidelización digital con Apple Wallet y Google Wallet. ${loyaltyGross.toLocaleString("es-CL")} con IVA/mes.
+              </p>
+            )}
+
+            <div style={{ display: "flex", gap: 8 }}>
+              {isLoyaltyNone ? (
+                <>
+                  <button
+                    onClick={async () => {
+                      if (!rid) return;
+                      try {
+                        const res = await fetch("/api/billing/loyalty/start-trial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
+                        const d = await res.json();
+                        if (!res.ok) { toast.error(d.error || "Error"); return; }
+                        toast.success("¡Loyalty activado! 7 días gratis.");
+                        setTimeout(() => window.location.reload(), 1000);
+                      } catch { toast.error("Error de conexión"); }
+                    }}
+                    style={{ flex: 2, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    ✨ Probar 7 días gratis
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!rid) return;
+                      const res = await fetch("/api/billing/loyalty/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
+                      const d = await res.json();
+                      if (!res.ok || !d.url) { toast.error(d.error || "Error"); return; }
+                      window.location.href = d.url;
+                    }}
+                    style={{ flex: 1, padding: "10px 0", border: `1.5px solid ${PURPLE}55`, borderRadius: 999, background: "transparent", color: PURPLE, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    Contratar
+                  </button>
+                </>
+              ) : (
+                <a href="/panel/loyalty" style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none" }}>
+                  Ir a Loyalty →
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Facturación ── */}
       <div style={{ marginBottom: 16 }}>
         <FacturacionPage />

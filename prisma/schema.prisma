@@ -286,6 +286,14 @@ model Restaurant {
   billingRut                 String?
   birthdayPerk               String?
   trialReminderSentAt        DateTime?
+  // ── Loyalty billing ──────────────────────────────────────────
+  loyaltyStatus              SubscriptionStatus       @default(NONE)
+  loyaltyPeriodEnd           DateTime?
+  loyaltyTrialEndsAt         DateTime?
+  loyaltyLastPaymentAt       DateTime?
+  loyaltyTrialReminderSentAt DateTime?
+  loyaltyFlowRegisterToken   String?
+  // ─────────────────────────────────────────────────────────────
   birthdayEmailEnabled       Boolean                  @default(false)
   birthdayPerkConditions     String?
   cartaColorMode             CartaColorMode           @default(LIGHT)

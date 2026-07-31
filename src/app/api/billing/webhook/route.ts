@@ -26,6 +26,27 @@ export async function POST(req: NextRequest) {
 
   console.log(`[billing/webhook] Recibido token: ${token}, subscriptionId: ${flowSubscriptionId}`);
 
+  // Detectar si es pago de Loyalty (loyaltyFlowRegisterToken)
+  if (token) {
+    const loyaltyRest = await prisma.restaurant.findFirst({
+      where: { loyaltyFlowRegisterToken: { startsWith: token } },
+    }) || await prisma.restaurant.findFirst({ where: { loyaltyFlowRegisterToken: token } });
+
+    if (loyaltyRest) {
+      // Activar loyalty — el return handler también lo hace, pero el webhook asegura activación
+      const existingEnd = loyaltyRest.loyaltyPeriodEnd ? new Date(loyaltyRest.loyaltyPeriodEnd) : null;
+      const isEarlyRenewal = loyaltyRest.loyaltyStatus === "ACTIVE" && !!existingEnd && existingEnd > new Date();
+      const baseDate = isEarlyRenewal ? existingEnd! : new Date();
+      const periodEnd = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      await prisma.restaurant.update({
+        where: { id: loyaltyRest.id },
+        data: { loyaltyStatus: "ACTIVE", loyaltyPeriodEnd: periodEnd, loyaltyLastPaymentAt: new Date() },
+      });
+      console.log(`[billing/webhook] Loyalty activado para ${loyaltyRest.name}`);
+      return NextResponse.json({ ok: true, loyalty: true });
+    }
+  }
+
   // Buscar restaurant — primero por flowRegisterToken (pago manual), luego por flowSubscriptionId (suscripción)
   let restaurant = token
     ? await prisma.restaurant.findFirst({

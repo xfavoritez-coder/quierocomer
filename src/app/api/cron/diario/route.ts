@@ -395,6 +395,46 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 4.9 Loyalty: expirar trials vencidos → NONE
+    let loyaltyTrialsExpired = 0;
+    const expiredLoyaltyTrials = await prisma.restaurant.findMany({
+      where: { loyaltyStatus: "TRIALING", loyaltyTrialEndsAt: { lt: now }, billingExempt: false },
+      select: { id: true, name: true },
+    });
+    if (expiredLoyaltyTrials.length > 0) {
+      await prisma.restaurant.updateMany({
+        where: { id: { in: expiredLoyaltyTrials.map(r => r.id) } },
+        data: { loyaltyStatus: "NONE", loyaltyTrialEndsAt: null },
+      });
+      loyaltyTrialsExpired = expiredLoyaltyTrials.length;
+    }
+
+    // 4.10 Loyalty: bajar suscripciones ACTIVE vencidas → NONE
+    let loyaltyExpiredDowngraded = 0;
+    const expiredLoyaltyActive = await prisma.restaurant.findMany({
+      where: { loyaltyStatus: "ACTIVE", loyaltyPeriodEnd: { lt: startOfToday }, billingExempt: false },
+      select: { id: true, name: true },
+    });
+    if (expiredLoyaltyActive.length > 0) {
+      await prisma.restaurant.updateMany({
+        where: { id: { in: expiredLoyaltyActive.map(r => r.id) } },
+        data: { loyaltyStatus: "NONE", loyaltyPeriodEnd: null },
+      });
+      loyaltyExpiredDowngraded = expiredLoyaltyActive.length;
+    }
+
+    // 4.11 Loyalty: bajar suscripciones CANCELED vencidas → NONE
+    const expiredLoyaltyCanceled = await prisma.restaurant.findMany({
+      where: { loyaltyStatus: "CANCELED", loyaltyPeriodEnd: { lt: now }, billingExempt: false },
+      select: { id: true },
+    });
+    if (expiredLoyaltyCanceled.length > 0) {
+      await prisma.restaurant.updateMany({
+        where: { id: { in: expiredLoyaltyCanceled.map(r => r.id) } },
+        data: { loyaltyStatus: "NONE", loyaltyPeriodEnd: null },
+      });
+    }
+
     // 5. Backfill translations for restaurants that failed during pipeline
     let translationsBackfilled = 0;
     try {
@@ -515,6 +555,8 @@ export async function GET(req: NextRequest) {
           expiringIn2EmailsSent,
           autoChargesInitiated,
           activeExpiredDowngraded,
+          loyaltyTrialsExpired,
+          loyaltyExpiredDowngraded,
           translationsBackfilled,
           automations: automationResults,
           dailySnapshot: {

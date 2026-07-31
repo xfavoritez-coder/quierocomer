@@ -169,6 +169,9 @@ export const ALL_PLAN_ORDER: PlanKey[] = ["FREE", "SILVER", "GOLD", "PREMIUM"];
 export const IVA_RATE = 0.19;
 export const TRIAL_DAYS = 7;
 export const GRACE_DAYS = 7;
+/** Loyalty module pricing (independent of Carta QR plan) */
+export const LOYALTY_PLAN_NET = 29900;
+export const LOYALTY_TRIAL_DAYS = 7;
 
 export function ivaOf(amount: number): number { return Math.round(amount * IVA_RATE); }
 export function grossOf(amount: number): number { return amount + ivaOf(amount); }
