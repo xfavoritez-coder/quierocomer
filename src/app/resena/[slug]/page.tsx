@@ -24,5 +24,5 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
 
   if (!restaurant || restaurant.reviewMode !== "private") return notFound();
 
-  return <ResenaClient restaurant={restaurant} />;
+  return <ResenaClient restaurant={{ ...restaurant, slug }} />;
 }

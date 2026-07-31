@@ -5,7 +5,7 @@ import { CheckCircle } from "lucide-react";
 const GOLD = "#F4A623";
 
 interface Props {
-  restaurant: { id: string; name: string; logoUrl: string | null; reviewReward: string | null };
+  restaurant: { id: string; slug: string; name: string; logoUrl: string | null; reviewReward: string | null };
 }
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -61,7 +61,21 @@ export default function ResenaClient({ restaurant }: Props) {
       background: "linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "40px 20px", fontFamily: "system-ui, -apple-system, sans-serif",
+      position: "relative",
     }}>
+      {/* Botón volver */}
+      <a
+        href={`/${restaurant.slug}`}
+        style={{
+          position: "absolute", top: 16, left: 16,
+          display: "flex", alignItems: "center", gap: 6,
+          color: "rgba(255,255,255,0.45)", fontSize: "0.82rem",
+          textDecoration: "none", fontWeight: 600,
+        }}
+      >
+        ← Volver
+      </a>
+
       {/* Logo */}
       <div style={{ marginBottom: 16 }}>
         {restaurant.logoUrl
