@@ -98,21 +98,69 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
         background: "#0d0d0d",
         color: "#fff",
         fontFamily: "system-ui, -apple-system, sans-serif",
-        display: "flex",
-        justifyContent: "center",
-        padding: "28px 18px 48px",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        {/* Encabezado del restaurante */}
-        <div style={{ textAlign: "center", marginBottom: 22 }}>
-          {restaurantLogo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={restaurantLogo} alt="" style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", margin: "0 auto 12px", display: "block", background: "rgba(255,255,255,0.1)" }} />
-          )}
-          <h1 style={{ fontSize: "1.4rem", fontWeight: 800, margin: 0 }}>{restaurantName}</h1>
-          <p style={{ color: "rgba(255,255,255,0.6)", margin: "4px 0 0" }}>{program.name}</p>
+      {/* ── HERO HEADER ── */}
+      <div style={{
+        position: "relative",
+        overflow: "hidden",
+        background: `linear-gradient(145deg, ${accent}22 0%, ${accent}08 50%, #0d0d0d 100%)`,
+        borderBottom: `1px solid ${accent}30`,
+        padding: "36px 24px 28px",
+        textAlign: "center",
+      }}>
+        {/* Círculos decorativos de fondo */}
+        <div style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: `radial-gradient(circle, ${accent}28 0%, transparent 70%)`, top: -60, right: -60, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)`, bottom: -40, left: -40, pointerEvents: "none" }} />
+
+        {/* Logo */}
+        {restaurantLogo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={restaurantLogo} alt="" style={{ width: 68, height: 68, borderRadius: "50%", objectFit: "cover", margin: "0 auto 14px", display: "block", border: `3px solid ${accent}`, boxShadow: `0 0 24px ${accent}55` }} />
+        )}
+
+        {/* Nombre del local */}
+        <p style={{ fontSize: "0.78rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 4px" }}>{restaurantName}</p>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 900, margin: "0 0 16px", lineHeight: 1.15 }}>{program.name}</h1>
+
+        {/* Sellos ilustrativos */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 18 }}>
+          {Array.from({ length: Math.min(program.stampGoal, 6) }).map((_, i) => {
+            const filled = i < 2;
+            return (
+              <div key={i} style={{
+                width: 40, height: 40, borderRadius: "50%",
+                border: `2.5px solid ${filled ? accent : "rgba(255,255,255,0.18)"}`,
+                background: filled ? `${accent}22` : "rgba(255,255,255,0.04)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "1.1rem",
+                boxShadow: filled ? `0 0 12px ${accent}55` : "none",
+                transition: "all 0.2s",
+              }}>
+                {filled ? <span style={{ fontSize: "1rem" }}>{iconText === "sellos" ? "★" : iconText}</span> : null}
+              </div>
+            );
+          })}
+          {program.stampGoal > 6 && <span style={{ color: "rgba(255,255,255,0.4)", alignSelf: "center", fontSize: "0.8rem" }}>…</span>}
         </div>
+
+        {/* Badges wallet */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
+          {[
+            { icon: "🍎", label: "Apple Wallet" },
+            { icon: "▶", label: "Google Wallet" },
+            { icon: "✓", label: "Sin descargar una app" },
+          ].map((b) => (
+            <span key={b.label} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
+              <span style={{ fontSize: "0.75rem" }}>{b.icon}</span> {b.label}
+            </span>
+          ))}
+        </div>
+
+        <style>{`@keyframes stampPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
+      </div>
+
+      <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", padding: "24px 18px 48px" }}>
 
         {/* Recompensas */}
         {program.rewards.length > 0 && (
