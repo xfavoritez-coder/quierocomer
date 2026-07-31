@@ -15,7 +15,7 @@ type Props = { params: Promise<{ restaurantSlug: string }> }
 // ---------------------------------------------------------------------------
 
 async function getRestaurantLanding(slug: string) {
-  return prisma.restaurant.findFirst({
+  const r = await prisma.restaurant.findFirst({
     where: { slug, isActive: true },
     select: {
       id: true,
@@ -28,9 +28,14 @@ async function getRestaurantLanding(slug: string) {
       commune: true,
       googleReviewUrl: true,
       reviewReward: true,
-      loyaltyProgram: { select: { active: true, name: true, stampIcon: true } },
     },
   })
+  if (!r) return null
+  const loyaltyProgram = await prisma.loyaltyProgram.findUnique({
+    where: { restaurantId: r.id },
+    select: { active: true, name: true, stampIcon: true },
+  })
+  return { ...r, loyaltyProgram }
 }
 
 // ---------------------------------------------------------------------------
@@ -45,7 +50,6 @@ const BTN = {
 
 function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof getRestaurantLanding>>> }) {
   const initials = r.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
-  const subtitle = [r.primaryCategory, r.commune || r.address].filter(Boolean).join(' · ')
   const hasLoyalty = !!r.loyaltyProgram?.active
   const loyaltyIcon = r.loyaltyProgram?.stampIcon || '★'
 
@@ -70,12 +74,6 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
       <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: '#fff', textAlign: 'center', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
         {r.name}
       </h1>
-      {subtitle && (
-        <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: '0.03em' }}>
-          {subtitle}
-        </p>
-      )}
-
       {/* Action buttons */}
       <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
         {/* Carta — siempre visible */}
@@ -90,7 +88,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {/* Pedido online — solo si está activo */}
         {r.orderingEnabled && (
           <a href={`/pedir/${r.slug}`} style={BTN}>
-            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🛍️</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.85 }}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             <span>
               <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
               <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Elige y envía por WhatsApp</span>
