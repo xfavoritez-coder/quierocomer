@@ -62,14 +62,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       ],
     },
     {
-      key: "ordering",
-      label: "Pedidos Online",
-      items: [
-        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
-        ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
-      ],
-    },
-    {
       key: "loyalty",
       label: "Loyalty",
       items: [
@@ -78,6 +70,14 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: UsersRound, labelKey: "nav_loyalty_members", href: `${base}/loyalty/miembros` },
         { icon: Bell, labelKey: "nav_loyalty_notif", href: `${base}/loyalty/notificaciones` },
         { icon: Scan, labelKey: "nav_loyalty_scan", href: `${base}/loyalty/escanear` },
+      ],
+    },
+    {
+      key: "ordering",
+      label: "Pedidos Online",
+      items: [
+        { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online`, badge: "Nuevo" },
+        ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
       ],
     },
     {
@@ -306,13 +306,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   // Footer with theme toggle + user info + logout
   const SidebarFooter = ({ onClose }: { onClose?: () => void }) => (
     <div style={{ borderTop: "1px solid var(--adm-card-border)", flexShrink: 0 }}>
-      <button
-        onClick={toggleTheme}
-        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 16px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer" }}
-      >
-        {theme === "dark" ? <Sun size={14} color="var(--adm-text3)" /> : <Moon size={14} color="var(--adm-text3)" />}
-        <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)" }}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
-      </button>
       <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", gap: 10 }}>
         <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>{initial}</div>
         <Link
