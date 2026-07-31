@@ -333,6 +333,9 @@ model Restaurant {
   orderingBannerUrl          String? // banner personalizado para /pedir
   orderingTheme              String                   @default("light") // light | dark
   orderingAccentColor        String? // color de acento hex
+  // Valoraciones (Google Reviews)
+  googleReviewUrl            String? // URL de Google Maps para dejar reseña
+  reviewReward               String? // Descripción del premio (null = sin premio)
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]

@@ -26,6 +26,9 @@ async function getRestaurantLanding(slug: string) {
       primaryCategory: true,
       address: true,
       commune: true,
+      googleReviewUrl: true,
+      reviewReward: true,
+      loyaltyProgram: { select: { active: true, name: true, stampIcon: true } },
     },
   })
 }
@@ -34,37 +37,32 @@ async function getRestaurantLanding(slug: string) {
 // Restaurant landing page component
 // ---------------------------------------------------------------------------
 
+const BTN = {
+  display: 'flex', alignItems: 'center', gap: 14,
+  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+  borderRadius: 18, padding: '17px 22px', textDecoration: 'none', color: '#fff',
+} as const
+
 function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof getRestaurantLanding>>> }) {
   const initials = r.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   const subtitle = [r.primaryCategory, r.commune || r.address].filter(Boolean).join(' · ')
+  const hasLoyalty = !!r.loyaltyProgram?.active
+  const loyaltyIcon = r.loyaltyProgram?.stampIcon || '★'
 
   return (
     <main style={{
       minHeight: '100svh',
       background: 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '48px 20px 60px',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '48px 20px 60px', fontFamily: 'system-ui, -apple-system, sans-serif',
     }}>
 
       {/* Logo */}
       <div style={{ marginBottom: 20 }}>
         {r.logoUrl ? (
-          <img
-            src={r.logoUrl}
-            alt={r.name}
-            style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.12)', display: 'block' }}
-          />
+          <img src={r.logoUrl} alt={r.name} style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.12)', display: 'block' }} />
         ) : (
-          <div style={{
-            width: 88, height: 88, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #F4A623, #e8920f)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 30, fontWeight: 700, color: '#0a0a0a',
-          }}>{initials}</div>
+          <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'linear-gradient(135deg, #F4A623, #e8920f)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 700, color: '#0a0a0a' }}>{initials}</div>
         )}
       </div>
 
@@ -80,15 +78,8 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
 
       {/* Action buttons */}
       <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
-        <a
-          href={`/qr/${r.slug}?carta=1`}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
-            borderRadius: 18, padding: '17px 22px', textDecoration: 'none',
-            color: '#fff',
-          }}
-        >
+        {/* Carta — siempre visible */}
+        <a href={`/qr/${r.slug}?carta=1`} style={BTN}>
           <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>📖</span>
           <span>
             <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
@@ -96,30 +87,47 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
           </span>
         </a>
 
-        <a
-          href={`/pedir/${r.slug}`}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
-            borderRadius: 18, padding: '17px 22px', textDecoration: 'none',
-            color: '#fff',
-          }}
-        >
-          <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🛍️</span>
-          <span>
-            <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
-            <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Elige y envía por WhatsApp</span>
-          </span>
-        </a>
+        {/* Pedido online — solo si está activo */}
+        {r.orderingEnabled && (
+          <a href={`/pedir/${r.slug}`} style={BTN}>
+            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🛍️</span>
+            <span>
+              <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Elige y envía por WhatsApp</span>
+            </span>
+          </a>
+        )}
+
+        {/* Loyalty — solo si programa activo */}
+        {hasLoyalty && (
+          <a href={`/fidelidad/${r.slug}`} style={BTN}>
+            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>{loyaltyIcon}</span>
+            <span>
+              <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>Tarjeta de fidelidad</span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>Junta sellos y gana premios</span>
+            </span>
+          </a>
+        )}
+
+        {/* Reseña Google — solo si configurado */}
+        {r.googleReviewUrl && (
+          <a href={r.googleReviewUrl} target="_blank" rel="noopener noreferrer" style={BTN}>
+            <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
+            <span>
+              <span style={{ display: 'block', fontSize: '0.97rem', fontWeight: 700, lineHeight: 1.2 }}>
+                {r.reviewReward ? 'Comenta y gana' : 'Déjanos una reseña'}
+              </span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+                {r.reviewReward || 'Nos ayuda mucho en Google'}
+              </span>
+            </span>
+          </a>
+        )}
       </div>
 
       {/* Footer */}
-      <a
-        href="https://quierocomer.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ marginTop: 48, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textDecoration: 'none' }}
-      >
+      <a href="https://quierocomer.com" target="_blank" rel="noopener noreferrer"
+        style={{ marginTop: 48, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textDecoration: 'none' }}>
         Powered by <strong style={{ color: 'rgba(255,255,255,0.55)' }}>QuieroComer</strong>
       </a>
     </main>
@@ -406,8 +414,8 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
   // Check if slug is a restaurant
   const rest = await getRestaurantLanding(restaurantSlug)
   if (rest) {
-    if (!rest.orderingEnabled) {
-      // No ordering → send directly to carta
+    const hasLanding = rest.orderingEnabled || !!rest.loyaltyProgram?.active || !!rest.googleReviewUrl
+    if (!hasLanding) {
       redirect(`/qr/${restaurantSlug}`)
     }
     return <RestaurantLanding r={rest} />

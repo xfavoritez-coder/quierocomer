@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -37,10 +38,13 @@ export async function PATCH(req: NextRequest) {
 
   if (!allowed) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  await prisma.restaurant.update({
+  const updated = await prisma.restaurant.update({
     where: { id: restaurantId },
     data: { orderingEnabled },
+    select: { slug: true },
   });
+
+  revalidatePath(`/${updated.slug}`);
 
   return NextResponse.json({ ok: true, orderingEnabled });
 }

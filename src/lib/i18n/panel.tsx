@@ -28,6 +28,7 @@ const translations = {
     nav_settings: "Ajustes",
     nav_support: "Soporte",
     nav_config_general: "General",
+    nav_reviews: "Valoraciones",
     nav_more: "Más",
     // Account
     my_profile: "Mi perfil",
@@ -863,6 +864,7 @@ const translations = {
     nav_settings: "Settings",
     nav_support: "Support",
     nav_config_general: "General",
+    nav_reviews: "Reviews",
     nav_more: "More",
     // Account
     my_profile: "My profile",

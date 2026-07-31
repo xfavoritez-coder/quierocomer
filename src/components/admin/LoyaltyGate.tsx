@@ -91,7 +91,7 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
           display: "block", width: "100%", padding: "15px 0", border: "none",
           borderRadius: 14, background: PURPLE, color: "#fff",
           fontFamily: F, fontSize: "0.95rem", fontWeight: 800,
-          cursor: activating ? "wait" : "pointer", marginBottom: 10,
+          cursor: activating ? "wait" : "pointer", marginBottom: 8,
           boxShadow: "0 6px 20px rgba(109,40,217,0.3)",
           opacity: activating ? 0.7 : 1,
         }}
@@ -99,43 +99,8 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
         {activating ? "Activando…" : `✨ Probar ${LOYALTY_TRIAL_DAYS} días gratis`}
       </button>
 
-      {/* Pricing info */}
-      <div style={{
-        border: "1px solid var(--adm-card-border)", borderRadius: 12,
-        padding: "14px 16px", marginBottom: 16, textAlign: "left",
-        background: "var(--adm-card)",
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text2)" }}>Mensual (neto)</span>
-          <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", fontWeight: 700 }}>
-            ${net.toLocaleString("es-CL")}
-          </span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, borderTop: "1px solid var(--adm-card-border)" }}>
-          <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)" }}>Total con IVA</span>
-          <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: PURPLE }}>
-            ${gross.toLocaleString("es-CL")}
-          </span>
-        </div>
-      </div>
-
-      <button
-        onClick={handleSubscribe}
-        disabled={subscribing}
-        style={{
-          display: "block", width: "100%", padding: "13px 0",
-          border: `1.5px solid ${PURPLE}55`, borderRadius: 12,
-          background: "transparent", color: PURPLE,
-          fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
-          cursor: subscribing ? "wait" : "pointer",
-          opacity: subscribing ? 0.7 : 1,
-        }}
-      >
-        {subscribing ? "Redirigiendo…" : "Contratar ahora →"}
-      </button>
-
-      <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 14, lineHeight: 1.5 }}>
-        Sin contratos · Cancelas cuando quieras · Se suma a tu plan actual
+      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 20px", lineHeight: 1.5 }}>
+        Luego de los {LOYALTY_TRIAL_DAYS} días, ${net.toLocaleString("es-CL")} neto mensual · Sin contratos · Cancelas cuando quieras
       </p>
     </div>
   );
