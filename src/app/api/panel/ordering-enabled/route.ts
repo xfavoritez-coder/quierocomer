@@ -45,6 +45,7 @@ export async function PATCH(req: NextRequest) {
   });
 
   revalidatePath(`/${updated.slug}`);
+  revalidatePath(`/qr/${updated.slug}`);
 
   return NextResponse.json({ ok: true, orderingEnabled });
 }
