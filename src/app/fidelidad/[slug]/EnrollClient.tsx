@@ -82,7 +82,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
     color: "#fff",
     fontSize: "1rem",
     outline: "none",
-    marginBottom: 12,
+    display: "block",
   };
 
   return (
@@ -211,16 +211,27 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
         {!done ? (
           <>
             {/* Formulario */}
-            <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: "0 0 12px" }}>Crea tu tarjeta gratis</p>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre *" style={inputStyle} />
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email *" style={inputStyle} inputMode="email" />
-            <input
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              style={{ ...inputStyle, colorScheme: "dark", maxWidth: "100%" }}
-            />
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono (opcional)" style={inputStyle} inputMode="tel" />
+            <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: "0 0 18px" }}>Crea tu tarjeta gratis</p>
+
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Nombre</span>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
+            </label>
+
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Email</span>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} inputMode="email" />
+            </label>
+
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Fecha de cumpleaños</span>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} style={{ ...inputStyle, marginBottom: 0, colorScheme: "dark", display: "block", width: "100%", boxSizing: "border-box" }} />
+            </label>
+
+            <label style={{ display: "block", marginBottom: 16 }}>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" style={{ ...inputStyle, marginBottom: 0 }} inputMode="tel" />
+            </label>
 
             {error && <p style={{ color: "#ff6b6b", fontSize: "0.85rem", margin: "0 0 12px" }}>{error}</p>}
 
