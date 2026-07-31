@@ -116,30 +116,44 @@ export default function ResenaClient({ restaurant }: Props) {
 
             <Stars value={rating} onChange={setRating} />
 
-            <textarea
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              placeholder="Cuéntanos qué te pareció (opcional)"
-              rows={4}
-              style={{
-                width: "100%", boxSizing: "border-box", padding: "14px 16px",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)",
-                borderRadius: 14, color: "#fff", fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
-                outline: "none", resize: "vertical", minHeight: 100, marginBottom: 10,
-              }}
-            />
+            <style>{`.resena-input::placeholder, .resena-textarea::placeholder { color: rgba(255,255,255,0.28); }`}</style>
 
-            <input
-              value={authorName}
-              onChange={e => setAuthorName(e.target.value)}
-              placeholder="Tu nombre (opcional)"
-              style={{
-                width: "100%", boxSizing: "border-box", padding: "12px 16px",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)",
-                borderRadius: 14, color: "#fff", fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
-                outline: "none", marginBottom: 14,
-              }}
-            />
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Tu comentario <span style={{ fontWeight: 400, opacity: 0.7 }}>(opcional)</span>
+              </span>
+              <textarea
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                placeholder="Cuéntanos qué te pareció…"
+                rows={4}
+                className="resena-textarea"
+                style={{
+                  width: "100%", boxSizing: "border-box", padding: "14px 16px",
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)",
+                  borderRadius: 14, color: "#fff", fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
+                  outline: "none", resize: "vertical", minHeight: 100,
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Tu nombre <span style={{ fontWeight: 400, opacity: 0.7 }}>(opcional)</span>
+              </span>
+              <input
+                value={authorName}
+                onChange={e => setAuthorName(e.target.value)}
+                placeholder="¿Cómo te llamas?"
+                className="resena-input"
+                style={{
+                  width: "100%", boxSizing: "border-box", padding: "12px 16px",
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)",
+                  borderRadius: 14, color: "#fff", fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
+                  outline: "none",
+                }}
+              />
+            </div>
 
             {error && <p style={{ color: "#f87171", fontSize: "0.8rem", textAlign: "center", margin: "0 0 10px" }}>{error}</p>}
 
