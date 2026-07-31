@@ -12,6 +12,7 @@ const NAV = [
   { icon: "🧪", label: "Tests A/B", href: "/admin/tests-ab" },
   { icon: "🎯", label: "Funnel", href: "/admin/funnel" },
   { icon: "📣", label: "FB Ads", href: "/admin/facebook-ads" },
+  { icon: "✉️", label: "Mail Marketing", href: "/admin/mailmarketing" },
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
   { icon: "🛒", label: "Pedidos Online", href: "/admin/pedidos-online" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
