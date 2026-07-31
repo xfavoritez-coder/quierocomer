@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Bell, Send } from "lucide-react";
-import LoyaltyNav from "../LoyaltyNav";
+import { Bell, Send, MapPin, AlertTriangle } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -32,6 +31,13 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
 };
 
+const GEO_PRESETS = [
+  { label: "150 m", km: 0.15 },
+  { label: "500 m", km: 0.5 },
+  { label: "1 km", km: 1 },
+  { label: "2 km", km: 2 },
+];
+
 interface Broadcast {
   id: string;
   title: string;
@@ -42,12 +48,25 @@ interface Broadcast {
 
 export default function LoyaltyNotifyPage() {
   const { selectedRestaurantId, loading } = usePanelSession();
+  const [tab, setTab] = useState<"send" | "proximity">("send");
 
+  // ── Enviar notificación ──
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [history, setHistory] = useState<Broadcast[]>([]);
+
+  // ── Cercanía ──
+  const [geoEnabled, setGeoEnabled] = useState(false);
+  const [geoRadiusKm, setGeoRadiusKm] = useState(1);
+  const [geoMessage, setGeoMessage] = useState("");
+  const [address, setAddress] = useState<string | null>(null);
+  const [hasLocation, setHasLocation] = useState(false);
+  const [loadingGeo, setLoadingGeo] = useState(true);
+  const [savingGeo, setSavingGeo] = useState(false);
+  const [savedGeo, setSavedGeo] = useState(false);
+  const [refreshingGeo, setRefreshingGeo] = useState(false);
 
   const loadHistory = useCallback(() => {
     if (!selectedRestaurantId) return;
@@ -60,6 +79,25 @@ export default function LoyaltyNotifyPage() {
   useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    setLoadingGeo(true);
+    setSavedGeo(false);
+    fetch(`/api/loyalty/program?restaurantId=${selectedRestaurantId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.program) {
+          setGeoEnabled(!!d.program.geoEnabled);
+          setGeoRadiusKm(d.program.geoRadiusKm ?? 1);
+          setGeoMessage(d.program.geoMessage || "");
+        }
+        setAddress(d.restaurant?.address ?? null);
+        setHasLocation(!!d.restaurant?.hasLocation);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingGeo(false));
+  }, [selectedRestaurantId]);
 
   const send = async () => {
     if (!selectedRestaurantId || !body.trim()) return;
@@ -84,22 +122,88 @@ export default function LoyaltyNotifyPage() {
     }
   };
 
+  const saveGeo = async () => {
+    if (!selectedRestaurantId) return;
+    setSavingGeo(true);
+    setSavedGeo(false);
+    try {
+      const res = await fetch("/api/loyalty/program", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, geoEnabled, geoRadiusKm, geoMessage }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Error al guardar");
+      }
+      setSavedGeo(true);
+    } catch (e: any) {
+      toast.error(e.message || "Error al guardar");
+    } finally {
+      setSavingGeo(false);
+    }
+  };
+
+  const refreshGeo = async () => {
+    if (!selectedRestaurantId) return;
+    if (!window.confirm("¿Aplicar la configuración de cercanía a todas las tarjetas ya instaladas?")) return;
+    setRefreshingGeo(true);
+    try {
+      const res = await fetch("/api/loyalty/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Error");
+      toast.success(`Aplicado · ${d.appleDevices} iPhone${d.google ? " + Android" : ""}`);
+    } catch (e: any) {
+      toast.error(e.message || "Error al actualizar");
+    } finally {
+      setRefreshingGeo(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 620 }}>
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-          <CreditCard size={20} color="var(--adm-text3)" /> Fidelidad
+          <Bell size={20} color="var(--adm-text3)" /> Notificaciones
         </h1>
         <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-          Envía una notificación push a todas las tarjetas de tus clientes (iPhone y Android).
+          Envía mensajes push a tus miembros o activa avisos automáticos por cercanía.
         </p>
       </div>
 
-      <LoyaltyNav />
+      {/* Tabs internos */}
+      <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--adm-card-border)", marginBottom: 24 }}>
+        {(["send", "proximity"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            style={{
+              padding: "8px 16px",
+              marginBottom: -1,
+              border: "none",
+              borderBottom: `2px solid ${tab === t ? GOLD : "transparent"}`,
+              background: "transparent",
+              fontFamily: F,
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: tab === t ? "var(--adm-text)" : "var(--adm-text3)",
+              cursor: "pointer",
+              transition: "color 0.15s",
+            }}
+          >
+            {t === "send" ? "Enviar notificación" : "Cercanía"}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>
-      ) : (
+      ) : tab === "send" ? (
         <>
           {/* Redactar */}
           <div style={{ padding: 16, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
@@ -113,7 +217,6 @@ export default function LoyaltyNotifyPage() {
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0", textAlign: "right" }}>{body.length}/300</p>
             </div>
 
-            {/* Vista previa de la notificación */}
             {body.trim() && (
               <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <Bell size={16} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
@@ -159,6 +262,103 @@ export default function LoyaltyNotifyPage() {
             </div>
           )}
         </>
+      ) : (
+        /* ── Tab Cercanía ── */
+        loadingGeo ? (
+          <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              Avisa al cliente en su pantalla cuando pasa cerca de tu local. El teléfono lo detecta solo (usa la ubicación del local en QuieroComer).
+            </p>
+
+            {/* Dirección */}
+            {hasLocation ? (
+              <div style={{ padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+                <label style={labelStyle}>Los avisos se enviarán desde:</label>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <MapPin size={16} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <span style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text)" }}>
+                    {address || "Ubicación de tu local (configurada)"}
+                  </span>
+                </div>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                  Es la dirección de tu restaurante en QuieroComer. Para cambiarla, edítala en los <b>Ajustes</b> de tu local.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: 14, background: "rgba(224,160,32,0.08)", border: "1px solid rgba(224,160,32,0.35)", borderRadius: 12 }}>
+                <AlertTriangle size={18} color="#e0a020" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Tu local no tiene ubicación configurada</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "3px 0 0", lineHeight: 1.5 }}>
+                    Para enviar avisos por cercanía, configura la dirección en los <b>Ajustes</b> de QuieroComer.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Activar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Activar avisos por cercanía</p>
+                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                  Requiere que tu local tenga ubicación configurada.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setGeoEnabled((v) => !v); setSavedGeo(false); }}
+                aria-pressed={geoEnabled}
+                style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: geoEnabled ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
+              >
+                <span style={{ position: "absolute", top: 3, left: geoEnabled ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+              </button>
+            </div>
+
+            {geoEnabled && (
+              <>
+                <div>
+                  <label style={labelStyle}>Distancia del aviso</label>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {GEO_PRESETS.map((opt) => {
+                      const active = Math.abs(geoRadiusKm - opt.km) < 0.001;
+                      return (
+                        <button key={opt.km} type="button" onClick={() => { setGeoRadiusKm(opt.km); setSavedGeo(false); }} style={{ padding: "9px 16px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, background: active ? "rgba(244,166,35,0.14)" : "var(--adm-card)", border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`, color: active ? GOLD : "var(--adm-text2)" }}>
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
+                    A qué distancia del local se activa (iPhone). En Android el radio es fijo (~150 m).
+                  </p>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Mensaje del aviso</label>
+                  <input type="text" value={geoMessage} maxLength={120} placeholder="Ej: ¡Estás cerca! Pásate por tus sellos 🍣" onChange={(e) => { setGeoMessage(e.target.value); setSavedGeo(false); }} style={inputStyle} />
+                </div>
+              </>
+            )}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button type="button" onClick={saveGeo} disabled={savingGeo} style={{ padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: savingGeo ? "default" : "pointer", opacity: savingGeo ? 0.6 : 1 }}>
+                {savingGeo ? "Guardando…" : "Guardar"}
+              </button>
+              {savedGeo && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#16a34a" }}>✓ Guardado</span>}
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16 }}>
+              <button type="button" onClick={refreshGeo} disabled={refreshingGeo} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: refreshingGeo ? "default" : "pointer", opacity: refreshingGeo ? 0.6 : 1 }}>
+                {refreshingGeo ? "Aplicando…" : "↻ Aplicar a las tarjetas ya instaladas"}
+              </button>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Guarda primero. Las tarjetas nuevas ya incluyen esta configuración.
+              </p>
+            </div>
+          </div>
+        )
       )}
     </div>
   );

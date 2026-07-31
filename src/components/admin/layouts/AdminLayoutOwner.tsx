@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -73,7 +73,11 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "loyalty",
       label: "Loyalty",
       items: [
-        { icon: Gift, labelKey: "nav_loyalty", href: `${base}/loyalty` },
+        { icon: HelpCircle, labelKey: "nav_loyalty_how", href: `${base}/loyalty` },
+        { icon: CreditCard, labelKey: "nav_loyalty_card", href: `${base}/loyalty/tarjeta` },
+        { icon: UsersRound, labelKey: "nav_loyalty_members", href: `${base}/loyalty/miembros` },
+        { icon: Bell, labelKey: "nav_loyalty_notif", href: `${base}/loyalty/notificaciones` },
+        { icon: Scan, labelKey: "nav_loyalty_scan", href: `${base}/loyalty/escanear` },
       ],
     },
     {
@@ -165,7 +169,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   }, [pathname, selectedRestaurantId, seenOrdering]);
 
   // Theme
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   useEffect(() => {
     const saved = localStorage.getItem("qc_panel_theme");
     if (saved === "light" || saved === "dark") setTheme(saved);

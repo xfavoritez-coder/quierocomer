@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import jsQR from "jsqr";
 import { CreditCard, Camera, Check, Gift, AlertCircle } from "lucide-react";
-import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -159,7 +158,6 @@ export default function LoyaltyScanPage() {
         </p>
       </div>
 
-      <LoyaltyNav />
 
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>

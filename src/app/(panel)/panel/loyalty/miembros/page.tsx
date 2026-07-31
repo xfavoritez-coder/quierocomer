@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import { CreditCard, Plus, Search, RotateCcw, Wallet, Apple, Trash2, Check, Circle, Share2 } from "lucide-react";
-import LoyaltyNav from "../LoyaltyNav";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -191,7 +190,6 @@ export default function LoyaltyMembersPage() {
         </p>
       </div>
 
-      <LoyaltyNav />
 
       {/* Buscador + agregar */}
       <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
