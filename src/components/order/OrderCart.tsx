@@ -42,8 +42,8 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
               Mi pedido
             </span>
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <X size={16} color="var(--carta-text, #333)" />
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X size={16} color="#fff" />
           </button>
         </div>
 
@@ -89,9 +89,9 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
                       </span>
                       <button
                         onClick={() => updateQuantity(item.key, item.quantity + 1)}
-                        style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: "pointer", background: "var(--carta-accent, #F4A623)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", cursor: "pointer", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" }}
                       >
-                        <Plus size={12} color="var(--carta-accent-fg, #fff)" />
+                        <Plus size={12} color="#fff" />
                       </button>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -121,7 +121,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
             </div>
             <button
               onClick={onCheckout}
-              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "none", background: "var(--carta-accent, #F4A623)", color: "var(--carta-accent-fg, #fff)", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}
+              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", color: "#fff", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" }}
             >
               Ir al checkout →
             </button>

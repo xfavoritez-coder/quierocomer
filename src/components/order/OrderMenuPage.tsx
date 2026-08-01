@@ -158,7 +158,7 @@ function ImpactHero({
             }}
             style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)`, flexShrink: 0 }}
           >
-            <Plus size={20} color={accent} />
+            <Plus size={20} color="#fff" />
           </button>
         </div>
         {heroDishes.length > 1 && (
@@ -260,7 +260,7 @@ function ListaHero({
             }}
             style={{ position: "absolute", bottom: 14, right: 14, zIndex: 11, width: 40, height: 40, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)` }}
           >
-            <Plus size={18} color={accent} />
+            <Plus size={18} color="#fff" />
           </button>
         )}
 
@@ -316,7 +316,7 @@ function ImpactCard({
         </div>
       </div>
       <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "color-mix(in srgb, var(--carta-accent) 18%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px color-mix(in srgb, var(--carta-accent) 50%, transparent)", pointerEvents: hasModifiers ? "none" : "auto" }}>
-        <Plus size={16} color="var(--carta-accent)" />
+        <Plus size={16} color="#fff" />
       </div>
     </button>
   );
@@ -362,56 +362,97 @@ function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
   );
 }
 
-// ── Categories section with cover photos ─────────────────────────────────────
+// ── Categories section — horizontal scroll idéntico a MoodSection de CartaImpact ──
 function CategoriesSection({
-  grouped, accent, isDark, isImpact, scrollToCategory,
+  grouped, accent, isDark, scrollToCategory,
 }: {
   grouped: { category: Category; dishes: Dish[] }[];
   accent: string;
   isDark: boolean;
-  isImpact: boolean;
   scrollToCategory: (id: string) => void;
 }) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollLeft > 10);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   if (grouped.length < 3) return null;
+
+  const handleTap = (id: string) => { setActiveId(id); scrollToCategory(id); };
+
   return (
-    <div style={{ padding: "14px 14px 4px", position: "relative", zIndex: 1 }}>
-      <h3 style={{
-        fontFamily: isImpact ? "'Bebas Neue', Impact, sans-serif" : "var(--font-playfair, Georgia, serif)",
-        fontSize: isImpact ? 20 : 17, letterSpacing: isImpact ? "0.6px" : 0,
-        color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)",
-        margin: "0 0 10px", fontWeight: isImpact ? 400 : 600,
+    <section style={{ padding: "24px 14px 0", position: "relative", zIndex: 1 }}>
+      <h2 style={{
+        fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
+        letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
+        color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.38)",
       }}>
-        {isImpact ? "CATEGORÍAS" : "Categorías"}
-      </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        {grouped.map(({ category, dishes }) => {
-          const cover = dishes.find(d => d.photos?.[0])?.photos?.[0] ?? null;
-          return (
-            <button
-              key={category.id}
-              onClick={() => scrollToCategory(category.id)}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: isImpact ? 18 : 12,
-                background: isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.03)",
-                border: `1px solid ${isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)"}`,
-                cursor: "pointer", textAlign: "left", fontFamily: "inherit",
-                overflow: "hidden",
-              }}
-            >
-              {cover ? (
-                <div style={{ width: 40, height: 40, borderRadius: isImpact ? 11 : 8, overflow: "hidden", flexShrink: 0 }}>
-                  <img src={cover} alt={category.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-              ) : (
-                <div style={{ width: 40, height: 40, borderRadius: isImpact ? 11 : 8, background: `color-mix(in srgb, ${accent} 18%, transparent)`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>🍽️</div>
-              )}
-              <span style={{ fontSize: 13, fontWeight: 700, color: isDark ? "rgba(255,255,255,0.72)" : "rgba(0,0,0,0.68)", lineHeight: 1.3, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{category.name}</span>
-            </button>
-          );
-        })}
+        CATEGORÍAS
+      </h2>
+      <div style={{ position: "relative" }}>
+        <div
+          ref={scrollRef}
+          style={{
+            display: "flex", gap: 10, overflowX: "auto",
+            padding: "4px 0 16px", scrollbarWidth: "none",
+            msOverflowStyle: "none", WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
+        >
+          {grouped.map(({ category, dishes }) => {
+            const photo = dishes.find(d => d.photos?.[0])?.photos?.[0] ?? null;
+            const isActive = activeId === category.id;
+            return (
+              <button
+                key={category.id}
+                onClick={() => handleTap(category.id)}
+                style={{
+                  width: 128, minWidth: 128, height: 148, borderRadius: 28,
+                  position: "relative", overflow: "hidden",
+                  padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end",
+                  border: isActive
+                    ? `1px solid color-mix(in srgb, ${accent} 90%, transparent)`
+                    : `1px solid color-mix(in srgb, var(--carta-text) 14%, transparent)`,
+                  background: "var(--carta-surface)", cursor: "pointer",
+                  boxShadow: isActive
+                    ? `0 0 28px color-mix(in srgb, ${accent} 20%, transparent), 0 4px 16px rgba(0,0,0,0.12)`
+                    : "0 4px 16px rgba(0,0,0,0.08)",
+                  flexShrink: 0,
+                }}
+              >
+                {photo ? (
+                  <img src={photo} alt={category.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{
+                    position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))`,
+                  }}>
+                    <span style={{ fontSize: "2rem", opacity: 0.35 }}>🍽️</span>
+                  </div>
+                )}
+                <div style={{ position: "absolute", inset: 0, background: photo ? "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.72))" : "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.52))" }} />
+                <b style={{
+                  position: "relative", zIndex: 1, fontSize: 14, lineHeight: 1.15,
+                  textShadow: "0 2px 14px #000", color: "white", textAlign: "left",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  display: "block", width: "100%",
+                }}>{category.name}</b>
+              </button>
+            );
+          })}
+        </div>
+        {scrolled && (
+          <div style={{ position: "absolute", top: 0, left: 0, bottom: 8, width: 20, background: `linear-gradient(to left, transparent, var(--carta-bg))`, pointerEvents: "none", opacity: 0.6 }} />
+        )}
+        <div style={{ position: "absolute", top: 0, right: 0, bottom: 8, width: 40, background: `linear-gradient(to right, transparent, var(--carta-bg))`, pointerEvents: "none" }} />
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -639,7 +680,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         </div>
 
         {/* Categories grid */}
-        <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} isImpact={true} scrollToCategory={scrollToCategory} />
+        <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} scrollToCategory={scrollToCategory} />
 
         {/* Título MENÚ + search */}
         <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -711,7 +752,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         {/* Cart bar */}
         {count > 0 && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: isDark ? "rgba(3,3,3,0.8)" : "rgba(250,250,248,0.9)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
-            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, ${isDark ? "rgba(3,3,3,0.75)" : "rgba(250,250,248,0.85)"})`, color: accent, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
+            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, ${isDark ? "rgba(3,3,3,0.75)" : "rgba(250,250,248,0.85)"})`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 25%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
                 <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
@@ -737,7 +778,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
 
       {/* Categories grid */}
-      <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} isImpact={false} scrollToCategory={scrollToCategory} />
+      <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} scrollToCategory={scrollToCategory} />
 
       {/* Sticky nav */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
@@ -814,7 +855,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {/* Cart bar */}
       {count > 0 && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: "var(--carta-bg)", borderTop: "1px solid var(--carta-border)" }}>
-          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 16%, ${isDark ? "rgba(10,10,10,0.82)" : "rgba(250,250,248,0.92)"})`, color: accent, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 48%, transparent)`, fontFamily: FB }}>
+          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 16%, ${isDark ? "rgba(10,10,10,0.82)" : "rgba(250,250,248,0.92)"})`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 48%, transparent)`, fontFamily: FB }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 22%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
               <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>

@@ -235,7 +235,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                     {group.name}
                   </p>
                   {group.required ? (
-                    <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--carta-accent-fg, #fff)", background: "var(--carta-accent, #F4A623)", borderRadius: 99, padding: "2px 8px", fontWeight: 600 }}>
+                    <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "#fff", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 20%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", borderRadius: 99, padding: "2px 8px", fontWeight: 600, boxShadow: "0 0 10px color-mix(in srgb, var(--carta-accent, #F4A623) 38%, transparent)" }}>
                       Obligatorio
                     </span>
                   ) : (
@@ -329,16 +329,16 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--carta-surface, #f5f5f5)", borderRadius: 12, padding: "6px 10px", flexShrink: 0 }}>
               <button
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                style={{ width: 32, height: 32, borderRadius: 9, border: "none", cursor: "pointer", background: quantity > 1 ? "var(--carta-accent, #F4A623)" : "var(--carta-border, #ddd)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ width: 32, height: 32, borderRadius: 9, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: quantity > 1 ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)" : "none", background: quantity > 1 ? "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)" : "var(--carta-border, #ddd)", boxShadow: quantity > 1 ? "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 40%, transparent)" : "none" }}
               >
-                <Minus size={15} color={quantity > 1 ? "var(--carta-accent-fg, #fff)" : "#aaa"} />
+                <Minus size={15} color={quantity > 1 ? "#fff" : "#aaa"} />
               </button>
               <span style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--carta-text, #111)", minWidth: 22, textAlign: "center" }}>{quantity}</span>
               <button
                 onClick={() => setQuantity(q => q + 1)}
-                style={{ width: 32, height: 32, borderRadius: 9, border: "none", cursor: "pointer", background: "var(--carta-accent, #F4A623)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", cursor: "pointer", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 40%, transparent)" }}
               >
-                <Plus size={15} color="var(--carta-accent-fg, #fff)" />
+                <Plus size={15} color="#fff" />
               </button>
             </div>
             {/* Add button */}
@@ -346,12 +346,14 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
               onClick={handleAdd}
               disabled={!isValid}
               style={{
-                flex: 1, padding: "14px 18px", borderRadius: 14, border: "none",
-                background: isValid ? "var(--carta-accent, #F4A623)" : "var(--carta-border, #ddd)",
-                color: isValid ? "var(--carta-accent-fg, #fff)" : "#aaa", cursor: isValid ? "pointer" : "not-allowed",
+                flex: 1, padding: "14px 18px", borderRadius: 14,
+                border: isValid ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)" : "none",
+                background: isValid ? "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)" : "var(--carta-border, #ddd)",
+                color: isValid ? "#fff" : "#aaa", cursor: isValid ? "pointer" : "not-allowed",
                 fontFamily: F, fontSize: "0.95rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 transition: "all 0.15s",
+                boxShadow: isValid ? "0 4px 20px color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" : "none",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
