@@ -60,6 +60,20 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
 
   const rewards = parseRewards(program.rewards);
 
+  // Si el color de tarjeta es muy oscuro (luminancia < 20%), lo consideramos
+  // "default no configurado" y usamos el color de carta como fallback.
+  function isTooDark(hex: string | null): boolean {
+    if (!hex) return true;
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return true;
+    const n = parseInt(m[1], 16);
+    const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+    return lum < 0.2;
+  }
+  const resolvedColor = isTooDark(program.cardColorHex)
+    ? (restaurant.cartaAccentColor || "#F59E1B")
+    : program.cardColorHex!;
+
   return (
     <>
       <PageHitTracker restaurantId={restaurant.id} page="fidelidad" />
@@ -69,8 +83,8 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
         restaurantLogo={restaurant.logoUrl}
         program={{
           name: program.name,
-          cardColorHex: (program.cardColorHex && program.cardColorHex !== "#111111") ? program.cardColorHex : (restaurant.cartaAccentColor || "#F59E1B"),
-          accentColor: (program.cardColorHex && program.cardColorHex !== "#111111") ? program.cardColorHex : (restaurant.cartaAccentColor || "#F59E1B"),
+          cardColorHex: resolvedColor,
+          accentColor: resolvedColor,
           stampIcon: program.stampIcon,
           stampGoal: program.stampGoal,
           description: program.description,
