@@ -48,24 +48,26 @@ export default function LandingPage() {
   const [formStep, setFormStep] = useState<"form" | "success">("form");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
-  const [formData, setFormData] = useState({ nombre: "", localName: "", email: "", whatsapp: "" });
+  const [formData, setFormData] = useState({ ownerName: "", localName: "", email: "", whatsapp: "" });
+  const [registeredSlug, setRegisteredSlug] = useState("");
 
   const openModal = () => { setModalOpen(true); setFormStep("form"); setFormError(""); };
-  const closeModal = () => { setModalOpen(false); setFormStep("form"); setFormData({ nombre: "", localName: "", email: "", whatsapp: "" }); };
+  const closeModal = () => { setModalOpen(false); setFormStep("form"); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setFormError("");
     try {
-      const res = await fetch("/api/public/register", {
+      const res = await fetch("/api/activar/registrar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
-      trackPurchase("FREE", 49900);
+      trackPurchase("PREMIUM", 49900);
+      setRegisteredSlug(data.slug || "");
       setFormStep("success");
     } catch (err) {
       setFormError((err as Error).message || "Ocurrió un error, intenta de nuevo.");
@@ -568,8 +570,8 @@ export default function LandingPage() {
                         className="qc-form-input"
                         type="text"
                         placeholder="María González"
-                        value={formData.nombre}
-                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                        value={formData.ownerName}
+                        onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                         required
                         autoFocus
                       />
@@ -616,15 +618,15 @@ export default function LandingPage() {
               ) : (
                 <div className="qc-success">
                   <span className="qc-success-icon">✅</span>
-                  <h2>¡Ya estás adentro!</h2>
+                  <h2>¡Tu cuenta está lista!</h2>
                   <p className="qc-success-desc">
-                    Recibirás un email con acceso a tu panel. El equipo de QuieroComer te escribirá para ayudarte a configurar todo.
+                    Creamos tu local con carta de ejemplo. Entra al panel, personalízala con tus platos y comparte el link con tus clientes.
                   </p>
                   <div className="qc-success-features">
                     {[
-                      "Carta QR activa en 24 horas",
-                      "Si tienes carta impresa, sácale fotos — la importamos por ti",
-                      "Genio de IA recomendando desde el día 1",
+                      "14 días gratis, sin tarjeta",
+                      "Carta QR activa ahora mismo con platos de ejemplo",
+                      "El equipo te escribirá para ayudarte a subir tu carta real",
                     ].map((f, i) => (
                       <div key={i} className="qc-success-feature">
                         <span style={{ color: "var(--ambar)", fontWeight: 700 }}>✓</span>
@@ -632,10 +634,17 @@ export default function LandingPage() {
                       </div>
                     ))}
                   </div>
-                  <a href="/panel/login" className="qc-btn-ambar" style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700 }}>
-                    Ir al panel
-                  </a>
-                  {formData.email && <p className="qc-success-note">Te enviamos un email a {formData.email}</p>}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <a href="/panel/login" className="qc-btn-ambar" style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700 }}>
+                      Ir a mi panel →
+                    </a>
+                    {registeredSlug && (
+                      <a href={`/qr/${registeredSlug}`} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "var(--ambar-tinta)", background: "var(--ambar-fondo)", textDecoration: "none" }}>
+                        Ver mi carta de ejemplo →
+                      </a>
+                    )}
+                  </div>
+                  {formData.email && <p className="qc-success-note">Cuenta creada con {formData.email}</p>}
                 </div>
               )}
             </div>
