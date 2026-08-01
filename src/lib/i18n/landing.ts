@@ -12,7 +12,8 @@ const es = {
 
   // Home hero
   hero_label: "Plataforma para restaurantes · Chile",
-  hero_title: "Haz que tus clientes se enamore de tu negocio",
+  hero_title: "Haz que tus clientes se enamoren de tu negocio",
+  hero_title_highlight: "se enamoren",
   hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los negocios que usan QuieroComer aumentan un 30% sus ventas.",
   hero_cta: "Probar gratis por 7 días",
   hero_demo: "Ver demo →",
@@ -134,6 +135,7 @@ const en: typeof es = {
   // Home hero
   hero_label: "Restaurant platform · Chile",
   hero_title: "Make your customers fall in love with your restaurant",
+  hero_title_highlight: "fall in love",
   hero_subtitle: "Turn your business into a loyalty machine. Restaurants using QuieroComer increase their sales by 30%.",
   hero_cta: "Try free for 7 days",
   hero_demo: "See demo →",
