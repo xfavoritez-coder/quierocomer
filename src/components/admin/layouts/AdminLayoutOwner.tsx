@@ -55,11 +55,18 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       ],
     },
     {
-      key: "carta",
-      label: "Carta QR",
+      key: "mi-carta",
+      label: "Mi Carta",
       icon: UtensilsCrossed,
       items: [
         { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
+      ],
+    },
+    {
+      key: "carta",
+      label: "Carta QR",
+      icon: QrCode,
+      items: [
         { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
         { icon: ContactRound, labelKey: "nav_clients", href: `${base}/clientes` },
         { icon: Tag, labelKey: "nav_offers", href: `${base}/promociones` },
@@ -140,7 +147,7 @@ function getActiveSectionKeys(pathname: string, sections: NavSection[], base: st
       keys.add(section.key);
     }
   }
-  if (keys.size === 0) keys.add(sections[0]?.key ?? "carta");
+  if (keys.size === 0) keys.add(sections[0]?.key ?? "dashboard");
   return keys;
 }
 
