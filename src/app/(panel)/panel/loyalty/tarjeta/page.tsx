@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { CreditCard, Plus, Trash2, ChevronDown, ChevronRight, Link2, Copy } from "lucide-react";
+import { CreditCard, Plus, Trash2, ChevronDown, ChevronRight, Link2, Copy, QrCode, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 const F = "var(--font-display)";
@@ -60,6 +60,7 @@ interface FormState {
   bgImageUrl: string;
   description: string;
   showGiftBadge: boolean;
+  cardExpiryDays: number | null;
 }
 
 const DEFAULTS: FormState = {
@@ -73,7 +74,17 @@ const DEFAULTS: FormState = {
   bgImageUrl: "",
   description: "",
   showGiftBadge: true,
+  cardExpiryDays: null,
 };
+
+const EXPIRY_OPTIONS = [
+  { label: "Sin vencimiento", value: null },
+  { label: "30 días", value: 30 },
+  { label: "60 días", value: 60 },
+  { label: "90 días (3 meses)", value: 90 },
+  { label: "180 días (6 meses)", value: 180 },
+  { label: "365 días (1 año)", value: 365 },
+];
 
 export default function LoyaltyCardPage() {
   const { restaurants, selectedRestaurantId, loading } = usePanelSession();
@@ -82,11 +93,13 @@ export default function LoyaltyCardPage() {
   const [loadingProgram, setLoadingProgram] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [dishPhotos, setDishPhotos] = useState<{ name: string; url: string }[]>([]);
   const [showPhotos, setShowPhotos] = useState(false);
   const [showIcons, setShowIcons] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [showQr, setShowQr] = useState(false);
+  const [customExpiry, setCustomExpiry] = useState("");
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
 
@@ -101,6 +114,15 @@ export default function LoyaltyCardPage() {
       .then((d) => setDishPhotos(Array.isArray(d.photos) ? d.photos : []))
       .catch(() => setDishPhotos([]));
   }, [selectedRestaurantId]);
+
+  // QR de inscripción
+  useEffect(() => {
+    if (!enrollUrl) return;
+    import("qrcode").then((mod) =>
+      mod.default.toDataURL(enrollUrl, { width: 300, margin: 2, errorCorrectionLevel: "H", color: { dark: "#1a1a1a", light: "#ffffff" } })
+        .then(setQrDataUrl)
+    ).catch(() => {});
+  }, [enrollUrl]);
 
   useEffect(() => {
     if (!selectedRestaurantId) return;
@@ -124,6 +146,7 @@ export default function LoyaltyCardPage() {
                 bgImageUrl: p.bgImageUrl || "",
                 description: p.description || "",
                 showGiftBadge: p.showGiftBadge !== false,
+                cardExpiryDays: p.cardExpiryDays ?? null,
               }
             : { ...DEFAULTS },
         );
@@ -170,7 +193,20 @@ export default function LoyaltyCardPage() {
       }
       const d = await res.json();
       if (d.program?.rewards) update({ rewards: d.program.rewards });
-      setSaved(true);
+
+      // Actualizar todos los pases instalados automáticamente
+      const refreshRes = await fetch("/api/loyalty/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId }),
+      });
+      const rd = await refreshRes.json();
+      const devCount = (rd.appleDevices || 0) + (rd.google || 0);
+      if (devCount > 0) {
+        toast.success(`Guardado · diseño enviado a ${devCount} tarjeta${devCount === 1 ? "" : "s"}`);
+      } else {
+        setSaved(true);
+      }
     } catch (e: any) {
       setSaveError(e.message || "Error al guardar");
     } finally {
@@ -178,25 +214,6 @@ export default function LoyaltyCardPage() {
     }
   };
 
-  const refreshAll = async () => {
-    if (!selectedRestaurantId) return;
-    if (!window.confirm("¿Aplicar el diseño actual a todas las tarjetas ya instaladas de tus clientes?")) return;
-    setRefreshing(true);
-    try {
-      const res = await fetch("/api/loyalty/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedRestaurantId }),
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Error");
-      toast.success(`Diseño enviado a las tarjetas · ${d.appleDevices} iPhone${d.google ? " + Android" : ""}`);
-    } catch (e: any) {
-      toast.error(e.message || "Error al actualizar");
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   return (
     <div style={{ maxWidth: 820 }}>
@@ -250,17 +267,56 @@ export default function LoyaltyCardPage() {
               </button>
             </div>
 
-            {/* Link de inscripción — compacto */}
+            {/* Link de inscripción + QR */}
             {enrollUrl && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-                <Link2 size={14} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
-                <input readOnly value={enrollUrl} onFocus={(e) => e.target.select()} style={{ ...inputStyle, flex: 1, padding: "6px 8px", fontSize: "0.78rem", border: "none", background: "transparent", color: "var(--adm-text2)", minWidth: 0 }} />
-                <button type="button" onClick={() => { navigator.clipboard?.writeText(enrollUrl); toast.success("Link copiado"); }} title="Copiar link" style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", fontFamily: F, fontWeight: 600 }}>
-                  <Copy size={12} /> Copiar
-                </button>
-                <a href={enrollUrl} target="_blank" rel="noreferrer" style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 6, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: "0.75rem", fontFamily: F, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
-                  Ver →
-                </a>
+              <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, overflow: "hidden" }}>
+                {/* URL row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px" }}>
+                  <Link2 size={14} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
+                  <input readOnly value={enrollUrl} onFocus={(e) => e.target.select()} style={{ ...inputStyle, flex: 1, padding: "6px 8px", fontSize: "0.78rem", border: "none", background: "transparent", color: "var(--adm-text2)", minWidth: 0 }} />
+                  <button type="button" onClick={() => { navigator.clipboard?.writeText(enrollUrl); toast.success("Link copiado"); }} title="Copiar link" style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", fontFamily: F, fontWeight: 600 }}>
+                    <Copy size={12} /> Copiar
+                  </button>
+                  <a href={enrollUrl} target="_blank" rel="noreferrer" style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 6, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: "0.75rem", fontFamily: F, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+                    Ver →
+                  </a>
+                </div>
+                {/* QR toggle */}
+                <div style={{ borderTop: "1px solid var(--adm-card-border)" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowQr((s) => !s)}
+                    style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", fontWeight: 600 }}
+                  >
+                    <QrCode size={13} />
+                    {showQr ? "Ocultar QR de inscripción" : "Ver QR de inscripción"}
+                    {showQr ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  </button>
+                  {showQr && qrDataUrl && (
+                    <div style={{ padding: "0 12px 14px", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ background: "#fff", padding: 8, borderRadius: 10, border: "1px solid var(--adm-card-border)", flexShrink: 0 }}>
+                        <img src={qrDataUrl} alt="QR inscripción" width={110} height={110} style={{ display: "block" }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 160 }}>
+                        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>
+                          Imprime este QR y ponlo en tus mesas o mostrador. El cliente lo escanea y la tarjeta queda en su teléfono.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const win = window.open("", "_blank");
+                            if (!win) return;
+                            win.document.write(`<!DOCTYPE html><html><head><title>QR Fidelización</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;gap:16px;padding:32px}img{width:260px;height:260px}p{font-size:14px;color:#555;margin:0}@media print{button{display:none}}</style></head><body><img src="${qrDataUrl}" /><p>${enrollUrl}</p><button onclick="window.print()">Imprimir</button></body></html>`);
+                            win.document.close();
+                          }}
+                          style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GOLD}50`, background: `${GOLD}15`, color: GOLD, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+                        >
+                          🖨️ Imprimir QR
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -346,6 +402,51 @@ export default function LoyaltyCardPage() {
                 onChange={(e) => update({ description: e.target.value })}
                 style={{ ...inputStyle, resize: "none" }}
               />
+            </div>
+
+            {/* Vencimiento de tarjeta */}
+            <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <Clock size={15} color="var(--adm-text3)" />
+                <label style={{ ...labelStyle, margin: 0 }}>Vencimiento de la tarjeta</label>
+              </div>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 10px", lineHeight: 1.5 }}>
+                Si el cliente no usa la tarjeta durante este período, quedará expirada. Útil para mantener el programa activo.
+              </p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <select
+                  value={EXPIRY_OPTIONS.some(o => o.value === form.cardExpiryDays) ? (form.cardExpiryDays ?? "") : "custom"}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "") { update({ cardExpiryDays: null }); setCustomExpiry(""); }
+                    else if (v === "custom") { setCustomExpiry(String(form.cardExpiryDays ?? "")); }
+                    else { update({ cardExpiryDays: Number(v) }); setCustomExpiry(""); }
+                  }}
+                  style={{ ...inputStyle, width: "auto", minWidth: 180 }}
+                >
+                  {EXPIRY_OPTIONS.map((o) => (
+                    <option key={o.value ?? "none"} value={o.value ?? ""}>{o.label}</option>
+                  ))}
+                  <option value="custom">Personalizado…</option>
+                </select>
+                {(!EXPIRY_OPTIONS.some(o => o.value === form.cardExpiryDays) && form.cardExpiryDays !== null) && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <input
+                      type="number"
+                      min={7}
+                      max={3650}
+                      value={customExpiry || form.cardExpiryDays || ""}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        setCustomExpiry(e.target.value);
+                        if (n >= 7 && n <= 3650) update({ cardExpiryDays: n });
+                      }}
+                      style={{ ...inputStyle, width: 80 }}
+                    />
+                    <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>días</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Icono del sello — colapsable */}
@@ -480,15 +581,6 @@ export default function LoyaltyCardPage() {
               {saveError && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ef4444" }}>{saveError}</span>}
             </div>
 
-            {/* Actualizar todos los pases ya instalados */}
-            <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16 }}>
-              <button type="button" onClick={refreshAll} disabled={refreshing} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: refreshing ? "default" : "pointer", opacity: refreshing ? 0.6 : 1 }}>
-                {refreshing ? "Actualizando…" : "↻ Actualizar todos los pases"}
-              </button>
-              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
-                Aplica el diseño actual (colores, icono, imagen, recompensas) a las tarjetas que tus clientes <b>ya tienen</b> en el teléfono. Guarda primero tus cambios.
-              </p>
-            </div>
           </div>
 
           {/* ── Vista previa ── */}

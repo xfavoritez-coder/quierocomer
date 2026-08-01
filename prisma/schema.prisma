@@ -2361,6 +2361,9 @@ model LoyaltyProgram {
 
   showGiftBadge Boolean @default(true) // mostrar el 🎁 en las casillas de recompensa
 
+  // Vencimiento de tarjeta (días de inactividad, null = sin vencimiento)
+  cardExpiryDays Int?
+
   // Geo-notificaciones (aviso al cliente cuando está cerca del local)
   geoEnabled  Boolean @default(false)
   geoRadiusKm Float   @default(1) // radio en km (principalmente para Apple)

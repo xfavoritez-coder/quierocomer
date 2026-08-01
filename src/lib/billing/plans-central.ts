@@ -168,7 +168,7 @@ export const IVA_RATE = 0.19;
 export const TRIAL_DAYS = 7;
 export const GRACE_DAYS = 7;
 /** Loyalty module pricing (independent of Carta QR plan) */
-export const LOYALTY_PLAN_NET = 19900;
+export const LOYALTY_PLAN_NET = 15900;
 export const LOYALTY_TRIAL_DAYS = 7;
 
 export function ivaOf(amount: number): number { return Math.round(amount * IVA_RATE); }

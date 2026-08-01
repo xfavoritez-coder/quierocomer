@@ -65,7 +65,6 @@ export default function LoyaltyNotifyPage() {
   const [loadingGeo, setLoadingGeo] = useState(true);
   const [savingGeo, setSavingGeo] = useState(false);
   const [savedGeo, setSavedGeo] = useState(false);
-  const [refreshingGeo, setRefreshingGeo] = useState(false);
 
   // Dirección / coordenadas del local (mismo dato que Ajustes)
   const [address, setAddress] = useState("");
@@ -159,31 +158,23 @@ export default function LoyaltyNotifyPage() {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error || "Error al guardar");
       }
-      setSavedGeo(true);
-    } catch (e: any) {
-      toast.error(e.message || "Error al guardar");
-    } finally {
-      setSavingGeo(false);
-    }
-  };
-
-  const refreshGeo = async () => {
-    if (!selectedRestaurantId) return;
-    if (!window.confirm("¿Aplicar la configuración de cercanía a todas las tarjetas ya instaladas?")) return;
-    setRefreshingGeo(true);
-    try {
-      const res = await fetch("/api/loyalty/refresh", {
+      // Aplicar a tarjetas instaladas automáticamente
+      const refreshRes = await fetch("/api/loyalty/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ restaurantId: selectedRestaurantId }),
       });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Error");
-      toast.success(`Aplicado · ${d.appleDevices} iPhone${d.google ? " + Android" : ""}`);
+      const rd = await refreshRes.json();
+      const devCount = (rd.appleDevices || 0) + (rd.google || 0);
+      if (devCount > 0) {
+        toast.success(`Guardado · aplicado a ${devCount} tarjeta${devCount === 1 ? "" : "s"}`);
+      } else {
+        setSavedGeo(true);
+      }
     } catch (e: any) {
-      toast.error(e.message || "Error al actualizar");
+      toast.error(e.message || "Error al guardar");
     } finally {
-      setRefreshingGeo(false);
+      setSavingGeo(false);
     }
   };
 
@@ -370,14 +361,6 @@ export default function LoyaltyNotifyPage() {
               {savedGeo && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#16a34a" }}>✓ Guardado</span>}
             </div>
 
-            <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 16 }}>
-              <button type="button" onClick={refreshGeo} disabled={refreshingGeo} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: refreshingGeo ? "default" : "pointer", opacity: refreshingGeo ? 0.6 : 1 }}>
-                {refreshingGeo ? "Aplicando…" : "↻ Aplicar a las tarjetas ya instaladas"}
-              </button>
-              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
-                Guarda primero. Las tarjetas nuevas ya incluyen esta configuración.
-              </p>
-            </div>
           </div>
         )
       )}

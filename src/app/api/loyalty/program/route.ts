@@ -117,6 +117,16 @@ export async function POST(req: NextRequest) {
 
     if (typeof body.logoUrl === "string") data.logoUrl = body.logoUrl.trim().slice(0, 500) || null;
 
+    // Vencimiento de tarjeta
+    if (body.cardExpiryDays !== undefined) {
+      if (body.cardExpiryDays === null || body.cardExpiryDays === 0) {
+        data.cardExpiryDays = null;
+      } else {
+        const n = Math.round(Number(body.cardExpiryDays));
+        if (Number.isFinite(n) && n >= 7 && n <= 3650) data.cardExpiryDays = n;
+      }
+    }
+
     // Niveles de recompensa. Si no viene stampGoal en el body, usamos el guardado.
     if (body.rewards !== undefined) {
       const existing = stampGoal == null
