@@ -186,10 +186,10 @@ export default function SoportePage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <span style={{
                     padding: "2px 6px", borderRadius: 4, fontSize: "0.6rem", fontWeight: 700, fontFamily: F,
-                    background: msg.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : "rgba(244,166,35,0.1)",
-                    color: msg.source === "panel_soporte" ? "#7c3aed" : GOLD,
+                    background: msg.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : msg.source === "landing_registro" ? "rgba(34,197,94,0.1)" : "rgba(244,166,35,0.1)",
+                    color: msg.source === "panel_soporte" ? "#7c3aed" : msg.source === "landing_registro" ? "#16a34a" : GOLD,
                   }}>
-                    {msg.source === "panel_soporte" ? "Panel" : "Contacto"}
+                    {msg.source === "panel_soporte" ? "Panel" : msg.source === "landing_registro" ? "Landing" : "Contacto"}
                   </span>
                   {msg.replies.length > 0 && (
                     <span style={{ fontSize: "0.6rem", color: "var(--adm-text3)", fontFamily: F }}>
@@ -228,10 +228,10 @@ export default function SoportePage() {
               </div>
               <span style={{
                 padding: "4px 10px", borderRadius: 50, fontSize: "0.68rem", fontWeight: 700, fontFamily: F,
-                background: selected.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : "rgba(244,166,35,0.1)",
-                color: selected.source === "panel_soporte" ? "#7c3aed" : GOLD,
+                background: selected.source === "panel_soporte" ? "rgba(124,58,237,0.1)" : selected.source === "landing_registro" ? "rgba(34,197,94,0.1)" : "rgba(244,166,35,0.1)",
+                color: selected.source === "panel_soporte" ? "#7c3aed" : selected.source === "landing_registro" ? "#16a34a" : GOLD,
               }}>
-                {selected.source === "panel_soporte" ? "Panel" : "Contacto"}
+                {selected.source === "panel_soporte" ? "Panel" : selected.source === "landing_registro" ? "Landing" : "Contacto"}
               </span>
             </div>
 

@@ -23,9 +23,9 @@ export function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 403 });
   }
 
-  // --- TEMPORAL: redirect / → /qr/ (quitar cuando se reactive el feed) ---
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/qr/", request.url));
+  // --- Redirect /qr → / (landing page now lives at /) ---
+  if (pathname === "/qr" || pathname === "/qr/") {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // --- Loyalty: ahora es sección nativa del panel en /panel/loyalty ---
