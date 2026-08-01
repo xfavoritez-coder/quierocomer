@@ -272,7 +272,7 @@ export default function LandingPage() {
         .qc-precio-card-featured { border-color: var(--ambar); background: var(--ambar-fondo); }
         .qc-precio-card-purple { border-color: var(--purpura); background: #FAF5FF; }
         .qc-precio-name { font-size: 22px; font-weight: 700; color: var(--tinta); margin-bottom: 6px; }
-        .qc-precio-price { font-size: 36px; font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 2px; }
+        .qc-precio-price { font-size: 37px; font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 2px; }
         .qc-precio-sub { font-size: 13px; color: var(--gris); margin-bottom: 28px; }
         .qc-feature-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 10px; }
         .qc-feature-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--tinta); line-height: 1.5; }
