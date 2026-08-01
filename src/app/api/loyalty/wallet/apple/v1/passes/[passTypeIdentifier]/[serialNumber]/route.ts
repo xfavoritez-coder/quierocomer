@@ -20,9 +20,11 @@ export async function GET(
     return new NextResponse(null, { status: 401 });
   }
 
-  // If-Modified-Since: si no cambió, 304
+  // If-Modified-Since: si no cambió, 304.
+  // Usamos > (estrictamente mayor) y no >= para evitar falsos 304 cuando dos
+  // actualizaciones caen en el mismo segundo — la hora HTTP es precisión de 1 s.
   const ims = req.headers.get("if-modified-since");
-  if (ims && new Date(ims).getTime() >= Math.floor(member.updatedAt.getTime() / 1000) * 1000) {
+  if (ims && new Date(ims).getTime() > Math.floor(member.updatedAt.getTime() / 1000) * 1000) {
     return new NextResponse(null, { status: 304 });
   }
 
