@@ -74,9 +74,10 @@ export default function FidelizacionPage() {
         .fid-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
         @media (max-width: 640px) { .fid-steps { grid-template-columns: 1fr; } }
         .fid-step { background: var(--purpura-fondo); border: 1.5px solid rgba(109,40,217,0.12); border-radius: 16px; padding: 28px; }
-        .fid-step-num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--purpura); color: white; border-radius: 50%; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
-        .fid-step-icon { font-size: 28px; display: block; margin-bottom: 10px; }
-        .fid-step h3 { font-size: 17px; font-weight: 700; color: var(--tinta); margin-bottom: 8px; }
+        .fid-step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--purpura); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; margin-bottom: 16px; flex-shrink: 0; }
+        .fid-step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .fid-step-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+        .fid-step h3 { font-size: 16px; font-weight: 700; color: var(--tinta); }
         .fid-step p { font-size: 14px; color: var(--gris); line-height: 1.65; }
 
         /* CERCANIA */
@@ -132,6 +133,14 @@ export default function FidelizacionPage() {
         .fid-cta-btn { display: inline-block; font-size: 16px; font-weight: 700; color: var(--purpura-dark); background: white; border-radius: 12px; padding: 14px 36px; text-decoration: none; transition: opacity .2s; }
         .fid-cta-btn:hover { opacity: 0.9; }
 
+        /* FOOTER */
+        .fid-footer { padding: 32px 24px; border-top: 1.5px solid var(--linea); }
+        .fid-footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+        .fid-footer-copy { font-size: 13px; color: var(--gris); }
+        .fid-footer-nav { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+        .fid-footer-link { font-size: 13px; color: var(--gris); text-decoration: none; transition: color .2s; }
+        .fid-footer-link:hover { color: var(--tinta); }
+
         @media (max-width: 680px) {
           .fid-hero { padding: 72px 20px 64px; }
           .fid-how { padding: 56px 20px; }
@@ -182,8 +191,10 @@ export default function FidelizacionPage() {
               ].map((s) => (
                 <div key={s.num} className="fid-step">
                   <div className="fid-step-num">{s.num}</div>
-                  <span className="fid-step-icon">{s.icon}</span>
-                  <h3>{s.title}</h3>
+                  <div className="fid-step-header">
+                    <span className="fid-step-icon">{s.icon}</span>
+                    <h3>{s.title}</h3>
+                  </div>
                   <p>{s.desc}</p>
                 </div>
               ))}
@@ -233,6 +244,21 @@ export default function FidelizacionPage() {
           <p>Prueba el módulo Loyalty sin riesgo. Cancela cuando quieras.</p>
           <a href="/" className="fid-cta-btn">Probar Loyalty gratis →</a>
         </section>
+
+        {/* FOOTER */}
+        <footer className="fid-footer">
+          <div className="fid-footer-inner">
+            <span className="fid-footer-copy">© 2026 QuieroComer · Santiago de Chile</span>
+            <nav className="fid-footer-nav">
+              <a href="/" className="fid-footer-link">Inicio</a>
+              <a href="/carta" className="fid-footer-link">Carta QR</a>
+              <a href="/#precios" className="fid-footer-link">Precios</a>
+              <a href="/panel/login" className="fid-footer-link">Ingresar</a>
+              <a href="https://instagram.com/quierocomer" target="_blank" rel="noopener noreferrer" className="fid-footer-link">Instagram</a>
+              <a href="https://wa.me/56999946208" target="_blank" rel="noopener noreferrer" className="fid-footer-link">WhatsApp</a>
+            </nav>
+          </div>
+        </footer>
 
       </div>
     </>

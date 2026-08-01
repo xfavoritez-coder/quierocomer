@@ -18,18 +18,15 @@ const TESTIMONIALS = [
   { quote: "Nuestra carta pasó a antojarse de verdad. El primer mes ya notamos más pedidos por mesa.", name: "María G.", restaurant: "Hand Roll", initials: "MG" },
   { quote: "El módulo Loyalty hizo que clientes regulares pasen de venir mensual a semanal. No lo pensé tanto.", name: "Andrés V.", restaurant: "Horus Vegan", initials: "AV" },
   { quote: "Lo configuré en una tarde. Al día siguiente la carta QR ya andaba con fotos y el menú actualizado.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
-  { quote: "El Genio que recomienda platos es un detalle que enamora. Los clientes dicen que les ayuda a decidir.", name: "Carla M.", restaurant: "Nascosto Pizzeria", initials: "CM" },
   { quote: "Las estadísticas me mostraron cuándo llega más gente y qué piden. Cambié el menú del día y vendí el doble.", name: "Felipe R.", restaurant: "Juana la Brava", initials: "FR" },
   { quote: "Crecer un 30% sonaba a marketing hasta que lo viví. La carta digital marcó la diferencia.", name: "Daniela P.", restaurant: "El Menú de la Esquina", initials: "DP" },
 ];
 
 const PRO_FEATURES = [
   "Carta QR con fotos y categorías",
-  "Genio de recomendaciones con IA",
   "Estadísticas de qué se ve y cuándo",
   "Llamado al garzón por QR",
   "Anuncios y promociones en la carta",
-  "Email marketing a tus clientes",
   "Pedidos online sin comisión",
   "Multi-idioma automático",
 ];
@@ -218,10 +215,9 @@ export default function LandingPage() {
         .qc-rest-tile img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; background: var(--linea); }
 
         /* TESTIMONIOS */
-        .qc-testimonios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        @media (max-width: 900px) { .qc-testimonios-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .qc-testimonios-grid { grid-template-columns: 1fr; } }
-        .qc-test-card { background: #FAFAF8; border: 1.5px solid var(--linea); border-radius: 16px; padding: 28px; }
+        .qc-testimonios-scroll { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 8px; }
+        .qc-testimonios-scroll::-webkit-scrollbar { display: none; }
+        .qc-test-card { background: #FAFAF8; border: 1.5px solid var(--linea); border-radius: 16px; padding: 28px; min-width: 300px; max-width: 340px; flex-shrink: 0; scroll-snap-align: start; }
         .qc-stars { color: var(--ambar); font-size: 16px; letter-spacing: 2px; margin-bottom: 14px; }
         .qc-test-quote { font-size: 15px; line-height: 1.65; color: var(--tinta); margin-bottom: 20px; font-style: italic; }
         .qc-test-author { display: flex; align-items: center; gap: 12px; }
@@ -250,22 +246,24 @@ export default function LandingPage() {
         /* CTA FINAL */
         .qc-cta-final { padding: 64px 24px; }
         .qc-cta-final-card {
-          max-width: 680px; margin: 0 auto; background: var(--ambar);
+          max-width: 680px; margin: 0 auto; background: #111;
           border-radius: 24px; padding: 56px 40px; text-align: center;
         }
-        .qc-cta-final-card h2 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: var(--ambar-tinta); letter-spacing: -0.02em; margin-bottom: 12px; }
-        .qc-cta-final-card p { font-size: 16px; color: var(--ambar-tinta); opacity: 0.85; margin-bottom: 32px; line-height: 1.55; }
-        .qc-btn-white { font-size: 16px; font-weight: 700; color: var(--ambar-tinta); background: white; border: none; border-radius: 12px; padding: 15px 36px; cursor: pointer; font-family: inherit; transition: opacity .2s; }
+        .qc-cta-final-card h2 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 12px; }
+        .qc-cta-final-card p { font-size: 16px; color: rgba(255,255,255,0.65); margin-bottom: 32px; line-height: 1.55; }
+        .qc-btn-white { font-size: 16px; font-weight: 700; color: #111; background: var(--ambar); border: none; border-radius: 12px; padding: 15px 36px; cursor: pointer; font-family: inherit; transition: opacity .2s; }
         .qc-btn-white:hover { opacity: 0.9; }
-        .qc-cta-note { font-size: 13px; color: var(--ambar-tinta); opacity: 0.7; margin-top: 14px; }
+        .qc-cta-note { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 14px; }
 
         /* FOOTER */
-        .qc-footer { padding: 28px 24px; border-top: 1.5px solid var(--linea); }
-        .qc-footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .qc-footer-copy { font-size: 13px; color: var(--gris); }
-        .qc-footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+        .qc-footer { padding: 32px 24px; border-top: 1.5px solid var(--linea); }
+        .qc-footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+        .qc-footer-copy { font-size: 13px; color: var(--gris); margin-top: 2px; }
+        .qc-footer-nav { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
         .qc-footer-link { font-size: 13px; color: var(--gris); text-decoration: none; transition: color .2s; }
         .qc-footer-link:hover { color: var(--tinta); }
+        .qc-footer-sep { color: var(--linea); font-size: 13px; }
+        .qc-footer-contact { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 
         /* MODAL */
         .qc-modal-overlay {
@@ -321,6 +319,13 @@ export default function LandingPage() {
         .qc-form-error { font-size: 13px; color: #DC2626; background: #FEF2F2; border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
         .qc-form-legal { font-size: 12px; color: var(--gris-claro); text-align: center; margin-top: 14px; line-height: 1.5; }
 
+        /* PHONE GROUP */
+        .qc-phone-group { display: flex; border: 1.5px solid #DDDDD8; border-radius: 10px; overflow: hidden; transition: border-color .2s; }
+        .qc-phone-group:focus-within { border-color: var(--ambar); }
+        .qc-phone-prefix { display: flex; align-items: center; gap: 6px; padding: 0 12px; background: #F5F5F3; border-right: 1.5px solid #DDDDD8; font-size: 13px; font-weight: 600; color: #444; white-space: nowrap; flex-shrink: 0; }
+        .qc-phone-group .qc-form-input { border: none; border-radius: 0; }
+        .qc-phone-group .qc-form-input:focus { border-color: transparent; }
+
         /* SUCCESS */
         .qc-success { text-align: center; }
         .qc-success-icon { font-size: 48px; display: block; margin-bottom: 16px; }
@@ -363,7 +368,7 @@ export default function LandingPage() {
         <section className="qc-hero">
           <div className="qc-hero-inner">
             <span className="qc-label">Plataforma para restaurantes · Chile</span>
-            <h1>Haz que clientes se&nbsp;enamoren de&nbsp;tu negocio</h1>
+            <h1>Haz que tus clientes se&nbsp;<span style={{color:"var(--ambar)"}}>enamoren</span> de&nbsp;tu negocio</h1>
             <p className="qc-hero-sub">
               Transforma tu negocio en una máquina de fidelización. Los negocios que usan QuieroComer aumentan un 30% sus ventas.
             </p>
@@ -397,14 +402,14 @@ export default function LandingPage() {
                   <div className="qc-carta-mock-header">
                     <div className="qc-carta-logo">🍣</div>
                     <div>
-                      <h4>Horus Vegan</h4>
-                      <p>Carta digital</p>
+                      <h4>Tu Restaurant</h4>
+                      <p>Carta digital activa</p>
                     </div>
                   </div>
                   {[
-                    { name: "Bowl Vegano", desc: "Arroz, tofu, vegetales", price: "$8.900" },
-                    { name: "Ceviche Verde", desc: "Con leche de tigre", price: "$9.500" },
-                    { name: "Taco Champiñones", desc: "Con guacamole", price: "$4.500" },
+                    { name: "Plato del día", desc: "Lomo con ensalada", price: "$9.900" },
+                    { name: "Ceviche mixto", desc: "Con leche de tigre", price: "$10.500" },
+                    { name: "Pasta carbonara", desc: "Con panceta crocante", price: "$8.900" },
                   ].map((dish, i) => (
                     <div key={i} className="qc-dish-row">
                       <div className="qc-dish-img" style={{ background: ["linear-gradient(135deg,#FFE4B5,#FFC97A)", "linear-gradient(135deg,#B5F7D1,#5ECFA0)", "linear-gradient(135deg,#FFD6B5,#FFA06A)"][i] }} />
@@ -466,7 +471,7 @@ export default function LandingPage() {
         <section className="qc-section" style={{ background: "white" }}>
           <div className="qc-section-inner">
             <h2 className="qc-section-title" style={{ textAlign: "center", marginBottom: 48 }}>Lo que dicen nuestros clientes</h2>
-            <div className="qc-testimonios-grid">
+            <div className="qc-testimonios-scroll">
               {TESTIMONIALS.map((t, i) => (
                 <div key={i} className="qc-test-card">
                   <div className="qc-stars">★★★★★</div>
@@ -543,12 +548,19 @@ export default function LandingPage() {
         <footer className="qc-footer">
           <div className="qc-footer-inner">
             <span className="qc-footer-copy">© 2026 QuieroComer · Santiago de Chile</span>
-            <nav className="qc-footer-links">
-              <a href="/carta" className="qc-footer-link">Carta QR</a>
-              <a href="/fidelizacion" className="qc-footer-link">Loyalty</a>
-              <a href="#precios" className="qc-footer-link">Precios</a>
-              <a href="/panel/login" className="qc-footer-link">Ingresar</a>
-            </nav>
+            <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "center" }}>
+              <nav className="qc-footer-nav">
+                <a href="/carta" className="qc-footer-link">Carta QR</a>
+                <a href="/fidelizacion" className="qc-footer-link">Loyalty</a>
+                <a href="#precios" className="qc-footer-link">Precios</a>
+                <a href="/panel/login" className="qc-footer-link">Ingresar</a>
+              </nav>
+              <div className="qc-footer-contact">
+                <span className="qc-footer-sep">|</span>
+                <a href="https://instagram.com/quierocomer" target="_blank" rel="noopener noreferrer" className="qc-footer-link">Instagram</a>
+                <a href="https://wa.me/56999946208" target="_blank" rel="noopener noreferrer" className="qc-footer-link">WhatsApp</a>
+              </div>
+            </div>
           </div>
         </footer>
 
@@ -600,13 +612,24 @@ export default function LandingPage() {
                     </div>
                     <div className="qc-form-group">
                       <label className="qc-form-label">Tu WhatsApp</label>
-                      <input
-                        className="qc-form-input"
-                        type="tel"
-                        placeholder="+56 9 1234 5678"
-                        value={formData.whatsapp}
-                        onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                      />
+                      <div className="qc-phone-group">
+                        <span className="qc-phone-prefix">
+                          <svg width="18" height="13" viewBox="0 0 20 14" style={{borderRadius:2,flexShrink:0}}>
+                            <rect width="20" height="7" fill="#fff"/>
+                            <rect y="7" width="20" height="7" fill="#D52B1E"/>
+                            <rect width="7" height="7" fill="#0039A6"/>
+                            <polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/>
+                          </svg>
+                          +56
+                        </span>
+                        <input
+                          className="qc-form-input"
+                          type="tel"
+                          placeholder="9 1234 5678"
+                          value={formData.whatsapp}
+                          onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                        />
+                      </div>
                     </div>
                     {formError && <div className="qc-form-error">{formError}</div>}
                     <button className="qc-btn-submit" type="submit" disabled={submitting}>
