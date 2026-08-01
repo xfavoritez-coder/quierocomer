@@ -161,7 +161,7 @@ export default function LoyaltyHowPage() {
         </div>
         <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
           <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(244,166,35,0.4)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
-            Ver programa demo →
+            Ver tarjeta demo →
           </a>
           <Link href="/panel/loyalty/tarjeta" style={{ padding: "10px 18px", borderRadius: 8, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
             Configurar tarjeta <ChevronRight size={16} />
