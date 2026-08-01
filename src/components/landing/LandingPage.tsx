@@ -444,8 +444,8 @@ export default function LandingPage() {
                 <h2>{t("module_qr_label")}</h2>
                 <p>{t("module_qr_desc")}</p>
                 <div className="qc-card-btns">
-                  <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_qr_demo")}</a>
                   <a href="/carta-qr" className="qc-btn-outline">{t("module_qr_more")}</a>
+                  <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_qr_demo")}</a>
                 </div>
                 <div className="qc-iphone-wrap">
                   <div className="qc-iphone">
@@ -493,8 +493,8 @@ export default function LandingPage() {
                 <h2>{t("module_loyalty_label")}</h2>
                 <p>{t("module_loyalty_desc")}</p>
                 <div className="qc-card-btns">
-                  <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
                   <a href="/fidelizacion" className="qc-btn-outline">{t("module_qr_more")}</a>
+                  <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
                 </div>
                 <div className="qc-loyalty-mock">
                   <div className="qc-loyalty-mock-header">{t("loyalty_mock_header")}</div>
