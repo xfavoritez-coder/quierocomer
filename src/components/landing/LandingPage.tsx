@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { trackPurchase } from "@/lib/metaPixel";
 
@@ -45,6 +45,13 @@ export default function LandingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [formData, setFormData] = useState({ ownerName: "", localName: "", email: "", whatsapp: "" });
+
+  const testimonialsRef = useRef<HTMLDivElement>(null);
+  const scrollTestimonials = (dir: "left" | "right") => {
+    if (testimonialsRef.current) {
+      testimonialsRef.current.scrollBy({ left: dir === "left" ? -340 : 340, behavior: "smooth" });
+    }
+  };
 
   const openModal = () => { setModalOpen(true); setFormError(""); };
   const closeModal = () => { setModalOpen(false); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
@@ -255,8 +262,14 @@ export default function LandingPage() {
         .qc-rest-tile-initials { width: 32px; height: 32px; border-radius: 50%; background: var(--ambar-fondo); border: 1.5px solid var(--linea); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--ambar-tinta); flex-shrink: 0; }
 
         /* TESTIMONIOS */
-        .qc-testimonios-scroll { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 8px; }
+        .qc-testimonios-wrap { position: relative; }
+        .qc-testimonios-scroll { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 8px; scroll-behavior: smooth; }
         .qc-testimonios-scroll::-webkit-scrollbar { display: none; }
+        .qc-testimonios-arrow { display: none; position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; background: white; border: 1.5px solid var(--linea); box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; font-size: 16px; color: var(--tinta); align-items: center; justify-content: center; transition: border-color .2s, box-shadow .2s; z-index: 2; }
+        .qc-testimonios-arrow:hover { border-color: #bbb; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .qc-testimonios-arrow-left { left: -18px; }
+        .qc-testimonios-arrow-right { right: -18px; }
+        @media (min-width: 681px) { .qc-testimonios-arrow { display: flex; } }
         .qc-test-card { background: #FAFAF8; border: 1.5px solid var(--linea); border-radius: 16px; padding: 28px; min-width: 300px; max-width: 340px; flex-shrink: 0; scroll-snap-align: start; }
         .qc-stars { color: var(--ambar); font-size: 16px; letter-spacing: 2px; margin-bottom: 14px; }
         .qc-test-quote { font-size: 15px; line-height: 1.65; color: var(--tinta); margin-bottom: 20px; font-style: italic; }
@@ -563,20 +576,24 @@ export default function LandingPage() {
         <section className="qc-section qc-testimonios-section" style={{ background: "white" }}>
           <div className="qc-section-inner">
             <h2 className="qc-section-title" style={{ textAlign: "center", marginBottom: 48 }}>Lo que dicen nuestros clientes</h2>
-            <div className="qc-testimonios-scroll">
-              {TESTIMONIALS.map((t, i) => (
-                <div key={i} className="qc-test-card">
-                  <div className="qc-stars">★★★★★</div>
-                  <p className="qc-test-quote">"{t.quote}"</p>
-                  <div className="qc-test-author">
-                    <div className="qc-avatar" style={{ background: ["#F59E1B","#6d28d9","#10B981","#EF4444","#3B82F6","#EC4899"][i % 6] }}>{t.initials}</div>
-                    <div className="qc-test-author-info">
-                      <strong>{t.name}</strong>
-                      <span>{t.restaurant}</span>
+            <div className="qc-testimonios-wrap">
+              <button className="qc-testimonios-arrow qc-testimonios-arrow-left" onClick={() => scrollTestimonials("left")} aria-label="Anterior">‹</button>
+              <div className="qc-testimonios-scroll" ref={testimonialsRef}>
+                {TESTIMONIALS.map((t, i) => (
+                  <div key={i} className="qc-test-card">
+                    <div className="qc-stars">★★★★★</div>
+                    <p className="qc-test-quote">"{t.quote}"</p>
+                    <div className="qc-test-author">
+                      <div className="qc-avatar" style={{ background: ["#F59E1B","#6d28d9","#10B981","#EF4444","#3B82F6","#EC4899"][i % 6] }}>{t.initials}</div>
+                      <div className="qc-test-author-info">
+                        <strong>{t.name}</strong>
+                        <span>{t.restaurant}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <button className="qc-testimonios-arrow qc-testimonios-arrow-right" onClick={() => scrollTestimonials("right")} aria-label="Siguiente">›</button>
             </div>
           </div>
         </section>
