@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
     // Enviar email de bienvenida con credenciales
     sendAdminEmail({
       to: email.trim().toLowerCase(),
-      subject: `Bienvenida a QuieroComer, ${ownerName.split(" ")[0]} 🎉`,
+      subject: `🔑 Credenciales de acceso para ${localName}`,
       html: welcomeEmailHtml({
         ownerName,
         restaurantName: localName,
