@@ -145,10 +145,12 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
           {(() => {
             const rewardStamps = new Set(program.rewards.map((r) => r.stamp));
             const cols = program.stampGoal <= 6 ? program.stampGoal : program.stampGoal <= 8 ? 4 : program.stampGoal <= 10 ? 5 : 6;
-            const stampFontSize = cols <= 4 ? "1.8rem" : cols <= 5 ? "1.3rem" : "1rem";
-            const stampNumFontSize = cols <= 4 ? "0.85rem" : cols <= 5 ? "0.7rem" : "0.6rem";
+            const stampFontSize = cols <= 4 ? "1.3rem" : cols <= 5 ? "1.1rem" : "1rem";
+            const stampNumFontSize = cols <= 4 ? "0.75rem" : cols <= 5 ? "0.7rem" : "0.6rem";
+            // Máximo 52px por círculo + gaps para que nunca queden demasiado grandes
+            const gridMaxWidth = cols * 52 + (cols - 1) * 8;
             return (
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginBottom: 16, maxWidth: gridMaxWidth, margin: "0 auto 16px" }}>
                 {Array.from({ length: program.stampGoal }).map((_, i) => {
                   const num = i + 1;
                   const isReward = rewardStamps.has(num);
