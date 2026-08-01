@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Gift, CreditCard, Camera, Bell, ChevronRight, Users, QrCode, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
-import { usePanelSession } from "@/components/admin/PanelSessionProvider";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
 import QRCodeLib from "qrcode";
 import toast from "react-hot-toast";
 
