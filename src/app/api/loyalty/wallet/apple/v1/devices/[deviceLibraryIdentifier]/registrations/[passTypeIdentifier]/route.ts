@@ -18,7 +18,14 @@ export async function GET(
   if (devices.length === 0) return new NextResponse(null, { status: 204 });
 
   const serials = devices.map((d) => d.serialNumber);
-  const sinceDate = since ? new Date(Number(since)) : new Date(0);
+  // Apple envía passesUpdatedSince en segundos (Unix epoch).
+  // Soportamos también ms por compatibilidad con versiones anteriores del servidor.
+  let sinceDate = new Date(0);
+  if (since) {
+    const n = Number(since);
+    // Si el valor es < 1e12 es segundos (antes del año 2001 en ms); si no, ms
+    sinceDate = new Date(n < 1e12 ? n * 1000 : n);
+  }
 
   const members = await prisma.loyaltyMember.findMany({
     where: { id: { in: serials }, updatedAt: { gt: sinceDate } },
@@ -26,6 +33,7 @@ export async function GET(
   });
   if (members.length === 0) return new NextResponse(null, { status: 204 });
 
-  const lastUpdated = String(Math.max(...members.map((m) => m.updatedAt.getTime())));
+  // Devolver en segundos (spec Apple PassKit Web Service)
+  const lastUpdated = String(Math.floor(Math.max(...members.map((m) => m.updatedAt.getTime())) / 1000));
   return NextResponse.json({ lastUpdated, serialNumbers: members.map((m) => m.id) });
 }

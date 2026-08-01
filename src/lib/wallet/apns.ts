@@ -44,11 +44,20 @@ async function pushToTokens(tokens: string[]): Promise<void> {
         ":method": "POST",
         ":path": `/3/device/${token}`,
         "apns-topic": cfg.passTypeId,
+        "apns-push-type": "background",
+        "apns-priority": "5",
       });
-      reqStream.on("response", () => {});
-      reqStream.on("data", () => {});
-      reqStream.on("end", done);
-      reqStream.on("error", done);
+      let status = 0;
+      let responseBody = "";
+      reqStream.on("response", (headers) => { status = headers[":status"] as number; });
+      reqStream.on("data", (chunk) => { responseBody += chunk.toString(); });
+      reqStream.on("end", () => {
+        if (status && status !== 200 && status !== 201) {
+          console.error(`[APNs] token ${token.slice(0, 8)}… status=${status} body=${responseBody}`);
+        }
+        done();
+      });
+      reqStream.on("error", (e) => { console.error("[APNs] stream error:", e); done(); });
       reqStream.end(JSON.stringify({}));
     }
   });
