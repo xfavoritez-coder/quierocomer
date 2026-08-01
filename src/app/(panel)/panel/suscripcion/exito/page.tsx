@@ -1,6 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { trackCompraFinal } from "@/lib/metaPixel";
 
 const GOLD = "#F4A623";
 
@@ -101,6 +102,14 @@ function ExitoContent() {
   const features = PLAN_FEATURES[planKey] || PLAN_FEATURES.SILVER;
   const colors = PLAN_COLORS[planKey] || PLAN_COLORS.SILVER;
   const emoji = PLAN_EMOJI[planKey] || "🎉";
+
+  // Disparar pixel "CompraFinal" una sola vez por sesión (pago real vía Flow)
+  useEffect(() => {
+    const key = `qc_comprafinal_${planKey}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    trackCompraFinal(planKey);
+  }, [planKey]);
 
   return (
     <div style={{

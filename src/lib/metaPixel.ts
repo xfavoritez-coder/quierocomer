@@ -79,3 +79,16 @@ export function trackContact() {
 export function trackInitiateCheckout(plan: string) {
   fbq("InitiateCheckout", { content_name: `Plan ${plan}`, currency: "CLP", value: PLAN_VALUES[plan] || 49900 });
 }
+
+// Gross prices per plan (net + 19% IVA) — used for CompraFinal
+const PLAN_GROSS: Record<string, number> = { SILVER: 17731, GOLD: 35581, PREMIUM: 53431 };
+
+/**
+ * Pago real confirmado vía Flow (tarjeta/Webpay).
+ * Se dispara en /panel/suscripcion/exito, solo cuando hay pago efectivo.
+ * NO reemplaza el evento Purchase existente — es un evento adicional.
+ */
+export function trackCompraFinal(plan: string) {
+  const value = PLAN_GROSS[plan.toUpperCase()] || PLAN_GROSS.PREMIUM;
+  fbq("CompraFinal", { content_name: `Plan ${plan}`, currency: "CLP", value });
+}
