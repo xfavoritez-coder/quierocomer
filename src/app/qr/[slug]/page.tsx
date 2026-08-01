@@ -13,6 +13,7 @@ import { isValidLang, parseLangHeader } from "@/lib/qr/i18n";
 import type { Lang } from "@/lib/qr/i18n";
 import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
+import CartaProximamente from "@/components/qr/carta/CartaProximamente";
 import MenuPausedPage from "@/components/qr/MenuPausedPage";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
@@ -278,6 +279,11 @@ export default async function CartaPage({
     select: { ownerName: true, email: true, whatsapp: true },
     orderBy: { createdAt: "desc" },
   }) : null;
+  // Empty carta: show "próximamente" when demo restaurant has no dishes yet
+  if ((restaurant as any).isDemo && dishes.length === 0 && !isShowcase && !isEmbed) {
+    return <CartaProximamente restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;
+  }
+
   const colorMode = hasDesignFeatures ? ((restaurant as any).cartaColorMode || "LIGHT") : "LIGHT";
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
   const accentColor = hasDesignFeatures ? ((restaurant as any).cartaAccentColor || null) : null;

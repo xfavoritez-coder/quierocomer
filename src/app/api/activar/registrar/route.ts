@@ -1,33 +1,116 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resend } from "@/lib/resend";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
 
 /**
  * POST /api/activar/registrar
  * Body: { localName, ownerName, email, whatsapp }
  *
- * Crea un restaurant con platos de ejemplo + owner para activación directa desde /planes.
+ * Crea un restaurant (sin platos de ejemplo) + owner + Lead para activación desde la landing.
+ * Retorna auto-login URL para redirigir a /bienvenida.
  */
 
-const SAMPLE_CATEGORIES = [
-  { name: "Para Comenzar", position: 0 },
-  { name: "Platos Principales", position: 1 },
-  { name: "Postres y Bebidas", position: 2 },
-];
+const BASE_URL = "https://quierocomer.com";
+const FROM_EMAIL = process.env.FROM_EMAIL
+  ? `QuieroComer <${process.env.FROM_EMAIL}>`
+  : "QuieroComer <onboarding@resend.dev>";
+const GOLD = "#e8930a";
 
-const SAMPLE_DISHES: { cat: number; name: string; desc: string; price: number; photo: string; isHero?: boolean; isSpicy?: boolean; diet?: "VEGAN" | "VEGETARIAN" | "OMNIVORE" }[] = [
-  { cat: 0, name: "Ensalada Mediterránea", desc: "Mix de hojas verdes, tomate cherry, aceitunas, pepino y queso feta con vinagreta de limón.", price: 6900, photo: "", diet: "VEGETARIAN" },
-  { cat: 0, name: "Bruschetta Clásica", desc: "Pan artesanal tostado con tomate fresco, albahaca, ajo y aceite de oliva.", price: 5500, photo: "", diet: "VEGAN" },
-  { cat: 0, name: "Empanadas de Carne", desc: "Tres empanadas horneadas rellenas de pino con huevo, aceituna y pasas.", price: 4900, photo: "" },
-  { cat: 1, name: "Lomo a la Parrilla", desc: "Corte de lomo grillado a punto, acompañado de puré rústico y verduras salteadas.", price: 14900, photo: "", isHero: true },
-  { cat: 1, name: "Pasta Carbonara", desc: "Spaghetti al dente con salsa cremosa de huevo, panceta crocante y parmesano.", price: 11900, photo: "", isHero: true },
-  { cat: 1, name: "Bowl Vegano Thai", desc: "Arroz jazmín, tofu marinado, edamame, palta, zanahoria y salsa de maní.", price: 10500, photo: "", diet: "VEGAN" },
-  { cat: 1, name: "Tacos Picantes", desc: "Tres tacos de carne especiada con jalapeños, cilantro, cebolla morada y salsa chipotle.", price: 9800, photo: "", isSpicy: true },
-  { cat: 2, name: "Tiramisú", desc: "Clásico postre italiano con capas de mascarpone, café espresso y cacao.", price: 5900, photo: "" },
-  { cat: 2, name: "Limonada Artesanal", desc: "Limonada natural con hierbabuena, jengibre y un toque de miel.", price: 3500, photo: "", diet: "VEGAN" },
-  { cat: 2, name: "Café de Especialidad", desc: "Espresso doble con granos de origen único, tostado medio.", price: 2800, photo: "" },
-];
+function welcomeEmailHtml({
+  ownerName,
+  restaurantName,
+  email,
+  password,
+  autoLoginUrl,
+}: {
+  ownerName: string;
+  restaurantName: string;
+  email: string;
+  password: string;
+  autoLoginUrl: string;
+}): string {
+  const firstName = ownerName.split(" ")[0];
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td align="center" style="padding-bottom:24px;">
+    <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
+    </tr></table></a>
+  </td></tr>
+
+  <tr><td style="text-align:center;padding-bottom:8px;"><span style="font-size:40px;">🎉</span></td></tr>
+
+  <tr><td style="padding-bottom:6px;">
+    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.3;">
+      Bienvenido, ${firstName}
+    </h1>
+  </td></tr>
+
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.65;padding-bottom:24px;text-align:center;">
+    Tu local <strong style="color:${GOLD};">${restaurantName}</strong> ya tiene cuenta activa en QuieroComer con <strong>7 días Premium gratis</strong>.
+  </td></tr>
+
+  <tr><td style="padding-bottom:16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:14px;">
+      <tr><td style="padding:18px 20px;">
+        <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;">Tus datos de acceso</div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:10px;margin-bottom:8px;">
+          <tr><td style="padding:10px 14px;">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#92400e;margin-bottom:3px;">Email</div>
+            <div style="font-size:14px;color:#111;font-weight:700;word-break:break-word;">${email}</div>
+          </td></tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:10px;">
+          <tr><td style="padding:10px 14px;">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#92400e;margin-bottom:3px;">Contraseña</div>
+            <div style="font-size:14px;color:#111;font-weight:700;word-break:break-word;">${password}</div>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;">
+      <tr><td style="padding:16px 20px;">
+        <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Primeros pasos</div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="padding:5px 0;font-size:14px;color:#5a3e1b;line-height:1.5;"><span style="color:${GOLD};margin-right:8px;font-weight:800;">1.</span> Entra a tu panel y agrega tus platos con fotos</td></tr>
+          <tr><td style="padding:5px 0;font-size:14px;color:#5a3e1b;line-height:1.5;"><span style="color:${GOLD};margin-right:8px;font-weight:800;">2.</span> Genera tu QR y ponlo en las mesas</td></tr>
+          <tr><td style="padding:5px 0;font-size:14px;color:#5a3e1b;line-height:1.5;"><span style="color:${GOLD};margin-right:8px;font-weight:800;">3.</span> Comparte el link de tu carta en redes sociales</td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding-bottom:16px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
+      <a href="${autoLoginUrl}" style="display:inline-block;background:${GOLD};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Entrar a mi panel →</a>
+    </td></tr></table>
+  </td></tr>
+
+  <tr><td style="padding-top:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:16px 0 0;">
+    <p style="font-size:12px;color:#b8a888;margin:0 0 4px;">¿Tienes dudas? Escríbenos a <a href="mailto:hola@quierocomer.com" style="color:${GOLD};text-decoration:none;">hola@quierocomer.com</a></p>
+    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.com</a>
+    <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
 
 export async function POST(req: NextRequest) {
   let body: { localName?: string; ownerName?: string; email?: string; whatsapp?: string };
@@ -41,7 +124,7 @@ export async function POST(req: NextRequest) {
   // Title Case: "horus vegan" → "Horus Vegan"
   const toTitleCase = (s: string) => s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
   const localName = toTitleCase(rawLocalName);
-  const ownerName = rawOwnerName?.trim() ? toTitleCase(rawOwnerName) : undefined;
+  const ownerName = rawOwnerName?.trim() ? toTitleCase(rawOwnerName) : localName;
 
   try {
     // Generar slug
@@ -54,19 +137,19 @@ export async function POST(req: NextRequest) {
 
     const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 
-    // Password basado en nombre del local (sin espacios ni tildes), nunca en el slug
+    // Password basado en nombre del local (sin espacios ni tildes)
     const cleanForPassword = localName.toLowerCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]/g, "");
     const generatedPassword = `${cleanForPassword}2026`;
     const passwordHash = await bcrypt.hash(generatedPassword, 10);
 
-    // Crear o encontrar owner — siempre actualizar password al del local actual
+    // Crear o encontrar owner
     let owner = await prisma.restaurantOwner.findFirst({ where: { email: email.trim().toLowerCase() } });
     if (!owner) {
       owner = await prisma.restaurantOwner.create({
         data: {
-          name: ownerName?.trim() || localName.trim(),
+          name: ownerName.trim(),
           email: email.trim().toLowerCase(),
           passwordHash,
           role: "OWNER",
@@ -80,7 +163,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Crear restaurant con categorías y platos de ejemplo
+    // Crear restaurant sin platos de ejemplo
     const restaurant = await prisma.restaurant.create({
       data: {
         name: localName.trim(),
@@ -96,66 +179,17 @@ export async function POST(req: NextRequest) {
         qrActivatedAt: new Date(),
         plan: "PREMIUM",
         subscriptionStatus: "TRIALING",
-        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 días de trial
+        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         ownerId: owner.id,
         allPhotosReferential: false,
       },
     });
 
-    // Crear categorías
-    const categoryIds: string[] = [];
-    for (const cat of SAMPLE_CATEGORIES) {
-      const c = await prisma.category.create({
-        data: { restaurantId: restaurant.id, name: cat.name, position: cat.position },
-      });
-      categoryIds.push(c.id);
-    }
-
-    // Crear platos de ejemplo
-    for (let i = 0; i < SAMPLE_DISHES.length; i++) {
-      const d = SAMPLE_DISHES[i];
-      await prisma.dish.create({
-        data: {
-          restaurantId: restaurant.id,
-          categoryId: categoryIds[d.cat],
-          name: d.name,
-          description: d.desc,
-          price: d.price,
-          photos: [d.photo],
-          isPhotoReferential: true,
-          photoCredits: [{ source: "unsplash", referential: true }],
-          isHero: d.isHero || false,
-          isSpicy: d.isSpicy || false,
-          dishDiet: d.diet || "OMNIVORE",
-          isFeaturedAuto: d.isHero || false,
-          txDishType: [],
-          txCuisine: [],
-          txMealSlot: [],
-          txIngredient: [],
-          txEstilo: [],
-          position: i,
-        },
-      });
-    }
-
-    // Traducir primeros 5 platos con descripción en background
-    import("@/lib/ai/translateContent").then(({ translateDish }) => {
-      (async () => {
-        const dishes = await prisma.dish.findMany({
-          where: { restaurantId: restaurant.id, description: { not: null } },
-          select: { id: true },
-          take: 5,
-          orderBy: { position: "asc" },
-        });
-        for (const d of dishes) await translateDish(d.id).catch(() => {});
-      })();
-    }).catch(() => {});
-
     // Crear Lead para que aparezca en funnel/lifecycle/clientes
     await prisma.lead.create({
       data: {
         localName: localName.trim(),
-        ownerName: ownerName || localName.trim(),
+        ownerName: ownerName.trim(),
         email: email.trim().toLowerCase(),
         whatsapp: whatsapp?.trim() || null,
         cartaType: "LINK",
@@ -169,7 +203,34 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ ok: true, slug: restaurant.slug, plan: "PREMIUM" });
+    // Generar auto-login URL
+    const autoLoginUrl = buildAutoLoginUrl(BASE_URL, owner.id);
+
+    // Enviar email de bienvenida con credenciales
+    resend.emails.send({
+      from: FROM_EMAIL,
+      to: email.trim().toLowerCase(),
+      subject: `Bienvenido a QuieroComer, ${ownerName.split(" ")[0]} 🎉`,
+      html: welcomeEmailHtml({
+        ownerName,
+        restaurantName: localName,
+        email: email.trim().toLowerCase(),
+        password: generatedPassword,
+        autoLoginUrl,
+      }),
+    }).catch((err: unknown) => {
+      console.error("[registrar] Error sending welcome email:", err);
+    });
+
+    return NextResponse.json({
+      ok: true,
+      slug: restaurant.slug,
+      email: email.trim().toLowerCase(),
+      generatedPassword,
+      autoLoginUrl,
+      ownerName,
+      localName,
+    });
   } catch (err: any) {
     console.error("[activar/registrar] error:", err);
     return NextResponse.json({ error: err?.message || "Error interno al crear el local" }, { status: 500 });

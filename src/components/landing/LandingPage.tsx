@@ -42,14 +42,12 @@ const LOYALTY_FEATURES = [
 
 export default function LandingPage() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [formStep, setFormStep] = useState<"form" | "success">("form");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [formData, setFormData] = useState({ ownerName: "", localName: "", email: "", whatsapp: "" });
-  const [registeredSlug, setRegisteredSlug] = useState("");
 
-  const openModal = () => { setModalOpen(true); setFormStep("form"); setFormError(""); };
-  const closeModal = () => { setModalOpen(false); setFormStep("form"); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
+  const openModal = () => { setModalOpen(true); setFormError(""); };
+  const closeModal = () => { setModalOpen(false); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,11 +62,20 @@ export default function LandingPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
       trackPurchase("PREMIUM", 49900);
-      setRegisteredSlug(data.slug || "");
-      setFormStep("success");
+      // Store welcome data in sessionStorage and redirect to /bienvenida
+      try {
+        sessionStorage.setItem("qc_welcome", JSON.stringify({
+          localName: data.localName || formData.localName,
+          ownerName: data.ownerName || formData.ownerName,
+          email: data.email || formData.email,
+          password: data.generatedPassword || "",
+          autoLoginUrl: data.autoLoginUrl || "",
+          slug: data.slug || "",
+        }));
+      } catch {}
+      window.location.href = "/bienvenida";
     } catch (err) {
       setFormError((err as Error).message || "Ocurrió un error, intenta de nuevo.");
-    } finally {
       setSubmitting(false);
     }
   };
@@ -649,106 +656,71 @@ export default function LandingPage() {
             <div className="qc-modal-card">
               <button className="qc-modal-close" onClick={closeModal} aria-label="Cerrar">×</button>
 
-              {formStep === "form" ? (
-                <>
-                  <span className="qc-modal-emoji">🍽️</span>
-                  <h2 className="qc-modal-title">Empieza gratis hoy</h2>
-                  <p className="qc-modal-sub">7 días sin cobrar nada. Sin tarjeta.</p>
-                  <form onSubmit={handleSubmit}>
-                    <div className="qc-form-group">
-                      <label className="qc-form-label">Tu nombre</label>
-                      <input
-                        className="qc-form-input"
-                        type="text"
-                        placeholder="María González"
-                        value={formData.ownerName}
-                        onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                        required
-                        autoFocus
-                      />
-                    </div>
-                    <div className="qc-form-group">
-                      <label className="qc-form-label">Nombre del local</label>
-                      <input
-                        className="qc-form-input"
-                        type="text"
-                        placeholder="Restaurante El Sabor"
-                        value={formData.localName}
-                        onChange={(e) => setFormData({ ...formData, localName: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="qc-form-group">
-                      <label className="qc-form-label">Tu email</label>
-                      <input
-                        className="qc-form-input"
-                        type="email"
-                        placeholder="maria@restaurante.cl"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="qc-form-group">
-                      <label className="qc-form-label">Tu WhatsApp</label>
-                      <div className="qc-phone-group">
-                        <span className="qc-phone-prefix">
-                          <svg width="18" height="13" viewBox="0 0 20 14" style={{borderRadius:2,flexShrink:0}}>
-                            <rect width="20" height="7" fill="#fff"/>
-                            <rect y="7" width="20" height="7" fill="#D52B1E"/>
-                            <rect width="7" height="7" fill="#0039A6"/>
-                            <polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/>
-                          </svg>
-                          +56
-                        </span>
-                        <input
-                          className="qc-form-input"
-                          type="tel"
-                          placeholder="9 1234 5678"
-                          value={formData.whatsapp}
-                          onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    {formError && <div className="qc-form-error">{formError}</div>}
-                    <button className="qc-btn-submit" type="submit" disabled={submitting}>
-                      {submitting ? "Enviando..." : "Empezar mis 7 días gratis →"}
-                    </button>
-                  </form>
-                  <p className="qc-form-legal">Al enviar aceptas que te contactemos para ayudarte a configurar tu carta.</p>
-                </>
-              ) : (
-                <div className="qc-success">
-                  <span className="qc-success-icon">✅</span>
-                  <h2>¡Tu cuenta está lista!</h2>
-                  <p className="qc-success-desc">
-                    Creamos tu local con carta de ejemplo. Entra al panel, personalízala con tus platos y comparte el link con tus clientes.
-                  </p>
-                  <div className="qc-success-features">
-                    {[
-                      "14 días gratis, sin tarjeta",
-                      "Carta QR activa ahora mismo con platos de ejemplo",
-                      "El equipo te escribirá para ayudarte a subir tu carta real",
-                    ].map((f, i) => (
-                      <div key={i} className="qc-success-feature">
-                        <span style={{ color: "var(--ambar)", fontWeight: 700 }}>✓</span>
-                        {f}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <a href="/panel/login" className="qc-btn-ambar" style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700 }}>
-                      Ir a mi panel →
-                    </a>
-                    {registeredSlug && (
-                      <a href={`/qr/${registeredSlug}`} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "var(--ambar-tinta)", background: "var(--ambar-fondo)", textDecoration: "none" }}>
-                        Ver mi carta de ejemplo →
-                      </a>
-                    )}
-                  </div>
-                  {formData.email && <p className="qc-success-note">Cuenta creada con {formData.email}</p>}
+              <span className="qc-modal-emoji">🍽️</span>
+              <h2 className="qc-modal-title">Empieza gratis hoy</h2>
+              <p className="qc-modal-sub">7 días sin cobrar nada. Sin tarjeta.</p>
+              <form onSubmit={handleSubmit}>
+                <div className="qc-form-group">
+                  <label className="qc-form-label">Tu nombre</label>
+                  <input
+                    className="qc-form-input"
+                    type="text"
+                    placeholder="María González"
+                    value={formData.ownerName}
+                    onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
+                    required
+                    autoFocus
+                  />
                 </div>
-              )}
+                <div className="qc-form-group">
+                  <label className="qc-form-label">Nombre del local</label>
+                  <input
+                    className="qc-form-input"
+                    type="text"
+                    placeholder="Restaurante El Sabor"
+                    value={formData.localName}
+                    onChange={(e) => setFormData({ ...formData, localName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="qc-form-group">
+                  <label className="qc-form-label">Tu email</label>
+                  <input
+                    className="qc-form-input"
+                    type="email"
+                    placeholder="maria@restaurante.cl"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="qc-form-group">
+                  <label className="qc-form-label">Tu WhatsApp</label>
+                  <div className="qc-phone-group">
+                    <span className="qc-phone-prefix">
+                      <svg width="18" height="13" viewBox="0 0 20 14" style={{borderRadius:2,flexShrink:0}}>
+                        <rect width="20" height="7" fill="#fff"/>
+                        <rect y="7" width="20" height="7" fill="#D52B1E"/>
+                        <rect width="7" height="7" fill="#0039A6"/>
+                        <polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/>
+                      </svg>
+                      +56
+                    </span>
+                    <input
+                      className="qc-form-input"
+                      type="tel"
+                      placeholder="9 1234 5678"
+                      value={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    />
+                  </div>
+                </div>
+                {formError && <div className="qc-form-error">{formError}</div>}
+                <button className="qc-btn-submit" type="submit" disabled={submitting}>
+                  {submitting ? "Creando tu cuenta..." : "Empezar mis 7 días gratis →"}
+                </button>
+              </form>
+              <p className="qc-form-legal">Al enviar aceptas que te contactemos para ayudarte a configurar tu carta.</p>
             </div>
           </div>
         )}
