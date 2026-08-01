@@ -60,11 +60,16 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
 
   const rewards = parseRewards(program.rewards);
 
-  // Usar el color de tarjeta si está configurado, si no caer al color de carta
-  const DEFAULT_CARD_COLORS = new Set(["#111111", "#111", ""]);
-  const rawCardColor = program.cardColorHex?.trim() ?? "";
-  const resolvedColor = (rawCardColor && !DEFAULT_CARD_COLORS.has(rawCardColor.toLowerCase()))
-    ? rawCardColor
+  // Si el color es muy oscuro (negro/casi negro = default nunca configurado),
+  // caer al color de carta. Cubre #000000, #111111 y similares.
+  function cardLuminance(hex: string | null): number {
+    const m = /^#?([0-9a-f]{6})$/i.exec((hex ?? "").trim());
+    if (!m) return 0;
+    const n = parseInt(m[1], 16);
+    return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  }
+  const resolvedColor = cardLuminance(program.cardColorHex) > 0.08
+    ? program.cardColorHex!
     : (restaurant.cartaAccentColor || "#F59E1B");
 
   return (
