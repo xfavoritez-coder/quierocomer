@@ -170,7 +170,6 @@ export function planActivatedEmailHtml(
     </td></tr>`;
 
   return wrap(`
-  <tr><td style="text-align:center;padding-bottom:10px;"><span style="font-size:36px;">🎉</span></td></tr>
   <tr><td style="padding-bottom:6px;">
     <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.2;">
       ¡Bienvenido al plan ${planLabel}, ${firstName}!
