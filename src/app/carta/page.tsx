@@ -122,16 +122,23 @@ export default function CartaPage() {
         .carta-iphone-dish-price { font-size: 9px; font-weight: 700; color: var(--ambar); flex-shrink: 0; }
 
         /* FEATURES */
-        .carta-features { padding: 80px 24px; background: white; }
-        .carta-features-inner { max-width: 1100px; margin: 0 auto; }
-        .carta-features-title { font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; text-align: center; margin-bottom: 56px; }
-        .carta-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        @media (max-width: 900px) { .carta-features-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 560px) { .carta-features-grid { grid-template-columns: 1fr; } }
-        .carta-feature-card { background: #FAFAF8; border: 1.5px solid var(--linea); border-radius: 16px; padding: 24px; display: flex; gap: 14px; align-items: flex-start; }
-        .carta-feature-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--ambar-fondo); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .carta-feature-content h3 { font-size: 16px; font-weight: 700; color: var(--tinta); margin-bottom: 6px; }
-        .carta-feature-content p { font-size: 13px; color: var(--gris); line-height: 1.65; }
+        .carta-features { padding: 80px 24px; background: #F8F8FC; }
+        .carta-features-inner { max-width: 560px; margin: 0 auto; }
+        .carta-features-title { font-size: clamp(24px, 4vw, 36px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; text-align: center; margin-bottom: 40px; }
+        .carta-features-list { display: flex; flex-direction: column; gap: 14px; }
+        .carta-feature-card {
+          background: white; border: 1px solid #EBEBEB;
+          border-radius: 18px; padding: 20px 20px;
+          display: flex; gap: 16px; align-items: center;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .carta-feature-icon {
+          width: 56px; height: 56px; border-radius: 14px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 28px; flex-shrink: 0;
+        }
+        .carta-feature-content h3 { font-size: 15px; font-weight: 700; color: var(--tinta); margin-bottom: 4px; }
+        .carta-feature-content p { font-size: 13px; color: var(--gris); line-height: 1.55; }
 
         /* CTA SECTION */
         .carta-cta { padding: 72px 24px; background: #111; text-align: center; }
@@ -151,8 +158,8 @@ export default function CartaPage() {
         @media (max-width: 760px) { .carta-footer-top { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 480px) { .carta-footer-top { grid-template-columns: 1fr; } }
         .carta-footer-brand p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; margin-top: 10px; max-width: 220px; }
-        .carta-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; }
-        .carta-footer-logo span { color: var(--ambar); }
+        .carta-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; display: flex; align-items: center; gap: 7px; }
+        .carta-footer-logo img { width: 22px; height: 22px; display: block; flex-shrink: 0; }
         .carta-footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
         .carta-footer-col-links { display: flex; flex-direction: column; gap: 10px; }
         .carta-footer-link { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: color .2s; }
@@ -239,17 +246,17 @@ export default function CartaPage() {
         <section className="carta-features">
           <div className="carta-features-inner">
             <h2 className="carta-features-title">Todo lo que tu carta necesita</h2>
-            <div className="carta-features-grid">
+            <div className="carta-features-list">
               {[
-                { icon: "📸", title: "Fotos que antojan", desc: "Sube fotos de tus platos y se muestran en un formato que convierte el apetito en pedidos." },
-                { icon: "🛎️", title: "Llamado al garzón", desc: "El cliente llama al mozo con un toque desde su teléfono. Sin papelitos ni botones físicos." },
-                { icon: "📊", title: "Estadísticas en tiempo real", desc: "Mira qué platos miran más, a qué hora llega gente y cuáles se piden más." },
-                { icon: "📢", title: "Anuncios y promos", desc: "Comunica el menú del día, eventos o promociones directo al abrir la carta." },
-                { icon: "🌍", title: "Multi-idioma automático", desc: "Tu carta se traduce automáticamente para turistas sin que tú hagas nada." },
-                { icon: "📱", title: "Pedidos online", desc: "Activa pedidos directo desde la carta. Sin comisión ni app de terceros." },
+                { icon: "📸", bg: "linear-gradient(135deg,#ede9fe,#c4b5fd)", title: "Fotos que antojan", desc: "Sube fotos de tus platos y se muestran en un formato que convierte el apetito en pedidos." },
+                { icon: "🛎️", bg: "linear-gradient(135deg,#fef3c7,#fcd34d)", title: "Llamado al garzón", desc: "El cliente llama al mozo con un toque desde su teléfono. Sin papelitos ni botones físicos." },
+                { icon: "📊", bg: "linear-gradient(135deg,#d1fae5,#6ee7b7)", title: "Estadísticas en tiempo real", desc: "Mira qué platos miran más, a qué hora llega gente y cuáles se piden más." },
+                { icon: "📢", bg: "linear-gradient(135deg,#fee2e2,#fca5a5)", title: "Anuncios y promos", desc: "Comunica el menú del día, eventos o promociones directo al abrir la carta." },
+                { icon: "🌍", bg: "linear-gradient(135deg,#dbeafe,#93c5fd)", title: "Multi-idioma automático", desc: "Tu carta se traduce automáticamente para turistas sin que tú hagas nada." },
+                { icon: "📱", bg: "linear-gradient(135deg,#ede9fe,#a78bfa)", title: "Pedidos online", desc: "Activa pedidos directo desde la carta. Sin comisión ni app de terceros." },
               ].map((f, i) => (
                 <div key={i} className="carta-feature-card">
-                  <div className="carta-feature-icon">{f.icon}</div>
+                  <div className="carta-feature-icon" style={{ background: f.bg }}>{f.icon}</div>
                   <div className="carta-feature-content">
                     <h3>{f.title}</h3>
                     <p>{f.desc}</p>
@@ -272,7 +279,7 @@ export default function CartaPage() {
           <div className="carta-footer-inner">
             <div className="carta-footer-top">
               <div className="carta-footer-brand">
-                <div className="carta-footer-logo">QuieroCome<span>r</span></div>
+                <div className="carta-footer-logo"><img src="/logo.png" alt="" />QuieroComer</div>
                 <p>Carta QR con fotos que antojan, en segundos.</p>
               </div>
               <div className="carta-footer-col">
