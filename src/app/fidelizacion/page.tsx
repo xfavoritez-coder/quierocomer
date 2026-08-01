@@ -193,7 +193,7 @@ export default function FidelizacionPage() {
             <div className="fid-steps">
               {[
                 { num: 1, icon: "🎁", title: "Diseña tu tarjeta", desc: "Elige colores, íconos y cuántos sellos das por visita. En minutos tienes tu programa listo." },
-                { num: 2, icon: "📱", title: "El cliente la instala", desc: "Escanea un QR y la tarjeta aparece en Apple Wallet o Google Wallet. Sin app que descargar." },
+                { num: 2, icon: "📱", title: "El cliente la agrega a su wallet digital", desc: "Escanea un QR y la tarjeta aparece en Apple Wallet o Google Wallet. Sin app que descargar." },
                 { num: 3, icon: "✅", title: "Sumas sellos en caja", desc: "Apuntas tu cámara al QR del cliente. Un sello al instante. Sin tocar su teléfono." },
                 { num: 4, icon: "🎉", title: "El cliente vuelve por su premio", desc: "Cuando completa la tarjeta, reclama su recompensa y el ciclo empieza de nuevo." },
               ].map((s) => (
@@ -214,7 +214,7 @@ export default function FidelizacionPage() {
         <section className="fid-cercania">
           <div className="fid-cercania-inner">
             <div>
-              <h2>Llegaron y ni sabían que querían entrar</h2>
+              <h2>Envía notificaciones automáticas por horario o cercanía</h2>
               <p>
                 Cuando un cliente pasa a metros de tu local, recibe una notificación push automática con tu oferta del día. Sin publicidad, sin costo extra.
               </p>
@@ -248,7 +248,7 @@ export default function FidelizacionPage() {
 
         {/* CTA */}
         <section className="fid-cta">
-          <h2>El primer mes es gratis</h2>
+          <h2>Pruébalo 7 días gratis</h2>
           <p>Prueba el módulo Loyalty sin riesgo. Cancela cuando quieras.</p>
           <a href="/" className="fid-cta-btn">Probar Loyalty gratis →</a>
         </section>
