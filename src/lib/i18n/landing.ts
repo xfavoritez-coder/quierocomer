@@ -296,7 +296,7 @@ export const TESTIMONIALS_ES = [
   { quote: "Tenía clientes que venían cada dos semanas. Desde que activamos los sellos de fidelización, los mismos están viniendo todas las semanas.", name: "Carlos G.", restaurant: "Horus Vegan", initials: "CG" },
   { quote: "Mis clientes ahora deciden mucho más rápido qué pedir. El garzón usa menos tiempo explicando platos y puede atender más mesas.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
   { quote: "Me di cuenta que el 70% de la gente miraba solo tres platos. Reordené la carta y empecé a vender más los que me dejan mejor margen.", name: "Javier M.", restaurant: "Juana la Brava", initials: "JM" },
-  { quote: "Los turistas que llegan en verano ahora pueden leer la carta en inglés solos. Antes tenía que estar explicando todo yo.", name: "Cristian C.", restaurant: "El Menú de la Esquina", initials: "CC" },
+  { quote: "Los turistas ahora pueden leer la carta en inglés solos. Antes tenía que estar explicando cada plato yo mismo.", name: "Cristian C.", restaurant: "El Menú de la Esquina", initials: "CC" },
 ];
 
 export const TESTIMONIALS_EN = [
@@ -304,7 +304,7 @@ export const TESTIMONIALS_EN = [
   { quote: "Customers used to come every two weeks. Since we activated the loyalty stamps, the same people are coming every week.", name: "Carlos G.", restaurant: "Horus Vegan", initials: "CG" },
   { quote: "My customers now decide much faster what to order. The waiter spends less time explaining dishes and can serve more tables.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
   { quote: "I realized 70% of people were only looking at three dishes. I reordered the menu and started selling more of the high-margin items.", name: "Javier M.", restaurant: "Juana la Brava", initials: "JM" },
-  { quote: "Tourists who come in summer can now read the menu in English by themselves. Before I had to explain everything.", name: "Cristian C.", restaurant: "El Menú de la Esquina", initials: "CC" },
+  { quote: "Tourists can now read the menu in English on their own. Before I had to explain every single dish myself.", name: "Cristian C.", restaurant: "El Menú de la Esquina", initials: "CC" },
 ];
 
 export const CARTA_FEATURES_ES = [
