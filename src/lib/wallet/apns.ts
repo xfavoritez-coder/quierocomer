@@ -84,7 +84,13 @@ export async function notifyAppleDevices(memberId: string): Promise<void> {
   }
 }
 
-/** Notifica a TODOS los dispositivos iOS de los miembros del restaurante con una alerta visible. Devuelve cuántos. */
+/**
+ * Notifica a TODOS los dispositivos iOS del restaurante para que descarguen el pase actualizado.
+ *
+ * Los push tokens de Apple Wallet solo admiten background pushes.
+ * El banner de notificación se muestra mediante `changeMessage` en el campo del pase
+ * cuando el valor del campo cambia entre la versión instalada y la nueva.
+ */
 export async function notifyRestaurantDevices(restaurantId: string, title?: string, message?: string): Promise<number> {
   if (!apnsConfig()) return 0;
   try {
@@ -96,19 +102,8 @@ export async function notifyRestaurantDevices(restaurantId: string, title?: stri
     });
     if (!devices.length) return 0;
 
-    if (title || message) {
-      // Push con alerta visible: aparece como banner (se auto-descarta) en lugar de notificación persistente de PassKit
-      const payload = {
-        aps: {
-          alert: { title: title || "", body: message || "" },
-          sound: "default",
-        },
-      };
-      await pushToTokens(devices.map((d) => d.pushToken), "alert", payload);
-    } else {
-      // Sin mensaje: push silencioso para refrescar el pase
-      await pushToTokens(devices.map((d) => d.pushToken), "background");
-    }
+    // Siempre background push: el banner lo dispara changeMessage en el pass JSON.
+    await pushToTokens(devices.map((d) => d.pushToken), "background");
     return devices.length;
   } catch (e) {
     console.error("[notifyRestaurantDevices]", e);

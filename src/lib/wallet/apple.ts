@@ -359,8 +359,14 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
       secondaryFields: [{ key: "next", label: status.label, value: status.value }],
       auxiliaryFields: [{ key: "member", label: "Cliente", value: member.name || "Cliente" }],
       backFields: [
-        // Sin changeMessage: la notificación visible se entrega vía APNs alert push (banner auto-descartable).
-        { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí." },
+        // changeMessage dispara el banner de iOS cuando el valor del campo cambia en el pase.
+        // Quitamos el sufijo invisible (\u200b + timestamp) que se usa para forzar unicidad.
+        {
+          key: "novedad",
+          label: "Novedades",
+          value: (program.pushMessage || "Te avisaremos de promos y novedades aquí.").replace(/\u200b\d+$/, ""),
+          ...(program.pushMessage ? { changeMessage: "%@" } : {}),
+        },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon === "logo" ? "•" : program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
         // _v: timestamp de GENERACIÓN (no de DB). Garantiza bytes únicos en cada fetch de Apple,

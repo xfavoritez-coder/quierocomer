@@ -24,9 +24,12 @@ export async function POST(req: NextRequest) {
 
     const program = await ensureProgram(restaurantId);
 
-    // 1) Apple: guardar el mensaje en el pase y forzar que iOS lo detecte como cambio
+    // 1) Apple: guardar el mensaje en el pase.
+    // Prefijamos un timestamp invisible (separado por \u200b) para garantizar que el campo
+    // "novedad" siempre cambie entre pushes, incluso si el texto es el mismo.
     const appleValue = title ? `${title}: ${message}` : message;
-    await prisma.loyaltyProgram.update({ where: { id: program.id }, data: { pushMessage: appleValue } });
+    const appleValueUniq = `${appleValue}\u200b${Date.now()}`;
+    await prisma.loyaltyProgram.update({ where: { id: program.id }, data: { pushMessage: appleValueUniq } });
     await prisma.$executeRaw`UPDATE "LoyaltyMember" SET "updatedAt" = NOW() WHERE "restaurantId" = ${restaurantId}`;
     const appleDevices = await notifyRestaurantDevices(restaurantId, title || undefined, message);
 
