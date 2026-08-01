@@ -24,7 +24,7 @@ const TESTIMONIALS = [
 
 const PRO_FEATURES = [
   "Carta QR con fotos y categorías",
-  "Estadísticas de qué se ve y cuándo",
+  "Exportar carta PDF",
   "Llamado al garzón por QR",
   "Anuncios y promociones en la carta",
   "Pedidos online sin comisión",
