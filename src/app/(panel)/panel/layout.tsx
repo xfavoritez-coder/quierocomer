@@ -460,8 +460,8 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
     setSubmitting(true);
     fetch("/api/panel/activity", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, action: "plan_subscribe_clicked", details: { plan: tab, currentPlan: plan } }) }).catch(() => {});
     try {
-      // Premium: activate 7-day trial directly — available to all FREE plan users
-      if (tab === "PREMIUM" && plan !== "PREMIUM") {
+      // Premium: activate 7-day trial — only if trial not yet used
+      if (tab === "PREMIUM" && plan !== "PREMIUM" && !trialUsed) {
         const res = await fetch("/api/billing/start-trial", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -648,7 +648,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
               }}
             >
-              {!inTrial ? "Empezar prueba gratis 7 días" : "Activar Pro"}
+              {(trialUsed || inTrial) ? "Activar Pro →" : "Empezar prueba gratis 7 días"}
             </button>
           ) : isEarlyRenewal ? (
             <div style={{ marginBottom: 8 }}>
@@ -700,7 +700,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
           const iva = ivaOf(net);
           const gross = grossOf(net);
           const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
-          const isPremiumTrial = confirmTab === "PREMIUM" && !inTrial && plan !== "PREMIUM";
+          const isPremiumTrial = confirmTab === "PREMIUM" && !inTrial && plan !== "PREMIUM" && !trialUsed;
           const planLabel = confirmTab.charAt(0) + confirmTab.slice(1).toLowerCase();
           return (
             <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "var(--adm-bg, #fff)", borderRadius: 24, display: "flex", flexDirection: "column", justifyContent: "center", padding: "28px 24px" }}>
