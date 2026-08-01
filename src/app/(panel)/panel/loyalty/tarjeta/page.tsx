@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { CreditCard, Plus, Trash2, ChevronDown, ChevronRight, Link2, Copy } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 
 const F = "var(--font-display)";
@@ -250,6 +249,20 @@ export default function LoyaltyCardPage() {
                 <span style={{ position: "absolute", top: 3, left: form.active ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
               </button>
             </div>
+
+            {/* Link de inscripción — compacto */}
+            {enrollUrl && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
+                <Link2 size={14} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
+                <input readOnly value={enrollUrl} onFocus={(e) => e.target.select()} style={{ ...inputStyle, flex: 1, padding: "6px 8px", fontSize: "0.78rem", border: "none", background: "transparent", color: "var(--adm-text2)", minWidth: 0 }} />
+                <button type="button" onClick={() => { navigator.clipboard?.writeText(enrollUrl); toast.success("Link copiado"); }} title="Copiar link" style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", fontFamily: F, fontWeight: 600 }}>
+                  <Copy size={12} /> Copiar
+                </button>
+                <a href={enrollUrl} target="_blank" rel="noreferrer" style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 6, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: "0.75rem", fontFamily: F, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+                  Ver →
+                </a>
+              </div>
+            )}
 
             {/* Nombre */}
             <div>
@@ -501,36 +514,6 @@ export default function LoyaltyCardPage() {
         </div>
       )}
 
-      {/* Inscripción de clientes: link + QR */}
-      {enrollUrl && (
-        <div style={{ marginTop: 28, padding: 18, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
-          <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-            <Link2 size={17} color="var(--adm-text3)" /> Inscripción de clientes
-          </h2>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
-            Comparte este link o QR (imprímelo en el local) para que tus clientes creen su tarjeta solos.
-            {!form.active && <span style={{ color: "#e0a020" }}> Activa el programa arriba para que funcione.</span>}
-          </p>
-
-          <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ background: "#fff", padding: 10, borderRadius: 10, flexShrink: 0 }}>
-              <QRCodeSVG value={enrollUrl} size={128} />
-            </div>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <label style={{ ...labelStyle, marginBottom: 6 }}>Link de inscripción</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input readOnly value={enrollUrl} onFocus={(e) => e.target.select()} style={{ ...inputStyle, fontSize: "0.8rem" }} />
-                <button type="button" onClick={() => { navigator.clipboard?.writeText(enrollUrl); toast.success("Link copiado"); }} title="Copiar" style={{ flexShrink: 0, width: 42, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Copy size={16} />
-                </button>
-              </div>
-              <a href={enrollUrl} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 10, fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: GOLD, textDecoration: "none" }}>
-                Abrir vista del cliente →
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`@media (max-width: 760px){ .loyalty-grid{ grid-template-columns: 1fr !important; } }`}</style>
     </div>
