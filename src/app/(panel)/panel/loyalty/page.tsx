@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Gift, CreditCard, Camera, Bell, ChevronRight, Users } from "lucide-react";
+import { Gift, CreditCard, Camera, Bell, ChevronRight, Users, QrCode, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { usePanelSession } from "@/components/admin/PanelSessionProvider";
+import QRCodeLib from "qrcode";
+import toast from "react-hot-toast";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -51,6 +55,21 @@ const STEPS = [
 ];
 
 export default function LoyaltyHowPage() {
+  const { selectedRestaurantId, restaurants } = usePanelSession();
+  const [enrollUrl, setEnrollUrl] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  useEffect(() => {
+    const slug = restaurants.find((r) => r.id === selectedRestaurantId)?.slug;
+    if (!slug) return;
+    const base = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const url = `${base}/fidelidad/${slug}`;
+    setEnrollUrl(url);
+    QRCodeLib.toDataURL(url, { width: 400, margin: 2, errorCorrectionLevel: "H", color: { dark: "#1a1a1a", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => {});
+  }, [selectedRestaurantId, restaurants]);
+
   return (
     <div style={{ maxWidth: 640 }}>
       <div style={{ marginBottom: 24 }}>
@@ -94,6 +113,45 @@ export default function LoyaltyHowPage() {
           </Link>
         ))}
       </div>
+
+      {/* QR de inscripción */}
+      {enrollUrl && (
+        <div style={{ marginBottom: 16, padding: "20px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+            <QrCode size={16} color={GOLD} />
+            <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>QR de inscripción</p>
+          </div>
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+            Imprime este QR y pégalo en tus mesas o mostrador. Tus clientes lo escanean y la tarjeta queda lista en su teléfono.
+          </p>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+            {qrDataUrl && (
+              <div style={{ background: "#fff", padding: 8, borderRadius: 10, border: "1px solid var(--adm-card-border)", flexShrink: 0 }}>
+                <img src={qrDataUrl} alt="QR inscripción" width={120} height={120} style={{ display: "block" }} />
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 8 }}>
+                <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{enrollUrl}</span>
+                <button onClick={() => { navigator.clipboard?.writeText(enrollUrl); toast.success("Link copiado"); }} style={{ flexShrink: 0, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: "0.72rem", fontFamily: F, fontWeight: 600 }}>
+                  <Copy size={11} /> Copiar
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  const win = window.open("", "_blank");
+                  if (!win) return;
+                  win.document.write(`<!DOCTYPE html><html><head><title>QR Fidelización</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;gap:16px;padding:32px}img{width:260px;height:260px}p{font-size:14px;color:#555;margin:0}@media print{button{display:none}}</style></head><body><img src="${qrDataUrl}" /><p>${enrollUrl}</p><button onclick="window.print()">Imprimir</button></body></html>`);
+                  win.document.close();
+                }}
+                style={{ width: "100%", padding: "9px 14px", borderRadius: 8, border: `1px solid ${GOLD}50`, background: `${GOLD}15`, color: GOLD, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+              >
+                🖨️ Imprimir QR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CTA principal */}
       <div style={{ padding: "18px 20px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>

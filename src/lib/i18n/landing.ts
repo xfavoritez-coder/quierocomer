@@ -274,12 +274,12 @@ export const PRO_FEATURES_EN = [
 ];
 
 export const LOYALTY_FEATURES_ES = [
-  "Tus clientes vuelven solos — el sello los engancha",
-  "Aumenta tus ventas hasta un 30% con recompensas propias",
-  "Avisa a tus clientes cuando estén cerca con notificaciones automáticas",
-  "Tarjeta de sellos en el celular, sin app que descargar",
-  "Tú defines los premios y las reglas del canje",
-  "Sin límite de miembros ni de canjes",
+  "Tus clientes vuelven solos",
+  "Aumenta tus ventas hasta un 30%",
+  "Notificaciones automáticas por cercanía",
+  "Tarjeta en el celular, sin app",
+  "Tú defines los premios y las reglas",
+  "Sin límite de miembros ni canjes",
 ];
 
 export const LOYALTY_FEATURES_EN = [

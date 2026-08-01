@@ -363,8 +363,9 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
         { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí." },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon === "logo" ? "•" : program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
-        // _v garantiza que el pase cambie en cada update para que el dispositivo haga fetch.
-        { key: "_v", label: "", value: String(Math.floor((member.updatedAt?.getTime() ?? Date.now()) / 1000)) },
+        // _v garantiza que el pase cambie en cada update. Usar ms (no segundos) evita colisiones
+        // cuando dos operaciones ocurren en el mismo segundo (ej: sello + refresh simultáneos).
+        { key: "_v", label: "", value: String(member.updatedAt?.getTime() ?? Date.now()) },
       ],
     },
   };

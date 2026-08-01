@@ -274,7 +274,7 @@ export default function LandingPage() {
         .qc-precio-name { font-size: 22px; font-weight: 700; color: var(--tinta); margin-bottom: 6px; }
         .qc-precio-price { font-size: 37px; font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 2px; }
         .qc-precio-sub { font-size: 13px; color: var(--gris); margin-bottom: 28px; }
-        .qc-feature-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 10px; }
+        .qc-feature-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
         .qc-feature-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--tinta); line-height: 1.5; }
         .qc-check { color: var(--ambar); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
         .qc-check-purple { color: var(--purpura); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
