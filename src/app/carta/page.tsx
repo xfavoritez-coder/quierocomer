@@ -185,7 +185,7 @@ export default function CartaPage() {
               Tu menú presentado como merece: con fotos que antojan, categorías claras y listo en minutos.
             </p>
             <div className="carta-hero-cta">
-              <a href="https://quierocomer.com/qr/hand-roll" target="_blank" rel="noopener noreferrer" className="carta-btn-ambar">
+              <a href="https://quierocomer.com/qr/alleria-pizza" target="_blank" rel="noopener noreferrer" className="carta-btn-ambar">
                 Ver carta en vivo →
               </a>
               <a href="/" className="carta-btn-outline">
