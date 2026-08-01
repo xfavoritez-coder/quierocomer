@@ -241,14 +241,16 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEndChile !== null && periodEndChile < todayChile;
   // Ya cortado (bajó a FREE después de no pagar) o siempre fue gratis
   const wasDowngraded = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !!status.lastPaymentAt;
-  const isFreePlan = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !status.lastPaymentAt;
+  const isFreeNeverTried = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !status.lastPaymentAt && !status.trialUsed;
+  const isFreeTrialExpired = status.plan === "FREE" && status.subscriptionStatus === "NONE" && !status.lastPaymentAt && !!status.trialUsed;
+  const isFreePlan = isFreeNeverTried || isFreeTrialExpired;
 
   if (!isExpiringSoon && !isExpiredActive && !wasDowngraded && !isFreePlan) return null;
 
   const isExpired = isExpiredActive || wasDowngraded;
 
-  // FREE sin plan pago previo → invitar al trial Premium
-  if (isFreePlan) {
+  // FREE sin plan pago previo y sin trial usado → invitar al trial Premium
+  if (isFreeNeverTried) {
     const handleTrial = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
       detail: { initialTab: "PREMIUM", source: "expiry_banner_trial" },
     }));
@@ -290,6 +292,46 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
               }}
             >
               Activar gratis
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // FREE con trial ya usado y sin pago → invitar a subscribirse (sin mencionar "gratis")
+  if (isFreeTrialExpired) {
+    const handleSubscribe = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
+      detail: { initialTab: "PREMIUM", source: "expiry_banner_subscribe" },
+    }));
+    return (
+      <>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .qc-expiry-sticky { position:sticky; top:0; z-index:99; margin:-24px -32px 24px; }
+          @media (max-width:767px) { .qc-expiry-sticky { top:58px; margin:-20px -16px 20px; } }
+        `}} />
+        <div className="qc-expiry-sticky">
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "10px 16px",
+            background: "linear-gradient(90deg, #b45309, #d97706)",
+            fontFamily: "var(--font-body)",
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>⭐</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>Tu prueba gratuita terminó</p>
+              <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>Activa tu plan Pro para seguir usando todas las funciones.</p>
+            </div>
+            <button
+              onClick={handleSubscribe}
+              style={{
+                padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
+                background: "transparent", color: "#fff",
+                fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
+                cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              Ver planes →
             </button>
           </div>
         </div>

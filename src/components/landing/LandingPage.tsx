@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { trackPurchase } from "@/lib/metaPixel";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { useLandingLang } from "@/lib/i18n/landing";
 
 const RESTAURANTS = [
   { name: "Hand Roll", url: "https://quierocomer.com/qr/hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
@@ -15,33 +16,9 @@ const RESTAURANTS = [
   { name: "Guffsushi Nikkei", url: "https://quierocomer.com/qr/guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
 ];
 
-const TESTIMONIALS = [
-  { quote: "Antes imprimíamos la carta cada vez que cambiábamos un precio. Ahora la actualizo desde el teléfono en dos minutos y ya está.", name: "María G.", restaurant: "Hand Roll", initials: "MG" },
-  { quote: "Tenía clientes que venían cada dos semanas. Desde que activamos los sellos de fidelización, los mismos están viniendo todas las semanas.", name: "Andrés V.", restaurant: "Horus Vegan", initials: "AV" },
-  { quote: "Lo armé un domingo en la tarde viendo un video. El lunes mis mesas ya tenían el QR. No esperaba que fuera tan rápido.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
-  { quote: "Me di cuenta que el 70% de la gente miraba solo tres platos. Reordené la carta y empecé a vender más los que me dejan mejor margen.", name: "Felipe R.", restaurant: "Juana la Brava", initials: "FR" },
-  { quote: "Los turistas que llegan en verano ahora pueden leer la carta en inglés solos. Antes tenía que estar explicando todo yo.", name: "Daniela P.", restaurant: "El Menú de la Esquina", initials: "DP" },
-];
-
-const PRO_FEATURES = [
-  "Carta QR con fotos y categorías",
-  "Exportar carta PDF",
-  "Llamado al garzón por QR",
-  "Anuncios y promociones en la carta",
-  "Pedidos online sin comisión",
-  "Multi-idioma automático",
-];
-
-const LOYALTY_FEATURES = [
-  "Tarjeta digital en Apple Wallet y Google Wallet",
-  "Sellos por visita configurables",
-  "Premios y recompensas propias",
-  "Notificaciones push de cercanía",
-  "Panel de miembros y canjes",
-  "Link propio de tu programa",
-];
 
 export default function LandingPage() {
+  const { t, testimonials, proFeatures, loyaltyFeatures } = useLandingLang();
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
@@ -405,7 +382,7 @@ export default function LandingPage() {
               <a href="#precios" className="qc-nav-link">Precios</a>
             </div>
             <div className="qc-nav-actions">
-              <a href="/panel/login" className="qc-btn-ghost">Ingresar</a>
+              <a href="/panel/login" className="qc-btn-ghost">{t("nav_login")}</a>
               <a href="https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer" target="_blank" rel="noopener noreferrer" className="qc-btn-ambar" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none"}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                 Contactar
@@ -417,20 +394,20 @@ export default function LandingPage() {
         {/* HERO */}
         <section className="qc-hero">
           <div className="qc-hero-inner">
-            <span className="qc-label">Plataforma para restaurantes · Chile</span>
-            <h1>Haz que tus clientes se&nbsp;<span style={{color:"var(--ambar)"}}>enamoren</span> de&nbsp;tu negocio</h1>
+            <span className="qc-label">{t("hero_label")}</span>
+            <h1>{t("hero_title")}</h1>
             <p className="qc-hero-sub">
-              Transforma tu negocio en una máquina de fidelización. Los negocios que usan QuieroComer aumentan un 30% sus ventas.
+              {t("hero_subtitle")}
             </p>
             <div className="qc-hero-cta">
               <button className="qc-btn-ambar qc-btn-ambar-xl" onClick={openModal}>
-                Probar gratis por 7 días
+                {t("hero_cta")}
               </button>
               <a href="https://quierocomer.com/qr/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
-                Ver demo →
+                {t("hero_demo")}
               </a>
             </div>
-            <p className="qc-hero-note">Sin tarjeta · Sin contratos</p>
+            <p className="qc-hero-note">{t("hero_note")}</p>
           </div>
         </section>
 
@@ -442,11 +419,11 @@ export default function LandingPage() {
               {/* Carta QR */}
               <div className="qc-card qc-card-amber">
                 <span className="qc-badge qc-badge-amber">Más vendido</span>
-                <h2>Carta QR Inteligente</h2>
-                <p>Carta multidioma, imprimir en PDF diseño profesional, llamar al garzón y mucho más.</p>
+                <h2>{t("module_qr_label")}</h2>
+                <p>{t("module_qr_desc")}</p>
                 <div className="qc-card-btns">
-                  <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">Ver demo →</a>
-                  <a href="/carta-qr" className="qc-btn-outline">Conocer más →</a>
+                  <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_qr_demo")}</a>
+                  <a href="/carta-qr" className="qc-btn-outline">{t("module_qr_more")}</a>
                 </div>
                 <div className="qc-iphone-wrap">
                   <div className="qc-iphone">
@@ -491,15 +468,15 @@ export default function LandingPage() {
               {/* Loyalty */}
               <div className="qc-card qc-card-light">
                 <span className="qc-badge qc-badge-dark">Nuevo</span>
-                <h2>Programa de Loyalty</h2>
-                <p>Tarjeta digital en Apple Wallet y Google Wallet. Tus clientes acumulan sellos, ganan premios y reciben notificaciones al pasar por tu local.</p>
+                <h2>{t("module_loyalty_label")}</h2>
+                <p>{t("module_loyalty_desc")}</p>
                 <div className="qc-card-btns">
-                  <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">Ver tarjeta demo →</a>
-                  <a href="/fidelizacion" className="qc-btn-outline">Conocer más →</a>
+                  <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
+                  <a href="/fidelizacion" className="qc-btn-outline">{t("module_qr_more")}</a>
                 </div>
                 <div className="qc-loyalty-mock">
-                  <div className="qc-loyalty-mock-header">Loyalty · Hand Roll</div>
-                  <h4>Tu tarjeta de sellos</h4>
+                  <div className="qc-loyalty-mock-header">{t("loyalty_mock_header")}</div>
+                  <h4>{t("loyalty_card_title")}</h4>
                   <div className="qc-stamps">
                     {[true, true, true, true, true, true, false, false, false, false].map((filled, i) => (
                       <div key={i} className={`qc-stamp ${filled ? "qc-stamp-filled" : "qc-stamp-empty"}`}>
@@ -507,7 +484,7 @@ export default function LandingPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="qc-loyalty-mock-footer">6 de 10 sellos · 4 más para tu premio 🎁</div>
+                  <div className="qc-loyalty-mock-footer">{t("loyalty_progress")}</div>
                 </div>
               </div>
 
@@ -519,7 +496,7 @@ export default function LandingPage() {
         <section className="qc-rest-section">
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <p style={{ textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gris-claro)", marginBottom: 20 }}>
-              Restaurantes que ya usan QuieroComer
+              {t("restaurants_label")}
             </p>
             <div className="qc-rest-grid">
               {RESTAURANTS.map((r) => {
@@ -555,11 +532,11 @@ export default function LandingPage() {
         {/* TESTIMONIOS */}
         <section className="qc-section qc-testimonios-section" style={{ background: "white" }}>
           <div className="qc-section-inner">
-            <h2 className="qc-section-title" style={{ textAlign: "center", marginBottom: 48 }}>Lo que dicen nuestros clientes</h2>
+            <h2 className="qc-section-title" style={{ textAlign: "center", marginBottom: 48 }}>{t("testimonials_title")}</h2>
             <div className="qc-testimonios-wrap">
               <button className="qc-testimonios-arrow qc-testimonios-arrow-left" onClick={() => scrollTestimonials("left")} aria-label="Anterior">‹</button>
               <div className="qc-testimonios-scroll" ref={testimonialsRef}>
-                {TESTIMONIALS.map((t, i) => (
+                {testimonials.map((t, i) => (
                   <div key={i} className="qc-test-card">
                     <div className="qc-stars">★★★★★</div>
                     <p className="qc-test-quote">"{t.quote}"</p>
@@ -581,41 +558,41 @@ export default function LandingPage() {
         {/* PRECIOS */}
         <section className="qc-precios-section" id="precios">
           <div className="qc-section-inner" style={{ textAlign: "center" }}>
-            <span className="qc-label">Precios</span>
-            <h2 className="qc-section-title" style={{ marginBottom: 8 }}>Precios simples, sin sorpresas</h2>
-            <p className="qc-section-sub">Sin comisiones, sin permanencia mínima.</p>
+            <span className="qc-label">{t("pricing_label")}</span>
+            <h2 className="qc-section-title" style={{ marginBottom: 8 }}>{t("pricing_title")}</h2>
+            <p className="qc-section-sub">{t("pricing_subtitle")}</p>
             <div className="qc-precios-grid">
 
               {/* Pro */}
               <div className="qc-precio-card qc-precio-card-featured">
-                <span className="qc-badge qc-badge-amber" style={{ marginBottom: 16 }}>7 días gratis</span>
-                <div className="qc-precio-name">Plan Pro</div>
-                <div className="qc-precio-price">$44.900 <span style={{ fontSize: 18 }}>/mes</span></div>
-                <div className="qc-precio-sub">+ IVA</div>
+                <span className="qc-badge qc-badge-amber" style={{ marginBottom: 16 }}>{t("pricing_trial")}</span>
+                <div className="qc-precio-name">{t("plan_pro")}</div>
+                <div className="qc-precio-price">{t("plan_price_pro")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
+                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
                 <ul className="qc-feature-list">
-                  {PRO_FEATURES.map((f, i) => (
+                  {proFeatures.map((f, i) => (
                     <li key={i}><span className="qc-check">✓</span>{f}</li>
                   ))}
                 </ul>
                 <button className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15 }} onClick={openModal}>
-                  Empezar gratis 7 días
+                  {t("plan_cta_pro")}
                 </button>
               </div>
 
               {/* Loyalty */}
               <div className="qc-precio-card qc-precio-card-purple">
-                <span className="qc-badge qc-badge-purple" style={{ marginBottom: 16 }}>Módulo adicional</span>
-                <div className="qc-precio-name">Loyalty</div>
-                <div className="qc-precio-price" style={{ color: "var(--purpura)" }}>$29.900 <span style={{ fontSize: 18 }}>/mes</span></div>
-                <div className="qc-precio-sub">+ IVA</div>
+                <span className="qc-badge qc-badge-purple" style={{ marginBottom: 16 }}>{t("plan_addon")}</span>
+                <div className="qc-precio-name">{t("plan_loyalty")}</div>
+                <div className="qc-precio-price" style={{ color: "var(--purpura)" }}>{t("plan_price_loyalty")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
+                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
                 <ul className="qc-feature-list">
-                  {LOYALTY_FEATURES.map((f, i) => (
+                  {loyaltyFeatures.map((f, i) => (
                     <li key={i}><span className="qc-check-purple">✓</span>{f}</li>
                   ))}
                 </ul>
-                <p className="qc-precio-note">Se suma al Plan Pro</p>
+                <p className="qc-precio-note">{t("plan_loyalty_note")}</p>
                 <button className="qc-btn-purple" onClick={openModal}>
-                  Probar Loyalty gratis
+                  {t("plan_cta_loyalty")}
                 </button>
               </div>
 
@@ -626,10 +603,10 @@ export default function LandingPage() {
         {/* CTA FINAL */}
         <section className="qc-cta-final">
           <div className="qc-cta-final-card">
-            <h2>¿Listo para hacer crecer tu negocio?</h2>
-            <p style={{color:"rgba(255,255,255,0.75)"}}>7 días gratis, empieza en segundos.</p>
-            <button className="qc-btn-white" onClick={openModal}>Empezar gratis ahora</button>
-            <p className="qc-cta-note" style={{color:"rgba(255,255,255,0.4)"}}>Sin tarjeta ni contratos</p>
+            <h2>{t("final_title")}</h2>
+            <p style={{color:"rgba(255,255,255,0.75)"}}>{t("final_subtitle")}</p>
+            <button className="qc-btn-white" onClick={openModal}>{t("final_cta")}</button>
+            <p className="qc-cta-note" style={{color:"rgba(255,255,255,0.4)"}}>{t("final_note")}</p>
           </div>
         </section>
 
@@ -642,15 +619,15 @@ export default function LandingPage() {
               <button className="qc-modal-close" onClick={closeModal} aria-label="Cerrar">×</button>
 
               <span className="qc-modal-emoji">🍽️</span>
-              <h2 className="qc-modal-title">Empieza gratis hoy</h2>
-              <p className="qc-modal-sub">7 días sin cobrar nada. Sin tarjeta.</p>
+              <h2 className="qc-modal-title">{t("modal_title")}</h2>
+              <p className="qc-modal-sub">{t("modal_subtitle")}</p>
               <form onSubmit={handleSubmit}>
                 <div className="qc-form-group">
-                  <label className="qc-form-label">Tu nombre</label>
+                  <label className="qc-form-label">{t("form_owner")}</label>
                   <input
                     className="qc-form-input"
                     type="text"
-                    placeholder="María González"
+                    placeholder={t("form_owner_ph")}
                     value={formData.ownerName}
                     onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                     required
@@ -658,29 +635,29 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="qc-form-group">
-                  <label className="qc-form-label">Nombre del local</label>
+                  <label className="qc-form-label">{t("form_local")}</label>
                   <input
                     className="qc-form-input"
                     type="text"
-                    placeholder="Restaurante El Sabor"
+                    placeholder={t("form_local_ph")}
                     value={formData.localName}
                     onChange={(e) => setFormData({ ...formData, localName: e.target.value })}
                     required
                   />
                 </div>
                 <div className="qc-form-group">
-                  <label className="qc-form-label">Tu email</label>
+                  <label className="qc-form-label">{t("form_email")}</label>
                   <input
                     className="qc-form-input"
                     type="email"
-                    placeholder="maria@restaurante.cl"
+                    placeholder={t("form_email_ph")}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
                   />
                 </div>
                 <div className="qc-form-group">
-                  <label className="qc-form-label">Tu WhatsApp</label>
+                  <label className="qc-form-label">{t("form_whatsapp")}</label>
                   <div className="qc-phone-group">
                     <span className="qc-phone-prefix">
                       <svg width="18" height="13" viewBox="0 0 20 14" style={{borderRadius:2,flexShrink:0}}>
@@ -694,7 +671,7 @@ export default function LandingPage() {
                     <input
                       className="qc-form-input"
                       type="tel"
-                      placeholder="9 1234 5678"
+                      placeholder={t("form_whatsapp_ph")}
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                     />
@@ -702,7 +679,7 @@ export default function LandingPage() {
                 </div>
                 {formError && <div className="qc-form-error">{formError}</div>}
                 <button className="qc-btn-submit" type="submit" disabled={submitting}>
-                  {submitting ? "Creando tu cuenta..." : "Empezar mis 7 días gratis →"}
+                  {submitting ? t("form_loading") : t("form_submit")}
                 </button>
               </form>
             </div>

@@ -1,7 +1,9 @@
 "use client";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { useLandingLang } from "@/lib/i18n/landing";
 
 export default function CartaPage() {
+  const { t, cartaFeatures } = useLandingLang();
   return (
     <>
       <style>{`
@@ -163,25 +165,25 @@ export default function CartaPage() {
         {/* NAV */}
         <nav className="carta-nav">
           <div className="carta-nav-inner">
-            <a href="/" className="carta-nav-back">← QuieroComer</a>
-            <a href="/" className="carta-nav-cta">Probar gratis</a>
+            <a href="/" className="carta-nav-back">{t("nav_back")}</a>
+            <a href="/" className="carta-nav-cta">{t("nav_cta")}</a>
           </div>
         </nav>
 
         {/* HERO */}
         <section className="carta-hero">
           <div className="carta-hero-inner">
-            <span className="carta-label">Carta QR</span>
-            <h1>Una carta que realmente antoja</h1>
+            <span className="carta-label">{t("carta_label")}</span>
+            <h1>{t("carta_hero_title")}</h1>
             <p className="carta-hero-sub">
-              Tu menú presentado como merece: con fotos que antojan, categorías claras y listo en minutos.
+              {t("carta_hero_subtitle")}
             </p>
             <div className="carta-hero-cta">
               <a href="https://quierocomer.com/qr/alleria-pizza" target="_blank" rel="noopener noreferrer" className="carta-btn-ambar">
-                Ver carta en vivo →
+                {t("carta_hero_cta1")}
               </a>
               <a href="/" className="carta-btn-outline">
-                Probar 7 días gratis
+                {t("carta_hero_cta2")}
               </a>
             </div>
           </div>
@@ -201,10 +203,10 @@ export default function CartaPage() {
                 </div>
               </div>
               <div className="carta-iphone-pills">
-                <span className="carta-iphone-pill carta-iphone-pill-active">Todo</span>
-                <span className="carta-iphone-pill carta-iphone-pill-inactive">Entradas</span>
-                <span className="carta-iphone-pill carta-iphone-pill-inactive">Pizzas</span>
-                <span className="carta-iphone-pill carta-iphone-pill-inactive">Postres</span>
+                <span className="carta-iphone-pill carta-iphone-pill-active">{t("mock_all")}</span>
+                <span className="carta-iphone-pill carta-iphone-pill-inactive">{t("mock_starters")}</span>
+                <span className="carta-iphone-pill carta-iphone-pill-inactive">{t("mock_pizzas")}</span>
+                <span className="carta-iphone-pill carta-iphone-pill-inactive">{t("mock_desserts")}</span>
               </div>
               <div className="carta-iphone-dishes">
                 {[
@@ -230,16 +232,9 @@ export default function CartaPage() {
         {/* FEATURES */}
         <section className="carta-features">
           <div className="carta-features-inner">
-            <h2 className="carta-features-title">Todo lo que tu carta necesita</h2>
+            <h2 className="carta-features-title">{t("carta_features_title")}</h2>
             <div className="carta-features-list">
-              {[
-                { icon: "📸", bg: "linear-gradient(135deg,#ede9fe,#c4b5fd)", title: "Fotos que antojan", desc: "Sube fotos de tus platos y se muestran en un formato que convierte el apetito en pedidos." },
-                { icon: "📱", bg: "linear-gradient(135deg,#ede9fe,#a78bfa)", title: "Pedidos online", desc: "Activa pedidos directo desde la carta. Sin comisión ni app de terceros." },
-                { icon: "🌍", bg: "linear-gradient(135deg,#dbeafe,#93c5fd)", title: "Multi-idioma automático", desc: "Tu carta se traduce automáticamente para turistas sin que tú hagas nada." },
-                { icon: "🛎️", bg: "linear-gradient(135deg,#fef3c7,#fcd34d)", title: "Llamado al garzón", desc: "El cliente llama al mozo con un toque desde su teléfono. Sin papelitos ni botones físicos." },
-                { icon: "📊", bg: "linear-gradient(135deg,#d1fae5,#6ee7b7)", title: "Estadísticas en tiempo real", desc: "Mira qué platos miran más, a qué hora llega gente y cuáles se piden más." },
-                { icon: "📢", bg: "linear-gradient(135deg,#fee2e2,#fca5a5)", title: "Anuncios y promociones", desc: "Comunica el menú del día, eventos o promociones directo al abrir la carta." },
-              ].map((f, i) => (
+              {cartaFeatures.map((f, i) => (
                 <div key={i} className="carta-feature-card">
                   <div className="carta-feature-icon" style={{ background: f.bg }}>{f.icon}</div>
                   <div className="carta-feature-content">
@@ -254,9 +249,9 @@ export default function CartaPage() {
 
         {/* CTA */}
         <section className="carta-cta">
-          <h2>Lista para tu restaurant al instante</h2>
-          <p>Sin tarjeta de crédito. Cancelación cuando quieras.</p>
-          <a href="/" className="carta-cta-btn">Empezar gratis 7 días</a>
+          <h2>{t("carta_bottom_title")}</h2>
+          <p>{t("carta_bottom_subtitle")}</p>
+          <a href="/" className="carta-cta-btn">{t("carta_bottom_cta")}</a>
         </section>
 
         <LandingFooter />

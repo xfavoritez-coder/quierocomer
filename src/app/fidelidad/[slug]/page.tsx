@@ -70,7 +70,7 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
         program={{
           name: program.name,
           cardColorHex: program.cardColorHex,
-          accentColor: restaurant.cartaAccentColor || program.cardColorHex,
+          accentColor: program.cardColorHex,
           stampIcon: program.stampIcon,
           stampGoal: program.stampGoal,
           description: program.description,

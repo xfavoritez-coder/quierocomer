@@ -1,7 +1,9 @@
 "use client";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { useLandingLang } from "@/lib/i18n/landing";
 
 export default function FidelizacionPage() {
+  const { t, fidSteps } = useLandingLang();
   return (
     <>
       <style>{`
@@ -148,25 +150,25 @@ export default function FidelizacionPage() {
         {/* NAV */}
         <nav className="fid-nav">
           <div className="fid-nav-inner">
-            <a href="/" className="fid-nav-back">← QuieroComer</a>
-            <a href="/" className="fid-nav-cta">Probar gratis</a>
+            <a href="/" className="fid-nav-back">{t("nav_back")}</a>
+            <a href="/" className="fid-nav-cta">{t("nav_cta")}</a>
           </div>
         </nav>
 
         {/* HERO */}
         <section className="fid-hero">
           <div className="fid-hero-inner">
-            <span className="fid-label">Módulo Loyalty</span>
-            <h1>Que vuelvan solos. Siempre.</h1>
+            <span className="fid-label">{t("fid_label")}</span>
+            <h1>{t("fid_hero_title")}</h1>
             <p className="fid-hero-sub">
-              Tarjeta de sellos digital en el teléfono de tu cliente. Sin app, sin papel.
+              {t("fid_hero_subtitle")}
             </p>
             <div className="fid-hero-cta">
               <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="fid-btn-white">
-                Ver tarjeta demo →
+                {t("fid_hero_cta1")}
               </a>
               <a href="/" className="fid-btn-outline">
-                Probar 7 días gratis
+                {t("fid_hero_cta2")}
               </a>
             </div>
           </div>
@@ -175,14 +177,9 @@ export default function FidelizacionPage() {
         {/* HOW IT WORKS */}
         <section className="fid-how">
           <div className="fid-how-inner">
-            <h2>Cómo funciona</h2>
+            <h2>{t("fid_how_title")}</h2>
             <div className="fid-steps">
-              {[
-                { num: 1, icon: "🎁", title: "Diseña tu tarjeta", desc: "Elige colores, íconos y cuántos sellos das por visita. En minutos tienes tu programa listo." },
-                { num: 2, icon: "📱", title: "El cliente la agrega a su wallet digital", desc: "Escanea un QR y la tarjeta aparece en Apple Wallet o Google Wallet. Sin app que descargar." },
-                { num: 3, icon: "✅", title: "Sumas sellos en caja", desc: "Apuntas tu cámara al QR del cliente. Un sello al instante. Sin tocar su teléfono." },
-                { num: 4, icon: "🎉", title: "El cliente vuelve por su premio", desc: "Cuando completa la tarjeta, reclama su recompensa y el ciclo empieza de nuevo." },
-              ].map((s) => (
+              {fidSteps.map((s) => (
                 <div key={s.num} className="fid-step">
                   <div className="fid-step-title-row">
                     <div className="fid-step-num">{s.num}</div>
@@ -202,9 +199,9 @@ export default function FidelizacionPage() {
         <section className="fid-cercania">
           <div className="fid-cercania-inner">
             <div>
-              <h2>Envía notificaciones automáticas por horario o cercanía</h2>
+              <h2>{t("fid_proximity_title")}</h2>
               <p>
-                Cuando un cliente pasa a metros de tu local, recibe una notificación push automática con tu oferta del día. Sin publicidad, sin costo extra.
+                {t("fid_proximity_subtitle")}
               </p>
             </div>
             <div className="fid-phone-wrap">
@@ -212,18 +209,18 @@ export default function FidelizacionPage() {
                 <div className="fid-phone-screen">
                   <div className="fid-phone-time">
                     <h4>14:23</h4>
-                    <p>Martes, 31 de julio</p>
+                    <p>{t("fid_phone_date")}</p>
                   </div>
                   <div style={{ marginTop: 24 }}>
                     <div className="fid-notification">
                       <div className="fid-notif-header">
                         <div className="fid-notif-app-icon">⭐</div>
-                        <span className="fid-notif-app-name">Wallet</span>
-                        <span className="fid-notif-time">ahora</span>
+                        <span className="fid-notif-app-name">{t("fid_notif_app")}</span>
+                        <span className="fid-notif-time">{t("fid_notif_now")}</span>
                       </div>
-                      <div className="fid-notif-title">Hand Roll está a 50 metros</div>
+                      <div className="fid-notif-title">{t("fid_notif_title")}</div>
                       <div className="fid-notif-body">
-                        🎁 Lleva tu tarjeta y suma el sello #7. ¡Falta poco para tu regalo!
+                        {t("fid_notif_body")}
                       </div>
                     </div>
                   </div>
@@ -236,9 +233,9 @@ export default function FidelizacionPage() {
 
         {/* CTA */}
         <section className="fid-cta">
-          <h2>Pruébalo 7 días gratis</h2>
-          <p>Prueba el módulo Loyalty sin riesgo. Cancela cuando quieras.</p>
-          <a href="/" className="fid-cta-btn">Probar Loyalty gratis →</a>
+          <h2>{t("fid_bottom_title")}</h2>
+          <p>{t("fid_bottom_subtitle")}</p>
+          <a href="/" className="fid-cta-btn">{t("fid_bottom_cta")}</a>
         </section>
 
         <LandingFooter />

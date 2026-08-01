@@ -145,6 +145,8 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
           {(() => {
             const rewardStamps = new Set(program.rewards.map((r) => r.stamp));
             const cols = program.stampGoal <= 6 ? program.stampGoal : program.stampGoal <= 8 ? 4 : program.stampGoal <= 10 ? 5 : 6;
+            const stampFontSize = cols <= 4 ? "1.8rem" : cols <= 5 ? "1.3rem" : "1rem";
+            const stampNumFontSize = cols <= 4 ? "0.85rem" : cols <= 5 ? "0.7rem" : "0.6rem";
             return (
               <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginBottom: 16 }}>
                 {Array.from({ length: program.stampGoal }).map((_, i) => {
@@ -161,12 +163,12 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
                         background: isFilled ? accent : isReward ? `${accent}20` : `${accent}08`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         boxShadow: isReward ? `0 0 14px ${accent}66` : isFilled ? `0 0 10px ${accent}88` : "none",
-                        fontSize: "1rem",
+                        fontSize: stampFontSize,
                         color: isFilled ? onAccentText : isReward ? accent : `${accent}60`,
                         fontWeight: 900,
                         position: "relative",
                       }}>
-                        {isFilled ? (iconText === "sellos" ? "★" : iconText) : isReward ? "🎁" : <span style={{ fontSize: "0.6rem" }}>{num}</span>}
+                        {isFilled ? (iconText === "sellos" ? "★" : iconText) : isReward ? "🎁" : <span style={{ fontSize: stampNumFontSize }}>{num}</span>}
                       </div>
                     </div>
                   );
