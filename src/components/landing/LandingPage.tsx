@@ -184,7 +184,7 @@ export default function LandingPage() {
           background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%);
           border-radius: 16px; padding: 20px;
           box-shadow: 0 8px 40px rgba(109,40,217,0.25);
-          max-width: 260px; color: white;
+          max-width: 260px; color: white; margin: 0 auto;
         }
         .qc-loyalty-mock-header { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; }
         .qc-loyalty-mock h4 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
