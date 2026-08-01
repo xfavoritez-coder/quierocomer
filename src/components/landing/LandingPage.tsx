@@ -394,6 +394,9 @@ export default function LandingPage() {
           .qc-section { padding: 56px 20px; }
           .qc-cta-final-card { padding: 40px 24px; }
           .qc-modal-card { padding: 28px 20px; }
+          /* Acercar testimonios y precios */
+          .qc-testimonios-section { padding-bottom: 24px; }
+          .qc-precios-section { padding-top: 24px; }
         }
       `}</style>
 
@@ -557,7 +560,7 @@ export default function LandingPage() {
         </section>
 
         {/* TESTIMONIOS */}
-        <section className="qc-section" style={{ background: "white" }}>
+        <section className="qc-section qc-testimonios-section" style={{ background: "white" }}>
           <div className="qc-section-inner">
             <h2 className="qc-section-title" style={{ textAlign: "center", marginBottom: 48 }}>Lo que dicen nuestros clientes</h2>
             <div className="qc-testimonios-scroll">
