@@ -12,9 +12,9 @@ const es = {
 
   // Home hero
   hero_label: "Plataforma para restaurantes · Chile",
-  hero_title: "Haz que tus clientes se enamoren de tu negocio",
+  hero_title: "Haz que tus clientes se enamoren de tu restaurant",
   hero_title_highlight: "se enamoren",
-  hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los negocios que usan QuieroComer aumentan un 30% sus ventas.",
+  hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los locales que usan QuieroComer aumentan un 30% sus ventas.",
   hero_cta: "Probar gratis por 7 días",
   hero_demo: "Ver demo →",
   hero_note: "Sin tarjeta · Sin contratos",
