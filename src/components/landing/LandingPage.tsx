@@ -114,8 +114,8 @@ export default function LandingPage() {
           display: flex; align-items: center; justify-content: space-between;
         }
         .qc-nav-inner { max-width: 1200px; width: 100%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .qc-logo { font-size: 18px; font-weight: 700; color: var(--tinta); text-decoration: none; letter-spacing: -0.02em; }
-        .qc-logo span { color: var(--ambar); }
+        .qc-logo { font-size: 18px; font-weight: 700; color: var(--tinta); text-decoration: none; letter-spacing: -0.02em; display: flex; align-items: center; gap: 7px; }
+        .qc-logo img { width: 22px; height: 22px; display: block; flex-shrink: 0; }
         .qc-nav-links { display: flex; align-items: center; gap: 28px; }
         .qc-nav-link { font-size: 14px; color: var(--gris); text-decoration: none; font-weight: 500; transition: color .2s; }
         .qc-nav-link:hover { color: var(--tinta); }
@@ -302,8 +302,8 @@ export default function LandingPage() {
         @media (max-width: 760px) { .qc-footer-top { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 480px) { .qc-footer-top { grid-template-columns: 1fr; } }
         .qc-footer-brand p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; margin-top: 10px; max-width: 220px; }
-        .qc-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; }
-        .qc-footer-logo span { color: var(--ambar); }
+        .qc-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; display: flex; align-items: center; gap: 7px; }
+        .qc-footer-logo img { width: 22px; height: 22px; display: block; flex-shrink: 0; }
         .qc-footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
         .qc-footer-col-links { display: flex; flex-direction: column; gap: 10px; }
         .qc-footer-link { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: color .2s; }
@@ -405,7 +405,7 @@ export default function LandingPage() {
         {/* NAV */}
         <nav className="qc-nav">
           <div className="qc-nav-inner">
-            <a href="/" className="qc-logo">QuieroCome<span>r</span></a>
+            <a href="/" className="qc-logo"><img src="/logo.png" alt="" />QuieroComer</a>
             <div className="qc-nav-links">
               <a href="/carta" className="qc-nav-link">Carta QR</a>
               <a href="/fidelizacion" className="qc-nav-link">Loyalty</a>
@@ -641,7 +641,7 @@ export default function LandingPage() {
           <div className="qc-footer-inner">
             <div className="qc-footer-top">
               <div className="qc-footer-brand">
-                <div className="qc-footer-logo">QuieroCome<span>r</span></div>
+                <div className="qc-footer-logo"><img src="/logo.png" alt="" />QuieroComer</div>
                 <p>Plataforma digital para restaurantes chilenos. Carta QR, fidelización y pedidos online.</p>
               </div>
               <div className="qc-footer-col">
