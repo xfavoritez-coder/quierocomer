@@ -2400,10 +2400,11 @@ model LoyaltyMember {
   googleObjectId String? @unique // object id (Google Wallet)
   authToken      String  @default(cuid()) // token del web service de Apple Wallet
 
-  enrolledAt  DateTime  @default(now())
-  lastStampAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  enrolledAt     DateTime  @default(now())
+  lastStampAt    DateTime?
+  lastGeoNotifAt DateTime? // última vez que se envió notif por cercanía (rate-limit)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   program      LoyaltyProgram       @relation(fields: [programId], references: [id])
   transactions LoyaltyTransaction[]

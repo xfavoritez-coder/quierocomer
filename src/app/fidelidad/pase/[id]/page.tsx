@@ -8,6 +8,7 @@ import {
   googleObjectId,
 } from "@/lib/wallet/google";
 import { isAppleWalletConfigured } from "@/lib/wallet/apple";
+import GeoCheck from "./GeoCheck";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -81,6 +82,9 @@ export default async function PasePage({
 
   return wrap(
     <>
+      {/* Geo check silencioso: si el miembro está cerca del local, envía push banner */}
+      <GeoCheck memberId={id} authToken={t!} />
+
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         {restaurant?.logoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
