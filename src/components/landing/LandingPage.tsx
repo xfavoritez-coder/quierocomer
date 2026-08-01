@@ -112,7 +112,7 @@ export default function LandingPage() {
         .qc-btn-ambar { font-size: 14px; font-weight: 600; color: #fff; background: var(--ambar); border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer; transition: background .2s; font-family: inherit; text-decoration: none; display: inline-block; }
         .qc-btn-ambar:hover { background: var(--ambar-hover); }
         .qc-btn-ambar-lg { font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 12px; }
-        .qc-btn-ambar-xl { font-size: 17px; font-weight: 700; padding: 16px 36px; border-radius: 12px; }
+        .qc-btn-ambar-xl { font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 12px; }
 
         /* HERO */
         .qc-hero {
