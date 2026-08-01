@@ -10,7 +10,7 @@ interface Props {
   onDone: (result: { dishes: number; categories: number }) => void;
 }
 
-type Mode = "link" | "file" | "photo";
+type Mode = "link" | "photo";
 
 export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props) {
   const [mode, setMode] = useState<Mode | null>(null);
@@ -56,8 +56,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
 
   const modes: { key: Mode; icon: React.ReactNode; label: string; desc: string }[] = [
     { key: "link", icon: <Link size={20} />, label: "Link", desc: "Pega la URL de tu carta online" },
-    { key: "file", icon: <Upload size={20} />, label: "PDF o documento", desc: "Sube un PDF, Word o Excel" },
-    { key: "photo", icon: <Camera size={20} />, label: "Foto", desc: "Sube una foto de tu carta" },
+    { key: "photo", icon: <Camera size={20} />, label: "Fotos", desc: "Sube fotos de tu carta" },
   ];
 
   return (
@@ -105,13 +104,13 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
               />
             )}
 
-            {(mode === "file" || mode === "photo") && (
+            {mode === "photo" && (
               <>
                 <input
                   ref={fileRef}
                   type="file"
-                  accept={mode === "photo" ? "image/jpeg,image/png,image/webp,image/heic" : ".pdf,.doc,.docx,.xls,.xlsx"}
-                  multiple={mode === "photo"}
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  multiple
                   onChange={e => {
                     if (!e.target.files) return;
                     const selected = Array.from(e.target.files).slice(0, 10);
@@ -144,7 +143,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
                     <div>
                       <Upload size={24} color="var(--adm-text3)" style={{ marginBottom: 8 }} />
                       <div style={{ fontSize: "0.85rem", color: "var(--adm-text3)", fontFamily: F }}>
-                        {mode === "photo" ? "Sube hasta 10 fotos de tu carta" : "Haz clic para subir tu PDF o documento"}
+                        Sube fotos de tu carta
                       </div>
                     </div>
                   )}

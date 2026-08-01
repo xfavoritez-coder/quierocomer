@@ -953,51 +953,7 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionContext.Provider value={ctxValue}>
-      {isDemo && selectedRest && (
-        <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "var(--adm-bg, rgba(3,3,3,.95))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 4px 12px rgba(0,0,0,.08)", overflow: "visible", fontFamily: "var(--font-body)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span onClick={() => setDemoTip(t => !t)} style={{ height: 38, padding: "0 14px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 7, cursor: "pointer", position: "relative" }}>
-              {(selectedRest as any).logoUrl ? (
-                <img src={(selectedRest as any).logoUrl} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }} />
-              ) : (
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontSize: 10 }}>🍽</span>
-              )}
-              {t("demo_badge")}
-              {demoTip && (
-                <>
-                  <div onClick={(e) => { e.stopPropagation(); setDemoTip(false); }} style={{ position: "fixed", inset: 0, zIndex: 69 }} />
-                  <div style={{
-                    position: "absolute", top: "calc(100% + 8px)", left: 0,
-                    background: "#1a1a1a", border: "1px solid rgba(255,178,45,0.3)", borderRadius: 10,
-                    padding: "10px 14px", width: 240, zIndex: 70,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-                  }}>
-                    <div style={{
-                      position: "absolute", top: -5, left: 16,
-                      width: 10, height: 10, background: "#1a1a1a", borderTop: "1px solid rgba(255,178,45,0.3)", borderLeft: "1px solid rgba(255,178,45,0.3)",
-                      transform: "rotate(45deg)",
-                    }} />
-                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: 0, lineHeight: 1.5, fontWeight: 400, letterSpacing: 0 }}>
-                      {t("demo_tooltip")}
-                    </p>
-                  </div>
-                </>
-              )}
-            </span>
-            <div style={{ display: "flex", gap: 7 }}>
-              <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.2)", borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>{t("view_menu")}</a>
-              <a href={`/activar/${selectedRest.slug}`} className="demo-activar-btn" style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", transition: "transform 0.1s ease" }}>{t("activate")}</a>
-            </div>
-          </div>
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "7px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center", lineHeight: 1.4 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#fff", display: "block" }}>{t("demo_title")}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.85)", display: "block" }}>{t("demo_subtitle")}</span>
-            <style>{`.demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
-            <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #d97706" }} />
-          </div>
-        </div>
-      )}
-      <div style={{ paddingTop: isDemo ? 56 : 0, background: isDemo ? "var(--adm-card)" : undefined }}>
+      <div>
       <AdminLayoutOwner
         name={name}
         restaurants={restaurants}

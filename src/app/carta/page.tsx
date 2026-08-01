@@ -1,4 +1,5 @@
 "use client";
+import LandingFooter from "@/components/landing/LandingFooter";
 
 export default function CartaPage() {
   return (
@@ -151,22 +152,6 @@ export default function CartaPage() {
         }
         .carta-cta-btn:hover { opacity: 0.88; }
 
-        /* FOOTER */
-        .carta-footer { padding: 56px 24px 32px; background: #0F0F0F; }
-        .carta-footer-inner { max-width: 1200px; margin: 0 auto; }
-        .carta-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
-        @media (max-width: 760px) { .carta-footer-top { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 480px) { .carta-footer-top { grid-template-columns: 1fr; } }
-        .carta-footer-brand p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; margin-top: 10px; max-width: 220px; }
-        .carta-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; display: flex; align-items: center; gap: 7px; }
-        .carta-footer-logo img { width: 22px; height: 22px; display: block; flex-shrink: 0; }
-        .carta-footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
-        .carta-footer-col-links { display: flex; flex-direction: column; gap: 10px; }
-        .carta-footer-link { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: color .2s; }
-        .carta-footer-link:hover { color: white; }
-        .carta-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .carta-footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
-
         @media (max-width: 680px) {
           .carta-hero { padding: 72px 20px 64px; }
           .carta-features { padding: 56px 20px; }
@@ -274,36 +259,7 @@ export default function CartaPage() {
           <a href="/" className="carta-cta-btn">Empezar gratis 7 días</a>
         </section>
 
-        {/* FOOTER */}
-        <footer className="carta-footer">
-          <div className="carta-footer-inner">
-            <div className="carta-footer-top">
-              <div className="carta-footer-brand">
-                <div className="carta-footer-logo"><img src="/logo.png" alt="" />QuieroComer</div>
-                <p>Carta QR con fotos que antojan, en segundos.</p>
-              </div>
-              <div className="carta-footer-col">
-                <h4>Producto</h4>
-                <div className="carta-footer-col-links">
-                  <a href="/" className="carta-footer-link">Inicio</a>
-                  <a href="/fidelizacion" className="carta-footer-link">Loyalty</a>
-                  <a href="/#precios" className="carta-footer-link">Precios</a>
-                  <a href="/panel/login" className="carta-footer-link">Ingresar</a>
-                </div>
-              </div>
-              <div className="carta-footer-col">
-                <h4>Contacto</h4>
-                <div className="carta-footer-col-links">
-                  <a href="https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer" target="_blank" rel="noopener noreferrer" className="carta-footer-link">WhatsApp</a>
-                  <a href="https://instagram.com/quierocomer" target="_blank" rel="noopener noreferrer" className="carta-footer-link">Instagram</a>
-                </div>
-              </div>
-            </div>
-            <div className="carta-footer-bottom">
-              <span className="carta-footer-copy">© 2026 QuieroComer · Santiago de Chile 🇨🇱</span>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter />
 
       </div>
     </>

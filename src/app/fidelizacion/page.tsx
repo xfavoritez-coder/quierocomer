@@ -1,4 +1,5 @@
 "use client";
+import LandingFooter from "@/components/landing/LandingFooter";
 
 export default function FidelizacionPage() {
   return (
@@ -74,11 +75,12 @@ export default function FidelizacionPage() {
         .fid-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
         @media (max-width: 640px) { .fid-steps { grid-template-columns: 1fr; } }
         .fid-step { background: var(--purpura-fondo); border: 1.5px solid rgba(109,40,217,0.12); border-radius: 16px; padding: 28px; }
-        .fid-step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--purpura); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; margin-bottom: 16px; flex-shrink: 0; }
-        .fid-step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .fid-step-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+        .fid-step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--purpura); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .fid-step-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .fid-step-desc-row { display: flex; align-items: flex-start; gap: 10px; }
+        .fid-step-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
         .fid-step h3 { font-size: 16px; font-weight: 700; color: var(--tinta); }
-        .fid-step p { font-size: 14px; color: var(--gris); line-height: 1.65; }
+        .fid-step p { font-size: 14px; color: var(--gris); line-height: 1.65; margin: 0; }
 
         /* CERCANIA */
         .fid-cercania { padding: 80px 24px; background: #0F0A1E; }
@@ -133,22 +135,6 @@ export default function FidelizacionPage() {
         .fid-cta-btn { display: inline-block; font-size: 16px; font-weight: 700; color: var(--purpura-dark); background: white; border-radius: 12px; padding: 14px 36px; text-decoration: none; transition: opacity .2s; }
         .fid-cta-btn:hover { opacity: 0.9; }
 
-        /* FOOTER */
-        .fid-footer { padding: 56px 24px 32px; background: #0F0F0F; }
-        .fid-footer-inner { max-width: 1200px; margin: 0 auto; }
-        .fid-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
-        @media (max-width: 760px) { .fid-footer-top { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 480px) { .fid-footer-top { grid-template-columns: 1fr; } }
-        .fid-footer-brand p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; margin-top: 10px; max-width: 220px; }
-        .fid-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; }
-        .fid-footer-logo span { color: #A78BFA; }
-        .fid-footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
-        .fid-footer-col-links { display: flex; flex-direction: column; gap: 10px; }
-        .fid-footer-link { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: color .2s; }
-        .fid-footer-link:hover { color: white; }
-        .fid-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .fid-footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
-
         @media (max-width: 680px) {
           .fid-hero { padding: 72px 20px 64px; }
           .fid-how { padding: 56px 20px; }
@@ -198,12 +184,14 @@ export default function FidelizacionPage() {
                 { num: 4, icon: "🎉", title: "El cliente vuelve por su premio", desc: "Cuando completa la tarjeta, reclama su recompensa y el ciclo empieza de nuevo." },
               ].map((s) => (
                 <div key={s.num} className="fid-step">
-                  <div className="fid-step-num">{s.num}</div>
-                  <div className="fid-step-header">
-                    <span className="fid-step-icon">{s.icon}</span>
+                  <div className="fid-step-title-row">
+                    <div className="fid-step-num">{s.num}</div>
                     <h3>{s.title}</h3>
                   </div>
-                  <p>{s.desc}</p>
+                  <div className="fid-step-desc-row">
+                    <span className="fid-step-icon">{s.icon}</span>
+                    <p>{s.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -253,36 +241,7 @@ export default function FidelizacionPage() {
           <a href="/" className="fid-cta-btn">Probar Loyalty gratis →</a>
         </section>
 
-        {/* FOOTER */}
-        <footer className="fid-footer">
-          <div className="fid-footer-inner">
-            <div className="fid-footer-top">
-              <div className="fid-footer-brand">
-                <div className="fid-footer-logo">QuieroCome<span>r</span></div>
-                <p>Programa de fidelización digital. Tus clientes vuelven solos.</p>
-              </div>
-              <div className="fid-footer-col">
-                <h4>Producto</h4>
-                <div className="fid-footer-col-links">
-                  <a href="/" className="fid-footer-link">Inicio</a>
-                  <a href="/carta" className="fid-footer-link">Carta QR</a>
-                  <a href="/#precios" className="fid-footer-link">Precios</a>
-                  <a href="/panel/login" className="fid-footer-link">Ingresar</a>
-                </div>
-              </div>
-              <div className="fid-footer-col">
-                <h4>Contacto</h4>
-                <div className="fid-footer-col-links">
-                  <a href="https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer" target="_blank" rel="noopener noreferrer" className="fid-footer-link">WhatsApp</a>
-                  <a href="https://instagram.com/quierocomer" target="_blank" rel="noopener noreferrer" className="fid-footer-link">Instagram</a>
-                </div>
-              </div>
-            </div>
-            <div className="fid-footer-bottom">
-              <span className="fid-footer-copy">© 2026 QuieroComer · Santiago de Chile 🇨🇱</span>
-            </div>
-          </div>
-        </footer>
+        <LandingFooter />
 
       </div>
     </>
