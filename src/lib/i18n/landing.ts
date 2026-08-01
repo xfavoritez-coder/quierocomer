@@ -12,8 +12,8 @@ const es = {
 
   // Home hero
   hero_label: "Plataforma de marketing para restaurantes",
-  hero_title: "Haz que tus clientes se enamoren de tu restaurant",
-  hero_title_highlight: "se enamoren",
+  hero_title: "Haz que tus clientes se ♥ enamoren de tu restaurant",
+  hero_title_highlight: "se ♥ enamoren",
   hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los locales que usan QuieroComer aumentan un 30% sus ventas.",
   hero_cta: "Probar gratis por 7 días",
   hero_demo: "Ver demo →",
@@ -257,14 +257,15 @@ const en: typeof es = {
 
 export const PRO_FEATURES_ES = [
   "Aumenta el ticket promedio de tus mesas 🎫",
-  "Carta QR con fotos y categorías",
+  "Carta QR inteligente",
+  "Carta exportable en PDF",
   "Pedidos online sin comisión",
   "Llamado al garzón por QR",
   "Multi-idioma automático",
 ];
 
 export const PRO_FEATURES_EN = [
-  "QR menu with photos and categories",
+  "Smart QR menu",
   "Export menu to PDF",
   "Waiter call via QR",
   "Announcements and promotions in the menu",
