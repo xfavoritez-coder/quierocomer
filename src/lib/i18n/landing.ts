@@ -292,19 +292,19 @@ export const LOYALTY_FEATURES_EN = [
 ];
 
 export const TESTIMONIALS_ES = [
-  { quote: "Antes imprimíamos la carta cada vez que cambiábamos un precio. Ahora la actualizo desde el teléfono en dos minutos y ya está.", name: "María G.", restaurant: "Hand Roll", initials: "MG" },
-  { quote: "Tenía clientes que venían cada dos semanas. Desde que activamos los sellos de fidelización, los mismos están viniendo todas las semanas.", name: "Andrés V.", restaurant: "Horus Vegan", initials: "AV" },
-  { quote: "Lo armé un domingo en la tarde viendo un video. El lunes mis mesas ya tenían el QR. No esperaba que fuera tan rápido.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
-  { quote: "Me di cuenta que el 70% de la gente miraba solo tres platos. Reordené la carta y empecé a vender más los que me dejan mejor margen.", name: "Felipe R.", restaurant: "Juana la Brava", initials: "FR" },
-  { quote: "Los turistas que llegan en verano ahora pueden leer la carta en inglés solos. Antes tenía que estar explicando todo yo.", name: "Daniela P.", restaurant: "El Menú de la Esquina", initials: "DP" },
+  { quote: "Antes imprimíamos la carta cada vez que cambiábamos un precio. Ahora la actualizo desde el teléfono en dos minutos y ya está.", name: "Alfredo M.", restaurant: "Hand Roll", initials: "AM" },
+  { quote: "Tenía clientes que venían cada dos semanas. Desde que activamos los sellos de fidelización, los mismos están viniendo todas las semanas.", name: "Carlos G.", restaurant: "Horus Vegan", initials: "CG" },
+  { quote: "Mis clientes ahora deciden mucho más rápido qué pedir. El garzón usa menos tiempo explicando platos y puede atender más mesas.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
+  { quote: "Me di cuenta que el 70% de la gente miraba solo tres platos. Reordené la carta y empecé a vender más los que me dejan mejor margen.", name: "Javier M.", restaurant: "Juana la Brava", initials: "JM" },
+  { quote: "Los turistas que llegan en verano ahora pueden leer la carta en inglés solos. Antes tenía que estar explicando todo yo.", name: "Cristian C.", restaurant: "El Menú de la Esquina", initials: "CC" },
 ];
 
 export const TESTIMONIALS_EN = [
-  { quote: "We used to reprint the menu every time we changed a price. Now I update it from my phone in two minutes and it's done.", name: "María G.", restaurant: "Hand Roll", initials: "MG" },
-  { quote: "Customers used to come every two weeks. Since we activated the loyalty stamps, the same people are coming every week.", name: "Andrés V.", restaurant: "Horus Vegan", initials: "AV" },
-  { quote: "I set it up on a Sunday afternoon watching a video. On Monday my tables already had the QR. I didn't expect it to be that fast.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
-  { quote: "I realized 70% of people were only looking at three dishes. I reordered the menu and started selling more of the high-margin items.", name: "Felipe R.", restaurant: "Juana la Brava", initials: "FR" },
-  { quote: "Tourists who come in summer can now read the menu in English by themselves. Before I had to explain everything.", name: "Daniela P.", restaurant: "El Menú de la Esquina", initials: "DP" },
+  { quote: "We used to reprint the menu every time we changed a price. Now I update it from my phone in two minutes and it's done.", name: "Alfredo M.", restaurant: "Hand Roll", initials: "AM" },
+  { quote: "Customers used to come every two weeks. Since we activated the loyalty stamps, the same people are coming every week.", name: "Carlos G.", restaurant: "Horus Vegan", initials: "CG" },
+  { quote: "My customers now decide much faster what to order. The waiter spends less time explaining dishes and can serve more tables.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
+  { quote: "I realized 70% of people were only looking at three dishes. I reordered the menu and started selling more of the high-margin items.", name: "Javier M.", restaurant: "Juana la Brava", initials: "JM" },
+  { quote: "Tourists who come in summer can now read the menu in English by themselves. Before I had to explain everything.", name: "Cristian C.", restaurant: "El Menú de la Esquina", initials: "CC" },
 ];
 
 export const CARTA_FEATURES_ES = [
