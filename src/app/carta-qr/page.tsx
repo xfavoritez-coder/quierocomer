@@ -1,9 +1,12 @@
 "use client";
+import { useState } from "react";
 import LandingFooter from "@/components/landing/LandingFooter";
 import { useLandingLang } from "@/lib/i18n/landing";
+import ActivarModal from "@/components/landing/ActivarModal";
 
 export default function CartaPage() {
   const { t, cartaFeatures } = useLandingLang();
+  const [modalOpen, setModalOpen] = useState(false);
   return (
     <>
       <style>{`
@@ -166,7 +169,7 @@ export default function CartaPage() {
         <nav className="carta-nav">
           <div className="carta-nav-inner">
             <a href="/" className="carta-nav-back">{t("nav_back")}</a>
-            <a href="/" className="carta-nav-cta">{t("nav_cta")}</a>
+            <button onClick={() => setModalOpen(true)} className="carta-nav-cta">{t("nav_cta")}</button>
           </div>
         </nav>
 
@@ -182,9 +185,9 @@ export default function CartaPage() {
               <a href="https://quierocomer.com/qr/alleria-pizza" target="_blank" rel="noopener noreferrer" className="carta-btn-ambar">
                 {t("carta_hero_cta1")}
               </a>
-              <a href="/" className="carta-btn-outline">
+              <button onClick={() => setModalOpen(true)} className="carta-btn-outline">
                 {t("carta_hero_cta2")}
-              </a>
+              </button>
             </div>
           </div>
         </section>
@@ -251,12 +254,14 @@ export default function CartaPage() {
         <section className="carta-cta">
           <h2>{t("carta_bottom_title")}</h2>
           <p>{t("carta_bottom_subtitle")}</p>
-          <a href="/" className="carta-cta-btn">{t("carta_bottom_cta")}</a>
+          <button onClick={() => setModalOpen(true)} className="carta-cta-btn">{t("carta_bottom_cta")}</button>
         </section>
 
         <LandingFooter />
 
       </div>
+
+      <ActivarModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }

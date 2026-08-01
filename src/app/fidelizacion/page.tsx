@@ -1,9 +1,12 @@
 "use client";
+import { useState } from "react";
 import LandingFooter from "@/components/landing/LandingFooter";
 import { useLandingLang } from "@/lib/i18n/landing";
+import ActivarModal from "@/components/landing/ActivarModal";
 
 export default function FidelizacionPage() {
   const { t, fidSteps } = useLandingLang();
+  const [modalOpen, setModalOpen] = useState(false);
   return (
     <>
       <style>{`
@@ -152,7 +155,7 @@ export default function FidelizacionPage() {
         <nav className="fid-nav">
           <div className="fid-nav-inner">
             <a href="/" className="fid-nav-back">{t("nav_back")}</a>
-            <a href="/" className="fid-nav-cta">{t("nav_cta")}</a>
+            <button onClick={() => setModalOpen(true)} className="fid-nav-cta">{t("nav_cta")}</button>
           </div>
         </nav>
 
@@ -165,9 +168,9 @@ export default function FidelizacionPage() {
               {t("fid_hero_subtitle")}
             </p>
             <div className="fid-hero-cta">
-              <a href="/" className="fid-btn-white">
+              <button onClick={() => setModalOpen(true)} className="fid-btn-white">
                 {t("fid_hero_cta2")}
-              </a>
+              </button>
               <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="fid-btn-outline">
                 {t("fid_hero_cta1")}
               </a>
@@ -236,12 +239,14 @@ export default function FidelizacionPage() {
         <section className="fid-cta">
           <h2>{t("fid_bottom_title")}</h2>
           <p>{t("fid_bottom_subtitle")}</p>
-          <a href="/" className="fid-cta-btn">{t("fid_bottom_cta")}</a>
+          <button onClick={() => setModalOpen(true)} className="fid-cta-btn">{t("fid_bottom_cta")}</button>
         </section>
 
         <LandingFooter />
 
       </div>
+
+      <ActivarModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }
