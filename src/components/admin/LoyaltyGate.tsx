@@ -87,71 +87,53 @@ function LoyaltyModal({
         {/* ── Pantalla 1: features + precio ── */}
         {!confirm && (
           <>
-            {/* Header */}
-            <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)", textAlign: "center", position: "relative" }}>
+            {/* Header con gradiente */}
+            <div style={{
+              padding: "28px 24px 22px", textAlign: "center", position: "relative",
+              background: `linear-gradient(160deg, rgba(109,40,217,0.12) 0%, rgba(109,40,217,0.04) 60%, transparent 100%)`,
+              borderBottom: "1px solid rgba(109,40,217,0.1)",
+            }}>
               <button
                 onClick={onClose}
                 style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: 20, cursor: "pointer", lineHeight: 1 }}
               >×</button>
-              <p style={{ margin: "0 0 4px", fontFamily: F, fontSize: "0.7rem", fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: PURPLE }}>
-                🎁 Módulo Loyalty
+              <div style={{ fontSize: "2.4rem", marginBottom: 10, lineHeight: 1 }}>🎁</div>
+              <p style={{ margin: "0 0 6px", fontFamily: F, fontSize: "0.65rem", fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: PURPLE, opacity: 0.85 }}>
+                Módulo Loyalty
               </p>
-              <h3 style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: "1.3rem", fontWeight: 400, color: "var(--adm-text, #1a1a1a)", lineHeight: 1.3 }}>
-                Tus clientes vuelven<br />más seguido
+              <h3 style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: "1.55rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)", lineHeight: 1.2, letterSpacing: "-0.3px" }}>
+                Convierte a tus clientes<br />
+                <span style={{ color: PURPLE }}>en fans de tu negocio</span>
               </h3>
             </div>
 
             <div style={{ padding: "20px 24px 24px" }}>
-              {/* Price */}
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)" }}>{fmt(net)}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3, #999)", marginLeft: 4 }}>+ IVA /mes</span>
-                <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3, #bbb)", margin: "6px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
-              </div>
-
               {/* Features */}
               <div style={{
                 background: "rgba(109,40,217,0.05)",
                 border: "1px solid rgba(109,40,217,0.14)",
-                borderRadius: 12, padding: "14px 16px", marginBottom: 18,
+                borderRadius: 14, padding: "14px 16px", marginBottom: 18,
               }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                   {FEATURES.map(f => (
-                    <div key={f.text} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <span style={{ fontSize: 16, lineHeight: 1.4, flexShrink: 0 }}>{f.icon}</span>
-                      <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text, #333)", lineHeight: 1.45 }}>{f.text}</span>
+                    <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0, width: 22, textAlign: "center" }}>{f.icon}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text, #333)", lineHeight: 1.4 }}>{f.text}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Demo link */}
-              <a
-                href="https://quierocomer.com/fidelidad/hand-roll"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "block", width: "100%", padding: "10px 0",
-                  border: "1px solid var(--adm-card-border, #e5e7eb)", borderRadius: 999,
-                  background: "transparent", color: "var(--adm-text2, #666)",
-                  fontFamily: FB, fontSize: "0.82rem", fontWeight: 600,
-                  textDecoration: "none", textAlign: "center", marginBottom: 10,
-                  boxSizing: "border-box",
-                }}
-              >
-                Ver demo →
-              </a>
-
               {/* CTA */}
               <button
                 onClick={() => setConfirm(true)}
                 style={{
-                  display: "block", width: "100%", padding: "14px 20px",
+                  display: "block", width: "100%", padding: "15px 20px",
                   border: "none", borderRadius: 999, textAlign: "center",
                   background: PURPLE, color: "#fff",
-                  fontFamily: F, fontSize: "0.92rem", fontWeight: 700,
-                  cursor: "pointer", marginBottom: 8,
-                  boxShadow: "0 4px 16px rgba(109,40,217,0.3)",
+                  fontFamily: F, fontSize: "0.94rem", fontWeight: 700,
+                  cursor: "pointer", marginBottom: 10,
+                  boxShadow: "0 6px 24px rgba(109,40,217,0.35)",
                   boxSizing: "border-box",
                 }}
               >
@@ -293,22 +275,6 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
         <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 24px" }}>
           ${net.toLocaleString("es-CL")} neto/mes · Sin contratos
         </p>
-
-        {/* Demo link */}
-        <a
-          href="https://quierocomer.com/fidelidad/hand-roll"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "block", width: "100%", padding: "12px 0", marginBottom: 10,
-            border: "1px solid var(--adm-card-border, #e5e7eb)", borderRadius: 14,
-            background: "transparent", color: "var(--adm-text2, #666)",
-            fontFamily: FB, fontSize: "0.88rem", fontWeight: 600,
-            textDecoration: "none", textAlign: "center",
-          }}
-        >
-          Ver demo →
-        </a>
 
         {trialUsed ? (
           /* Trial ya usado → abrir modal con features + pago */

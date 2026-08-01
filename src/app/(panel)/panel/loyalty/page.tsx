@@ -101,9 +101,14 @@ export default function LoyaltyHowPage() {
           <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>¿Listo para empezar?</p>
           <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0 }}>Diseña tu tarjeta en minutos y comparte el link con tus clientes.</p>
         </div>
-        <Link href="/panel/loyalty/tarjeta" style={{ flexShrink: 0, padding: "10px 18px", borderRadius: 8, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-          Configurar tarjeta <ChevronRight size={16} />
-        </Link>
+        <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+          <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(244,166,35,0.4)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+            Ver tarjeta demo →
+          </a>
+          <Link href="/panel/loyalty/tarjeta" style={{ padding: "10px 18px", borderRadius: 8, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+            Configurar tarjeta <ChevronRight size={16} />
+          </Link>
+        </div>
       </div>
     </div>
   );
