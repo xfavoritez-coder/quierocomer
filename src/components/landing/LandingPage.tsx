@@ -281,7 +281,7 @@ export default function LandingPage() {
         .qc-btn-purple:hover { opacity: 0.88; }
 
         /* CTA FINAL */
-        .qc-cta-final { padding: 64px 24px; }
+        .qc-cta-final { padding: 24px 24px 64px; }
         .qc-cta-final-card {
           max-width: 680px; margin: 0 auto; background: #111;
           border-radius: 24px; padding: 56px 40px; text-align: center;

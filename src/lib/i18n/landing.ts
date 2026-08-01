@@ -37,7 +37,7 @@ const es = {
   restaurants_trust_title: "Restaurantes que ya ",
   restaurants_trust_highlight: "confían",
   restaurants_trust_suffix: " en QuieroComer",
-  restaurants_label: "Más de 200 restaurantes en Chile ya lo usan",
+  restaurants_label: "Más de 100 restaurantes en Chile ya lo usan",
 
   // Home testimonials
   testimonials_title: "Lo que dicen nuestros clientes",
@@ -117,7 +117,7 @@ const es = {
   fid_phone_date: "Martes, 31 de julio",
 
   // Footer
-  footer_tagline: "Plataforma digital para restaurantes chilenos. Carta QR, fidelización y pedidos online.",
+  footer_tagline: "Plataforma digital para restaurantes. Carta QR, fidelización y pedidos online.",
   footer_product: "Producto",
   footer_contact: "Contacto",
   footer_qr: "Carta QR",
@@ -162,7 +162,7 @@ const en: typeof es = {
   restaurants_trust_title: "Restaurants that already ",
   restaurants_trust_highlight: "trust",
   restaurants_trust_suffix: " QuieroComer",
-  restaurants_label: "Over 200 restaurants in Chile already use it",
+  restaurants_label: "Over 100 restaurants in Chile already use it",
 
   // Home testimonials
   testimonials_title: "What our customers say",
@@ -242,7 +242,7 @@ const en: typeof es = {
   fid_phone_date: "Tuesday, July 31",
 
   // Footer
-  footer_tagline: "Digital platform for Chilean restaurants. QR menu, loyalty and online orders.",
+  footer_tagline: "Digital platform for restaurants. QR menu, loyalty and online orders.",
   footer_product: "Product",
   footer_contact: "Contact",
   footer_qr: "QR Menu",
