@@ -47,7 +47,7 @@ const es = {
   pricing_title: "Precios simples, sin sorpresas",
   pricing_subtitle: "Sin comisiones, sin permanencia mínima.",
   pricing_trial: "7 días gratis",
-  plan_pro: "Plan Pro",
+  plan_pro: "Carta QR inteligente + pedidos online",
   plan_price_pro: "$44.900",
   plan_price_unit: "/mes",
   plan_price_tax: "+ IVA",
@@ -256,11 +256,11 @@ const en: typeof es = {
 // ─── Arrays ──────────────────────────────────────────────────────────────────
 
 export const PRO_FEATURES_ES = [
+  "Aumenta el ticket promedio de tus mesas 🎫",
   "Carta QR con fotos y categorías",
-  "Exportar carta PDF",
+  "Pedidos online sin comisión",
   "Llamado al garzón por QR",
   "Anuncios y promociones en la carta",
-  "Pedidos online sin comisión",
   "Multi-idioma automático",
 ];
 
