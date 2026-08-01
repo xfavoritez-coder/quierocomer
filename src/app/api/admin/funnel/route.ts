@@ -31,6 +31,18 @@ export async function GET() {
       }),
     ]);
 
+    // Fetch owner lastLoginAt for activated leads
+    const activatedOwnerIds = leads
+      .filter((l) => l.convertedToOwnerId && l.activatedAt)
+      .map((l) => l.convertedToOwnerId!);
+    const ownerLogins = activatedOwnerIds.length
+      ? await prisma.restaurantOwner.findMany({
+          where: { id: { in: activatedOwnerIds } },
+          select: { id: true, lastLoginAt: true },
+        })
+      : [];
+    const ownerLoginMap = new Map(ownerLogins.map((o) => [o.id, o.lastLoginAt]));
+
     const total = leads.length;
     const reachedStep2 = leads.filter((l) => l.step2At).length;
     const completed = leads.filter((l) => l.completedAt).length;
@@ -102,11 +114,22 @@ export async function GET() {
       return { ...v, matchedLeadId };
     });
 
-    // Enrich leads with device type
-    const enrichedLeads = leads.map((l) => ({
-      ...l,
-      device: leadDevice.get(l.id) || null,
-    }));
+    // Enrich leads with device type and owner last login
+    const enrichedLeads = leads.map((l) => {
+      const ownerLastLoginAt = l.convertedToOwnerId
+        ? (ownerLoginMap.get(l.convertedToOwnerId) ?? null)
+        : null;
+      // Only show if after activation (i.e. the owner has logged in post-activation)
+      const ownerLoginAfterActivation =
+        ownerLastLoginAt && l.activatedAt && ownerLastLoginAt > new Date(l.activatedAt)
+          ? ownerLastLoginAt
+          : null;
+      return {
+        ...l,
+        device: leadDevice.get(l.id) || null,
+        ownerLastLoginAt: ownerLoginAfterActivation,
+      };
+    });
 
     return NextResponse.json({ leads: enrichedLeads, stats, visits });
   } catch (error) {
