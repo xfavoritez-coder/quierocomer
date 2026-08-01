@@ -77,6 +77,7 @@ export default function FacturacionPage() {
       if (!res.ok) { setLoading(false); return; }
       const d: BillingInfo = await res.json();
       setInfo(d);
+      setOpen(!d.isComplete);
       setCompanyName(d.billingCompanyName || "");
       setRut(d.billingRut || "");
       setGiro(d.billingGiro || "");
