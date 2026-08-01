@@ -359,12 +359,11 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
       secondaryFields: [{ key: "next", label: status.label, value: status.value }],
       auxiliaryFields: [{ key: "member", label: "Cliente", value: member.name || "Cliente" }],
       backFields: [
-        // Campo de novedades: su changeMessage dispara la notificación push al cambiar
-        { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí.", changeMessage: "%@" },
+        // Sin changeMessage: la notificación visible se entrega vía APNs alert push (banner auto-descartable).
+        { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí." },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon === "logo" ? "•" : program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
-        // Campo oculto: garantiza que el pass cambie cada vez que se actualiza updatedAt,
-        // incluso si el texto de pushMessage es idéntico al anterior.
+        // _v garantiza que el pase cambie en cada update para que el dispositivo haga fetch.
         { key: "_v", label: "", value: String(Math.floor((member.updatedAt?.getTime() ?? Date.now()) / 1000)) },
       ],
     },

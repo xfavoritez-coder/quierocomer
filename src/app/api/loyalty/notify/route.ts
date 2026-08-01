@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const appleValue = title ? `${title}: ${message}` : message;
     await prisma.loyaltyProgram.update({ where: { id: program.id }, data: { pushMessage: appleValue } });
     await prisma.$executeRaw`UPDATE "LoyaltyMember" SET "updatedAt" = NOW() WHERE "restaurantId" = ${restaurantId}`;
-    const appleDevices = await notifyRestaurantDevices(restaurantId);
+    const appleDevices = await notifyRestaurantDevices(restaurantId, title || undefined, message);
 
     // 2) Google: un mensaje a cada objeto (tarjeta) → notificación en Android
     const googleCards = await prisma.loyaltyMember.findMany({

@@ -18,9 +18,15 @@ function apnsConfig() {
   };
 }
 
-async function pushToTokens(tokens: string[]): Promise<void> {
+type PushType = "background" | "alert";
+
+async function pushToTokens(tokens: string[], pushType: PushType = "background", payload?: object): Promise<void> {
   const cfg = apnsConfig();
   if (!cfg || tokens.length === 0) return;
+
+  const body = pushType === "alert" && payload
+    ? JSON.stringify(payload)
+    : JSON.stringify({});
 
   await new Promise<void>((resolve) => {
     let client: http2.ClientHttp2Session;
@@ -40,16 +46,17 @@ async function pushToTokens(tokens: string[]): Promise<void> {
     };
 
     for (const token of tokens) {
-      const reqStream = client.request({
+      const headers: Record<string, string | number> = {
         ":method": "POST",
         ":path": `/3/device/${token}`,
         "apns-topic": cfg.passTypeId,
-        "apns-push-type": "background",
-        "apns-priority": "5",
-      });
+        "apns-push-type": pushType,
+        "apns-priority": pushType === "alert" ? "10" : "5",
+      };
+      const reqStream = client.request(headers);
       let status = 0;
       let responseBody = "";
-      reqStream.on("response", (headers) => { status = headers[":status"] as number; });
+      reqStream.on("response", (h) => { status = h[":status"] as number; });
       reqStream.on("data", (chunk) => { responseBody += chunk.toString(); });
       reqStream.on("end", () => {
         if (status && status !== 200 && status !== 201) {
@@ -58,7 +65,7 @@ async function pushToTokens(tokens: string[]): Promise<void> {
         done();
       });
       reqStream.on("error", (e) => { console.error("[APNs] stream error:", e); done(); });
-      reqStream.end(JSON.stringify({}));
+      reqStream.end(body);
     }
   });
 }
@@ -71,14 +78,14 @@ export async function notifyAppleDevices(memberId: string): Promise<void> {
       where: { serialNumber: memberId },
       select: { pushToken: true },
     });
-    if (devices.length) await pushToTokens(devices.map((d) => d.pushToken));
+    if (devices.length) await pushToTokens(devices.map((d) => d.pushToken), "background");
   } catch (e) {
     console.error("[notifyAppleDevices]", e);
   }
 }
 
-/** Notifica a TODOS los dispositivos iOS de los miembros del restaurante. Devuelve cuántos. */
-export async function notifyRestaurantDevices(restaurantId: string): Promise<number> {
+/** Notifica a TODOS los dispositivos iOS de los miembros del restaurante con una alerta visible. Devuelve cuántos. */
+export async function notifyRestaurantDevices(restaurantId: string, title?: string, message?: string): Promise<number> {
   if (!apnsConfig()) return 0;
   try {
     const members = await prisma.loyaltyMember.findMany({ where: { restaurantId }, select: { id: true } });
@@ -88,7 +95,20 @@ export async function notifyRestaurantDevices(restaurantId: string): Promise<num
       select: { pushToken: true },
     });
     if (!devices.length) return 0;
-    await pushToTokens(devices.map((d) => d.pushToken));
+
+    if (title || message) {
+      // Push con alerta visible: aparece como banner (se auto-descarta) en lugar de notificación persistente de PassKit
+      const payload = {
+        aps: {
+          alert: { title: title || "", body: message || "" },
+          sound: "default",
+        },
+      };
+      await pushToTokens(devices.map((d) => d.pushToken), "alert", payload);
+    } else {
+      // Sin mensaje: push silencioso para refrescar el pase
+      await pushToTokens(devices.map((d) => d.pushToken), "background");
+    }
     return devices.length;
   } catch (e) {
     console.error("[notifyRestaurantDevices]", e);

@@ -11,7 +11,7 @@ const es = {
   nav_cta: "Probar gratis",
 
   // Home hero
-  hero_label: "Plataforma para restaurantes · Chile",
+  hero_label: "Plataforma de marketing para restaurantes",
   hero_title: "Haz que tus clientes se enamoren de tu restaurant",
   hero_title_highlight: "se enamoren",
   hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los locales que usan QuieroComer aumentan un 30% sus ventas.",
@@ -59,7 +59,7 @@ const es = {
   plan_cta_loyalty: "Probar Loyalty gratis",
 
   // Home final CTA
-  final_title: "¿Listo para hacer crecer tu negocio?",
+  final_title: "Lleva tu restaurant al siguiente nivel",
   final_subtitle: "Sé parte de la evolución gastronómica.",
   final_cta: "Empezar gratis ahora",
   final_note: "Sin tarjeta ni contratos",
