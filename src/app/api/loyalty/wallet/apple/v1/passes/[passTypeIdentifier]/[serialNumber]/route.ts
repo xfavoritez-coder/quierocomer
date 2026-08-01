@@ -31,7 +31,7 @@ export async function GET(
     status: 200,
     headers: {
       "Content-Type": "application/vnd.apple.pkpass",
-      "Last-Modified": member.updatedAt.toUTCString(),
+      "Last-Modified": new Date().toUTCString(),
     },
   });
 }
