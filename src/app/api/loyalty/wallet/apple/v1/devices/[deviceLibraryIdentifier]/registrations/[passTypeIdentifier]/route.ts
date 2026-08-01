@@ -18,22 +18,10 @@ export async function GET(
   if (devices.length === 0) return new NextResponse(null, { status: 204 });
 
   const serials = devices.map((d) => d.serialNumber);
-  // Apple envía passesUpdatedSince en segundos (Unix epoch).
-  // Soportamos también ms por compatibilidad con versiones anteriores del servidor.
-  let sinceDate = new Date(0);
-  if (since) {
-    const n = Number(since);
-    // Si el valor es < 1e12 es segundos (antes del año 2001 en ms); si no, ms
-    sinceDate = new Date(n < 1e12 ? n * 1000 : n);
-  }
-
-  const members = await prisma.loyaltyMember.findMany({
-    where: { id: { in: serials }, updatedAt: { gt: sinceDate } },
-    select: { id: true, updatedAt: true },
-  });
-  if (members.length === 0) return new NextResponse(null, { status: 204 });
-
-  // Devolver en segundos (spec Apple PassKit Web Service)
-  const lastUpdated = String(Math.floor(Math.max(...members.map((m) => m.updatedAt.getTime())) / 1000));
-  return NextResponse.json({ lastUpdated, serialNumbers: members.map((m) => m.id) });
+  // Devolvemos todos los serials del dispositivo sin filtrar por timestamp.
+  // El historial de `passesUpdatedSince` causaba bugs por discrepancias de
+  // ms vs segundos entre lo que devolvíamos y lo que Apple re-enviaba.
+  // El endpoint del pase ya maneja If-Modified-Since para evitar re-descargas innecesarias.
+  const lastUpdated = String(Math.floor(Date.now() / 1000));
+  return NextResponse.json({ lastUpdated, serialNumbers: serials });
 }
