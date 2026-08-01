@@ -592,8 +592,7 @@ export default function LandingPage() {
               <div className="qc-precio-card qc-precio-card-featured">
                 <span className="qc-badge qc-badge-amber" style={{ marginBottom: 16 }}>{t("pricing_trial")}</span>
                 <div className="qc-precio-name">{t("plan_pro")}</div>
-                <div className="qc-precio-price">{t("plan_price_pro")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
-                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
+                <div className="qc-precio-price">{t("plan_price_pro")} <span style={{ fontSize: 16, fontWeight: 500, color: "var(--gris-claro)" }}>neto</span><span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
                 <ul className="qc-feature-list">
                   {proFeatures.map((f, i) => (
                     <li key={i}><span className="qc-check">✓</span>{f}</li>
@@ -608,8 +607,7 @@ export default function LandingPage() {
               <div className="qc-precio-card qc-precio-card-purple">
                 <span className="qc-badge qc-badge-purple" style={{ marginBottom: 16 }}>{t("plan_addon")}</span>
                 <div className="qc-precio-name">{t("plan_loyalty")}</div>
-                <div className="qc-precio-price" style={{ color: "var(--purpura)" }}>{t("plan_price_loyalty")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
-                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
+                <div className="qc-precio-price" style={{ color: "var(--purpura)" }}>{t("plan_price_loyalty")} <span style={{ fontSize: 16, fontWeight: 500, color: "var(--gris-claro)" }}>neto</span><span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
                 <ul className="qc-feature-list">
                   {loyaltyFeatures.map((f, i) => (
                     <li key={i}><span className="qc-check-purple">✓</span>{f}</li>
