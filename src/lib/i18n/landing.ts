@@ -12,8 +12,8 @@ const es = {
 
   // Home hero
   hero_label: "Plataforma de marketing para restaurantes",
-  hero_title: "Haz que tus clientes se ♥ enamoren de tu restaurant",
-  hero_title_highlight: "se ♥ enamoren",
+  hero_title: "Haz que tus clientes se enamoren ♥ de tu restaurant",
+  hero_title_highlight: "se enamoren ♥",
   hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los locales que usan QuieroComer aumentan un 30% sus ventas.",
   hero_cta: "Probar gratis por 7 días",
   hero_demo: "Ver demo →",
@@ -112,7 +112,7 @@ const es = {
   // /fidelizacion notification mock
   fid_notif_app: "Wallet",
   fid_notif_now: "ahora",
-  fid_notif_title: "El Menú de la Esquina está cerca",
+  fid_notif_title: "La Taberna Mori está cerca",
   fid_notif_body: "🎁 Lleva tu tarjeta y suma un sello. ¡Falta poco para tu regalo!",
   fid_phone_date: "Martes, 31 de julio",
 
@@ -237,7 +237,7 @@ const en: typeof es = {
   // /fidelizacion notification mock
   fid_notif_app: "Wallet",
   fid_notif_now: "now",
-  fid_notif_title: "El Menú de la Esquina is nearby",
+  fid_notif_title: "La Taberna Mori is nearby",
   fid_notif_body: "🎁 Bring your card and get stamp #7. Almost there for your reward!",
   fid_phone_date: "Tuesday, July 31",
 
