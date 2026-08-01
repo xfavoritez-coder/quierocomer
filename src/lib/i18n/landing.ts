@@ -330,6 +330,7 @@ export const FID_STEPS_ES = [
   { num: 2, icon: "📱", title: "El cliente la agrega a su wallet digital", desc: "Escanea un QR y la tarjeta aparece en Apple Wallet o Google Wallet. Sin app que descargar." },
   { num: 3, icon: "✅", title: "Sumas sellos en caja", desc: "Apuntas tu cámara al QR del cliente. Un sello al instante. Sin tocar su teléfono." },
   { num: 4, icon: "🎉", title: "El cliente vuelve por su premio", desc: "Cuando completa la tarjeta, reclama su recompensa y el ciclo empieza de nuevo." },
+  { num: 5, icon: "🔔", title: "Envía notificaciones cuando quieras", desc: "Manda un mensaje por horario o por cercanía. Cuando el cliente pasa cerca de tu local, recibe una notificación directo en su teléfono." },
 ];
 
 export const FID_STEPS_EN = [
@@ -337,6 +338,7 @@ export const FID_STEPS_EN = [
   { num: 2, icon: "📱", title: "Customer adds it to their digital wallet", desc: "They scan a QR and the card appears in Apple Wallet or Google Wallet. No app to download." },
   { num: 3, icon: "✅", title: "Add stamps at checkout", desc: "Point your camera at the customer's QR code. One stamp instantly. No touching their phone." },
   { num: 4, icon: "🎉", title: "Customer comes back for their reward", desc: "When they complete the card, they claim their reward and the cycle starts again." },
+  { num: 5, icon: "🔔", title: "Send notifications whenever you want", desc: "Send a message by schedule or by proximity. When a customer walks near your restaurant, they get a notification right on their phone." },
 ];
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
