@@ -145,12 +145,20 @@ export default function CartaPage() {
         .carta-cta-btn:hover { opacity: 0.88; }
 
         /* FOOTER */
-        .carta-footer { padding: 32px 24px; border-top: 1.5px solid var(--linea); }
-        .carta-footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-        .carta-footer-copy { font-size: 13px; color: var(--gris); }
-        .carta-footer-nav { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
-        .carta-footer-link { font-size: 13px; color: var(--gris); text-decoration: none; transition: color .2s; }
-        .carta-footer-link:hover { color: var(--tinta); }
+        .carta-footer { padding: 56px 24px 32px; background: #0F0F0F; }
+        .carta-footer-inner { max-width: 1200px; margin: 0 auto; }
+        .carta-footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+        @media (max-width: 760px) { .carta-footer-top { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 480px) { .carta-footer-top { grid-template-columns: 1fr; } }
+        .carta-footer-brand p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; margin-top: 10px; max-width: 220px; }
+        .carta-footer-logo { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; }
+        .carta-footer-logo span { color: var(--ambar); }
+        .carta-footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
+        .carta-footer-col-links { display: flex; flex-direction: column; gap: 10px; }
+        .carta-footer-link { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: color .2s; }
+        .carta-footer-link:hover { color: white; }
+        .carta-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .carta-footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
 
         @media (max-width: 680px) {
           .carta-hero { padding: 72px 20px 64px; }
@@ -193,10 +201,11 @@ export default function CartaPage() {
             <div className="carta-iphone-notch"></div>
             <div className="carta-iphone-screen">
               <div className="carta-iphone-hero">
+                <img src="https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783901270166-pizza-alla-genovese.webp" alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} />
                 <div className="carta-iphone-hero-overlay"></div>
                 <div className="carta-iphone-hero-text">
-                  <h4>Nascosto Pizzeria</h4>
-                  <p>📍 Providencia · Abierto ahora</p>
+                  <h4>Alleria Pizza</h4>
+                  <p>📍 Providencia · Carta digital</p>
                 </div>
               </div>
               <div className="carta-iphone-pills">
@@ -207,13 +216,13 @@ export default function CartaPage() {
               </div>
               <div className="carta-iphone-dishes">
                 {[
-                  { name: "Pizza Margherita", desc: "Salsa de tomate, mozzarella, albahaca", price: "$12.900", bg: "linear-gradient(135deg,#FF6B35,#F7C59F)" },
-                  { name: "Bruschetta clásica", desc: "Pan, tomate, albahaca, aceite", price: "$5.500", bg: "linear-gradient(135deg,#FFD700,#FFA500)" },
-                  { name: "Pizza Cuatro quesos", desc: "Mozzarella, gorgonzola, brie, parmesano", price: "$14.900", bg: "linear-gradient(135deg,#F7C59F,#EFEFD0)" },
-                  { name: "Tiramisú", desc: "Mascarpone, café, cacao", price: "$6.900", bg: "linear-gradient(135deg,#8B4513,#D2691E)" },
+                  { name: "Pizza alla Genovese", desc: "Filete y cebollas 10 hrs.", price: "$24.680", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783901270166-pizza-alla-genovese.webp" },
+                  { name: "Arancinis di Riso", desc: "Risotto con carne y ragú", price: "$13.400", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1778093711966-arancinis-di-riso.webp" },
+                  { name: "Pasta alla Genovese", desc: "Receta tradicional Nonna", price: "$18.980", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783875855139-pasta-alla-genovese.webp" },
+                  { name: "Baba Napolitana", desc: "Nutella, chantilly, ron", price: "$10.900", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1780618444541-baba-napolitana.webp" },
                 ].map((dish, i) => (
                   <div key={i} className="carta-iphone-dish">
-                    <div className="carta-iphone-dish-img" style={{ background: dish.bg }} />
+                    <img src={dish.img} alt={dish.name} className="carta-iphone-dish-img" style={{objectFit:"cover"}} />
                     <div className="carta-iphone-dish-info">
                       <h5>{dish.name}</h5>
                       <p>{dish.desc}</p>
@@ -253,7 +262,7 @@ export default function CartaPage() {
 
         {/* CTA */}
         <section className="carta-cta">
-          <h2>Lista para tu restaurant en 24 horas</h2>
+          <h2>Lista para tu restaurant al instante</h2>
           <p>Sin tarjeta de crédito. Cancelación cuando quieras.</p>
           <a href="/" className="carta-cta-btn">Empezar gratis 7 días</a>
         </section>
@@ -261,15 +270,31 @@ export default function CartaPage() {
         {/* FOOTER */}
         <footer className="carta-footer">
           <div className="carta-footer-inner">
-            <span className="carta-footer-copy">© 2026 QuieroComer · Santiago de Chile</span>
-            <nav className="carta-footer-nav">
-              <a href="/" className="carta-footer-link">Inicio</a>
-              <a href="/fidelizacion" className="carta-footer-link">Loyalty</a>
-              <a href="/#precios" className="carta-footer-link">Precios</a>
-              <a href="/panel/login" className="carta-footer-link">Ingresar</a>
-              <a href="https://instagram.com/quierocomer" target="_blank" rel="noopener noreferrer" className="carta-footer-link">Instagram</a>
-              <a href="https://wa.me/56999946208" target="_blank" rel="noopener noreferrer" className="carta-footer-link">WhatsApp</a>
-            </nav>
+            <div className="carta-footer-top">
+              <div className="carta-footer-brand">
+                <div className="carta-footer-logo">QuieroCome<span>r</span></div>
+                <p>Carta QR con fotos que antojan, en segundos.</p>
+              </div>
+              <div className="carta-footer-col">
+                <h4>Producto</h4>
+                <div className="carta-footer-col-links">
+                  <a href="/" className="carta-footer-link">Inicio</a>
+                  <a href="/fidelizacion" className="carta-footer-link">Loyalty</a>
+                  <a href="/#precios" className="carta-footer-link">Precios</a>
+                  <a href="/panel/login" className="carta-footer-link">Ingresar</a>
+                </div>
+              </div>
+              <div className="carta-footer-col">
+                <h4>Contacto</h4>
+                <div className="carta-footer-col-links">
+                  <a href="https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer" target="_blank" rel="noopener noreferrer" className="carta-footer-link">WhatsApp</a>
+                  <a href="https://instagram.com/quierocomer" target="_blank" rel="noopener noreferrer" className="carta-footer-link">Instagram</a>
+                </div>
+              </div>
+            </div>
+            <div className="carta-footer-bottom">
+              <span className="carta-footer-copy">© 2026 QuieroComer · Santiago de Chile 🇨🇱</span>
+            </div>
           </div>
         </footer>
 
