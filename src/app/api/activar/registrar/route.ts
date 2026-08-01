@@ -163,6 +163,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
     // Crear restaurant sin platos de ejemplo
     const restaurant = await prisma.restaurant.create({
       data: {
@@ -179,7 +181,10 @@ export async function POST(req: NextRequest) {
         qrActivatedAt: new Date(),
         plan: "PREMIUM",
         subscriptionStatus: "TRIALING",
-        trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        trialEndsAt: trialEnd,
+        // Loyalty trial activo desde el día 1
+        loyaltyStatus: "TRIALING",
+        loyaltyTrialEndsAt: trialEnd,
         ownerId: owner.id,
         allPhotosReferential: false,
       },
