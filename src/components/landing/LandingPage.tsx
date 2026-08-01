@@ -146,7 +146,7 @@ export default function LandingPage() {
         .qc-modulos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .qc-modulos-grid { grid-template-columns: 1fr; } }
 
-        .qc-card { border-radius: 20px; overflow: hidden; padding: 40px; position: relative; }
+        .qc-card { border-radius: 20px; overflow: hidden; padding: 40px; position: relative; text-align: center; }
         .qc-card-amber { background: var(--ambar-fondo); border: 1.5px solid rgba(245,158,27,0.2); }
         .qc-card-light { background: #F7F7F5; border: 1.5px solid var(--linea); }
 
@@ -157,7 +157,7 @@ export default function LandingPage() {
 
         .qc-card h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--tinta); margin-bottom: 12px; }
         .qc-card p { font-size: 15px; color: var(--gris); line-height: 1.65; margin-bottom: 28px; }
-        .qc-card-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+        .qc-card-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; justify-content: center; }
 
         .qc-btn-outline { font-size: 14px; font-weight: 600; color: var(--tinta); text-decoration: none; border: 1.5px solid rgba(0,0,0,0.2); border-radius: 8px; padding: 9px 18px; transition: border-color .2s, background .2s; background: transparent; cursor: pointer; font-family: inherit; display: inline-block; }
         .qc-btn-outline:hover { border-color: var(--tinta); background: rgba(0,0,0,0.04); }
@@ -195,12 +195,12 @@ export default function LandingPage() {
         .qc-loyalty-mock-footer { font-size: 11px; opacity: 0.6; text-align: center; }
 
 /* iPhone carta mock en módulo */
-        .qc-iphone-wrap { display: flex; justify-content: flex-start; margin-top: 16px; }
+        .qc-iphone-wrap { display: flex; justify-content: center; margin-top: 16px; }
         .qc-iphone {
           width: 200px; height: 360px;
           background: #0A0A0A; border-radius: 36px;
           border: 6px solid #2a2a2a;
-          box-shadow: 0 0 0 1px #3a3a3a, 0 20px 60px rgba(0,0,0,0.35);
+          box-shadow: 0 0 0 1px #3a3a3a, 0 12px 32px rgba(0,0,0,0.18);
           overflow: hidden; position: relative; flex-shrink: 0;
         }
         .qc-iphone-notch { width: 80px; height: 18px; background: #0A0A0A; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 3; }
