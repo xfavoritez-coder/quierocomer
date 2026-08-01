@@ -117,7 +117,7 @@ type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesione
 /* ═══ TAB: Resumen ═══ */
 function HeroKpi({ icon, value, label, sub, color, gradient, lucideIcon }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string; lucideIcon?: React.ReactNode }) {
   return (
-    <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow, none)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
         <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{value}</strong>
         {lucideIcon || <span style={{ fontSize: "1rem", opacity: 0.5 }}>{icon}</span>}
@@ -194,15 +194,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemo) {
-      setMetrics(DEMO_ANALYTICS.metrics);
-      setClientes(DEMO_ANALYTICS.clientes);
-      setDishes(DEMO_ANALYTICS.dishes);
-      setSearches(DEMO_ANALYTICS.searches);
-      setPopularByHour(DEMO_ANALYTICS.popularByHour);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     const make = (type: string) => {
       const p = new URLSearchParams({ type, from, to });
@@ -223,7 +214,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         setCross(cv && !cv.error ? cv : null);
       })
       .finally(() => setLoading(false));
-  }, [rid, from, to, hasToteatPlan, isDemo]);
+  }, [rid, from, to, hasToteatPlan]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_data")}</p>;
@@ -523,17 +514,6 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   const [popularByHour, setPopularByHour] = useState<any[]>([]);
   const [menuHealth, setMenuHealth] = useState<any>(null);
   useEffect(() => {
-    if (isDemo) {
-      setData({
-        mostViewed: DEMO_ANALYTICS.dishes.mostViewed,
-        mostDetailed: DEMO_ANALYTICS.dishes.mostDetailed,
-        leastViewed: DEMO_ANALYTICS.dishes.leastViewed,
-        topCategories: DEMO_ANALYTICS.dishes.topCategories,
-      });
-      setPopularByHour(DEMO_ANALYTICS.popularByHour);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     const p1 = new URLSearchParams({ type: "dishes", from, to });
     const p2 = new URLSearchParams({ from, to });
@@ -558,7 +538,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       if (c && !c.error) setCross(c);
       if (b && !b.error) setBadges(b);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, hasToteatAccess, isDemo]);
+  }, [rid, from, to, hasToteatAccess]);
 
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_data")}</p>;
@@ -990,12 +970,6 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemo) {
-      setFunnel(DEMO_CLIENTES.funnel);
-      setClientes(DEMO_CLIENTES.clientes);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     const p1 = new URLSearchParams({ type: "funnel", from, to });
     const p2 = new URLSearchParams({ type: "clientes", from, to });
@@ -1004,7 +978,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics?${p2}`).then(r => r.json()),
     ]).then(([f, c]) => { setFunnel(f); setClientes(c); }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, isDemo]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
 
@@ -1128,16 +1102,11 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemo) {
-      setData(DEMO_GARZON);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     const params = rid ? `restaurantId=${rid}` : (isSuper ? "all=true" : "");
     if (!params) { setLoading(false); return; }
     fetch(`/api/admin/analytics-garzon?${params}`).then(r => r.json()).then(d => { if (!d.error) setData(d); }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, isSuper, isDemo]);
+  }, [rid, isSuper]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_waiter_data")}</p>;
@@ -1255,11 +1224,6 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemo) {
-      setData(DEMO_BUSQUEDAS);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     const p = new URLSearchParams({ type: "searches", from, to });
     if (rid) p.set("restaurantId", rid);
@@ -1267,7 +1231,7 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
       const arr = Array.isArray(d) ? d : [];
       setData(arr.map((s: any) => ({ ...s, count: s.timesSearched || s.count || 0 })));
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, isDemo]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
 
@@ -1324,11 +1288,6 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   }, [rid]);
 
   useEffect(() => {
-    if (isDemo) {
-      setData(DEMO_SESSIONS);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setPage(1);
     const p = new URLSearchParams({ page: "1" });
@@ -1341,7 +1300,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
     if (rid) p.set("restaurantId", rid);
     if (hideEmpty) p.set("hideEmpty", "true");
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, guestIdFromUrl, hideEmpty, isDemo]);
+  }, [rid, from, to, guestIdFromUrl, hideEmpty]);
 
   const loadPage = (pg: number) => {
     setLoading(true);
@@ -1650,17 +1609,12 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isDemo) {
-      setData(DEMO_SUGERIDOS);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     fetch(`/api/admin/analytics/suggestions?restaurantId=${rid}&from=${from}&to=${to}`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [rid, from, to, isDemo]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="cards" />;
   if (!data || data.totalShown === 0) return (
@@ -1844,10 +1798,11 @@ export default function AnalyticsDashboard() {
         <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", alignItems: "center" }}>
           {(["hoy", "ayer", "semana", "mes"] as DatePreset[]).map(p => (
             <button key={p} onClick={() => setDatePreset(p)} style={{
-              padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+              padding: "7px 15px", borderRadius: 999, cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
               background: datePreset === p ? "var(--adm-card-border)" : "transparent",
               color: datePreset === p ? "var(--adm-text)" : "var(--adm-text3)",
+              border: datePreset === p ? "1px solid transparent" : "1px solid var(--adm-card-border)",
             }}>
               {p === "hoy" ? t("analytics_today") : p === "ayer" ? t("analytics_yesterday") : p === "semana" ? t("analytics_this_week") : t("analytics_this_month")}
             </button>
@@ -1858,10 +1813,11 @@ export default function AnalyticsDashboard() {
               else updateParams({ preset: "custom" });
             }}
             style={{
-              padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+              padding: "7px 15px", borderRadius: 999, cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
               background: datePreset === "custom" ? "var(--adm-card-border)" : "transparent",
               color: datePreset === "custom" ? "var(--adm-text)" : "var(--adm-text3)",
+              border: datePreset === "custom" ? "1px solid transparent" : "1px solid var(--adm-card-border)",
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
@@ -1891,10 +1847,11 @@ export default function AnalyticsDashboard() {
                 const locked = isAdvancedTab && !hasAdvanced;
                 return (
                   <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
-                    padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                    padding: "7px 15px", borderRadius: 999, cursor: "pointer",
                     fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
                     background: tab === t.key ? "var(--adm-card-border)" : "transparent",
                     color: tab === t.key ? "var(--adm-text)" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
+                    border: tab === t.key ? "1px solid transparent" : "1px solid var(--adm-card-border)",
                     opacity: locked ? 0.5 : 1,
                     transition: "all 0.15s",
                   }}>

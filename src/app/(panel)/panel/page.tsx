@@ -197,7 +197,7 @@ export default function PanelDashboard() {
   // ═══ Empty state: new restaurant with no dishes yet ═══
   if (noDishes) {
     const onboardingSteps = [
-      { emoji: "🍽️", title: "Agrega tus platos", desc: "Crea tu carta con fotos, precios y categorías.", href: "/panel/mi-carta", cta: "Ir a Mi Carta" },
+      { emoji: "🍽️", title: "Agrega tus platos", desc: "Crea tu carta con fotos, precios y categorías.", href: "/panel/menus", cta: "Ir a Mi Carta" },
       { emoji: "📱", title: "Genera tu código QR", desc: "Ponlo en las mesas para que los clientes escaneen.", href: "/panel/qr", cta: "Generar QR" },
       { emoji: "🔗", title: "Comparte tu carta", desc: "Comparte el link en redes sociales o por WhatsApp.", href: landingUrl, cta: "Ver mi carta" },
     ];
