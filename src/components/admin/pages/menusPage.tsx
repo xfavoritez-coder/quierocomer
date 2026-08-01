@@ -1381,9 +1381,10 @@ export default function AdminMenus() {
           ...(canAccess(activePlan, "multi_menu") ? [{ key: "multimenu" as const, label: t("menu_multimenu_tab") }] : []),
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
-            padding: "8px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+            padding: "8px 14px", borderRadius: 999, cursor: "pointer",
             fontFamily: F, fontSize: "13px", fontWeight: menuTab === tab.key ? 600 : 500, whiteSpace: "nowrap", flexShrink: 0,
             background: menuTab === tab.key ? "var(--adm-card-border)" : "transparent",
+            border: menuTab === tab.key ? "1px solid transparent" : "1px solid var(--adm-card-border)",
             color: menuTab === tab.key ? "var(--adm-text)" : "var(--adm-text2)",
           }}>{tab.label}</button>
         ))}

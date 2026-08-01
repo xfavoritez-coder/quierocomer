@@ -320,7 +320,6 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
             <span style={{ fontSize: 16, flexShrink: 0 }}>⭐</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>Tu prueba gratuita terminó</p>
-              <p style={{ margin: "1px 0 0", fontSize: "0.76rem", color: "rgba(255,255,255,0.85)" }}>Activa tu plan Pro para seguir usando todas las funciones.</p>
             </div>
             <button
               onClick={handleSubscribe}
@@ -331,7 +330,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
                 cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
               }}
             >
-              Ver planes →
+              Activar Pro
             </button>
           </div>
         </div>
