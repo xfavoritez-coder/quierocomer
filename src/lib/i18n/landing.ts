@@ -60,7 +60,7 @@ const es = {
 
   // Home final CTA
   final_title: "¿Listo para hacer crecer tu negocio?",
-  final_subtitle: "7 días gratis, empieza en segundos.",
+  final_subtitle: "Sé parte de la evolución gastronómica.",
   final_cta: "Empezar gratis ahora",
   final_note: "Sin tarjeta ni contratos",
 
@@ -185,7 +185,7 @@ const en: typeof es = {
 
   // Home final CTA
   final_title: "Ready to grow your business?",
-  final_subtitle: "7 days free, get started in seconds.",
+  final_subtitle: "Be part of the gastronomic evolution.",
   final_cta: "Start free now",
   final_note: "No credit card or contracts",
 
