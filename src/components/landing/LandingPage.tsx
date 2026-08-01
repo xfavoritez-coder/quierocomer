@@ -437,7 +437,7 @@ export default function LandingPage() {
                 Ver demo →
               </a>
             </div>
-            <p className="qc-hero-note">Sin tarjeta · Sin contratos · Configuración en 1 día</p>
+            <p className="qc-hero-note">Sin tarjeta · Sin contratos</p>
           </div>
         </section>
 
