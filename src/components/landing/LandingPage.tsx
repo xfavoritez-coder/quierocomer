@@ -10,7 +10,7 @@ const RESTAURANTS = [
   { name: "Alleria Pizza", url: "https://quierocomer.com/qr/alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
   { name: "La Oveja Negra", url: "https://quierocomer.com/qr/la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
   { name: "El Menú de la Esquina", url: "https://quierocomer.com/qr/el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779594834786-i3nhsddtw68.png" },
-  { name: "Entre Pisco y Pebre", url: "https://quierocomer.com/qr/entre-pisco-y-pebre", logo: "" },
+  { name: "Entre Pisco y Pebre", url: "https://quierocomer.com/qr/entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
   { name: "Guffsushi Nikkei", url: "https://quierocomer.com/qr/guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
 ];
 
@@ -251,7 +251,8 @@ export default function LandingPage() {
           font-size: 14px; font-weight: 500;
         }
         .qc-rest-tile:hover { border-color: #bbb; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-        .qc-rest-tile img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; background: var(--linea); }
+        .qc-rest-tile img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--linea); }
+        .qc-rest-tile-initials { width: 32px; height: 32px; border-radius: 50%; background: var(--ambar-fondo); border: 1.5px solid var(--linea); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--ambar-tinta); flex-shrink: 0; }
 
         /* TESTIMONIOS */
         .qc-testimonios-scroll { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 8px; }
@@ -525,12 +526,32 @@ export default function LandingPage() {
               Restaurantes que ya usan QuieroComer
             </p>
             <div className="qc-rest-grid">
-              {RESTAURANTS.map((r) => (
-                <a key={r.name} href={r.url} target="_blank" rel="noopener noreferrer" className="qc-rest-tile">
-                  <img src={r.logo} alt={r.name} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  {r.name}
-                </a>
-              ))}
+              {RESTAURANTS.map((r) => {
+                const initials = r.name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                return (
+                  <a key={r.name} href={r.url} target="_blank" rel="noopener noreferrer" className="qc-rest-tile">
+                    {r.logo ? (
+                      <img
+                        src={r.logo}
+                        alt={r.name}
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = "none";
+                          const sib = img.nextElementSibling as HTMLElement | null;
+                          if (sib) sib.style.display = "flex";
+                        }}
+                      />
+                    ) : null}
+                    <span
+                      className="qc-rest-tile-initials"
+                      style={{ display: r.logo ? "none" : "flex" }}
+                    >
+                      {initials}
+                    </span>
+                    {r.name}
+                  </a>
+                );
+              })}
             </div>
           </div>
         </section>
