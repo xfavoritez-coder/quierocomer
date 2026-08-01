@@ -225,19 +225,25 @@ export default function LandingPage() {
         .qc-iphone-price { font-size: 8px; font-weight: 700; color: var(--ambar); flex-shrink: 0; }
 
         /* RESTAURANTES */
-        .qc-rest-section { padding: 64px 24px; background: #FAFAF8; }
-        .qc-rest-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-        .qc-rest-tile {
-          display: flex; align-items: center; gap: 10px;
-          background: white; border: 1.5px solid var(--linea);
-          border-radius: 12px; padding: 10px 16px;
+        .qc-rest-section { padding: 72px 0; background: #FFF9F0; overflow: hidden; }
+        .qc-rest-section-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .qc-rest-title { text-align: center; font-size: clamp(1.3rem, 3vw, 1.75rem); font-weight: 700; letter-spacing: -0.02em; color: var(--tinta); margin: 0 0 8px; }
+        .qc-rest-subtitle { text-align: center; font-size: 0.9rem; color: var(--gris-claro); margin: 0 0 40px; }
+        .qc-rest-marquee-wrap { position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); }
+        .qc-rest-marquee-track { display: flex; gap: 16px; width: max-content; animation: qcMarquee 32s linear infinite; }
+        .qc-rest-marquee-track:hover { animation-play-state: paused; }
+        @keyframes qcMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .qc-rest-card {
+          flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;
+          background: white; border-radius: 18px; border: 1.5px solid rgba(245,158,27,0.12);
+          padding: 20px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
           text-decoration: none; color: var(--tinta);
-          transition: border-color .2s, box-shadow .2s;
-          font-size: 14px; font-weight: 500;
+          font-size: 13px; font-weight: 600; width: 136px; text-align: center;
+          transition: box-shadow .2s, transform .2s, border-color .2s;
         }
-        .qc-rest-tile:hover { border-color: #bbb; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-        .qc-rest-tile img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--linea); }
-        .qc-rest-tile-initials { width: 32px; height: 32px; border-radius: 50%; background: var(--ambar-fondo); border: 1.5px solid var(--linea); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--ambar-tinta); flex-shrink: 0; }
+        .qc-rest-card:hover { box-shadow: 0 8px 28px rgba(245,158,27,0.14); transform: translateY(-3px); border-color: rgba(245,158,27,0.35); }
+        .qc-rest-card img { width: 54px; height: 54px; border-radius: 14px; object-fit: cover; }
+        .qc-rest-card-initials { width: 54px; height: 54px; border-radius: 14px; background: var(--ambar-fondo); display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: var(--ambar-tinta); flex-shrink: 0; }
 
         /* TESTIMONIOS */
         .qc-testimonios-wrap { position: relative; }
@@ -508,15 +514,18 @@ export default function LandingPage() {
 
         {/* RESTAURANTES */}
         <section className="qc-rest-section">
-          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <p style={{ textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gris-claro)", marginBottom: 20 }}>
-              {t("restaurants_label")}
-            </p>
-            <div className="qc-rest-grid">
-              {RESTAURANTS.map((r) => {
+          <div className="qc-rest-section-inner">
+            <h2 className="qc-rest-title">
+              {t("restaurants_trust_title")}<span style={{ color: "var(--ambar)" }}>{t("restaurants_trust_highlight")}</span>{t("restaurants_trust_suffix")}
+            </h2>
+            <p className="qc-rest-subtitle">{t("restaurants_label")}</p>
+          </div>
+          <div className="qc-rest-marquee-wrap">
+            <div className="qc-rest-marquee-track">
+              {[...RESTAURANTS, ...RESTAURANTS].map((r, i) => {
                 const initials = r.name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
                 return (
-                  <a key={r.name} href={r.url} target="_blank" rel="noopener noreferrer" className="qc-rest-tile">
+                  <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className="qc-rest-card">
                     {r.logo ? (
                       <img
                         src={r.logo}
@@ -530,7 +539,7 @@ export default function LandingPage() {
                       />
                     ) : null}
                     <span
-                      className="qc-rest-tile-initials"
+                      className="qc-rest-card-initials"
                       style={{ display: r.logo ? "none" : "flex" }}
                     >
                       {initials}

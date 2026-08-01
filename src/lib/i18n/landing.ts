@@ -34,7 +34,10 @@ const es = {
   loyalty_progress: "6 de 10 sellos · 4 más para tu premio 🎁",
 
   // Home restaurants section
-  restaurants_label: "Restaurantes que ya usan QuieroComer",
+  restaurants_trust_title: "Restaurantes que ya ",
+  restaurants_trust_highlight: "confían",
+  restaurants_trust_suffix: " en QuieroComer",
+  restaurants_label: "Más de 200 restaurantes en Chile ya lo usan",
 
   // Home testimonials
   testimonials_title: "Lo que dicen nuestros clientes",
@@ -156,7 +159,10 @@ const en: typeof es = {
   loyalty_progress: "6 of 10 stamps · 4 more for your reward 🎁",
 
   // Home restaurants section
-  restaurants_label: "Restaurants already using QuieroComer",
+  restaurants_trust_title: "Restaurants that already ",
+  restaurants_trust_highlight: "trust",
+  restaurants_trust_suffix: " QuieroComer",
+  restaurants_label: "Over 200 restaurants in Chile already use it",
 
   // Home testimonials
   testimonials_title: "What our customers say",
