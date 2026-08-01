@@ -265,7 +265,7 @@ export default function LandingPage() {
         .qc-test-author-info span { font-size: 13px; color: var(--gris); }
 
         /* PRECIOS */
-        .qc-precios-section { padding: 80px 24px; background: white; }
+        .qc-precios-section { padding: 40px 24px 80px; background: white; }
         .qc-precios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 840px; margin: 0 auto; }
         @media (max-width: 680px) { .qc-precios-grid { grid-template-columns: 1fr; } }
         .qc-precio-card { border-radius: 20px; padding: 36px; border: 2px solid var(--linea); }
