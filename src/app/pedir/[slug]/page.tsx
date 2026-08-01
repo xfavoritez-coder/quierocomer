@@ -6,6 +6,7 @@ import { getCachedTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 import OrderMenuPage from "@/components/order/OrderMenuPage";
 import { OrderCartProvider } from "@/components/order/OrderCartContext";
 import MenuPausedPage from "@/components/qr/MenuPausedPage";
+import CartaProximamente from "@/components/qr/carta/CartaProximamente";
 import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,11 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     categories: filteredCats,
     dishes: (restaurant as any).dishes.filter((d: any) => visibleCatIds.has(d.categoryId)),
   };
+
+  // Empty carta: demo restaurant with no dishes yet
+  if (config.isDemo && scheduledRestaurant.dishes.length === 0 && !isPaused) {
+    return <CartaProximamente restaurantName={config.name} logoUrl={config.logoUrl} />;
+  }
 
   const orderingConfig = {
     phone: config.orderingPhone || config.whatsapp || config.phone || "",
