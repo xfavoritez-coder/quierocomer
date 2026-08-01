@@ -425,7 +425,7 @@ export default function LandingPage() {
               <button className="qc-btn-ambar qc-btn-ambar-xl" onClick={openModal}>
                 {t("hero_cta")}
               </button>
-              <a href="https://quierocomer.com/qr/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
+              <a href="https://quierocomer.com/qr/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
                 {t("hero_demo")}
               </a>
             </div>
@@ -494,7 +494,7 @@ export default function LandingPage() {
                 <p>{t("module_loyalty_desc")}</p>
                 <div className="qc-card-btns">
                   <a href="/fidelizacion" className="qc-btn-outline">{t("module_qr_more")}</a>
-                  <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
+                  <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
                 </div>
                 <div className="qc-loyalty-mock">
                   <div className="qc-loyalty-mock-header">{t("loyalty_mock_header")}</div>

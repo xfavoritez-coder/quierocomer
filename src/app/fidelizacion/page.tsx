@@ -168,7 +168,7 @@ export default function FidelizacionPage() {
               <a href="/" className="fid-btn-white">
                 {t("fid_hero_cta2")}
               </a>
-              <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="fid-btn-outline">
+              <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="fid-btn-outline">
                 {t("fid_hero_cta1")}
               </a>
             </div>

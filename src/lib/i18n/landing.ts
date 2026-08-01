@@ -29,7 +29,7 @@ const es = {
   module_loyalty_demo: "Ver tarjeta demo →",
 
   // Loyalty mock UI
-  loyalty_mock_header: "Loyalty · Hand Roll",
+  loyalty_mock_header: "Loyalty · El Menú de la Esquina",
   loyalty_card_title: "Tu tarjeta de sellos",
   loyalty_progress: "6 de 10 sellos · 4 más para tu premio 🎁",
 
@@ -112,8 +112,8 @@ const es = {
   // /fidelizacion notification mock
   fid_notif_app: "Wallet",
   fid_notif_now: "ahora",
-  fid_notif_title: "Hand Roll está a 50 metros",
-  fid_notif_body: "🎁 Lleva tu tarjeta y suma el sello #7. ¡Falta poco para tu regalo!",
+  fid_notif_title: "El Menú de la Esquina está cerca",
+  fid_notif_body: "🎁 Lleva tu tarjeta y suma un sello. ¡Falta poco para tu regalo!",
   fid_phone_date: "Martes, 31 de julio",
 
   // Footer
@@ -154,7 +154,7 @@ const en: typeof es = {
   module_loyalty_demo: "See demo card →",
 
   // Loyalty mock UI
-  loyalty_mock_header: "Loyalty · Hand Roll",
+  loyalty_mock_header: "Loyalty · El Menú de la Esquina",
   loyalty_card_title: "Your stamp card",
   loyalty_progress: "6 of 10 stamps · 4 more for your reward 🎁",
 
@@ -237,7 +237,7 @@ const en: typeof es = {
   // /fidelizacion notification mock
   fid_notif_app: "Wallet",
   fid_notif_now: "now",
-  fid_notif_title: "Hand Roll is 50 meters away",
+  fid_notif_title: "El Menú de la Esquina is nearby",
   fid_notif_body: "🎁 Bring your card and get stamp #7. Almost there for your reward!",
   fid_phone_date: "Tuesday, July 31",
 
@@ -260,7 +260,6 @@ export const PRO_FEATURES_ES = [
   "Carta QR con fotos y categorías",
   "Pedidos online sin comisión",
   "Llamado al garzón por QR",
-  "Anuncios y promociones en la carta",
   "Multi-idioma automático",
 ];
 
@@ -274,9 +273,9 @@ export const PRO_FEATURES_EN = [
 ];
 
 export const LOYALTY_FEATURES_ES = [
+  "🔔 Notificaciones automáticas por cercanía",
   "Tus clientes vuelven solos",
   "Aumenta tus ventas hasta un 30%",
-  "Notificaciones automáticas por cercanía",
   "Tarjeta en el celular, sin app",
   "Tú defines los premios y las reglas",
   "Sin límite de miembros ni canjes",
