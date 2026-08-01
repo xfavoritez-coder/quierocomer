@@ -1,3 +1,5 @@
+import LoyaltyGate from "@/components/admin/LoyaltyGate";
+
 export default function LoyaltyLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <LoyaltyGate>{children}</LoyaltyGate>;
 }

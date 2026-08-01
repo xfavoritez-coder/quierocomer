@@ -418,9 +418,9 @@ export default function MiRestaurantePage() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 99, background: inGrace ? "rgba(220,38,38,0.12)" : cycleEndsToday ? "rgba(217,119,6,0.12)" : isActive || inTrial ? "rgba(22,163,74,0.12)" : "rgba(100,116,139,0.12)", border: `1px solid ${inGrace ? "rgba(220,38,38,0.3)" : cycleEndsToday ? "rgba(217,119,6,0.3)" : isActive || inTrial ? "rgba(22,163,74,0.3)" : "rgba(100,116,139,0.3)"}` }}>
-                      {inGrace ? <AlertTriangle size={12} color="#dc2626" /> : cycleEndsToday ? <Clock size={12} color="#d97706" /> : isActive || inTrial ? <CheckCircle2 size={12} color="#16a34a" /> : isCanceled ? <XCircle size={12} color="#dc2626" /> : <CreditCard size={12} color="var(--adm-text3)" />}
-                      <span style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : isActive || inTrial ? "#16a34a" : isCanceled ? "#dc2626" : "var(--adm-text3)" }}>
-                        {inGrace ? "Vencido" : cycleEndsToday ? "Renueva hoy" : inTrial ? "En prueba" : isActive ? "Activo" : isCanceled ? "Cancelado" : "Sin suscripción"}
+                      {inGrace ? <AlertTriangle size={12} color="#dc2626" /> : cycleEndsToday ? <Clock size={12} color="#d97706" /> : isActive || inTrial ? <CheckCircle2 size={12} color="#16a34a" /> : isFree ? <CreditCard size={12} color="var(--adm-text3)" /> : isCanceled ? <XCircle size={12} color="#dc2626" /> : <CreditCard size={12} color="var(--adm-text3)" />}
+                      <span style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : isActive || inTrial ? "#16a34a" : isFree ? "var(--adm-text3)" : isCanceled ? "#dc2626" : "var(--adm-text3)" }}>
+                        {inGrace ? "Vencido" : cycleEndsToday ? "Renueva hoy" : inTrial ? "En prueba" : isActive ? "Activo" : isFree ? "Sin suscripción" : isCanceled ? "Cancelado" : "Sin suscripción"}
                       </span>
                     </div>
                   </div>
@@ -588,7 +588,7 @@ export default function MiRestaurantePage() {
             )}
             {isLoyaltyNone && (
               <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
-                Tarjeta de fidelización digital con Apple Wallet y Google Wallet. ${loyaltyNet.toLocaleString("es-CL")} neto/mes.
+                Tarjeta de fidelización digital con Apple Wallet y Google Wallet.
               </p>
             )}
 
@@ -621,7 +621,7 @@ export default function MiRestaurantePage() {
                   }}
                   style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
                 >
-                  Activar Loyalty — ${loyaltyGross.toLocaleString("es-CL")} con IVA/mes
+                  Activar Loyalty →
                 </button>
               )}
             </div>
