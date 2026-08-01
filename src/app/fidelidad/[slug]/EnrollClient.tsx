@@ -120,7 +120,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
           <img src={restaurantLogo} alt="" style={{ width: 62, height: 62, borderRadius: "50%", objectFit: "cover", margin: "0 auto 10px", display: "block", border: `3px solid ${accent}`, boxShadow: `0 0 20px ${accent}66` }} />
         )}
         <p style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 2px" }}>{restaurantName}</p>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15 }}>Tarjeta de premios</h1>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15 }}>{program.name || "Tarjeta de premios"}</h1>
 
         {/* Texto descriptivo */}
         <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: "0 0 20px", maxWidth: 340, marginLeft: "auto", marginRight: "auto" }}>
