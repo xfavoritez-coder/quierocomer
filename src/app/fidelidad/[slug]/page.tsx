@@ -69,8 +69,8 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
         restaurantLogo={restaurant.logoUrl}
         program={{
           name: program.name,
-          cardColorHex: program.cardColorHex,
-          accentColor: program.cardColorHex,
+          cardColorHex: (program.cardColorHex && program.cardColorHex !== "#111111") ? program.cardColorHex : (restaurant.cartaAccentColor || "#F59E1B"),
+          accentColor: (program.cardColorHex && program.cardColorHex !== "#111111") ? program.cardColorHex : (restaurant.cartaAccentColor || "#F59E1B"),
           stampIcon: program.stampIcon,
           stampGoal: program.stampGoal,
           description: program.description,
