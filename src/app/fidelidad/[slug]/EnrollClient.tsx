@@ -150,7 +150,8 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
             // Máximo 52px por círculo + gaps para que nunca queden demasiado grandes
             const gridMaxWidth = cols * 52 + (cols - 1) * 8;
             return (
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginBottom: 16, maxWidth: gridMaxWidth, margin: "0 auto 16px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, width: "100%", maxWidth: gridMaxWidth }}>
                 {Array.from({ length: program.stampGoal }).map((_, i) => {
                   const num = i + 1;
                   const isReward = rewardStamps.has(num);
@@ -175,6 +176,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
                     </div>
                   );
                 })}
+              </div>
               </div>
             );
           })()}
