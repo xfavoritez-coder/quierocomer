@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Gift, CreditCard, Camera, Bell, ChevronRight, Users, QrCode, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
