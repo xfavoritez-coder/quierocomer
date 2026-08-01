@@ -516,7 +516,7 @@ export default function LandingPage() {
         <section className="qc-rest-section">
           <div className="qc-rest-section-inner">
             <h2 className="qc-rest-title">
-              {t("restaurants_trust_title")}<span style={{ color: "var(--ambar)" }}>{t("restaurants_trust_highlight")}</span>{t("restaurants_trust_suffix")}
+              {t("restaurants_trust_title")}{t("restaurants_trust_highlight")}{t("restaurants_trust_suffix")}
             </h2>
             <p className="qc-rest-subtitle">{t("restaurants_label")}</p>
           </div>
