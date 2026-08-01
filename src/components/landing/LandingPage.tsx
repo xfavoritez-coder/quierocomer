@@ -14,6 +14,8 @@ const RESTAURANTS = [
   { name: "El Menú de la Esquina", url: "https://quierocomer.com/qr/el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779594834786-i3nhsddtw68.png" },
   { name: "Entre Pisco y Pebre", url: "https://quierocomer.com/qr/entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
   { name: "Guffsushi Nikkei", url: "https://quierocomer.com/qr/guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
+  { name: "Nascosto Pizzeria", url: "https://quierocomer.com/qr/nascosto-pizzeria", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777586747684-596ypo9g4nu.png" },
+  { name: "Krua Thai", url: "https://quierocomer.com/qr/krua-thai", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781025353917-x9yx2cbbcrn.webp" },
 ];
 
 
