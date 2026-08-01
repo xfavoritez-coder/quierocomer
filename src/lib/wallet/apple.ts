@@ -121,6 +121,7 @@ interface MemberLike {
   redeemedTiers?: number[];
   authToken?: string;
   revoked?: boolean;
+  updatedAt?: Date;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
@@ -362,6 +363,9 @@ export async function buildPkpass(member: MemberLike, program: ProgramLike, rest
         { key: "novedad", label: "Novedades", value: program.pushMessage || "Te avisaremos de promos y novedades aquí.", changeMessage: "%@" },
         { key: "rewards", label: "Recompensas", value: rewards.map((r) => `${r.stamp} ${program.stampIcon === "logo" ? "•" : program.stampIcon} → ${r.reward}`).join("\n") || "—" },
         ...(program.description ? [{ key: "cond", label: "Condiciones", value: program.description }] : []),
+        // Campo oculto: garantiza que el pass cambie cada vez que se actualiza updatedAt,
+        // incluso si el texto de pushMessage es idéntico al anterior.
+        { key: "_v", label: "", value: String(Math.floor((member.updatedAt?.getTime() ?? Date.now()) / 1000)) },
       ],
     },
   };
