@@ -88,6 +88,7 @@ export default function PanelDashboard() {
   const { restaurants, loading: sessionLoading, selectedRestaurantId, name: ownerName } = useAdminSession();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [noDishes, setNoDishes] = useState(false);
   const [restSettings, setRestSettings] = useState<any>(null);
   const [cartaReviewed, setCartaReviewed] = useState(true);
   const [qrGenerated, setQrGenerated] = useState(true);
@@ -122,7 +123,7 @@ export default function PanelDashboard() {
             const dishes = d.dishes.slice(0, 5).map((dd: any, i: number) => ({ name: dd.name, count: fakeCounts[i], photo: dd.photo }));
             setData({ ...DEMO_DATA, topDishesViewed: dishes, starDish: { name: dishes[0].name, count: dishes[0].count, photo: dishes[0].photo } });
           } else {
-            setData(DEMO_DATA);
+            setNoDishes(true);
           }
         })
         .catch(() => { setData(DEMO_DATA); })
@@ -183,15 +184,68 @@ export default function PanelDashboard() {
       `}</style>
     </div>
   );
-  if (!data) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("home_no_data")}</p></div>;
+  if (!data && !noDishes) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>{t("home_no_data")}</p></div>;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t("home_greeting_morning") : hour < 20 ? t("home_greeting_afternoon") : t("home_greeting_evening");
-  const topViewed = data.topDishesViewed || [];
+  const topViewed = data?.topDishesViewed || [];
   const maxCount = topViewed[0]?.count || 1;
 
   const rest = restaurants.find(r => r.id === selectedRestaurantId);
   const landingUrl = rest ? `https://quierocomer.com/${rest.slug}` : "#";
+
+  // ═══ Empty state: new restaurant with no dishes yet ═══
+  if (noDishes) {
+    const onboardingSteps = [
+      { emoji: "🍽️", title: "Agrega tus platos", desc: "Crea tu carta con fotos, precios y categorías.", href: "/panel/mi-carta", cta: "Ir a Mi Carta" },
+      { emoji: "📱", title: "Genera tu código QR", desc: "Ponlo en las mesas para que los clientes escaneen.", href: "/panel/qr", cta: "Generar QR" },
+      { emoji: "🔗", title: "Comparte tu carta", desc: "Comparte el link en redes sociales o por WhatsApp.", href: landingUrl, cta: "Ver mi carta" },
+    ];
+    return (
+      <div style={{ maxWidth: 520 }}>
+        <p style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "var(--adm-text)", margin: "0 0 4px", letterSpacing: "-0.03em" }}>
+          {greeting}, {ownerName?.split(" ")[0] || ""}
+        </p>
+        <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "0 0 24px", lineHeight: 1.5 }}>
+          Tu panel está listo. Sigue estos pasos para activar tu carta.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {onboardingSteps.map((s, i) => (
+            <Link key={i} href={s.href} style={{
+              display: "block", textDecoration: "none",
+              background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+              borderRadius: 16, padding: "14px 16px",
+              transition: "border-color 0.15s, box-shadow 0.15s",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                  background: `${GOLD}18`, display: "grid", placeItems: "center", fontSize: "1.4rem",
+                }}>
+                  {s.emoji}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontWeight: 800, fontSize: "0.92rem", color: "var(--adm-text)", marginBottom: 2 }}>
+                    {s.title}
+                  </div>
+                  <div style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", lineHeight: 1.4 }}>
+                    {s.desc}
+                  </div>
+                </div>
+                <span style={{ fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, color: GOLD, whiteSpace: "nowrap", flexShrink: 0 }}>
+                  {s.cta} →
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", marginTop: 20, lineHeight: 1.5 }}>
+          Las estadísticas aparecerán aquí cuando tu carta tenga visitas. Tienes <strong style={{ color: GOLD }}>7 días gratis</strong> para probarlo todo.
+        </p>
+      </div>
+    );
+  }
+  if (!data) return null;
   const delta = data.visitsDelta;
   const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
   const showOrdering = ((rest as any)?.plan === "PREMIUM" || ORDERING_EXCEPTIONS.includes((rest as any)?.slug ?? "")) && !!(rest as any)?.orderingEnabled;
