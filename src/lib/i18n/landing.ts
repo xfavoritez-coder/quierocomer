@@ -274,12 +274,12 @@ export const PRO_FEATURES_EN = [
 ];
 
 export const LOYALTY_FEATURES_ES = [
-  "Tarjeta digital en Apple Wallet y Google Wallet",
-  "Sellos por visita configurables",
-  "Premios y recompensas propias",
-  "Notificaciones push de cercanía",
-  "Panel de miembros y canjes",
-  "Clientes y pases ilimitados",
+  "Tus clientes vuelven solos — el sello los engancha",
+  "Aumenta tus ventas hasta un 30% con recompensas propias",
+  "Avisa a tus clientes cuando estén cerca con notificaciones automáticas",
+  "Tarjeta de sellos en el celular, sin app que descargar",
+  "Tú defines los premios y las reglas del canje",
+  "Sin límite de miembros ni de canjes",
 ];
 
 export const LOYALTY_FEATURES_EN = [

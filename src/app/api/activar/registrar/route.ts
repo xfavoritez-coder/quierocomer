@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
+import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
@@ -13,10 +13,7 @@ import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
  * Retorna auto-login URL para redirigir a /bienvenida.
  */
 
-const BASE_URL = "https://quierocomer.com";
-const FROM_EMAIL = process.env.FROM_EMAIL
-  ? `QuieroComer <${process.env.FROM_EMAIL}>`
-  : "QuieroComer <onboarding@resend.dev>";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 const GOLD = "#e8930a";
 
 function welcomeEmailHtml({
@@ -33,82 +30,108 @@ function welcomeEmailHtml({
   autoLoginUrl: string;
 }): string {
   const firstName = ownerName.split(" ")[0];
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
-<tr><td align="center" style="padding:32px 16px;">
-<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+  const panelStaticUrl = `https://quierocomer.com/panel`;
+  return `<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fbf6ec;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;padding:0;-webkit-text-size-adjust:100%">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:430px;margin:0 auto;padding:24px 16px 32px">
+<tr><td>
 
-  <tr><td align="center" style="padding-bottom:24px;">
-    <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="vertical-align:middle;padding-right:6px;"><img src="${BASE_URL}/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
-      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:${GOLD};">QuieroComer</span></td>
-    </tr></table></a>
-  </td></tr>
-
-  <tr><td style="text-align:center;padding-bottom:8px;"><span style="font-size:40px;">🎉</span></td></tr>
-
-  <tr><td style="padding-bottom:6px;">
-    <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.3;">
-      Bienvenido, ${firstName}
-    </h1>
-  </td></tr>
-
-  <tr><td style="font-size:15px;color:#7a6547;line-height:1.65;padding-bottom:24px;text-align:center;">
-    Tu local <strong style="color:${GOLD};">${restaurantName}</strong> ya tiene cuenta activa en QuieroComer con <strong>7 días Premium gratis</strong>.
-  </td></tr>
-
-  <tr><td style="padding-bottom:16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:14px;">
-      <tr><td style="padding:18px 20px;">
-        <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;">Tus datos de acceso</div>
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:10px;margin-bottom:8px;">
-          <tr><td style="padding:10px 14px;">
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#92400e;margin-bottom:3px;">Email</div>
-            <div style="font-size:14px;color:#111;font-weight:700;word-break:break-word;">${email}</div>
-          </td></tr>
-        </table>
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:10px;">
-          <tr><td style="padding:10px 14px;">
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#92400e;margin-bottom:3px;">Contraseña</div>
-            <div style="font-size:14px;color:#111;font-weight:700;word-break:break-word;">${password}</div>
-          </td></tr>
-        </table>
-      </td></tr>
-    </table>
-  </td></tr>
-
-  <tr><td style="padding-bottom:20px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f6f0;border:1px solid #e8dcc4;border-radius:14px;">
-      <tr><td style="padding:16px 20px;">
-        <div style="font-size:10px;color:${GOLD};font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Primeros pasos</div>
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr><td style="padding:5px 0;font-size:14px;color:#5a3e1b;line-height:1.5;"><span style="color:${GOLD};margin-right:8px;font-weight:800;">1.</span> Entra a tu panel y agrega tus platos con fotos</td></tr>
-          <tr><td style="padding:5px 0;font-size:14px;color:#5a3e1b;line-height:1.5;"><span style="color:${GOLD};margin-right:8px;font-weight:800;">2.</span> Genera tu QR y ponlo en las mesas</td></tr>
-          <tr><td style="padding:5px 0;font-size:14px;color:#5a3e1b;line-height:1.5;"><span style="color:${GOLD};margin-right:8px;font-weight:800;">3.</span> Comparte el link de tu carta en redes sociales</td></tr>
-        </table>
-      </td></tr>
-    </table>
-  </td></tr>
-
-  <tr><td style="padding-bottom:16px;">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
-      <a href="${autoLoginUrl}" style="display:inline-block;background:${GOLD};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:14px;text-decoration:none;">Entrar a mi panel →</a>
-    </td></tr></table>
-  </td></tr>
-
-  <tr><td style="padding-top:8px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
-  </td></tr>
-  <tr><td align="center" style="padding:16px 0 0;">
-    <p style="font-size:12px;color:#b8a888;margin:0 0 4px;">¿Tienes dudas? Escríbenos a <a href="mailto:hola@quierocomer.com" style="color:${GOLD};text-decoration:none;">hola@quierocomer.com</a></p>
-    <a href="${BASE_URL}" style="font-size:12px;color:${GOLD};text-decoration:none;">quierocomer.com</a>
-    <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
-  </td></tr>
-
+<!-- Logo -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:16px">
+  <a href="${BASE_URL}" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    <td style="vertical-align:middle;padding-right:3px;"><img src="https://quierocomer.cl/logo.png" alt="" width="24" height="24" style="width:24px;height:24px;display:block;" /></td>
+    <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:#e8930a;">QuieroComer</span></td>
+  </tr></table></a>
+</td></tr>
 </table>
-</td></tr></table>
+
+<!-- Main card -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#fffaf1;border-radius:28px;border:1px solid #ead7b7;box-shadow:0 24px 70px rgba(70,45,10,0.10)">
+<tr><td style="padding:28px 22px 24px">
+
+<!-- Title -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:10px">
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.15;letter-spacing:-0.02em;margin:0;color:#111111">
+  ${restaurantName}<br/>ya tiene su panel
+</h1>
+</td></tr>
+</table>
+
+<!-- Lead text -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:20px">
+<p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
+  ${firstName}, tu cuenta está activa con <strong style="color:#111">7 días Premium gratis</strong>.
+</p>
+</td></tr>
+</table>
+
+<!-- Credentials card -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #ead7b7;border-radius:22px;margin-bottom:22px">
+<tr><td style="padding:22px 20px">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr><td style="text-align:center;padding-bottom:14px">
+      <span style="font-size:22px">🔐</span>
+    </td></tr>
+    <tr><td style="text-align:center;padding-bottom:16px">
+      <p style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:800;color:#92400e;margin:0">Tus datos de acceso</p>
+    </td></tr>
+  </table>
+
+  <!-- Email -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
+  <tr><td style="padding:12px 14px">
+    <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Email</p>
+    <p style="font-size:14px;color:#111;font-weight:700;margin:0;word-break:break-word">${email}</p>
+  </td></tr>
+  </table>
+
+  <!-- Password -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
+  <tr><td style="padding:12px 14px">
+    <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Contraseña</p>
+    <p style="font-size:14px;color:#111;font-weight:700;margin:0;font-family:monospace,sans-serif;letter-spacing:0.5px">${password}</p>
+  </td></tr>
+  </table>
+
+  <!-- Panel link -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
+  <tr><td style="padding:12px 14px">
+    <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
+    <a href="${panelStaticUrl}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${panelStaticUrl}</a>
+  </td></tr>
+  </table>
+
+  <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso.</p>
+</td></tr>
+</table>
+
+<!-- CTA -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:22px">
+  <a href="${autoLoginUrl}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
+    Entrar a mi panel →
+  </a>
+</td></tr>
+</table>
+
+</td></tr>
+</table>
+
+<!-- Footer -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-top:20px">
+  <p style="color:#b8a888;font-size:11px;margin:0">QuieroComer.cl · ${new Date().getFullYear()} · Hecho en Chile</p>
+</td></tr>
+</table>
+
+</td></tr>
+</table>
 </body></html>`;
 }
 
@@ -212,10 +235,9 @@ export async function POST(req: NextRequest) {
     const autoLoginUrl = buildAutoLoginUrl(BASE_URL, owner.id);
 
     // Enviar email de bienvenida con credenciales
-    resend.emails.send({
-      from: FROM_EMAIL,
+    sendAdminEmail({
       to: email.trim().toLowerCase(),
-      subject: `Bienvenido a QuieroComer, ${ownerName.split(" ")[0]} 🎉`,
+      subject: `Bienvenida a QuieroComer, ${ownerName.split(" ")[0]} 🎉`,
       html: welcomeEmailHtml({
         ownerName,
         restaurantName: localName,
@@ -223,6 +245,7 @@ export async function POST(req: NextRequest) {
         password: generatedPassword,
         autoLoginUrl,
       }),
+      purpose: "activation_welcome",
     }).catch((err: unknown) => {
       console.error("[registrar] Error sending welcome email:", err);
     });

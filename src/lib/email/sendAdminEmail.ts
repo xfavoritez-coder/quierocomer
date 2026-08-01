@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 const FROM = process.env.FROM_EMAIL
   ? `QuieroComer <${process.env.FROM_EMAIL}>`
-  : "QuieroComer <onboarding@resend.dev>";
+  : "QuieroComer <hola@quierocomer.cl>";
 
 interface SendEmailOptions {
   to: string;
