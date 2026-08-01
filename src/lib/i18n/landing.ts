@@ -279,7 +279,7 @@ export const LOYALTY_FEATURES_ES = [
   "Premios y recompensas propias",
   "Notificaciones push de cercanía",
   "Panel de miembros y canjes",
-  "Link propio de tu programa",
+  "Clientes y pases ilimitados",
 ];
 
 export const LOYALTY_FEATURES_EN = [
@@ -288,7 +288,7 @@ export const LOYALTY_FEATURES_EN = [
   "Custom prizes and rewards",
   "Proximity push notifications",
   "Members and redemptions dashboard",
-  "Your own loyalty program link",
+  "Unlimited customers and passes",
 ];
 
 export const TESTIMONIALS_ES = [

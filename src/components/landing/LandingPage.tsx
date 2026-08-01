@@ -615,7 +615,6 @@ export default function LandingPage() {
                     <li key={i}><span className="qc-check-purple">✓</span>{f}</li>
                   ))}
                 </ul>
-                <p className="qc-precio-note">{t("plan_loyalty_note")}</p>
                 <button className="qc-btn-purple" onClick={openModal}>
                   {t("plan_cta_loyalty")}
                 </button>
