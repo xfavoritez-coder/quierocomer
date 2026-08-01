@@ -1,311 +1,267 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+"use client";
+import LandingFooter from "@/components/landing/LandingFooter";
 
-export const revalidate = 86400;
-
-export const metadata: Metadata = {
-  title: "Carta QR para restaurantes gratis · Chile | QuieroComer",
-  description: "Crea tu carta QR digital gratis en minutos. Nuestra IA digitaliza tu carta física y la transforma en un menú online con fotos, filtros y recomendaciones. Sin comisiones.",
-  openGraph: {
-    title: "Carta QR para restaurantes gratis · Chile | QuieroComer",
-    description: "Crea tu carta QR digital gratis en minutos. Nuestra IA digitaliza tu carta física y la transforma en un menú online con fotos, filtros y recomendaciones. Sin comisiones.",
-    url: "https://quierocomer.com/carta-qr",
-    siteName: "QuieroComer",
-    type: "website",
-    locale: "es_CL",
-    images: [{ url: "https://quierocomer.com/og.png", width: 1200, height: 630 }],
-  },
-};
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  name: "Carta QR para restaurantes gratis · Chile | QuieroComer",
-  description: "Crea tu carta QR digital gratis en minutos.",
-  url: "https://quierocomer.com/carta-qr",
-  mainEntity: {
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "¿Qué es una carta QR?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Una carta QR es un menú digital que tus clientes pueden ver escaneando un código QR con su celular. No necesitan descargar ninguna app: se abre directo en el navegador con fotos, precios y descripciones de tus platos.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "¿Cuánto cuesta crear una carta QR?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Con QuieroComer puedes crear tu carta QR completamente gratis. El plan gratuito incluye carta digital, código QR descargable y actualización ilimitada de platos.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "¿Cómo creo mi carta QR?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Sube tu carta actual (foto, PDF o link) en quierocomer.com/subircarta. Nuestra IA la digitaliza en minutos, y recibes tu carta QR lista para imprimir y poner en las mesas.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "¿Puedo actualizar los precios después?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Sí, desde tu panel puedes modificar precios, agregar platos, cambiar fotos o crear promociones en cualquier momento. El código QR no cambia, solo se actualiza el contenido.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "¿Funciona en Chile?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "QuieroComer está diseñado especialmente para restaurantes en Chile. Precios en pesos chilenos, soporte en horario local y miles de restaurantes ya usando la plataforma.",
-        },
-      },
-    ],
-  },
-};
-
-const FEATURES = [
-  {
-    icon: "📷",
-    title: "Fotos automáticas con IA",
-    desc: "Nuestra IA busca y asigna fotos a tus platos para que tu carta se vea profesional desde el primer día.",
-  },
-  {
-    icon: "✏️",
-    title: "Edición en tiempo real",
-    desc: "Cambia precios, agrega platos o activa promociones desde el celular. El QR siempre muestra la versión actualizada.",
-  },
-  {
-    icon: "🌟",
-    title: "Platos populares primero",
-    desc: "El sistema aprende qué platos prefieren tus clientes y los muestra primero para que vendan más.",
-  },
-  {
-    icon: "🌿",
-    title: "Filtros por categoría",
-    desc: "Tus clientes pueden filtrar por vegano, vegetariano, sin gluten o los más pedidos con un solo toque.",
-  },
-  {
-    icon: "📊",
-    title: "Estadísticas de vistas",
-    desc: "Ve cuántas personas escanearon tu QR, qué platos miraron más y en qué horarios tienes más tráfico.",
-  },
-  {
-    icon: "🖨️",
-    title: "QR listo para imprimir",
-    desc: "Descarga tu código QR en alta resolución para imprimirlo en stickers, porta-menús o la puerta del local.",
-  },
-];
-
-const FAQS = [
-  {
-    q: "¿Qué es una carta QR?",
-    a: "Una carta QR es un menú digital que tus clientes ven escaneando un código QR con el celular. Se abre directo en el navegador — sin apps — con fotos, precios y descripciones actualizados.",
-  },
-  {
-    q: "¿Cuánto cuesta crear una carta QR?",
-    a: "Puedes crear tu carta QR completamente gratis. El plan gratuito incluye carta digital, código QR descargable y actualización ilimitada de platos, sin vencimiento.",
-  },
-  {
-    q: "¿Cómo creo mi carta QR?",
-    a: "Sube tu carta actual (foto, PDF o link de tu menú) en nuestra plataforma. Nuestra IA la digitaliza en minutos y recibes tu carta QR lista para poner en las mesas.",
-  },
-  {
-    q: "¿Necesito saber de tecnología?",
-    a: "No. Subes tu carta como si mandaras una foto por WhatsApp y nosotros hacemos el resto. El panel para editar es tan simple como cualquier red social.",
-  },
-  {
-    q: "¿Puedo actualizar los precios después?",
-    a: "Sí, en cualquier momento y desde el celular. El código QR no cambia — solo se actualiza el contenido, así que no tienes que reimprimir nada.",
-  },
-  {
-    q: "¿Funciona en todo Chile?",
-    a: "Sí. Tenemos restaurantes en Santiago, Valparaíso, Concepción, Temuco, Valdivia y más. La plataforma está pensada para el mercado chileno con precios en pesos.",
-  },
-];
-
-export default function CartaQrPage() {
+export default function CartaPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+        :root {
+          --blanco: #FFFFFF;
+          --tinta: #111111;
+          --gris: #71716C;
+          --gris-claro: #A8A8A2;
+          --ambar: #F59E1B;
+          --ambar-hover: #E08D0C;
+          --ambar-tinta: #8F5A05;
+          --ambar-fondo: #FFF7EA;
+          --linea: #ECECEA;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Instrument Sans', sans-serif; }
+        .carta-page { font-family: 'Instrument Sans', sans-serif; color: var(--tinta); }
 
-      <main style={{ fontFamily: "var(--font-display, system-ui, sans-serif)", color: "#111", background: "#fff" }}>
+        /* NAV */
+        .carta-nav {
+          position: sticky; top: 0; z-index: 100;
+          background: rgba(10,10,10,0.9);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          padding: 0 24px; height: 60px;
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .carta-nav-inner { max-width: 1200px; width: 100%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .carta-nav-back { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color .2s; }
+        .carta-nav-back:hover { color: white; }
+        .carta-nav-cta { font-size: 14px; font-weight: 600; color: #111; background: var(--ambar); border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; transition: opacity .2s; }
+        .carta-nav-cta:hover { opacity: 0.88; }
 
-        {/* Hero */}
-        <section style={{ textAlign: "center", padding: "72px 24px 56px", background: "linear-gradient(180deg,#fafafa 0%,#fff 100%)" }}>
-          <p style={{ fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.1em", color: "#f97316", textTransform: "uppercase", marginBottom: 12 }}>
-            GRATIS · SIN COMISIONES · CHILE
-          </p>
-          <h1 style={{ fontSize: "clamp(2rem,5vw,3.2rem)", fontWeight: 800, lineHeight: 1.1, marginBottom: 20, maxWidth: 700, margin: "0 auto 20px" }}>
-            La carta QR más inteligente para tu restaurante
-          </h1>
-          <p style={{ fontSize: "1.1rem", color: "#555", maxWidth: 560, margin: "0 auto 36px", lineHeight: 1.6 }}>
-            Sube tu carta actual y en minutos tendrás un menú QR digital con fotos, filtros y recomendaciones IA — gratis para siempre.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link
-              href="/subircarta"
-              style={{
-                display: "inline-block",
-                background: "#111",
-                color: "#fff",
-                borderRadius: 12,
-                padding: "14px 32px",
-                fontWeight: 700,
-                fontSize: "1rem",
-                textDecoration: "none",
-              }}
-            >
-              Crear mi carta QR gratis →
-            </Link>
-            <Link
-              href="/descubrir"
-              style={{
-                display: "inline-block",
-                background: "#f3f4f6",
-                color: "#111",
-                borderRadius: 12,
-                padding: "14px 28px",
-                fontWeight: 600,
-                fontSize: "1rem",
-                textDecoration: "none",
-              }}
-            >
-              Ver ejemplos
-            </Link>
+        /* HERO */
+        .carta-hero {
+          background: #0A0A0A;
+          padding: 100px 24px 90px;
+          text-align: center;
+        }
+        .carta-hero-inner { max-width: 760px; margin: 0 auto; }
+        .carta-label {
+          display: inline-block;
+          font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+          color: var(--ambar); border: 1px solid rgba(245,158,27,0.4);
+          border-radius: 100px; padding: 5px 14px; margin-bottom: 28px;
+        }
+        .carta-hero h1 {
+          font-size: clamp(40px, 7vw, 72px); font-weight: 700; color: white;
+          line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 20px;
+        }
+        .carta-hero-sub { font-size: 18px; color: rgba(255,255,255,0.6); line-height: 1.65; margin-bottom: 40px; max-width: 520px; margin-left: auto; margin-right: auto; }
+        .carta-hero-cta { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .carta-btn-ambar { font-size: 16px; font-weight: 700; color: #fff; background: var(--ambar); border: none; border-radius: 12px; padding: 14px 32px; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; transition: opacity .2s; }
+        .carta-btn-ambar:hover { opacity: 0.88; }
+        .carta-btn-outline { font-size: 15px; font-weight: 600; color: white; background: transparent; border: 1.5px solid rgba(255,255,255,0.25); border-radius: 12px; padding: 13px 28px; text-decoration: none; display: inline-block; transition: border-color .2s, background .2s; }
+        .carta-btn-outline:hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); }
+
+        /* PHONE SECTION */
+        .carta-phone-section {
+          background: #0A0A0A;
+          padding: 0 24px 80px;
+          display: flex; justify-content: center;
+        }
+        .carta-iphone {
+          width: 230px; height: 400px;
+          background: #0A0A0A; border-radius: 40px;
+          border: 7px solid #2a2a2a;
+          box-shadow: 0 0 0 1px #3a3a3a, 0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(245,158,27,0.08);
+          overflow: hidden; position: relative;
+        }
+        .carta-iphone-notch {
+          width: 90px; height: 22px;
+          background: #0A0A0A; border-radius: 0 0 16px 16px;
+          margin: 0 auto; position: relative; z-index: 3;
+        }
+        .carta-iphone-screen {
+          position: absolute; inset: 0;
+          background: #111; overflow: hidden;
+          display: flex; flex-direction: column;
+        }
+        .carta-iphone-hero {
+          height: 140px; flex-shrink: 0; position: relative;
+          background: linear-gradient(135deg, #FF6B35 0%, #F7C59F 40%, #EFEFD0 100%);
+        }
+        .carta-iphone-hero-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+        }
+        .carta-iphone-hero-text {
+          position: absolute; bottom: 10px; left: 12px; right: 12px;
+        }
+        .carta-iphone-hero-text h4 { font-size: 13px; font-weight: 700; color: white; margin-bottom: 2px; }
+        .carta-iphone-hero-text p { font-size: 9px; color: rgba(255,255,255,0.7); }
+        .carta-iphone-pills {
+          display: flex; gap: 6px; padding: 10px 10px 6px;
+          overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+        }
+        .carta-iphone-pills::-webkit-scrollbar { display: none; }
+        .carta-iphone-pill {
+          padding: 4px 10px; border-radius: 100px;
+          font-size: 8px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+        }
+        .carta-iphone-pill-active { background: var(--ambar); color: #000; }
+        .carta-iphone-pill-inactive { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+        .carta-iphone-dishes { flex: 1; overflow-y: auto; padding: 4px 10px; scrollbar-width: none; }
+        .carta-iphone-dishes::-webkit-scrollbar { display: none; }
+        .carta-iphone-dish {
+          display: flex; gap: 8px; align-items: center;
+          padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .carta-iphone-dish:last-child { border-bottom: none; }
+        .carta-iphone-dish-img {
+          width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
+        }
+        .carta-iphone-dish-info { flex: 1; }
+        .carta-iphone-dish-info h5 { font-size: 9px; font-weight: 600; color: white; margin-bottom: 2px; }
+        .carta-iphone-dish-info p { font-size: 8px; color: rgba(255,255,255,0.5); line-height: 1.3; }
+        .carta-iphone-dish-price { font-size: 9px; font-weight: 700; color: var(--ambar); flex-shrink: 0; }
+
+        /* FEATURES */
+        .carta-features { padding: 80px 24px; background: #F8F8FC; }
+        .carta-features-inner { max-width: 560px; margin: 0 auto; }
+        .carta-features-title { font-size: clamp(24px, 4vw, 36px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; text-align: center; margin-bottom: 40px; }
+        .carta-features-list { display: flex; flex-direction: column; gap: 14px; }
+        .carta-feature-card {
+          background: white; border: 1px solid #EBEBEB;
+          border-radius: 18px; padding: 20px 20px;
+          display: flex; gap: 16px; align-items: center;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .carta-feature-icon {
+          width: 56px; height: 56px; border-radius: 14px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 28px; flex-shrink: 0;
+        }
+        .carta-feature-content h3 { font-size: 15px; font-weight: 700; color: var(--tinta); margin-bottom: 4px; }
+        .carta-feature-content p { font-size: 13px; color: var(--gris); line-height: 1.55; }
+
+        /* CTA SECTION */
+        .carta-cta { padding: 72px 24px; background: #111; text-align: center; }
+        .carta-cta h2 { font-size: clamp(24px, 4vw, 38px); font-weight: 700; color: white; letter-spacing: -0.02em; margin-bottom: 10px; }
+        .carta-cta p { font-size: 16px; color: rgba(255,255,255,0.6); margin-bottom: 28px; }
+        .carta-cta-btn {
+          display: inline-block; font-size: 16px; font-weight: 700;
+          color: #111; background: var(--ambar); border-radius: 12px;
+          padding: 14px 36px; text-decoration: none; transition: opacity .2s;
+        }
+        .carta-cta-btn:hover { opacity: 0.88; }
+
+        @media (max-width: 680px) {
+          .carta-hero { padding: 72px 20px 64px; }
+          .carta-features { padding: 56px 20px; }
+        }
+      `}</style>
+
+      <div className="carta-page">
+
+        {/* NAV */}
+        <nav className="carta-nav">
+          <div className="carta-nav-inner">
+            <a href="/" className="carta-nav-back">← QuieroComer</a>
+            <a href="/" className="carta-nav-cta">Probar gratis</a>
           </div>
-          <p style={{ marginTop: 18, fontSize: "0.82rem", color: "#999" }}>
-            +200 restaurantes en Chile ya lo están usando
-          </p>
+        </nav>
+
+        {/* HERO */}
+        <section className="carta-hero">
+          <div className="carta-hero-inner">
+            <span className="carta-label">Carta QR</span>
+            <h1>Una carta que realmente antoja</h1>
+            <p className="carta-hero-sub">
+              Tu menú presentado como merece: con fotos que antojan, categorías claras y listo en minutos.
+            </p>
+            <div className="carta-hero-cta">
+              <a href="https://quierocomer.com/qr/alleria-pizza" target="_blank" rel="noopener noreferrer" className="carta-btn-ambar">
+                Ver carta en vivo →
+              </a>
+              <a href="/" className="carta-btn-outline">
+                Probar 7 días gratis
+              </a>
+            </div>
+          </div>
         </section>
 
-        {/* Features */}
-        <section style={{ padding: "64px 24px", maxWidth: 960, margin: "0 auto" }}>
-          <h2 style={{ textAlign: "center", fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 700, marginBottom: 48 }}>
-            Todo lo que incluye tu carta QR gratis
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 28 }}>
-            {FEATURES.map((f) => (
-              <div key={f.title} style={{ background: "#fafafa", borderRadius: 16, padding: "28px 24px" }}>
-                <div style={{ fontSize: "2rem", marginBottom: 12 }}>{f.icon}</div>
-                <h3 style={{ fontWeight: 700, fontSize: "1rem", marginBottom: 8 }}>{f.title}</h3>
-                <p style={{ fontSize: "0.88rem", color: "#555", lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
+        {/* PHONE MOCKUP */}
+        <section className="carta-phone-section">
+          <div className="carta-iphone">
+            <div className="carta-iphone-notch"></div>
+            <div className="carta-iphone-screen">
+              <div className="carta-iphone-hero">
+                <img src="https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783901270166-pizza-alla-genovese.webp" alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} />
+                <div className="carta-iphone-hero-overlay"></div>
+                <div className="carta-iphone-hero-text">
+                  <h4>Alleria Pizza</h4>
+                  <p>📍 Providencia · Carta digital</p>
+                </div>
               </div>
-            ))}
+              <div className="carta-iphone-pills">
+                <span className="carta-iphone-pill carta-iphone-pill-active">Todo</span>
+                <span className="carta-iphone-pill carta-iphone-pill-inactive">Entradas</span>
+                <span className="carta-iphone-pill carta-iphone-pill-inactive">Pizzas</span>
+                <span className="carta-iphone-pill carta-iphone-pill-inactive">Postres</span>
+              </div>
+              <div className="carta-iphone-dishes">
+                {[
+                  { name: "Pizza alla Genovese", desc: "Filete y cebollas 10 hrs.", price: "$24.680", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783901270166-pizza-alla-genovese.webp" },
+                  { name: "Arancinis di Riso", desc: "Risotto con carne y ragú", price: "$13.400", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1778093711966-arancinis-di-riso.webp" },
+                  { name: "Pasta alla Genovese", desc: "Receta tradicional Nonna", price: "$18.980", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783875855139-pasta-alla-genovese.webp" },
+                  { name: "Baba Napolitana", desc: "Nutella, chantilly, ron", price: "$10.900", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1780618444541-baba-napolitana.webp" },
+                ].map((dish, i) => (
+                  <div key={i} className="carta-iphone-dish">
+                    <img src={dish.img} alt={dish.name} className="carta-iphone-dish-img" style={{objectFit:"cover"}} />
+                    <div className="carta-iphone-dish-info">
+                      <h5>{dish.name}</h5>
+                      <p>{dish.desc}</p>
+                    </div>
+                    <span className="carta-iphone-dish-price">{dish.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* How it works */}
-        <section style={{ padding: "56px 24px", background: "#fafafa" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-            <h2 style={{ fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 700, marginBottom: 40 }}>
-              ¿Cómo funciona?
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 24, textAlign: "left" }}>
+        {/* FEATURES */}
+        <section className="carta-features">
+          <div className="carta-features-inner">
+            <h2 className="carta-features-title">Todo lo que tu carta necesita</h2>
+            <div className="carta-features-list">
               {[
-                { n: "1", title: "Sube tu carta", desc: "Foto, PDF, link de tu carta actual o créala desde cero. Cualquier formato funciona." },
-                { n: "2", title: "La IA la digitaliza", desc: "En minutos extraemos platos, precios y categorías. Asignamos fotos automáticamente." },
-                { n: "3", title: "Recibe tu código QR", desc: "Descarga el QR, imprímelo y ponlo en las mesas. Listo — tus clientes ya pueden escanear." },
-                { n: "4", title: "Edita cuando quieras", desc: "Cambia precios, agrega platos o activa promos desde el celular en segundos." },
-              ].map((step) => (
-                <div key={step.n} style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-                  <div style={{
-                    minWidth: 40, height: 40, borderRadius: "50%",
-                    background: "#111", color: "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 800, fontSize: "1rem", flexShrink: 0,
-                  }}>
-                    {step.n}
-                  </div>
-                  <div>
-                    <p style={{ fontWeight: 700, margin: "0 0 4px" }}>{step.title}</p>
-                    <p style={{ fontSize: "0.88rem", color: "#555", margin: 0, lineHeight: 1.5 }}>{step.desc}</p>
+                { icon: "📸", bg: "linear-gradient(135deg,#ede9fe,#c4b5fd)", title: "Fotos que antojan", desc: "Sube fotos de tus platos y se muestran en un formato que convierte el apetito en pedidos." },
+                { icon: "📱", bg: "linear-gradient(135deg,#ede9fe,#a78bfa)", title: "Pedidos online", desc: "Activa pedidos directo desde la carta. Sin comisión ni app de terceros." },
+                { icon: "🌍", bg: "linear-gradient(135deg,#dbeafe,#93c5fd)", title: "Multi-idioma automático", desc: "Tu carta se traduce automáticamente para turistas sin que tú hagas nada." },
+                { icon: "🛎️", bg: "linear-gradient(135deg,#fef3c7,#fcd34d)", title: "Llamado al garzón", desc: "El cliente llama al mozo con un toque desde su teléfono. Sin papelitos ni botones físicos." },
+                { icon: "📊", bg: "linear-gradient(135deg,#d1fae5,#6ee7b7)", title: "Estadísticas en tiempo real", desc: "Mira qué platos miran más, a qué hora llega gente y cuáles se piden más." },
+                { icon: "📢", bg: "linear-gradient(135deg,#fee2e2,#fca5a5)", title: "Anuncios y promociones", desc: "Comunica el menú del día, eventos o promociones directo al abrir la carta." },
+              ].map((f, i) => (
+                <div key={i} className="carta-feature-card">
+                  <div className="carta-feature-icon" style={{ background: f.bg }}>{f.icon}</div>
+                  <div className="carta-feature-content">
+                    <h3>{f.title}</h3>
+                    <p>{f.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 40 }}>
-              <Link
-                href="/subircarta"
-                style={{
-                  display: "inline-block",
-                  background: "#111",
-                  color: "#fff",
-                  borderRadius: 12,
-                  padding: "14px 32px",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  textDecoration: "none",
-                }}
-              >
-                Empezar gratis →
-              </Link>
-            </div>
           </div>
         </section>
 
-        {/* FAQ */}
-        <section style={{ padding: "64px 24px", maxWidth: 720, margin: "0 auto" }}>
-          <h2 style={{ fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 700, textAlign: "center", marginBottom: 40 }}>
-            Preguntas frecuentes sobre carta QR
-          </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {FAQS.map((faq, i) => (
-              <div
-                key={i}
-                style={{
-                  borderTop: "1px solid #e5e7eb",
-                  padding: "24px 0",
-                  ...(i === FAQS.length - 1 ? { borderBottom: "1px solid #e5e7eb" } : {}),
-                }}
-              >
-                <h3 style={{ fontWeight: 700, fontSize: "1rem", marginBottom: 10, margin: "0 0 10px" }}>{faq.q}</h3>
-                <p style={{ fontSize: "0.9rem", color: "#555", lineHeight: 1.6, margin: 0 }}>{faq.a}</p>
-              </div>
-            ))}
-          </div>
+        {/* CTA */}
+        <section className="carta-cta">
+          <h2>Lista para tu restaurant al instante</h2>
+          <p>Sin tarjeta de crédito. Cancelación cuando quieras.</p>
+          <a href="/" className="carta-cta-btn">Empezar gratis 7 días</a>
         </section>
 
-        {/* Final CTA */}
-        <section style={{ padding: "64px 24px 80px", textAlign: "center", background: "#111", color: "#fff" }}>
-          <h2 style={{ fontSize: "clamp(1.6rem,4vw,2.4rem)", fontWeight: 800, marginBottom: 16, maxWidth: 580, margin: "0 auto 16px" }}>
-            Tu carta QR lista en minutos
-          </h2>
-          <p style={{ fontSize: "1rem", color: "#ccc", marginBottom: 32 }}>
-            Gratis para siempre. Sin comisiones. Sin tarjeta de crédito.
-          </p>
-          <Link
-            href="/subircarta"
-            style={{
-              display: "inline-block",
-              background: "#fff",
-              color: "#111",
-              borderRadius: 12,
-              padding: "14px 36px",
-              fontWeight: 700,
-              fontSize: "1rem",
-              textDecoration: "none",
-            }}
-          >
-            Crear mi carta QR →
-          </Link>
-          <p style={{ marginTop: 20, fontSize: "0.82rem", color: "#666" }}>
-            ¿Tienes dudas?{" "}
-            <a href="https://wa.me/56999946208" style={{ color: "#ccc" }}>
-              Escríbenos por WhatsApp
-            </a>
-          </p>
-        </section>
-      </main>
+        <LandingFooter />
+
+      </div>
     </>
   );
 }

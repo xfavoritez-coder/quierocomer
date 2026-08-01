@@ -36,7 +36,7 @@ export default function LandingFooter() {
             <div className="lf-footer-col">
               <h4>Producto</h4>
               <div className="lf-footer-col-links">
-                <a href="/carta" className="lf-footer-link">Carta QR</a>
+                <a href="/carta-qr" className="lf-footer-link">Carta QR</a>
                 <a href="/fidelizacion" className="lf-footer-link">Loyalty</a>
                 <a href="/#precios" className="lf-footer-link">Precios</a>
                 <a href="/panel/login" className="lf-footer-link">Ingresar al panel</a>

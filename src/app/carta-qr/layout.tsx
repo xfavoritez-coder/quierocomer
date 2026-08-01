@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     title: "Carta QR inteligente para tu restaurante | QuieroComer",
     description:
       "Tu menú con fotos, categorías y precios siempre al día. Escanean el QR y ya. Empieza gratis hoy.",
-    url: "https://quierocomer.com/carta",
+    url: "https://quierocomer.com/carta-qr",
     siteName: "QuieroComer",
     images: [
       {
@@ -37,10 +37,10 @@ export const metadata: Metadata = {
     images: ["https://quierocomer.com/og-carta.png"],
   },
   alternates: {
-    canonical: "https://quierocomer.com/carta",
+    canonical: "https://quierocomer.com/carta-qr",
   },
 };
 
-export default function CartaLayout({ children }: { children: React.ReactNode }) {
+export default function CartaQrLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

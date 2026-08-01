@@ -16,11 +16,11 @@ const RESTAURANTS = [
 ];
 
 const TESTIMONIALS = [
-  { quote: "Nuestra carta pasó a antojarse de verdad. El primer mes ya notamos más pedidos por mesa.", name: "María G.", restaurant: "Hand Roll", initials: "MG" },
-  { quote: "El módulo Loyalty hizo que clientes regulares pasen de venir mensual a semanal. No lo pensé tanto.", name: "Andrés V.", restaurant: "Horus Vegan", initials: "AV" },
-  { quote: "Lo configuré en una tarde. Al día siguiente la carta QR ya andaba con fotos y el menú actualizado.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
-  { quote: "Las estadísticas me mostraron cuándo llega más gente y qué piden. Cambié el menú del día y vendí el doble.", name: "Felipe R.", restaurant: "Juana la Brava", initials: "FR" },
-  { quote: "Crecer un 30% sonaba a marketing hasta que lo viví. La carta digital marcó la diferencia.", name: "Daniela P.", restaurant: "El Menú de la Esquina", initials: "DP" },
+  { quote: "Antes imprimíamos la carta cada vez que cambiábamos un precio. Ahora la actualizo desde el teléfono en dos minutos y ya está.", name: "María G.", restaurant: "Hand Roll", initials: "MG" },
+  { quote: "Tenía clientes que venían cada dos semanas. Desde que activamos los sellos de fidelización, los mismos están viniendo todas las semanas.", name: "Andrés V.", restaurant: "Horus Vegan", initials: "AV" },
+  { quote: "Lo armé un domingo en la tarde viendo un video. El lunes mis mesas ya tenían el QR. No esperaba que fuera tan rápido.", name: "Tomás L.", restaurant: "Alleria Pizza", initials: "TL" },
+  { quote: "Me di cuenta que el 70% de la gente miraba solo tres platos. Reordené la carta y empecé a vender más los que me dejan mejor margen.", name: "Felipe R.", restaurant: "Juana la Brava", initials: "FR" },
+  { quote: "Los turistas que llegan en verano ahora pueden leer la carta en inglés solos. Antes tenía que estar explicando todo yo.", name: "Daniela P.", restaurant: "El Menú de la Esquina", initials: "DP" },
 ];
 
 const PRO_FEATURES = [
@@ -400,7 +400,7 @@ export default function LandingPage() {
           <div className="qc-nav-inner">
             <a href="/" className="qc-logo"><img src="/logo.png" alt="" />QuieroComer</a>
             <div className="qc-nav-links">
-              <a href="/carta" className="qc-nav-link">Carta QR</a>
+              <a href="/carta-qr" className="qc-nav-link">Carta QR</a>
               <a href="/fidelizacion" className="qc-nav-link">Loyalty</a>
               <a href="#precios" className="qc-nav-link">Precios</a>
             </div>
@@ -446,7 +446,7 @@ export default function LandingPage() {
                 <p>Carta multidioma, imprimir en PDF diseño profesional, llamar al garzón y mucho más.</p>
                 <div className="qc-card-btns">
                   <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">Ver demo →</a>
-                  <a href="/carta" className="qc-btn-outline">Conocer más →</a>
+                  <a href="/carta-qr" className="qc-btn-outline">Conocer más →</a>
                 </div>
                 <div className="qc-iphone-wrap">
                   <div className="qc-iphone">
