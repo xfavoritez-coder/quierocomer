@@ -164,11 +164,11 @@ export default function FidelizacionPage() {
               {t("fid_hero_subtitle")}
             </p>
             <div className="fid-hero-cta">
-              <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="fid-btn-white">
-                {t("fid_hero_cta1")}
-              </a>
-              <a href="/" className="fid-btn-outline">
+              <a href="/" className="fid-btn-white">
                 {t("fid_hero_cta2")}
+              </a>
+              <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="fid-btn-outline">
+                {t("fid_hero_cta1")}
               </a>
             </div>
           </div>
