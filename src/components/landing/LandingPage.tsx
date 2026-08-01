@@ -450,7 +450,7 @@ export default function LandingPage() {
               <div className="qc-card qc-card-amber">
                 <span className="qc-badge qc-badge-amber">Más vendido</span>
                 <h2>Carta QR Inteligente</h2>
-                <p>Fotos que antojan, un genio que recomienda y datos de qué se pide más. Tu carta deja de ser un PDF.</p>
+                <p>Carta multidioma, imprimir en PDF diseño profesional, llamar al garzón y mucho más.</p>
                 <div className="qc-card-btns">
                   <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">Ver demo →</a>
                   <a href="/carta" className="qc-btn-outline">Conocer más →</a>
