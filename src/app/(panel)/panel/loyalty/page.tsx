@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Gift, CreditCard, Camera, Bell, ChevronRight, Users, QrCode, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import QRCodeLib from "qrcode";
 import toast from "react-hot-toast";
 
 const F = "var(--font-display)";
@@ -65,9 +64,10 @@ export default function LoyaltyHowPage() {
     const base = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
     const url = `${base}/fidelidad/${slug}`;
     setEnrollUrl(url);
-    QRCodeLib.toDataURL(url, { width: 400, margin: 2, errorCorrectionLevel: "H", color: { dark: "#1a1a1a", light: "#ffffff" } })
-      .then(setQrDataUrl)
-      .catch(() => {});
+    import("qrcode").then((mod) =>
+      mod.default.toDataURL(url, { width: 400, margin: 2, errorCorrectionLevel: "H", color: { dark: "#1a1a1a", light: "#ffffff" } })
+        .then(setQrDataUrl)
+    ).catch(() => {});
   }, [selectedRestaurantId, restaurants]);
 
   return (
