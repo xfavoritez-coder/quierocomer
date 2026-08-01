@@ -141,6 +141,7 @@ export default function FidelizacionPage() {
           .fid-hero { padding: 72px 20px 64px; }
           .fid-how { padding: 56px 20px; }
           .fid-cercania { padding: 56px 20px; }
+          .fid-cercania-inner { text-align: center; }
           .fid-phone-wrap { display: flex; justify-content: center; }
         }
       `}</style>
@@ -170,27 +171,6 @@ export default function FidelizacionPage() {
               <a href="https://quierocomer.com/fidelidad/hand-roll" target="_blank" rel="noopener noreferrer" className="fid-btn-outline">
                 {t("fid_hero_cta1")}
               </a>
-            </div>
-          </div>
-        </section>
-
-        {/* HOW IT WORKS */}
-        <section className="fid-how">
-          <div className="fid-how-inner">
-            <h2>{t("fid_how_title")}</h2>
-            <div className="fid-steps">
-              {fidSteps.map((s) => (
-                <div key={s.num} className="fid-step">
-                  <div className="fid-step-title-row">
-                    <div className="fid-step-num">{s.num}</div>
-                    <h3>{s.title}</h3>
-                  </div>
-                  <div className="fid-step-desc-row">
-                    <span className="fid-step-icon">{s.icon}</span>
-                    <p>{s.desc}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -227,6 +207,27 @@ export default function FidelizacionPage() {
                 </div>
                 <div className="fid-phone-notch"></div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* HOW IT WORKS */}
+        <section className="fid-how">
+          <div className="fid-how-inner">
+            <h2>{t("fid_how_title")}</h2>
+            <div className="fid-steps">
+              {fidSteps.map((s) => (
+                <div key={s.num} className="fid-step">
+                  <div className="fid-step-title-row">
+                    <div className="fid-step-num">{s.num}</div>
+                    <h3>{s.title}</h3>
+                  </div>
+                  <div className="fid-step-desc-row">
+                    <span className="fid-step-icon">{s.icon}</span>
+                    <p>{s.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
