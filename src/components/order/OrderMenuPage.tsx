@@ -156,9 +156,9 @@ function ImpactHero({
               const hasModifiers = d.modifierTemplates?.some((t: any) => t.groups?.length > 0);
               if (hasModifiers) onDishSelect(d); else onDirectAdd(d);
             }}
-            style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: accent, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 3px 14px rgba(0,0,0,0.5)", flexShrink: 0 }}
+            style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)`, flexShrink: 0 }}
           >
-            <Plus size={20} color={accentFg} />
+            <Plus size={20} color={accent} />
           </button>
         </div>
         {heroDishes.length > 1 && (
@@ -258,9 +258,9 @@ function ListaHero({
               const hasModifiers = dish.modifierTemplates?.some((t: any) => t.groups?.length > 0);
               if (hasModifiers) onDishSelect(dish); else onDirectAdd(dish);
             }}
-            style={{ position: "absolute", bottom: 14, right: 14, zIndex: 11, width: 40, height: 40, borderRadius: "50%", border: "none", background: accent, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 3px 12px rgba(0,0,0,0.45)" }}
+            style={{ position: "absolute", bottom: 14, right: 14, zIndex: 11, width: 40, height: 40, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)` }}
           >
-            <Plus size={18} color={accentFg} />
+            <Plus size={18} color={accent} />
           </button>
         )}
 
@@ -315,8 +315,8 @@ function ImpactCard({
           {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3, #666)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
         </div>
       </div>
-      <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "var(--carta-accent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.35)", pointerEvents: hasModifiers ? "none" : "auto" }}>
-        <Plus size={16} color="var(--carta-accent-fg, #fff)" />
+      <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "color-mix(in srgb, var(--carta-accent) 18%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px color-mix(in srgb, var(--carta-accent) 50%, transparent)", pointerEvents: hasModifiers ? "none" : "auto" }}>
+        <Plus size={16} color="var(--carta-accent)" />
       </div>
     </button>
   );
@@ -359,6 +359,59 @@ function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
         </div>
       </div>
     </button>
+  );
+}
+
+// ── Categories section with cover photos ─────────────────────────────────────
+function CategoriesSection({
+  grouped, accent, isDark, isImpact, scrollToCategory,
+}: {
+  grouped: { category: Category; dishes: Dish[] }[];
+  accent: string;
+  isDark: boolean;
+  isImpact: boolean;
+  scrollToCategory: (id: string) => void;
+}) {
+  if (grouped.length < 3) return null;
+  return (
+    <div style={{ padding: "14px 14px 4px", position: "relative", zIndex: 1 }}>
+      <h3 style={{
+        fontFamily: isImpact ? "'Bebas Neue', Impact, sans-serif" : "var(--font-playfair, Georgia, serif)",
+        fontSize: isImpact ? 20 : 17, letterSpacing: isImpact ? "0.6px" : 0,
+        color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)",
+        margin: "0 0 10px", fontWeight: isImpact ? 400 : 600,
+      }}>
+        {isImpact ? "CATEGORÍAS" : "Categorías"}
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {grouped.map(({ category, dishes }) => {
+          const cover = dishes.find(d => d.photos?.[0])?.photos?.[0] ?? null;
+          return (
+            <button
+              key={category.id}
+              onClick={() => scrollToCategory(category.id)}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 12px", borderRadius: isImpact ? 18 : 12,
+                background: isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.03)",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)"}`,
+                cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                overflow: "hidden",
+              }}
+            >
+              {cover ? (
+                <div style={{ width: 40, height: 40, borderRadius: isImpact ? 11 : 8, overflow: "hidden", flexShrink: 0 }}>
+                  <img src={cover} alt={category.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              ) : (
+                <div style={{ width: 40, height: 40, borderRadius: isImpact ? 11 : 8, background: `color-mix(in srgb, ${accent} 18%, transparent)`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>🍽️</div>
+              )}
+              <span style={{ fontSize: 13, fontWeight: 700, color: isDark ? "rgba(255,255,255,0.72)" : "rgba(0,0,0,0.68)", lineHeight: 1.3, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{category.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -585,6 +638,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           <ImpactHero heroDishes={heroDishes} restaurantName={restaurant.name} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
         </div>
 
+        {/* Categories grid */}
+        <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} isImpact={true} scrollToCategory={scrollToCategory} />
+
         {/* Título MENÚ + search */}
         <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
           <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "#ddd" : "#333", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
@@ -655,9 +711,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         {/* Cart bar */}
         {count > 0 && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: isDark ? "rgba(3,3,3,0.8)" : "rgba(250,250,248,0.9)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
-            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: "none", background: accent, color: accentFg, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 20px color-mix(in srgb, ${accent} 40%, transparent)`, fontFamily: FB }}>
+            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, ${isDark ? "rgba(3,3,3,0.75)" : "rgba(250,250,248,0.85)"})`, color: accent, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.2)", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
+                <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 25%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
                 <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
               </div>
               <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{cartTotal}</span>
@@ -679,6 +735,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
       {/* Hero con fotos de platos */}
       <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
+
+      {/* Categories grid */}
+      <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} isImpact={false} scrollToCategory={scrollToCategory} />
 
       {/* Sticky nav */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
@@ -755,9 +814,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {/* Cart bar */}
       {count > 0 && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: "var(--carta-bg)", borderTop: "1px solid var(--carta-border)" }}>
-          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: "none", background: accent, color: accentFg, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: "0 4px 16px rgba(0,0,0,0.25)", fontFamily: FB }}>
+          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 16%, ${isDark ? "rgba(10,10,10,0.82)" : "rgba(250,250,248,0.92)"})`, color: accent, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 48%, transparent)`, fontFamily: FB }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.2)", fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
+              <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 22%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
               <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
             </div>
             <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{cartTotal}</span>

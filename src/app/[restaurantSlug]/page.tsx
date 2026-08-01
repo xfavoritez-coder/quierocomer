@@ -30,6 +30,7 @@ async function getRestaurantLanding(slug: string) {
       googleReviewUrl: true,
       reviewReward: true,
       reviewMode: true,
+      cartaAccentColor: true,
     },
   })
   if (!r) return null
@@ -55,6 +56,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
   const initials = r.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   const hasLoyalty = !!r.loyaltyProgram?.active
   const loyaltyIcon = r.loyaltyProgram?.stampIcon || '★'
+  const accent = (r as any).cartaAccentColor || '#F4A623'
 
   return (
     <>
@@ -64,7 +66,11 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
       background: 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '48px 20px 60px', fontFamily: 'system-ui, -apple-system, sans-serif',
+      position: 'relative', overflow: 'hidden',
     }}>
+      {/* Subtle accent glow overlays */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, background: `radial-gradient(ellipse at 82% 5%, color-mix(in srgb, ${accent} 11%, transparent) 0%, transparent 46%), radial-gradient(ellipse at 6% 90%, color-mix(in srgb, ${accent} 7%, transparent) 0%, transparent 40%)` }} />
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
       {/* Logo */}
       <div style={{ marginBottom: 20 }}>
@@ -153,6 +159,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         style={{ marginTop: 48, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textDecoration: 'none' }}>
         Powered by <strong style={{ color: 'rgba(255,255,255,0.55)' }}>QuieroComer</strong>
       </a>
+      </div>
     </main>
     </>
   )

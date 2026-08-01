@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan as PlanKey } from "@/lib/plans";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { Tag, Megaphone, BarChart3, Globe, Bell, Mail, Cake, Users, UtensilsCrossed, LayoutGrid, FileText, ShoppingCart } from "lucide-react";
 type Plan = PlanKey;
 
@@ -36,6 +38,16 @@ interface Props {
 
 export default function PlanGate({ plan, feature, children, blur = true }: Props) {
   const hasAccess = canAccess(plan, feature);
+  const { selectedRestaurantId } = usePanelSession();
+  const [trialUsed, setTrialUsed] = useState(false);
+
+  useEffect(() => {
+    if (hasAccess || !selectedRestaurantId) return;
+    fetch(`/api/billing/status?restaurantId=${selectedRestaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.trialUsed) setTrialUsed(true); })
+      .catch(() => {});
+  }, [hasAccess, selectedRestaurantId]);
 
   if (hasAccess) return <>{children}</>;
 
@@ -113,7 +125,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
             fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
             boxShadow: `0 4px 16px ${accentColor}40`,
           }}>
-            Desbloquear Pro →
+            {trialUsed ? "⚡ Activar Pro →" : "⚡ Probar Pro 7 días gratis"}
           </button>
         </div>
       </div>
