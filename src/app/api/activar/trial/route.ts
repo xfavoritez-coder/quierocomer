@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
   const ownerEmail = freshOwner?.email || restaurant.owner?.email;
   const ownerName = freshOwner?.name || restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-  const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+  const panelLink = `${baseUrl}/panel`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
   const planLabel = selectedPlan === "FREE" ? "Gratis" : `${selectedPlan.charAt(0) + selectedPlan.slice(1).toLowerCase()} (7 dias de Premium gratis)`;
 

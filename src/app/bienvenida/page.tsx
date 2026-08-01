@@ -131,7 +131,6 @@ export default function BienvenidaPage() {
 
           {/* Hero */}
           <div className="bv-card" style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ fontSize: "3rem", marginBottom: 16 }}>🎉</div>
             <h1 style={{
               fontSize: "clamp(1.6rem, 5vw, 2.2rem)",
               fontWeight: 700,
