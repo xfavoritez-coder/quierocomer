@@ -35,8 +35,6 @@ const labelStyle: React.CSSProperties = {
 const GEO_PRESETS = [
   { label: "150 m", km: 0.15 },
   { label: "500 m", km: 0.5 },
-  { label: "1 km", km: 1 },
-  { label: "2 km", km: 2 },
 ];
 
 interface Broadcast {
@@ -60,7 +58,7 @@ export default function LoyaltyNotifyPage() {
 
   // ── Cercanía ──
   const [geoEnabled, setGeoEnabled] = useState(false);
-  const [geoRadiusKm, setGeoRadiusKm] = useState(1);
+  const [geoRadiusKm, setGeoRadiusKm] = useState(0.5);
   const [geoMessage, setGeoMessage] = useState("");
   const [loadingGeo, setLoadingGeo] = useState(true);
   const [savingGeo, setSavingGeo] = useState(false);
@@ -94,7 +92,8 @@ export default function LoyaltyNotifyPage() {
     ]).then(([loyaltyData, localData]) => {
       if (loyaltyData.program) {
         setGeoEnabled(!!loyaltyData.program.geoEnabled);
-        setGeoRadiusKm(loyaltyData.program.geoRadiusKm ?? 1);
+        const rawKm = loyaltyData.program.geoRadiusKm ?? 0.5;
+        setGeoRadiusKm([0.15, 0.5].includes(rawKm) ? rawKm : 0.5);
         setGeoMessage(loyaltyData.program.geoMessage || "");
       }
       setAddress(localData.address || "");

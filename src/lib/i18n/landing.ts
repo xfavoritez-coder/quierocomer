@@ -12,8 +12,8 @@ const es = {
 
   // Home hero
   hero_label: "Plataforma de marketing para restaurantes",
-  hero_title: "Haz que tus clientes se enamoren ♥ de tu restaurant",
-  hero_title_highlight: "se enamoren ♥",
+  hero_title: "Haz que tus clientes se enamoren de tu restaurant",
+  hero_title_highlight: "se enamoren",
   hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los locales que usan QuieroComer aumentan un 30% sus ventas.",
   hero_cta: "Probar gratis por 7 días",
   hero_demo: "Ver demo →",
