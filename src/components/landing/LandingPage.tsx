@@ -198,12 +198,12 @@ export default function LandingPage() {
         .qc-iphone-wrap { display: flex; justify-content: center; margin-top: 16px; }
         .qc-iphone {
           width: 200px; height: 360px;
-          background: #0A0A0A; border-radius: 36px;
-          border: 6px solid #2a2a2a;
+          background: #0A0A0A; border-radius: 26px;
+          border: 5px solid #2a2a2a;
           box-shadow: 0 0 0 1px #3a3a3a, 0 12px 32px rgba(0,0,0,0.18);
           overflow: hidden; position: relative; flex-shrink: 0;
         }
-        .qc-iphone-notch { width: 80px; height: 18px; background: #0A0A0A; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 3; }
+        .qc-iphone-notch { width: 80px; height: 18px; background: #0A0A0A; border-radius: 0 0 10px 10px; margin: 0 auto; position: relative; z-index: 3; }
         .qc-iphone-screen { position: absolute; inset: 0; background: #111; overflow: hidden; display: flex; flex-direction: column; }
         .qc-iphone-hero { height: 130px; flex-shrink: 0; position: relative; }
         .qc-iphone-hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -440,7 +440,7 @@ export default function LandingPage() {
 
               {/* Carta QR */}
               <div className="qc-card qc-card-amber">
-                <span className="qc-badge qc-badge-amber">Más vendido</span>
+                <span className="qc-badge qc-badge-dark">Más vendido</span>
                 <h2>{t("module_qr_label")}</h2>
                 <p>{t("module_qr_desc")}</p>
                 <div className="qc-card-btns">
