@@ -588,22 +588,6 @@ export default function LandingPage() {
             <p className="qc-section-sub">{t("pricing_subtitle")}</p>
             <div className="qc-precios-grid">
 
-              {/* Pro */}
-              <div className="qc-precio-card qc-precio-card-featured">
-                <span className="qc-badge qc-badge-amber" style={{ marginBottom: 16 }}>{t("pricing_trial")}</span>
-                <div className="qc-precio-name">{t("plan_pro")}</div>
-                <div className="qc-precio-price">{t("plan_price_pro")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
-                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
-                <ul className="qc-feature-list">
-                  {proFeatures.map((f, i) => (
-                    <li key={i}><span className="qc-check">✓</span>{f}</li>
-                  ))}
-                </ul>
-                <button className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15 }} onClick={openModal}>
-                  {t("plan_cta_pro")}
-                </button>
-              </div>
-
               {/* Loyalty */}
               <div className="qc-precio-card qc-precio-card-purple">
                 <span className="qc-badge qc-badge-purple" style={{ marginBottom: 16 }}>{t("plan_addon")}</span>
@@ -617,6 +601,22 @@ export default function LandingPage() {
                 </ul>
                 <button className="qc-btn-purple" onClick={openModal}>
                   {t("plan_cta_loyalty")}
+                </button>
+              </div>
+
+              {/* Pro */}
+              <div className="qc-precio-card qc-precio-card-featured">
+                <span className="qc-badge qc-badge-amber" style={{ marginBottom: 16 }}>{t("pricing_trial")}</span>
+                <div className="qc-precio-name">{t("plan_pro")}</div>
+                <div className="qc-precio-price">{t("plan_price_pro")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
+                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
+                <ul className="qc-feature-list">
+                  {proFeatures.map((f, i) => (
+                    <li key={i}><span className="qc-check">✓</span>{f}</li>
+                  ))}
+                </ul>
+                <button className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15 }} onClick={openModal}>
+                  {t("plan_cta_pro")}
                 </button>
               </div>
 

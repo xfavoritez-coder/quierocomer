@@ -256,7 +256,7 @@ const en: typeof es = {
 // ─── Arrays ──────────────────────────────────────────────────────────────────
 
 export const PRO_FEATURES_ES = [
-  "Aumenta el ticket promedio de tus mesas 🎫",
+  "Aumenta el ticket promedio de tus mesas",
   "Carta QR inteligente",
   "Carta exportable en PDF",
   "Pedidos online sin comisión",
@@ -274,7 +274,7 @@ export const PRO_FEATURES_EN = [
 ];
 
 export const LOYALTY_FEATURES_ES = [
-  "🔔 Notificaciones automáticas por cercanía",
+  "Notificaciones automáticas por cercanía",
   "Tus clientes vuelven solos",
   "Aumenta tus ventas hasta un 30%",
   "Tarjeta en el celular, sin app",
