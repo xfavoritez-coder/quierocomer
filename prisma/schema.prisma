@@ -2462,12 +2462,21 @@ model PrivateReview {
 }
 
 // Historial de notificaciones push enviadas a las tarjetas.
+model PanelShortLink {
+  id        Int      @id @default(autoincrement()) // URL corta: quierocomer.com/panel/1
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+}
+
 model LoyaltyBroadcast {
   id           String   @id @default(cuid())
   restaurantId String
   title        String
   body         String
   recipients   Int      @default(0)
+  filter       String   @default("all") // "all" | "birthday_today" | "birthday_week" | "loyal" | "active" | "inactive" | "no_stamps"
   createdAt    DateTime @default(now())
 
   @@index([restaurantId, createdAt])

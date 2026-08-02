@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { Bell, Send, MapPin } from "lucide-react";
+import { Bell, Send, MapPin, Users } from "lucide-react";
 import AddressPicker from "@/components/admin/AddressPicker";
+import type { MemberFilter } from "@/lib/loyalty/memberFilter";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -37,11 +38,33 @@ const GEO_PRESETS = [
   { label: "500 m", km: 0.5 },
 ];
 
+type FilterOption = {
+  value: MemberFilter;
+  label: string;
+  description: string;
+  emoji: string;
+};
+
+const FILTER_OPTIONS: FilterOption[] = [
+  { value: "all",            label: "Todos",              description: "Todos los miembros activos",              emoji: "📣" },
+  { value: "birthday_today", label: "Cumpleaños hoy",     description: "Miembros que cumplen años hoy",           emoji: "🎂" },
+  { value: "birthday_week",  label: "Cumpleaños esta semana", description: "Cumplen años en los próximos 7 días", emoji: "🎁" },
+  { value: "loyal",          label: "Frecuentes",         description: "Completaron al menos una tarjeta",        emoji: "⭐" },
+  { value: "active",         label: "Activos",            description: "Tuvieron un sello en los últimos 30 días",emoji: "🔥" },
+  { value: "inactive",       label: "Inactivos",          description: "Sin actividad por más de 30 días",        emoji: "😴" },
+  { value: "no_stamps",      label: "Sin sellos",         description: "Se unieron pero nunca volvieron",         emoji: "👋" },
+];
+
+const FILTER_LABEL: Record<MemberFilter, string> = Object.fromEntries(
+  FILTER_OPTIONS.map((o) => [o.value, o.label])
+) as Record<MemberFilter, string>;
+
 interface Broadcast {
   id: string;
   title: string;
   body: string;
   recipients: number;
+  filter: string;
   createdAt: string;
 }
 
@@ -52,9 +75,13 @@ export default function LoyaltyNotifyPage() {
   // ── Enviar notificación ──
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [filter, setFilter] = useState<MemberFilter>("all");
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [sending, setSending] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [history, setHistory] = useState<Broadcast[]>([]);
+  const previewDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Cercanía ──
   const [geoEnabled, setGeoEnabled] = useState(false);
@@ -63,8 +90,6 @@ export default function LoyaltyNotifyPage() {
   const [loadingGeo, setLoadingGeo] = useState(true);
   const [savingGeo, setSavingGeo] = useState(false);
   const [savedGeo, setSavedGeo] = useState(false);
-
-  // Dirección / coordenadas del local (mismo dato que Ajustes)
   const [address, setAddress] = useState("");
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
@@ -80,12 +105,28 @@ export default function LoyaltyNotifyPage() {
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
+  // Cargar preview count cuando cambia restaurante o filtro
+  const fetchPreview = useCallback((restaurantId: string, f: MemberFilter) => {
+    setLoadingPreview(true);
+    setPreviewCount(null);
+    fetch(`/api/loyalty/notify/preview?restaurantId=${restaurantId}&filter=${f}`)
+      .then((r) => r.json())
+      .then((d) => setPreviewCount(typeof d.count === "number" ? d.count : null))
+      .catch(() => setPreviewCount(null))
+      .finally(() => setLoadingPreview(false));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    if (previewDebounce.current) clearTimeout(previewDebounce.current);
+    previewDebounce.current = setTimeout(() => fetchPreview(selectedRestaurantId, filter), 300);
+  }, [selectedRestaurantId, filter, fetchPreview]);
+
   useEffect(() => {
     if (!selectedRestaurantId) return;
     setLoadingGeo(true);
     setSavedGeo(false);
 
-    // Carga geo config + dirección del local en paralelo
     Promise.all([
       fetch(`/api/loyalty/program?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
       fetch(`/api/admin/locales/${selectedRestaurantId}`).then(r => r.json()),
@@ -109,11 +150,16 @@ export default function LoyaltyNotifyPage() {
       const res = await fetch("/api/loyalty/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedRestaurantId, title, body }),
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, title, body, filter }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Error");
-      toast.success(`📣 Notificación enviada · ${d.appleDevices} iPhone${d.google ? " + Android" : ""}`);
+      const total = (d.appleDevices || 0) + (d.googleMembers || 0);
+      if (total === 0) {
+        toast.info("Sin destinatarios en este segmento");
+      } else {
+        toast.success(`📣 Enviada · ${d.appleDevices} iPhone${d.googleMembers ? ` + ${d.googleMembers} Android` : ""}`);
+      }
       setTitle("");
       setBody("");
       setConfirm(false);
@@ -157,7 +203,6 @@ export default function LoyaltyNotifyPage() {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error || "Error al guardar");
       }
-      // Aplicar a tarjetas instaladas automáticamente
       const refreshRes = await fetch("/api/loyalty/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,6 +222,8 @@ export default function LoyaltyNotifyPage() {
     }
   };
 
+  const selectedFilter = FILTER_OPTIONS.find((o) => o.value === filter)!;
+
   return (
     <div style={{ maxWidth: 620 }}>
       <div style={{ marginBottom: 20 }}>
@@ -188,7 +235,7 @@ export default function LoyaltyNotifyPage() {
         </p>
       </div>
 
-      {/* Tabs internos */}
+      {/* Tabs */}
       <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--adm-card-border)", marginBottom: 24 }}>
         {(["send", "proximity"] as const).map((t) => (
           <button
@@ -218,18 +265,84 @@ export default function LoyaltyNotifyPage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>
       ) : tab === "send" ? (
         <>
+          {/* Selector de audiencia */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 6 }}>
+              <Users size={13} color="var(--adm-text3)" /> Audiencia
+            </label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {FILTER_OPTIONS.map((opt) => {
+                const active = filter === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => { setFilter(opt.value); setConfirm(false); }}
+                    title={opt.description}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "7px 13px",
+                      borderRadius: 20,
+                      border: `1.5px solid ${active ? GOLD : "var(--adm-card-border)"}`,
+                      background: active ? "rgba(244,166,35,0.12)" : "var(--adm-card)",
+                      color: active ? GOLD : "var(--adm-text2)",
+                      fontFamily: F,
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <span>{opt.emoji}</span> {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Contador de destinatarios */}
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>
+                {loadingPreview
+                  ? "Contando…"
+                  : previewCount === null
+                  ? ""
+                  : previewCount === 0
+                  ? "Sin miembros en este segmento"
+                  : `${previewCount} destinatario${previewCount !== 1 ? "s" : ""} · ${selectedFilter.description}`
+                }
+              </span>
+            </div>
+          </div>
+
           {/* Redactar */}
           <div style={{ padding: 16, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Título <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(opcional)</span></label>
-              <input type="text" value={title} maxLength={80} onChange={(e) => { setTitle(e.target.value); setConfirm(false); }} placeholder="Ej: ¡Promo del finde!" style={inputStyle} />
+              <input
+                type="text"
+                value={title}
+                maxLength={80}
+                onChange={(e) => { setTitle(e.target.value); setConfirm(false); }}
+                placeholder="Ej: ¡Promo del finde!"
+                style={inputStyle}
+              />
             </div>
             <div>
               <label style={labelStyle}>Mensaje</label>
-              <textarea value={body} maxLength={300} rows={3} onChange={(e) => { setBody(e.target.value); setConfirm(false); }} placeholder="Ej: Este sábado 2x1 en hand rolls. ¡Te esperamos!" style={{ ...inputStyle, resize: "none" }} />
+              <textarea
+                value={body}
+                maxLength={300}
+                rows={3}
+                onChange={(e) => { setBody(e.target.value); setConfirm(false); }}
+                placeholder="Ej: Este sábado 2x1 en hand rolls. ¡Te esperamos!"
+                style={{ ...inputStyle, resize: "none" }}
+              />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0", textAlign: "right" }}>{body.length}/300</p>
             </div>
 
+            {/* Preview de la notificación */}
             {body.trim() && (
               <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <Bell size={16} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
@@ -240,17 +353,36 @@ export default function LoyaltyNotifyPage() {
               </div>
             )}
 
+            {/* Botones de acción */}
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16, gap: 10, alignItems: "center" }}>
               {confirm ? (
                 <>
-                  <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>¿Enviar a todos?</span>
-                  <button type="button" onClick={() => setConfirm(false)} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
-                  <button type="button" onClick={send} disabled={sending} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: sending ? 0.6 : 1 }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>
+                    ¿Enviar a {previewCount !== null ? `${previewCount} miembro${previewCount !== 1 ? "s" : ""}` : `los ${FILTER_LABEL[filter].toLowerCase()}`}?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setConfirm(false)}
+                    style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={send}
+                    disabled={sending || previewCount === 0}
+                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 8, border: "none", background: previewCount === 0 ? "var(--adm-card-border)" : "#16a34a", color: previewCount === 0 ? "var(--adm-text3)" : "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: sending || previewCount === 0 ? "default" : "pointer", opacity: sending ? 0.6 : 1 }}
+                  >
                     {sending ? "Enviando…" : "Sí, enviar"}
                   </button>
                 </>
               ) : (
-                <button type="button" disabled={!body.trim()} onClick={() => setConfirm(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: body.trim() ? "pointer" : "not-allowed", opacity: body.trim() ? 1 : 0.5 }}>
+                <button
+                  type="button"
+                  disabled={!body.trim() || previewCount === 0}
+                  onClick={() => setConfirm(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: body.trim() && previewCount !== 0 ? "pointer" : "not-allowed", opacity: body.trim() && previewCount !== 0 ? 1 : 0.5 }}
+                >
                   <Send size={16} /> Enviar notificación
                 </button>
               )}
@@ -262,15 +394,25 @@ export default function LoyaltyNotifyPage() {
             <div style={{ marginTop: 26 }}>
               <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text2)", margin: "0 0 10px" }}>Enviadas</p>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                {history.map((b) => (
-                  <li key={b.id} style={{ padding: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-                    {b.title && <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{b.title}</p>}
-                    <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "1px 0 0", lineHeight: 1.4 }}>{b.body}</p>
-                    <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
-                      {new Date(b.createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {b.recipients} destinatario{b.recipients !== 1 ? "s" : ""}
-                    </p>
-                  </li>
-                ))}
+                {history.map((b) => {
+                  const filterOpt = FILTER_OPTIONS.find((o) => o.value === b.filter);
+                  return (
+                    <li key={b.id} style={{ padding: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
+                      {b.title && <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{b.title}</p>}
+                      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "1px 0 0", lineHeight: 1.4 }}>{b.body}</p>
+                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "6px 0 0", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        {new Date(b.createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {" · "}
+                        {b.recipients} destinatario{b.recipients !== 1 ? "s" : ""}
+                        {filterOpt && filterOpt.value !== "all" && (
+                          <span style={{ padding: "1px 7px", borderRadius: 10, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>
+                            {filterOpt.emoji} {filterOpt.label}
+                          </span>
+                        )}
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -285,7 +427,6 @@ export default function LoyaltyNotifyPage() {
               Avisa al cliente en su pantalla cuando pasa cerca de tu local. El teléfono lo detecta usando la ubicación que configures aquí.
             </p>
 
-            {/* Dirección del local — editable directo */}
             <div style={{ padding: 16, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                 <MapPin size={14} color={GOLD} /> Dirección del local
@@ -309,7 +450,6 @@ export default function LoyaltyNotifyPage() {
               </p>
             </div>
 
-            {/* Activar cercanía */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Activar avisos por cercanía</p>
@@ -359,7 +499,6 @@ export default function LoyaltyNotifyPage() {
               </button>
               {savedGeo && <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#16a34a" }}>✓ Guardado</span>}
             </div>
-
           </div>
         )
       )}

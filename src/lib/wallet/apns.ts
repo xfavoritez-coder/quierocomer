@@ -70,6 +70,23 @@ async function pushToTokens(tokens: string[], pushType: PushType = "background",
   });
 }
 
+/** Notifica a los dispositivos iOS de una lista de miembros para que refresquen el pase. Best-effort. */
+export async function notifyMemberListDevices(memberIds: string[]): Promise<number> {
+  if (!apnsConfig() || memberIds.length === 0) return 0;
+  try {
+    const devices = await prisma.loyaltyDevice.findMany({
+      where: { serialNumber: { in: memberIds } },
+      select: { pushToken: true },
+    });
+    if (!devices.length) return 0;
+    await pushToTokens(devices.map((d) => d.pushToken), "background");
+    return devices.length;
+  } catch (e) {
+    console.error("[notifyMemberListDevices]", e);
+    return 0;
+  }
+}
+
 /** Notifica a los dispositivos iOS registrados del miembro para que refresquen el pase. Best-effort. */
 export async function notifyAppleDevices(memberId: string): Promise<void> {
   if (!apnsConfig()) return;

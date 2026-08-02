@@ -10,6 +10,21 @@ const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+56962183197";
 // Template SID for "carta_lista_v2" (approved by Meta)
 const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 
+// Template SID para inicio de trial Loyalty
+// Cuerpo:
+//   Hola {{1}} 👋
+//
+//   Tu prueba gratuita para *{{2}}* ya está activa por 7 días.
+//
+//   Revisa tu correo con tus credenciales de acceso y entra directo aquí:
+//   quierocomer.com/panel/{{3}}
+//
+//   Bienvenido a la evolución gastronómica
+//   — QuieroComer
+//
+// Variables: {{1}} = primer nombre, {{2}} = nombre restaurante, {{3}} = ID numérico (short link)
+export const LOYALTY_TRIAL_WA_TEMPLATE = process.env.LOYALTY_TRIAL_WA_TEMPLATE_SID || "HXf36da48d805830e3ec0a050e9426dde3";
+
 // Template SID for billing expiry — day plan expires (aprobado por Meta)
 // Variables: {{1}} = owner first name, {{2}} = restaurant name, {{3}} = renewal URL
 // Template body:
@@ -94,6 +109,27 @@ export async function sendWhatsApp({ to, body, contentSid, contentVariables }: S
     console.error("[WhatsApp] Send failed:", (err as Error).message);
     return null;
   }
+}
+
+/**
+ * Build the "loyalty trial started" WhatsApp message for a restaurant owner.
+ */
+export function buildLoyaltyTrialMessage({
+  ownerName,
+  restaurantName,
+  shortId,
+}: {
+  ownerName: string;
+  restaurantName: string;
+  shortId: number;
+}): { body: string; contentSid: string; contentVariables: Record<string, string> } {
+  const firstName = ownerName.split(" ")[0];
+  const idStr = String(shortId);
+  return {
+    body: `Hola ${firstName} 👋\n\nTu prueba gratuita para *${restaurantName}* ya está activa por 7 días.\n\nRevisa tu correo con tus credenciales de acceso, o entra directo aquí:\nquierocomer.com/panel/${idStr}\n\nBienvenido a la evolución gastronómica\n— QuieroComer`,
+    contentSid: LOYALTY_TRIAL_WA_TEMPLATE,
+    contentVariables: { "1": firstName, "2": restaurantName, "3": idStr },
+  };
 }
 
 /**

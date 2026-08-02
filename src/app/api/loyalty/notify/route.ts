@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { ensureProgram } from "@/lib/loyalty";
 import { sendGoogleObjectMessage } from "@/lib/wallet/google";
-import { notifyRestaurantDevices } from "@/lib/wallet/apns";
+import { notifyMemberListDevices } from "@/lib/wallet/apns";
+import { getFilteredMemberIds, type MemberFilter } from "@/lib/loyalty/memberFilter";
 
 export const runtime = "nodejs";
 
-// POST /api/loyalty/notify  → envía una notificación push a todas las tarjetas (iOS + Android).
+// POST /api/loyalty/notify  → envía notificación push a un segmento de tarjetas (iOS + Android).
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
@@ -22,20 +23,30 @@ export async function POST(req: NextRequest) {
     const message = typeof body.body === "string" ? body.body.trim().slice(0, 300) : "";
     if (!message) return NextResponse.json({ error: "Escribe el mensaje" }, { status: 400 });
 
+    const filter = (body.filter || "all") as MemberFilter;
+
+    // Obtener IDs de miembros que cumplen el filtro
+    const memberIds = await getFilteredMemberIds(restaurantId, filter);
+    if (!memberIds.length) {
+      return NextResponse.json({ ok: true, appleDevices: 0, google: false, googleMembers: 0, recipients: 0 });
+    }
+
     const program = await ensureProgram(restaurantId);
 
-    // 1) Apple: guardar el mensaje en el pase.
-    // Prefijamos un timestamp invisible (separado por \u200b) para garantizar que el campo
-    // "novedad" siempre cambie entre pushes, incluso si el texto es el mismo.
+    // 1) Apple: actualizar pushMessage en el programa y updatedAt solo de los miembros filtrados.
+    // El timestamp invisible garantiza que el campo siempre cambie entre pushes con el mismo texto.
     const appleValue = title ? `${title}: ${message}` : message;
     const appleValueUniq = `${appleValue}\u200b${Date.now()}`;
     await prisma.loyaltyProgram.update({ where: { id: program.id }, data: { pushMessage: appleValueUniq } });
-    await prisma.$executeRaw`UPDATE "LoyaltyMember" SET "updatedAt" = NOW() WHERE "restaurantId" = ${restaurantId}`;
-    const appleDevices = await notifyRestaurantDevices(restaurantId, title || undefined, message);
+    await prisma.loyaltyMember.updateMany({
+      where: { id: { in: memberIds } },
+      data: { updatedAt: new Date() },
+    });
+    const appleDevices = await notifyMemberListDevices(memberIds);
 
     // 2) Google: un mensaje a cada objeto (tarjeta) → notificación en Android
     const googleCards = await prisma.loyaltyMember.findMany({
-      where: { restaurantId, googleObjectId: { not: null } },
+      where: { id: { in: memberIds }, googleObjectId: { not: null } },
       select: { googleObjectId: true },
     });
     let googleMembers = 0;
@@ -50,10 +61,10 @@ export async function POST(req: NextRequest) {
 
     const recipients = appleDevices + googleMembers;
     await prisma.loyaltyBroadcast.create({
-      data: { restaurantId, title, body: message, recipients },
+      data: { restaurantId, title, body: message, recipients, filter },
     });
 
-    return NextResponse.json({ ok: true, appleDevices, google, googleMembers });
+    return NextResponse.json({ ok: true, appleDevices, google, googleMembers, recipients });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
     console.error("[Loyalty notify]", e);
