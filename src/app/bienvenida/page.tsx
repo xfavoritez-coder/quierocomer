@@ -232,7 +232,7 @@ export default function BienvenidaPage() {
             </div>
 
             {[
-              { icon: "🔑", title: "Ingresa al panel", desc: "Entra con tu email y contraseña para empezar a configurar tu local." },
+              { icon: "📧", title: "Revisa tu email", desc: "Te enviamos un enlace para confirmar tu correo y entrar al panel." },
               { icon: "🍽️", title: "Agrega tus platos", desc: "Sube fotos, precios y descripciones desde el panel." },
               { icon: "📱", title: "Genera tu QR", desc: "Descárgalo e imprímelo para tus mesas y redes sociales." },
             ].map((step, i) => (
@@ -258,8 +258,23 @@ export default function BienvenidaPage() {
 
           {/* CTA */}
           <div className="bv-cta">
+            <div style={{
+              background: "#FFF7EA",
+              border: "1.5px solid rgba(245,158,27,0.25)",
+              borderRadius: 12,
+              padding: "14px 16px",
+              marginBottom: 12,
+              textAlign: "center",
+            }}>
+              <p style={{ fontSize: "0.85rem", color: "#92400e", margin: "0 0 4px", fontWeight: 600 }}>
+                Revisa tu correo 📧
+              </p>
+              <p style={{ fontSize: "0.8rem", color: "#A8A8A2", margin: 0, lineHeight: 1.5 }}>
+                Enviamos un enlace a <strong style={{ color: "#111" }}>{data.email}</strong> — haz clic en él para entrar al panel
+              </p>
+            </div>
             <a
-              href={data.autoLoginUrl}
+              href="/panel/login"
               style={{
                 display: "block",
                 background: "#F59E1B",
@@ -274,7 +289,7 @@ export default function BienvenidaPage() {
                 boxShadow: "0 4px 20px rgba(245,158,27,0.25)",
               }}
             >
-              Entrar a mi panel →
+              Entrar al panel →
             </a>
           </div>
 
