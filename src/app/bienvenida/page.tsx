@@ -12,7 +12,7 @@ interface WelcomeData {
 
 export default function BienvenidaPage() {
   const [data, setData] = useState<WelcomeData | null>(null);
-  const [copied, setCopied] = useState<"email" | "password" | null>(null);
+  const [copied, setCopied] = useState<"email" | "password" | "panel" | null>(null);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
 
@@ -39,7 +39,7 @@ export default function BienvenidaPage() {
     } catch {}
   }, []);
 
-  const copy = (text: string, field: "email" | "password") => {
+  const copy = (text: string, field: "email" | "password" | "panel") => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(field);
       setTimeout(() => setCopied(null), 2000);
@@ -177,14 +177,18 @@ export default function BienvenidaPage() {
                     {copied === "password" ? "✓ Copiado" : "Copiar"}
                   </button>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, flexWrap: "wrap", gap: 4 }}>
-                  <p style={{ fontSize: "0.7rem", color: "#A8A8A2", margin: 0, lineHeight: 1.5 }}>
-                    También te enviamos estos datos al email
-                  </p>
-                  <a href="/panel" style={{ fontSize: "0.7rem", color: "#F59E1B", fontWeight: 600, textDecoration: "none" }}>
-                    quierocomer.com/panel →
-                  </a>
+                <div className="bv-cred-row" onClick={() => copy("https://quierocomer.com/panel", "panel")}>
+                  <div>
+                    <div style={{ fontSize: "0.62rem", color: "#A8A8A2", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Tu panel</div>
+                    <div style={{ fontSize: "0.9rem", color: "#F59E1B", fontWeight: 600 }}>quierocomer.com/panel</div>
+                  </div>
+                  <button className={`bv-copy-btn${copied === "panel" ? " copied" : ""}`}>
+                    {copied === "panel" ? "✓ Copiado" : "Copiar"}
+                  </button>
                 </div>
+                <p style={{ fontSize: "0.7rem", color: "#A8A8A2", margin: "6px 0 0", lineHeight: 1.5 }}>
+                  También te enviamos estos datos al correo
+                </p>
               </div>
 
               {/* Steps */}
@@ -217,10 +221,10 @@ export default function BienvenidaPage() {
               <div className="bv-cta">
                 <a href="/panel" style={{
                   display: "block", background: "#F59E1B", color: "#fff", textAlign: "center",
-                  padding: "16px 24px", borderRadius: 14, fontWeight: 700, fontSize: "1rem",
-                  textDecoration: "none", letterSpacing: 0.2, boxShadow: "0 4px 20px rgba(245,158,27,0.25)",
+                  padding: "18px 24px", borderRadius: 14, fontWeight: 800, fontSize: "1.05rem",
+                  textDecoration: "none", letterSpacing: 0.2, boxShadow: "0 4px 24px rgba(245,158,27,0.35)",
                 }}>
-                  Entrar al panel →
+                  Entrar a mi panel →
                 </a>
               </div>
             </>

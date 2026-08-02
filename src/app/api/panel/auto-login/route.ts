@@ -66,39 +66,38 @@ export async function GET(req: NextRequest) {
     data: { lastLoginAt: new Date(), emailVerificado: true, emailVerificadoAt: new Date() },
   });
 
-  // ── New account activation ─────────────────────────────────────────────────
+  // ── First-time confirmation: activate trial + show welcome screen ───────────
   let welcomeCookie: string | null = null;
 
   if (isFirstConfirmation) {
-    // Check if any restaurant is still NONE (unactivated new account)
-    const pendingRestaurants = await prisma.restaurant.findMany({
-      where: { ownerId: oid, subscriptionStatus: "NONE" },
-      select: { id: true, name: true, slug: true },
+    // Get owner's first restaurant (any status — handles both old and new flow)
+    const restaurant = await prisma.restaurant.findFirst({
+      where: { ownerId: oid },
+      select: { id: true, name: true, slug: true, subscriptionStatus: true },
+      orderBy: { createdAt: "asc" },
     });
 
-    if (pendingRestaurants.length > 0) {
-      const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      const restaurant = pendingRestaurants[0];
+    if (restaurant) {
+      // Activate trial only if not already active (new flow accounts start as NONE)
+      if (restaurant.subscriptionStatus === "NONE") {
+        const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await prisma.restaurant.updateMany({
+          where: { ownerId: oid, subscriptionStatus: "NONE" },
+          data: {
+            plan: "PREMIUM",
+            subscriptionStatus: "TRIALING",
+            trialEndsAt: trialEnd,
+            loyaltyStatus: "TRIALING",
+            loyaltyTrialEndsAt: trialEnd,
+          },
+        });
+        await prisma.lead.updateMany({
+          where: { convertedToOwnerId: oid, activated: false },
+          data: { activated: true, activatedAt: new Date() },
+        });
+      }
 
-      // Activate trial
-      await prisma.restaurant.updateMany({
-        where: { ownerId: oid, subscriptionStatus: "NONE" },
-        data: {
-          plan: "PREMIUM",
-          subscriptionStatus: "TRIALING",
-          trialEndsAt: trialEnd,
-          loyaltyStatus: "TRIALING",
-          loyaltyTrialEndsAt: trialEnd,
-        },
-      });
-
-      // Activate lead
-      await prisma.lead.updateMany({
-        where: { convertedToOwnerId: oid, activated: false },
-        data: { activated: true, activatedAt: new Date() },
-      });
-
-      // Generate password for credentials email
+      // Generate / regenerate password so we can show it on /bienvenida and email it
       const cleanName = restaurant.name.toLowerCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]/g, "");
@@ -135,7 +134,7 @@ export async function GET(req: NextRequest) {
           .catch((err) => console.error("[auto-login] whatsapp error:", err));
       }
 
-      // Set welcome cookie (5 min, readable by JS) so /bienvenida shows credentials
+      // Welcome cookie (path "/" so redirect always picks it up)
       welcomeCookie = JSON.stringify({
         localName: restaurant.name,
         ownerName: owner.name,
@@ -162,9 +161,10 @@ export async function GET(req: NextRequest) {
   response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
 
   if (welcomeCookie) {
+    // path "/" ensures the cookie is sent on the redirect to /bienvenida
     response.cookies.set("qc_wb", encodeURIComponent(welcomeCookie), {
-      path: "/bienvenida",
-      maxAge: 300, // 5 min — just enough to load the page
+      path: "/",
+      maxAge: 300,
       httpOnly: false,
       sameSite: "lax",
       secure: IS_PROD,
