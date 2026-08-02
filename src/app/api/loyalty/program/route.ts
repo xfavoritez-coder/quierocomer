@@ -76,6 +76,11 @@ export async function POST(req: NextRequest) {
       if (Number.isFinite(n) && n > 0 && n <= 50) data.geoRadiusKm = n;
     }
     if (typeof body.geoMessage === "string") data.geoMessage = body.geoMessage.trim().slice(0, 120) || null;
+
+    // Cumpleaños automático
+    if (typeof body.birthdayEnabled === "boolean") data.birthdayEnabled = body.birthdayEnabled;
+    if (typeof body.birthdayTitle === "string") data.birthdayTitle = body.birthdayTitle.trim().slice(0, 80) || null;
+    if (typeof body.birthdayMessage === "string") data.birthdayMessage = body.birthdayMessage.trim().slice(0, 300) || null;
     if (typeof body.description === "string") data.description = body.description.trim().slice(0, 300);
     if (typeof body.stampIcon === "string" && body.stampIcon.trim()) {
       const raw = body.stampIcon.trim();

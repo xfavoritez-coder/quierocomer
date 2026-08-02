@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { Bell, Send, MapPin, Users } from "lucide-react";
+import { Bell, Send, MapPin, Users, Cake } from "lucide-react";
 import AddressPicker from "@/components/admin/AddressPicker";
 import type { MemberFilter } from "@/lib/loyalty/memberFilter";
 
@@ -70,7 +70,7 @@ interface Broadcast {
 
 export default function LoyaltyNotifyPage() {
   const { selectedRestaurantId, loading } = usePanelSession();
-  const [tab, setTab] = useState<"send" | "proximity">("send");
+  const [tab, setTab] = useState<"send" | "birthday" | "proximity">("send");
 
   // ── Enviar notificación ──
   const [title, setTitle] = useState("");
@@ -82,6 +82,13 @@ export default function LoyaltyNotifyPage() {
   const [confirm, setConfirm] = useState(false);
   const [history, setHistory] = useState<Broadcast[]>([]);
   const previewDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Cumpleaños automático ──
+  const [birthdayEnabled, setBirthdayEnabled] = useState(false);
+  const [birthdayTitle, setBirthdayTitle] = useState("");
+  const [birthdayMessage, setBirthdayMessage] = useState("");
+  const [savingBirthday, setSavingBirthday] = useState(false);
+  const [loadingBirthday, setLoadingBirthday] = useState(true);
 
   // ── Cercanía ──
   const [geoEnabled, setGeoEnabled] = useState(false);
@@ -125,6 +132,7 @@ export default function LoyaltyNotifyPage() {
   useEffect(() => {
     if (!selectedRestaurantId) return;
     setLoadingGeo(true);
+    setLoadingBirthday(true);
     setSavedGeo(false);
 
     Promise.all([
@@ -136,11 +144,14 @@ export default function LoyaltyNotifyPage() {
         const rawKm = loyaltyData.program.geoRadiusKm ?? 0.5;
         setGeoRadiusKm([0.15, 0.5].includes(rawKm) ? rawKm : 0.5);
         setGeoMessage(loyaltyData.program.geoMessage || "");
+        setBirthdayEnabled(!!loyaltyData.program.birthdayEnabled);
+        setBirthdayTitle(loyaltyData.program.birthdayTitle || "");
+        setBirthdayMessage(loyaltyData.program.birthdayMessage || "");
       }
       setAddress(localData.address || "");
       setLat(localData.lat ?? null);
       setLng(localData.lng ?? null);
-    }).catch(() => {}).finally(() => setLoadingGeo(false));
+    }).catch(() => {}).finally(() => { setLoadingGeo(false); setLoadingBirthday(false); });
   }, [selectedRestaurantId]);
 
   const send = async () => {
@@ -168,6 +179,32 @@ export default function LoyaltyNotifyPage() {
       toast.error(e.message || "Error al enviar");
     } finally {
       setSending(false);
+    }
+  };
+
+  const saveBirthday = async () => {
+    if (!selectedRestaurantId) return;
+    setSavingBirthday(true);
+    try {
+      const res = await fetch("/api/loyalty/program", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId: selectedRestaurantId,
+          birthdayEnabled,
+          birthdayTitle: birthdayTitle.trim(),
+          birthdayMessage: birthdayMessage.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Error al guardar");
+      }
+      toast.success("Configuración de cumpleaños guardada");
+    } catch (e: any) {
+      toast.error(e.message || "Error al guardar");
+    } finally {
+      setSavingBirthday(false);
     }
   };
 
@@ -237,26 +274,30 @@ export default function LoyaltyNotifyPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--adm-card-border)", marginBottom: 24 }}>
-        {(["send", "proximity"] as const).map((t) => (
+        {([
+          { key: "send", label: "Enviar" },
+          { key: "birthday", label: "Cumpleaños" },
+          { key: "proximity", label: "Cercanía" },
+        ] as const).map(({ key, label }) => (
           <button
-            key={t}
+            key={key}
             type="button"
-            onClick={() => setTab(t)}
+            onClick={() => setTab(key)}
             style={{
               padding: "8px 16px",
               marginBottom: -1,
               border: "none",
-              borderBottom: `2px solid ${tab === t ? GOLD : "transparent"}`,
+              borderBottom: `2px solid ${tab === key ? GOLD : "transparent"}`,
               background: "transparent",
               fontFamily: F,
               fontSize: "0.85rem",
               fontWeight: 600,
-              color: tab === t ? "var(--adm-text)" : "var(--adm-text3)",
+              color: tab === key ? "var(--adm-text)" : "var(--adm-text3)",
               cursor: "pointer",
               transition: "color 0.15s",
             }}
           >
-            {t === "send" ? "Enviar notificación" : "Cercanía"}
+            {label}
           </button>
         ))}
       </div>
@@ -417,6 +458,83 @@ export default function LoyaltyNotifyPage() {
             </div>
           )}
         </>
+      ) : tab === "birthday" ? (
+        /* ── Tab Cumpleaños ── */
+        loadingBirthday ? (
+          <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              El sistema enviará automáticamente un mensaje push a cada miembro el día de su cumpleaños. Solo llega a quienes tienen fecha de nacimiento registrada.
+            </p>
+
+            {/* Toggle activar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>Activar mensajes de cumpleaños</p>
+                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                  Se envían automáticamente cada mañana.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBirthdayEnabled(v => !v)}
+                aria-pressed={birthdayEnabled}
+                style={{ position: "relative", height: 26, width: 46, flexShrink: 0, borderRadius: 999, border: "none", cursor: "pointer", background: birthdayEnabled ? "#16a34a" : "var(--adm-card-border)", transition: "background 0.15s" }}
+              >
+                <span style={{ position: "absolute", top: 3, left: birthdayEnabled ? 23 : 3, height: 20, width: 20, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+              </button>
+            </div>
+
+            {birthdayEnabled && (
+              <div style={{ padding: 16, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, display: "flex", flexDirection: "column", gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Título <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(opcional)</span></label>
+                  <input
+                    type="text"
+                    value={birthdayTitle}
+                    maxLength={80}
+                    onChange={e => setBirthdayTitle(e.target.value)}
+                    placeholder="Ej: ¡Feliz cumpleaños!"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Mensaje</label>
+                  <textarea
+                    value={birthdayMessage}
+                    maxLength={300}
+                    rows={3}
+                    onChange={e => setBirthdayMessage(e.target.value)}
+                    placeholder="Ej: Hoy es tu día 🎂 Ven a celebrarlo con nosotros y te tenemos una sorpresa."
+                    style={{ ...inputStyle, resize: "none" }}
+                  />
+                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "4px 0 0", textAlign: "right" }}>{birthdayMessage.length}/300</p>
+                </div>
+
+                {/* Preview */}
+                {birthdayMessage.trim() && (
+                  <div style={{ padding: "10px 12px", borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <Cake size={16} color={GOLD} style={{ marginTop: 2, flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      {birthdayTitle.trim() && <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{birthdayTitle}</p>}
+                      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "1px 0 0", lineHeight: 1.4 }}>{birthdayMessage}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={saveBirthday}
+              disabled={savingBirthday || (birthdayEnabled && !birthdayMessage.trim())}
+              style={{ alignSelf: "flex-start", padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: savingBirthday ? "default" : "pointer", opacity: savingBirthday || (birthdayEnabled && !birthdayMessage.trim()) ? 0.5 : 1 }}
+            >
+              {savingBirthday ? "Guardando…" : "Guardar configuración"}
+            </button>
+          </div>
+        )
       ) : (
         /* ── Tab Cercanía ── */
         loadingGeo ? (

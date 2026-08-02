@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { processAutomations } from "@/lib/automations/processor";
+import { runBirthdayPushes } from "@/lib/loyalty/birthdayPush";
 
 /**
  * Daily cron job — runs at 8 AM Chile time (configured in vercel.json)
@@ -423,6 +424,18 @@ export async function GET(req: NextRequest) {
       loyaltyExpiredDowngraded = expiredLoyaltyActive.length;
     }
 
+    // 4.10b Loyalty: notificaciones de cumpleaños automáticas
+    let birthdayPushMembers = 0;
+    try {
+      const birthdayResult = await runBirthdayPushes();
+      birthdayPushMembers = birthdayResult.members;
+      if (birthdayResult.members > 0) {
+        console.log(`[diario] Birthday pushes: ${birthdayResult.members} miembros en ${birthdayResult.restaurants} locales`);
+      }
+    } catch (e) {
+      console.error("[diario] Birthday pushes error:", e);
+    }
+
     // 4.11 Loyalty: bajar suscripciones CANCELED vencidas → NONE
     const expiredLoyaltyCanceled = await prisma.restaurant.findMany({
       where: { loyaltyStatus: "CANCELED", loyaltyPeriodEnd: { lt: now }, billingExempt: false },
@@ -557,6 +570,7 @@ export async function GET(req: NextRequest) {
           activeExpiredDowngraded,
           loyaltyTrialsExpired,
           loyaltyExpiredDowngraded,
+          birthdayPushMembers,
           translationsBackfilled,
           automations: automationResults,
           dailySnapshot: {

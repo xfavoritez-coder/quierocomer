@@ -2372,6 +2372,11 @@ model LoyaltyProgram {
   // Última notificación enviada (se muestra como "Novedades" en el pase de Apple)
   pushMessage String?
 
+  // Notificación automática de cumpleaños
+  birthdayEnabled Boolean @default(false)
+  birthdayTitle   String? // ej: "¡Feliz cumpleaños!" (opcional)
+  birthdayMessage String? // ej: "Hoy es tu día 🎂 Ven a celebrar con nosotros"
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2400,9 +2405,10 @@ model LoyaltyMember {
   googleObjectId String? @unique // object id (Google Wallet)
   authToken      String  @default(cuid()) // token del web service de Apple Wallet
 
-  enrolledAt     DateTime  @default(now())
-  lastStampAt    DateTime?
-  lastGeoNotifAt DateTime? // última vez que se envió notif por cercanía (rate-limit)
+  enrolledAt          DateTime  @default(now())
+  lastStampAt         DateTime?
+  lastGeoNotifAt      DateTime? // última vez que se envió notif por cercanía (rate-limit)
+  lastBirthdayNotifAt DateTime? // última vez que se envió notif de cumpleaños (para no duplicar en el año)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
