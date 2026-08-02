@@ -560,7 +560,7 @@ export default function MiRestaurantePage() {
         const isLoyaltyActive = ls === "ACTIVE";
         const isLoyaltyTrial = ls === "TRIALING";
         const isLoyaltyNone = ls === "NONE" || ls === "CANCELED";
-        const loyaltyNet = 15900;
+        const loyaltyNet = 25900;
         const loyaltyGross = loyaltyNet + ivaOf(loyaltyNet);
         const PURPLE = "#6d28d9";
 
@@ -744,7 +744,7 @@ export default function MiRestaurantePage() {
       {/* Loyalty Modal */}
       {loyaltyModalOpen && (() => {
         const PURPLE = "#6d28d9";
-        const loyaltyNet = 15900;
+        const loyaltyNet = 25900;
         const loyaltyIva = ivaOf(loyaltyNet);
         const loyaltyGross = loyaltyNet + loyaltyIva;
         const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
