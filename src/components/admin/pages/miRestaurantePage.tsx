@@ -514,7 +514,7 @@ export default function MiRestaurantePage() {
                       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>Incluye carta QR, pedidos online y valoraciones</p>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
                         <span style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, color: proAccent, lineHeight: 1 }}>{formatCLP(proNet)}</span>
-                        <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>+ IVA /mes</span>
+                        <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>/mes</span>
                       </div>
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{formatCLP(proGross)} con IVA · Sin contratos</p>
                       {isPremiumTrial && <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: proAccent, margin: "8px 0 0" }}>✨ 7 días gratis para probar</p>}
@@ -581,7 +581,7 @@ export default function MiRestaurantePage() {
 
             {isLoyaltyActive && lEnd && (
               <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 14px" }}>
-                Vigente hasta el {formatDate(lEnd)} · ${loyaltyGross.toLocaleString("es-CL")} con IVA/mes
+                Vigente hasta el {formatDate(lEnd)} · ${loyaltyNet.toLocaleString("es-CL")}/mes
               </p>
             )}
             {isLoyaltyTrial && lTrial && (
