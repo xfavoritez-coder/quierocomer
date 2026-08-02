@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 interface Lead {
   id: string;
@@ -440,7 +440,10 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
           }}>
             {expanded ? "Ocultar ▲" : "Detalle ▼"}
           </button>
-          <DeleteButton leadId={lead.id} onDone={onDelete} />
+          {lead.activated
+            ? <NukeButton leadId={lead.id} onDone={onDelete} />
+            : <DeleteButton leadId={lead.id} onDone={onDelete} />
+          }
         </div>
       </div>
 
@@ -523,6 +526,9 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
           {lead.events && lead.events.some((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor")) && (
             <DoctorInline events={lead.events.filter((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor"))} />
           )}
+
+          {/* Panel activity (lazy loaded) */}
+          {lead.activated && <PanelActivitiesBlock leadId={lead.id} />}
         </div>
       )}
     </div>
@@ -731,7 +737,7 @@ function DoctorInline({ events }: { events: any[] }) {
   );
 }
 
-/* ─── Delete Button ─── */
+/* ─── Delete Button (solo lead) ─── */
 function DeleteButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
   const [state, setState] = useState<"idle" | "confirm" | "loading">("idle");
   const del = async () => {
@@ -751,6 +757,116 @@ function DeleteButton({ leadId, onDone }: { leadId: string; onDone: () => void }
     <button onClick={() => setState("confirm")} disabled={state === "loading"} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "#333", border: "1px solid rgba(255,255,255,0.06)" }}>
       {state === "loading" ? "..." : "✕"}
     </button>
+  );
+}
+
+/* ─── Nuke Button (elimina cuenta completa: lead + owner + restaurant) ─── */
+function NukeButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
+  const [state, setState] = useState<"idle" | "confirm" | "loading">("idle");
+  const nuke = async () => {
+    setState("loading");
+    try {
+      const res = await fetch(`/api/admin/lead/${leadId}/nuke`, { method: "DELETE" });
+      if (res.ok) onDone(); else setState("idle");
+    } catch { setState("idle"); }
+  };
+  if (state === "confirm") return (
+    <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+      <span style={{ fontSize: 10, color: "#f87171" }}>¿Eliminar cuenta?</span>
+      <button onClick={nuke} style={{ fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)" }}>Sí, eliminar todo</button>
+      <button onClick={() => setState("idle")} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "#555", border: "1px solid rgba(255,255,255,0.06)" }}>No</button>
+    </span>
+  );
+  return (
+    <button onClick={() => setState("confirm")} disabled={state === "loading"} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.15)" }}>
+      {state === "loading" ? "..." : "🗑 Eliminar cuenta"}
+    </button>
+  );
+}
+
+/* ─── Panel Activities (lazy) ─── */
+interface PanelActivity {
+  id: string;
+  action: string;
+  details: any;
+  ip: string | null;
+  createdAt: string;
+  restaurantName: string | null;
+}
+
+function PanelActivitiesBlock({ leadId }: { leadId: string }) {
+  const [activities, setActivities] = useState<PanelActivity[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    if (activities !== null) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/lead/${leadId}/activities`);
+      const data = await res.json();
+      setActivities(data.activities || []);
+    } catch {
+      setActivities([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [leadId, activities]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <div style={{ fontSize: 11, color: "#444", padding: "6px 0" }}>Cargando acciones...</div>;
+  if (!activities || activities.length === 0) return <div style={{ fontSize: 11, color: "#333", padding: "4px 0" }}>Sin acciones registradas en el panel.</div>;
+
+  const ACTION_LABELS: Record<string, string> = {
+    panel_login: "Ingresó al panel",
+    panel_visit: "Visitó el panel",
+    dish_edit: "Editó un plato",
+    dish_create: "Creó un plato",
+    dish_delete: "Eliminó un plato",
+    dish_show: "Mostró un plato",
+    dish_hide: "Ocultó un plato",
+    photo_upload: "Subió foto",
+    category_create: "Creó categoría",
+    category_edit: "Editó categoría",
+    category_delete: "Eliminó categoría",
+    settings_change: "Cambió configuración",
+    promo_create: "Creó promoción",
+    announcement_create: "Creó anuncio",
+  };
+
+  // Group by unique IPs seen
+  const uniqueIps = [...new Set(activities.map((a) => a.ip).filter(Boolean))];
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+        Acciones en panel
+        {uniqueIps.length > 0 && (
+          <span style={{ fontSize: 9, color: "#555", fontWeight: 500, background: "rgba(255,255,255,0.04)", padding: "1px 6px", borderRadius: 4 }}>
+            IPs: {uniqueIps.join(", ")}
+          </span>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {activities.map((a) => {
+          const label = ACTION_LABELS[a.action] || a.action;
+          const d = new Date(a.createdAt);
+          const ts = `${d.getDate()}/${d.getMonth() + 1} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+          const device = (a.details as any)?.deviceType;
+          return (
+            <div key={a.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 11, padding: "3px 0", borderBottom: "1px solid #111" }}>
+              <span style={{ color: "#333", minWidth: 90 }}>{ts}</span>
+              <span style={{ color: device === "mobile" ? "#60a5fa" : "#888" }}>{device === "mobile" ? "📱" : "💻"}</span>
+              <span style={{ color: "#aaa", flex: 1 }}>{label}</span>
+              {a.ip && <span style={{ color: "#444", fontSize: 10, fontFamily: "monospace" }}>{a.ip}</span>}
+              {(a.details as any)?.email && (
+                <span style={{ color: "#555", fontSize: 10 }}>{(a.details as any).email}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

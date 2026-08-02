@@ -30,13 +30,14 @@ export const metadata: Metadata = {
     siteName: "QuieroComer.cl",
     locale: "es_CL",
     type: "website",
-    images: [{ url: "https://quierocomer.com/opengraph-image", width: 1200, height: 630 }],
+    images: [{ url: "https://quierocomer.com/opengraph-image", width: 300, height: 300 }],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "QuieroComer.cl — Descubre qué pedir en restaurantes de Chile",
     description:
       "Encuentra los mejores platos de restaurantes en Chile. Fotos reales, precios actualizados.",
+    images: ["https://quierocomer.com/opengraph-image"],
   },
 };
 
