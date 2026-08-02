@@ -817,51 +817,150 @@ function PanelActivitiesBlock({ leadId }: { leadId: string }) {
   if (loading) return <div style={{ fontSize: 11, color: "#444", padding: "6px 0" }}>Cargando acciones...</div>;
   if (!activities || activities.length === 0) return <div style={{ fontSize: 11, color: "#333", padding: "4px 0" }}>Sin acciones registradas en el panel.</div>;
 
-  const ACTION_LABELS: Record<string, string> = {
-    panel_login: "Ingresó al panel",
-    panel_visit: "Visitó el panel",
-    dish_edit: "Editó un plato",
-    dish_create: "Creó un plato",
-    dish_delete: "Eliminó un plato",
-    dish_show: "Mostró un plato",
-    dish_hide: "Ocultó un plato",
-    photo_upload: "Subió foto",
-    category_create: "Creó categoría",
-    category_edit: "Editó categoría",
-    category_delete: "Eliminó categoría",
-    settings_change: "Cambió configuración",
-    promo_create: "Creó promoción",
-    announcement_create: "Creó anuncio",
+  const SECTION_LABELS: Record<string, string> = {
+    "": "Dashboard",
+    inicio: "Dashboard",
+    menus: "Carta / Menús",
+    analytics: "Analytics",
+    clientes: "Clientes",
+    loyalty: "Loyalty",
+    "pedir-online": "Pedir Online",
+    promociones: "Promociones",
+    anuncios: "Anuncios",
+    configuracion: "Configuración",
+    ajustes: "Ajustes",
+    "mi-restaurante": "Mi Restaurante",
+    facturacion: "Facturación",
+    suscripcion: "Suscripción",
+    qr: "Código QR",
+    exportar: "Exportar",
+    garzon: "Garzón",
+    control: "Control de stock",
+    valoraciones: "Valoraciones",
+    segmentos: "Segmentos",
+    campanias: "Campañas",
+    usuarios: "Usuarios",
+    automatizaciones: "Automatizaciones",
+    ayuda: "Ayuda",
+    perfil: "Perfil",
+    live: "Vista en vivo",
+    invite: "Invitar equipo",
   };
+
+  function getLabel(a: PanelActivity): string {
+    const det = a.details as any;
+    if (a.action === "panel_visit") {
+      const raw = det?.section || "";
+      // section puede ser "menus", "loyalty/miembros", "pedir-online", etc.
+      const base = raw.split("/")[0];
+      const sub = raw.includes("/") ? raw.split("/").slice(1).join("/") : null;
+      const sectionName = SECTION_LABELS[base] || base || "Dashboard";
+      return sub ? `Visitó ${sectionName} › ${sub}` : `Visitó ${sectionName}`;
+    }
+    const LABELS: Record<string, string> = {
+      panel_login: "Ingresó al panel",
+      dish_edit: "Editó un plato",
+      dish_create: "Creó un plato",
+      dish_delete: "Eliminó un plato",
+      dish_show: "Mostró un plato",
+      dish_hide: "Ocultó un plato",
+      photo_upload: "Subió foto",
+      category_create: "Creó categoría",
+      category_edit: "Editó categoría",
+      category_delete: "Eliminó categoría",
+      category_show: "Mostró categoría",
+      category_hide: "Ocultó categoría",
+      settings_change: "Cambió configuración",
+      promo_create: "Creó promoción",
+      promo_edit: "Editó promoción",
+      announcement_create: "Creó anuncio",
+      modifier_create: "Creó modificador",
+      modifier_edit: "Editó modificador",
+      modifier_delete: "Eliminó modificador",
+      pedidos_online_visit: "Visitó Pedir Online",
+      pedidos_online_activated: "Activó Pedir Online",
+      loyalty_visit: "Visitó Loyalty",
+      loyalty_member_add: "Agregó miembro Loyalty",
+      qr_download: "Descargó QR",
+      menu_create: "Creó menú",
+      menu_edit: "Editó menú",
+      menu_delete: "Eliminó menú",
+      dish_move: "Movió un plato",
+      dish_reorder: "Reordenó platos",
+      import_start: "Inició importación",
+      import_complete: "Completó importación",
+      menu_import: "Importó carta",
+      password_change: "Cambió contraseña",
+      weekly_email_toggle: "Cambió email semanal",
+      exportar_carta_viewed: "Vio exportar carta",
+      exportar_pdf_download: "Descargó PDF",
+      exportar_image_download: "Descargó imagen",
+      plan_modal_opened: "Abrió modal de planes",
+      plan_subscribe_clicked: "Hizo clic en suscribirse",
+    };
+    return LABELS[a.action] || a.action;
+  }
 
   // Group by unique IPs seen
   const uniqueIps = [...new Set(activities.map((a) => a.ip).filter(Boolean))];
+
+  // Collapse consecutive panel_visit to same section (keep first + count)
+  const collapsed: Array<PanelActivity & { count: number }> = [];
+  for (const a of activities) {
+    const prev = collapsed[collapsed.length - 1];
+    const det = a.details as any;
+    const prevDet = prev?.details as any;
+    if (
+      prev &&
+      a.action === "panel_visit" &&
+      prev.action === "panel_visit" &&
+      det?.section === prevDet?.section
+    ) {
+      prev.count++;
+    } else {
+      collapsed.push({ ...a, count: 1 });
+    }
+  }
 
   return (
     <div style={{ marginTop: 10 }}>
       <div style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
         Acciones en panel
+        <span style={{ color: "#555", fontWeight: 400, fontSize: 9, textTransform: "none" }}>{activities.length} eventos</span>
         {uniqueIps.length > 0 && (
-          <span style={{ fontSize: 9, color: "#555", fontWeight: 500, background: "rgba(255,255,255,0.04)", padding: "1px 6px", borderRadius: 4 }}>
-            IPs: {uniqueIps.join(", ")}
+          <span style={{ fontSize: 9, color: "#ef4444", fontWeight: 600, background: "rgba(239,68,68,0.08)", padding: "1px 6px", borderRadius: 4, border: "1px solid rgba(239,68,68,0.15)" }}>
+            IP{uniqueIps.length > 1 ? "s" : ""}: {uniqueIps.join(", ")}
           </span>
         )}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {activities.map((a) => {
-          const label = ACTION_LABELS[a.action] || a.action;
+      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        {collapsed.map((a) => {
+          const label = getLabel(a);
           const d = new Date(a.createdAt);
           const ts = `${d.getDate()}/${d.getMonth() + 1} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
           const device = (a.details as any)?.deviceType;
+          const isVisit = a.action === "panel_visit";
+          const isAction = !isVisit && a.action !== "panel_login";
           return (
-            <div key={a.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 11, padding: "3px 0", borderBottom: "1px solid #111" }}>
-              <span style={{ color: "#333", minWidth: 90 }}>{ts}</span>
-              <span style={{ color: device === "mobile" ? "#60a5fa" : "#888" }}>{device === "mobile" ? "📱" : "💻"}</span>
-              <span style={{ color: "#aaa", flex: 1 }}>{label}</span>
-              {a.ip && <span style={{ color: "#444", fontSize: 10, fontFamily: "monospace" }}>{a.ip}</span>}
+            <div key={a.id} style={{
+              display: "flex", gap: 8, alignItems: "center", fontSize: 11,
+              padding: "3px 0", borderBottom: "1px solid #0d0d0d",
+              opacity: isVisit ? 0.65 : 1,
+            }}>
+              <span style={{ color: "#333", minWidth: 90, fontFamily: "monospace", fontSize: 10 }}>{ts}</span>
+              <span title={device}>{device === "mobile" ? "📱" : "💻"}</span>
+              <span style={{
+                flex: 1,
+                color: isAction ? "#e8c87a" : isVisit ? "#666" : "#aaa",
+                fontWeight: isAction ? 600 : 400,
+              }}>
+                {label}
+                {a.count > 1 && <span style={{ color: "#444", fontSize: 10, marginLeft: 4 }}>×{a.count}</span>}
+              </span>
               {(a.details as any)?.email && (
                 <span style={{ color: "#555", fontSize: 10 }}>{(a.details as any).email}</span>
               )}
+              {a.ip && <span style={{ color: "#333", fontSize: 10, fontFamily: "monospace" }}>{a.ip}</span>}
             </div>
           );
         })}
