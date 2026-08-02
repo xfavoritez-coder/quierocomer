@@ -250,7 +250,7 @@ export default function LoyaltyMembersPage() {
                 </p>
                 {m.birthDate && (
                   <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                    🎂 {new Date(m.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long" })}
+                    🎂 {new Date(m.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", timeZone: "UTC" })}
                   </p>
                 )}
 

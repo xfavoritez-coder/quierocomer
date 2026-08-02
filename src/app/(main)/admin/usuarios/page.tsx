@@ -132,7 +132,7 @@ export default function UsuariosPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
             <div><p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 2px", textTransform: "uppercase" }}>Registro</p><p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0 }}>{new Date(u.createdAt).toLocaleDateString("es-CL")}</p></div>
-            <div><p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 2px", textTransform: "uppercase" }}>Cumpleaños</p><p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0 }}>{u.birthDate ? new Date(u.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long" }) : "—"}</p></div>
+            <div><p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 2px", textTransform: "uppercase" }}>Cumpleaños</p><p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0 }}>{u.birthDate ? new Date(u.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", timeZone: "UTC" }) : "—"}</p></div>
             <div><p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 2px", textTransform: "uppercase" }}>Dieta</p><p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0 }}>{DIET_LABELS[u.dietType || ""] || "—"}</p></div>
           </div>
 

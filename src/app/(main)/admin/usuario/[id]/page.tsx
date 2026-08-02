@@ -158,7 +158,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
             {user?.restrictions?.filter(r => r !== "ninguna").map(r => (
               <span key={r} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", background: "rgba(255,100,100,0.08)", border: "1px solid rgba(255,100,100,0.15)", borderRadius: 6, color: "#ff6b6b" }}>Sin {r}</span>
             ))}
-            {user?.birthDate && <span style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 6, color: "#7fbfdc" }}>🎂 {new Date(user.birthDate).toLocaleDateString("es-CL")}</span>}
+            {user?.birthDate && <span style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 6, color: "#7fbfdc" }}>🎂 {new Date(user.birthDate).toLocaleDateString("es-CL", { timeZone: "UTC" })}</span>}
             {prefs?.dietType && !user?.dietType && <span style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 6, color: "#F4A623" }}>{DIET_LABELS[prefs.dietType] || prefs.dietType} (localStorage)</span>}
           </div>
         </div>
