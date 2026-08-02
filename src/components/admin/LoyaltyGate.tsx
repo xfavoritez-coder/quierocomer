@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { grossOf, ivaOf } from "@/lib/billing/plans-config";
 import { LOYALTY_PLAN_NET, LOYALTY_TRIAL_DAYS } from "@/lib/billing/plans-central";
 import { toast } from "sonner";
@@ -217,21 +217,26 @@ function LoyaltyModal({
 
 // ── Gate principal ────────────────────────────────────────────────────────────
 export default function LoyaltyGate({ children }: { children: React.ReactNode }) {
-  const { selectedRestaurantId } = useAdminSession();
+  const { selectedRestaurantId, loading: sessionLoading } = usePanelSession();
   const [status, setStatus] = useState<LoyaltyStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
+    if (sessionLoading) return;
     if (!selectedRestaurantId) { setLoading(false); return; }
     fetch(`/api/billing/status?restaurantId=${selectedRestaurantId}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { setStatus(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [selectedRestaurantId]);
+  }, [selectedRestaurantId, sessionLoading]);
 
-  if (loading) return null;
+  if (loading || sessionLoading) return (
+    <p style={{ fontFamily: "var(--font-body)", color: "var(--adm-text3)", fontSize: "0.85rem", padding: 20 }}>
+      Cargando…
+    </p>
+  );
   if (!status) return <>{children}</>;
   if (status.billingExempt) return <>{children}</>;
 
