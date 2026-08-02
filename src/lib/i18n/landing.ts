@@ -21,7 +21,8 @@ const es = {
 
   // Home modules
   module_qr_label: "Carta QR + Pedidos Online",
-  module_qr_desc: "Recibe pedidos directamente desde la carta — delivery, retiro o en mesa. Sin comisiones.",
+  module_qr_desc: "Carta multidioma, imprimir en PDF diseño profesional, llamar al garzón y mucho más.",
+  module_qr_subdesc: "Recibe pedidos directamente desde la carta — delivery, retiro o en mesa. Sin comisiones.",
   module_qr_demo: "Ver demo →",
   module_qr_more: "Conocer más →",
   module_loyalty_label: "Programa de Loyalty",
@@ -145,8 +146,9 @@ const en: typeof es = {
   hero_note: "No credit card · No contracts",
 
   // Home modules
-  module_qr_label: "Smart QR Menu",
+  module_qr_label: "QR Menu + Online Orders",
   module_qr_desc: "Multilingual menu, professional PDF export, waiter call and much more.",
+  module_qr_subdesc: "Receive orders directly from the menu — delivery, pickup or table. No commissions.",
   module_qr_demo: "See demo →",
   module_qr_more: "Learn more →",
   module_loyalty_label: "Loyalty Program",
