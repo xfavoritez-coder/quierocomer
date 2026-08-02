@@ -38,10 +38,11 @@ export async function GET() {
     const ownerLogins = activatedOwnerIds.length
       ? await prisma.restaurantOwner.findMany({
           where: { id: { in: activatedOwnerIds } },
-          select: { id: true, lastLoginAt: true },
+          select: { id: true, lastLoginAt: true, emailVerificado: true },
         })
       : [];
     const ownerLoginMap = new Map(ownerLogins.map((o) => [o.id, o.lastLoginAt]));
+    const ownerEmailVerifMap = new Map(ownerLogins.map((o) => [o.id, o.emailVerificado]));
 
     const total = leads.length;
     const reachedStep2 = leads.filter((l) => l.step2At).length;
@@ -124,10 +125,14 @@ export async function GET() {
         ownerLastLoginAt && l.activatedAt && ownerLastLoginAt > new Date(l.activatedAt)
           ? ownerLastLoginAt
           : null;
+      const emailVerificado = l.convertedToOwnerId
+        ? (ownerEmailVerifMap.get(l.convertedToOwnerId) ?? null)
+        : null;
       return {
         ...l,
         device: leadDevice.get(l.id) || null,
         ownerLastLoginAt: ownerLoginAfterActivation,
+        emailVerificado,
       };
     });
 

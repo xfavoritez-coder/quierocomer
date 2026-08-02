@@ -36,6 +36,7 @@ interface Lead {
   activarVisitedAt: string | null;
   activatedAt: string | null;
   ownerLastLoginAt: string | null;
+  emailVerificado: boolean | null;
   errorLog: string | null;
   events?: any[];
 }
@@ -350,6 +351,12 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
               )}
               {lead.activatedAt && (
                 <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "rgba(67,209,123,0.12)", color: "#43d17b" }}>ACTIVADO</span>
+              )}
+              {lead.activatedAt && lead.emailVerificado === false && (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "rgba(239,68,68,0.12)", color: "#f87171" }}>EMAIL NO VERIFICADO</span>
+              )}
+              {lead.activatedAt && lead.emailVerificado === true && (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>✓ VERIFICADO</span>
               )}
               {lead.emailBouncedAt && (
                 <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "rgba(239,68,68,0.12)", color: "#f87171" }}>REBOTÓ</span>

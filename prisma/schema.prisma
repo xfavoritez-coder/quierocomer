@@ -203,6 +203,8 @@ model RestaurantOwner {
   mustChangePassword Boolean            @default(false)
   whatsapp           String?
   seenFeatures       String[]           @default([])
+  emailVerificado    Boolean   @default(false)
+  emailVerificadoAt  DateTime?
   restaurants        Restaurant[]
   uploadedTickets    RestaurantTicket[]
 
@@ -1175,6 +1177,7 @@ model PanelActivity {
   ownerId      String?
   action       String
   details      Json?
+  ip        String?
   createdAt    DateTime @default(now())
 
   @@index([restaurantId, createdAt])

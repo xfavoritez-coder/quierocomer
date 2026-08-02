@@ -2,41 +2,52 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
-const PUBLIC_PANEL_ROUTES = ["/panel/login", "/panel/forgot-password", "/panel/reset-password", "/panel/invite"];
-const PUBLIC_PANEL_API_ROUTES = ["/api/panel/login", "/api/panel/demo-auth", "/api/panel/invite"];
+const PUBLIC_PANEL_ROUTES = [
+  "/panel/login",
+  "/panel/forgot-password",
+  "/panel/reset-password",
+  "/panel/invite",
+  "/panel/verificar-email",
+];
+const PUBLIC_PANEL_API_ROUTES = [
+  "/api/panel/login",
+  "/api/panel/demo-auth",
+  "/api/panel/invite",
+  "/api/panel/auto-login",
+  "/api/panel/magic-entry",
+  "/api/panel/resend-verification",
+  "/api/panel/change-email",
+];
 const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/api/admin/reset-password"];
 
-// Bots agresivos que no deben gatillar server functions.
-// facebookexternalhit (OG previews) se permite; meta-externalagent es el crawler masivo.
 const BLOCKED_UA_PATTERNS = [
   "meta-externalagent",
-  "facebookbot",          // rastreador de índice FB (diferente al OG preview)
-  "AdsBot-Google",        // Google Ads bot (no necesita ver páginas de carta)
+  "facebookbot",
+  "AdsBot-Google",
 ];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // --- Bloqueo de bots agresivos (edge, sin compute) ---
   const ua = request.headers.get("user-agent") || "";
   if (BLOCKED_UA_PATTERNS.some(p => ua.toLowerCase().includes(p.toLowerCase()))) {
     return new NextResponse(null, { status: 403 });
   }
 
-  // --- Redirect /qr → / (landing page now lives at /) ---
   if (pathname === "/qr" || pathname === "/qr/") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // --- Loyalty: ahora es sección nativa del panel en /panel/loyalty ---
-  // Redirige los enlaces antiguos /loyalty → /panel/loyalty (el gate de /panel maneja el acceso).
   if (pathname === "/loyalty" || pathname.startsWith("/loyalty/")) {
-    const rest = pathname.slice("/loyalty".length); // "" o "/miembros"
+    const rest = pathname.slice("/loyalty".length);
     return NextResponse.redirect(new URL(`/panel/loyalty${rest}`, request.url));
   }
 
-  // --- Panel page routes (owner panel) ---
+  // Panel page routes (owner panel)
   if (pathname.startsWith("/panel")) {
+    // WhatsApp short links: /panel/123 (numeric) — entry point, no token required
+    if (/^\/panel\/\d+$/.test(pathname)) return NextResponse.next();
+
     if (PUBLIC_PANEL_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
       return NextResponse.next();
     }
@@ -44,10 +55,18 @@ export function middleware(request: NextRequest) {
     if (!token) {
       return NextResponse.redirect(new URL("/panel/login", request.url));
     }
+    // Email verification gate: only for non-demo sessions
+    const isDemo = request.cookies.get("panel_demo")?.value;
+    if (!isDemo) {
+      const emailVerif = request.cookies.get("panel_ev")?.value;
+      if (emailVerif !== "1") {
+        return NextResponse.redirect(new URL("/panel/verificar-email", request.url));
+      }
+    }
     return NextResponse.next();
   }
 
-  // --- Panel API routes ---
+  // Panel API routes
   if (pathname.startsWith("/api/panel")) {
     if (PUBLIC_PANEL_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
       return NextResponse.next();
@@ -59,7 +78,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // --- Admin page routes (superadmin) ---
+  // Admin page routes (superadmin)
   if (pathname.startsWith("/admin")) {
     if (PUBLIC_ADMIN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
       return NextResponse.next();
@@ -71,7 +90,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // --- Admin API routes ---
+  // Admin API routes
   if (pathname.startsWith("/api/admin")) {
     if (PUBLIC_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
       return NextResponse.next();
@@ -88,7 +107,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Bloqueo de bots aplica a todas las rutas excepto estáticos (_next, favicon, etc.)
     "/((?!_next/static|_next/image|favicon|og\\.png|robots\\.txt|sitemap).*)",
   ],
 };

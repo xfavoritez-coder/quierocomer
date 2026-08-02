@@ -11,6 +11,7 @@ const SECRET = process.env.AUTO_LOGIN_SECRET || "qc-auto-login-secret-2026";
  * GET /api/panel/auto-login?oid=<ownerId>&sig=<signature>&t=<timestamp>
  *
  * Token is valid for 7 days from creation.
+ * Clicking this link also marks the email as verified.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -48,7 +49,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/panel/login", req.url));
   }
 
-  await prisma.restaurantOwner.update({ where: { id: oid }, data: { lastLoginAt: new Date() } });
+  // Mark email as verified (clicking the link from email proves the email is real)
+  await prisma.restaurantOwner.update({
+    where: { id: oid },
+    data: {
+      lastLoginAt: new Date(),
+      emailVerificado: true,
+      emailVerificadoAt: new Date(),
+    },
+  });
 
   const token = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
@@ -59,7 +68,9 @@ export async function GET(req: NextRequest) {
   const response = NextResponse.redirect(new URL(destination, req.url));
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
   response.cookies.set("panel_role", owner.role, { ...base, httpOnly: true });
-  response.cookies.set("panel_id", owner.id, { ...base, httpOnly: true });
+  response.cookies.set("panel_id", oid, { ...base, httpOnly: true });
+  response.cookies.set("panel_ev", "1", { ...base, httpOnly: true });
+  response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
 
   return response;
 }

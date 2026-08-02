@@ -19,23 +19,33 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/panel/login?error=link_expired", req.url));
   }
 
-  // Verify owner exists
   const owner = await prisma.restaurantOwner.findUnique({
     where: { id: payload.id },
-    select: { id: true, status: true },
+    select: { id: true, role: true, status: true },
   });
 
   if (!owner || owner.status === "SUSPENDED") {
     return NextResponse.redirect(new URL("/panel/login?error=invalid", req.url));
   }
 
+  // Magic entry (WhatsApp link) also verifies email
+  await prisma.restaurantOwner.update({
+    where: { id: owner.id },
+    data: {
+      lastLoginAt: new Date(),
+      emailVerificado: true,
+      emailVerificadoAt: new Date(),
+    },
+  });
+
   const panelToken = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
   const response = NextResponse.redirect(new URL(redirectTo, "https://quierocomer.com"));
   response.cookies.set("panel_token", panelToken, { ...base, httpOnly: true });
-  response.cookies.set("panel_role", "OWNER", { ...base, httpOnly: true });
+  response.cookies.set("panel_role", owner.role, { ...base, httpOnly: true });
   response.cookies.set("panel_id", owner.id, { ...base, httpOnly: true });
+  response.cookies.set("panel_ev", "1", { ...base, httpOnly: true });
   response.cookies.set("panel_logged", "1", { ...base, httpOnly: false });
 
   return response;

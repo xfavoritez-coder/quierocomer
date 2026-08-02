@@ -26,6 +26,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No encontrado o ya activado" }, { status: 404 });
   }
 
+  // Block activation if email not verified
+  const ownerCheck = await prisma.restaurantOwner.findFirst({
+    where: { restaurants: { some: { id: restaurantId } } },
+    select: { id: true, emailVerificado: true },
+  });
+  if (ownerCheck && !ownerCheck.emailVerificado) {
+    return NextResponse.json({ error: "email_not_verified", message: "Debes verificar tu correo antes de activar tu plan." }, { status: 403 });
+  }
+
   // All plans from /planes get 7 days of premium trial
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 7);

@@ -18,6 +18,15 @@ export async function POST(req: NextRequest) {
   });
   if (!restaurant || !restaurant.isDemo) return NextResponse.json({ error: "not found or already activated" }, { status: 404 });
 
+  // Block activation if email not verified
+  const ownerCheck = await prisma.restaurantOwner.findFirst({
+    where: { restaurants: { some: { id: restaurantId } } },
+    select: { id: true, emailVerificado: true },
+  });
+  if (ownerCheck && !ownerCheck.emailVerificado) {
+    return NextResponse.json({ error: "email_not_verified", message: "Debes verificar tu correo antes de activar tu plan." }, { status: 403 });
+  }
+
   // Guard: atomically set isDemo=false to prevent double activation
   const { count } = await prisma.restaurant.updateMany({
     where: { id: restaurantId, isDemo: true },
