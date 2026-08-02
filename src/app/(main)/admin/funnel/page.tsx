@@ -739,14 +739,16 @@ function DoctorInline({ events }: { events: any[] }) {
 
 /* ─── Delete Button (solo lead) ─── */
 function DeleteButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
-  const [state, setState] = useState<"idle" | "confirm" | "loading">("idle");
+  const [state, setState] = useState<"idle" | "confirm" | "loading" | "error">("idle");
   const del = async () => {
     setState("loading");
     try {
       const res = await fetch(`/api/subircarta/${leadId}`, { method: "DELETE" });
-      if (res.ok) onDone(); else setState("idle");
-    } catch { setState("idle"); }
+      if (res.ok) onDone();
+      else { setState("error"); setTimeout(() => setState("idle"), 3000); }
+    } catch { setState("error"); setTimeout(() => setState("idle"), 3000); }
   };
+  if (state === "error") return <span style={{ fontSize: 10, color: "#f87171" }}>Error ✕</span>;
   if (state === "confirm") return (
     <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
       <button onClick={del} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>Confirmar</button>
@@ -762,14 +764,21 @@ function DeleteButton({ leadId, onDone }: { leadId: string; onDone: () => void }
 
 /* ─── Nuke Button (elimina cuenta completa: lead + owner + restaurant) ─── */
 function NukeButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
-  const [state, setState] = useState<"idle" | "confirm" | "loading">("idle");
+  const [state, setState] = useState<"idle" | "confirm" | "loading" | "error">("idle");
   const nuke = async () => {
     setState("loading");
     try {
       const res = await fetch(`/api/admin/lead/${leadId}/nuke`, { method: "DELETE" });
-      if (res.ok) onDone(); else setState("idle");
-    } catch { setState("idle"); }
+      if (res.ok) onDone();
+      else {
+        const data = await res.json().catch(() => ({}));
+        console.error("[nuke]", data.error);
+        setState("error");
+        setTimeout(() => setState("idle"), 4000);
+      }
+    } catch { setState("error"); setTimeout(() => setState("idle"), 4000); }
   };
+  if (state === "error") return <span style={{ fontSize: 10, color: "#f87171" }}>Error al eliminar ✕</span>;
   if (state === "confirm") return (
     <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
       <span style={{ fontSize: 10, color: "#f87171" }}>¿Eliminar cuenta?</span>
