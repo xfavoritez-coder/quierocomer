@@ -108,6 +108,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Completa nombre del local y email" }, { status: 400 });
   }
 
+  // Validate WhatsApp (optional field — only validate if provided)
+  if (whatsapp?.trim()) {
+    const digits = whatsapp.replace(/\D/g, "");
+    if (!/^9\d{8}$/.test(digits)) {
+      return NextResponse.json({ error: "Número de WhatsApp inválido. Ingresa 9 dígitos comenzando con 9 (ej: 912345678)" }, { status: 400 });
+    }
+  }
+
   // Title Case: "horus vegan" → "Horus Vegan"
   const toTitleCase = (s: string) => s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
   const localName = toTitleCase(rawLocalName);

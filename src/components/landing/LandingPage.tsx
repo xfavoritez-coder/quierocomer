@@ -40,6 +40,14 @@ export default function LandingPage() {
     e.preventDefault();
     setSubmitting(true);
     setFormError("");
+    if (formData.whatsapp.trim()) {
+      const digits = formData.whatsapp.replace(/\D/g, "");
+      if (!/^9\d{8}$/.test(digits)) {
+        setFormError("Número de WhatsApp inválido. Ingresa 9 dígitos comenzando con 9 (ej: 912345678)");
+        setSubmitting(false);
+        return;
+      }
+    }
     try {
       const res = await fetch("/api/activar/registrar", {
         method: "POST",
@@ -696,7 +704,8 @@ export default function LandingPage() {
                       type="tel"
                       placeholder={t("form_whatsapp_ph")}
                       value={formData.whatsapp}
-                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      maxLength={9}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value.replace(/\D/g, "") })}
                     />
                   </div>
                 </div>
