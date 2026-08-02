@@ -20,8 +20,8 @@ const es = {
   hero_note: "Sin tarjeta · Sin contratos",
 
   // Home modules
-  module_qr_label: "Carta QR Inteligente",
-  module_qr_desc: "Carta multidioma, imprimir en PDF diseño profesional, llamar al garzón y mucho más.",
+  module_qr_label: "Carta QR + Pedidos Online",
+  module_qr_desc: "Recibe pedidos directamente desde la carta — delivery, retiro o en mesa. Sin comisiones.",
   module_qr_demo: "Ver demo →",
   module_qr_more: "Conocer más →",
   module_loyalty_label: "Programa de Loyalty",
