@@ -147,7 +147,7 @@ async function findRecipients(
       return users.filter(u => {
         if (!u.birthDate) return false;
         const bd = new Date(u.birthDate);
-        return bd.getMonth() + 1 === month && bd.getDate() === day;
+        return bd.getUTCMonth() + 1 === month && bd.getUTCDate() === day;
       });
     }
 

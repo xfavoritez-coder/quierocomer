@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const email = typeof body.email === "string" ? body.email.trim().slice(0, 120) : "";
     const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
     const birthDateRaw = typeof body.birthDate === "string" ? body.birthDate.trim() : "";
-    const birthDate = birthDateRaw ? new Date(birthDateRaw) : null;
+    const birthDate = birthDateRaw ? new Date(birthDateRaw + "T12:00:00Z") : null;
 
     if (!slug) return NextResponse.json({ error: "Restaurante no especificado" }, { status: 400 });
     if (!name && !email && !phone) {

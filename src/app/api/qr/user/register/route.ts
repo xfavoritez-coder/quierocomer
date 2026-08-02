@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       where: { email },
       update: {
         ...(name && { name }),
-        ...(birthDate && { birthDate: new Date(birthDate) }),
+        ...(birthDate && { birthDate: new Date(birthDate + "T12:00:00Z") }),
         ...(dietType && { dietType }),
         ...(restrictions && { restrictions }),
         ...(dislikes && { dislikes }),
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       create: {
         email,
         name: name || null,
-        birthDate: birthDate ? new Date(birthDate) : null,
+        birthDate: birthDate ? new Date(birthDate + "T12:00:00Z") : null,
         dietType: dietType || null,
         restrictions: restrictions || [],
         dislikes: dislikes || [],

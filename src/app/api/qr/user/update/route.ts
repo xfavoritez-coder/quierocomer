@@ -14,7 +14,7 @@ export async function PATCH(request: Request) {
     where: { id: userId },
     data: {
       ...(body.name !== undefined && { name: body.name }),
-      ...(body.birthDate !== undefined && { birthDate: body.birthDate ? new Date(body.birthDate) : null }),
+      ...(body.birthDate !== undefined && { birthDate: body.birthDate ? new Date(body.birthDate + "T12:00:00Z") : null }),
       ...(body.dietType !== undefined && { dietType: body.dietType }),
       ...(body.restrictions !== undefined && { restrictions: body.restrictions }),
       ...(body.dislikes !== undefined && { dislikes: body.dislikes }),

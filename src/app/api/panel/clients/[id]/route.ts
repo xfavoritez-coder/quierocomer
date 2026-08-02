@@ -45,7 +45,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.birthDate === null || body.birthDate === "") {
       data.birthDate = null;
     } else if (typeof body.birthDate === "string") {
-      const d = new Date(body.birthDate);
+      const d = new Date(body.birthDate + "T12:00:00Z");
       if (isNaN(d.getTime())) return NextResponse.json({ error: "Fecha invalida" }, { status: 400 });
       data.birthDate = d;
     }
