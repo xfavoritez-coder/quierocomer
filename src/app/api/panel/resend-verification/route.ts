@@ -7,16 +7,23 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
 export async function POST(req: NextRequest) {
   try {
-    const { ownerId } = await req.json();
-    if (!ownerId) return NextResponse.json({ error: "missing ownerId" }, { status: 400 });
+    const body = await req.json();
+    const { ownerId, email: rawEmail } = body;
+    if (!ownerId && !rawEmail) return NextResponse.json({ error: "missing ownerId or email" }, { status: 400 });
 
-    const owner = await prisma.restaurantOwner.findUnique({
-      where: { id: ownerId },
-      select: { id: true, email: true, name: true, status: true },
-    });
+    const owner = ownerId
+      ? await prisma.restaurantOwner.findUnique({
+          where: { id: ownerId },
+          select: { id: true, email: true, name: true, status: true },
+        })
+      : await prisma.restaurantOwner.findFirst({
+          where: { email: rawEmail.trim().toLowerCase() },
+          select: { id: true, email: true, name: true, status: true },
+        });
 
     if (!owner || owner.status !== "ACTIVE") {
-      return NextResponse.json({ error: "Owner no encontrado" }, { status: 404 });
+      // Return ok to avoid email enumeration
+      return NextResponse.json({ ok: true });
     }
 
     const autoLoginUrl = buildAutoLoginUrl(BASE_URL, owner.id);

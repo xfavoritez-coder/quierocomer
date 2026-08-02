@@ -14,23 +14,17 @@ import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
  */
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-const GOLD = "#e8930a";
 
-function welcomeEmailHtml({
+function confirmEmailHtml({
   ownerName,
   restaurantName,
-  email,
-  password,
-  autoLoginUrl,
+  confirmUrl,
 }: {
   ownerName: string;
   restaurantName: string;
-  email: string;
-  password: string;
-  autoLoginUrl: string;
+  confirmUrl: string;
 }): string {
   const firstName = ownerName.split(" ")[0];
-  const panelStaticUrl = `https://quierocomer.com/panel`;
   return `<html><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,72 +45,42 @@ function welcomeEmailHtml({
 
 <!-- Main card -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#fffaf1;border-radius:28px;border:1px solid #ead7b7;box-shadow:0 24px 70px rgba(70,45,10,0.10)">
-<tr><td style="padding:28px 22px 24px">
+<tr><td style="padding:28px 22px 28px">
 
 <!-- Title -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:10px">
-<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.15;letter-spacing:-0.02em;margin:0;color:#111111">
-  ${restaurantName}<br/>ya tiene su panel
+<tr><td style="text-align:center;padding-bottom:12px">
+<div style="font-size:36px;margin-bottom:12px">✉️</div>
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.2;letter-spacing:-0.02em;margin:0;color:#111111">
+  Confirma tu cuenta<br/>para <span style="color:#e8930a">${restaurantName}</span>
 </h1>
 </td></tr>
 </table>
 
 <!-- Lead text -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:20px">
-<p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${firstName}, tu cuenta está activa con <strong style="color:#111">7 días Premium gratis</strong>.
+<tr><td style="text-align:center;padding-bottom:24px;padding-top:12px">
+<p style="font-size:15px;color:#7a6547;line-height:1.6;margin:0">
+  ${firstName}, haz clic en el botón para confirmar tu correo y activar tus <strong style="color:#111">7 días Premium gratis</strong>.
 </p>
-</td></tr>
-</table>
-
-<!-- Credentials card -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #ead7b7;border-radius:22px;margin-bottom:22px">
-<tr><td style="padding:22px 20px">
-  <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td style="text-align:center;padding-bottom:14px">
-      <span style="font-size:22px">🔐</span>
-    </td></tr>
-    <tr><td style="text-align:center;padding-bottom:16px">
-      <p style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:800;color:#92400e;margin:0">Tus datos de acceso</p>
-    </td></tr>
-  </table>
-
-  <!-- Email -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
-  <tr><td style="padding:12px 14px">
-    <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Email</p>
-    <p style="font-size:14px;color:#111;font-weight:700;margin:0;word-break:break-word">${email}</p>
-  </td></tr>
-  </table>
-
-  <!-- Password -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
-  <tr><td style="padding:12px 14px">
-    <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Contraseña</p>
-    <p style="font-size:14px;color:#111;font-weight:700;margin:0;font-family:monospace,sans-serif;letter-spacing:0.5px">${password}</p>
-  </td></tr>
-  </table>
-
-  <!-- Panel link -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
-  <tr><td style="padding:12px 14px">
-    <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
-    <a href="${panelStaticUrl}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${panelStaticUrl}</a>
-  </td></tr>
-  </table>
-
-  <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso.</p>
 </td></tr>
 </table>
 
 <!-- CTA -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:22px">
-  <a href="${autoLoginUrl}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
-    Entrar a mi panel →
+<tr><td style="text-align:center;padding-bottom:24px">
+  <a href="${confirmUrl}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
+    Confirmar mi cuenta →
   </a>
+</td></tr>
+</table>
+
+<!-- Note -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center">
+<p style="font-size:12px;color:#b8a888;margin:0;line-height:1.5">
+  Si no creaste esta cuenta, puedes ignorar este correo.<br/>El enlace expira en 7 días.
+</p>
 </td></tr>
 </table>
 
@@ -186,9 +150,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    // Crear restaurant sin platos de ejemplo
+    // Crear restaurant en estado NONE — el trial se activa cuando confirme el email
     const restaurant = await prisma.restaurant.create({
       data: {
         name: localName.trim(),
@@ -202,18 +164,15 @@ export async function POST(req: NextRequest) {
         weeklyEmailEnabled: true,
         qrToken,
         qrActivatedAt: new Date(),
-        plan: "PREMIUM",
-        subscriptionStatus: "TRIALING",
-        trialEndsAt: trialEnd,
-        // Loyalty trial activo desde el día 1
-        loyaltyStatus: "TRIALING",
-        loyaltyTrialEndsAt: trialEnd,
+        plan: "FREE",
+        subscriptionStatus: "NONE",
+        loyaltyStatus: "NONE",
         ownerId: owner.id,
         allPhotosReferential: false,
       },
     });
 
-    // Crear Lead para que aparezca en funnel/lifecycle/clientes
+    // Crear Lead (sin activar hasta confirmar email)
     await prisma.lead.create({
       data: {
         localName: localName.trim(),
@@ -223,39 +182,30 @@ export async function POST(req: NextRequest) {
         cartaType: "LINK",
         cartaUrl: null,
         cartaStatus: "DELIVERED",
-        activated: true,
-        activatedAt: new Date(),
+        activated: false,
         completedAt: new Date(),
         generatedSlug: restaurant.slug,
         convertedToOwnerId: owner.id,
       },
     });
 
-    // Generar auto-login URL
-    const autoLoginUrl = buildAutoLoginUrl(BASE_URL, owner.id);
+    // Generar URL de confirmación (auto-login)
+    const confirmUrl = buildAutoLoginUrl(BASE_URL, owner.id);
 
-    // Enviar email de bienvenida con credenciales
+    // Enviar email de confirmación (sin credenciales — las credenciales van después de confirmar)
     sendAdminEmail({
       to: email.trim().toLowerCase(),
-      subject: `🔑 Credenciales de acceso para ${localName}`,
-      html: welcomeEmailHtml({
-        ownerName,
-        restaurantName: localName,
-        email: email.trim().toLowerCase(),
-        password: generatedPassword,
-        autoLoginUrl,
-      }),
-      purpose: "activation_welcome",
+      subject: `Confirma tu cuenta para ${localName} — QuieroComer`,
+      html: confirmEmailHtml({ ownerName, restaurantName: localName, confirmUrl }),
+      purpose: "email_confirmation",
     }).catch((err: unknown) => {
-      console.error("[registrar] Error sending welcome email:", err);
+      console.error("[registrar] Error sending confirmation email:", err);
     });
 
     return NextResponse.json({
       ok: true,
       slug: restaurant.slug,
       email: email.trim().toLowerCase(),
-      generatedPassword,
-      autoLoginUrl,
       ownerName,
       localName,
     });

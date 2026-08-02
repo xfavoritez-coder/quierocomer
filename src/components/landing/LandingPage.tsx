@@ -49,14 +49,13 @@ export default function LandingPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
       trackPurchase("PREMIUM", 49900);
-      // Store welcome data in sessionStorage and redirect to /bienvenida
+      // Store basic info in sessionStorage for /bienvenida (pre-confirmation state, no credentials)
       try {
         sessionStorage.setItem("qc_welcome", JSON.stringify({
           localName: data.localName || formData.localName,
           ownerName: data.ownerName || formData.ownerName,
           email: data.email || formData.email,
-          password: data.generatedPassword || "",
-          autoLoginUrl: data.autoLoginUrl || "",
+          password: "",
           slug: data.slug || "",
         }));
       } catch {}
