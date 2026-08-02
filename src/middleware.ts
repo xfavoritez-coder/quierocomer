@@ -55,14 +55,6 @@ export function middleware(request: NextRequest) {
     if (!token) {
       return NextResponse.redirect(new URL("/panel/login", request.url));
     }
-    // Email verification gate: only for non-demo sessions
-    const isDemo = request.cookies.get("panel_demo")?.value;
-    if (!isDemo) {
-      const emailVerif = request.cookies.get("panel_ev")?.value;
-      if (emailVerif !== "1") {
-        return NextResponse.redirect(new URL("/panel/verificar-email", request.url));
-      }
-    }
     return NextResponse.next();
   }
 
