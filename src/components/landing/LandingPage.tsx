@@ -151,8 +151,7 @@ export default function LandingPage() {
         .qc-section-title { font-size: clamp(24px, 4vw, 38px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 8px; }
         .qc-section-sub { font-size: 16px; color: var(--gris); margin-bottom: 48px; line-height: 1.5; }
 
-        .qc-modulos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        @media (max-width: 960px) { .qc-modulos-grid { grid-template-columns: 1fr 1fr; } }
+        .qc-modulos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .qc-modulos-grid { grid-template-columns: 1fr; } }
 
         .qc-card { border-radius: 20px; overflow: hidden; padding: 40px; position: relative; text-align: center; }
@@ -275,8 +274,9 @@ export default function LandingPage() {
 
         /* PRECIOS */
         .qc-precios-section { padding: 40px 24px 80px; background: white; }
-        .qc-precios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 840px; margin: 0 auto; }
-        @media (max-width: 680px) { .qc-precios-grid { grid-template-columns: 1fr; } }
+        .qc-precios-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; }
+        @media (max-width: 900px) { .qc-precios-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 580px) { .qc-precios-grid { grid-template-columns: 1fr; } }
         .qc-precio-card { border-radius: 20px; padding: 36px; border: 2px solid var(--linea); }
         .qc-precio-card-featured { border-color: var(--ambar); background: var(--ambar-fondo); }
         .qc-precio-card-purple { border-color: var(--purpura); background: #FAF5FF; }
@@ -497,30 +497,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Carta QR Gratis */}
-              <div className="qc-card" style={{ background: "#f9f9f9", border: "1.5px solid #e5e5e5" }}>
-                <span className="qc-badge" style={{ background: "#e5e5e5", color: "#555" }}>$0 para siempre</span>
-                <h2 style={{ color: "#111" }}>Carta QR gratis para tu local</h2>
-                <p style={{ color: "#555" }}>Sube tus platos, genera un QR y tus clientes ven tu carta al instante. Sin tarjeta, sin vencimiento.</p>
-                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    ["📷", "Fotos de tus platos"],
-                    ["🗂️", "Navegación por categorías"],
-                    ["📱", "QR listo para imprimir"],
-                    ["✏️", "Panel autoadministrable"],
-                  ].map(([icon, text]) => (
-                    <li key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", color: "#444" }}>
-                      <span>{icon}</span><span>{text}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="qc-card-btns">
-                  <button className="qc-btn-outline" onClick={() => openModal("free")} style={{ width: "100%", textAlign: "center" }}>
-                    Empezar gratis →
-                  </button>
-                </div>
-              </div>
-
               {/* Loyalty */}
               <div className="qc-card qc-card-light">
                 <span className="qc-badge qc-badge-dark">Nuevo</span>
@@ -621,6 +597,25 @@ export default function LandingPage() {
             <h2 className="qc-section-title" style={{ marginBottom: 8 }}>{t("pricing_title")}</h2>
             <p className="qc-section-sub">{t("pricing_subtitle")}</p>
             <div className="qc-precios-grid">
+
+              {/* Gratis */}
+              <div className="qc-precio-card" style={{ background: "#FAFAF8", borderColor: "#DDDDD8" }}>
+                <span className="qc-badge" style={{ background: "#ECECEA", color: "#555", marginBottom: 16 }}>Para siempre gratis</span>
+                <div className="qc-precio-name">Carta QR</div>
+                <div className="qc-precio-price" style={{ color: "#555" }}>$0 <span style={{ fontSize: 18 }}>/ mes</span></div>
+                <div className="qc-precio-sub">Sin tarjeta. Sin vencimiento.</div>
+                <ul className="qc-feature-list">
+                  {["Carta digital con fotos", "Navegación por categorías", "QR listo para imprimir", "Panel autoadministrable"].map((f, i) => (
+                    <li key={i}><span className="qc-check" style={{ color: "#999" }}>✓</span>{f}</li>
+                  ))}
+                </ul>
+                <button
+                  style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15, background: "transparent", border: "1.5px solid #DDDDD8", color: "#555", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                  onClick={() => openModal("free")}
+                >
+                  Empezar gratis →
+                </button>
+              </div>
 
               {/* Loyalty */}
               <div className="qc-precio-card qc-precio-card-purple">
