@@ -452,7 +452,7 @@ export default function LandingPage() {
                 <span className="qc-badge qc-badge-dark">Más vendido</span>
                 <h2>{t("module_qr_label")}</h2>
                 <p>{t("module_qr_desc")}</p>
-                <p style={{ fontSize: "0.82rem", color: "#F59E1B", fontWeight: 600, marginTop: -6 }}>{t("module_qr_subdesc")}</p>
+
                 <div className="qc-card-btns">
                   <a href="/carta-qr" className="qc-btn-outline">{t("module_qr_more")}</a>
                   <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_qr_demo")}</a>
