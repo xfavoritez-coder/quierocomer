@@ -298,7 +298,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
                 cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
               }}
             >
-              Ver planes
+              Activar Pro
             </button>
           </div>
         </div>
@@ -345,7 +345,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
                 cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
               }}
             >
-              Ver planes
+              Activar Pro
             </button>
           </div>
         </div>
