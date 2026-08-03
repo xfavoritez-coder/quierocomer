@@ -142,7 +142,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "online_ordering",
     ]),
     featureDisplay: [
-      { text: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante. Edita precios y fotos desde tu celular." },
+      { text: "Carta QR que aumenta tus ventas", tip: "Tus clientes escanean un QR y ven tu carta al instante. Edita precios y fotos desde tu celular." },
       { text: "Pedidos online", tip: "Tus clientes arman su pedido desde el celular y te lo envían por WhatsApp. Sin comisiones ni apps de terceros." },
       { text: "Valoraciones", tip: "Recibe reseñas privadas o redirige a tus clientes a Google Maps." },
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente a inglés y portugués." },

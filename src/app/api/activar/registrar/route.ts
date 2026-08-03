@@ -19,10 +19,12 @@ function confirmEmailHtml({
   ownerName,
   restaurantName,
   confirmUrl,
+  isFree,
 }: {
   ownerName: string;
   restaurantName: string;
   confirmUrl: string;
+  isFree?: boolean;
 }): string {
   const firstName = ownerName.split(" ")[0];
   return `<html><head>
@@ -61,7 +63,7 @@ function confirmEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:24px;padding-top:12px">
 <p style="font-size:15px;color:#7a6547;line-height:1.6;margin:0">
-  ${firstName}, haz clic en el botón para confirmar tu correo y activar tus <strong style="color:#111">7 días Premium gratis</strong>.
+  ${firstName}, haz clic en el botón para confirmar tu correo y ${isFree ? 'activar tu <strong style="color:#111">carta QR gratis</strong>' : 'activar tus <strong style="color:#111">7 días Premium gratis</strong>'}.
 </p>
 </td></tr>
 </table>
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest) {
   let body: { localName?: string; ownerName?: string; email?: string; whatsapp?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Body inválido" }, { status: 400 }); }
 
-  const { localName: rawLocalName, ownerName: rawOwnerName, email, whatsapp } = body;
+  const { localName: rawLocalName, ownerName: rawOwnerName, email, whatsapp, tier } = body as any;
   if (!rawLocalName?.trim() || !email?.trim() || !email.includes("@")) {
     return NextResponse.json({ error: "Completa nombre del local y email" }, { status: 400 });
   }
@@ -188,7 +190,7 @@ export async function POST(req: NextRequest) {
         email: email.trim().toLowerCase(),
         whatsapp: whatsapp?.trim() || null,
         cartaType: "LINK",
-        cartaUrl: null,
+        cartaUrl: tier === "free" ? "__free__" : null,
         cartaStatus: "DELIVERED",
         activated: false,
         completedAt: new Date(),
@@ -204,7 +206,7 @@ export async function POST(req: NextRequest) {
     sendAdminEmail({
       to: email.trim().toLowerCase(),
       subject: `Confirma tu cuenta para ${localName} — QuieroComer`,
-      html: confirmEmailHtml({ ownerName, restaurantName: localName, confirmUrl }),
+      html: confirmEmailHtml({ ownerName, restaurantName: localName, confirmUrl, isFree: tier === "free" }),
       purpose: "email_confirmation",
     }).catch((err: unknown) => {
       console.error("[registrar] Error sending confirmation email:", err);

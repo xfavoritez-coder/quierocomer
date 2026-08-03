@@ -78,19 +78,35 @@ export async function GET(req: NextRequest) {
     });
 
     if (restaurant) {
-      // Activate trial only if not already active (new flow accounts start as NONE)
+      // Check if this is a free-only signup (no trial)
+      const lead = await prisma.lead.findFirst({
+        where: { convertedToOwnerId: oid },
+        select: { cartaUrl: true },
+        orderBy: { createdAt: "desc" },
+      });
+      const isFreeOnly = lead?.cartaUrl === "__free__";
+
+      // Activate trial only if not already active and not a free-only signup
       if (restaurant.subscriptionStatus === "NONE") {
-        const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        await prisma.restaurant.updateMany({
-          where: { ownerId: oid, subscriptionStatus: "NONE" },
-          data: {
-            plan: "PREMIUM",
-            subscriptionStatus: "TRIALING",
-            trialEndsAt: trialEnd,
-            loyaltyStatus: "TRIALING",
-            loyaltyTrialEndsAt: trialEnd,
-          },
-        });
+        if (isFreeOnly) {
+          // Free plan: just mark as non-demo, keep FREE/NONE
+          await prisma.restaurant.updateMany({
+            where: { ownerId: oid, subscriptionStatus: "NONE" },
+            data: { isDemo: false },
+          });
+        } else {
+          const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          await prisma.restaurant.updateMany({
+            where: { ownerId: oid, subscriptionStatus: "NONE" },
+            data: {
+              plan: "PREMIUM",
+              subscriptionStatus: "TRIALING",
+              trialEndsAt: trialEnd,
+              loyaltyStatus: "TRIALING",
+              loyaltyTrialEndsAt: trialEnd,
+            },
+          });
+        }
         await prisma.lead.updateMany({
           where: { convertedToOwnerId: oid, activated: false },
           data: { activated: true, activatedAt: new Date() },
@@ -119,6 +135,7 @@ export async function GET(req: NextRequest) {
           email: owner.email,
           password: newPassword,
           autoLoginUrl: newAutoLoginUrl,
+          isFree: isFreeOnly,
         }),
         purpose: "activation_welcome",
       }).catch((err) => console.error("[auto-login] credentials email error:", err));
@@ -141,6 +158,7 @@ export async function GET(req: NextRequest) {
         email: owner.email,
         password: newPassword,
         slug: restaurant.slug,
+        isFree: isFreeOnly,
       });
     }
   }
@@ -181,12 +199,14 @@ function credentialsEmailHtml({
   email,
   password,
   autoLoginUrl,
+  isFree,
 }: {
   ownerName: string;
   restaurantName: string;
   email: string;
   password: string;
   autoLoginUrl: string;
+  isFree?: boolean;
 }): string {
   const firstName = ownerName.split(" ")[0];
   const panelUrl = "https://quierocomer.com/panel";
@@ -217,7 +237,7 @@ function credentialsEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:20px">
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${firstName}, tu cuenta está activa con <strong style="color:#111">7 días Premium gratis</strong>.
+  ${firstName}, ${isFree ? "tu carta QR ya está <strong style=\"color:#111\">activa y lista</strong> para compartir con tus clientes" : "tu cuenta está activa con <strong style=\"color:#111\">7 días Premium gratis</strong>"}.
 </p>
 </td></tr>
 </table>

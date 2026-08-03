@@ -22,6 +22,7 @@ const RESTAURANTS = [
 export default function LandingPage() {
   const { t, testimonials, proFeatures, loyaltyFeatures } = useLandingLang();
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<"trial" | "free">("trial");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [formData, setFormData] = useState({ ownerName: "", localName: "", email: "", whatsapp: "" });
@@ -33,7 +34,7 @@ export default function LandingPage() {
     }
   };
 
-  const openModal = () => { setModalOpen(true); setFormError(""); };
+  const openModal = (tier: "trial" | "free" = "trial") => { setSelectedTier(tier); setModalOpen(true); setFormError(""); };
   const closeModal = () => { setModalOpen(false); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +53,7 @@ export default function LandingPage() {
       const res = await fetch("/api/activar/registrar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, tier: selectedTier }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
@@ -150,8 +151,9 @@ export default function LandingPage() {
         .qc-section-title { font-size: clamp(24px, 4vw, 38px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 8px; }
         .qc-section-sub { font-size: 16px; color: var(--gris); margin-bottom: 48px; line-height: 1.5; }
 
-        .qc-modulos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .qc-modulos-grid { grid-template-columns: 1fr; } }
+        .qc-modulos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        @media (max-width: 960px) { .qc-modulos-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 600px) { .qc-modulos-grid { grid-template-columns: 1fr; } }
 
         .qc-card { border-radius: 20px; overflow: hidden; padding: 40px; position: relative; text-align: center; }
         .qc-card-amber { background: var(--ambar-fondo); border: 1.5px solid rgba(245,158,27,0.2); }
@@ -429,7 +431,7 @@ export default function LandingPage() {
               {t("hero_subtitle")}
             </p>
             <div className="qc-hero-cta">
-              <button className="qc-btn-ambar qc-btn-ambar-xl" onClick={openModal}>
+              <button className="qc-btn-ambar qc-btn-ambar-xl" onClick={() => openModal()}>
                 {t("hero_cta")}
               </button>
               <a href="https://quierocomer.com/qr/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
@@ -492,6 +494,30 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Carta QR Gratis */}
+              <div className="qc-card" style={{ background: "#f9f9f9", border: "1.5px solid #e5e5e5" }}>
+                <span className="qc-badge" style={{ background: "#e5e5e5", color: "#555" }}>$0 para siempre</span>
+                <h2 style={{ color: "#111" }}>Carta QR gratis para tu local</h2>
+                <p style={{ color: "#555" }}>Sube tus platos, genera un QR y tus clientes ven tu carta al instante. Sin tarjeta, sin vencimiento.</p>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    ["📷", "Fotos de tus platos"],
+                    ["🗂️", "Navegación por categorías"],
+                    ["📱", "QR listo para imprimir"],
+                    ["✏️", "Panel autoadministrable"],
+                  ].map(([icon, text]) => (
+                    <li key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", color: "#444" }}>
+                      <span>{icon}</span><span>{text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="qc-card-btns">
+                  <button className="qc-btn-outline" onClick={() => openModal("free")} style={{ width: "100%", textAlign: "center" }}>
+                    Empezar gratis →
+                  </button>
                 </div>
               </div>
 
@@ -607,7 +633,7 @@ export default function LandingPage() {
                     <li key={i}><span className="qc-check-purple">✓</span>{f}</li>
                   ))}
                 </ul>
-                <button className="qc-btn-purple" onClick={openModal}>
+                <button className="qc-btn-purple" onClick={() => openModal()}>
                   {t("plan_cta_loyalty")}
                 </button>
               </div>
@@ -623,7 +649,7 @@ export default function LandingPage() {
                     <li key={i}><span className="qc-check">✓</span>{f}</li>
                   ))}
                 </ul>
-                <button className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15 }} onClick={openModal}>
+                <button className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15 }} onClick={() => openModal()}>
                   {t("plan_cta_pro")}
                 </button>
               </div>
@@ -637,7 +663,7 @@ export default function LandingPage() {
           <div className="qc-cta-final-card">
             <h2>{t("final_title")}</h2>
             <p style={{color:"rgba(255,255,255,0.75)"}}>{t("final_subtitle")}</p>
-            <button className="qc-btn-white" onClick={openModal}>{t("final_cta")}</button>
+            <button className="qc-btn-white" onClick={() => openModal()}>{t("final_cta")}</button>
             <p className="qc-cta-note" style={{color:"rgba(255,255,255,0.4)"}}>{t("final_note")}</p>
           </div>
         </section>

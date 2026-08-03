@@ -8,6 +8,7 @@ interface WelcomeData {
   email: string;
   password: string; // empty before confirmation, filled after
   slug: string;
+  isFree?: boolean;
 }
 
 export default function BienvenidaPage() {
@@ -142,8 +143,10 @@ export default function BienvenidaPage() {
                   fontSize: "clamp(1.6rem, 5vw, 2.2rem)", fontWeight: 700,
                   lineHeight: 1.15, letterSpacing: "-0.03em", margin: "0 0 12px", color: "#111",
                 }}>
-                  {firstName}, ya comenzaron tus{" "}
-                  <span style={{ color: "#F59E1B" }}>7 días gratis</span>
+                  {data.isFree
+                    ? <>{firstName}, tu carta QR ya está <span style={{ color: "#F59E1B" }}>lista</span></>
+                    : <>{firstName}, ya comenzaron tus{" "}<span style={{ color: "#F59E1B" }}>7 días gratis</span></>
+                  }
                 </h1>
                 <p style={{ fontSize: "1rem", color: "#71716C", lineHeight: 1.65, margin: 0 }}>
                   <strong style={{ color: "#111" }}>{data.localName}</strong> ya tiene carta digital activa.
