@@ -92,7 +92,6 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
           <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>📖</span>
           <span style={{ flex: 1 }}>
             <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
-            <span style={{ display: 'block', fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginTop: 3 }}>Menú completo con fotos y precios</span>
           </span>
           <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
         </a>
@@ -103,7 +102,6 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.85 }}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             <span style={{ flex: 1 }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginTop: 3 }}>Elige y envía por WhatsApp</span>
             </span>
             <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
           </a>
@@ -115,7 +113,6 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🎁</span>
             <span style={{ flex: 1 }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Tarjeta de premios</span>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginTop: 3 }}>Junta sellos y gana premios</span>
             </span>
             <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
           </a>
@@ -129,9 +126,6 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos una reseña'}
               </span>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginTop: 3 }}>
-                {r.reviewReward || 'Nos ayuda mucho en Google'}
-              </span>
             </span>
             <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
           </a>
@@ -144,9 +138,6 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
             <span style={{ flex: 1 }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos tu opinión'}
-              </span>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', marginTop: 3 }}>
-                {r.reviewReward || 'Tu opinión es privada y va directo al local'}
               </span>
             </span>
             <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
