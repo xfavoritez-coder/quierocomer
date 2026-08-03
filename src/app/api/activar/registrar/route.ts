@@ -123,6 +123,12 @@ export async function POST(req: NextRequest) {
   const localName = toTitleCase(rawLocalName);
   const ownerName = rawOwnerName?.trim() ? toTitleCase(rawOwnerName) : localName;
 
+  // Capture IP and location from Vercel geo headers
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const rawCity = req.headers.get("x-vercel-ip-city");
+  const rawRegion = req.headers.get("x-vercel-ip-country-region");
+  const city = rawCity ? decodeURIComponent(rawCity) : (rawRegion || null);
+
   try {
     // Generar slug
     let slug = localName.toLowerCase()
@@ -196,6 +202,8 @@ export async function POST(req: NextRequest) {
         completedAt: new Date(),
         generatedSlug: restaurant.slug,
         convertedToOwnerId: owner.id,
+        ip: ip || undefined,
+        city: city || undefined,
       },
     });
 
