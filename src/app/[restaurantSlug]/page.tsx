@@ -94,7 +94,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
       <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 380 }}>
         {/* Carta — siempre visible */}
         <a href={`/qr/${r.slug}?carta=1`} style={BTN}>
-          <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>📖</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0, opacity: 0.9 }}><path d="M3 3h7v7H3V3zm1 1v5h5V4H4zm1 1h3v3H5V5zM14 3h7v7h-7V3zm1 1v5h5V4h-5zm1 1h3v3h-3V5zM3 14h7v7H3v-7zm1 1v5h5v-5H4zm1 1h3v3H5v-3zm9 0h2v2h-2v-2zm3 0h2v2h-2v-2zm-3 3h2v2h-2v-2zm3 0h2v2h-2v-2zm-6-4h2v2h-2v-2zm0 4h2v2h-2v-2z"/></svg>
           <span style={{ textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
           </span>
