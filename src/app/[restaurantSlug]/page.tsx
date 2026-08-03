@@ -46,7 +46,7 @@ async function getRestaurantLanding(slug: string) {
 // ---------------------------------------------------------------------------
 
 const BTN = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
   background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
   borderRadius: 18, padding: '18px 20px', textDecoration: 'none', color: '#fff',
   minHeight: 80, position: 'relative',
