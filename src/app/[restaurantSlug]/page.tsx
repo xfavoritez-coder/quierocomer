@@ -46,7 +46,7 @@ async function getRestaurantLanding(slug: string) {
 // ---------------------------------------------------------------------------
 
 const BTN = {
-  display: 'flex', alignItems: 'center', gap: 16,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
   background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
   borderRadius: 18, padding: '18px 20px', textDecoration: 'none', color: '#fff',
   minHeight: 80,
@@ -90,7 +90,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {/* Carta — siempre visible */}
         <a href={`/qr/${r.slug}?carta=1`} style={BTN}>
           <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>📖</span>
-          <span style={{ flex: 1 }}>
+          <span style={{ textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
           </span>
           <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
@@ -100,7 +100,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {r.orderingEnabled && (
           <a href={`/pedir/${r.slug}`} style={BTN}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.85 }}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            <span style={{ flex: 1 }}>
+            <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
             </span>
             <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
@@ -111,7 +111,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {hasLoyalty && (
           <a href={`/fidelidad/${r.slug}`} style={BTN}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🎁</span>
-            <span style={{ flex: 1 }}>
+            <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Tarjeta de premios</span>
             </span>
             <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
@@ -122,7 +122,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {r.reviewMode !== 'private' && r.reviewMode !== 'off' && r.googleReviewUrl && (
           <a href={r.googleReviewUrl} target="_blank" rel="noopener noreferrer" style={BTN}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
-            <span style={{ flex: 1 }}>
+            <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos una reseña'}
               </span>
@@ -135,7 +135,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {r.reviewMode === 'private' && (
           <a href={`/resena/${r.slug}`} style={BTN}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
-            <span style={{ flex: 1 }}>
+            <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos tu opinión'}
               </span>
