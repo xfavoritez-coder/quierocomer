@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
         const waMsg = buildLoyaltyTrialMessage({
           ownerName: owner.name,
           restaurantName: restaurant.name,
-          shortId: shortLink.id,
+          email: owner.email,
         });
         sendWhatsApp({ to: owner.whatsapp, ...waMsg })
           .catch((err) => console.error("[auto-login] whatsapp error:", err));

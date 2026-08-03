@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     const msg = buildLoyaltyTrialMessage({
       ownerName: owner.name,
       restaurantName: restaurant.name,
-      shortId: shortLink.id,
+      email: owner.email,
     });
     sendWhatsApp({ to: owner.whatsapp, ...msg }).catch((e) =>
       console.error("[LoyaltyTrial WA]", e),
