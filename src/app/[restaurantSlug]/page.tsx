@@ -49,7 +49,12 @@ const BTN = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
   background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
   borderRadius: 18, padding: '18px 20px', textDecoration: 'none', color: '#fff',
-  minHeight: 80,
+  minHeight: 80, position: 'relative',
+} as const
+
+const ARROW = {
+  position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)',
+  fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)',
 } as const
 
 function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof getRestaurantLanding>>> & { id: string } }) {
@@ -93,7 +98,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
           <span style={{ textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
           </span>
-          <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
+          <span style={ARROW}>›</span>
         </a>
 
         {/* Pedido online — solo si está activo */}
@@ -103,7 +108,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
             <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
             </span>
-            <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
+            <span style={ARROW}>›</span>
           </a>
         )}
 
@@ -114,7 +119,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
             <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Tarjeta de premios</span>
             </span>
-            <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
+            <span style={ARROW}>›</span>
           </a>
         )}
 
@@ -127,7 +132,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos una reseña'}
               </span>
             </span>
-            <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
+            <span style={ARROW}>›</span>
           </a>
         )}
 
@@ -140,7 +145,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos tu opinión'}
               </span>
             </span>
-            <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>›</span>
+            <span style={ARROW}>›</span>
           </a>
         )}
       </div>
