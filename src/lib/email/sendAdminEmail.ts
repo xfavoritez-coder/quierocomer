@@ -581,6 +581,49 @@ export function graceExpiryWarningEmailHtml({
   `);
 }
 
+export function newPrivateReviewEmailHtml({
+  ownerName,
+  restaurantName,
+  rating,
+  comment,
+  authorName,
+  panelLink,
+}: {
+  ownerName: string;
+  restaurantName: string;
+  rating: number;
+  comment?: string | null;
+  authorName?: string | null;
+  panelLink: string;
+}): string {
+  const firstName = ownerName.split(" ")[0];
+  const stars = "⭐".repeat(rating);
+  return wrap(`
+  <tr><td style="text-align:center;padding-bottom:16px;">
+    <div style="display:inline-block;width:56px;height:56px;background:#fff8ee;border:2px solid #ead7b7;border-radius:50%;line-height:56px;font-size:26px;">⭐</div>
+  </td></tr>
+  <tr><td style="padding-bottom:6px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0;text-align:center;line-height:1.3;">
+      Nueva valoración en ${restaurantName}
+    </h1>
+  </td></tr>
+  <tr><td style="font-size:15px;color:#7a6547;line-height:1.6;padding-bottom:20px;text-align:center;">
+    Hola ${firstName}, un cliente dejó su opinión sobre tu local.
+  </td></tr>
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #ead7b7;border-radius:14px;">
+      <tr><td style="padding:18px 20px;">
+        <div style="font-size:22px;margin-bottom:10px;">${stars}</div>
+        <div style="font-size:13px;color:#92400e;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Nota: ${rating}/5</div>
+        ${authorName ? `<div style="font-size:12px;color:#b8a888;margin-bottom:12px;">De: ${authorName}</div>` : `<div style="font-size:12px;color:#b8a888;margin-bottom:12px;">Anónimo</div>`}
+        ${comment ? `<div style="font-size:15px;color:#1a1a1a;line-height:1.6;border-left:3px solid ${GOLD};padding-left:12px;font-style:italic;">"${comment}"</div>` : `<div style="font-size:14px;color:#b8a888;font-style:italic;">Sin comentario.</div>`}
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-bottom:4px;">${btn(panelLink, "Ver todas las valoraciones")}</td></tr>
+  `);
+}
+
 export function trialExpiredEmailHtml(
   firstName: string, restaurantName: string, suscripcionLink: string, cartaUrl?: string,
 ): string {
