@@ -126,7 +126,9 @@ export default async function CartaPage({
     (_r.subscriptionStatus === "ACTIVE" && _periodEnd && _chileDate(_periodEnd) >= _todayChile) ||
     (_r.subscriptionStatus === "TRIALING" && _trialEnd && _chileDate(_trialEnd) >= _todayChile) ||
     (_r.subscriptionStatus === "CANCELED" && _periodEnd && _chileDate(_periodEnd) >= _todayChile);
-  const isPaused = !isMenuLive;
+  // Restaurants that never paid (lastPaymentAt === null) get free-tier access instead of the paused screen
+  const neverPaid = !_r.lastPaymentAt;
+  const isPaused = !isMenuLive && !neverPaid;
 
   // Only Premium restaurants support multilingual — override lang for others
   if ((restaurant as any).plan !== "PREMIUM" && !isValidLang(urlLang)) {
@@ -248,7 +250,8 @@ export default async function CartaPage({
   const serverView = validViews.includes(urlView || "") ? urlView! : ((restaurant as any).defaultView || "premium");
 
   // Plan-based feature gating (done server-side so bypassing devtools doesn't help)
-  const plan = ((restaurant as any).plan || "FREE").toUpperCase();
+  // If the menu isn't actually live (expired trial / no subscription), treat as FREE regardless of DB plan field
+  const plan = isMenuLive ? (((restaurant as any).plan || "FREE").toUpperCase()) : "FREE";
   const canShowPromos = plan === "SILVER" || plan === "GOLD" || plan === "PREMIUM";
   const canShowAnnouncements = plan === "GOLD" || plan === "PREMIUM";
   const hasDesignFeatures = plan === "SILVER" || plan === "GOLD" || plan === "PREMIUM";
