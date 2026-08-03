@@ -306,10 +306,18 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
     );
   }
 
-  // FREE con trial ya usado y sin pago → invitar a subscribirse (sin mencionar "gratis")
+  // FREE con trial ya usado y sin pago → mismo banner rotativo (no mencionar "prueba terminó")
   if (isFreeTrialExpired) {
-    const handleSubscribe = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
-      detail: { initialTab: "PREMIUM", source: "expiry_banner_subscribe" },
+    const UPGRADE_MESSAGES = [
+      "Mejora tu carta QR para que venda más",
+      "Activa tu página de pedidos online",
+      "Exporta tu carta en PDF con diseño",
+      "Permite que tus mesas llamen al garzón",
+      "Recibe valoraciones de tus clientes",
+    ];
+    const msgIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % UPGRADE_MESSAGES.length;
+    const handleUpgrade = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
+      detail: { initialTab: "PREMIUM", source: "expiry_banner_upgrade" },
     }));
     return (
       <>
@@ -321,15 +329,15 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
           <div style={{
             display: "flex", alignItems: "center", gap: 12,
             padding: "10px 16px",
-            background: "linear-gradient(90deg, #b45309, #d97706)",
+            background: "linear-gradient(135deg, #6d28d9, #7c3aed)",
             fontFamily: "var(--font-body)",
           }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>⭐</span>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>Tu prueba gratuita terminó</p>
+              <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{UPGRADE_MESSAGES[msgIndex]}</p>
             </div>
             <button
-              onClick={handleSubscribe}
+              onClick={handleUpgrade}
               style={{
                 padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
                 background: "transparent", color: "#fff",
@@ -337,7 +345,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
                 cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
               }}
             >
-              Activar Pro
+              Ver planes
             </button>
           </div>
         </div>
