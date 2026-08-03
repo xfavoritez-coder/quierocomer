@@ -125,6 +125,71 @@ type BillingStatus = {
   sessions30d?: number;
 };
 
+function FreeTrialBanner({ restaurantId }: { restaurantId: string | null }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const MESSAGES = [
+    "Prueba gratis: agrega pedidos online a tu carta",
+    "Prueba gratis: exporta tu carta en PDF con diseño",
+    "Prueba gratis: permite que tus mesas llamen al garzón",
+    "Prueba gratis: recibe valoraciones de tus clientes",
+    "Prueba gratis: mejora tu carta QR para que venda más",
+  ];
+  const msgIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % MESSAGES.length;
+
+  const handleStart = async () => {
+    if (!restaurantId || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/billing/start-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId }),
+      });
+      if (res.ok) {
+        setDone(true);
+        setTimeout(() => window.location.reload(), 1200);
+      }
+    } catch {}
+    setLoading(false);
+  };
+
+  if (done) {
+    return (
+      <div style={{ position: "sticky", top: 0, zIndex: 99, margin: "-24px -32px 24px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", background: "linear-gradient(135deg, #6d28d9, #7c3aed)", fontFamily: "var(--font-body)" }}>
+          <span style={{ fontSize: 16 }}>🎉</span>
+          <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>¡Tu prueba de 7 días comenzó!</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .qc-expiry-sticky { position:sticky; top:0; z-index:99; margin:-24px -32px 24px; }
+        @media (max-width:767px) { .qc-expiry-sticky { top:58px; margin:-20px -16px 20px; } }
+      `}} />
+      <div className="qc-expiry-sticky">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", background: "linear-gradient(135deg, #6d28d9, #7c3aed)", fontFamily: "var(--font-body)" }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{MESSAGES[msgIndex]}</p>
+          </div>
+          <button
+            onClick={handleStart}
+            disabled={loading}
+            style={{ padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999, background: "transparent", color: "#fff", fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700, cursor: loading ? "default" : "pointer", whiteSpace: "nowrap", flexShrink: 0, opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? "Activando..." : "Probar 7 días gratis"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTrialEnds, subscriptionStatus: propStatus }: { restaurantId: string | null; plan?: string; trialEndsAt?: string | null; subscriptionStatus?: string }) {
   const [status, setStatus] = useState<BillingStatus | null>(null);
 
@@ -249,61 +314,9 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
 
   const isExpired = isExpiredActive || wasDowngraded;
 
-  // FREE sin plan pago previo y sin trial usado → invitar a mejorar (mensajes rotativos)
+  // FREE sin trial usado → ofrecer prueba gratuita de 7 días
   if (isFreeNeverTried) {
-    const UPGRADE_MESSAGES = [
-      "Mejora tu carta QR para que venda más",
-      "Activa tu página de pedidos online",
-      "Exporta tu carta en PDF con diseño",
-      "Permite que tus mesas llamen al garzón",
-      "Recibe valoraciones de tus clientes",
-    ];
-    const msgIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % UPGRADE_MESSAGES.length;
-    const handleUpgrade = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
-      detail: { initialTab: "PREMIUM", source: "expiry_banner_upgrade" },
-    }));
-    return (
-      <>
-        <style dangerouslySetInnerHTML={{ __html: `
-          .qc-expiry-sticky {
-            position: sticky;
-            top: 0;
-            z-index: 99;
-            margin: -24px -32px 24px;
-          }
-          @media (max-width: 767px) {
-            .qc-expiry-sticky {
-              top: 58px;
-              margin: -20px -16px 20px;
-            }
-          }
-        `}} />
-        <div className="qc-expiry-sticky">
-          <div style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "10px 16px",
-            background: "linear-gradient(90deg, #6d28d9, #7c3aed)",
-            fontFamily: "var(--font-body)",
-          }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>⚡</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{UPGRADE_MESSAGES[msgIndex]}</p>
-            </div>
-            <button
-              onClick={handleUpgrade}
-              style={{
-                padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
-                background: "transparent", color: "#fff",
-                fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
-                cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-              }}
-            >
-              Activar Pro
-            </button>
-          </div>
-        </div>
-      </>
-    );
+    return <FreeTrialBanner restaurantId={restaurantId} />;
   }
 
   // FREE con trial ya usado y sin pago → mismo banner rotativo (no mencionar "prueba terminó")
