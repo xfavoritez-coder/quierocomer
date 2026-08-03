@@ -23,7 +23,7 @@ const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 //   — QuieroComer
 //
 // Variables: {{1}} = primer nombre, {{2}} = nombre restaurante, {{3}} = ID numérico (short link)
-export const LOYALTY_TRIAL_WA_TEMPLATE = process.env.LOYALTY_TRIAL_WA_TEMPLATE_SID || "HX1a3bbf7e19c7bfa4ea27519be1417b60";
+export const LOYALTY_TRIAL_WA_TEMPLATE = process.env.LOYALTY_TRIAL_WA_TEMPLATE_SID || "HXd6ab85f044d19c4524d7cda06dbf2eaf";
 
 // Template SID for billing expiry — day plan expires (aprobado por Meta)
 // Variables: {{1}} = owner first name, {{2}} = restaurant name, {{3}} = renewal URL
@@ -125,7 +125,7 @@ export function buildLoyaltyTrialMessage({
 }): { body: string; contentSid: string; contentVariables: Record<string, string> } {
   const firstName = ownerName.split(" ")[0];
   return {
-    body: `Hola ${firstName}! Tu acceso a QuieroComer ya está listo. Entra a tu panel y configura la carta de *${restaurantName}*.\n\n🔗 quierocomer.com/panel\n📧 Credenciales enviadas a tu correo: ${email}\n\n— QuieroComer.com`,
+    body: `Hola ${firstName}, tu carta digital de *${restaurantName}* ya está lista en QuieroComer.\n\nEntra a configurarla en quierocomer.com/panel\n\nTe enviamos los detalles a ${email}.\n\n— QuieroComer.com`,
     contentSid: LOYALTY_TRIAL_WA_TEMPLATE,
     contentVariables: { "1": firstName, "2": restaurantName, "3": email },
   };
