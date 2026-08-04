@@ -72,7 +72,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
   }
   const arrowStyle: React.CSSProperties = {
     ...ARROW,
-    color: isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.35)',
+    color: accent,
   }
 
   return (
