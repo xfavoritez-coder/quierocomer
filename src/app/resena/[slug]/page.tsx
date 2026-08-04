@@ -20,7 +20,7 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug },
-    select: { id: true, name: true, logoUrl: true, reviewMode: true, reviewReward: true },
+    select: { id: true, name: true, logoUrl: true, reviewMode: true, reviewReward: true, cartaColorMode: true },
   });
 
   if (!restaurant || restaurant.reviewMode !== "private") return notFound();
@@ -28,7 +28,7 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
   return (
     <>
       <PageHitTracker restaurantId={restaurant.id} page="resena" />
-      <ResenaClient restaurant={{ ...restaurant, slug }} />
+      <ResenaClient restaurant={{ ...restaurant, slug }} colorMode={(restaurant.cartaColorMode as string) || "DARK"} />
     </>
   );
 }

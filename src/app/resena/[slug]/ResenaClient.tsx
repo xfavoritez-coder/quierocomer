@@ -6,6 +6,7 @@ const GOLD = "#F4A623";
 
 interface Props {
   restaurant: { id: string; slug: string; name: string; logoUrl: string | null; reviewReward: string | null };
+  colorMode?: string;
 }
 
 function Stars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -27,7 +28,7 @@ function Stars({ value, onChange }: { value: number; onChange: (v: number) => vo
   );
 }
 
-export default function ResenaClient({ restaurant }: Props) {
+export default function ResenaClient({ restaurant, colorMode = "DARK" }: Props) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [authorName, setAuthorName] = useState("");
@@ -35,6 +36,7 @@ export default function ResenaClient({ restaurant }: Props) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
+  const isLight = colorMode === "LIGHT";
   const initials = restaurant.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   const handleSubmit = async () => {
@@ -55,10 +57,16 @@ export default function ResenaClient({ restaurant }: Props) {
     setSubmitting(false);
   };
 
+  const textPrimary = isLight ? "#111" : "#fff";
+  const textSecondary = isLight ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.45)";
+  const textMuted = isLight ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.2)";
+  const inputBg = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.06)";
+  const inputBorder = isLight ? "1px solid rgba(0,0,0,0.13)" : "1px solid rgba(255,255,255,0.13)";
+
   return (
     <main style={{
       minHeight: "100svh",
-      background: "linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)",
+      background: isLight ? "#f7f7f7" : "linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "40px 20px", fontFamily: "system-ui, -apple-system, sans-serif",
       position: "relative",
@@ -69,7 +77,7 @@ export default function ResenaClient({ restaurant }: Props) {
         style={{
           position: "absolute", top: 16, left: 16,
           display: "flex", alignItems: "center", gap: 6,
-          color: "rgba(255,255,255,0.45)", fontSize: "0.82rem",
+          color: textSecondary, fontSize: "0.82rem",
           textDecoration: "none", fontWeight: 600,
         }}
       >
@@ -79,7 +87,7 @@ export default function ResenaClient({ restaurant }: Props) {
       {/* Logo */}
       <div style={{ marginBottom: 16 }}>
         {restaurant.logoUrl
-          ? <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.12)" }} />
+          ? <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: isLight ? "3px solid rgba(0,0,0,0.1)" : "3px solid rgba(255,255,255,0.12)" }} />
           : <div style={{ width: 72, height: 72, borderRadius: "50%", background: `linear-gradient(135deg, ${GOLD}, #e8920f)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 700, color: "#0a0a0a" }}>{initials}</div>
         }
       </div>
@@ -88,24 +96,24 @@ export default function ResenaClient({ restaurant }: Props) {
         {done ? (
           <div style={{ textAlign: "center", padding: "24px 0" }}>
             <CheckCircle size={48} color="#4ade80" style={{ display: "block", margin: "0 auto 16px" }} />
-            <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 800, margin: "0 0 8px" }}>¡Gracias por tu opinión!</h2>
+            <h2 style={{ color: textPrimary, fontSize: "1.2rem", fontWeight: 800, margin: "0 0 8px" }}>¡Gracias por tu opinión!</h2>
             {restaurant.reviewReward && (
               <div style={{ marginTop: 16, background: `${GOLD}18`, border: `1px solid ${GOLD}44`, borderRadius: 14, padding: "14px 18px" }}>
                 <p style={{ color: GOLD, fontSize: "0.88rem", fontWeight: 700, margin: "0 0 4px" }}>🎁 Tu premio</p>
-                <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.85rem", margin: 0 }}>{restaurant.reviewReward}</p>
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", margin: "6px 0 0" }}>Preséntalo en el local</p>
+                <p style={{ color: isLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)", fontSize: "0.85rem", margin: 0 }}>{restaurant.reviewReward}</p>
+                <p style={{ color: textSecondary, fontSize: "0.75rem", margin: "6px 0 0" }}>Preséntalo en el local</p>
               </div>
             )}
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", marginTop: 20 }}>
+            <p style={{ color: textSecondary, fontSize: "0.78rem", marginTop: 20 }}>
               {restaurant.name} recibirá tu mensaje.
             </p>
           </div>
         ) : (
           <>
-            <h1 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 800, textAlign: "center", margin: "0 0 4px" }}>
+            <h1 style={{ color: textPrimary, fontSize: "1.1rem", fontWeight: 800, textAlign: "center", margin: "0 0 4px" }}>
               {restaurant.name}
             </h1>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.82rem", textAlign: "center", margin: "0 0 4px" }}>
+            <p style={{ color: textSecondary, fontSize: "0.82rem", textAlign: "center", margin: "0 0 4px" }}>
               ¿Cómo fue tu experiencia?
             </p>
             {restaurant.reviewReward && (
@@ -118,7 +126,7 @@ export default function ResenaClient({ restaurant }: Props) {
 
 
             <div style={{ marginBottom: 12 }}>
-              <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: textSecondary, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Tu comentario <span style={{ fontWeight: 400, opacity: 0.7 }}>(opcional)</span>
               </span>
               <textarea
@@ -129,15 +137,15 @@ export default function ResenaClient({ restaurant }: Props) {
                 className="resena-textarea"
                 style={{
                   width: "100%", boxSizing: "border-box", padding: "14px 16px",
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)",
-                  borderRadius: 14, color: "#fff", fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
+                  background: inputBg, border: inputBorder,
+                  borderRadius: 14, color: textPrimary, fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
                   outline: "none", resize: "vertical", minHeight: 100,
                 }}
               />
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: textSecondary, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Tu nombre <span style={{ fontWeight: 400, opacity: 0.7 }}>(opcional)</span>
               </span>
               <input
@@ -147,8 +155,8 @@ export default function ResenaClient({ restaurant }: Props) {
                 className="resena-input"
                 style={{
                   width: "100%", boxSizing: "border-box", padding: "12px 16px",
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)",
-                  borderRadius: 14, color: "#fff", fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
+                  background: inputBg, border: inputBorder,
+                  borderRadius: 14, color: textPrimary, fontFamily: "system-ui, sans-serif", fontSize: "0.88rem",
                   outline: "none",
                 }}
               />
@@ -161,8 +169,8 @@ export default function ResenaClient({ restaurant }: Props) {
               disabled={submitting || rating === 0}
               style={{
                 width: "100%", padding: "14px 0", border: "none", borderRadius: 14,
-                background: rating > 0 ? `linear-gradient(135deg, #ffc44f, ${GOLD})` : "rgba(255,255,255,0.1)",
-                color: rating > 0 ? "#0a0a0a" : "rgba(255,255,255,0.3)",
+                background: rating > 0 ? `linear-gradient(135deg, #ffc44f, ${GOLD})` : (isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.1)"),
+                color: rating > 0 ? "#0a0a0a" : textMuted,
                 fontFamily: "system-ui, sans-serif", fontSize: "0.95rem", fontWeight: 800,
                 cursor: rating > 0 && !submitting ? "pointer" : "default",
                 opacity: submitting ? 0.7 : 1,
@@ -171,7 +179,7 @@ export default function ResenaClient({ restaurant }: Props) {
               {submitting ? "Enviando..." : "Enviar opinión"}
             </button>
 
-            <p style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.7rem", textAlign: "center", marginTop: 16 }}>
+            <p style={{ color: textMuted, fontSize: "0.7rem", textAlign: "center", marginTop: 16 }}>
               Tu reseña es privada · Solo la ve el local
             </p>
           </>
