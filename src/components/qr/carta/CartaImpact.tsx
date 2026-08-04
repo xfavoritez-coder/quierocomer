@@ -1321,7 +1321,7 @@ export default function CartaImpact({
       </div>{/* end fixed wrapper */}
 
       {/* Spacer: reserva el espacio del nav fixed para que el contenido no quede debajo */}
-      <div style={{ height: impactHeaderH }} />
+      <div style={{ height: impactHeaderH + 16 }} />
 
       {/* Search overlay */}
 
