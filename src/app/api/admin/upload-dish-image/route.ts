@@ -61,7 +61,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (e: any) {
     console.error("[Upload dish image] Exception:", e);
-    const detail = e?.message || String(e) || "desconocido";
-    return NextResponse.json({ error: `Error al procesar imagen: ${detail}` }, { status: 500 });
+    const msg: string = e?.message || String(e) || "";
+    // Sharp/vips errors mean the image file is corrupt or unsupported
+    if (msg.includes("Vips") || msg.includes("vips") || msg.includes("premature") || msg.includes("Input buffer")) {
+      return NextResponse.json({ error: "La imagen está dañada o en un formato no compatible. Intenta con otra foto (JPG o PNG)." }, { status: 400 });
+    }
+    return NextResponse.json({ error: `Error al procesar imagen: ${msg || "desconocido"}` }, { status: 500 });
   }
 }
