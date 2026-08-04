@@ -430,6 +430,7 @@ export default function AdminMenus() {
   const [newDishCatId, setNewDishCatId] = useState("");
   const [newDishPhoto, setNewDishPhoto] = useState("");
   const [newDishPhotoUploading, setNewDishPhotoUploading] = useState(false);
+  const [newDishPhotoError, setNewDishPhotoError] = useState("");
   const [newDishDiet, setNewDishDiet] = useState("OMNIVORE");
   const [dishSaving, setDishSaving] = useState(false);
   const [dishCreatedMsg, setDishCreatedMsg] = useState("");
@@ -1166,7 +1167,7 @@ export default function AdminMenus() {
                         const data = await res.json();
                         if (data.url) { setEPhotoUrl(data.url); setPhotoSuccess(true); setTimeout(() => setPhotoSuccess(false), 2500); }
                         else alert(data.error || "Error al subir foto");
-                      } catch (err) { alert("Error al subir foto"); }
+                      } catch (err: any) { alert(err?.message || "Error al subir foto"); }
                       setPhotoUploading(false);
                     }} />
                   </label>
@@ -1677,16 +1678,18 @@ export default function AdminMenus() {
                     fd.append("dishName", newDishName || "plato");
                     const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
                     const data = await res.json();
-                    if (data.url) setNewDishPhoto(data.url);
+                    if (data.url) { setNewDishPhoto(data.url); setNewDishPhotoError(""); }
+                    else setNewDishPhotoError(data.error || "Error al subir foto");
                     setNewDishPhotoUploading(false);
                   }} />
                 </label>
                 {newDishPhoto && <button onClick={() => setNewDishPhoto("")} style={{ padding: "4px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>×</button>}
+                {newDishPhotoError && <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#ef4444", margin: "4px 0 0" }}>{newDishPhotoError}</p>}
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={createDish} disabled={dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{newDishPhotoUploading ? t("menu_uploading_photo_long") : dishSaving ? t("menu_creating") : t("menu_create_dish")}</button>
-              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); setNewDishPhoto(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
+              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); setNewDishPhoto(""); setNewDishPhotoError(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
             </div>
           </div>
         </div>

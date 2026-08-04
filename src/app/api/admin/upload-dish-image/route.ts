@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
       .upload(fileName, optimizedBuffer, { contentType: "image/webp", upsert: true });
 
     if (error) {
-      console.error("[Upload dish image]", error);
-      return NextResponse.json({ error: "Error al subir imagen" }, { status: 500 });
+      console.error("[Upload dish image] Supabase error:", error);
+      return NextResponse.json({ error: `Error al subir imagen: ${error.message}` }, { status: 500 });
     }
 
     const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
@@ -59,8 +59,9 @@ export async function POST(req: NextRequest) {
       originalSize,
       optimizedSize,
     });
-  } catch (e) {
-    console.error("[Upload dish image]", e);
-    return NextResponse.json({ error: "Error al procesar imagen" }, { status: 500 });
+  } catch (e: any) {
+    console.error("[Upload dish image] Exception:", e);
+    const detail = e?.message || String(e) || "desconocido";
+    return NextResponse.json({ error: `Error al procesar imagen: ${detail}` }, { status: 500 });
   }
 }
