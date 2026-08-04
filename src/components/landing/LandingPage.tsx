@@ -447,9 +447,32 @@ export default function LandingPage() {
           <div className="qc-section-inner">
             <div className="qc-modulos-grid">
 
+              {/* Loyalty */}
+              <div className="qc-card qc-card-light">
+                <span className="qc-badge qc-badge-dark">Nuevo</span>
+                <h2>{t("module_loyalty_label")}</h2>
+                <p>{t("module_loyalty_desc")}</p>
+                <div className="qc-card-btns">
+                  <a href="/fidelizacion" className="qc-btn-outline">{t("module_qr_more")}</a>
+                  <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
+                </div>
+                <div className="qc-loyalty-mock">
+                  <div className="qc-loyalty-mock-header">{t("loyalty_mock_header")}</div>
+                  <h4>{t("loyalty_card_title")}</h4>
+                  <div className="qc-stamps">
+                    {[true, true, true, true, true, true, false, false, false, false].map((filled, i) => (
+                      <div key={i} className={`qc-stamp ${filled ? "qc-stamp-filled" : "qc-stamp-empty"}`}>
+                        {filled ? "⭐" : ""}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="qc-loyalty-mock-footer">{t("loyalty_progress")}</div>
+                </div>
+              </div>
+
               {/* Carta QR */}
               <div className="qc-card qc-card-amber">
-                <span className="qc-badge qc-badge-dark">Más vendido</span>
+                <span className="qc-badge qc-badge-dark">Otras herramientas</span>
                 <h2>{t("module_qr_label")}</h2>
                 <p>{t("module_qr_desc")}</p>
 
@@ -494,29 +517,6 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Loyalty */}
-              <div className="qc-card qc-card-light">
-                <span className="qc-badge qc-badge-dark">Nuevo</span>
-                <h2>{t("module_loyalty_label")}</h2>
-                <p>{t("module_loyalty_desc")}</p>
-                <div className="qc-card-btns">
-                  <a href="/fidelizacion" className="qc-btn-outline">{t("module_qr_more")}</a>
-                  <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
-                </div>
-                <div className="qc-loyalty-mock">
-                  <div className="qc-loyalty-mock-header">{t("loyalty_mock_header")}</div>
-                  <h4>{t("loyalty_card_title")}</h4>
-                  <div className="qc-stamps">
-                    {[true, true, true, true, true, true, false, false, false, false].map((filled, i) => (
-                      <div key={i} className={`qc-stamp ${filled ? "qc-stamp-filled" : "qc-stamp-empty"}`}>
-                        {filled ? "⭐" : ""}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="qc-loyalty-mock-footer">{t("loyalty_progress")}</div>
                 </div>
               </div>
 
