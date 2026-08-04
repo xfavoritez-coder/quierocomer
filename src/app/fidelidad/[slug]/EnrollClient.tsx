@@ -108,7 +108,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
       <div style={{
         position: "relative",
         overflow: "hidden",
-        background: `linear-gradient(160deg, ${accent}30 0%, ${accent}10 45%, #111 100%)`,
+        background: `linear-gradient(160deg, ${accent}30 0%, ${accent}10 45%, ${isLightMode ? '#F9F7F4' : '#111'} 100%)`,
         borderBottom: `1px solid ${accent}30`,
         padding: "32px 20px 28px",
         textAlign: "center",
@@ -122,10 +122,10 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
           <img src={restaurantLogo} alt="" style={{ width: 62, height: 62, borderRadius: "50%", objectFit: "cover", margin: "0 auto 10px", display: "block", border: `3px solid ${accent}`, boxShadow: `0 0 20px ${accent}66` }} />
         )}
         <p style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 2px" }}>{restaurantName}</p>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15 }}>{program.name || "Tarjeta de premios"}</h1>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15, color: isLightMode ? '#111' : '#fff' }}>{program.name || "Tarjeta de premios"}</h1>
 
         {/* Texto descriptivo */}
-        <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: "0 0 20px", maxWidth: 340, marginLeft: "auto", marginRight: "auto" }}>
+        <p style={{ fontSize: "0.88rem", color: isLightMode ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: "0 0 20px", maxWidth: 340, marginLeft: "auto", marginRight: "auto" }}>
           Acumula sellos cada vez que compras y canjéalos por productos gratis. Tu tarjeta se guarda directamente en tu celular.
         </p>
 
@@ -189,7 +189,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
               {program.rewards.map((r, idx) => (
                 <div key={r.stamp} style={{
                   display: "flex", alignItems: "center", gap: 12,
-                  background: "rgba(255,255,255,0.05)",
+                  background: isLightMode ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.05)",
                   borderRadius: 12, padding: "10px 14px",
                   border: `1px solid ${accent}30`,
                 }}>
@@ -197,18 +197,18 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
                   <div style={{
                     flexShrink: 0,
                     width: 52, height: 52, borderRadius: "50%",
-                    border: "3px solid rgba(255,255,255,0.9)",
-                    background: "rgba(255,255,255,0.08)",
+                    border: isLightMode ? "3px solid rgba(0,0,0,0.15)" : "3px solid rgba(255,255,255,0.9)",
+                    background: isLightMode ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 0 16px rgba(255,255,255,0.15)",
+                    boxShadow: isLightMode ? "0 0 16px rgba(0,0,0,0.08)" : "0 0 16px rgba(255,255,255,0.15)",
                     lineHeight: 1,
                   }}>
-                    <span style={{ fontSize: "1.2rem", fontWeight: 900, color: "#fff" }}>{r.stamp}</span>
-                    <span style={{ fontSize: "0.45rem", fontWeight: 700, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>sellos</span>
+                    <span style={{ fontSize: "1.2rem", fontWeight: 900, color: isLightMode ? "#111" : "#fff" }}>{r.stamp}</span>
+                    <span style={{ fontSize: "0.45rem", fontWeight: 700, color: isLightMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: "0.05em" }}>sellos</span>
                   </div>
                   <div style={{ textAlign: "left" }}>
-                    <p style={{ margin: 0, fontWeight: 800, fontSize: "0.97rem", color: "#fff" }}>{r.reward}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "rgba(255,255,255,0.5)" }}>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: "0.97rem", color: isLightMode ? "#111" : "#fff" }}>{r.reward}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: isLightMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }}>
                       Canjea tu premio al completar {r.stamp} sello{r.stamp > 1 ? "s" : ""}.
                     </p>
                   </div>
@@ -226,25 +226,25 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
         {!done ? (
           <>
             {/* Formulario */}
-            <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: "0 0 18px" }}>Crea tu tarjeta gratis</p>
+            <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: "0 0 18px", color: isLightMode ? "#111" : "#fff" }}>Crea tu tarjeta gratis</p>
 
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Nombre</span>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Nombre</span>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} className={inputClass} />
             </label>
 
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Email</span>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Email</span>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" style={inputStyle} className={inputClass} inputMode="email" />
             </label>
 
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Fecha de cumpleaños</span>
-              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputClass} style={{ ...inputStyle, colorScheme: "dark", WebkitAppearance: "none", appearance: "none" as any }} />
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Fecha de cumpleaños</span>
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputClass} style={{ ...inputStyle, colorScheme: isLightMode ? "light" : "dark", WebkitAppearance: "none", appearance: "none" as any }} />
             </label>
 
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" style={{ ...inputStyle, marginBottom: 0 }} className={inputClass} inputMode="tel" />
             </label>
 
@@ -270,7 +270,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
               )}
             </button>
             {program.description && (
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
+              <p style={{ color: isLightMode ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)", fontSize: "0.72rem", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
                 {program.description}
               </p>
             )}
@@ -280,8 +280,8 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
             {/* Éxito → botones de wallet */}
             <div style={{ textAlign: "center", marginBottom: 20 }}>
               <div style={{ fontSize: "2.4rem" }}>🎉</div>
-              <p style={{ fontWeight: 800, fontSize: "1.15rem", margin: "6px 0 4px" }}>¡Tu tarjeta está lista{name ? `, ${name}` : ""}!</p>
-              <p style={{ color: "rgba(255,255,255,0.6)", margin: 0 }}>Agrégala a tu teléfono para empezar a juntar {iconText}.</p>
+              <p style={{ fontWeight: 800, fontSize: "1.15rem", margin: "6px 0 4px", color: isLightMode ? "#111" : "#fff" }}>¡Tu tarjeta está lista{name ? `, ${name}` : ""}!</p>
+              <p style={{ color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", margin: 0 }}>Agrégala a tu teléfono para empezar a juntar {iconText}.</p>
             </div>
 
             {done.appleUrl && (
@@ -296,7 +296,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
                 Guardar en Google Wallet
               </a>
             )}
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", textAlign: "center", marginTop: 16, lineHeight: 1.5 }}>
+            <p style={{ color: isLightMode ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.4)", fontSize: "0.72rem", textAlign: "center", marginTop: 16, lineHeight: 1.5 }}>
               En iPhone usa Apple Wallet; en Android, Google Wallet.
             </p>
           </>

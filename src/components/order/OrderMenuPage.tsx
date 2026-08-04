@@ -158,7 +158,7 @@ function ImpactHero({
             }}
             style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)`, flexShrink: 0 }}
           >
-            <Plus size={20} color="#fff" />
+            <Plus size={20} color="var(--carta-plus-icon, #fff)" />
           </button>
         </div>
         {heroDishes.length > 1 && (
@@ -260,7 +260,7 @@ function ListaHero({
             }}
             style={{ position: "absolute", bottom: 14, right: 14, zIndex: 11, width: 40, height: 40, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)` }}
           >
-            <Plus size={18} color="#fff" />
+            <Plus size={18} color="var(--carta-plus-icon, #fff)" />
           </button>
         )}
 
@@ -316,7 +316,7 @@ function ImpactCard({
         </div>
       </div>
       <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "color-mix(in srgb, var(--carta-accent) 18%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px color-mix(in srgb, var(--carta-accent) 50%, transparent)", pointerEvents: hasModifiers ? "none" : "auto" }}>
-        <Plus size={16} color="#fff" />
+        <Plus size={16} color="var(--carta-plus-icon, #fff)" />
       </div>
     </button>
   );
@@ -485,13 +485,13 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
     "--carta-text": "#f0f0f0", "--carta-text2": "#aaa", "--carta-text3": "#555",
     "--carta-border": "#262626", "--carta-accent": accent, "--carta-accent-fg": accentFg,
     "--carta-card-bg": "#1a1a1a", "--carta-card-shadow": "0 1px 8px rgba(0,0,0,0.4)",
-    "--carta-photo-bg": "#222",
+    "--carta-photo-bg": "#222", "--carta-plus-icon": "#fff",
   } as React.CSSProperties : {
     "--carta-bg": "#FAFAF8", "--carta-surface": "#fff",
     "--carta-text": "#111", "--carta-text2": "#666", "--carta-text3": "#999",
     "--carta-border": "#ece9e3", "--carta-accent": accent, "--carta-accent-fg": accentFg,
     "--carta-card-bg": "#fff", "--carta-card-shadow": "0 1px 8px rgba(0,0,0,0.07)",
-    "--carta-photo-bg": "#f0ece6",
+    "--carta-photo-bg": "#f0ece6", "--carta-plus-icon": accent,
   } as React.CSSProperties;
 
   const activeDishes = restaurant.dishes.filter(d => d.isActive && !d.deletedAt);

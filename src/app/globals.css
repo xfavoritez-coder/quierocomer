@@ -23,6 +23,7 @@
   --carta-bg: #f5f4f0;
   --carta-bg-solid: #faf9f6;
   --carta-nav-bg: #fff;
+  --carta-glass-bg: rgba(250,249,246,0.88);
   --carta-surface: #ffffff;
   --carta-surface-rec: rgba(244,166,35,0.04);
   --carta-text: #0e0e0e;
@@ -101,6 +102,7 @@
   --carta-bg: #070707;
   --carta-bg-solid: #0d0d0d;
   --carta-nav-bg: #0a0a0a;
+  --carta-glass-bg: rgba(10,10,10,0.88);
   --carta-surface: #111111;
   --carta-surface-rec: rgba(244,166,35,0.08);
   --carta-text: #f0f0f0;

@@ -384,7 +384,7 @@ export default function CartaLista({
       )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
-      <div style={{ position: "sticky", top: bannerH + navH, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
+      <div style={{ position: "sticky", top: bannerH + navH, zIndex: 20, background: "var(--carta-glass-bg, rgba(13,13,13,0.88))", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />

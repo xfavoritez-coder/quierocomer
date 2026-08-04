@@ -494,7 +494,7 @@ export default function CartaPremium({
       {searchOpen ? (
         <div
           className="z-40"
-          style={{ position: "sticky", top: bannerH + navH, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
+          style={{ position: "sticky", top: bannerH + navH, background: "var(--carta-glass-bg, rgba(13,13,13,0.88))", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
         >
           <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
           <input

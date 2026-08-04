@@ -46,7 +46,7 @@ export default function CategoryNav({
     <nav
       data-category-nav
       className="z-40"
-      style={{ position: "sticky", top: stickyTop, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
+      style={{ position: "sticky", top: stickyTop, background: "var(--carta-glass-bg, rgba(13,13,13,0.88))", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid var(--carta-border)", display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
     >
       {leftSlot && (
         <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center" }}>
