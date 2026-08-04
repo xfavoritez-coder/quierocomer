@@ -5,6 +5,8 @@ export const runtime = 'nodejs'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
+const QC_LOGO = 'https://quierocomer.com/logo.png'
+
 type Props = { params: Promise<{ restaurantSlug: string }> }
 
 export default async function Image({ params }: Props) {
@@ -19,6 +21,7 @@ export default async function Image({ params }: Props) {
   const category = r?.primaryCategory ?? ''
   const commune = r?.commune ?? ''
   const logoUrl = r?.logoUrl ?? null
+  const meta = [category, commune].filter(Boolean).join(' · ')
 
   return new ImageResponse(
     (
@@ -26,93 +29,108 @@ export default async function Image({ params }: Props) {
         style={{
           width: 1200,
           height: 630,
-          background: 'linear-gradient(145deg, #111111 0%, #1a1a1a 60%, #0e0e0e 100%)',
+          background: '#FAFAF8',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
           fontFamily: 'system-ui, -apple-system, sans-serif',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* subtle grid texture */}
+        {/* Accent top bar */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, background: '#F4A623', display: 'flex' }} />
+
+        {/* Subtle background circle */}
         <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(244,166,35,0.06) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(244,166,35,0.04) 0%, transparent 50%)',
+          position: 'absolute', right: -80, top: -80,
+          width: 400, height: 400, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(244,166,35,0.06) 0%, transparent 70%)',
           display: 'flex',
         }} />
 
-        {/* Logo circle */}
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            width={120}
-            height={120}
-            style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.12)', marginBottom: 28 }}
-          />
-        ) : (
-          <div style={{
-            width: 100, height: 100, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #F4A623, #e8920f)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 42, fontWeight: 800, color: '#0a0a0a',
-            marginBottom: 28,
-          }}>
-            {name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
-          </div>
-        )}
-
-        {/* Restaurant name */}
+        {/* Left: logo */}
         <div style={{
-          fontSize: name.length > 22 ? 52 : 64,
-          fontWeight: 800,
-          color: '#ffffff',
-          letterSpacing: '-0.03em',
-          lineHeight: 1.1,
-          textAlign: 'center',
-          maxWidth: 900,
-          marginBottom: 16,
-        }}>
-          {name}
-        </div>
-
-        {/* Category / commune */}
-        {(category || commune) && (
-          <div style={{
-            fontSize: 26,
-            color: 'rgba(255,255,255,0.45)',
-            letterSpacing: '0.04em',
-            marginBottom: 0,
-          }}>
-            {[category, commune].filter(Boolean).join(' · ')}
-          </div>
-        )}
-
-        {/* QC branding bottom */}
-        <div style={{
-          position: 'absolute',
-          bottom: 36,
+          width: 320,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          justifyContent: 'center',
+          flexShrink: 0,
         }}>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              width={140}
+              height={140}
+              style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(0,0,0,0.08)' }}
+            />
+          ) : (
+            <div style={{
+              width: 120, height: 120, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #F4A623, #e8920f)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 48, fontWeight: 800, color: '#0a0a0a',
+            }}>
+              {name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 280, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+
+        {/* Right: info */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '0 64px',
+        }}>
+          {meta && (
+            <div style={{
+              fontSize: 22,
+              fontWeight: 600,
+              color: '#F4A623',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              marginBottom: 16,
+            }}>
+              {meta}
+            </div>
+          )}
           <div style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: '#F4A623',
-          }} />
-          <div style={{
-            fontSize: 18,
-            color: 'rgba(255,255,255,0.3)',
-            letterSpacing: '0.08em',
-            fontWeight: 600,
+            fontSize: name.length > 20 ? 58 : 72,
+            fontWeight: 800,
+            color: '#111',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.05,
           }}>
-            QUIEROCOMER.COM
+            {name}
           </div>
           <div style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: '#F4A623',
-          }} />
+            marginTop: 28,
+            fontSize: 22,
+            color: 'rgba(0,0,0,0.35)',
+            fontWeight: 500,
+          }}>
+            quierocomer.com/{restaurantSlug}
+          </div>
+        </div>
+
+        {/* QC branding bottom left */}
+        <div style={{
+          position: 'absolute',
+          bottom: 28,
+          left: 36,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 7,
+        }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F4A623' }} />
+          <div style={{ fontSize: 15, color: 'rgba(0,0,0,0.25)', fontWeight: 600, letterSpacing: '0.07em' }}>
+            QUIEROCOMER.COM
+          </div>
         </div>
       </div>
     ),
