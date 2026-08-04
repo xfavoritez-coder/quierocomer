@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Check } from "lucide-react";
 import ModalMesa from "./ModalMesa";
@@ -45,6 +45,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   const [modalOpen, setModalOpen] = useState(false);
   const [savedTable, setSavedTable] = useState<string | null>(null);
   const [panelActive, setPanelActive] = useState(waiterPanelActive);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [isLight, setIsLight] = useState(false);
 
   // Read saved table (with TTL) + check subscription on mount
   useEffect(() => {
@@ -56,6 +58,11 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
       .then((data) => { if (data.active) setPanelActive(true); })
       .catch(() => {});
   }, [restaurantId]);
+
+  // Detect light mode from DOM (carta-light class on ancestor)
+  useEffect(() => {
+    setIsLight(!!btnRef.current?.closest(".carta-light"));
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -203,15 +210,16 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
 
       {/* Bell button */}
       <button
+        ref={btnRef}
         onClick={handleClick}
         className="flex items-center justify-center rounded-full transition-transform active:scale-95"
         style={{
           width: size,
           height: size,
-          background: state === "success" ? "#16a34a" : "rgba(0,0,0,0.5)",
+          background: state === "success" ? "#16a34a" : isLight ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.5)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          border: state === "success" ? "none" : "1px solid rgba(255,255,255,0.12)",
+          border: state === "success" ? "none" : isLight ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,255,255,0.12)",
           boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.25)",
           animation: state === "calling" ? "waiterPulse 1s ease-in-out infinite" : undefined,
           opacity: isInactive ? 0.6 : 1,
@@ -222,8 +230,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         ) : (
           <Bell
             size={size * 0.32}
-            color={isInactive ? "rgba(255,255,255,0.5)" : "#F4A623"}
-            fill={isInactive ? "rgba(255,255,255,0.5)" : "#F4A623"}
+            color={isInactive ? (isLight ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.5)") : "#F4A623"}
+            fill={isInactive ? (isLight ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.5)") : "#F4A623"}
             style={{ animation: state === "calling" ? "waiterShake 0.3s ease-in-out infinite" : undefined }}
           />
         )}
@@ -236,6 +244,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           onSave={handleSaveTable}
           onSaveAndCall={handleSaveAndCall}
           onClose={() => setModalOpen(false)}
+          isLight={isLight}
         />,
         document.body
       )}

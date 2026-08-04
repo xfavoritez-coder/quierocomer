@@ -74,6 +74,7 @@ export default function ConfiguracionGeneralPage() {
   const [accentColor, setAccentColor] = useState<string | null>(null);
   const [customColor, setCustomColor] = useState("#F4A623");
   const [customDirty, setCustomDirty] = useState(false);
+  const [colorMode, setColorMode] = useState<"LIGHT" | "DARK">("LIGHT");
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "light"); }, []);
@@ -98,6 +99,7 @@ export default function ConfiguracionGeneralPage() {
       setInfoSlug(d.slug || "");
       setSlugInput(d.slug || "");
       setAccentColor(d.cartaAccentColor || null);
+      setColorMode((d.cartaColorMode as "LIGHT" | "DARK") || "LIGHT");
       setLoaded(true);
     } catch {}
     setLoading(false);
@@ -331,6 +333,36 @@ export default function ConfiguracionGeneralPage() {
             Aplicar color
           </button>
         )}
+      </div>
+
+      {/* ── Modo de la carta ── */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>
+          <Sun size={16} color="var(--adm-text3)" /> Modo de la carta
+        </h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>
+          Se aplica en la carta QR, pedidos online, valoraciones, fidelización y página del local.
+        </p>
+        <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
+          <button onClick={() => { setColorMode("LIGHT"); save({ cartaColorMode: "LIGHT" }); }} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: colorMode !== "DARK" ? "rgba(255,210,80,0.15)" : "transparent",
+            color: colorMode !== "DARK" ? "#e6a817" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+          }}>
+            <Sun size={16} strokeWidth={colorMode !== "DARK" ? 2.5 : 1.5} /> Claro
+          </button>
+          <button onClick={() => { setColorMode("DARK"); save({ cartaColorMode: "DARK" }); }} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: colorMode === "DARK" ? "rgba(100,120,180,0.12)" : "transparent",
+            color: colorMode === "DARK" ? "#8b9fda" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+          }}>
+            <Moon size={16} strokeWidth={colorMode === "DARK" ? 2.5 : 1.5} /> Oscuro
+          </button>
+        </div>
       </div>
 
       {/* Modo del panel */}

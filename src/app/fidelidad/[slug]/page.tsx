@@ -26,7 +26,7 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug },
-    select: { id: true, name: true, logoUrl: true, cartaAccentColor: true },
+    select: { id: true, name: true, logoUrl: true, cartaAccentColor: true, cartaColorMode: true },
   });
 
   const program = restaurant
@@ -79,6 +79,7 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
         slug={slug}
         restaurantName={restaurant.name}
         restaurantLogo={restaurant.logoUrl}
+        colorMode={(restaurant.cartaColorMode as string) || "DARK"}
         program={{
           name: program.name,
           cardColorHex: resolvedColor,

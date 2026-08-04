@@ -10,6 +10,7 @@ interface Props {
   slug: string;
   restaurantName: string;
   restaurantLogo: string | null;
+  colorMode?: string;
   program: {
     name: string;
     cardColorHex: string;
@@ -28,7 +29,7 @@ function isLight(hex: string) {
   return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.6;
 }
 
-export default function EnrollClient({ slug, restaurantName, restaurantLogo, program }: Props) {
+export default function EnrollClient({ slug, restaurantName, restaurantLogo, colorMode, program }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,6 +41,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
 
   const accent = program.accentColor || program.cardColorHex;
   const onAccentText = isLight(accent) ? "#111" : "#fff";
+  const isLightMode = colorMode === "LIGHT";
   const iconText = program.stampIcon === "logo" ? "sellos" : program.stampIcon;
 
   useEffect(() => {
@@ -77,10 +79,10 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
     width: "100%",
     padding: "13px 14px",
     boxSizing: "border-box",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.15)",
+    background: isLightMode ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.06)",
+    border: isLightMode ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,255,255,0.15)",
     borderRadius: 12,
-    color: "#fff",
+    color: isLightMode ? "#111" : "#fff",
     fontSize: "1rem",
     outline: "none",
     display: "block",
@@ -91,13 +93,13 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, pro
     <main
       style={{
         minHeight: "100vh",
-        background: "#0d0d0d",
-        color: "#fff",
+        background: isLightMode ? '#F9F7F4' : '#0d0d0d',
+        color: isLightMode ? '#111' : '#fff',
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       {/* Botón volver */}
-      <a href={`/${slug}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", color: "rgba(255,255,255,0.55)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
+      <a href={`/${slug}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", color: isLightMode ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.55)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Volver
       </a>

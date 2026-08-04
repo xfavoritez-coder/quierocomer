@@ -31,6 +31,7 @@ async function getRestaurantLanding(slug: string) {
       reviewReward: true,
       reviewMode: true,
       cartaAccentColor: true,
+      cartaColorMode: true,
     },
   })
   if (!r) return null
@@ -62,19 +63,30 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
   const hasLoyalty = !!r.loyaltyProgram?.active
   const loyaltyIcon = r.loyaltyProgram?.stampIcon || '★'
   const accent = (r as any).cartaAccentColor || '#F4A623'
+  const isLight = (r as any).cartaColorMode !== 'DARK'
+  const btnStyle: React.CSSProperties = {
+    ...BTN,
+    background: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)',
+    border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.13)',
+    color: isLight ? '#111' : '#fff',
+  }
+  const arrowStyle: React.CSSProperties = {
+    ...ARROW,
+    color: isLight ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.35)',
+  }
 
   return (
     <>
     <PageHitTracker restaurantId={r.id} page="landing" />
     <main style={{
       minHeight: '100svh',
-      background: 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
+      background: isLight ? '#F9F7F4' : 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '48px 20px 60px', fontFamily: 'system-ui, -apple-system, sans-serif',
       position: 'relative', overflow: 'hidden',
     }}>
       {/* Subtle accent glow overlays */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, background: `radial-gradient(ellipse at 82% 5%, color-mix(in srgb, ${accent} 11%, transparent) 0%, transparent 46%), radial-gradient(ellipse at 6% 90%, color-mix(in srgb, ${accent} 7%, transparent) 0%, transparent 40%)` }} />
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, background: `radial-gradient(ellipse at 82% 5%, color-mix(in srgb, ${accent} ${isLight ? '18%' : '11%'}, transparent) 0%, transparent 46%), radial-gradient(ellipse at 6% 90%, color-mix(in srgb, ${accent} ${isLight ? '12%' : '7%'}, transparent) 0%, transparent 40%)` }} />
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
       {/* Logo */}
@@ -87,73 +99,73 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
       </div>
 
       {/* Name + category */}
-      <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: '#fff', textAlign: 'center', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+      <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: isLight ? '#111' : '#fff', textAlign: 'center', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
         {r.name}
       </h1>
       {/* Action buttons */}
       <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 380 }}>
         {/* Carta — siempre visible */}
-        <a href={`/qr/${r.slug}?carta=1`} style={BTN}>
+        <a href={`/qr/${r.slug}?carta=1`} style={btnStyle}>
           <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>📖</span>
           <span style={{ textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Ver carta</span>
           </span>
-          <span style={ARROW}>›</span>
+          <span style={arrowStyle}>›</span>
         </a>
 
         {/* Pedido online — solo si está activo */}
         {r.orderingEnabled && (
-          <a href={`/pedir/${r.slug}`} style={BTN}>
+          <a href={`/pedir/${r.slug}`} style={btnStyle}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.85 }}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Hacer pedido online</span>
             </span>
-            <span style={ARROW}>›</span>
+            <span style={arrowStyle}>›</span>
           </a>
         )}
 
         {/* Loyalty — solo si programa activo */}
         {hasLoyalty && (
-          <a href={`/fidelidad/${r.slug}`} style={BTN}>
+          <a href={`/fidelidad/${r.slug}`} style={btnStyle}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🎁</span>
             <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>Tarjeta de premios</span>
             </span>
-            <span style={ARROW}>›</span>
+            <span style={arrowStyle}>›</span>
           </a>
         )}
 
         {/* Reseña Google */}
         {r.reviewMode !== 'private' && r.reviewMode !== 'off' && r.googleReviewUrl && (
-          <a href={r.googleReviewUrl} target="_blank" rel="noopener noreferrer" style={BTN}>
+          <a href={r.googleReviewUrl} target="_blank" rel="noopener noreferrer" style={btnStyle}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
             <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos una reseña'}
               </span>
             </span>
-            <span style={ARROW}>›</span>
+            <span style={arrowStyle}>›</span>
           </a>
         )}
 
         {/* Reseña privada */}
         {r.reviewMode === 'private' && (
-          <a href={`/resena/${r.slug}`} style={BTN}>
+          <a href={`/resena/${r.slug}`} style={btnStyle}>
             <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>⭐</span>
             <span style={{ textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>
                 {r.reviewReward ? 'Comenta y gana' : 'Déjanos tu opinión'}
               </span>
             </span>
-            <span style={ARROW}>›</span>
+            <span style={arrowStyle}>›</span>
           </a>
         )}
       </div>
 
       {/* Footer */}
       <a href="https://quierocomer.com" target="_blank" rel="noopener noreferrer"
-        style={{ marginTop: 48, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textDecoration: 'none' }}>
-        Powered by <strong style={{ color: 'rgba(255,255,255,0.55)' }}>QuieroComer</strong>
+        style={{ marginTop: 48, fontSize: '0.72rem', color: isLight ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', textDecoration: 'none' }}>
+        Powered by <strong style={{ color: isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.55)' }}>QuieroComer</strong>
       </a>
       </div>
     </main>

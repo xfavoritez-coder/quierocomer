@@ -8,9 +8,10 @@ interface Props {
   onSave: (tableNumber: string) => void;
   onSaveAndCall: (tableNumber: string) => void;
   onClose: () => void;
+  isLight?: boolean;
 }
 
-export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose }: Props) {
+export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose, isLight = false }: Props) {
   const [visible, setVisible] = useState(false);
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,13 +35,13 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
     <div className="fixed z-[110] flex items-end font-[family-name:var(--font-dm)]" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
       <div onClick={(e) => { if (e.target === e.currentTarget) close(); }} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)", opacity: visible ? 1 : 0, transition: "opacity 0.2s" }} />
       <div style={{
-        position: "relative", zIndex: 1, background: "#0e0e0e", width: "100%",
+        position: "relative", zIndex: 1, background: isLight ? "#f7f7f7" : "#0e0e0e", width: "100%",
         borderRadius: "20px 20px 0 0", padding: "28px 24px calc(48px + env(safe-area-inset-bottom))",
         transform: visible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.25s ease-out",
       }}>
         {/* Close X */}
-        <button onClick={close} style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "1rem", cursor: "pointer" }}>✕</button>
+        <button onClick={close} style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: isLight ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.3)", fontSize: "1rem", cursor: "pointer" }}>✕</button>
 
         {/* Icon */}
         <div style={{ textAlign: "center", marginBottom: 16 }}>
@@ -49,13 +50,13 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
 
         {/* Title */}
         <h3
-          style={{ fontSize: "1.3rem", fontWeight: 900, color: "white", textAlign: "center", margin: "0 0 6px", fontFamily: "var(--font-dm, inherit)" }}
+          style={{ fontSize: "1.3rem", fontWeight: 900, color: isLight ? "#111" : "white", textAlign: "center", margin: "0 0 6px", fontFamily: "var(--font-dm, inherit)" }}
         >
           ¿En qué mesa estás?
         </h3>
 
         {/* Subtitle */}
-        <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.4)", textAlign: "center", margin: "0 0 24px" }}>
+        <p style={{ fontSize: "0.9rem", color: isLight ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.4)", textAlign: "center", margin: "0 0 24px" }}>
           Así podrás llamar al garzón cuando lo necesites.
         </p>
 
@@ -69,8 +70,9 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
           placeholder="Ej: 4, A1, Terraza"
           style={{
             width: "100%", padding: "14px 16px", boxSizing: "border-box",
-            background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: 12, color: "white", fontSize: "1.2rem", textAlign: "center",
+            background: isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.07)",
+            border: isLight ? "1px solid rgba(0,0,0,0.15)" : "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 12, color: isLight ? "#111" : "white", fontSize: "1.2rem", textAlign: "center",
             outline: "none", fontFamily: "inherit",
           }}
         />
@@ -96,7 +98,7 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
           onClick={close}
           style={{
             display: "block", width: "100%", marginTop: 8, padding: "10px",
-            background: "none", border: "none", color: "rgba(255,255,255,0.3)",
+            background: "none", border: "none", color: isLight ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.3)",
             fontSize: "0.85rem", fontFamily: "inherit", cursor: "pointer", textAlign: "center",
           }}
         >

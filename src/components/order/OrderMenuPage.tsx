@@ -628,7 +628,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
     whiteSpace: "nowrap", flexShrink: 0,
     border: isActive ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)" : `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`,
     background: isActive ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)" : (isDark ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.04)"),
-    borderRadius: 999, color: isActive ? "#fff" : (isDark ? "#777" : "#999"),
+    borderRadius: 999, color: isActive ? (isDark ? "#fff" : accent) : (isDark ? "#777" : "#999"),
     fontWeight: 800, cursor: "pointer",
   });
 
@@ -684,7 +684,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
         {/* Título MENÚ + search */}
         <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-          <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "#ddd" : "#333", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
+          <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.38)", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
             MENÚ
           </h2>
           <div style={{ flex: searchOpen ? 1 : "0 0 0", overflow: "hidden", opacity: searchOpen ? 1 : 0, transition: "flex 0.22s ease, opacity 0.18s ease", display: "flex", alignItems: "center", minWidth: 0 }}>
@@ -707,9 +707,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
               return (
                 <button key={f.key} onClick={() => toggleFilter(f.key)} style={{
                   flexShrink: 0, display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 999, fontSize: 14, fontWeight: isActive ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
-                  background: isActive ? (f.key === "popular" ? "color-mix(in srgb, #ef4444 14%, rgba(255,255,255,0.08))" : f.key === "veggie" ? "color-mix(in srgb, #16a34a 14%, rgba(255,255,255,0.08))" : f.key === "gluten-free" ? "color-mix(in srgb, #ca8a04 14%, rgba(255,255,255,0.08))" : `color-mix(in srgb, ${accent} 15%, rgba(255,255,255,0.08))`) : "rgba(255,255,255,0.08)",
-                  border: isActive ? (f.key === "popular" ? "1px solid rgba(239,68,68,0.45)" : f.key === "veggie" ? "1px solid rgba(22,163,74,0.45)" : f.key === "gluten-free" ? "1px solid rgba(202,138,4,0.45)" : `1px solid color-mix(in srgb, ${accent} 50%, transparent)`) : "1px solid rgba(255,255,255,0.18)",
-                  color: isActive ? activeColor : "rgba(255,255,255,0.65)",
+                  background: isActive ? (f.key === "popular" ? `color-mix(in srgb, #ef4444 14%, ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)"})` : f.key === "veggie" ? `color-mix(in srgb, #16a34a 14%, ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)"})` : f.key === "gluten-free" ? `color-mix(in srgb, #ca8a04 14%, ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)"})` : `color-mix(in srgb, ${accent} 15%, ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)"})`): (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"),
+                  border: isActive ? (f.key === "popular" ? "1px solid rgba(239,68,68,0.45)" : f.key === "veggie" ? "1px solid rgba(22,163,74,0.45)" : f.key === "gluten-free" ? "1px solid rgba(202,138,4,0.45)" : `1px solid color-mix(in srgb, ${accent} 50%, transparent)`) : `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)"}`,
+                  color: isActive ? activeColor : (isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.5)"),
                 }}>
                   <span>{f.emoji}</span>{f.label}
                 </button>
