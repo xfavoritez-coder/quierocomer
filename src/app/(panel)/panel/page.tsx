@@ -95,6 +95,8 @@ export default function PanelDashboard() {
   const [dietModal, setDietModal] = useState(false);
   const [dietValue, setDietValue] = useState("");
   const [savingChecklist, setSavingChecklist] = useState(false);
+  const [showQrFidelidad, setShowQrFidelidad] = useState(false);
+  const [qrFidelDataUrl, setQrFidelDataUrl] = useState("");
   const welcomeShown = useRef(false);
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
@@ -366,28 +368,89 @@ export default function PanelDashboard() {
       })()}
 
       {/* ═══ Página del local ═══ */}
-      {rest?.slug && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "14px 16px", marginBottom: 16, boxShadow: "var(--adm-card-shadow)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página de mi local</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
-              {landingUrl}
-            </a>
-            <button
-              onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }}
-              title="Copiar link"
-              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
-            >
-              <Copy size={15} color="var(--adm-text3)" />
-            </button>
-            <a href={landingUrl} target="_blank" rel="noopener noreferrer"
-              style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "grid", placeItems: "center", flexShrink: 0 }}
-            >
-              <ExternalLink size={15} color="var(--adm-text3)" />
-            </a>
+      {rest?.slug && (() => {
+        const fidelUrl = `https://quierocomer.com/fidelidad/${rest.slug}`;
+        return (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "14px 16px", marginBottom: 16, boxShadow: "var(--adm-card-shadow)" }}>
+            <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página de mi local</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <a href={landingUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
+                {landingUrl}
+              </a>
+              <button
+                onClick={() => { navigator.clipboard.writeText(landingUrl); toast.success("Copiado"); }}
+                title="Copiar link"
+                style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+              >
+                <Copy size={15} color="var(--adm-text3)" />
+              </button>
+              <a href={landingUrl} target="_blank" rel="noopener noreferrer"
+                style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "grid", placeItems: "center", flexShrink: 0 }}
+              >
+                <ExternalLink size={15} color="var(--adm-text3)" />
+              </a>
+            </div>
+
+            {/* Tarjeta de fidelización */}
+            <div style={{ marginTop: 10, borderTop: "1px solid var(--adm-card-border)", paddingTop: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Tarjeta de fidelización</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <a href={fidelUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
+                  {fidelUrl}
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(fidelUrl); toast.success("Copiado"); }}
+                  title="Copiar link"
+                  style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+                >
+                  <Copy size={15} color="var(--adm-text3)" />
+                </button>
+                <a href={fidelUrl} target="_blank" rel="noopener noreferrer"
+                  style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "grid", placeItems: "center", flexShrink: 0 }}
+                >
+                  <ExternalLink size={15} color="var(--adm-text3)" />
+                </a>
+              </div>
+              {/* QR de inscripción toggle */}
+              <button
+                onClick={() => {
+                  setShowQrFidelidad(s => !s);
+                  if (!qrFidelDataUrl) {
+                    import("qrcode").then(mod => mod.default.toDataURL(fidelUrl, { width: 220, margin: 1 })).then(setQrFidelDataUrl);
+                  }
+                }}
+                style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, padding: 0 }}
+              >
+                <QrCode size={13} />
+                {showQrFidelidad ? "Ocultar QR de inscripción" : "Ver QR de inscripción"}
+              </button>
+              {showQrFidelidad && qrFidelDataUrl && (
+                <div style={{ marginTop: 10, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ background: "#fff", padding: 8, borderRadius: 10, border: "1px solid var(--adm-card-border)", flexShrink: 0 }}>
+                    <img src={qrFidelDataUrl} alt="QR inscripción" width={110} height={110} style={{ display: "block" }} />
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>
+                      Imprime este QR y ponlo en tu mostrador. El cliente lo escanea y la tarjeta queda en su teléfono.
+                    </p>
+                    <button
+                      onClick={() => {
+                        const win = window.open("", "_blank");
+                        if (!win) return;
+                        win.document.write(`<!DOCTYPE html><html><head><title>QR Fidelización</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;gap:16px;padding:32px}img{width:260px;height:260px}p{font-size:14px;color:#555;margin:0}@media print{button{display:none}}</style></head><body><img src="${qrFidelDataUrl}" /><p>${fidelUrl}</p><button onclick="window.print()">Imprimir</button></body></html>`);
+                        win.document.close();
+                      }}
+                      style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GOLD}50`, background: `${GOLD}15`, color: GOLD, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+                    >
+                      🖨️ Imprimir QR
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ═══ VISITAS POR SECCIÓN ═══ */}
       {data.pageHitsToday && (() => {
