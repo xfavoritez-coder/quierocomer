@@ -97,6 +97,7 @@ export default function PanelDashboard() {
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [showQrFidelidad, setShowQrFidelidad] = useState(false);
   const [qrFidelDataUrl, setQrFidelDataUrl] = useState("");
+  const [loyaltyMemberCount, setLoyaltyMemberCount] = useState<number | null>(null);
   const welcomeShown = useRef(false);
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
@@ -194,7 +195,17 @@ export default function PanelDashboard() {
   const maxCount = topViewed[0]?.count || 1;
 
   const rest = restaurants.find(r => r.id === selectedRestaurantId);
+  const isStore = (rest as any)?.profileType === "STORE";
   const landingUrl = rest ? `https://quierocomer.com/${rest.slug}` : "#";
+
+  // Fetch loyalty member count for STORE dashboard
+  useEffect(() => {
+    if (!isStore || !selectedRestaurantId) return;
+    fetch(`/api/loyalty/members?restaurantId=${selectedRestaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setLoyaltyMemberCount(d.total ?? d.members?.length ?? 0); })
+      .catch(() => {});
+  }, [isStore, selectedRestaurantId]);
 
   // ═══ Empty state: new restaurant with no dishes yet ═══
   if (noDishes) {
@@ -367,9 +378,73 @@ export default function PanelDashboard() {
         );
       })()}
 
-      {/* ═══ Página del local ═══ */}
+      {/* ═══ Página del local / Tarjeta de fidelización ═══ */}
       {rest?.slug && (() => {
         const fidelUrl = `https://quierocomer.com/fidelidad/${rest.slug}`;
+        const storeUrl = landingUrl; // /slug → redirect to fidelidad for STORE
+
+        if (isStore) {
+          // STORE: solo tarjeta de fidelización con URL /slug
+          return (
+            <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "14px 16px", marginBottom: 16, boxShadow: "var(--adm-card-shadow)" }}>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Tarjeta de fidelización</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <a href={storeUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", color: GOLD, background: `${GOLD}12`, padding: "8px 12px", borderRadius: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "none" }}>
+                  {storeUrl}
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(storeUrl); toast.success("Copiado"); }}
+                  title="Copiar link"
+                  style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+                >
+                  <Copy size={15} color="var(--adm-text3)" />
+                </button>
+                <a href={storeUrl} target="_blank" rel="noopener noreferrer"
+                  style={{ width: 34, height: 34, borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "grid", placeItems: "center", flexShrink: 0 }}
+                >
+                  <ExternalLink size={15} color="var(--adm-text3)" />
+                </a>
+              </div>
+              <button
+                onClick={() => {
+                  setShowQrFidelidad(s => !s);
+                  if (!qrFidelDataUrl) {
+                    import("qrcode").then(mod => mod.default.toDataURL(storeUrl, { width: 220, margin: 1 })).then(setQrFidelDataUrl);
+                  }
+                }}
+                style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, padding: 0 }}
+              >
+                <QrCode size={13} />
+                {showQrFidelidad ? "Ocultar QR de inscripción" : "Ver QR de inscripción"}
+              </button>
+              {showQrFidelidad && qrFidelDataUrl && (
+                <div style={{ marginTop: 10, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ background: "#fff", padding: 8, borderRadius: 10, border: "1px solid var(--adm-card-border)", flexShrink: 0 }}>
+                    <img src={qrFidelDataUrl} alt="QR inscripción" width={110} height={110} style={{ display: "block" }} />
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>
+                      Imprime este QR y ponlo en tu mostrador. El cliente lo escanea y la tarjeta queda en su teléfono.
+                    </p>
+                    <button
+                      onClick={() => {
+                        const win = window.open("", "_blank");
+                        if (!win) return;
+                        win.document.write(`<!DOCTYPE html><html><head><title>QR Fidelización</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;gap:16px;padding:32px}img{width:260px;height:260px}p{font-size:14px;color:#555;margin:0}@media print{button{display:none}}</style></head><body><img src="${qrFidelDataUrl}" /><p>${storeUrl}</p><button onclick="window.print()">Imprimir</button></body></html>`);
+                        win.document.close();
+                      }}
+                      style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GOLD}50`, background: `${GOLD}15`, color: GOLD, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+                    >
+                      🖨️ Imprimir QR
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // RESTAURANT: bloque normal con página del local + tarjeta de fidelización
         return (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "14px 16px", marginBottom: 16, boxShadow: "var(--adm-card-shadow)" }}>
             <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Página de mi local</p>
@@ -452,8 +527,32 @@ export default function PanelDashboard() {
         );
       })()}
 
+      {/* ═══ STORE: estadísticas simples ═══ */}
+      {isStore && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>
+                {data.pageHitsWeek?.fidelidad ?? data.visitsThisWeek ?? 0}
+              </strong>
+              <Users size={16} color="var(--adm-text3)" />
+            </div>
+            <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", fontWeight: 700 }}>Visitas esta semana</span>
+          </div>
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>
+                {loyaltyMemberCount ?? "—"}
+              </strong>
+              <Users size={16} color={GOLD} />
+            </div>
+            <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", fontWeight: 700 }}>Miembros suscritos</span>
+          </div>
+        </div>
+      )}
+
       {/* ═══ VISITAS POR SECCIÓN ═══ */}
-      {data.pageHitsToday && (() => {
+      {!isStore && data.pageHitsToday && (() => {
         const today = data.pageHitsToday!;
         const week = data.pageHitsWeek!;
         const sections: { key: keyof PageHits; label: string; emoji: string }[] = [
@@ -485,8 +584,9 @@ export default function PanelDashboard() {
         );
       })()}
 
-      {/* ═══ ESTA SEMANA ═══ */}
-      <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_this_week")}</h3>
+      {/* ═══ ESTA SEMANA (solo restaurantes) ═══ */}
+      {!isStore && <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_this_week")}</h3>}
+      {!isStore && (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -505,9 +605,10 @@ export default function PanelDashboard() {
           <small style={{ display: "block", color: "#36e982", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>+12 {t("home_vs_prev")}</small>
         </div>
       </div>
+      )}
 
       {/* ═══ Plato estrella ═══ */}
-      {data.starDish && (
+      {!isStore && data.starDish && (
         <div style={{
           display: "flex", alignItems: "center", gap: 14,
           border: "1px solid var(--adm-card-border)", borderRadius: 25, padding: 14, marginBottom: 18,
@@ -528,7 +629,7 @@ export default function PanelDashboard() {
       )}
 
       {/* ═══ Top 5 más vistos ═══ */}
-      {topViewed.length > 0 && (
+      {!isStore && topViewed.length > 0 && (
         <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
           <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>{t("home_top_viewed")}</h3>
           {topViewed.slice(0, 5).map((d, i) => (
@@ -546,7 +647,7 @@ export default function PanelDashboard() {
 
 
       {/* ═══ Filtros usados ═══ */}
-      {data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
+      {!isStore && data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
         const fu = data.filterUsage!;
         const total = fu.popular + fu.estrella + fu.veggie + (fu["gluten-free"] || 0);
         const filters = [

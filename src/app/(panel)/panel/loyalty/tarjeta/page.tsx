@@ -100,11 +100,22 @@ export default function LoyaltyCardPage() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [showQr, setShowQr] = useState(false);
   const [customExpiry, setCustomExpiry] = useState("");
+  const [accentColor, setAccentColor] = useState<string>("#F4A623");
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
+  const isStore = (restaurant as any)?.profileType === "STORE";
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
   const enrollUrl = restaurant?.slug ? `${baseUrl}/fidelidad/${restaurant.slug}` : "";
+
+  // Fetch accent color from restaurant settings
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    fetch(`/api/admin/locales/${selectedRestaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.cartaAccentColor) setAccentColor(d.cartaAccentColor); else setAccentColor("#F4A623"); })
+      .catch(() => {});
+  }, [selectedRestaurantId]);
 
   // Fotos de platos para elegir fondo de la tarjeta
   useEffect(() => {
@@ -185,7 +196,7 @@ export default function LoyaltyCardPage() {
       const res = await fetch("/api/loyalty/program", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, rewards: cleanRewards, showGiftBadge: true }),
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, cardColorHex: accentColor, rewards: cleanRewards, showGiftBadge: true }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -251,7 +262,7 @@ export default function LoyaltyCardPage() {
                     const res = await fetch("/api/loyalty/program", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, active: newActive, showGiftBadge: true }),
+                      body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, cardColorHex: accentColor, active: newActive, showGiftBadge: true }),
                     });
                     if (!res.ok) throw new Error();
                     setSaved(true);
@@ -267,10 +278,9 @@ export default function LoyaltyCardPage() {
               </button>
             </div>
 
-            {/* Link de inscripción + QR */}
-            {enrollUrl && (
+            {/* Link de inscripción + QR — solo restaurantes (STORE lo tiene en el dashboard) */}
+            {!isStore && enrollUrl && (
               <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, overflow: "hidden" }}>
-                {/* URL row */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px" }}>
                   <Link2 size={14} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
                   <input readOnly value={enrollUrl} onFocus={(e) => e.target.select()} style={{ ...inputStyle, flex: 1, padding: "6px 8px", fontSize: "0.78rem", border: "none", background: "transparent", color: "var(--adm-text2)", minWidth: 0 }} />
@@ -281,7 +291,6 @@ export default function LoyaltyCardPage() {
                     Ver →
                   </a>
                 </div>
-                {/* QR toggle */}
                 <div style={{ borderTop: "1px solid var(--adm-card-border)" }}>
                   <button
                     type="button"
@@ -514,23 +523,6 @@ export default function LoyaltyCardPage() {
               )}
             </div>
 
-            {/* Colores */}
-            <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-              <div>
-                <label style={labelStyle}>Color de la tarjeta</label>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <input type="color" value={form.cardColorHex} onChange={(e) => update({ cardColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
-                  <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.cardColorHex}</span>
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Color de fondo de los sellos</label>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <input type="color" value={form.stampColorHex} onChange={(e) => update({ stampColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
-                  <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.stampColorHex}</span>
-                </div>
-              </div>
-            </div>
 
             {/* Imagen de fondo */}
             <div>
@@ -587,7 +579,7 @@ export default function LoyaltyCardPage() {
           <div style={{ height: "fit-content" }}>
             <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Vista previa</p>
             <CardPreview
-              color={form.cardColorHex}
+              color={accentColor}
               stampColor={form.stampColorHex}
               bgImage={form.bgImageUrl}
               logoUrl={restaurant?.logoUrl || ""}

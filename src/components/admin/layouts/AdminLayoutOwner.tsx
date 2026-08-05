@@ -96,14 +96,14 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       icon: Gift,
       badge: "Nuevo",
       items: [
-        { icon: HelpCircle, labelKey: "nav_loyalty_how", href: `${base}/loyalty` },
+        ...(!isStore ? [{ icon: HelpCircle, labelKey: "nav_loyalty_how", href: `${base}/loyalty` }] : []),
         { icon: CreditCard, labelKey: "nav_loyalty_card", href: `${base}/loyalty/tarjeta` },
         { icon: UsersRound, labelKey: "nav_loyalty_members", href: `${base}/loyalty/miembros` },
         { icon: Bell, labelKey: "nav_loyalty_notif", href: `${base}/loyalty/notificaciones` },
         { icon: Scan, labelKey: "nav_loyalty_scan", href: `${base}/loyalty/escanear` },
       ],
     },
-    {
+    ...(!isStore ? [{
       key: "valoraciones",
       label: "Valoraciones",
       icon: Star,
@@ -112,7 +112,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Settings, labelKey: "nav_reviews_config", href: `${base}/valoraciones` },
         { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
       ],
-    },
+    }] : []),
     {
       key: "config",
       label: "Configuración",

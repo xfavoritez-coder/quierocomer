@@ -56,6 +56,7 @@ function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void })
 export default function ConfiguracionGeneralPage() {
   const { selectedRestaurantId, restaurants } = useAdminSession();
   const selectedRestaurant = restaurants?.find((r: any) => r.id === selectedRestaurantId);
+  const isStore = (selectedRestaurant as any)?.profileType === "STORE";
   const { lang, setLang, t } = usePanelLang();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -242,31 +243,33 @@ export default function ConfiguracionGeneralPage() {
           <label style={labelStyle}>Nombre del local</label>
           <input value={infoName} onChange={e => setInfoName(e.target.value)} style={inputStyle} placeholder="Nombre del restaurant" />
         </div>
-        {/* Tipo de cocina */}
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Tipo de cocina</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            {([
-              { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️" },
-              { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
-              { value: "VEGAN", label: "Vegano", icon: "🌿" },
-            ] as const).map(opt => {
-              const active = infoDietType === opt.value;
-              return (
-                <button key={opt.value} onClick={() => setInfoDietType(opt.value)} style={{
-                  flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
-                  background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
-                  border: active ? "1px solid rgba(244,166,35,0.3)" : "1px solid transparent",
-                  color: active ? GOLD : "var(--adm-text3)",
-                  fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                }}>
-                  <span style={{ fontSize: "0.9rem" }}>{opt.icon}</span> {opt.label}
-                </button>
-              );
-            })}
+        {/* Tipo de cocina — solo restaurantes */}
+        {!isStore && (
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Tipo de cocina</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {([
+                { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️" },
+                { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
+                { value: "VEGAN", label: "Vegano", icon: "🌿" },
+              ] as const).map(opt => {
+                const active = infoDietType === opt.value;
+                return (
+                  <button key={opt.value} onClick={() => setInfoDietType(opt.value)} style={{
+                    flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
+                    background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                    border: active ? "1px solid rgba(244,166,35,0.3)" : "1px solid transparent",
+                    color: active ? GOLD : "var(--adm-text3)",
+                    fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  }}>
+                    <span style={{ fontSize: "0.9rem" }}>{opt.icon}</span> {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
         {/* Dirección */}
         <div style={{ marginBottom: 14 }}>
           <label style={labelStyle}>Dirección</label>
@@ -277,17 +280,19 @@ export default function ConfiguracionGeneralPage() {
             onChange={(a, la, ln) => { setInfoAddress(a); setInfoLat(la); setInfoLng(ln); }}
           />
         </div>
-        {/* Teléfono y WhatsApp */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          <div>
-            <label style={labelStyle}>Teléfono</label>
-            <input value={infoPhone} onChange={e => setInfoPhone(e.target.value)} style={inputStyle} placeholder="+56 9 1234 5678" />
+        {/* Teléfono y WhatsApp — solo restaurantes */}
+        {!isStore && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            <div>
+              <label style={labelStyle}>Teléfono</label>
+              <input value={infoPhone} onChange={e => setInfoPhone(e.target.value)} style={inputStyle} placeholder="+56 9 1234 5678" />
+            </div>
+            <div>
+              <label style={labelStyle}>WhatsApp</label>
+              <input value={infoWhatsapp} onChange={e => setInfoWhatsapp(e.target.value)} style={inputStyle} placeholder="+56 9 1234 5678" />
+            </div>
           </div>
-          <div>
-            <label style={labelStyle}>WhatsApp</label>
-            <input value={infoWhatsapp} onChange={e => setInfoWhatsapp(e.target.value)} style={inputStyle} placeholder="+56 9 1234 5678" />
-          </div>
-        </div>
+        )}
         <button
           onClick={() => save({ name: infoName, dietType: infoDietType, address: infoAddress || null, lat: infoLat, lng: infoLng, phone: infoPhone || null, whatsapp: infoWhatsapp || null, logoUrl: infoLogoUrl || null })}
           disabled={saving}
@@ -341,13 +346,13 @@ export default function ConfiguracionGeneralPage() {
         )}
       </div>
 
-      {/* ── Modo de la carta ── */}
+      {/* ── Modo de la carta / tarjeta ── */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>
-          <Sun size={16} color="var(--adm-text3)" /> Modo de la carta
+          <Sun size={16} color="var(--adm-text3)" /> {isStore ? "Modo de la tarjeta" : "Modo de la carta"}
         </h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>
-          Se aplica en la carta QR, pedidos online, valoraciones, fidelización y página del local.
+          {isStore ? "Se aplica en la tarjeta de fidelización y página del local." : "Se aplica en la carta QR, pedidos online, valoraciones, fidelización y página del local."}
         </p>
         <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
           <button onClick={() => { setColorMode("LIGHT"); save({ cartaColorMode: "LIGHT" }); }} style={{
@@ -371,8 +376,8 @@ export default function ConfiguracionGeneralPage() {
         </div>
       </div>
 
-      {/* ── Títulos de la carta ── */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+      {/* ── Títulos de la carta — solo restaurantes ── */}
+      {!isStore && <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
           ✏️ Títulos de la carta
         </h3>
@@ -393,7 +398,7 @@ export default function ConfiguracionGeneralPage() {
             <input value={titleCraving} onChange={e => setTitleCraving(e.target.value)} onBlur={() => save({ sectionTitleCraving: titleCraving.trim() || null })} onKeyDown={e => e.key === "Enter" && save({ sectionTitleCraving: titleCraving.trim() || null })} placeholder="¿Qué se te antoja?" style={inputStyle} />
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Modo del panel */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -420,8 +425,8 @@ export default function ConfiguracionGeneralPage() {
         </div>
       </div>
 
-      {/* Idioma del panel */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+      {/* Idioma del panel — solo restaurantes */}
+      {!isStore && <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>
           🌐 {t("language")}
         </h3>
@@ -446,7 +451,7 @@ export default function ConfiguracionGeneralPage() {
             🇺🇸 English
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
