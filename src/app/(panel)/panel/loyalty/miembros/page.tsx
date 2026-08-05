@@ -144,7 +144,7 @@ export default function LoyaltyMembersPage() {
           <CreditCard size={20} color="var(--adm-text3)" /> Fidelidad
         </h1>
         <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-          Gestiona tus miembros y sus sellos.
+          Gestiona tus miembros y sus sellos.{!loadingList && <span style={{ marginLeft: 8, fontFamily: F, fontWeight: 700, color: "var(--adm-text3)", fontSize: "0.82rem" }}>{members.length} {members.length === 1 ? "miembro" : "miembros"}</span>}
         </p>
       </div>
 
