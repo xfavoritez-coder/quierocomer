@@ -96,10 +96,10 @@ export default function AddressPicker({
 
   const select = async (s: Suggestion) => {
     setOpen(false);
+    const userText = q; // conservar lo que escribió el usuario (puede incluir número)
     try {
       let la: number | null = null;
       let ln: number | null = null;
-      let label = s.display_name;
       if (s.lat && s.lat !== "0") {
         la = Number(s.lat);
         ln = Number(s.lon);
@@ -109,11 +109,10 @@ export default function AddressPicker({
         if (d) {
           la = Number(d.lat);
           ln = Number(d.lon);
-          label = d.display_name || s.display_name;
         }
       }
-      setQ(label);
-      onChange(label, la, ln);
+      // Mantener el texto que escribió el usuario; solo actualizar las coords
+      onChange(userText, la, ln);
     } catch {
       /* noop */
     }

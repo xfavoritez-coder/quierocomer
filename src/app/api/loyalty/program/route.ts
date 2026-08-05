@@ -149,7 +149,10 @@ export async function POST(req: NextRequest) {
     });
 
     const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
-    if (rest?.slug) revalidatePath(`/${rest.slug}`);
+    if (rest?.slug) {
+      revalidatePath(`/${rest.slug}`);
+      revalidatePath(`/fidelidad/${rest.slug}`);
+    }
 
     return NextResponse.json({ program });
   } catch (e: any) {
