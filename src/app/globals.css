@@ -188,7 +188,7 @@
   --impact-card-bg: rgba(0,0,0,0.04);
   --impact-card-border: rgba(0,0,0,0.07);
   --impact-card-glow: rgba(0,0,0,0.06);
-  --impact-section-title: #1a1a1a;
+  --impact-section-title: rgba(0,0,0,0.65);
   --impact-cat-title: rgba(0,0,0,0.4);
   --impact-offer-bg: #111;
   --impact-offer-text: white;
@@ -212,7 +212,7 @@
   --impact-card-bg: linear-gradient(135deg, rgba(255,255,255,0.075), rgba(255,255,255,0.025));
   --impact-card-border: rgba(255,255,255,0.1);
   --impact-card-glow: rgba(244,166,35,0.08);
-  --impact-section-title: #fff7ed;
+  --impact-section-title: rgba(255,247,237,0.82);
   --impact-cat-title: rgba(255,255,255,0.4);
   --impact-offer-bg: #111;
   --impact-offer-text: white;

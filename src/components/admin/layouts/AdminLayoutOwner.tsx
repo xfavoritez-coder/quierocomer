@@ -9,7 +9,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
-interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; plan?: string; hasToteat?: boolean; }
+interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; plan?: string; hasToteat?: boolean; profileType?: string; }
 
 interface Props {
   name: string;
@@ -42,8 +42,9 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string; hasLoyalty?: boolean } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
+  const isStore = opts.profileType === "STORE";
 
   const SECTIONS: NavSection[] = [
     {
@@ -54,15 +55,15 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Home, labelKey: "nav_home", href: base },
       ],
     },
-    {
+    ...(!isStore ? [{
       key: "mi-carta",
       label: "Mi Carta",
       icon: UtensilsCrossed,
       items: [
         { icon: UtensilsCrossed, labelKey: "nav_menu", href: `${base}/menus` },
       ],
-    },
-    {
+    }] : []),
+    ...(!isStore ? [{
       key: "carta",
       label: "Carta QR",
       icon: QrCode,
@@ -77,8 +78,8 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: QrCode, labelKey: "nav_generate_qr", href: `${base}/qr` },
         { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
       ],
-    },
-    {
+    }] : []),
+    ...(!isStore ? [{
       key: "ordering",
       label: "Pedidos Online",
       icon: ShoppingCart,
@@ -88,7 +89,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Users, labelKey: "nav_clients_orders", href: `${base}/pedir-online/clientes` },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
       ],
-    },
+    }] : []),
     {
       key: "loyalty",
       label: "Loyalty",
@@ -161,7 +162,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
   const hasControl = !!(selected as any)?.hasControl;
-  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug, hasLoyalty });
+  const profileType = (selected as any)?.profileType || "RESTAURANT";
+  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug, hasLoyalty, profileType });
 
   // Accordion state
   const [openSections, setOpenSections] = useState<Set<string>>(() => getActiveSectionKeys(pathname, SECTIONS, basePath));

@@ -104,6 +104,7 @@ export async function GET(req: NextRequest) {
               trialEndsAt: trialEnd,
               loyaltyStatus: "TRIALING",
               loyaltyTrialEndsAt: trialEnd,
+              isDemo: false,
             },
           });
         }

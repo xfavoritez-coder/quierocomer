@@ -373,7 +373,7 @@ export default function CartaLista({
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       ) : (
-        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} orderingEnabled={(restaurant as any).orderingEnabled} restaurantSlug={(restaurant as any).slug} />
+        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).plan === "PREMIUM" ? (restaurant as any).enabledLangs : undefined} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} belowNavSlot={announcementSlot} stickyNav navRef={navRef} />
       )}
 
       {/* Filter bar — solo Gold y Premium, y si el dueño no lo desactivó */}

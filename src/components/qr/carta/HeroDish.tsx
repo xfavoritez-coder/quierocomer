@@ -162,7 +162,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
 
       <section
         className="relative w-full overflow-hidden"
-        style={{ height: isCompact ? "38vh" : "50vh", maxHeight: isCompact ? 300 : 400, marginTop: isCompact ? 10 : 20 }}
+        style={{ height: isCompact ? "38vh" : "50vh", maxHeight: isCompact ? 300 : 400, marginTop: 0 }}
         onTouchStart={hasSlides ? handleTouchStart : undefined}
         onTouchEnd={hasSlides ? handleTouchEnd : undefined}
       >

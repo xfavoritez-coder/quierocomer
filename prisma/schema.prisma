@@ -302,6 +302,9 @@ model Restaurant {
   birthdayPerkConditions     String?
   cartaColorMode             CartaColorMode           @default(LIGHT)
   cartaAccentColor           String?
+  sectionTitleMenu           String?
+  sectionTitleRecomendados   String?
+  sectionTitleCraving        String?
   isDemo                     Boolean                  @default(false)
   isShowcase                 Boolean                  @default(false)
   needsTranslation           Boolean                  @default(false)
@@ -390,6 +393,7 @@ model Restaurant {
 
   commune     String?
   communeSlug String?
+  profileType String   @default("RESTAURANT") // "RESTAURANT" | "STORE"
 
   @@index([ownerId])
   @@index([communeSlug])

@@ -14,6 +14,9 @@ const OWNER_EDITABLE_FIELDS = [
   "birthdayPerk",
   "cartaColorMode",
   "cartaAccentColor",
+  "sectionTitleMenu",
+  "sectionTitleRecomendados",
+  "sectionTitleCraving",
   "allPhotosReferential",
   "defaultView",
   "weeklyEmailEnabled",
@@ -125,6 +128,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.lng !== undefined && { lng: body.lng === null ? null : Number(body.lng) }),
         ...(body.cartaProvider !== undefined && { cartaProvider: body.cartaProvider || null }),
         ...(body.websiteIsOrderUrl !== undefined && { websiteIsOrderUrl: body.websiteIsOrderUrl }),
+        ...(body.sectionTitleMenu !== undefined && { sectionTitleMenu: body.sectionTitleMenu || null }),
+        ...(body.sectionTitleRecomendados !== undefined && { sectionTitleRecomendados: body.sectionTitleRecomendados || null }),
+        ...(body.sectionTitleCraving !== undefined && { sectionTitleCraving: body.sectionTitleCraving || null }),
       };
     } else {
       // Owner: silently filter to allowed fields only
@@ -164,7 +170,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const feedFields = ['name','phone','website','websiteIsOrderUrl','cartaProvider','instagram','googleMapsUrl','address','logoUrl','isActive'];
     if (feedFields.some(f => data[f] !== undefined)) revalidateTag('feed-dishes', { expire: 0 });
     // Invalidar cache QR si cambiaron ajustes de la carta
-    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','multiMenuEnabled','filterBarEnabled','bannerUrl','logoUrl','name','description','orderingEnabled','orderingPhone','orderingDelivery','orderingMinAmount','orderingWaitTime','orderingNote','orderingPaymentMethods','orderingBannerUrl','orderingTheme','orderingAccentColor'];
+    const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','multiMenuEnabled','filterBarEnabled','bannerUrl','logoUrl','name','description','orderingEnabled','orderingPhone','orderingDelivery','orderingMinAmount','orderingWaitTime','orderingNote','orderingPaymentMethods','orderingBannerUrl','orderingTheme','orderingAccentColor','sectionTitleMenu','sectionTitleRecomendados','sectionTitleCraving'];
     if (qrFields.some(f => data[f] !== undefined)) {
       revalidateTag(`qr-restaurant-${restaurant.slug}`, { expire: 0 });
     }

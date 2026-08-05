@@ -39,6 +39,12 @@ export async function POST(
     update: { pushToken, passTypeIdentifier },
   });
 
+  // Marcar en el miembro que tiene Apple Wallet
+  await prisma.loyaltyMember.update({
+    where: { id: serialNumber },
+    data: { appleSerial: serialNumber },
+  });
+
   // 201 si es nuevo, 200 si ya estaba
   return new NextResponse(null, { status: existing ? 200 : 201 });
 }
@@ -53,5 +59,15 @@ export async function DELETE(
   if (!member) return new NextResponse(null, { status: 401 });
 
   await prisma.loyaltyDevice.deleteMany({ where: { deviceLibraryIdentifier, serialNumber } });
+
+  // Si no quedan más dispositivos, limpiar appleSerial
+  const remaining = await prisma.loyaltyDevice.count({ where: { serialNumber } });
+  if (remaining === 0) {
+    await prisma.loyaltyMember.update({
+      where: { id: serialNumber },
+      data: { appleSerial: null },
+    });
+  }
+
   return new NextResponse(null, { status: 200 });
 }

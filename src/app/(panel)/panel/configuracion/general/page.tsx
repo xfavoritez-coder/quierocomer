@@ -76,6 +76,9 @@ export default function ConfiguracionGeneralPage() {
   const [customDirty, setCustomDirty] = useState(false);
   const [colorMode, setColorMode] = useState<"LIGHT" | "DARK">("LIGHT");
   const [loaded, setLoaded] = useState(false);
+  const [titleMenu, setTitleMenu] = useState("");
+  const [titleRecomendados, setTitleRecomendados] = useState("");
+  const [titleCraving, setTitleCraving] = useState("");
 
   useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "light"); }, []);
 
@@ -100,6 +103,9 @@ export default function ConfiguracionGeneralPage() {
       setSlugInput(d.slug || "");
       setAccentColor(d.cartaAccentColor || null);
       setColorMode((d.cartaColorMode as "LIGHT" | "DARK") || "LIGHT");
+      setTitleMenu(d.sectionTitleMenu || "");
+      setTitleRecomendados(d.sectionTitleRecomendados || "");
+      setTitleCraving(d.sectionTitleCraving || "");
       setLoaded(true);
     } catch {}
     setLoading(false);
@@ -362,6 +368,30 @@ export default function ConfiguracionGeneralPage() {
           }}>
             <Moon size={16} strokeWidth={colorMode === "DARK" ? 2.5 : 1.5} /> Oscuro
           </button>
+        </div>
+      </div>
+
+      {/* ── Títulos de la carta ── */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
+          ✏️ Títulos de la carta
+        </h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>
+          Personaliza los títulos de sección en la carta QR y pedidos online. Déjalos en blanco para usar los valores por defecto.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Sección menú <span style={{ color: "var(--adm-text3)", fontWeight: 400, textTransform: "none" }}>(por defecto: &quot;MENÚ&quot;)</span></label>
+            <input value={titleMenu} onChange={e => setTitleMenu(e.target.value)} onBlur={() => save({ sectionTitleMenu: titleMenu.trim() || null })} onKeyDown={e => e.key === "Enter" && save({ sectionTitleMenu: titleMenu.trim() || null })} placeholder="MENÚ" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Sección recomendados <span style={{ color: "var(--adm-text3)", fontWeight: 400, textTransform: "none" }}>(por defecto: &quot;Recomendados&quot;)</span></label>
+            <input value={titleRecomendados} onChange={e => setTitleRecomendados(e.target.value)} onBlur={() => save({ sectionTitleRecomendados: titleRecomendados.trim() || null })} onKeyDown={e => e.key === "Enter" && save({ sectionTitleRecomendados: titleRecomendados.trim() || null })} placeholder="Recomendados" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Sección &quot;¿Qué se te antoja?&quot; <span style={{ color: "var(--adm-text3)", fontWeight: 400, textTransform: "none" }}>(por defecto: &quot;¿Qué se te antoja?&quot;)</span></label>
+            <input value={titleCraving} onChange={e => setTitleCraving(e.target.value)} onBlur={() => save({ sectionTitleCraving: titleCraving.trim() || null })} onKeyDown={e => e.key === "Enter" && save({ sectionTitleCraving: titleCraving.trim() || null })} placeholder="¿Qué se te antoja?" style={inputStyle} />
+          </div>
         </div>
       </div>
 

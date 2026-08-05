@@ -339,10 +339,12 @@ function MoodSection({
   categories,
   dishes,
   onCategoryTap,
+  title,
 }: {
   categories: Category[];
   dishes: Dish[];
   onCategoryTap: (catId: string) => void;
+  title?: string;
 }) {
   const [active, setActive] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -384,7 +386,7 @@ function MoodSection({
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
         color: "var(--impact-section-title)",
       }}>
-        {t(useLang(), "impactCraving" as any)}
+        {title || t(useLang(), "impactCraving" as any)}
       </h2>
       <div style={{ position: "relative" }}>
         <div
@@ -454,10 +456,12 @@ function FeaturedSection({
   dishes,
   popularDishIds,
   onDishSelect,
+  title,
 }: {
   dishes: Dish[];
   popularDishIds: Set<string>;
   onDishSelect: (d: Dish) => void;
+  title?: string;
 }) {
   const featured = useMemo(() => {
     return dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
@@ -487,7 +491,7 @@ function FeaturedSection({
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
         color: "var(--impact-section-title)",
-      }}>{t(useLang(), "impactFeatured" as any)}</h2>
+      }}>{title || t(useLang(), "impactFeatured" as any)}</h2>
       <div style={{ position: "relative" }}>
         <div
           ref={scrollRef}
@@ -1350,6 +1354,7 @@ export default function CartaImpact({
           setActiveCategory(catId);
           scrollToCategory(catId);
         }}
+        title={(restaurant as any).sectionTitleCraving || undefined}
       />
 
       {/* Featured / Destacados */}
@@ -1357,6 +1362,7 @@ export default function CartaImpact({
         dishes={dishes}
         popularDishIds={popularDishIds}
         onDishSelect={(d) => setSelectedDish(d)}
+        title={(restaurant as any).sectionTitleRecomendados || undefined}
       />
 
       {/* Promos */}
@@ -1463,7 +1469,7 @@ export default function CartaImpact({
           transition: "flex 0.22s ease, opacity 0.15s ease",
           whiteSpace: "nowrap",
         }}>
-          {t(lang, "impactMenu" as any)}
+          {(restaurant as any).sectionTitleMenu || t(lang, "impactMenu" as any)}
         </h2>
 
         {/* Input inline — se expande desde la derecha */}
@@ -1633,7 +1639,7 @@ export default function CartaImpact({
             <div id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
               <h3 style={{
                 fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 26,
-                color: "var(--impact-section-title)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9, opacity: 0.8,
+                color: "var(--impact-section-title)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9,
               }}>{category.name}</h3>
               {category.description && category.description.length <= 60 && (
                 <p style={{ fontSize: "0.8rem", color: "var(--carta-text3, #999)", marginTop: -6, marginBottom: 8 }}>

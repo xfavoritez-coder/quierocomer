@@ -390,7 +390,7 @@ function CategoriesSection({
   return (
     <section style={{ padding: "24px 14px 0", position: "relative", zIndex: 1 }}>
       <h2 style={{
-        fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
+        fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 22,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
         color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.38)",
       }}>
@@ -485,13 +485,13 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
     "--carta-text": "#f0f0f0", "--carta-text2": "#aaa", "--carta-text3": "#555",
     "--carta-border": "#262626", "--carta-accent": accent, "--carta-accent-fg": accentFg,
     "--carta-card-bg": "#1a1a1a", "--carta-card-shadow": "0 1px 8px rgba(0,0,0,0.4)",
-    "--carta-photo-bg": "#222", "--carta-plus-icon": "#fff",
+    "--carta-photo-bg": "#222", "--carta-plus-icon": "#fff", "--carta-btn-text": "#fff",
   } as React.CSSProperties : {
     "--carta-bg": "#FAFAF8", "--carta-surface": "#fff",
     "--carta-text": "#111", "--carta-text2": "#666", "--carta-text3": "#999",
     "--carta-border": "#ece9e3", "--carta-accent": accent, "--carta-accent-fg": accentFg,
     "--carta-card-bg": "#fff", "--carta-card-shadow": "0 1px 8px rgba(0,0,0,0.07)",
-    "--carta-photo-bg": "#f0ece6", "--carta-plus-icon": accent,
+    "--carta-photo-bg": "#f0ece6", "--carta-plus-icon": accent, "--carta-btn-text": accent,
   } as React.CSSProperties;
 
   const activeDishes = restaurant.dishes.filter(d => d.isActive && !d.deletedAt);
@@ -684,8 +684,8 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
         {/* Título MENÚ + search */}
         <div style={{ position: "relative", zIndex: 1, padding: "24px 14px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-          <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.38)", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
-            MENÚ
+          <h2 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 22, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.38)", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex 0.22s ease, opacity 0.15s ease", whiteSpace: "nowrap" }}>
+            {(restaurant as any).sectionTitleMenu || "MENÚ"}
           </h2>
           <div style={{ flex: searchOpen ? 1 : "0 0 0", overflow: "hidden", opacity: searchOpen ? 1 : 0, transition: "flex 0.22s ease, opacity 0.18s ease", display: "flex", alignItems: "center", minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)", borderRadius: 999, padding: "0 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)"}`, width: "100%" }}>
@@ -740,7 +740,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           ) : (
             grouped.map(({ category, dishes }) => (
               <div key={category.id} id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
-                <h3 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 26, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{category.name}</h3>
+                <h3 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 20, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{category.name}</h3>
                 {dishes.map(dish => (
                   <ImpactCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />
                 ))}
@@ -752,7 +752,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         {/* Cart bar */}
         {count > 0 && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: isDark ? "rgba(3,3,3,0.8)" : "rgba(250,250,248,0.9)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
-            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, ${isDark ? "rgba(3,3,3,0.75)" : "rgba(250,250,248,0.85)"})`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
+            <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, ${isDark ? "rgba(3,3,3,0.75)" : "rgba(250,250,248,0.85)"})`, color: "var(--carta-btn-text, #fff)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 25%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
                 <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>
@@ -855,7 +855,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {/* Cart bar */}
       {count > 0 && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: "var(--carta-bg)", borderTop: "1px solid var(--carta-border)" }}>
-          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 16%, ${isDark ? "rgba(10,10,10,0.82)" : "rgba(250,250,248,0.92)"})`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 48%, transparent)`, fontFamily: FB }}>
+          <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 16%, ${isDark ? "rgba(10,10,10,0.82)" : "rgba(250,250,248,0.92)"})`, color: "var(--carta-btn-text, #fff)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 48%, transparent)`, fontFamily: FB }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 22%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>
               <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Ver carrito</span>

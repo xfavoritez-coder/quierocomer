@@ -13,6 +13,7 @@ interface PanelRestaurant {
   isDemo?: boolean;
   multiMenuEnabled?: boolean;
   hasControl?: boolean;
+  profileType?: string;
 }
 
 export interface PanelSession {

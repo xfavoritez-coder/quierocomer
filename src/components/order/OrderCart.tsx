@@ -91,7 +91,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
                         onClick={() => updateQuantity(item.key, item.quantity + 1)}
                         style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", cursor: "pointer", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" }}
                       >
-                        <Plus size={12} color="#fff" />
+                        <Plus size={12} color="var(--carta-plus-icon, #fff)" />
                       </button>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -121,7 +121,7 @@ export default function OrderCart({ onClose, onCheckout }: Props) {
             </div>
             <button
               onClick={onCheckout}
-              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", color: "#fff", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" }}
+              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", color: "var(--carta-btn-text, #fff)", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px color-mix(in srgb, var(--carta-accent, #F4A623) 45%, transparent)" }}
             >
               Ir al checkout →
             </button>

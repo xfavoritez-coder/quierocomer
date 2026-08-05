@@ -331,14 +331,14 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
                 style={{ width: 32, height: 32, borderRadius: 9, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: quantity > 1 ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)" : "none", background: quantity > 1 ? "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)" : "var(--carta-border, #ddd)", boxShadow: quantity > 1 ? "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 40%, transparent)" : "none" }}
               >
-                <Minus size={15} color={quantity > 1 ? "#fff" : "#aaa"} />
+                <Minus size={15} color={quantity > 1 ? "var(--carta-plus-icon, #fff)" : "#aaa"} />
               </button>
               <span style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--carta-text, #111)", minWidth: 22, textAlign: "center" }}>{quantity}</span>
               <button
                 onClick={() => setQuantity(q => q + 1)}
                 style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)", cursor: "pointer", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 12px color-mix(in srgb, var(--carta-accent, #F4A623) 40%, transparent)" }}
               >
-                <Plus size={15} color="#fff" />
+                <Plus size={15} color="var(--carta-plus-icon, #fff)" />
               </button>
             </div>
             {/* Add button */}
@@ -349,7 +349,7 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
                 flex: 1, padding: "14px 18px", borderRadius: 14,
                 border: isValid ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)" : "none",
                 background: isValid ? "color-mix(in srgb, var(--carta-accent, #F4A623) 18%, transparent)" : "var(--carta-border, #ddd)",
-                color: isValid ? "#fff" : "#aaa", cursor: isValid ? "pointer" : "not-allowed",
+                color: isValid ? "var(--carta-btn-text, #fff)" : "#aaa", cursor: isValid ? "pointer" : "not-allowed",
                 fontFamily: F, fontSize: "0.95rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 transition: "all 0.15s",

@@ -32,6 +32,7 @@ async function getRestaurantLanding(slug: string) {
       reviewMode: true,
       cartaAccentColor: true,
       cartaColorMode: true,
+      profileType: true,
     },
   })
   if (!r) return null
@@ -453,6 +454,11 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
   // Check if slug is a restaurant
   const rest = await getRestaurantLanding(restaurantSlug)
   if (rest) {
+    // STORE profile: redirect directly to loyalty page
+    if (rest.profileType === 'STORE') {
+      redirect(`/fidelidad/${restaurantSlug}`)
+    }
+
     const hasOrdering = rest.orderingEnabled
     const hasLoyalty = !!rest.loyaltyProgram?.active
     const hasReview = rest.reviewMode !== 'off' && (rest.reviewMode === 'private' || !!rest.googleReviewUrl)
