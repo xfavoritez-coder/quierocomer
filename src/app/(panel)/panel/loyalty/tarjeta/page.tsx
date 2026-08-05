@@ -339,8 +339,8 @@ export default function LoyaltyCardPage() {
 
             {/* Nombre */}
             <div>
-              <label style={labelStyle}>Nombre del programa</label>
-              <input type="text" value={form.name} maxLength={80} onChange={(e) => update({ name: e.target.value })} style={inputStyle} />
+              <label style={labelStyle}>Título de la tarjeta <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(lo que ves en la vista previa y en el Wallet)</span></label>
+              <input type="text" value={form.name} maxLength={80} placeholder="Ej: Tarjeta VIP, Club de puntos, Mis recompensas…" onChange={(e) => update({ name: e.target.value })} style={inputStyle} />
             </div>
 
             {/* Texto hero */}
