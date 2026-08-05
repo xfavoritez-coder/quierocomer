@@ -477,7 +477,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
   const isImpact = (orderingConfig.cartaView || "lista") === "impact";
   const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
-  const accent = orderingConfig.cartaAccentColor || (isDark ? "#fe0001" : "#F59E0B");
+  const accent = orderingConfig.cartaAccentColor || "#F4A623";
   const accentFg = accentContrast(accent);
 
   const themeVars: React.CSSProperties = isDark ? {
