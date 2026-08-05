@@ -60,6 +60,7 @@ interface FormState {
   stampColorHex: string;
   bgImageUrl: string;
   description: string;
+  heroText: string;
   showGiftBadge: boolean;
   cardExpiryDays: number | null;
 }
@@ -74,6 +75,7 @@ const DEFAULTS: FormState = {
   stampColorHex: "#FFFFFF",
   bgImageUrl: "",
   description: "",
+  heroText: "",
   showGiftBadge: true,
   cardExpiryDays: null,
 };
@@ -161,6 +163,7 @@ export default function LoyaltyCardPage() {
                 stampColorHex: p.stampColorHex || "#FFFFFF",
                 bgImageUrl: p.bgImageUrl || "",
                 description: p.description || "",
+                heroText: p.heroText || "",
                 showGiftBadge: p.showGiftBadge !== false,
                 cardExpiryDays: p.cardExpiryDays ?? null,
               }
@@ -338,6 +341,19 @@ export default function LoyaltyCardPage() {
             <div>
               <label style={labelStyle}>Nombre del programa</label>
               <input type="text" value={form.name} maxLength={80} onChange={(e) => update({ name: e.target.value })} style={inputStyle} />
+            </div>
+
+            {/* Texto hero */}
+            <div>
+              <label style={labelStyle}>Texto descriptivo <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(se muestra en la página de inscripción)</span></label>
+              <textarea
+                value={form.heroText}
+                maxLength={300}
+                rows={3}
+                placeholder="Acumula sellos cada vez que compras y canjéalos por productos gratis. Tu tarjeta se guarda directamente en tu celular."
+                onChange={(e) => update({ heroText: e.target.value })}
+                style={{ ...inputStyle, resize: "none" }}
+              />
             </div>
 
             {/* Cantidad de sellos */}

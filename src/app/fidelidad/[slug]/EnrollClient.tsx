@@ -129,7 +129,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
 
         {/* Texto descriptivo */}
         <p style={{ fontSize: "0.88rem", color: isLightMode ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: "0 0 20px", maxWidth: 340, marginLeft: "auto", marginRight: "auto" }}>
-          Acumula sellos cada vez que compras y canjéalos por productos gratis. Tu tarjeta se guarda directamente en tu celular.
+          {(program as any).heroText || "Acumula sellos cada vez que compras y canjéalos por productos gratis. Tu tarjeta se guarda directamente en tu celular."}
         </p>
 
         {/* ── PREVIEW TARJETA ── */}

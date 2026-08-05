@@ -2365,6 +2365,7 @@ model LoyaltyProgram {
   bgImageUrl    String? // imagen de fondo de la tarjeta (foto de un plato de la carta)
   logoUrl       String?
   description   String? // condiciones/letra chica que se muestra al pie de la tarjeta
+  heroText      String? // texto descriptivo del hero en la página de inscripción
 
   showGiftBadge Boolean @default(true) // mostrar el 🎁 en las casillas de recompensa
 
