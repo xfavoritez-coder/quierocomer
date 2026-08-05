@@ -50,13 +50,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "El programa de fidelidad no está disponible." }, { status: 403 });
     }
 
+    // Buscar duplicado por email o teléfono en el mismo programa
+    const orConditions: object[] = [];
+    if (email) orConditions.push({ email: email.toLowerCase() });
+    if (phone) orConditions.push({ phone });
+
+    let member = orConditions.length > 0
+      ? await prisma.loyaltyMember.findFirst({
+          where: { programId: program.id, revoked: false, OR: orConditions },
+        })
+      : null;
+
+    if (member) {
+      // Ya existe — devolvemos el pase existente sin crear uno nuevo
+      return NextResponse.json({
+        memberId: member.id,
+        token: member.authToken,
+        googleSaveUrl: member.googleObjectId ? generateSaveUrl(member.googleObjectId) : null,
+        appleUrl: isAppleWalletConfigured() ? `/api/loyalty/pass/apple/${member.id}?t=${member.authToken}` : null,
+        existing: true,
+      });
+    }
+
     // Crear el miembro
-    const member = await prisma.loyaltyMember.create({
+    member = await prisma.loyaltyMember.create({
       data: {
         programId: program.id,
         restaurantId: restaurant.id,
         name: name || null,
-        email: email || null,
+        email: email ? email.toLowerCase() : null,
         phone: phone || null,
         birthDate: birthDate || null,
       },
