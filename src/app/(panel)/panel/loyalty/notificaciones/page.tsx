@@ -366,7 +366,7 @@ export default function LoyaltyNotifyPage() {
                 value={title}
                 maxLength={80}
                 onChange={(e) => { setTitle(e.target.value); setConfirm(false); }}
-                placeholder="Ej: ¡Promo del finde!"
+                placeholder="Ej: ¡Novedad esta semana!"
                 style={inputStyle}
               />
             </div>
@@ -377,7 +377,7 @@ export default function LoyaltyNotifyPage() {
                 maxLength={300}
                 rows={3}
                 onChange={(e) => { setBody(e.target.value); setConfirm(false); }}
-                placeholder="Ej: Este sábado 2x1 en hand rolls. ¡Te esperamos!"
+                placeholder="Ej: Este fin de semana tenemos una oferta especial para ti. ¡Te esperamos!"
                 style={{ ...inputStyle, resize: "none" }}
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0", textAlign: "right" }}>{body.length}/300</p>
