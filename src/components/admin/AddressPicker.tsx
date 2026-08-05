@@ -35,11 +35,6 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
 };
 
-// Quita el número de calle para mejorar resultados en geocodificadores que no lo soportan
-function stripStreetNumber(q: string): string {
-  // "Avenida Providencia 2550, Providencia" → "Avenida Providencia, Providencia"
-  return q.replace(/\s+\d+(\s*,|\s|$)/, (m) => m.replace(/\d+/, "").replace(/\s{2,}/, " "));
-}
 
 export default function AddressPicker({
   address,
@@ -74,10 +69,7 @@ export default function AddressPicker({
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        // Busca primero con el texto completo; si no hay resultados, intenta sin número
-        const stripped = stripStreetNumber(q);
-        const searchQ = stripped !== q ? stripped : q;
-        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(searchQ)}&all=1`);
+        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(q)}&all=1`);
         const data = await res.json();
         setResults(Array.isArray(data) ? data : []);
         setOpen(true);
