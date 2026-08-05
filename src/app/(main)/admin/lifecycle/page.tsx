@@ -108,6 +108,7 @@ export default function LifecyclePage() {
   const [sortBy, setSortBy] = useState<"name" | "owner" | "stage" | "engagement" | "lastActivity" | "salud" | "createdAt">("lastActivity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  const [showCreateStore, setShowCreateStore] = useState(false);
   const [cached, setCached] = useState(false);
   const [computedAt, setComputedAt] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -249,6 +250,9 @@ export default function LifecyclePage() {
             {computedAt && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· actualizado {timeAgo(computedAt)}</span>}
           </p>
         </div>
+        <button onClick={() => setShowCreateStore(true)} style={{ padding: "7px 14px", background: "#F4A623", border: "none", borderRadius: 8, color: "#000", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
+          + Nueva Tienda
+        </button>
         <button onClick={refreshData} disabled={refreshing || loading} style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.78rem", cursor: (refreshing || loading) ? "default" : "pointer", opacity: (refreshing || loading) ? 0.5 : 1 }}>
           {refreshing ? "Calculando..." : "↻ Actualizar"}
         </button>
@@ -525,6 +529,7 @@ export default function LifecyclePage() {
           </div>
         )}
       </div>
+      {showCreateStore && <CreateStoreModal onClose={() => setShowCreateStore(false)} onCreated={refreshData} />}
     </div>
   );
 }
@@ -957,6 +962,83 @@ function CommBadge({ icon, label, date, color, extra }: { icon: string; label: s
       {icon} {label} · {new Date(date).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
       {extra && <span style={{ opacity: 0.7 }}>· {extra}</span>}
     </span>
+  );
+}
+
+function CreateStoreModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [storeName, setStoreName] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<{ slug: string; password: string } | null>(null);
+
+  const submit = async () => {
+    if (!storeName.trim() || !ownerName.trim() || !email.trim()) {
+      setError("Nombre de tienda, dueño y email son obligatorios");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const r = await fetch("/api/admin/stores/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeName, ownerName, email, whatsapp, password }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Error");
+      setResult({ slug: d.slug, password: d.password });
+      onCreated();
+    } catch (e: any) {
+      setError(e.message);
+    }
+    setSaving(false);
+  };
+
+  const inp: React.CSSProperties = { width: "100%", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, padding: "9px 12px", color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" };
+  const lbl: React.CSSProperties = { display: "block", fontSize: 11, color: "#888", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, padding: "28px 24px", width: "100%", maxWidth: 420, fontFamily: F }}>
+        {!result ? (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#fff" }}>Nueva Tienda</h2>
+              <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 20 }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div><label style={lbl}>Nombre de la tienda *</label><input value={storeName} onChange={e => setStoreName(e.target.value)} placeholder="Ej: Treino" style={inp} /></div>
+              <div><label style={lbl}>Nombre del dueño *</label><input value={ownerName} onChange={e => setOwnerName(e.target.value)} placeholder="Ej: Juan Pérez" style={inp} /></div>
+              <div><label style={lbl}>Email *</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="juan@tienda.cl" style={inp} /></div>
+              <div><label style={lbl}>WhatsApp</label><input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+56912345678" style={inp} /></div>
+              <div><label style={lbl}>Contraseña (opcional — se auto-genera)</label><input value={password} onChange={e => setPassword(e.target.value)} placeholder="Dejar vacío para auto-generar" style={inp} /></div>
+              {error && <p style={{ color: "#ef4444", fontSize: 13, margin: 0 }}>{error}</p>}
+              <button onClick={submit} disabled={saving} style={{ marginTop: 4, padding: "12px", background: "#F4A623", border: "none", borderRadius: 10, color: "#000", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1 }}>
+                {saving ? "Creando..." : "Crear Tienda"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>✅</div>
+            <h2 style={{ margin: "0 0 8px", color: "#fff", fontSize: "1.1rem" }}>Tienda creada</h2>
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>quierocomer.com/{result.slug}</p>
+            <div style={{ background: "#1a1a1a", border: "1px solid #333", borderRadius: 10, padding: "14px 16px", marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Acceso</div>
+              <div style={{ fontSize: 13, color: "#fff", marginBottom: 4 }}>URL: <span style={{ color: "#F4A623" }}>quierocomer.com/fidelidad/{result.slug}</span></div>
+              <div style={{ fontSize: 13, color: "#fff" }}>Contraseña: <span style={{ color: "#F4A623", fontFamily: "monospace" }}>{result.password}</span></div>
+            </div>
+            <button onClick={onClose} style={{ padding: "10px 24px", background: "#222", border: "1px solid #333", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>
+              Cerrar
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

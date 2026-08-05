@@ -11,6 +11,7 @@ interface Props {
   restaurantName: string;
   restaurantLogo: string | null;
   colorMode?: string;
+  hideBack?: boolean;
   program: {
     name: string;
     cardColorHex: string;
@@ -29,7 +30,7 @@ function isLight(hex: string) {
   return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.6;
 }
 
-export default function EnrollClient({ slug, restaurantName, restaurantLogo, colorMode, program }: Props) {
+export default function EnrollClient({ slug, restaurantName, restaurantLogo, colorMode, hideBack, program }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -98,11 +99,13 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      {/* Botón volver */}
-      <a href={`/${slug}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", color: isLightMode ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.55)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Volver
-      </a>
+      {/* Botón volver — oculto para clientes tipo STORE */}
+      {!hideBack && (
+        <a href={`/${slug}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", color: isLightMode ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.55)", fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver
+        </a>
+      )}
 
       {/* ── HERO HEADER ── */}
       <div style={{
