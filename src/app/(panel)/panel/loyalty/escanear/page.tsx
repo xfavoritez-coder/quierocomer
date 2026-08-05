@@ -331,15 +331,15 @@ function EmployeeAppTab({ restaurantId, slug }: { restaurantId: string; slug: st
 
   if (loading) return <p style={{ fontFamily: FB, color: "var(--adm-text3)", fontSize: "0.85rem" }}>Cargando…</p>;
 
-  // ── Estado inicial: nunca configurado ──
-  if (!state?.scanToken && !state?.hasPin) {
+  // ── Estado inicial: sin token ──
+  if (!state?.scanToken) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.55 }}>
           Crea una app de escaneo que tus empleados instalen en su celular. No necesitan acceso al panel — solo abren la app y escanean.
         </p>
         <div style={{ padding: 18, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Paso 1 de 1 — Elige un PIN de acceso</p>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Elige un PIN de acceso</p>
           <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 14px", lineHeight: 1.5 }}>
             El empleado lo introduce solo la primera vez que abre la app. Después queda guardado en su celular.
           </p>
@@ -375,59 +375,57 @@ function EmployeeAppTab({ restaurantId, slug }: { restaurantId: string; slug: st
     );
   }
 
-  // ── Activo: mostrar QR + controles ──
+  // ── Activo: mostrar QR + instrucciones + controles ──
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-      {/* QR grande al tope — lo más importante */}
-      {isReady && scanUrl && (
-        <div style={{ padding: 20, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, textAlign: "center" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>
-            Muéstrale este QR al empleado para que lo escanee con su cámara
-          </p>
-          {qrDataUrl ? (
-            <div style={{ display: "inline-block", background: "#fff", padding: 12, borderRadius: 14, border: "1px solid var(--adm-card-border)", marginBottom: 14 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUrl} alt="QR del escáner" style={{ width: 200, height: 200, display: "block" }} />
-            </div>
-          ) : (
-            <div style={{ width: 224, height: 224, margin: "0 auto 14px", borderRadius: 14, background: "var(--adm-hover)" }} />
-          )}
+      {/* QR grande al tope */}
+      <div style={{ padding: 20, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, textAlign: "center" }}>
+        <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>
+          Muéstrale este QR al empleado para que lo escanee con su cámara
+        </p>
+        {qrDataUrl ? (
+          <div style={{ display: "inline-block", background: "#fff", padding: 12, borderRadius: 14, border: "1px solid var(--adm-card-border)", marginBottom: 14 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrDataUrl} alt="QR del escáner" style={{ width: 200, height: 200, display: "block" }} />
+          </div>
+        ) : (
+          <div style={{ width: 224, height: 224, margin: "0 auto 14px", borderRadius: 14, background: "var(--adm-hover)" }} />
+        )}
+        {scanUrl && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-bg)", borderRadius: 9, padding: "8px 12px", border: "1px solid var(--adm-card-border)" }}>
             <p style={{ fontFamily: "monospace", fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{scanUrl}</p>
             <button type="button" onClick={copyLink} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 7, border: "none", background: copied ? "rgba(22,163,74,0.15)" : GOLD, color: copied ? "#16a34a" : "#1a1a1a", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
               {copied ? <><CheckCheck size={14} /> Copiado</> : <><Copy size={14} /> Copiar link</>}
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Instrucciones de instalación */}
-      {isReady && (
-        <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
-          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
-            <Smartphone size={15} /> Cómo instalarla en el celular
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)" }}>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>iPhone</p>
-              <ol style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-                <li>Escanear el QR de arriba con la cámara → abre en <strong>Safari</strong></li>
-                <li>Introducir el PIN cuando lo pida (solo una vez)</li>
-                <li>Tocar <strong>Compartir ↑</strong> → <strong>"Agregar a pantalla de inicio"</strong></li>
-              </ol>
-            </div>
-            <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)" }}>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Android</p>
-              <ol style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-                <li>Escanear el QR con la cámara → abre en <strong>Chrome</strong></li>
-                <li>Introducir el PIN cuando lo pida (solo una vez)</li>
-                <li>Tocar menú <strong>⋮</strong> → <strong>"Agregar a pantalla de inicio"</strong> o <strong>"Instalar app"</strong></li>
-              </ol>
-            </div>
+      <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
+        <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 10px", display: "flex", alignItems: "center", gap: 6 }}>
+          <Smartphone size={15} /> Cómo instalarla en el celular
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)" }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>iPhone</p>
+            <ol style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
+              <li>Escanear el QR de arriba con la cámara → abre en <strong>Safari</strong></li>
+              <li>Introducir el PIN cuando lo pida (solo una vez)</li>
+              <li>Tocar <strong>Compartir ↑</strong> → <strong>"Agregar a pantalla de inicio"</strong></li>
+            </ol>
+          </div>
+          <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)" }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Android</p>
+            <ol style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
+              <li>Escanear el QR con la cámara → abre en <strong>Chrome</strong></li>
+              <li>Introducir el PIN cuando lo pida (solo una vez)</li>
+              <li>Tocar menú <strong>⋮</strong> → <strong>"Agregar a pantalla de inicio"</strong> o <strong>"Instalar app"</strong></li>
+            </ol>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Controles */}
       <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, display: "flex", flexDirection: "column", gap: 12 }}>
