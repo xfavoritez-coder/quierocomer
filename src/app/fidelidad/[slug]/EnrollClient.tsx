@@ -19,6 +19,7 @@ interface Props {
     stampIcon: string;
     stampGoal: number;
     description: string | null;
+    heroText?: string | null;
     rewards: RewardTier[];
   };
 }
