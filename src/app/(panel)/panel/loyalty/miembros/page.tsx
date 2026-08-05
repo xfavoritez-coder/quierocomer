@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { CreditCard, Plus, Search, RotateCcw, Wallet, Apple, Trash2, Check, Circle, Share2 } from "lucide-react";
+import { CreditCard, Plus, Search, RotateCcw, Trash2, Check, Circle } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -114,49 +114,6 @@ export default function LoyaltyMembersPage() {
       }
     } catch (e: any) {
       toast.error(e.message || "Error");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const googleWallet = async (member: Member) => {
-    setBusyId(member.id);
-    try {
-      const res = await fetch(`/api/loyalty/members/${member.id}/wallet/google`);
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Error");
-      window.open(d.saveUrl, "_blank");
-    } catch (e: any) {
-      toast.error(e.message || "Error al generar la tarjeta");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  // Compartir el link del pase (para instalarlo en otro teléfono)
-  const shareMember = async (member: Member) => {
-    setBusyId(member.id);
-    try {
-      const res = await fetch(`/api/loyalty/members/${member.id}/share`);
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Error");
-      const shared = typeof navigator !== "undefined" && (navigator as any).share;
-      if (shared) {
-        try {
-          await (navigator as any).share({
-            title: restaurantName ? `Tarjeta de fidelidad · ${restaurantName}` : "Tu tarjeta de fidelidad",
-            text: restaurantName ? `Agrega tu tarjeta de fidelidad de ${restaurantName} a tu teléfono` : undefined,
-            url: d.url,
-          });
-        } catch {
-          /* el usuario canceló */
-        }
-      } else {
-        await navigator.clipboard?.writeText(d.url);
-        toast.success("Link del pase copiado");
-      }
-    } catch (e: any) {
-      toast.error(e.message || "Error al generar el link");
     } finally {
       setBusyId(null);
     }
@@ -289,12 +246,8 @@ export default function LoyaltyMembersPage() {
                   </div>
                 )}
 
-                {/* Acciones (su propia línea, con espacio) */}
+                {/* Acciones */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                  <a href={`/api/loyalty/members/${m.id}/wallet/apple`} title="Tarjeta Apple Wallet (iPhone)" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Apple size={16} /></a>
-                  <button type="button" disabled={busy} onClick={() => googleWallet(m)} title="Tarjeta Google Wallet (Android)" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Wallet size={16} /></button>
-                  <button type="button" disabled={busy} onClick={() => shareMember(m)} title="Compartir link del pase (instalar en otro teléfono)" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}><Share2 size={15} /></button>
-                  <span style={{ width: 1, height: 22, background: "var(--adm-card-border)", margin: "0 2px" }} />
                   <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.1rem", cursor: "pointer", opacity: busy ? 0.4 : 1 }}>−</button>
                   {cardFull ? (
                     <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
