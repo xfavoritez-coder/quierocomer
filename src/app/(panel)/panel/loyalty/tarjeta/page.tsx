@@ -101,6 +101,7 @@ export default function LoyaltyCardPage() {
   const [showQr, setShowQr] = useState(false);
   const [customExpiry, setCustomExpiry] = useState("");
   const [accentColor, setAccentColor] = useState<string>("#F4A623");
+  const [colorMode, setColorMode] = useState<"LIGHT" | "DARK">("DARK");
 
   const restaurant = restaurants.find((r) => r.id === selectedRestaurantId);
   const isStore = (restaurant as any)?.profileType === "STORE";
@@ -113,7 +114,10 @@ export default function LoyaltyCardPage() {
     if (!selectedRestaurantId) return;
     fetch(`/api/admin/locales/${selectedRestaurantId}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.cartaAccentColor) setAccentColor(d.cartaAccentColor); else setAccentColor("#F4A623"); })
+      .then(d => {
+        setAccentColor(d?.cartaAccentColor || "#F4A623");
+        setColorMode(d?.cartaColorMode === "LIGHT" ? "LIGHT" : "DARK");
+      })
       .catch(() => {});
   }, [selectedRestaurantId]);
 
@@ -196,7 +200,7 @@ export default function LoyaltyCardPage() {
       const res = await fetch("/api/loyalty/program", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, cardColorHex: accentColor, rewards: cleanRewards, showGiftBadge: true }),
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, rewards: cleanRewards, showGiftBadge: true }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -262,7 +266,7 @@ export default function LoyaltyCardPage() {
                     const res = await fetch("/api/loyalty/program", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, cardColorHex: accentColor, active: newActive, showGiftBadge: true }),
+                      body: JSON.stringify({ restaurantId: selectedRestaurantId, ...form, active: newActive, showGiftBadge: true }),
                     });
                     if (!res.ok) throw new Error();
                     setSaved(true);
@@ -524,6 +528,30 @@ export default function LoyaltyCardPage() {
             </div>
 
 
+            {/* Color de la tarjeta en Wallet (Apple/Google Wallet — fondo sólido en el celular) */}
+            <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Color de la tarjeta en el celular</p>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px", lineHeight: 1.45 }}>
+                Fondo sólido que se ve en Apple Wallet y Google Wallet. No afecta la página de inscripción.
+              </p>
+              <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
+                <div>
+                  <label style={labelStyle}>Color de fondo</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <input type="color" value={form.cardColorHex} onChange={(e) => update({ cardColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
+                    <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.cardColorHex}</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Color de los sellos</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <input type="color" value={form.stampColorHex} onChange={(e) => update({ stampColorHex: e.target.value })} style={{ height: 40, width: 56, padding: 2, cursor: "pointer", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)" }} />
+                    <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "var(--adm-text2)" }}>{form.stampColorHex}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Imagen de fondo */}
             <div>
               <label style={labelStyle}>Imagen de fondo <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(un plato de tu carta, opcional)</span></label>
@@ -579,9 +607,8 @@ export default function LoyaltyCardPage() {
           <div style={{ height: "fit-content" }}>
             <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Vista previa</p>
             <CardPreview
-              color={accentColor}
-              stampColor={form.stampColorHex}
-              bgImage={form.bgImageUrl}
+              accentColor={accentColor}
+              colorMode={colorMode}
               logoUrl={restaurant?.logoUrl || ""}
               restaurantName={restaurant?.name || "Tu restaurante"}
               programName={form.name}
@@ -589,7 +616,6 @@ export default function LoyaltyCardPage() {
               stampIcon={form.stampIcon}
               rewards={form.rewards}
               description={form.description}
-              showGiftBadge={true}
             />
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.5 }}>
               Así se verá aproximadamente en el teléfono del cliente. Ejemplo con algunos sellos.
@@ -604,10 +630,10 @@ export default function LoyaltyCardPage() {
   );
 }
 
-function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, programName, stampGoal, stampIcon, rewards, description, showGiftBadge }: {
-  color: string;
-  stampColor: string;
-  bgImage: string;
+// Vista previa idéntica a la página real /fidelidad/[slug]
+function CardPreview({ accentColor, colorMode, logoUrl, restaurantName, programName, stampGoal, stampIcon, rewards, description }: {
+  accentColor: string;
+  colorMode: "LIGHT" | "DARK";
   logoUrl: string;
   restaurantName: string;
   programName: string;
@@ -615,96 +641,104 @@ function CardPreview({ color, stampColor, bgImage, logoUrl, restaurantName, prog
   stampIcon: string;
   rewards: RewardTier[];
   description: string;
-  showGiftBadge: boolean;
 }) {
-  const demoStamps = Math.min(3, stampGoal);
-  const textColor = bgImage ? "#ffffff" : isLight(color) ? "#111111" : "#ffffff";
-  const subColor = bgImage ? "rgba(255,255,255,0.75)" : isLight(color) ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
-  const stampGlyphColor = isLight(stampColor) ? "#111111" : "#ffffff";
-  const cols = Math.min(5, Math.max(1, stampGoal));
-  const tierStamps = new Set(rewards.map((r) => r.stamp));
+  const accent = accentColor;
+  const onAccentText = isLight(accent) ? "#111" : "#fff";
+  const isLightMode = colorMode === "LIGHT";
+  const iconText = stampIcon === "logo" ? "sellos" : stampIcon;
+  const rewardStamps = new Set(rewards.map((r) => r.stamp));
+  const cols = stampGoal <= 6 ? stampGoal : stampGoal <= 8 ? 4 : stampGoal <= 10 ? 5 : 6;
+  const stampFontSize = cols <= 4 ? "1.1rem" : cols <= 5 ? "1rem" : "0.9rem";
+  const stampNumFontSize = cols <= 4 ? "0.7rem" : cols <= 5 ? "0.65rem" : "0.6rem";
   const sortedRewards = [...rewards].filter((r) => r.reward.trim()).sort((a, b) => a.stamp - b.stamp);
 
   return (
-    <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: color, color: textColor, boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
-      {bgImage && (
-        <>
-          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.68) 100%)" }} />
-        </>
-      )}
+    <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--adm-card-border)", boxShadow: "0 4px 20px rgba(0,0,0,0.18)" }}>
+      {/* Hero — replica del header de /fidelidad/ */}
+      <div style={{
+        position: "relative",
+        overflow: "hidden",
+        background: `linear-gradient(160deg, ${accent}30 0%, ${accent}10 45%, ${isLightMode ? "#F9F7F4" : "#111"} 100%)`,
+        borderBottom: `1px solid ${accent}30`,
+        padding: "20px 16px 16px",
+        textAlign: "center",
+      }}>
+        <div style={{ position: "absolute", width: 180, height: 180, borderRadius: "50%", background: `radial-gradient(circle, ${accent}20 0%, transparent 65%)`, top: -60, right: -60, pointerEvents: "none" }} />
+        {logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", margin: "0 auto 8px", display: "block", border: `2px solid ${accent}`, boxShadow: `0 0 14px ${accent}66` }} />
+        )}
+        <p style={{ fontSize: "0.65rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 2px" }}>{restaurantName}</p>
+        <p style={{ fontSize: "1.1rem", fontWeight: 900, margin: "0 0 14px", lineHeight: 1.15, color: isLightMode ? "#111" : "#fff" }}>{programName || "Tarjeta de premios"}</p>
 
-      <div style={{ position: "relative", padding: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            {logoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt="" style={{ height: 26, width: 26, borderRadius: 6, objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.15)" }} />
-            )}
-            <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", textShadow: bgImage ? "0 1px 3px rgba(0,0,0,0.5)" : undefined, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {restaurantName}
-            </span>
+        {/* Card de sellos — réplica exacta */}
+        <div style={{
+          background: `linear-gradient(135deg, ${accent}18, rgba(255,255,255,0.04))`,
+          border: `1.5px solid ${accent}40`,
+          borderRadius: 18,
+          padding: "14px 12px",
+          position: "relative",
+          zIndex: 1,
+        }}>
+          <p style={{ fontSize: "0.62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: accent, margin: "0 0 12px" }}>
+            Junta {stampGoal} sellos y gana
+          </p>
+          {/* Grid de sellos */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: sortedRewards.length > 0 ? 12 : 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 6, width: "100%" }}>
+              {Array.from({ length: stampGoal }).map((_, i) => {
+                const num = i + 1;
+                const isReward = rewardStamps.has(num);
+                const isFilled = i < 1;
+                return (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <div style={{
+                      width: "100%", aspectRatio: "1", borderRadius: "50%",
+                      border: `2px solid ${isFilled || isReward ? accent : `${accent}50`}`,
+                      background: isFilled ? accent : isReward ? `${accent}20` : `${accent}08`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: isReward ? `0 0 10px ${accent}55` : isFilled ? `0 0 8px ${accent}77` : "none",
+                      fontSize: stampFontSize,
+                      color: isFilled ? onAccentText : isReward ? accent : `${accent}60`,
+                      fontWeight: 900, position: "relative",
+                    }}>
+                      {isFilled ? (iconText === "sellos" ? "★" : iconText) : isReward ? "🎁" : <span style={{ fontSize: stampNumFontSize }}>{num}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <span style={{ fontFamily: F, fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: subColor, textAlign: "right", flexShrink: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {programName}
-          </span>
-        </div>
 
-        <div style={{ fontFamily: F, fontSize: "0.62rem", color: subColor, margin: "22px 0 10px", letterSpacing: "0.1em" }}>
-          SELLOS · {demoStamps}/{stampGoal}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 5 }}>
-          {Array.from({ length: Math.max(stampGoal, 1) }).map((_, i) => {
-            const filled = i < demoStamps;
-            const isTier = tierStamps.has(i + 1);
-            const logoMode = stampIcon === "logo" && !!logoUrl;
-            return (
-              <div
-                key={i}
-                style={{
-                  aspectRatio: "1",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "50%",
-                  fontSize: "2.2rem",
-                  lineHeight: 1,
-                  border: `0.75px solid ${filled ? (isTier ? GOLD : textColor) : (isTier ? "rgba(244,166,35,0.55)" : (isLight(color) ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.18)"))}`,
-                  background: filled ? stampColor : "transparent",
-                  color: filled ? stampGlyphColor : textColor,
-                  position: "relative",
-                }}
-              >
-                {logoMode ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl!} alt="" style={{ width: "62%", height: "62%", objectFit: "contain", opacity: filled ? 1 : 0.23 }} />
-                ) : (
-                  <span style={{ opacity: filled ? 1 : 0.23 }}>{stampIcon}</span>
-                )}
-                {isTier && showGiftBadge && (
-                  <span style={{ position: "absolute", top: "0%", right: "0%", fontSize: "0.6rem", opacity: filled ? 1 : 0.23, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>🎁</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ marginTop: 20, borderTop: `1px solid ${subColor}`, paddingTop: 12 }}>
-          <div style={{ fontFamily: F, fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.12em", color: subColor }}>Recompensas</div>
-          {sortedRewards.length === 0 ? (
-            <div style={{ fontFamily: FB, fontSize: "0.72rem", color: subColor, marginTop: 4 }}>Aún sin recompensas configuradas.</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 5 }}>
-              {sortedRewards.map((r, i) => (
-                <div key={i} style={{ fontFamily: FB, fontSize: "0.72rem", display: "flex", gap: 6 }}>
-                  <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{r.stamp} {stampIcon === "logo" ? "•" : stampIcon}</span>
-                  <span style={{ color: subColor }}>→ {r.reward}</span>
+          {/* Recompensas */}
+          {sortedRewards.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {sortedRewards.map((r) => (
+                <div key={r.stamp} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  background: isLightMode ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.05)",
+                  borderRadius: 10, padding: "8px 10px",
+                  border: `1px solid ${accent}30`,
+                }}>
+                  <div style={{
+                    flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
+                    border: isLightMode ? "2px solid rgba(0,0,0,0.15)" : "2px solid rgba(255,255,255,0.9)",
+                    background: isLightMode ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1,
+                  }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 900, color: isLightMode ? "#111" : "#fff" }}>{r.stamp}</span>
+                    <span style={{ fontSize: "0.38rem", fontWeight: 700, color: isLightMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.7)", textTransform: "uppercase" }}>sellos</span>
+                  </div>
+                  <div style={{ textAlign: "left", minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: "0.8rem", color: isLightMode ? "#111" : "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.reward}</p>
+                  </div>
                 </div>
               ))}
             </div>
           )}
+
           {description && (
-            <div style={{ fontFamily: FB, fontSize: "0.64rem", color: subColor, marginTop: 8, lineHeight: 1.45 }}>{description}</div>
+            <p style={{ margin: "10px 0 0", fontSize: "0.65rem", color: isLightMode ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)", lineHeight: 1.45, textAlign: "center" }}>{description}</p>
           )}
         </div>
       </div>
