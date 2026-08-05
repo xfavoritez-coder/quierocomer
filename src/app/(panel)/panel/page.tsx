@@ -102,6 +102,15 @@ export default function PanelDashboard() {
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
   const isDemo = !!(selectedRestaurant as any)?.isDemo;
+  const isStorePre = (selectedRestaurant as any)?.profileType === "STORE";
+
+  useEffect(() => {
+    if (!isStorePre || !selectedRestaurantId) return;
+    fetch(`/api/loyalty/members?restaurantId=${selectedRestaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setLoyaltyMemberCount(d.total ?? d.members?.length ?? 0); })
+      .catch(() => {});
+  }, [isStorePre, selectedRestaurantId]);
 
   useEffect(() => {
     if (welcomeShown.current) return;
@@ -195,17 +204,8 @@ export default function PanelDashboard() {
   const maxCount = topViewed[0]?.count || 1;
 
   const rest = restaurants.find(r => r.id === selectedRestaurantId);
-  const isStore = (rest as any)?.profileType === "STORE";
+  const isStore = isStorePre;
   const landingUrl = rest ? `https://quierocomer.com/${rest.slug}` : "#";
-
-  // Fetch loyalty member count for STORE dashboard
-  useEffect(() => {
-    if (!isStore || !selectedRestaurantId) return;
-    fetch(`/api/loyalty/members?restaurantId=${selectedRestaurantId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setLoyaltyMemberCount(d.total ?? d.members?.length ?? 0); })
-      .catch(() => {});
-  }, [isStore, selectedRestaurantId]);
 
   // ═══ Empty state: new restaurant with no dishes yet ═══
   if (noDishes) {
