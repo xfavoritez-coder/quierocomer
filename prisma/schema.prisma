@@ -2372,6 +2372,11 @@ model LoyaltyProgram {
   // Vencimiento de tarjeta (días de inactividad, null = sin vencimiento)
   cardExpiryDays Int?
 
+  // Acceso al escáner (app de empleados sin login)
+  scanToken    String?  @unique // token en la URL que autentica el escáner
+  scanPinHash  String?          // PIN hasheado (bcrypt) para primer acceso
+  scanEnabled  Boolean  @default(true)
+
   // Geo-notificaciones (aviso al cliente cuando está cerca del local)
   geoEnabled  Boolean @default(false)
   geoRadiusKm Float   @default(1) // radio en km (principalmente para Apple)
