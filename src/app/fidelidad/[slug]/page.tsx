@@ -88,6 +88,7 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
           stampIcon: program.stampIcon,
           stampGoal: program.stampGoal,
           description: program.description,
+          heroText: program.heroText,
           rewards,
         }}
       />
