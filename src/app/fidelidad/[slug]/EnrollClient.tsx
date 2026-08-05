@@ -248,7 +248,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
             </label>
 
             <label style={{ display: "block", marginBottom: 16 }}>
-              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></span>
+              <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono</span>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" style={{ ...inputStyle, marginBottom: 0 }} className={inputClass} inputMode="tel" />
             </label>
 
