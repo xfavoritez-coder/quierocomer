@@ -571,7 +571,7 @@ export default function LoyaltyCardPage() {
 
             {/* Imagen de fondo */}
             <div>
-              <label style={labelStyle}>Imagen de fondo <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(opcional)</span></label>
+              <label style={labelStyle}>Imagen de fondo</label>
               {/* STORE: siempre puede subir foto */}
               {isStore ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
