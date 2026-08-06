@@ -600,7 +600,7 @@ function ImpactDishCard({
   onClick: () => void;
 }) {
   const lang = useLang();
-  const photo = getDishPhoto(dish);
+  const photo = dish.photos?.[0] ?? null;
   const [imgLoaded, setImgLoaded] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
   const isNew = dish.createdAt && (Date.now() - new Date(dish.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
