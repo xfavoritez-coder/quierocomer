@@ -135,6 +135,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     } else {
       // Owner: silently filter to allowed fields only
       data = pickFields(body, OWNER_EDITABLE_FIELDS);
+      // Lat/lng: owners need to set their coordinates for geo notifications
+      if (body.lat !== undefined) data.lat = body.lat === null ? null : Number(body.lat);
+      if (body.lng !== undefined) data.lng = body.lng === null ? null : Number(body.lng);
       // Plan checks: some fields require SILVER+ or PREMIUM
       const needsPlanCheck = data.defaultView !== undefined || body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
       if (needsPlanCheck) {
