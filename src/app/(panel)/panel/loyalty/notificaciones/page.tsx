@@ -218,7 +218,20 @@ export default function LoyaltyNotifyPage() {
         body: JSON.stringify({ address: address || null, lat, lng }),
       });
       if (!res.ok) throw new Error("Error al guardar");
-      toast.success("Dirección guardada");
+
+      // Si geo está activo, el pase instalado necesita actualizarse con las nuevas coordenadas
+      if (geoEnabled) {
+        const refreshRes = await fetch("/api/loyalty/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: selectedRestaurantId }),
+        });
+        const rd = await refreshRes.json();
+        const devCount = (rd.appleDevices || 0) + (rd.google ? 1 : 0);
+        toast.success(devCount > 0 ? `Dirección guardada · pase actualizado en ${rd.appleDevices || 0} iPhone${rd.google ? " + Android" : ""}` : "Dirección guardada");
+      } else {
+        toast.success("Dirección guardada");
+      }
     } catch (e: any) {
       toast.error(e.message || "Error al guardar");
     } finally {
