@@ -254,7 +254,8 @@ export async function sendGoogleClassMessage(programId: string, header: string, 
   if (!isGoogleWalletConfigured()) return false;
   const classId = googleClassId(programId);
   const res = await walletApi("POST", `/loyaltyClass/${classId}/addMessage`, {
-    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000) },
+    // messageType TEXT_AND_NOTIFY = dispara notificación push en Android (TEXT solo la deja en el reverso).
+    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000), messageType: "TEXT_AND_NOTIFY" },
   });
   if (res.status === 404) return false; // la clase aún no existe (sin tarjetas Google)
   if (!res.ok) throw new Error(`sendGoogleClassMessage ${res.status}: ${await res.text()}`);
@@ -268,7 +269,8 @@ export async function sendGoogleClassMessage(programId: string, header: string, 
 export async function sendGoogleObjectMessage(objectId: string, header: string, body: string): Promise<boolean> {
   if (!isGoogleWalletConfigured()) return false;
   const res = await walletApi("POST", `/loyaltyObject/${objectId}/addMessage`, {
-    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000) },
+    // messageType TEXT_AND_NOTIFY = dispara notificación push en Android (TEXT solo la deja en el reverso).
+    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000), messageType: "TEXT_AND_NOTIFY" },
   });
   if (res.status === 404) return false;
   if (!res.ok) throw new Error(`sendGoogleObjectMessage ${res.status}: ${await res.text()}`);
