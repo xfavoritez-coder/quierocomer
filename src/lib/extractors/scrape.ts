@@ -292,6 +292,20 @@ function resolveMenuUrl(cartaUrl: string, providerName?: string | null): string 
       return url.toString();
     }
 
+    // Fudo (menu.fu.do): strip /qr-menu and other sub-paths — base URL /{slug} renders all categories
+    // /qr-menu only shows a filtered subset; base URL shows everything at once
+    if (url.hostname.includes("fu.do")) {
+      const segments = path.split("/").filter(Boolean); // e.g. ["caferagusa", "qr-menu"]
+      if (segments.length >= 1) {
+        const SKIP_PATHS = ["qr-menu", "qr", "menu"];
+        const filteredSegments = segments.filter(s => !SKIP_PATHS.includes(s));
+        // Keep only the restaurant slug (first segment)
+        url.pathname = "/" + (filteredSegments[0] || segments[0]);
+        url.search = "";
+        return url.toString();
+      }
+    }
+
     return url.toString();
   } catch {}
   return cartaUrl;
@@ -379,9 +393,9 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
   const cfgUseJina = extractionConfig?.useJina === true;
-  // Fudo menus can be very large — increased to 80k (was 32k which cut sections)
+  // Fudo: base URL renders all categories at once, content is typically small (~10-20KB)
   const isFudo = getDomain(menuUrl).includes("fu.do");
-  const cfgMaxChars = extractionConfig?.maxContentChars || (isFudo ? 80000 : 40000);
+  const cfgMaxChars = extractionConfig?.maxContentChars || (isFudo ? 60000 : 40000);
   const needsJina = cfgUseJina || ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
 
   console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "", extractionConfig ? `(config: ${JSON.stringify(extractionConfig)})` : "");
