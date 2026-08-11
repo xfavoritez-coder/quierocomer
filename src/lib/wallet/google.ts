@@ -247,6 +247,23 @@ export async function updateGooglePoints(member: MemberLike, program: ProgramLik
 }
 
 /**
+ * Construye el objeto Message para addMessage.
+ * - messageType TEXT_AND_NOTIFY → dispara notificación push en Android (TEXT solo lo deja en el reverso).
+ * - displayInterval.end → el mensaje se auto-oculta del reverso del pase al pasar 24 h,
+ *   para no acumular un log de pruebas/notificaciones. (start omitido = se muestra/notifica ya.)
+ */
+function buildNotifyMessage(header: string, body: string) {
+  const end = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  return {
+    id: `msg_${Date.now()}`,
+    header: header.slice(0, 100),
+    body: body.slice(0, 2000),
+    messageType: "TEXT_AND_NOTIFY",
+    displayInterval: { end: { date: end } },
+  };
+}
+
+/**
  * Envía un mensaje/notificación a TODOS los que tienen la tarjeta de este programa
  * (se agrega a la clase → llega a todos los objetos). Devuelve true si se envió.
  */
@@ -254,8 +271,7 @@ export async function sendGoogleClassMessage(programId: string, header: string, 
   if (!isGoogleWalletConfigured()) return false;
   const classId = googleClassId(programId);
   const res = await walletApi("POST", `/loyaltyClass/${classId}/addMessage`, {
-    // messageType TEXT_AND_NOTIFY = dispara notificación push en Android (TEXT solo la deja en el reverso).
-    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000), messageType: "TEXT_AND_NOTIFY" },
+    message: buildNotifyMessage(header, body),
   });
   if (res.status === 404) return false; // la clase aún no existe (sin tarjetas Google)
   if (!res.ok) throw new Error(`sendGoogleClassMessage ${res.status}: ${await res.text()}`);
@@ -269,8 +285,7 @@ export async function sendGoogleClassMessage(programId: string, header: string, 
 export async function sendGoogleObjectMessage(objectId: string, header: string, body: string): Promise<boolean> {
   if (!isGoogleWalletConfigured()) return false;
   const res = await walletApi("POST", `/loyaltyObject/${objectId}/addMessage`, {
-    // messageType TEXT_AND_NOTIFY = dispara notificación push en Android (TEXT solo la deja en el reverso).
-    message: { id: `msg_${Date.now()}`, header: header.slice(0, 100), body: body.slice(0, 2000), messageType: "TEXT_AND_NOTIFY" },
+    message: buildNotifyMessage(header, body),
   });
   if (res.status === 404) return false;
   if (!res.ok) throw new Error(`sendGoogleObjectMessage ${res.status}: ${await res.text()}`);
