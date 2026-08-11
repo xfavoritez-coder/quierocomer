@@ -379,9 +379,9 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
   const cfgUseJina = extractionConfig?.useJina === true;
-  // Fudo menus can be very large — cap at 32k to keep Claude under timeout
+  // Fudo menus can be very large — increased to 80k (was 32k which cut sections)
   const isFudo = getDomain(menuUrl).includes("fu.do");
-  const cfgMaxChars = extractionConfig?.maxContentChars || (isFudo ? 32000 : 40000);
+  const cfgMaxChars = extractionConfig?.maxContentChars || (isFudo ? 80000 : 40000);
   const needsJina = cfgUseJina || ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
 
   console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "", extractionConfig ? `(config: ${JSON.stringify(extractionConfig)})` : "");

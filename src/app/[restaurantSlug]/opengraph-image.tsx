@@ -65,14 +65,13 @@ export default async function Image({ params }: Props) {
               style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(0,0,0,0.08)' }}
             />
           ) : (
-            <div style={{
-              width: 120, height: 120, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #F4A623, #e8920f)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 48, fontWeight: 800, color: '#0a0a0a',
-            }}>
-              {name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={QC_LOGO}
+              width={120}
+              height={120}
+              style={{ objectFit: 'contain' }}
+            />
           )}
         </div>
 

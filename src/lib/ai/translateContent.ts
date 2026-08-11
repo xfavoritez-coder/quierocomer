@@ -325,29 +325,24 @@ export async function translateAllForRestaurant(restaurantId: string): Promise<{
   const [dishes, categories] = await Promise.all([
     prisma.dish.findMany({
       where: { restaurantId, isActive: true, deletedAt: null },
-      select: { id: true },
+      select: { id: true, name: true, description: true },
     }),
     prisma.category.findMany({
       where: { restaurantId, isActive: true },
-      select: { id: true },
+      select: { id: true, name: true },
     }),
   ]);
 
   let dishCount = 0;
-  let catCount = 0;
 
-  // Translate in batches of 3 to avoid rate limits
-  for (let i = 0; i < dishes.length; i += 3) {
-    const batch = dishes.slice(i, i + 3);
-    await Promise.all(batch.map((d) => translateDish(d.id).catch(console.error)));
-    dishCount += batch.length;
+  // Use bulk translation (15 dishes per API call) — much faster than individual translateDish()
+  for (let i = 0; i < dishes.length; i += 15) {
+    const batch = dishes.slice(i, i + 15);
+    dishCount += await translateDishBulk(batch).catch(() => 0);
   }
 
-  for (let i = 0; i < categories.length; i += 3) {
-    const batch = categories.slice(i, i + 3);
-    await Promise.all(batch.map((c) => translateCategory(c.id).catch(console.error)));
-    catCount += batch.length;
-  }
+  // Translate categories in bulk
+  await translateCategoryBulk(categories).catch(console.error);
 
-  return { dishes: dishCount, categories: catCount };
+  return { dishes: dishCount, categories: categories.length };
 }
