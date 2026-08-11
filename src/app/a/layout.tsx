@@ -1,18 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Playfair_Display, DM_Sans } from 'next/font/google'
 import './feed.css'
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-feed-display',
-})
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-feed-body',
-})
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -34,14 +21,17 @@ export const metadata: Metadata = {
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`feed-root ${playfair.variable} ${dmSans.variable} min-h-dvh antialiased`}
+      className="feed-root min-h-dvh antialiased"
       style={{
+        '--font-feed-display': '"Playfair Display", Georgia, serif',
+        '--font-feed-body': '"DM Sans", system-ui, sans-serif',
         background: '#f5f4f1',
         color: '#111111',
         fontFamily: 'var(--font-feed-body), system-ui, -apple-system, sans-serif',
         WebkitTapHighlightColor: 'transparent',
-      }}
+      } as React.CSSProperties}
     >
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');`}</style>
       {children}
     </div>
   )

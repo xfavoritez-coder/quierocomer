@@ -1,22 +1,9 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import GenieShell from "@/components/GenieShell";
 import VisitorTrackerInit from "@/components/VisitorTrackerInit";
 import { Toaster } from "sonner";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-display",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-});
 
 export const metadata: Metadata = {
   title: "QuieroComer | La carta QR inteligente que vende más por ti",
@@ -41,7 +28,8 @@ export const metadata: Metadata = {
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${spaceGrotesk.variable} ${inter.variable}`}>
+    <div style={{ '--font-display': '"Space Grotesk", system-ui, sans-serif', '--font-body': '"Inter", system-ui, sans-serif' } as React.CSSProperties}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');`}</style>
       <ErrorBoundary>
         <AuthProvider>
           <VisitorTrackerInit />
