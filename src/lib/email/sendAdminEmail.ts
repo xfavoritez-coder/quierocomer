@@ -165,8 +165,8 @@ export function orderAcceptedEmailHtml(opts: {
   return wrap(`
   <tr><td style="padding-bottom:20px;text-align:center;">
     <div style="font-size:48px;line-height:1;margin-bottom:12px;">🎉</div>
-    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">¡Tu pedido fue aceptado!</h1>
-    <p style="font-size:15px;color:#555;margin:0;">El local ya está preparando tu pedido.</p>
+    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">¡${opts.restaurantName} aceptó tu pedido!</h1>
+    <p style="font-size:15px;color:#555;margin:0;">${opts.restaurantName} ya está preparando tu pedido.</p>
   </td></tr>
   <tr><td style="padding-bottom:16px;">
     ${card(`

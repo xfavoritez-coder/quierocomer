@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest) {
 
     const emailOpts = body.status === "ACCEPTED"
       ? {
-          subject: "¡Tu pedido fue aceptado! ✅",
+          subject: `${restaurant?.name ?? "El local"} aceptó tu pedido ✅`,
           html: orderAcceptedEmailHtml({
             customerName: order.customerName,
             restaurantName: restaurant?.name ?? "",
