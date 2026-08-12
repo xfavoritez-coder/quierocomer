@@ -177,6 +177,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [orderNotes, setOrderNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [addressSuggestions, setAddressSuggestions] = useState<{ display_name: string; place_id: string | number }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [addressCoords, setAddressCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -258,6 +259,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const sendOrder = async () => {
     if (!isValid || sending) return;
     setSending(true);
+    setSendError(null);
 
     if (isPanelMode) {
       try {
@@ -282,9 +284,12 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
           clearCart();
           window.location.href = `/pedido/${data.id}`;
         } else {
+          const errData = await res.json().catch(() => ({}));
+          setSendError(errData.error || "No se pudo enviar el pedido. Intenta de nuevo.");
           setSending(false);
         }
       } catch {
+        setSendError("Error de conexión. Intenta de nuevo.");
         setSending(false);
       }
       return;
@@ -615,6 +620,11 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
         {/* Send button */}
         <div style={{ padding: "14px 18px", borderTop: "1px solid var(--carta-border, #eee)", background: "var(--carta-bg, #fff)", flexShrink: 0, paddingBottom: "max(14px, env(safe-area-inset-bottom, 14px))" }}>
+          {sendError && (
+            <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#ef4444", textAlign: "center", margin: "0 0 10px", padding: "8px 12px", background: "rgba(239,68,68,0.08)", borderRadius: 8 }}>
+              {sendError}
+            </p>
+          )}
           <button
             onClick={sendOrder}
             disabled={!isValid || sending}

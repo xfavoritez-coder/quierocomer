@@ -143,7 +143,9 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   const rawBH = (config as any).orderingBusinessHours ?? null;
   let isClosed = false;
   let closedBusinessHours: Record<string, { open: boolean; from: string; to: string }> | null = null;
-  if (rawBH && typeof rawBH === "object") {
+  const bhDays = rawBH && typeof rawBH === "object" ? Object.values(rawBH as Record<string, any>) : [];
+  const anyDayOpen = bhDays.some((d: any) => d?.open === true);
+  if (rawBH && typeof rawBH === "object" && anyDayOpen) {
     closedBusinessHours = rawBH as any;
     const day = String(chileNow.getDay()); // 0=Dom…6=Sab
     const dayConfig = (rawBH as any)[day];

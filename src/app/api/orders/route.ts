@@ -19,25 +19,30 @@ export async function POST(req: NextRequest) {
     }
 
     // Business hours check (Chile timezone)
+    // Only enforce if at least one day has open:true — if all days are off, the feature is disabled
     const restaurant = await prisma.restaurant.findUnique({ where: { id: resId }, select: { orderingBusinessHours: true } });
     const rawBH = (restaurant as any)?.orderingBusinessHours;
     if (rawBH && typeof rawBH === "object") {
-      const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
-      const day = String(chileNow.getDay());
-      const dayConfig = (rawBH as any)[day];
-      if (!dayConfig || !dayConfig.open) {
-        return NextResponse.json({ error: "El local está cerrado" }, { status: 409 });
-      } else {
-        const nowMins = chileNow.getHours() * 60 + chileNow.getMinutes();
-        const parseMins = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
-        const fromMins = parseMins(dayConfig.from || "00:00");
-        const rawTo = dayConfig.to || "23:59";
-        const toMins = rawTo === "00:00" ? 1440 : parseMins(rawTo);
-        const isClosed = fromMins <= toMins
-          ? nowMins < fromMins || nowMins >= toMins
-          : nowMins < fromMins && nowMins >= toMins;
-        if (isClosed) {
+      const bhDays = Object.values(rawBH as Record<string, any>);
+      const anyDayOpen = bhDays.some(d => d?.open === true);
+      if (anyDayOpen) {
+        const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+        const day = String(chileNow.getDay());
+        const dayConfig = (rawBH as any)[day];
+        if (!dayConfig || !dayConfig.open) {
           return NextResponse.json({ error: "El local está cerrado" }, { status: 409 });
+        } else {
+          const nowMins = chileNow.getHours() * 60 + chileNow.getMinutes();
+          const parseMins = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+          const fromMins = parseMins(dayConfig.from || "00:00");
+          const rawTo = dayConfig.to || "23:59";
+          const toMins = rawTo === "00:00" ? 1440 : parseMins(rawTo);
+          const isClosed = fromMins <= toMins
+            ? nowMins < fromMins || nowMins >= toMins
+            : nowMins < fromMins && nowMins >= toMins;
+          if (isClosed) {
+            return NextResponse.json({ error: "El local está cerrado" }, { status: 409 });
+          }
         }
       }
     }
