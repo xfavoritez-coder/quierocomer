@@ -34,12 +34,37 @@ interface OrderData {
   estimatedTime: string | null;
   createdAt: string;
   updatedAt: string;
+  colorMode: string;
+  accentColor: string | null;
 }
 
-const ACCENT = "#F4A623";
+interface Theme {
+  bg: string;
+  surface: string;
+  text: string;
+  text2: string;
+  text3: string;
+  border: string;
+  accent: string;
+  isDark: boolean;
+}
+
+function buildTheme(colorMode: string, accentColor: string | null): Theme {
+  const isDark = colorMode === "DARK";
+  return {
+    isDark,
+    bg: isDark ? "#0e0e0e" : "#fafafa",
+    surface: isDark ? "#1a1a1a" : "#fff",
+    text: isDark ? "#f0f0f0" : "#111",
+    text2: isDark ? "#aaa" : "#666",
+    text3: isDark ? "#555" : "#999",
+    border: isDark ? "#262626" : "#e5e5e5",
+    accent: accentColor || "#F4A623",
+  };
+}
+
 const GREEN = "#22c55e";
 const RED = "#ef4444";
-const GRAY = "#9ca3af";
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 function fmt(n: number) {
@@ -52,7 +77,6 @@ const PAY_LABELS: Record<string, string> = {
   tarjeta: "Tarjeta",
 };
 
-// Status to step index mapping
 const STATUS_STEP: Record<string, number> = {
   PENDING: 0,
   ACCEPTED: 1,
@@ -63,7 +87,6 @@ const STATUS_STEP: Record<string, number> = {
   CANCELLED: -1,
 };
 
-// Which statuses correspond to each step index
 const STEP_STATUSES: string[][] = [
   ["PENDING"],
   ["ACCEPTED"],
@@ -89,27 +112,19 @@ function fmtTime(iso: string) {
 }
 
 function getStepTime(stepIndex: number, statusHistory: StatusEntry[], createdAt: string): string | null {
-  // Step 0 always uses createdAt (PENDING is set at creation)
   if (stepIndex === 0) return fmtTime(createdAt);
-
   const statuses = STEP_STATUSES[stepIndex];
   if (!statuses) return null;
-
-  // Find the first history entry matching any status for this step
   const entry = statusHistory.find(e => statuses.includes(e.status));
   return entry ? fmtTime(entry.ts) : null;
 }
 
-function Stepper({
-  status,
-  orderType,
-  statusHistory,
-  createdAt,
-}: {
+function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
   status: string;
   orderType: "PICKUP" | "DELIVERY";
   statusHistory: StatusEntry[];
   createdAt: string;
+  theme: Theme;
 }) {
   const steps = getSteps(orderType);
   const currentStep = STATUS_STEP[status] ?? 0;
@@ -119,16 +134,16 @@ function Stepper({
       {steps.map((step, i) => {
         const done = i < currentStep;
         const active = i === currentStep;
-        const color = done ? GREEN : active ? ACCENT : GRAY;
+        const color = done ? GREEN : active ? theme.accent : theme.text3;
+        const circleBg = done ? GREEN + "22" : active ? theme.accent + "22" : theme.isDark ? "#242424" : "#f3f4f6";
         const timeLabel = (done || active) ? getStepTime(i, statusHistory, createdAt) : null;
 
         return (
           <div key={i} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
-            {/* Step */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 56 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: "50%",
-                background: done ? GREEN + "22" : active ? ACCENT + "22" : "#f3f4f6",
+                background: circleBg,
                 border: `2px solid ${color}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 16, flexShrink: 0,
@@ -143,15 +158,15 @@ function Stepper({
                 {step.label}
               </span>
               {timeLabel && (
-                <span style={{ fontFamily: FONT, fontSize: 9, color: "#aaa", marginTop: 2, textAlign: "center" }}>
+                <span style={{ fontFamily: FONT, fontSize: 9, color: theme.text3, marginTop: 2, textAlign: "center" }}>
                   {timeLabel}
                 </span>
               )}
             </div>
-            {/* Connector */}
             {i < steps.length - 1 && (
               <div style={{
-                flex: 1, height: 2, background: i < currentStep ? GREEN : "#e5e7eb",
+                flex: 1, height: 2,
+                background: i < currentStep ? GREEN : theme.border,
                 marginBottom: 28, minWidth: 8,
               }} />
             )}
@@ -180,15 +195,11 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     }
   }
 
-  // Initial fetch
-  useEffect(() => {
-    fetchOrder();
-  }, [orderId]);
+  useEffect(() => { fetchOrder(); }, [orderId]);
 
-  // Polling fallback every 12 seconds — in case realtime misses events
+  // Polling fallback cada 12 segundos
   useEffect(() => {
     const interval = setInterval(() => {
-      // Only poll while order is active (not done/cancelled)
       const cur = orderRef.current;
       if (cur && cur.status !== "DONE" && cur.status !== "CANCELLED") {
         fetchOrder();
@@ -197,7 +208,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     return () => clearInterval(interval);
   }, [orderId]);
 
-  // Supabase Realtime — escucha cambios en este pedido específico
+  // Supabase Realtime
   useEffect(() => {
     const channel = supabase
       .channel(`pedido-${orderId}`)
@@ -226,21 +237,29 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     return () => { supabase.removeChannel(channel); };
   }, [orderId]);
 
+  // Theme derivado del pedido (usa LIGHT como fallback mientras carga)
+  const theme = buildTheme(order?.colorMode ?? "LIGHT", order?.accentColor ?? null);
+
   const cardStyle: React.CSSProperties = {
-    background: "#fff",
-    border: "1px solid #e5e5e5",
+    background: theme.surface,
+    border: `1px solid ${theme.border}`,
     borderRadius: 16,
     padding: "20px 18px",
     marginBottom: 16,
   };
 
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11, fontWeight: 700, color: theme.text3,
+    textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 2px",
+  };
+
   if (error) {
     return (
-      <div style={{ minHeight: "100vh", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
+      <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>😕</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", margin: "0 0 8px" }}>Pedido no encontrado</h2>
-          <p style={{ fontSize: 14, color: "#666", margin: 0 }}>Verifica el enlace o contacta al local.</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: theme.text, margin: "0 0 8px" }}>Pedido no encontrado</h2>
+          <p style={{ fontSize: 14, color: theme.text2, margin: 0 }}>Verifica el enlace o contacta al local.</p>
         </div>
       </div>
     );
@@ -248,8 +267,8 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
   if (!order) {
     return (
-      <div style={{ minHeight: "100vh", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT }}>
-        <div style={{ textAlign: "center", color: "#999" }}>
+      <div style={{ minHeight: "100vh", background: "#0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT }}>
+        <div style={{ textAlign: "center", color: "#555" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
           <p style={{ fontSize: 14 }}>Cargando tu pedido...</p>
         </div>
@@ -257,11 +276,10 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     );
   }
 
-  // CANCELLED screen
   if (order.status === "CANCELLED") {
     const waPhone = order.restaurantPhone?.replace(/\D/g, "");
     return (
-      <div style={{ minHeight: "100vh", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
+      <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 320 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>😔</div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: RED, margin: "0 0 8px" }}>Pedido cancelado</h2>
@@ -270,7 +288,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
               Motivo: {order.cancellationReason}
             </p>
           )}
-          <p style={{ fontSize: 14, color: "#666", margin: "0 0 20px", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, color: theme.text2, margin: "0 0 20px", lineHeight: 1.6 }}>
             Lamentamos informarte que tu pedido fue cancelado.
           </p>
           {waPhone && (
@@ -290,22 +308,21 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             </a>
           )}
           {!waPhone && (
-            <p style={{ fontSize: 13, color: "#999" }}>Contacta al local para más información.</p>
+            <p style={{ fontSize: 13, color: theme.text3 }}>Contacta al local para más información.</p>
           )}
         </div>
       </div>
     );
   }
 
-  // DONE screen
   if (order.status === "DONE") {
     return (
-      <div style={{ minHeight: "100vh", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
+      <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: GREEN, margin: "0 0 8px" }}>¡Pedido entregado!</h2>
-          <p style={{ fontSize: 14, color: "#666", margin: 0, lineHeight: 1.6 }}>
-            Gracias por tu pedido en <strong>{order.restaurantName}</strong>.<br />¡Esperamos que lo hayas disfrutado!
+          <p style={{ fontSize: 14, color: theme.text2, margin: 0, lineHeight: 1.6 }}>
+            Gracias por tu pedido en <strong style={{ color: theme.text }}>{order.restaurantName}</strong>.<br />¡Esperamos que lo hayas disfrutado!
           </p>
         </div>
       </div>
@@ -315,7 +332,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   const items = Array.isArray(order.items) ? order.items : [];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: FONT }}>
+    <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: FONT }}>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px 48px" }}>
 
         {/* Restaurant header */}
@@ -328,17 +345,17 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             />
           ) : (
             <div style={{
-              width: 48, height: 48, borderRadius: "50%", background: ACCENT + "22",
+              width: 48, height: 48, borderRadius: "50%", background: theme.accent + "22",
               display: "inline-flex", alignItems: "center", justifyContent: "center",
-              fontSize: 20, fontWeight: 700, color: ACCENT, marginBottom: 8,
+              fontSize: 20, fontWeight: 700, color: theme.accent, marginBottom: 8,
             }}>
               {order.restaurantName.charAt(0).toUpperCase()}
             </div>
           )}
-          <h1 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: "#111", margin: 0 }}>
+          <h1 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: theme.text, margin: 0 }}>
             {order.restaurantName}
           </h1>
-          <p style={{ fontSize: 13, color: "#666", margin: "4px 0 0" }}>Seguimiento de pedido</p>
+          <p style={{ fontSize: 13, color: theme.text2, margin: "4px 0 0" }}>Seguimiento de pedido</p>
         </div>
 
         {/* Stepper */}
@@ -348,6 +365,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             orderType={order.orderType}
             statusHistory={order.statusHistory}
             createdAt={order.createdAt}
+            theme={theme}
           />
         </div>
 
@@ -357,7 +375,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
             <span style={{
               display: "inline-flex", alignItems: "center", gap: 4,
-              background: ACCENT + "18", color: ACCENT,
+              background: theme.accent + "18", color: theme.accent,
               fontWeight: 700, fontSize: 12, padding: "4px 10px", borderRadius: 999,
             }}>
               {order.orderType === "DELIVERY" ? "🛵 Delivery" : "🏠 Retiro"}
@@ -367,64 +385,64 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           {/* Delivery address */}
           {order.orderType === "DELIVERY" && order.deliveryAddress && (
             <div style={{ marginBottom: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 2px" }}>Dirección</p>
-              <p style={{ fontSize: 14, color: "#111", margin: 0 }}>{order.deliveryAddress}</p>
+              <p style={labelStyle}>Dirección</p>
+              <p style={{ fontSize: 14, color: theme.text, margin: 0 }}>{order.deliveryAddress}</p>
             </div>
           )}
 
           {/* Estimated time */}
           {order.estimatedTime && (
             <div style={{ marginBottom: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 2px" }}>Tiempo estimado</p>
-              <p style={{ fontSize: 14, color: "#111", margin: 0 }}>⏱ {order.estimatedTime}</p>
+              <p style={labelStyle}>Tiempo estimado</p>
+              <p style={{ fontSize: 14, color: theme.text, margin: 0 }}>⏱ {order.estimatedTime}</p>
             </div>
           )}
 
           {/* Divider */}
-          <div style={{ height: 1, background: "#f0f0f0", margin: "14px 0" }} />
+          <div style={{ height: 1, background: theme.border, margin: "14px 0" }} />
 
           {/* Items */}
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 10px" }}>Productos</p>
+          <p style={{ ...labelStyle, marginBottom: 10 }}>Productos</p>
           {items.map((item, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <span style={{ fontSize: 14, color: "#111", fontWeight: 500 }}>
+                <span style={{ fontSize: 14, color: theme.text, fontWeight: 500 }}>
                   {item.quantity}× {item.dishName}
                 </span>
                 {item.selectedOptions && item.selectedOptions.length > 0 && (
-                  <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>
+                  <p style={{ fontSize: 12, color: theme.text2, margin: "2px 0 0" }}>
                     {item.selectedOptions.map(o => o.optionName).join(", ")}
                   </p>
                 )}
                 {item.notes && (
-                  <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0", fontStyle: "italic" }}>
+                  <p style={{ fontSize: 12, color: theme.text2, margin: "2px 0 0", fontStyle: "italic" }}>
                     Nota: {item.notes}
                   </p>
                 )}
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#111", flexShrink: 0, marginLeft: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: theme.text, flexShrink: 0, marginLeft: 12 }}>
                 {fmt(item.unitTotal * item.quantity)}
               </span>
             </div>
           ))}
 
           {/* Total */}
-          <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #f0f0f0", marginTop: 6 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>Total</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: ACCENT }}>{fmt(order.total)}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: `1px solid ${theme.border}`, marginTop: 6 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: theme.text }}>Total</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: theme.accent }}>{fmt(order.total)}</span>
           </div>
 
           {/* Payment method */}
           <div style={{ marginTop: 12 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 2px" }}>Forma de pago</p>
-            <p style={{ fontSize: 14, color: "#111", margin: 0 }}>{PAY_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
+            <p style={labelStyle}>Forma de pago</p>
+            <p style={{ fontSize: 14, color: theme.text, margin: 0 }}>{PAY_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
           </div>
 
           {/* Notes */}
           {order.notes && (
             <div style={{ marginTop: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 2px" }}>Notas</p>
-              <p style={{ fontSize: 14, color: "#555", margin: 0, fontStyle: "italic" }}>{order.notes}</p>
+              <p style={labelStyle}>Notas</p>
+              <p style={{ fontSize: 14, color: theme.text2, margin: 0, fontStyle: "italic" }}>{order.notes}</p>
             </div>
           )}
         </div>
