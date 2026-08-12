@@ -746,6 +746,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
         {/* Fixed glass header */}
         <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+          {isClosed && <ClosedBanner businessHours={businessHours} inline />}
           <header style={{ padding: "calc(10px + env(safe-area-inset-top)) 16px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -773,7 +774,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
               </div>
             </div>
           </header>
-          {isClosed && <ClosedBanner businessHours={businessHours} inline />}
         </div>
 
         <div style={{ height: impactHeaderH }} />
