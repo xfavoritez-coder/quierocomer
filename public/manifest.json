@@ -1,0 +1,23 @@
+{
+  "name": "QuieroComer Panel",
+  "short_name": "QC Panel",
+  "description": "Panel de gestión de pedidos online",
+  "start_url": "/panel/pedir-online/pedidos",
+  "display": "standalone",
+  "background_color": "#0e0e0e",
+  "theme_color": "#F4A623",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

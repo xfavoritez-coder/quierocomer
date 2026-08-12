@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck, Banknote, CreditCard, ArrowLeftRight } from "lucide-react";
+import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck, Banknote, CreditCard, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { useCart } from "./OrderCartContext";
 
 const F = "var(--font-display, 'Inter', sans-serif)";
@@ -143,6 +143,7 @@ interface Props {
   orderingConfig: OrderingConfig;
   onBack: () => void;
   onClose: () => void;
+  orderingMode?: string;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -153,9 +154,10 @@ const inputStyle: React.CSSProperties = {
   outline: "none", boxSizing: "border-box",
 };
 
-export default function OrderCheckout({ restaurantName, restaurantSlug, orderingConfig, onBack, onClose }: Props) {
+export default function OrderCheckout({ restaurantName, restaurantSlug, orderingConfig, onBack, onClose, orderingMode }: Props) {
   const { items, total, clearCart } = useCart();
   const { delivery, minAmount, waitTime, note, address, phone, paymentMethods = ["efectivo", "transferencia", "tarjeta"] } = orderingConfig;
+  const isPanelMode = orderingMode === "panel";
 
   const showPickup = delivery === "PICKUP" || delivery === "BOTH";
   const showDelivery = delivery === "DELIVERY" || delivery === "BOTH";
@@ -163,10 +165,13 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [name, setName] = useState("");
   const [dialCountry, setDialCountry] = useState<CountryCode>("CL");
   const [clientPhone, setClientPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [orderType, setOrderType] = useState<"PICKUP" | "DELIVERY">(showPickup ? "PICKUP" : "DELIVERY");
   const [clientAddress, setClientAddress] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
   const phoneDigits = clientPhone.replace(/\D/g, "");
@@ -174,6 +179,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const isValid =
     name.trim().length >= 2 &&
     phoneDigits.length >= 8 &&
+    (!isPanelMode || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) &&
     (orderType === "PICKUP" || clientAddress.trim().length >= 5) &&
     paymentMethod !== null &&
     !belowMin;
@@ -215,7 +221,36 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   };
 
   const sendOrder = async () => {
-    if (!isValid) return;
+    if (!isValid || sending) return;
+    setSending(true);
+
+    if (isPanelMode) {
+      try {
+        await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            restaurantSlug,
+            customerName: name.trim(),
+            customerPhone: buildFullPhone(clientPhone, dialCountry),
+            customerEmail: email.trim() || null,
+            orderType,
+            deliveryAddress: orderType === "DELIVERY" ? clientAddress.trim() : null,
+            paymentMethod,
+            items,
+            total,
+            notes: orderNotes.trim() || null,
+          }),
+        });
+        clearCart();
+        setSuccess(true);
+      } catch {
+        setSending(false);
+      }
+      return;
+    }
+
+    // WhatsApp mode
     fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -237,6 +272,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     if (!waPhone) {
       navigator.clipboard?.writeText(msg).catch(() => {});
       alert("El local no tiene número de WhatsApp configurado. Se copió el pedido al portapapeles.");
+      setSending(false);
       return;
     }
     const url = `https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`;
@@ -244,6 +280,34 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     clearCart();
     onClose();
   };
+
+  if (success) {
+    return (
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, zIndex: 950, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "flex-end" }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ background: "var(--carta-bg, #fff)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 520, padding: "40px 24px 48px", textAlign: "center" }}
+        >
+          <CheckCircle2 size={56} color="#22c55e" style={{ marginBottom: 16 }} />
+          <h2 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--carta-text, #111)", margin: "0 0 8px" }}>
+            ¡Pedido recibido!
+          </h2>
+          <p style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--carta-text2, #666)", margin: "0 0 24px", lineHeight: 1.6 }}>
+            Tu pedido fue enviado al local. Te avisaremos cuando esté listo.
+          </p>
+          <button
+            onClick={onClose}
+            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: ACCENT, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: "pointer" }}
+          >
+            Volver al menú
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -378,6 +442,21 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             />
           </div>
 
+          {/* Email (panel mode only) */}
+          {isPanelMode && (
+            <div style={{ marginBottom: 12 }}>
+              <input
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="oc-input"
+                style={inputStyle}
+                placeholder="Tu email para recibir notificaciones *"
+                type="email"
+                autoComplete="email"
+              />
+            </div>
+          )}
+
           {/* Payment method */}
           <div style={{ marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
@@ -482,23 +561,25 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
         <div style={{ padding: "14px 18px", borderTop: "1px solid var(--carta-border, #eee)", background: "var(--carta-bg, #fff)", flexShrink: 0, paddingBottom: "max(14px, env(safe-area-inset-bottom, 14px))" }}>
           <button
             onClick={sendOrder}
-            disabled={!isValid}
+            disabled={!isValid || sending}
             style={{
               width: "100%", padding: "15px 16px", borderRadius: 14, border: "none",
-              background: isValid ? "#25D366" : "var(--carta-border, #ddd)",
-              color: isValid ? "#fff" : "var(--carta-text2, #aaa)",
+              background: isValid && !sending ? (isPanelMode ? ACCENT : "#25D366") : "var(--carta-border, #ddd)",
+              color: isValid && !sending ? "#fff" : "var(--carta-text2, #aaa)",
               fontFamily: F, fontSize: "0.92rem", fontWeight: 700,
-              cursor: isValid ? "pointer" : "not-allowed",
+              cursor: isValid && !sending ? "pointer" : "not-allowed",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
               transition: "all 0.15s",
             }}
           >
-            <MessageCircle size={20} />
-            Enviar pedido por WhatsApp
+            {isPanelMode ? <CheckCircle2 size={20} /> : <MessageCircle size={20} />}
+            {sending ? "Enviando..." : isPanelMode ? "Confirmar pedido" : "Enviar pedido por WhatsApp"}
           </button>
-          <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text2, #999)", textAlign: "center", margin: "8px 0 0" }}>
-            Se abrirá WhatsApp con tu pedido listo para enviar
-          </p>
+          {!isPanelMode && (
+            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text2, #999)", textAlign: "center", margin: "8px 0 0" }}>
+              Se abrirá WhatsApp con tu pedido listo para enviar
+            </p>
+          )}
         </div>
       </div>
     </div>

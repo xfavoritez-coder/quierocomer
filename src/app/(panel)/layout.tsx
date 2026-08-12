@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 
-export const metadata: Metadata = { title: "Panel · QuieroComer" };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1 };
+export const metadata: Metadata = {
+  title: "Panel · QuieroComer",
+  manifest: "/manifest.json",
+};
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, themeColor: "#F4A623" };
 
 export default function PanelRootLayout({ children }: { children: React.ReactNode }) {
   return (

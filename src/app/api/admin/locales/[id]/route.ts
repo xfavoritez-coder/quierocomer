@@ -30,7 +30,7 @@ const OWNER_EDITABLE_FIELDS = [
   // Pedidos online
   "orderingEnabled", "orderingPhone", "orderingDelivery",
   "orderingMinAmount", "orderingWaitTime", "orderingNote",
-  "orderingPaymentMethods",
+  "orderingPaymentMethods", "orderingMode",
   "orderingBannerUrl", "orderingTheme", "orderingAccentColor",
   "filterBarEnabled",
 ];

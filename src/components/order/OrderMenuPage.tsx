@@ -49,6 +49,7 @@ interface OrderingConfig {
   cartaView?: string;
   cartaColorMode?: string;
   cartaAccentColor?: string | null;
+  orderingMode?: string;
 }
 interface Props { restaurant: Restaurant; orderingConfig: OrderingConfig; popularDishIds?: string[]; }
 
@@ -764,7 +765,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
         {selectedDish && <OrderItemModal dish={selectedDish} onClose={() => setSelectedDish(null)} onAdd={handleAddItem} />}
         {cartOpen && !checkoutOpen && <OrderCart onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
-        {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
+        {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} orderingMode={orderingConfig.orderingMode} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
       </div>
     );
   }

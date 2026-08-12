@@ -150,6 +150,7 @@ interface OrderingData {
   slug: string;
   plan: string;
   orderingEnabled: boolean;
+  orderingMode: string | null;
   orderingPhone: string | null;
   orderingDelivery: string;
   orderingMinAmount: number | null;
@@ -191,6 +192,7 @@ export default function PedirOnlinePage() {
 
   // form state
   const [enabled, setEnabled] = useState(false);
+  const [orderingMode, setOrderingMode] = useState<"whatsapp" | "panel">("whatsapp");
   const [phoneCountry, setPhoneCountry] = useState<CountryCode>("CL");
   const [phoneLocal, setPhoneLocal] = useState("");
   const [delivery, setDelivery] = useState<"PICKUP" | "DELIVERY" | "BOTH">("BOTH");
@@ -207,6 +209,7 @@ export default function PedirOnlinePage() {
       .then((d: OrderingData) => {
         setData(d);
         setEnabled(d.orderingEnabled ?? false);
+        setOrderingMode((d.orderingMode as "whatsapp" | "panel") || "whatsapp");
         // Track section visit
         fetch("/api/panel/activity", {
           method: "POST",
@@ -268,7 +271,8 @@ export default function PedirOnlinePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderingPhone: fullPhone || null,
+          orderingMode,
+          orderingPhone: orderingMode === "whatsapp" ? (fullPhone || null) : null,
           orderingDelivery: delivery,
           orderingMinAmount: minAmount ? parseInt(minAmount, 10) : null,
           orderingWaitTime: waitTime.trim() || null,
@@ -383,7 +387,36 @@ export default function PedirOnlinePage() {
       {/* Config */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px 18px", marginBottom: 16 }}>
 
-        {/* WhatsApp destino */}
+        {/* Modo de recepción */}
+        <Field label="Cómo recibes los pedidos" hint="Elige si los pedidos llegan por WhatsApp o por el panel en tiempo real.">
+          <div style={{ display: "flex", gap: 8 }}>
+            {([
+              { value: "whatsapp" as const, label: "WhatsApp", emoji: "💬" },
+              { value: "panel" as const, label: "Panel online", emoji: "📋" },
+            ]).map(opt => {
+              const active = orderingMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setOrderingMode(opt.value)}
+                  style={{
+                    flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
+                    background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                    border: active ? `1px solid rgba(244,166,35,0.4)` : "1px solid transparent",
+                    color: active ? GOLD : "var(--adm-text3)",
+                    fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {opt.emoji} {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {/* WhatsApp destino (solo en modo whatsapp) */}
+        {orderingMode === "whatsapp" && (
         <Field
           label={t("ordering_whatsapp")}
           hint={t("ordering_whatsapp_hint")}
@@ -399,6 +432,17 @@ export default function PedirOnlinePage() {
             />
           </div>
         </Field>
+        )}
+
+        {/* Info panel mode */}
+        {orderingMode === "panel" && (
+          <div style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#3b82f6", fontWeight: 600, margin: "0 0 4px" }}>📋 Modo panel activo</p>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+              Los pedidos llegarán al panel en <strong>/panel/pedir-online/pedidos</strong>. El cliente verá una pantalla de confirmación (no se abre WhatsApp). Instala el panel como app en tu celular para recibir notificaciones.
+            </p>
+          </div>
+        )}
 
         {/* Tipo de entrega */}
         <Field label={t("ordering_delivery_type")}>

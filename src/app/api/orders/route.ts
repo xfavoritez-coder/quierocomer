@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantId, restaurantSlug, customerName, customerPhone, orderType, deliveryAddress, paymentMethod, items, total, notes } = body;
+    const { restaurantId, restaurantSlug, customerName, customerPhone, customerEmail, orderType, deliveryAddress, paymentMethod, items, total, notes } = body;
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
     if (!customerName || !customerPhone || !orderType || !paymentMethod || !items || total == null) {
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
         restaurantId: resId,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
+        customerEmail: customerEmail?.trim() || null,
         orderType,
         deliveryAddress: deliveryAddress?.trim() || null,
         paymentMethod,

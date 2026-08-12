@@ -341,6 +341,7 @@ model Restaurant {
   orderingBannerUrl          String? // banner personalizado para /pedir
   orderingTheme              String                   @default("light") // light | dark
   orderingAccentColor        String? // color de acento hex
+  orderingMode               String                   @default("whatsapp") // "whatsapp" | "panel"
   // Valoraciones
   reviewMode                 String                   @default("off") // "off" | "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
@@ -406,6 +407,7 @@ model OnlineOrder {
 
   customerName    String
   customerPhone   String
+  customerEmail   String?
   orderType       String // "PICKUP" | "DELIVERY"
   deliveryAddress String?
   paymentMethod   String // "efectivo" | "transferencia" | "tarjeta"
@@ -413,7 +415,8 @@ model OnlineOrder {
   total           Int
   notes           String?
 
-  status String @default("PENDING") // "PENDING" | "CONFIRMED" | "READY" | "DONE" | "CANCELLED"
+  // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
+  status String @default("PENDING")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -118,6 +118,37 @@ function field(name: string, value: string): string {
   </table>`;
 }
 
+// ─── Order in delivery email ──────────────────────────────────────────
+export function orderInDeliveryEmailHtml(opts: {
+  customerName: string;
+  restaurantName: string;
+  total: number;
+  orderType: string;
+  estimatedTime?: string | null;
+}): string {
+  const emoji = opts.orderType === "DELIVERY" ? "🛵" : "✅";
+  const headline = opts.orderType === "DELIVERY" ? "¡Tu pedido está en camino!" : "¡Tu pedido está listo para retirar!";
+  const sub = opts.orderType === "DELIVERY"
+    ? "Nuestro repartidor ya salió con tu pedido."
+    : "Puedes pasar a retirar tu pedido al local.";
+
+  return wrap(`
+  <tr><td style="padding-bottom:20px;text-align:center;">
+    <div style="font-size:48px;line-height:1;margin-bottom:12px;">${emoji}</div>
+    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">${headline}</h1>
+    <p style="font-size:15px;color:#555;margin:0;">${sub}</p>
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">
+    ${card(`
+      ${label("Tu pedido")}
+      <div style="font-size:15px;color:#111;font-weight:700;margin-bottom:4px;">${opts.restaurantName}</div>
+      <div style="font-size:14px;color:#555;">Hola ${opts.customerName}, tu pedido por <strong>$${opts.total.toLocaleString("es-CL")}</strong> ya está en camino.</div>
+      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:6px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
+    `, true)}
+  </td></tr>
+  `);
+}
+
 // ─── Email templates ──────────────────────────────────────────────────
 
 export function resetPasswordEmailHtml(name: string, resetLink: string, restaurantName?: string): string {
