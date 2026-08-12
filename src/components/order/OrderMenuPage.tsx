@@ -881,6 +881,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
     <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
       <style>{`@keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
 
+      {/* DEBUG TEMP */}
+      <div style={{ position: "fixed", bottom: 60, right: 8, zIndex: 9999, background: isClosed ? "red" : "green", color: "#fff", fontSize: 11, padding: "4px 8px", borderRadius: 4, fontFamily: "monospace" }}>
+        isClosed={String(isClosed)} prop={String(isClosedProp)}
+      </div>
       {/* Banner de cerrado */}
       {isClosed && <ClosedBanner businessHours={businessHours} />}
 
