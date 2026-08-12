@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { supabase } from "@/lib/supabase";
-import { ClipboardList, RefreshCw, ChevronDown, ChevronUp, Bell } from "lucide-react";
+import { ClipboardList, ChevronDown, ChevronUp } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -100,12 +100,19 @@ function relativeTime(iso: string) {
 }
 
 // ─── Order card ───────────────────────────────────────────────────────────────
-function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: (id: string, status: OrderStatus) => Promise<void> }) {
+function OrderCard({
+  order,
+  isNew,
+  onStatusChange,
+}: {
+  order: Order;
+  isNew: boolean;
+  onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
-  const isNew = order.status === "PENDING";
   const statusColor = STATUS_COLOR[order.status];
 
   const handleAction = async (status: OrderStatus) => {
@@ -117,160 +124,188 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: (i
     }
   };
 
+  const isPending = order.status === "PENDING";
+
   return (
-    <div style={{
-      background: "var(--adm-card)",
-      border: `1.5px solid ${isNew ? ORANGE + "55" : "var(--adm-card-border)"}`,
-      borderRadius: 14,
-      overflow: "hidden",
-      boxShadow: isNew ? `0 0 0 3px ${ORANGE}18` : undefined,
-    }}>
-      {/* Header */}
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+    <>
+      <style>{`
+        @keyframes pendingPulse {
+          0%, 100% { box-shadow: 0 0 0 0 ${ORANGE}44; }
+          50%       { box-shadow: 0 0 0 6px ${ORANGE}00; }
+        }
+        @keyframes newOrderGlow {
+          0%   { box-shadow: 0 0 0 0 ${GREEN}66; border-color: ${GREEN}; }
+          50%  { box-shadow: 0 0 0 10px ${GREEN}11; border-color: ${GREEN}; }
+          100% { box-shadow: 0 0 0 0 ${GREEN}00; border-color: ${GREEN}; }
+        }
+        .pending-card { animation: pendingPulse 2s ease-in-out infinite; }
+        .new-order-card { animation: newOrderGlow 1s ease-in-out 4; }
+      `}</style>
+      <div
+        className={isNew ? "new-order-card" : isPending ? "pending-card" : ""}
+        style={{
+          background: "var(--adm-card)",
+          border: `2px solid ${isNew ? GREEN : isPending ? ORANGE : "var(--adm-card-border)"}`,
+          borderRadius: 14,
+          overflow: "hidden",
+          transition: "border-color 0.4s",
+        }}
       >
-        {/* Status dot */}
-        <div style={{ width: 10, height: 10, borderRadius: "50%", background: statusColor, flexShrink: 0 }} />
+        {/* Header */}
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+        >
+          {/* Status dot */}
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: statusColor, flexShrink: 0 }} />
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)" }}>
-              {order.customerName}
-            </span>
-            <span style={{
-              fontSize: "0.68rem", fontWeight: 700, fontFamily: F, padding: "2px 8px",
-              borderRadius: 999, background: statusColor + "22", color: statusColor,
-            }}>
-              {STATUS_LABEL[order.status]}
-            </span>
-            <span style={{
-              fontSize: "0.68rem", fontFamily: FB, padding: "2px 8px", borderRadius: 999,
-              background: "var(--adm-hover)", color: "var(--adm-text2)",
-            }}>
-              {order.orderType === "PICKUP" ? "🏠 Retiro" : "🛵 Delivery"}
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>{relativeTime(order.createdAt)}</span>
-            <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)" }}>{fmt(order.total)}</span>
-            <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>
-              {items.length} producto{items.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-        {open ? <ChevronUp size={16} color="var(--adm-text3)" /> : <ChevronDown size={16} color="var(--adm-text3)" />}
-      </button>
-
-      {/* Actions (always visible for active orders) */}
-      {actions.length > 0 && (
-        <div style={{ padding: "0 16px 14px", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {actions.map(action => (
-            <button
-              key={action.status}
-              type="button"
-              disabled={busy}
-              onClick={(e) => { e.stopPropagation(); handleAction(action.status); }}
-              style={{
-                padding: "7px 16px", borderRadius: 8,
-                border: action.status === "CANCELLED" ? `1.5px solid ${action.color}44` : "none",
-                cursor: busy ? "not-allowed" : "pointer",
-                background: action.color + (action.status === "CANCELLED" ? "18" : ""),
-                color: action.status === "CANCELLED" ? action.color : "#fff",
-                fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
-                opacity: busy ? 0.6 : 1,
-                transition: "all 0.15s",
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Expanded detail */}
-      {open && (
-        <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Customer info */}
-          <div style={{ paddingTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
-            <div>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Teléfono</p>
-              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>
-                <a href={`tel:${order.customerPhone}`} style={{ color: "inherit", textDecoration: "none" }}>{order.customerPhone}</a>
-              </p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)" }}>
+                {order.customerName}
+              </span>
+              <span style={{
+                fontSize: "0.68rem", fontWeight: 700, fontFamily: F, padding: "2px 8px",
+                borderRadius: 999, background: statusColor + "22", color: statusColor,
+              }}>
+                {STATUS_LABEL[order.status]}
+              </span>
+              {isNew && (
+                <span style={{
+                  fontSize: "0.65rem", fontWeight: 800, fontFamily: F, padding: "2px 8px",
+                  borderRadius: 999, background: GREEN + "22", color: GREEN, letterSpacing: ".04em",
+                }}>
+                  ¡NUEVO!
+                </span>
+              )}
+              <span style={{
+                fontSize: "0.68rem", fontFamily: FB, padding: "2px 8px", borderRadius: 999,
+                background: "var(--adm-hover)", color: "var(--adm-text2)",
+              }}>
+                {order.orderType === "PICKUP" ? "🏠 Retiro" : "🛵 Delivery"}
+              </span>
             </div>
-            {order.customerEmail && (
+            <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>{relativeTime(order.createdAt)}</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)" }}>{fmt(order.total)}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>
+                {items.length} producto{items.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+          {open ? <ChevronUp size={16} color="var(--adm-text3)" /> : <ChevronDown size={16} color="var(--adm-text3)" />}
+        </button>
+
+        {/* Actions (always visible for active orders) */}
+        {actions.length > 0 && (
+          <div style={{ padding: "0 16px 14px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {actions.map(action => (
+              <button
+                key={action.status}
+                type="button"
+                disabled={busy}
+                onClick={(e) => { e.stopPropagation(); handleAction(action.status); }}
+                style={{
+                  padding: "7px 16px", borderRadius: 8,
+                  border: action.status === "CANCELLED" ? `1.5px solid ${action.color}44` : "none",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  background: action.status === "CANCELLED" ? action.color + "18" : action.color,
+                  color: action.status === "CANCELLED" ? action.color : "#fff",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
+                  opacity: busy ? 0.6 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Expanded detail */}
+        {open && (
+          <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Customer info */}
+            <div style={{ paddingTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
               <div>
-                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Email</p>
-                <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0, wordBreak: "break-all" }}>{order.customerEmail}</p>
+                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Teléfono</p>
+                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>
+                  <a href={`tel:${order.customerPhone}`} style={{ color: "inherit", textDecoration: "none" }}>{order.customerPhone}</a>
+                </p>
               </div>
-            )}
-            <div>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Pago</p>
-              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>
-                {{ efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" }[order.paymentMethod]}
-              </p>
-            </div>
-            {order.orderType === "DELIVERY" && order.deliveryAddress && (
-              <div style={{ gridColumn: "1 / -1" }}>
-                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Dirección</p>
-                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>{order.deliveryAddress}</p>
-              </div>
-            )}
-            <div>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Hora</p>
-              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0 }}>
-                {new Date(order.createdAt).toLocaleString("es-CL", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" })}
-              </p>
-            </div>
-          </div>
-
-          {/* Items */}
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 8px" }}>Productos</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {items.map((item, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "8px 10px", background: "var(--adm-hover)", borderRadius: 8 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>
-                      {item.quantity}× {item.dishName}
-                    </p>
-                    {item.selectedOptions && item.selectedOptions.length > 0 && (
-                      <p style={{ fontFamily: FB, fontSize: "0.73rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                        {item.selectedOptions.map(o => o.optionName).join(", ")}
-                      </p>
-                    )}
-                    {item.notes && (
-                      <p style={{ fontFamily: FB, fontSize: "0.73rem", color: "var(--adm-text3)", margin: "2px 0 0", fontStyle: "italic" }}>
-                        Nota: {item.notes}
-                      </p>
-                    )}
-                  </div>
-                  <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", flexShrink: 0 }}>
-                    {fmt(item.unitTotal * item.quantity)}
-                  </span>
+              {order.customerEmail && (
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Email</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0, wordBreak: "break-all" }}>{order.customerEmail}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Total + notes */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12 }}>
-            {order.notes ? (
+              )}
               <div>
-                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Notas</p>
-                <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>{order.notes}</p>
+                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Pago</p>
+                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>
+                  {{ efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" }[order.paymentMethod]}
+                </p>
               </div>
-            ) : <div />}
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Total</p>
-              <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: GOLD, margin: 0 }}>{fmt(order.total)}</p>
+              {order.orderType === "DELIVERY" && order.deliveryAddress && (
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Dirección</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>{order.deliveryAddress}</p>
+                </div>
+              )}
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Hora</p>
+                <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0 }}>
+                  {new Date(order.createdAt).toLocaleString("es-CL", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" })}
+                </p>
+              </div>
+            </div>
+
+            {/* Items */}
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 8px" }}>Productos</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {items.map((item, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "8px 10px", background: "var(--adm-hover)", borderRadius: 8 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>
+                        {item.quantity}× {item.dishName}
+                      </p>
+                      {item.selectedOptions && item.selectedOptions.length > 0 && (
+                        <p style={{ fontFamily: FB, fontSize: "0.73rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                          {item.selectedOptions.map(o => o.optionName).join(", ")}
+                        </p>
+                      )}
+                      {item.notes && (
+                        <p style={{ fontFamily: FB, fontSize: "0.73rem", color: "var(--adm-text3)", margin: "2px 0 0", fontStyle: "italic" }}>
+                          Nota: {item.notes}
+                        </p>
+                      )}
+                    </div>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", flexShrink: 0 }}>
+                      {fmt(item.unitTotal * item.quantity)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Total + notes */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12 }}>
+              {order.notes ? (
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Notas</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>{order.notes}</p>
+                </div>
+              ) : <div />}
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 2px" }}>Total</p>
+                <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: GOLD, margin: 0 }}>{fmt(order.total)}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -279,16 +314,53 @@ export default function PedidosPage() {
   const { selectedRestaurantId } = useAdminSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<TabId>("active");
-  const [newAlert, setNewAlert] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const prevPendingCountRef = useRef<number | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const playNotification = useCallback(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJiVkHBRUGmim5J2VVVwpaCYgGJhfLCpoI2Agoy1rqePgoWPvranmZCRlcO8s6yjmaKqy8Owp6CkqtLKv7Cwt7/a0ca8yszS3NbOxsvP2OHb08jL0trl4NfN0NXg6uXc0tLX4evn3tXU2+Pt6+Pc2d/l7+3k3d3i6O/u5uDf5Ovx7+ji4+bp7/Hv6OXm6u3w8O3p6Ors7fDy8Ovp6u3u8PLx7erq7O3v8fHu6+vs7u/x8O3r7O3u8PDv7Ozs7e7v8O/t7Ozs7e7w7+3t7e3u7+/u7e3t7e7u7+7t7e3t7u7v7u3t7e3u7u7u7e3t7e3u7u7t7e3t7e3u7e7t7e3t7e3t7e3t7e3t7e3t7e0=");
-    }
-    audioRef.current.play().catch(() => {});
+    try {
+      const ctx = new AudioContext();
+      // Bell tone: layered harmonics with exponential decay
+      [[880, 0.5], [1320, 0.25], [1760, 0.15], [2200, 0.08]].forEach(([freq, amp]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(amp, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 1.8);
+      });
+      // Second chime after 0.4s
+      setTimeout(() => {
+        [[1100, 0.4], [1650, 0.2]].forEach(([freq, amp]) => {
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.type = "sine";
+          osc2.frequency.setValueAtTime(freq, ctx.currentTime);
+          gain2.gain.setValueAtTime(amp, ctx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.4);
+          osc2.start(ctx.currentTime);
+          osc2.stop(ctx.currentTime + 1.4);
+        });
+      }, 400);
+    } catch {}
+  }, []);
+
+  const markOrderAsNew = useCallback((orderId: string) => {
+    setNewOrderIds(prev => new Set(prev).add(orderId));
+    setTimeout(() => {
+      setNewOrderIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }, 6000);
   }, []);
 
   const fetchOrders = useCallback(async (isPolling = false) => {
@@ -297,24 +369,25 @@ export default function PedidosPage() {
       const res = await fetch(`/api/panel/orders?restaurantId=${selectedRestaurantId}`);
       const data = await res.json();
       const fetched: Order[] = data.orders || [];
-      setOrders(fetched);
 
-      // Polling-based new order detection
       if (isPolling) {
-        const newPendingCount = fetched.filter(o => o.status === "PENDING").length;
-        const prev = prevPendingCountRef.current;
-        if (prev !== null && newPendingCount > prev) {
-          setNewAlert(true);
-          playNotification();
-          setTab("active");
-        }
-        prevPendingCountRef.current = newPendingCount;
+        // Detect new PENDING orders that weren't there before
+        setOrders(prev => {
+          const prevIds = new Set(prev.map(o => o.id));
+          const newPendings = fetched.filter(o => o.status === "PENDING" && !prevIds.has(o.id));
+          if (newPendings.length > 0) {
+            playNotification();
+            setTab("active");
+            newPendings.forEach(o => markOrderAsNew(o.id));
+          }
+          return fetched;
+        });
       } else {
-        // On initial load, just record baseline
+        setOrders(fetched);
         prevPendingCountRef.current = fetched.filter(o => o.status === "PENDING").length;
       }
     } catch {}
-  }, [selectedRestaurantId, playNotification]);
+  }, [selectedRestaurantId, playNotification, markOrderAsNew]);
 
   // Initial fetch + polling fallback every 10s
   useEffect(() => {
@@ -345,9 +418,9 @@ export default function PedidosPage() {
             const newOrder = payload.new as Order;
             setOrders(prev => [newOrder, ...prev]);
             if (newOrder.status === "PENDING") {
-              setNewAlert(true);
               playNotification();
               setTab("active");
+              markOrderAsNew(newOrder.id);
             }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Order;
@@ -358,7 +431,7 @@ export default function PedidosPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [selectedRestaurantId, playNotification]);
+  }, [selectedRestaurantId, playNotification, markOrderAsNew]);
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
     const res = await fetch("/api/panel/orders", {
@@ -381,26 +454,19 @@ export default function PedidosPage() {
   return (
     <div style={{ maxWidth: 680 }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <ClipboardList size={20} color={GOLD} />
-          <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-            Pedidos en vivo
-          </h2>
-          {pendingCount > 0 && (
-            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: ORANGE, color: "#fff", fontFamily: F, fontSize: "0.72rem", fontWeight: 800 }}>
-              {pendingCount}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => { setNewAlert(false); fetchOrders(false); }}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: "1.5px solid var(--adm-card-border)", background: newAlert ? ORANGE + "18" : "var(--adm-card)", color: newAlert ? ORANGE : "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
-        >
-          {newAlert ? <Bell size={14} /> : <RefreshCw size={14} />}
-          {newAlert ? "Nuevo pedido" : "Actualizar"}
-        </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <ClipboardList size={20} color={GOLD} />
+        <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
+          Pedidos en vivo
+        </h2>
+        {pendingCount > 0 && (
+          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: ORANGE, color: "#fff", fontFamily: F, fontSize: "0.72rem", fontWeight: 800 }}>
+            {pendingCount}
+          </span>
+        )}
+        <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+          ⚡ En vivo
+        </span>
       </div>
 
       {/* Stats hoy */}
@@ -428,7 +494,7 @@ export default function PedidosPage() {
             <button
               key={t.id}
               type="button"
-              onClick={() => { setTab(t.id); if (t.id === "active") setNewAlert(false); }}
+              onClick={() => setTab(t.id)}
               style={{
                 padding: "9px 14px", border: "none", borderBottom: `2px solid ${active ? GOLD : "transparent"}`,
                 background: "none", color: active ? GOLD : "var(--adm-text2)",
@@ -464,7 +530,12 @@ export default function PedidosPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {tabOrders.map(order => (
-            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              isNew={newOrderIds.has(order.id)}
+              onStatusChange={handleStatusChange}
+            />
           ))}
         </div>
       )}
