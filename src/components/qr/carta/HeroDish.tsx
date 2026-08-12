@@ -227,6 +227,10 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   fontWeight: 900,
                   lineHeight: 1.1,
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
               >
                 {dish.name}

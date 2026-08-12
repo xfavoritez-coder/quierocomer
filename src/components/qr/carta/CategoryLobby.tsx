@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import type { Category, Dish } from "@prisma/client";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface Props {
   categories: Category[];
@@ -16,6 +18,7 @@ interface Props {
 export default function CategoryLobby({ categories, dishes, restaurantName, logoUrl, accentColor, onSelectCategory, onSkip }: Props) {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const accent = accentColor || "#F4A623";
+  const lang = useLang();
 
   const [isDark, setIsDark] = useState(true);
   useEffect(() => {
@@ -93,7 +96,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                 margin: 0, fontWeight: 500, letterSpacing: "0.8px",
                 textTransform: "uppercase",
               }}>
-                Nuestra carta
+                {t(lang, "ourMenu" as any)}
               </p>
             </div>
           </div>

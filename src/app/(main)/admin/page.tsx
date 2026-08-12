@@ -12,11 +12,6 @@ const PERIODS = [
   { key: "custom", label: "Rango" },
 ] as const;
 
-interface LangUsageRow {
-  name: string; total: number; es: number; en: number; pt: number;
-  enPct: number; ptPct: number; foreignPct: number;
-}
-
 interface DashData {
   period: string; from: string; to: string;
   totalSessions: number; uniqueGuests: number; registeredGuests: number;
@@ -29,7 +24,6 @@ interface DashData {
   genio: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
   restaurantRanking: { name: string; uniqueGuests: number }[];
   birthdaysByRestaurant: { name: string; count: number }[];
-  langUsageByRestaurant?: LangUsageRow[];
 }
 
 interface BillingRow {
@@ -351,52 +345,6 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
-
-      {/* ── Idiomas de la carta ── */}
-      {data.langUsageByRestaurant && data.langUsageByRestaurant.length > 0 && (() => {
-        const rows = data.langUsageByRestaurant!;
-        const totalSessions = rows.reduce((s, r) => s + r.total, 0);
-        const totalEn = rows.reduce((s, r) => s + r.en, 0);
-        const totalPt = rows.reduce((s, r) => s + r.pt, 0);
-        const totalForeignPct = totalSessions > 0 ? Math.round(((totalEn + totalPt) / totalSessions) * 100) : 0;
-        return (
-          <div style={{ ...card, marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-              <h3 style={{ ...sectionTitle, margin: 0 }}>Idiomas de la carta</h3>
-              <div style={{ display: "flex", gap: 14 }}>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                  🇺🇸 EN total: <strong style={{ color: "#3b82f6" }}>{totalEn}</strong>
-                </span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                  🇧🇷 PT total: <strong style={{ color: "#16a34a" }}>{totalPt}</strong>
-                </span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                  Extranjero: <strong style={{ color: GOLD }}>{totalForeignPct}%</strong>
-                </span>
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {rows.map((r, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto", gap: "6px 12px", alignItems: "center" }}>
-                  <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.name}>{r.name}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "right", whiteSpace: "nowrap" }}>
-                    🇪🇸 {r.es}
-                  </span>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: r.en > 0 ? "#3b82f6" : "var(--adm-text3)", textAlign: "right", whiteSpace: "nowrap", fontWeight: r.en > 0 ? 700 : 400 }}>
-                    🇺🇸 {r.en} <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>({r.enPct}%)</span>
-                  </span>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: r.pt > 0 ? "#16a34a" : "var(--adm-text3)", textAlign: "right", whiteSpace: "nowrap", fontWeight: r.pt > 0 ? 700 : 400 }}>
-                    🇧🇷 {r.pt} <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>({r.ptPct}%)</span>
-                  </span>
-                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: r.foreignPct > 0 ? GOLD : "var(--adm-text3)", textAlign: "right", whiteSpace: "nowrap", fontWeight: 600 }}>
-                    {r.foreignPct}% ext.
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── Billing ── */}
       {isSuper && billing && <BillingSection data={billing} />}

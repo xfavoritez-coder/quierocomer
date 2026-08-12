@@ -296,7 +296,7 @@ export default function CartaRouter(props: Props) {
               const scrollToCategory = () => {
                 const el = document.querySelector(`[id$="-cat-${catId}"]`);
                 if (el) {
-                  const y = el.getBoundingClientRect().top + window.scrollY - 20;
+                  const y = el.getBoundingClientRect().top + window.scrollY - 70;
                   window.scrollTo({ top: y, behavior: "smooth" });
                   return true;
                 }

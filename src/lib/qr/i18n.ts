@@ -20,6 +20,7 @@ export const LANG_FLAGS: Record<Lang, string> = {
 
 const dict = {
   es: {
+    ourMenu: "Nuestra carta",
     heroView: "Ver",
     search: "Buscar plato...",
     recommended: "Recomendado",
@@ -122,6 +123,7 @@ const dict = {
     gGlutenFreeDishesForYou: "{n} opciones sin gluten para ti 🌾", gGlutenFreeSubtitle: "Platos libres de gluten en esta carta", gMyGlutenFreeOptions: "Mis platos sin gluten ↑",
   },
   en: {
+    ourMenu: "Our menu",
     heroView: "View",
     search: "Search dish...",
     recommended: "Recommended",
@@ -224,6 +226,7 @@ const dict = {
     gGlutenFreeDishesForYou: "{n} gluten-free options for you 🌾", gGlutenFreeSubtitle: "Gluten-free dishes on this menu", gMyGlutenFreeOptions: "My gluten-free dishes ↑",
   },
   pt: {
+    ourMenu: "Nosso cardápio",
     heroView: "Ver",
     search: "Buscar prato...",
     recommended: "Recomendado",
@@ -326,6 +329,7 @@ const dict = {
     gGlutenFreeDishesForYou: "{n} opções sem glúten para você 🌾", gGlutenFreeSubtitle: "Pratos sem glúten neste cardápio", gMyGlutenFreeOptions: "Meus pratos sem glúten ↑",
   },
   it: {
+    ourMenu: "Il nostro menu",
     heroView: "Vedi",
     search: "Cerca piatto...",
     recommended: "Consigliato",
@@ -428,6 +432,7 @@ const dict = {
     gGlutenFreeDishesForYou: "{n} opzioni senza glutine per te 🌾", gGlutenFreeSubtitle: "Piatti senza glutine in questo menù", gMyGlutenFreeOptions: "I miei piatti senza glutine ↑",
   },
   th: {
+    ourMenu: "เมนูของเรา",
     heroView: "ดู",
     search: "ค้นหาเมนู...",
     recommended: "แนะนำ",
