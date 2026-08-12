@@ -485,7 +485,7 @@ function fmt12(hhmm: string) {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function ClosedBanner({ businessHours }: { businessHours?: Record<string, BHDay> | null }) {
+function ClosedBanner({ businessHours, inline }: { businessHours?: Record<string, BHDay> | null; inline?: boolean }) {
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -493,7 +493,7 @@ function ClosedBanner({ businessHours }: { businessHours?: Record<string, BHDay>
       <div
         onClick={() => setShowModal(true)}
         style={{
-          position: "sticky", top: 0, zIndex: 100,
+          position: inline ? "relative" : "sticky", top: 0, zIndex: inline ? undefined : 100,
           background: "#1a1a1a", color: "#fff",
           padding: "10px 16px",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -573,12 +573,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
-  // Client-side isClosed check runs on mount (handles SSR cache edge cases)
-  const [isClosedClient, setIsClosedClient] = useState(isClosedProp);
-  useEffect(() => {
-    if (businessHours) setIsClosedClient(checkIsClosedNow(businessHours));
-  }, [businessHours]);
-  const isClosed = isClosedClient;
+  const isClosed = isClosedProp;
   const popularSet = useMemo(() => new Set(popularDishIds || []), [popularDishIds]);
   const toggleFilter = (k: FilterKey) => setActiveFilters(f => f.includes(k) ? f.filter(x => x !== k) : [...f, k]);
 
@@ -778,6 +773,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
               </div>
             </div>
           </header>
+          {isClosed && <ClosedBanner businessHours={businessHours} inline />}
         </div>
 
         <div style={{ height: impactHeaderH }} />
