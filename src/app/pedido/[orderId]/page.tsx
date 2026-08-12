@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { use } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -9,6 +9,11 @@ interface OrderItem {
   unitTotal: number;
   selectedOptions?: { optionName: string }[];
   notes?: string;
+}
+
+interface StatusEntry {
+  status: string;
+  ts: string;
 }
 
 interface OrderData {
@@ -23,6 +28,7 @@ interface OrderData {
   deliveryAddress: string | null;
   paymentMethod: string;
   status: string;
+  statusHistory: StatusEntry[];
   notes: string | null;
   cancellationReason: string | null;
   estimatedTime: string | null;
@@ -57,6 +63,15 @@ const STATUS_STEP: Record<string, number> = {
   CANCELLED: -1,
 };
 
+// Which statuses correspond to each step index
+const STEP_STATUSES: string[][] = [
+  ["PENDING"],
+  ["ACCEPTED"],
+  ["PREPARING"],
+  ["IN_DELIVERY", "READY"],
+  ["DONE"],
+];
+
 function getSteps(orderType: "PICKUP" | "DELIVERY") {
   return [
     { icon: "📋", label: "Recibido" },
@@ -64,7 +79,7 @@ function getSteps(orderType: "PICKUP" | "DELIVERY") {
     { icon: "👨‍🍳", label: "Preparando" },
     orderType === "DELIVERY"
       ? { icon: "🛵", label: "En reparto" }
-      : { icon: "🏁", label: "Listo para retirar" },
+      : { icon: "🏁", label: "Listo" },
     { icon: "🎉", label: "Entregado" },
   ];
 }
@@ -73,7 +88,29 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 }
 
-function Stepper({ status, orderType, createdAt, updatedAt }: { status: string; orderType: "PICKUP" | "DELIVERY"; createdAt: string; updatedAt: string }) {
+function getStepTime(stepIndex: number, statusHistory: StatusEntry[], createdAt: string): string | null {
+  // Step 0 always uses createdAt (PENDING is set at creation)
+  if (stepIndex === 0) return fmtTime(createdAt);
+
+  const statuses = STEP_STATUSES[stepIndex];
+  if (!statuses) return null;
+
+  // Find the first history entry matching any status for this step
+  const entry = statusHistory.find(e => statuses.includes(e.status));
+  return entry ? fmtTime(entry.ts) : null;
+}
+
+function Stepper({
+  status,
+  orderType,
+  statusHistory,
+  createdAt,
+}: {
+  status: string;
+  orderType: "PICKUP" | "DELIVERY";
+  statusHistory: StatusEntry[];
+  createdAt: string;
+}) {
   const steps = getSteps(orderType);
   const currentStep = STATUS_STEP[status] ?? 0;
 
@@ -83,7 +120,7 @@ function Stepper({ status, orderType, createdAt, updatedAt }: { status: string; 
         const done = i < currentStep;
         const active = i === currentStep;
         const color = done ? GREEN : active ? ACCENT : GRAY;
-        const timeLabel = i === 0 ? fmtTime(createdAt) : (active || done) && i === currentStep ? fmtTime(updatedAt) : null;
+        const timeLabel = (done || active) ? getStepTime(i, statusHistory, createdAt) : null;
 
         return (
           <div key={i} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
@@ -129,13 +166,35 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   const { orderId } = use(params);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState(false);
+  const orderRef = useRef<OrderData | null>(null);
+
+  async function fetchOrder() {
+    try {
+      const r = await fetch(`/api/pedido/${orderId}`);
+      if (!r.ok) { setError(true); return; }
+      const data: OrderData = await r.json();
+      orderRef.current = data;
+      setOrder(data);
+    } catch {
+      setError(true);
+    }
+  }
 
   // Initial fetch
   useEffect(() => {
-    fetch(`/api/pedido/${orderId}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then((data: OrderData) => setOrder(data))
-      .catch(() => setError(true));
+    fetchOrder();
+  }, [orderId]);
+
+  // Polling fallback every 12 seconds — in case realtime misses events
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only poll while order is active (not done/cancelled)
+      const cur = orderRef.current;
+      if (cur && cur.status !== "DONE" && cur.status !== "CANCELLED") {
+        fetchOrder();
+      }
+    }, 12000);
+    return () => clearInterval(interval);
   }, [orderId]);
 
   // Supabase Realtime — escucha cambios en este pedido específico
@@ -148,7 +207,19 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
         table: "OnlineOrder",
         filter: `id=eq.${orderId}`,
       }, (payload) => {
-        setOrder(prev => prev ? { ...prev, status: (payload.new as any).status } : prev);
+        const p = payload.new as any;
+        setOrder(prev => {
+          if (!prev) return prev;
+          const updated = {
+            ...prev,
+            status: p.status ?? prev.status,
+            updatedAt: p.updatedAt ?? prev.updatedAt,
+            statusHistory: Array.isArray(p.statusHistory) ? p.statusHistory : prev.statusHistory,
+            cancellationReason: p.cancellationReason ?? prev.cancellationReason,
+          };
+          orderRef.current = updated;
+          return updated;
+        });
       })
       .subscribe();
 
@@ -272,7 +343,12 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
         {/* Stepper */}
         <div style={{ ...cardStyle, padding: "20px 12px" }}>
-          <Stepper status={order.status} orderType={order.orderType} createdAt={order.createdAt} updatedAt={order.updatedAt} />
+          <Stepper
+            status={order.status}
+            orderType={order.orderType}
+            statusHistory={order.statusHistory}
+            createdAt={order.createdAt}
+          />
         </div>
 
         {/* Order summary card */}
@@ -352,11 +428,6 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             </div>
           )}
         </div>
-
-        {/* Realtime indicator */}
-        <p style={{ fontSize: 12, color: "#bbb", textAlign: "center", margin: 0 }}>
-          ⚡ En vivo
-        </p>
       </div>
     </div>
   );

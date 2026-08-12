@@ -21,6 +21,7 @@ export async function GET(
       notes: true,
       cancellationReason: true,
       status: true,
+      statusHistory: true,
       createdAt: true,
       updatedAt: true,
       restaurant: {
@@ -48,6 +49,7 @@ export async function GET(
     deliveryAddress: order.deliveryAddress ?? null,
     paymentMethod: order.paymentMethod,
     status: order.status,
+    statusHistory: Array.isArray(order.statusHistory) ? order.statusHistory : [],
     notes: order.notes ?? null,
     cancellationReason: order.cancellationReason ?? null,
     estimatedTime: order.restaurant.orderingWaitTime ?? null,

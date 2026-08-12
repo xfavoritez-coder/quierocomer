@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
         total: Math.round(total),
         notes: notes?.trim() || null,
         status: "PENDING",
+        statusHistory: [{ status: "PENDING", ts: new Date().toISOString() }],
       },
     });
 

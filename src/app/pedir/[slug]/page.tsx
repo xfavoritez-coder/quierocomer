@@ -51,6 +51,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         defaultView: true, cartaColorMode: true, cartaAccentColor: true,
         billingExempt: true, isDemo: true,
         subscriptionStatus: true, currentPeriodEnd: true, trialEndsAt: true,
+        orderingBusinessHours: true,
       },
     }),
   ]);
@@ -138,6 +139,24 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     orderingMode: (config as any).orderingMode || "whatsapp",
   };
 
+  // ── Business hours check ──────────────────────────────────────────────────
+  const rawBH = (config as any).orderingBusinessHours ?? null;
+  let isClosed = false;
+  let closedBusinessHours: Record<string, { open: boolean; from: string; to: string }> | null = null;
+  if (rawBH && typeof rawBH === "object") {
+    closedBusinessHours = rawBH as any;
+    const day = String(chileNow.getDay()); // 0=Dom…6=Sab
+    const dayConfig = (rawBH as any)[day];
+    if (!dayConfig || !dayConfig.open) {
+      isClosed = true;
+    } else {
+      const hhmm = `${String(chileNow.getHours()).padStart(2, "0")}:${String(chileNow.getMinutes()).padStart(2, "0")}`;
+      const from: string = dayConfig.from || "00:00";
+      const to: string = dayConfig.to || "23:59";
+      isClosed = to === "00:00" ? hhmm < from : hhmm < from || hhmm > to;
+    }
+  }
+
   return (
     <>
       <PageHitTracker restaurantId={config.id} page="pedir" />
@@ -147,6 +166,8 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
           restaurant={scheduledRestaurant as any}
           orderingConfig={orderingConfig}
           popularDishIds={topDishes.dishIds}
+          isClosed={isClosed}
+          businessHours={closedBusinessHours}
         />
       </OrderCartProvider>
     </>

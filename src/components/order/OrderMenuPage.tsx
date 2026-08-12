@@ -51,7 +51,14 @@ interface OrderingConfig {
   cartaAccentColor?: string | null;
   orderingMode?: string;
 }
-interface Props { restaurant: Restaurant; orderingConfig: OrderingConfig; popularDishIds?: string[]; }
+type BHDay = { open: boolean; from: string; to: string };
+interface Props {
+  restaurant: Restaurant;
+  orderingConfig: OrderingConfig;
+  popularDishIds?: string[];
+  isClosed?: boolean;
+  businessHours?: Record<string, BHDay> | null;
+}
 
 // ── Impact Hero (replica de ImpactHeroSlider) ─────────────────────────────────
 function ImpactHero({
@@ -465,7 +472,81 @@ const FILTER_OPTS: { key: FilterKey; emoji: string; label: string }[] = [
   { key: "gluten-free", emoji: "🌾", label: "Sin gluten" },
 ];
 
-export default function OrderMenuPage({ restaurant, orderingConfig, popularDishIds }: Props) {
+const BH_DAY_LABELS: Record<string, string> = {
+  "1": "Lunes", "2": "Martes", "3": "Miércoles", "4": "Jueves",
+  "5": "Viernes", "6": "Sábado", "0": "Domingo",
+};
+const BH_ORDER = ["1", "2", "3", "4", "5", "6", "0"];
+
+function fmt12(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const period = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function ClosedBanner({ businessHours }: { businessHours?: Record<string, BHDay> | null }) {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <div
+        onClick={() => setShowModal(true)}
+        style={{
+          position: "sticky", top: 0, zIndex: 100,
+          background: "#1a1a1a", color: "#fff",
+          padding: "10px 16px",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          cursor: "pointer", userSelect: "none",
+        }}
+      >
+        <span style={{ fontSize: 14 }}>🔒</span>
+        <span style={{ fontFamily: FB, fontSize: "0.82rem", fontWeight: 600 }}>
+          Este local está cerrado ahora
+        </span>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "#F4A623", textDecoration: "underline", flexShrink: 0 }}>
+          Ver horarios →
+        </span>
+      </div>
+
+      {showModal && (
+        <div
+          onClick={() => setShowModal(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "24px 20px 32px" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <h3 style={{ fontFamily: FB, fontSize: "1rem", fontWeight: 700, color: "#111", margin: 0 }}>🕐 Horarios de atención</h3>
+              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#999", lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {BH_ORDER.map(key => {
+                const day = businessHours?.[key];
+                return (
+                  <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontFamily: FB, fontSize: "0.88rem", color: "#333", fontWeight: 500 }}>{BH_DAY_LABELS[key]}</span>
+                    {day?.open ? (
+                      <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#111", fontWeight: 600 }}>
+                        {fmt12(day.from)} – {day.to === "00:00" ? "Medianoche" : fmt12(day.to)}
+                      </span>
+                    ) : (
+                      <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "#e11d48", fontWeight: 500 }}>Cerrado</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function OrderMenuPage({ restaurant, orderingConfig, popularDishIds, isClosed = false, businessHours }: Props) {
   const { items, count, addItem } = useCart();
   const [selectedDish, setSelectedDish] = useState<DishForOrder | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -751,7 +832,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         </div>
 
         {/* Cart bar */}
-        {count > 0 && (
+        {count > 0 && !isClosed && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: isDark ? "rgba(3,3,3,0.8)" : "rgba(250,250,248,0.9)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
             <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, ${isDark ? "rgba(3,3,3,0.75)" : "rgba(250,250,248,0.85)"})`, color: "var(--carta-btn-text, #fff)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -774,6 +855,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   return (
     <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
       <style>{`@keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
+
+      {/* Banner de cerrado */}
+      {isClosed && <ClosedBanner businessHours={businessHours} />}
 
       {/* Hero con fotos de platos */}
       <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
@@ -854,7 +938,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       <div style={{ height: 120 }} />
 
       {/* Cart bar */}
-      {count > 0 && (
+      {count > 0 && !isClosed && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 80, padding: "10px 16px", paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))", background: "var(--carta-bg)", borderTop: "1px solid var(--carta-border)" }}>
           <button onClick={() => setCartOpen(true)} style={{ width: "100%", padding: "13px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 16%, ${isDark ? "rgba(10,10,10,0.82)" : "rgba(250,250,248,0.92)"})`, color: "var(--carta-btn-text, #fff)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 520, margin: "0 auto", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 48%, transparent)`, fontFamily: FB }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

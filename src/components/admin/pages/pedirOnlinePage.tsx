@@ -145,6 +145,19 @@ function PhoneCountrySelector({ country, onChange }: { country: CountryCode; onC
   );
 }
 
+type DayHours = { open: boolean; from: string; to: string };
+type BusinessHours = Record<string, DayHours>; // keys "0"-"6" (0=Dom)
+
+const BH_DAYS = [
+  { key: "1", label: "Lunes" },
+  { key: "2", label: "Martes" },
+  { key: "3", label: "Miércoles" },
+  { key: "4", label: "Jueves" },
+  { key: "5", label: "Viernes" },
+  { key: "6", label: "Sábado" },
+  { key: "0", label: "Domingo" },
+];
+
 interface OrderingData {
   id: string;
   slug: string;
@@ -157,6 +170,7 @@ interface OrderingData {
   orderingWaitTime: string | null;
   orderingNote: string | null;
   orderingPaymentMethods: string;
+  orderingBusinessHours?: BusinessHours | null;
   whatsapp: string | null;
   owner?: { whatsapp?: string | null } | null;
 }
@@ -200,6 +214,8 @@ export default function PedirOnlinePage() {
   const [waitTime, setWaitTime] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["efectivo", "transferencia", "tarjeta"]);
+  const [businessHours, setBusinessHours] = useState<BusinessHours>({});
+  const [savingHours, setSavingHours] = useState(false);
 
   useEffect(() => {
     if (!rid) return;
@@ -225,6 +241,14 @@ export default function PedirOnlinePage() {
         setWaitTime(d.orderingWaitTime || "");
         setNote(d.orderingNote || "");
         setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
+        // Business hours
+        const bh: BusinessHours = {};
+        const raw = d.orderingBusinessHours || {};
+        BH_DAYS.forEach(({ key }) => {
+          const v = (raw as any)[key];
+          bh[key] = v ? { open: !!v.open, from: v.from || "09:00", to: v.to || "22:00" } : { open: false, from: "09:00", to: "22:00" };
+        });
+        setBusinessHours(bh);
       })
       .catch(() => toast.error(t("ordering_error_load")))
       .finally(() => setLoading(false));
@@ -304,6 +328,24 @@ export default function PedirOnlinePage() {
       }
     } catch { toast.error(t("ordering_error_connection")); }
     setSaving(false);
+  };
+
+  const saveBusinessHours = async () => {
+    if (!rid) return;
+    setSavingHours(true);
+    try {
+      // Only include days that are open; closed days stored as { open: false }
+      const payload: BusinessHours = {};
+      BH_DAYS.forEach(({ key }) => { payload[key] = businessHours[key] || { open: false, from: "09:00", to: "22:00" }; });
+      const res = await fetch(`/api/admin/locales/${rid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderingBusinessHours: payload }),
+      });
+      if (res.ok) toast.success("Horarios guardados");
+      else toast.error("Error al guardar horarios");
+    } catch { toast.error("Error de conexión"); }
+    setSavingHours(false);
   };
 
   const orderUrl = data ? `${typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com"}/pedir/${data.slug}` : "";
@@ -569,6 +611,75 @@ export default function PedirOnlinePage() {
           style={{ width: "100%", padding: 11, background: GOLD, color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}
         >
           {saving ? t("ordering_saving") : t("ordering_save")}
+        </button>
+      </div>
+      {/* ── Horarios de atención ── */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px 18px", marginTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <Clock size={16} color={GOLD} />
+          <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Horarios de atención</h3>
+        </div>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
+          Si configuras horarios, los pedidos solo se recibirán en esos rangos. Fuera de horario el cliente verá que está cerrado.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {BH_DAYS.map(({ key, label }) => {
+            const day = businessHours[key] || { open: false, from: "09:00", to: "22:00" };
+            return (
+              <div key={key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* Toggle */}
+                <button
+                  onClick={() => setBusinessHours(prev => ({
+                    ...prev,
+                    [key]: { ...( prev[key] || { from: "09:00", to: "22:00" }), open: !day.open },
+                  }))}
+                  style={{
+                    width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0,
+                    background: day.open ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s",
+                  }}
+                >
+                  <span style={{
+                    display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff",
+                    position: "absolute", top: 3, left: day.open ? 17 : 3, transition: "left 0.2s",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                  }} />
+                </button>
+                {/* Day label */}
+                <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: day.open ? "var(--adm-text)" : "var(--adm-text3)", minWidth: 80, transition: "color 0.2s" }}>
+                  {label}
+                </span>
+                {/* Time inputs */}
+                {day.open ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+                    <input
+                      type="time"
+                      value={day.from}
+                      onChange={e => setBusinessHours(prev => ({ ...prev, [key]: { ...prev[key], from: e.target.value } }))}
+                      style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 10px", fontSize: "0.82rem" }}
+                    />
+                    <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", flexShrink: 0 }}>a</span>
+                    <input
+                      type="time"
+                      value={day.to}
+                      onChange={e => setBusinessHours(prev => ({ ...prev, [key]: { ...prev[key], to: e.target.value } }))}
+                      style={{ ...inputStyle, width: "auto", flex: 1, padding: "6px 10px", fontSize: "0.82rem" }}
+                    />
+                  </div>
+                ) : (
+                  <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", fontStyle: "italic" }}>Cerrado</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={saveBusinessHours}
+          disabled={savingHours}
+          style={{ width: "100%", marginTop: 16, padding: 11, background: GOLD, color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: savingHours ? "wait" : "pointer", opacity: savingHours ? 0.7 : 1 }}
+        >
+          {savingHours ? "Guardando…" : "Guardar horarios"}
         </button>
       </div>
     </div>

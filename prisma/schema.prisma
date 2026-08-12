@@ -342,6 +342,7 @@ model Restaurant {
   orderingTheme              String                   @default("light") // light | dark
   orderingAccentColor        String? // color de acento hex
   orderingMode               String                   @default("whatsapp") // "whatsapp" | "panel"
+  orderingBusinessHours      Json?                    // { "0": { open: bool, from: "HH:mm", to: "HH:mm" }, ..., "6": ... } (0=Dom)
   // Valoraciones
   reviewMode                 String                   @default("off") // "off" | "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
@@ -418,7 +419,8 @@ model OnlineOrder {
   cancellationReason String?
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
-  status String @default("PENDING")
+  status        String @default("PENDING")
+  statusHistory Json   @default("[]") // Array<{ status: string; ts: string }>
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -66,10 +66,16 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Se requiere el motivo de cancelación" }, { status: 422 });
   }
 
+  // Fetch current statusHistory to append new entry
+  const orderFull = await prisma.onlineOrder.findUnique({ where: { id: order.id }, select: { statusHistory: true } });
+  const history: { status: string; ts: string }[] = Array.isArray(orderFull?.statusHistory) ? (orderFull!.statusHistory as any) : [];
+  history.push({ status: body.status, ts: new Date().toISOString() });
+
   const updated = await prisma.onlineOrder.update({
     where: { id: order.id },
     data: {
       status: body.status,
+      statusHistory: history,
       ...(body.status === "CANCELLED" && cancellationReason ? { cancellationReason: cancellationReason.trim() } : {}),
     },
   });
