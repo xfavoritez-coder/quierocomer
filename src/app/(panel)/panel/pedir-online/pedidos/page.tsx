@@ -387,6 +387,26 @@ export default function PedidosPage() {
   const prevPendingCountRef = useRef<number | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
+  const [isStandalone, setIsStandalone] = useState(true); // assume standalone to avoid flash
+  const [platform, setPlatform] = useState<"ios" | "android" | "other">("other");
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [installTab, setInstallTab] = useState<"ios" | "android">("ios");
+  const deferredPromptRef = useRef<any>(null);
+
+  // Detect standalone mode and platform
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad|iPod/i.test(ua)) { setPlatform("ios"); setInstallTab("ios"); }
+    else if (/Android/i.test(ua)) { setPlatform("android"); setInstallTab("android"); }
+    // Capture Android install prompt
+    const handler = (e: Event) => { e.preventDefault(); deferredPromptRef.current = e; };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
 
   // Push subscription state check on mount
   useEffect(() => {
@@ -574,6 +594,7 @@ export default function PedidosPage() {
   const todayRevenue = todayOrders.filter(o => o.status !== "CANCELLED").reduce((s, o) => s + o.total, 0);
 
   return (
+    <>
     <div style={{ maxWidth: 680 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
@@ -586,24 +607,41 @@ export default function PedidosPage() {
             {pendingCount}
           </span>
         )}
-        {pushState !== "unsupported" && (
-          <button
-            type="button"
-            onClick={pushState === "active" ? unsubscribeFromPush : subscribeToPush}
-            title={pushState === "active" ? "Desactivar notificaciones" : pushState === "denied" ? "Notificaciones bloqueadas en el navegador" : "Activar notificaciones push"}
-            style={{
-              marginLeft: "auto",
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 8,
-              border: `1.5px solid ${pushState === "active" ? GREEN + "55" : "var(--adm-card-border)"}`,
-              background: pushState === "active" ? GREEN + "18" : "var(--adm-card)",
-              color: pushState === "active" ? GREEN : pushState === "denied" ? RED : "var(--adm-text2)",
-              fontFamily: F, fontSize: "0.73rem", fontWeight: 600, cursor: "pointer",
-            }}
-          >
-            {pushState === "active" ? "🔔 Notificaciones activas" : pushState === "denied" ? "🔕 Bloqueadas" : "🔔 Activar notificaciones"}
-          </button>
-        )}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          {!isStandalone && (
+            <button
+              type="button"
+              onClick={() => setShowInstallModal(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "6px 12px", borderRadius: 8,
+                border: "1.5px solid var(--adm-card-border)",
+                background: "var(--adm-card)",
+                color: "var(--adm-text2)",
+                fontFamily: F, fontSize: "0.73rem", fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              📲 Instalar app
+            </button>
+          )}
+          {pushState !== "unsupported" && (
+            <button
+              type="button"
+              onClick={pushState === "active" ? unsubscribeFromPush : subscribeToPush}
+              title={pushState === "active" ? "Desactivar notificaciones" : pushState === "denied" ? "Notificaciones bloqueadas en el navegador" : "Activar notificaciones push"}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "6px 12px", borderRadius: 8,
+                border: `1.5px solid ${pushState === "active" ? GREEN + "55" : "var(--adm-card-border)"}`,
+                background: pushState === "active" ? GREEN + "18" : "var(--adm-card)",
+                color: pushState === "active" ? GREEN : pushState === "denied" ? RED : "var(--adm-text2)",
+                fontFamily: F, fontSize: "0.73rem", fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              {pushState === "active" ? "🔔 Activas" : pushState === "denied" ? "🔕 Bloqueadas" : "🔔 Notificaciones"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats hoy */}
@@ -678,5 +716,124 @@ export default function PedidosPage() {
       )}
 
     </div>
+
+      {/* Install modal */}
+
+      {showInstallModal && (
+        <div
+          onClick={() => setShowInstallModal(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0 0 env(safe-area-inset-bottom)" }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: "var(--adm-bg, #1a1a1a)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 520, padding: "24px 24px 32px" }}
+          >
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--adm-card-border)", margin: "0 auto 20px" }} />
+
+            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
+              📲 Instalar como app
+            </h3>
+            <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 20px", lineHeight: 1.5 }}>
+              Agrega el panel a tu pantalla de inicio para acceder más rápido y recibir notificaciones aunque el teléfono esté bloqueado.
+            </p>
+
+            {/* Platform tabs */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+              {(["ios", "android"] as const).map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setInstallTab(p)}
+                  style={{
+                    flex: 1, padding: "8px 0", borderRadius: 8,
+                    border: `1.5px solid ${installTab === p ? GOLD + "88" : "var(--adm-card-border)"}`,
+                    background: installTab === p ? GOLD + "18" : "var(--adm-card)",
+                    color: installTab === p ? GOLD : "var(--adm-text2)",
+                    fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  {p === "ios" ? "🍎 iPhone / iPad" : "🤖 Android"}
+                </button>
+              ))}
+            </div>
+
+            {installTab === "ios" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {[
+                  { n: 1, icon: "🌐", text: "Abre esta página en Safari (no en Chrome ni otro navegador)" },
+                  { n: 2, icon: "⬆️", text: 'Toca el botón de compartir (el cuadrado con la flecha hacia arriba, en la barra inferior de Safari)' },
+                  { n: 3, icon: "➕", text: 'Desplázate hacia abajo en el menú y toca "Agregar a pantalla de inicio"' },
+                  { n: 4, icon: "✅", text: 'Toca "Agregar" en la esquina superior derecha. ¡Listo!' },
+                ].map(step => (
+                  <div key={step.n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: GOLD + "22", color: GOLD, fontFamily: F, fontSize: "0.75rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {step.n}
+                    </div>
+                    <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", margin: 0, lineHeight: 1.5 }}>
+                      {step.icon} {step.text}
+                    </p>
+                  </div>
+                ))}
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "4px 0 0", lineHeight: 1.4 }}>
+                  ⚠️ Requiere iOS 16.4 o superior para recibir notificaciones push.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {deferredPromptRef.current ? (
+                  <>
+                    <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", margin: 0, lineHeight: 1.5 }}>
+                      Tu dispositivo está listo para instalar la app directamente.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const prompt = deferredPromptRef.current;
+                        if (!prompt) return;
+                        prompt.prompt();
+                        await prompt.userChoice;
+                        deferredPromptRef.current = null;
+                        setShowInstallModal(false);
+                        setIsStandalone(true);
+                      }}
+                      style={{ padding: "12px 0", borderRadius: 10, border: "none", background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}
+                    >
+                      ➕ Instalar ahora
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {[
+                      { n: 1, icon: "🌐", text: "Abre esta página en Chrome" },
+                      { n: 2, icon: "⋮", text: 'Toca el menú de tres puntos (esquina superior derecha)' },
+                      { n: 3, icon: "➕", text: '"Agregar a pantalla de inicio" o "Instalar app"' },
+                      { n: 4, icon: "✅", text: 'Toca "Instalar". ¡Listo!' },
+                    ].map(step => (
+                      <div key={step.n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: GOLD + "22", color: GOLD, fontFamily: F, fontSize: "0.75rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {step.n}
+                        </div>
+                        <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", margin: 0, lineHeight: 1.5 }}>
+                          {step.icon} {step.text}
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowInstallModal(false)}
+              style={{ marginTop: 24, width: "100%", padding: "11px 0", borderRadius: 10, border: "1.5px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
