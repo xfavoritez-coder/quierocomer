@@ -746,6 +746,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   if (isImpact) {
     return (
       <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');`}</style>
         {/* Ambient bg */}
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} ${isDark ? "28%" : "18%"}, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} ${isDark ? "15%" : "10%"}, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
         <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: isDark ? 0.22 : 0.12, backgroundImage: `linear-gradient(rgba(${isDark ? "255,255,255" : "0,0,0"},0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(${isDark ? "255,255,255" : "0,0,0"},0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
@@ -883,7 +884,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   // ─── LISTA LAYOUT ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
-      <style>{`@keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800;900&display=swap'); @keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
 
       {/* Banner de cerrado */}
       {isClosed && <ClosedBanner businessHours={businessHours} isDark={isDark} accent={accent} />}
