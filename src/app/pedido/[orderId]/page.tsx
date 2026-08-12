@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { use } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface OrderItem {
   dishName: string;
@@ -115,36 +116,30 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   const { orderId } = use(params);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchOrder = async () => {
-    try {
-      const res = await fetch(`/api/pedido/${orderId}`);
-      if (!res.ok) {
-        setError(true);
-        return;
-      }
-      const data: OrderData = await res.json();
-      setOrder(data);
-      // Stop polling if terminal state
-      if (data.status === "DONE" || data.status === "CANCELLED") {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      }
-    } catch {
-      setError(true);
-    }
-  };
-
+  // Initial fetch
   useEffect(() => {
-    fetchOrder();
-    intervalRef.current = setInterval(fetchOrder, 6000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetch(`/api/pedido/${orderId}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: OrderData) => setOrder(data))
+      .catch(() => setError(true));
+  }, [orderId]);
+
+  // Supabase Realtime — escucha cambios en este pedido específico
+  useEffect(() => {
+    const channel = supabase
+      .channel(`pedido-${orderId}`)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "OnlineOrder",
+        filter: `id=eq.${orderId}`,
+      }, (payload) => {
+        setOrder(prev => prev ? { ...prev, status: (payload.new as any).status } : prev);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [orderId]);
 
   const cardStyle: React.CSSProperties = {
