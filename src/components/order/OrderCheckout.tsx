@@ -509,8 +509,8 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               {showSuggestions && addressSuggestions.length > 0 && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 200,
-                  background: "#fff", border: "1.5px solid var(--carta-border, #e5e5e5)",
-                  borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.12)", overflow: "hidden",
+                  background: "var(--carta-bg, #fff)", border: "1.5px solid var(--carta-border, #e5e5e5)",
+                  borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.3)", overflow: "hidden",
                 }}>
                   {addressSuggestions.map((s) => (
                     <button
