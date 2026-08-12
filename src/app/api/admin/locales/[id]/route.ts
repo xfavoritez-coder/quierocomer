@@ -132,6 +132,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.sectionTitleMenu !== undefined && { sectionTitleMenu: body.sectionTitleMenu || null }),
         ...(body.sectionTitleRecomendados !== undefined && { sectionTitleRecomendados: body.sectionTitleRecomendados || null }),
         ...(body.sectionTitleCraving !== undefined && { sectionTitleCraving: body.sectionTitleCraving || null }),
+        ...(body.orderingBusinessHours !== undefined && { orderingBusinessHours: body.orderingBusinessHours }),
       };
     } else {
       // Owner: silently filter to allowed fields only
