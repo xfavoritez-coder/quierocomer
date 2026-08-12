@@ -134,8 +134,9 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
       {steps.map((step, i) => {
         const done = i < currentStep;
         const active = i === currentStep;
-        const color = done ? GREEN : active ? theme.accent : theme.text3;
-        const circleBg = done ? GREEN + "22" : active ? theme.accent + "22" : theme.isDark ? "#242424" : "#f3f4f6";
+        const YELLOW = "#F4A623";
+        const color = done ? GREEN : active ? YELLOW : theme.text3;
+        const circleBg = done ? GREEN + "22" : active ? YELLOW + "22" : theme.isDark ? "#242424" : "#f3f4f6";
         const timeLabel = (done || active) ? getStepTime(i, statusHistory, createdAt) : null;
 
         return (
