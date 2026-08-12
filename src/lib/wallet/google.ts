@@ -126,15 +126,18 @@ export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: s
   const icon = program.stampIcon === "logo" ? "•" : program.stampIcon;
   const rewardsText = rewards.map((r) => `${r.stamp} ${icon} → ${r.reward}`).join("\n") || "—";
 
-  // Geo-notificaciones: geofence en la clase (Google avisa cuando el cliente está cerca)
-  let locations: { latitude: number; longitude: number }[] | undefined;
+  // Geo-notificaciones: geofence en la clase (Google avisa cuando el cliente está cerca).
+  // IMPORTANTE: usar `merchantLocations`, NO `locations` — el campo `locations` está deprecado
+  // y Google ya NO dispara notificaciones geográficas con él. `merchantLocations` (máx 10) es el
+  // reemplazo que sí notifica al entrar en el radio (fijado por Google).
+  let merchantLocations: { latitude: number; longitude: number }[] | undefined;
   if (program.geoEnabled && program.restaurantId) {
     const rest = await prisma.restaurant.findUnique({
       where: { id: program.restaurantId },
       select: { lat: true, lng: true },
     });
     if (rest?.lat != null && rest?.lng != null) {
-      locations = [{ latitude: rest.lat, longitude: rest.lng }];
+      merchantLocations = [{ latitude: rest.lat, longitude: rest.lng }];
     }
   }
 
@@ -147,7 +150,7 @@ export async function upsertLoyaltyClass(program: ProgramLike, restaurantName: s
     programLogo: { sourceUri: { uri: program.logoUrl || restaurantLogo || DEFAULT_LOGO } },
     // La imagen "hero" es el banner de la tarjeta (recortado ancho para no alargar el pase).
     ...(program.bgImageUrl && { heroImage: { sourceUri: { uri: wideBanner(program.bgImageUrl) } } }),
-    ...(locations && { locations }),
+    ...(merchantLocations && { merchantLocations }),
     textModulesData: [
       { id: "recompensas", header: "Recompensas", body: rewardsText },
       ...(program.description ? [{ id: "condiciones", header: "Condiciones", body: program.description }] : []),
