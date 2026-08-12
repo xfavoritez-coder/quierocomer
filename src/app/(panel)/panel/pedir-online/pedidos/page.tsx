@@ -464,9 +464,6 @@ export default function PedidosPage() {
             {pendingCount}
           </span>
         )}
-        <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-          ⚡ En vivo
-        </span>
       </div>
 
       {/* Stats hoy */}
@@ -540,10 +537,6 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Realtime indicator */}
-      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "center", marginTop: 24 }}>
-        ⚡ En vivo
-      </p>
     </div>
   );
 }
