@@ -72,37 +72,36 @@ export async function PATCH(req: NextRequest) {
       select: { name: true, orderingWaitTime: true },
     });
 
-    if (body.status === "ACCEPTED") {
-      const trackingUrl = `https://quierocomer.com/pedido/${order.id}`;
-      sendAdminEmail({
-        to: order.customerEmail,
-        subject: "¡Tu pedido fue aceptado! ✅",
-        html: orderAcceptedEmailHtml({
-          customerName: order.customerName,
-          restaurantName: restaurant?.name ?? "",
-          total: order.total,
-          orderType: order.orderType,
-          estimatedTime: restaurant?.orderingWaitTime ?? null,
-          trackingUrl,
-        }),
-        purpose: "other",
-        skipLog: true,
-      }).catch(() => {});
-    } else {
-      sendAdminEmail({
-        to: order.customerEmail,
-        subject: body.status === "IN_DELIVERY" ? "¡Tu pedido está en camino! 🛵" : "¡Tu pedido está listo! ✅",
-        html: orderInDeliveryEmailHtml({
-          customerName: order.customerName,
-          restaurantName: restaurant?.name ?? "",
-          total: order.total,
-          orderType: order.orderType,
-          estimatedTime: restaurant?.orderingWaitTime ?? null,
-        }),
-        purpose: "other",
-        skipLog: true,
-      }).catch(() => {});
-    }
+    const emailOpts = body.status === "ACCEPTED"
+      ? {
+          subject: "¡Tu pedido fue aceptado! ✅",
+          html: orderAcceptedEmailHtml({
+            customerName: order.customerName,
+            restaurantName: restaurant?.name ?? "",
+            total: order.total,
+            orderType: order.orderType,
+            estimatedTime: restaurant?.orderingWaitTime ?? null,
+            trackingUrl: `https://quierocomer.com/pedido/${order.id}`,
+          }),
+        }
+      : {
+          subject: body.status === "IN_DELIVERY" ? "¡Tu pedido está en camino! 🛵" : "¡Tu pedido está listo! ✅",
+          html: orderInDeliveryEmailHtml({
+            customerName: order.customerName,
+            restaurantName: restaurant?.name ?? "",
+            total: order.total,
+            orderType: order.orderType,
+            estimatedTime: restaurant?.orderingWaitTime ?? null,
+          }),
+        };
+
+    sendAdminEmail({
+      to: order.customerEmail,
+      ...emailOpts,
+      purpose: "order",
+    }).catch((err) => {
+      console.error(`[orders PATCH] email send failed to ${order.customerEmail}:`, err?.message ?? err);
+    });
   }
 
   return NextResponse.json({ order: updated });
