@@ -542,7 +542,7 @@ export default function PedidosPage() {
 
       {/* Realtime indicator */}
       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "center", marginTop: 24 }}>
-        ⚡ Tiempo real · 🔄 Respaldo cada 10s
+        ⚡ En vivo
       </p>
     </div>
   );
