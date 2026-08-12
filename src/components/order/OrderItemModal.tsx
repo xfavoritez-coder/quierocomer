@@ -42,13 +42,14 @@ interface Props {
   dish: DishForOrder;
   onClose: () => void;
   onAdd: (opts: { selectedOptions: SelectedOption[]; quantity: number; notes: string }) => void;
+  isClosed?: boolean;
 }
 
 function formatCLP(n: number) {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
 }
 
-export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
+export default function OrderItemModal({ dish, onClose, onAdd, isClosed = false }: Props) {
   const groups: ModifierGroup[] = dish.modifierTemplates.flatMap(t => t.groups);
   const photos = dish.photos?.filter(Boolean) || [];
 
@@ -319,6 +320,15 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
           background: "var(--carta-bg, #fff)", borderTop: "1px solid var(--carta-border, #eee)",
           backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
         }}>
+          {isClosed ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 0", maxWidth: 640, margin: "0 auto" }}>
+              <span style={{ fontSize: 16 }}>🔒</span>
+              <span style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--carta-text2, #666)", fontWeight: 600 }}>
+                El local está cerrado — no se puede agregar al carrito
+              </span>
+            </div>
+          ) : (
+          <>
           {!isValid && (
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#ef4444", margin: "0 0 10px", textAlign: "center" }}>
               Selecciona las opciones obligatorias para continuar
@@ -363,6 +373,8 @@ export default function OrderItemModal({ dish, onClose, onAdd }: Props) {
               <span>{formatCLP(unitTotal * quantity)}</span>
             </button>
           </div>
+          </>
+          )}
         </div>
       </div>
     </>
