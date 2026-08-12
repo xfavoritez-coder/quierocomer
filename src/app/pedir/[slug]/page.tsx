@@ -168,6 +168,10 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
 
   return (
     <>
+      {/* DEBUG TEMP — borrar */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 99999, background: isClosed ? "#b91c1c" : "#15803d", color: "#fff", fontSize: 13, padding: "6px 12px", fontFamily: "monospace", textAlign: "center" }}>
+        SERVER: isClosed={String(isClosed)} | chileH={chileNow.getHours()} | day={chileNow.getDay()}
+      </div>
       <PageHitTracker restaurantId={config.id} page="pedir" />
       <OrderCartProvider>
         {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} mode="ordering" />}
