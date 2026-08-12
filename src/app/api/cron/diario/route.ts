@@ -520,13 +520,15 @@ export async function GET(req: NextRequest) {
     // 5b. Auto-detect restaurants with untranslated dishes and mark them for backfill
     try {
       const untranslated = await prisma.$queryRaw<{ restaurantId: string }[]>`
-        SELECT DISTINCT d."restaurantId"
+        SELECT d."restaurantId", COUNT(*) as missing
         FROM "Dish" d
         WHERE d."isActive" = true
           AND d."deletedAt" IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM "DishTranslation" dt WHERE dt."dishId" = d.id AND dt.lang = 'en'
           )
+        GROUP BY d."restaurantId"
+        ORDER BY missing DESC
         LIMIT 20
       `;
       if (untranslated.length > 0) {

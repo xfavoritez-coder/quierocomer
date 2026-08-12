@@ -1071,6 +1071,43 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
           </div>
         </div>
       )}
+
+      {/* Idiomas de la carta */}
+      {clientes?.languages && clientes.languages.length > 0 && (() => {
+        const totalLang = clientes.languages.reduce((s: number, l: any) => s + l.count, 0);
+        const langMeta: Record<string, { label: string; flag: string; color: string }> = {
+          es: { label: "Español", flag: "🇪🇸", color: "var(--adm-accent)" },
+          en: { label: "English", flag: "🇺🇸", color: "#3b82f6" },
+          pt: { label: "Português", flag: "🇧🇷", color: "#16a34a" },
+        };
+        return (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>Idioma de la carta</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {clientes.languages.map((l: any) => {
+                const meta = langMeta[l.code] || { label: l.code.toUpperCase(), flag: "🌐", color: "var(--adm-text2)" };
+                const pct = totalLang > 0 ? Math.round((l.count / totalLang) * 100) : 0;
+                return (
+                  <div key={l.code}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, alignItems: "center" }}>
+                      <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <span>{meta.flag}</span> {meta.label}
+                      </span>
+                      <span style={{ fontFamily: F, fontSize: "0.74rem", color: meta.color, fontWeight: 600 }}>{l.count} <span style={{ color: "var(--adm-text3)" }}>({pct}%)</span></span>
+                    </div>
+                    <div style={{ height: 6, borderRadius: 3, background: "var(--adm-card-border)" }}>
+                      <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: meta.color, transition: "width 0.5s ease" }} />
+                    </div>
+                  </div>
+                );
+              })}
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+                Basado en {totalLang} {totalLang === 1 ? "sesión" : "sesiones"} donde el cliente seleccionó un idioma.
+              </p>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

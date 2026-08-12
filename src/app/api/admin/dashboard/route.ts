@@ -99,6 +99,7 @@ export async function GET(req: NextRequest) {
         birthdaysByRestaurantRaw,
         periodDurationAgg,
         filterUsageRaw,
+        langUsageRaw,
       ] = await Promise.all([
         prisma.session.count({ where: { ...restaurantFilter, startedAt: dateFilter } }),
         prisma.session.groupBy({ by: ["guestId"], where: { ...restaurantFilter, startedAt: dateFilter }, _count: { id: true } }).then(r => r.length),
@@ -107,6 +108,7 @@ export async function GET(req: NextRequest) {
         prisma.statEvent.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
         prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: dateFilter, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
         prisma.statEvent.groupBy({ by: ["restaurantId", "query"], where: { ...restaurantFilter, eventType: "FILTER_APPLIED" as any, query: { in: ["popular", "estrella", "veggie", "gluten-free"] }, createdAt: { gte: weekAgo } }, _count: { id: true } }),
+        prisma.session.groupBy({ by: ["restaurantId", "cartaLang"], where: { ...restaurantFilter, startedAt: dateFilter, cartaLang: { not: null } }, _count: { id: true } }),
       ]);
 
       const uniqueGuests = uniqueGuestsCount as number;
@@ -133,12 +135,42 @@ export async function GET(req: NextRequest) {
           (filterByRestaurantMap[rid] as any)[fv] += row._count.id;
         }
       }
+      // Resolve extra restaurant names needed (filter + lang usage)
+      const langRestIds = (langUsageRaw as any[]).map((r: any) => r.restaurantId);
       const filterRestIds = Object.keys(filterByRestaurantMap).filter(id => !restMap[id]);
-      const extraRests = filterRestIds.length ? await prisma.restaurant.findMany({ where: { id: { in: filterRestIds } }, select: { id: true, name: true } }) : [];
+      const extraIds = [...new Set([...filterRestIds, ...langRestIds.filter((id: string) => !restMap[id])])];
+      const extraRests = extraIds.length ? await prisma.restaurant.findMany({ where: { id: { in: extraIds } }, select: { id: true, name: true } }) : [];
       for (const r of extraRests) restMap[r.id] = r.name;
+
       const filterUsageByRestaurant = Object.entries(filterByRestaurantMap)
         .map(([rid, counts]) => ({ name: restMap[rid] || rid, ...counts, total: counts.popular + counts.estrella + counts.veggie + (counts["gluten-free"] || 0) }))
         .sort((a, b) => b.total - a.total);
+
+      // Build lang usage by restaurant: { name, total, es, en, pt, enPct, ptPct, foreignPct }
+      const langByRestMap: Record<string, { es: number; en: number; pt: number; other: number }> = {};
+      for (const row of langUsageRaw as any[]) {
+        const rid = row.restaurantId as string;
+        const lang = (row.cartaLang as string) || "es";
+        if (!langByRestMap[rid]) langByRestMap[rid] = { es: 0, en: 0, pt: 0, other: 0 };
+        if (lang === "es") langByRestMap[rid].es += row._count.id;
+        else if (lang === "en") langByRestMap[rid].en += row._count.id;
+        else if (lang === "pt") langByRestMap[rid].pt += row._count.id;
+        else langByRestMap[rid].other += row._count.id;
+      }
+      const langUsageByRestaurant = Object.entries(langByRestMap)
+        .map(([rid, counts]) => {
+          const total = counts.es + counts.en + counts.pt + counts.other;
+          const foreign = counts.en + counts.pt + counts.other;
+          return {
+            name: restMap[rid] || rid,
+            total, es: counts.es, en: counts.en, pt: counts.pt,
+            enPct: total > 0 ? Math.round((counts.en / total) * 100) : 0,
+            ptPct: total > 0 ? Math.round((counts.pt / total) * 100) : 0,
+            foreignPct: total > 0 ? Math.round((foreign / total) * 100) : 0,
+          };
+        })
+        .filter(r => r.total > 0)
+        .sort((a, b) => b.foreignPct - a.foreignPct || b.total - a.total);
 
       return NextResponse.json({
         period, from: rangeFrom.toISOString(), to: rangeTo.toISOString(),
@@ -149,7 +181,7 @@ export async function GET(req: NextRequest) {
         genio: { starts: 0, dietMarked: 0, completed: 0, completionRate: 0, dietRate: 0 },
         restaurantRanking: restaurantRankingRaw.map((r: any) => ({ name: restMap[r.restaurantId] || r.restaurantId, uniqueGuests: r._count.guestId })),
         birthdaysByRestaurant: (birthdaysByRestaurantRaw as any[]).map((r: any) => ({ name: restMap[r.restaurantId] || r.restaurantId, count: r._count.id })),
-        filterUsage, filterUsageByRestaurant,
+        filterUsage, filterUsageByRestaurant, langUsageByRestaurant,
       });
     }
 
