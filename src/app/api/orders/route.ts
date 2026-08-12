@@ -34,6 +34,29 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Send push notifications to subscribed panel devices (non-blocking)
+    prisma.orderPushSubscription.findMany({ where: { restaurantId: resId, isActive: true } })
+      .then(async (subs) => {
+        if (subs.length === 0) return;
+        const { sendOrderNotification } = await import("@/lib/qr/utils/orderPush");
+        for (const sub of subs) {
+          try {
+            await sendOrderNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              order.id,
+              customerName.trim(),
+              Math.round(total),
+              orderType
+            );
+          } catch (e: any) {
+            if (e?.statusCode === 410) {
+              await prisma.orderPushSubscription.update({ where: { id: sub.id }, data: { isActive: false } });
+            }
+          }
+        }
+      })
+      .catch(() => {});
+
     return NextResponse.json({ id: order.id });
   } catch (e) {
     console.error("[POST /api/orders]", e);

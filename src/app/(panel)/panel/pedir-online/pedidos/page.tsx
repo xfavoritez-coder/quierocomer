@@ -4,6 +4,13 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { supabase } from "@/lib/supabase";
 import { ClipboardList, ChevronDown, ChevronUp } from "lucide-react";
 
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
@@ -317,6 +324,59 @@ export default function PedidosPage() {
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const prevPendingCountRef = useRef<number | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
+
+  // Push subscription state check on mount
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushState("unsupported");
+      return;
+    }
+    if (Notification.permission === "denied") { setPushState("denied"); return; }
+    navigator.serviceWorker.register("/sw-orders.js")
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => setPushState(sub ? "active" : "inactive"))
+      .catch(() => setPushState("inactive"));
+  }, []);
+
+  const subscribeToPush = useCallback(async () => {
+    if (!selectedRestaurantId) return;
+    try {
+      const reg = await navigator.serviceWorker.register("/sw-orders.js");
+      await navigator.serviceWorker.ready;
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { setPushState("denied"); return; }
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+        });
+      }
+      await fetch("/api/panel/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, subscription: sub.toJSON() }),
+      });
+      setPushState("active");
+    } catch { setPushState("inactive"); }
+  }, [selectedRestaurantId]);
+
+  const unsubscribeFromPush = useCallback(async () => {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration("/sw-orders.js");
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/panel/push/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setPushState("inactive");
+    } catch { setPushState("inactive"); }
+  }, []);
 
   const playNotification = useCallback(() => {
     try {
@@ -463,6 +523,24 @@ export default function PedidosPage() {
           <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: ORANGE, color: "#fff", fontFamily: F, fontSize: "0.72rem", fontWeight: 800 }}>
             {pendingCount}
           </span>
+        )}
+        {pushState !== "unsupported" && (
+          <button
+            type="button"
+            onClick={pushState === "active" ? unsubscribeFromPush : subscribeToPush}
+            title={pushState === "active" ? "Desactivar notificaciones" : pushState === "denied" ? "Notificaciones bloqueadas en el navegador" : "Activar notificaciones push"}
+            style={{
+              marginLeft: "auto",
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 8,
+              border: `1.5px solid ${pushState === "active" ? GREEN + "55" : "var(--adm-card-border)"}`,
+              background: pushState === "active" ? GREEN + "18" : "var(--adm-card)",
+              color: pushState === "active" ? GREEN : pushState === "denied" ? RED : "var(--adm-text2)",
+              fontFamily: F, fontSize: "0.73rem", fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            {pushState === "active" ? "🔔 Notificaciones activas" : pushState === "denied" ? "🔕 Bloqueadas" : "🔔 Activar notificaciones"}
+          </button>
         )}
       </div>
 

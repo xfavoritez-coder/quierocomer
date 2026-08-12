@@ -1,7 +1,13 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck, Banknote, CreditCard, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { useCart } from "./OrderCartContext";
+
+const MapView = dynamic(() => import("@/app/a/components/LocationMapView"), {
+  ssr: false,
+  loading: () => <div style={{ width: "100%", height: "100%", background: "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--carta-text2, #999)" }}>Cargando mapa…</div>,
+});
 
 const F = "var(--font-display, 'Inter', sans-serif)";
 const FB = "var(--font-body, 'Inter', sans-serif)";
@@ -173,6 +179,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [sending, setSending] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<{ display_name: string; place_id: string | number }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [addressCoords, setAddressCoords] = useState<{ lat: number; lng: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
@@ -495,7 +502,8 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
           {/* Address for delivery — with autocomplete */}
           {orderType === "DELIVERY" && (
-            <div style={{ marginBottom: 12, position: "relative" }}>
+            <div style={{ marginBottom: 12 }}>
+            <div style={{ position: "relative" }}>
               <input
                 value={clientAddress}
                 onChange={e => handleAddressChange(e.target.value)}
@@ -520,6 +528,11 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                         setClientAddress(s.display_name);
                         setShowSuggestions(false);
                         setAddressSuggestions([]);
+                        // Fetch coordinates for map preview
+                        fetch(`/api/geo/place?place_id=${encodeURIComponent(String(s.place_id))}`)
+                          .then(r => r.json())
+                          .then(d => { if (d?.lat) setAddressCoords({ lat: Number(d.lat), lng: Number(d.lon) }); })
+                          .catch(() => {});
                       }}
                       style={{
                         width: "100%", textAlign: "left", padding: "10px 14px", border: "none",
@@ -535,6 +548,13 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                   ))}
                 </div>
               )}
+            </div>
+            {/* Map preview */}
+            {addressCoords && (
+              <div style={{ marginTop: 8, height: 160, borderRadius: 10, overflow: "hidden", border: "1.5px solid var(--carta-border, #e5e5e5)", position: "relative", zIndex: 0 }}>
+                <MapView lat={addressCoords.lat} lng={addressCoords.lng} onDragEnd={() => {}} />
+              </div>
+            )}
             </div>
           )}
 

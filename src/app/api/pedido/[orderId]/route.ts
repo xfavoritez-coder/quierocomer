@@ -21,11 +21,14 @@ export async function GET(
       notes: true,
       status: true,
       createdAt: true,
+      updatedAt: true,
       restaurant: {
         select: {
           name: true,
           logoUrl: true,
           orderingWaitTime: true,
+          whatsapp: true,
+          phone: true,
         },
       },
     },
@@ -47,5 +50,7 @@ export async function GET(
     notes: order.notes ?? null,
     estimatedTime: order.restaurant.orderingWaitTime ?? null,
     createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
+    restaurantPhone: order.restaurant.whatsapp || order.restaurant.phone || null,
   });
 }

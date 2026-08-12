@@ -381,6 +381,7 @@ model Restaurant {
   waiterCalls                WaiterCall[]
   onlineOrders               OnlineOrder[]
   waiterSubscriptions        WaiterPushSubscription[]
+  orderPushSubscriptions     OrderPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
   invoices                   Invoice[]
   // Módulo Control
@@ -966,6 +967,20 @@ model AdminPushSubscription {
 }
 
 model WaiterPushSubscription {
+  id           String     @id @default(cuid())
+  restaurantId String
+  endpoint     String     @unique
+  p256dh       String
+  auth         String
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model OrderPushSubscription {
   id           String     @id @default(cuid())
   restaurantId String
   endpoint     String     @unique
