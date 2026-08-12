@@ -485,8 +485,15 @@ function fmt12(hhmm: string) {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function ClosedBanner({ businessHours, inline }: { businessHours?: Record<string, BHDay> | null; inline?: boolean }) {
+function ClosedBanner({ businessHours, inline, isDark, accent }: { businessHours?: Record<string, BHDay> | null; inline?: boolean; isDark?: boolean; accent?: string }) {
   const [showModal, setShowModal] = useState(false);
+  const bg = isDark ? "#111" : "#1a1a1a";
+  const modalBg = isDark ? "#1e1e1e" : "#fff";
+  const titleColor = isDark ? "#f0f0f0" : "#111";
+  const dayColor = isDark ? "#ccc" : "#333";
+  const timeColor = isDark ? "#f0f0f0" : "#111";
+  const closeColor = isDark ? "#666" : "#999";
+  const borderColor = isDark ? "#2a2a2a" : "#f0ece3";
 
   return (
     <>
@@ -494,7 +501,7 @@ function ClosedBanner({ businessHours, inline }: { businessHours?: Record<string
         onClick={() => setShowModal(true)}
         style={{
           position: inline ? "relative" : "sticky", top: 0, zIndex: inline ? undefined : 100,
-          background: "#1a1a1a", color: "#fff",
+          background: bg, color: "#fff",
           padding: "10px 16px",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           cursor: "pointer", userSelect: "none",
@@ -512,24 +519,24 @@ function ClosedBanner({ businessHours, inline }: { businessHours?: Record<string
       {showModal && (
         <div
           onClick={() => setShowModal(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 20, width: "calc(100% - 32px)", maxWidth: 400, padding: "24px 20px 28px", margin: 16 }}
+            style={{ background: modalBg, borderRadius: 20, width: "calc(100% - 32px)", maxWidth: 400, padding: "24px 20px 28px", margin: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <h3 style={{ fontFamily: FB, fontSize: "1rem", fontWeight: 700, color: "#111", margin: 0 }}>🕐 Horarios de atención</h3>
-              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#999", lineHeight: 1 }}>×</button>
+              <h3 style={{ fontFamily: FB, fontSize: "1rem", fontWeight: 700, color: titleColor, margin: 0 }}>🕐 Horarios de atención</h3>
+              <button onClick={() => setShowModal(false)} style={{ background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", border: "none", width: 28, height: 28, borderRadius: "50%", fontSize: 16, cursor: "pointer", color: closeColor, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>×</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {BH_ORDER.map(key => {
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {BH_ORDER.map((key, i) => {
                 const day = businessHours?.[key];
                 return (
-                  <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontFamily: FB, fontSize: "0.88rem", color: "#333", fontWeight: 500 }}>{BH_DAY_LABELS[key]}</span>
+                  <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderTop: i === 0 ? "none" : `1px solid ${borderColor}` }}>
+                    <span style={{ fontFamily: FB, fontSize: "0.88rem", color: dayColor, fontWeight: 500 }}>{BH_DAY_LABELS[key]}</span>
                     {day?.open ? (
-                      <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#111", fontWeight: 600 }}>
+                      <span style={{ fontFamily: FB, fontSize: "0.85rem", color: timeColor, fontWeight: 600 }}>
                         {fmt12(day.from)} – {day.to === "00:00" ? "Medianoche" : fmt12(day.to)}
                       </span>
                     ) : (
@@ -746,7 +753,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
         {/* Fixed glass header */}
         <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
-          {isClosed && <ClosedBanner businessHours={businessHours} inline />}
+          {isClosed && <ClosedBanner businessHours={businessHours} inline isDark={isDark} accent={accent} />}
           <header style={{ padding: "calc(10px + env(safe-area-inset-top)) 16px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -879,7 +886,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       <style>{`@keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
 
       {/* Banner de cerrado */}
-      {isClosed && <ClosedBanner businessHours={businessHours} />}
+      {isClosed && <ClosedBanner businessHours={businessHours} isDark={isDark} accent={accent} />}
 
       {/* Hero con fotos de platos */}
       <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
