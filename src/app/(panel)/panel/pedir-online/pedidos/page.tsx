@@ -281,6 +281,8 @@ export default function PedidosPage() {
   const [tab, setTab] = useState<TabId>("active");
   const [newAlert, setNewAlert] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevPendingCountRef = useRef<number | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const playNotification = useCallback(() => {
     if (!audioRef.current) {
@@ -289,19 +291,39 @@ export default function PedidosPage() {
     audioRef.current.play().catch(() => {});
   }, []);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (isPolling = false) => {
     if (!selectedRestaurantId) return;
     try {
       const res = await fetch(`/api/panel/orders?restaurantId=${selectedRestaurantId}`);
       const data = await res.json();
       const fetched: Order[] = data.orders || [];
       setOrders(fetched);
-    } catch {}
-  }, [selectedRestaurantId]);
 
-  // Initial fetch
+      // Polling-based new order detection
+      if (isPolling) {
+        const newPendingCount = fetched.filter(o => o.status === "PENDING").length;
+        const prev = prevPendingCountRef.current;
+        if (prev !== null && newPendingCount > prev) {
+          setNewAlert(true);
+          playNotification();
+          setTab("active");
+        }
+        prevPendingCountRef.current = newPendingCount;
+      } else {
+        // On initial load, just record baseline
+        prevPendingCountRef.current = fetched.filter(o => o.status === "PENDING").length;
+      }
+    } catch {}
+  }, [selectedRestaurantId, playNotification]);
+
+  // Initial fetch + polling fallback every 10s
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(false);
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(() => fetchOrders(true), 10000);
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
   }, [fetchOrders]);
 
   // Supabase Realtime subscription
@@ -373,7 +395,7 @@ export default function PedidosPage() {
         </div>
         <button
           type="button"
-          onClick={() => { setNewAlert(false); fetchOrders(); }}
+          onClick={() => { setNewAlert(false); fetchOrders(false); }}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: "1.5px solid var(--adm-card-border)", background: newAlert ? ORANGE + "18" : "var(--adm-card)", color: newAlert ? ORANGE : "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
         >
           {newAlert ? <Bell size={14} /> : <RefreshCw size={14} />}
@@ -449,7 +471,7 @@ export default function PedidosPage() {
 
       {/* Realtime indicator */}
       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "center", marginTop: 24 }}>
-        ⚡ Actualización en tiempo real
+        ⚡ Tiempo real · 🔄 Respaldo cada 10s
       </p>
     </div>
   );

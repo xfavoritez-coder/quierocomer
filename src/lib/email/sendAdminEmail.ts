@@ -149,6 +149,42 @@ export function orderInDeliveryEmailHtml(opts: {
   `);
 }
 
+// ─── Order accepted email ─────────────────────────────────────────────
+export function orderAcceptedEmailHtml(opts: {
+  customerName: string;
+  restaurantName: string;
+  total: number;
+  orderType: string;
+  estimatedTime?: string | null;
+  trackingUrl: string;
+}): string {
+  const nextNote = opts.orderType === "DELIVERY"
+    ? "Te avisaremos cuando tu pedido salga a reparto."
+    : "Te avisaremos cuando tu pedido esté listo para retirar.";
+
+  return wrap(`
+  <tr><td style="padding-bottom:20px;text-align:center;">
+    <div style="font-size:48px;line-height:1;margin-bottom:12px;">🎉</div>
+    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">¡Tu pedido fue aceptado!</h1>
+    <p style="font-size:15px;color:#555;margin:0;">El local ya está preparando tu pedido.</p>
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">
+    ${card(`
+      ${label("Tu pedido")}
+      <div style="font-size:15px;color:#111;font-weight:700;margin-bottom:4px;">${opts.restaurantName}</div>
+      <div style="font-size:14px;color:#555;">Hola ${opts.customerName}, tu pedido por <strong>$${opts.total.toLocaleString("es-CL")}</strong> fue aceptado.</div>
+      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:6px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
+    `, true)}
+  </td></tr>
+  <tr><td style="padding-bottom:16px;">
+    ${btn(opts.trackingUrl, "Ver mi pedido en vivo")}
+  </td></tr>
+  <tr><td style="font-size:13px;color:#888;text-align:center;padding-bottom:4px;">
+    ${nextNote}
+  </td></tr>
+  `);
+}
+
 // ─── Email templates ──────────────────────────────────────────────────
 
 export function resetPasswordEmailHtml(name: string, resetLink: string, restaurantName?: string): string {

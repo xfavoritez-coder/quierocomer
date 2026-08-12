@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck, Banknote, CreditCard, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { useCart } from "./OrderCartContext";
 
@@ -171,10 +171,38 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [orderNotes, setOrderNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
   const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<{ display_name: string; place_id: string | number }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
   const phoneDigits = clientPhone.replace(/\D/g, "");
+
+  const handleAddressChange = useCallback((value: string) => {
+    setClientAddress(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(value)}&all=1`);
+        const data = await res.json();
+        setAddressSuggestions((Array.isArray(data) ? data : []).slice(0, 5));
+        setShowSuggestions(true);
+      } catch {
+        // ignore
+      }
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const isValid =
     name.trim().length >= 2 &&
@@ -226,7 +254,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
     if (isPanelMode) {
       try {
-        await fetch("/api/orders", {
+        const res = await fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -242,8 +270,13 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             notes: orderNotes.trim() || null,
           }),
         });
-        clearCart();
-        setSuccess(true);
+        if (res.ok) {
+          const data = await res.json();
+          clearCart();
+          window.location.href = `/pedido/${data.id}`;
+        } else {
+          setSending(false);
+        }
       } catch {
         setSending(false);
       }
@@ -280,34 +313,6 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     clearCart();
     onClose();
   };
-
-  if (success) {
-    return (
-      <div
-        onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 950, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "flex-end" }}
-      >
-        <div
-          onClick={e => e.stopPropagation()}
-          style={{ background: "var(--carta-bg, #fff)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 520, padding: "40px 24px 48px", textAlign: "center" }}
-        >
-          <CheckCircle2 size={56} color="#22c55e" style={{ marginBottom: 16 }} />
-          <h2 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--carta-text, #111)", margin: "0 0 8px" }}>
-            ¡Pedido recibido!
-          </h2>
-          <p style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--carta-text2, #666)", margin: "0 0 24px", lineHeight: 1.6 }}>
-            Tu pedido fue enviado al local. Te avisaremos cuando esté listo.
-          </p>
-          <button
-            onClick={onClose}
-            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: ACCENT, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: "pointer" }}
-          >
-            Volver al menú
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -488,17 +493,48 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             </div>
           </div>
 
-          {/* Address for delivery */}
+          {/* Address for delivery — with autocomplete */}
           {orderType === "DELIVERY" && (
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 12, position: "relative" }}>
               <input
                 value={clientAddress}
-                onChange={e => setClientAddress(e.target.value)}
+                onChange={e => handleAddressChange(e.target.value)}
+                onFocus={() => { if (addressSuggestions.length > 0) setShowSuggestions(true); }}
+                onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); }}
                 className="oc-input"
                 style={inputStyle}
                 placeholder="Dirección de delivery *"
-                autoComplete="street-address"
+                autoComplete="off"
               />
+              {showSuggestions && addressSuggestions.length > 0 && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 200,
+                  background: "#fff", border: "1.5px solid var(--carta-border, #e5e5e5)",
+                  borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.12)", overflow: "hidden",
+                }}>
+                  {addressSuggestions.map((s) => (
+                    <button
+                      key={s.place_id}
+                      type="button"
+                      onMouseDown={() => {
+                        setClientAddress(s.display_name);
+                        setShowSuggestions(false);
+                        setAddressSuggestions([]);
+                      }}
+                      style={{
+                        width: "100%", textAlign: "left", padding: "10px 14px", border: "none",
+                        background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.82rem",
+                        color: "var(--carta-text, #111)", borderBottom: "1px solid var(--carta-border, #f0f0f0)",
+                        transition: "background 0.1s",
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "var(--carta-surface, #f5f5f5)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                    >
+                      📍 {s.display_name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

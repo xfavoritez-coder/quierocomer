@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendAdminEmail, orderInDeliveryEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail, orderInDeliveryEmailHtml, orderAcceptedEmailHtml } from "@/lib/email/sendAdminEmail";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -65,25 +65,44 @@ export async function PATCH(req: NextRequest) {
     data: { status: body.status },
   });
 
-  // Send email to customer when order goes out for delivery or is ready for pickup
-  if ((body.status === "IN_DELIVERY" || body.status === "READY") && order.customerEmail) {
+  // Send email to customer on status changes
+  if ((body.status === "ACCEPTED" || body.status === "IN_DELIVERY" || body.status === "READY") && order.customerEmail) {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: order.restaurantId },
       select: { name: true, orderingWaitTime: true },
     });
-    sendAdminEmail({
-      to: order.customerEmail,
-      subject: body.status === "IN_DELIVERY" ? "¡Tu pedido está en camino! 🛵" : "¡Tu pedido está listo! ✅",
-      html: orderInDeliveryEmailHtml({
-        customerName: order.customerName,
-        restaurantName: restaurant?.name ?? "",
-        total: order.total,
-        orderType: order.orderType,
-        estimatedTime: restaurant?.orderingWaitTime ?? null,
-      }),
-      purpose: "other",
-      skipLog: true,
-    }).catch(() => {});
+
+    if (body.status === "ACCEPTED") {
+      const trackingUrl = `https://quierocomer.com/pedido/${order.id}`;
+      sendAdminEmail({
+        to: order.customerEmail,
+        subject: "¡Tu pedido fue aceptado! ✅",
+        html: orderAcceptedEmailHtml({
+          customerName: order.customerName,
+          restaurantName: restaurant?.name ?? "",
+          total: order.total,
+          orderType: order.orderType,
+          estimatedTime: restaurant?.orderingWaitTime ?? null,
+          trackingUrl,
+        }),
+        purpose: "other",
+        skipLog: true,
+      }).catch(() => {});
+    } else {
+      sendAdminEmail({
+        to: order.customerEmail,
+        subject: body.status === "IN_DELIVERY" ? "¡Tu pedido está en camino! 🛵" : "¡Tu pedido está listo! ✅",
+        html: orderInDeliveryEmailHtml({
+          customerName: order.customerName,
+          restaurantName: restaurant?.name ?? "",
+          total: order.total,
+          orderType: order.orderType,
+          estimatedTime: restaurant?.orderingWaitTime ?? null,
+        }),
+        purpose: "other",
+        skipLog: true,
+      }).catch(() => {});
+    }
   }
 
   return NextResponse.json({ order: updated });
