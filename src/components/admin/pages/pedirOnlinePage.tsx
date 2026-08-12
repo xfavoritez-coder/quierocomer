@@ -233,6 +233,21 @@ export default function PedirOnlinePage() {
   const isPremium = (data?.plan === "PREMIUM") || (activePlan === "PREMIUM") || (data as any)?.subscriptionStatus === "TRIALING";
 
   const [togglingEnabled, setTogglingEnabled] = useState(false);
+  const [savingMode, setSavingMode] = useState(false);
+
+  const changeOrderingMode = async (mode: "whatsapp" | "panel") => {
+    if (!rid || savingMode) return;
+    setOrderingMode(mode);
+    setSavingMode(true);
+    try {
+      await fetch("/api/panel/ordering-mode", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: rid, orderingMode: mode }),
+      });
+    } catch {}
+    setSavingMode(false);
+  };
 
   const toggleEnabled = async () => {
     if (!rid || togglingEnabled) return;
@@ -271,8 +286,7 @@ export default function PedirOnlinePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderingMode,
-          orderingPhone: orderingMode === "whatsapp" ? (fullPhone || null) : null,
+          orderingPhone: fullPhone || null,
           orderingDelivery: delivery,
           orderingMinAmount: minAmount ? parseInt(minAmount, 10) : null,
           orderingWaitTime: waitTime.trim() || null,
@@ -388,8 +402,8 @@ export default function PedirOnlinePage() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px 18px", marginBottom: 16 }}>
 
         {/* Modo de recepción */}
-        <Field label="Cómo recibes los pedidos" hint="Elige si los pedidos llegan por WhatsApp o por el panel en tiempo real.">
-          <div style={{ display: "flex", gap: 8 }}>
+        <Field label="Cómo recibes los pedidos">
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             {([
               { value: "whatsapp" as const, label: "WhatsApp", emoji: "💬" },
               { value: "panel" as const, label: "Panel online", emoji: "📋" },
@@ -398,14 +412,15 @@ export default function PedirOnlinePage() {
               return (
                 <button
                   key={opt.value}
-                  onClick={() => setOrderingMode(opt.value)}
+                  onClick={() => changeOrderingMode(opt.value)}
+                  disabled={savingMode}
                   style={{
-                    flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
+                    flex: 1, padding: "10px 8px", borderRadius: 10, cursor: savingMode ? "wait" : "pointer",
                     background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
                     border: active ? `1px solid rgba(244,166,35,0.4)` : "1px solid transparent",
                     color: active ? GOLD : "var(--adm-text3)",
                     fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
-                    transition: "all 0.15s",
+                    transition: "all 0.15s", opacity: savingMode && !active ? 0.5 : 1,
                   }}
                 >
                   {opt.emoji} {opt.label}
@@ -413,6 +428,15 @@ export default function PedirOnlinePage() {
               );
             })}
           </div>
+          {orderingMode === "whatsapp" ? (
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+              El cliente verifica el pedido y lo envía por WhatsApp. Tú lo recibes ahí.
+            </p>
+          ) : (
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+              El cliente confirma el pedido digitalmente. Tú lo recibes en esta pantalla en tiempo real, puedes gestionar estados y el cliente recibe email cuando su pedido está listo.
+            </p>
+          )}
         </Field>
 
         {/* WhatsApp destino (solo en modo whatsapp) */}
@@ -434,15 +458,6 @@ export default function PedirOnlinePage() {
         </Field>
         )}
 
-        {/* Info panel mode */}
-        {orderingMode === "panel" && (
-          <div style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#3b82f6", fontWeight: 600, margin: "0 0 4px" }}>📋 Modo panel activo</p>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-              Los pedidos llegarán al panel en <strong>/panel/pedir-online/pedidos</strong>. El cliente verá una pantalla de confirmación (no se abre WhatsApp). Instala el panel como app en tu celular para recibir notificaciones.
-            </p>
-          </div>
-        )}
 
         {/* Tipo de entrega */}
         <Field label={t("ordering_delivery_type")}>

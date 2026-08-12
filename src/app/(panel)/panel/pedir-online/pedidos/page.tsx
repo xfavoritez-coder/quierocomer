@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { ClipboardList, RefreshCw, CheckCircle2, Clock, Truck, Package, X, ChevronDown, ChevronUp, Bell } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { ClipboardList, RefreshCw, ChevronDown, ChevronUp, Bell } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -278,33 +279,23 @@ export default function PedidosPage() {
   const { selectedRestaurantId } = useAdminSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<TabId>("active");
-  const [lastCount, setLastCount] = useState<number | null>(null);
   const [newAlert, setNewAlert] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchOrders = useCallback(async (silent = false) => {
+  const playNotification = useCallback(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJiVkHBRUGmim5J2VVVwpaCYgGJhfLCpoI2Agoy1rqePgoWPvranmZCRlcO8s6yjmaKqy8Owp6CkqtLKv7Cwt7/a0ca8yszS3NbOxsvP2OHb08jL0trl4NfN0NXg6uXc0tLX4evn3tXU2+Pt6+Pc2d/l7+3k3d3i6O/u5uDf5Ovx7+ji4+bp7/Hv6OXm6u3w8O3p6Ors7fDy8Ovp6u3u8PLx7erq7O3v8fHu6+vs7u/x8O3r7O3u8PDv7Ozs7e7v8O/t7Ozs7e7w7+3t7e3u7+/u7e3t7e7u7+7t7e3t7u7v7u3t7e3u7u7u7e3t7e3u7u7t7e3t7e3u7e7t7e3t7e3t7e3t7e3t7e3t7e0=");
+    }
+    audioRef.current.play().catch(() => {});
+  }, []);
+
+  const fetchOrders = useCallback(async () => {
     if (!selectedRestaurantId) return;
     try {
       const res = await fetch(`/api/panel/orders?restaurantId=${selectedRestaurantId}`);
       const data = await res.json();
       const fetched: Order[] = data.orders || [];
       setOrders(fetched);
-
-      // Detect new pending orders
-      const pendingCount = fetched.filter(o => o.status === "PENDING").length;
-      setLastCount(prev => {
-        if (prev !== null && pendingCount > prev) {
-          setNewAlert(true);
-          // Play notification sound
-          if (!audioRef.current) {
-            audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJiVkHBRUGmim5J2VVVwpaCYgGJhfLCpoI2Agoy1rqePgoWPvranmZCRlcO8s6yjmaKqy8Owp6CkqtLKv7Cwt7/a0ca8yszS3NbOxsvP2OHb08jL0trl4NfN0NXg6uXc0tLX4evn3tXU2+Pt6+Pc2d/l7+3k3d3i6O/u5uDf5Ovx7+ji4+bp7/Hv6OXm6u3w8O3p6Ors7fDy8Ovp6u3u8PLx7erq7O3v8fHu6+vs7u/x8O3r7O3u8PDv7Ozs7e7v8O/t7Ozs7e7w7+3t7e3u7+/u7e3t7e7u7+7t7e3t7u7v7u3t7e3u7u7u7e3t7e3u7u7t7e3t7e3u7e7t7e3t7e3t7e3t7e3t7e3t7e0=");
-          }
-          audioRef.current.play().catch(() => {});
-          if (!silent) setTab("active");
-        }
-        return pendingCount;
-      });
     } catch {}
   }, [selectedRestaurantId]);
 
@@ -313,12 +304,39 @@ export default function PedidosPage() {
     fetchOrders();
   }, [fetchOrders]);
 
-  // Polling every 5 seconds
+  // Supabase Realtime subscription
   useEffect(() => {
     if (!selectedRestaurantId) return;
-    pollRef.current = setInterval(() => fetchOrders(true), 5000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [selectedRestaurantId, fetchOrders]);
+
+    const channel = supabase
+      .channel(`orders-${selectedRestaurantId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "OnlineOrder",
+          filter: `restaurantId=eq.${selectedRestaurantId}`,
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newOrder = payload.new as Order;
+            setOrders(prev => [newOrder, ...prev]);
+            if (newOrder.status === "PENDING") {
+              setNewAlert(true);
+              playNotification();
+              setTab("active");
+            }
+          } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as Order;
+            setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } : o));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedRestaurantId, playNotification]);
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
     const res = await fetch("/api/panel/orders", {
@@ -417,7 +435,7 @@ export default function PedidosPage() {
       {/* Orders list */}
       {tabOrders.length === 0 ? (
         <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.88rem" }}>
-          {tab === "active" ? "No hay pedidos nuevos ahora. La página se actualiza sola cada 5 segundos." :
+          {tab === "active" ? "No hay pedidos nuevos ahora. Llegarán aquí en tiempo real." :
            tab === "out" ? "No hay pedidos en reparto o listos para retirar." :
            "El historial está vacío."}
         </div>
@@ -429,9 +447,9 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Auto-refresh indicator */}
+      {/* Realtime indicator */}
       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "center", marginTop: 24 }}>
-        ↻ Se actualiza automáticamente cada 5 segundos
+        ⚡ Actualización en tiempo real
       </p>
     </div>
   );
