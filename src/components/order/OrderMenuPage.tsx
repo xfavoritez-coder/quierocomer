@@ -546,7 +546,26 @@ function ClosedBanner({ businessHours }: { businessHours?: Record<string, BHDay>
   );
 }
 
-export default function OrderMenuPage({ restaurant, orderingConfig, popularDishIds, isClosed = false, businessHours }: Props) {
+function checkIsClosedNow(bh: Record<string, BHDay> | null | undefined): boolean {
+  if (!bh || typeof bh !== "object") return false;
+  try {
+    const chileStr = new Date().toLocaleString("en-US", { timeZone: "America/Santiago" });
+    const chileNow = new Date(chileStr);
+    const day = String(chileNow.getDay());
+    const dayConfig = bh[day];
+    if (!dayConfig || !dayConfig.open) return true;
+    const nowMins = chileNow.getHours() * 60 + chileNow.getMinutes();
+    const parseMins = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+    const fromMins = parseMins(dayConfig.from || "00:00");
+    const rawTo = dayConfig.to || "23:59";
+    const toMins = rawTo === "00:00" ? 1440 : parseMins(rawTo);
+    return fromMins <= toMins
+      ? nowMins < fromMins || nowMins >= toMins
+      : nowMins < fromMins && nowMins >= toMins;
+  } catch { return false; }
+}
+
+export default function OrderMenuPage({ restaurant, orderingConfig, popularDishIds, isClosed: isClosedProp = false, businessHours }: Props) {
   const { items, count, addItem } = useCart();
   const [selectedDish, setSelectedDish] = useState<DishForOrder | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -554,6 +573,12 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+  // Client-side isClosed check runs on mount (handles SSR cache edge cases)
+  const [isClosedClient, setIsClosedClient] = useState(isClosedProp);
+  useEffect(() => {
+    if (businessHours) setIsClosedClient(checkIsClosedNow(businessHours));
+  }, [businessHours]);
+  const isClosed = isClosedClient;
   const popularSet = useMemo(() => new Set(popularDishIds || []), [popularDishIds]);
   const toggleFilter = (k: FilterKey) => setActiveFilters(f => f.includes(k) ? f.filter(x => x !== k) : [...f, k]);
 
