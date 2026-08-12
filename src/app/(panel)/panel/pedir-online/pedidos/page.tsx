@@ -646,11 +646,13 @@ export default function PedidosPage() {
 
       {/* Stats hoy */}
       {todayOrders.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isStandalone ? "1fr" : "repeat(3, 1fr)", gap: 10, marginBottom: 20 }}>
           {[
             { label: "Pedidos hoy", value: String(todayOrders.filter(o => o.status !== "CANCELLED").length) },
-            { label: "Ingresos hoy", value: fmt(todayRevenue) },
-            { label: "Ticket promedio", value: todayOrders.filter(o => o.status !== "CANCELLED").length > 0 ? fmt(Math.round(todayRevenue / todayOrders.filter(o => o.status !== "CANCELLED").length)) : "-" },
+            ...(!isStandalone ? [
+              { label: "Ingresos hoy", value: fmt(todayRevenue) },
+              { label: "Ticket promedio", value: todayOrders.filter(o => o.status !== "CANCELLED").length > 0 ? fmt(Math.round(todayRevenue / todayOrders.filter(o => o.status !== "CANCELLED").length)) : "-" },
+            ] : []),
           ].map(s => (
             <div key={s.label} style={{ padding: "12px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <p style={{ fontFamily: F, fontSize: "0.63rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 4px" }}>{s.label}</p>

@@ -850,6 +850,14 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
   const [demoScrolled, setDemoScrolled] = useState(false);
   const [demoTip, setDemoTip] = useState(false);
   const [hasLoyalty, setHasLoyalty] = useState(false);
+  const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandaloneApp(standalone);
+  }, []);
 
   // Auto-tag gold buttons for dark mode softening
   useEffect(() => {
@@ -1019,6 +1027,19 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
 
   const selectedRest = selectedRestEarly;
   const isDemo = isDemoEarly;
+
+  // En modo PWA standalone solo mostramos el contenido sin navegación del panel
+  if (isStandaloneApp) {
+    return (
+      <SessionContext.Provider value={ctxValue}>
+        <div style={{ minHeight: "100dvh", background: "var(--adm-bg, #0e0e0e)", color: "var(--adm-text, #f0f0f0)" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 40px" }}>
+            {children}
+          </div>
+        </div>
+      </SessionContext.Provider>
+    );
+  }
 
   return (
     <SessionContext.Provider value={ctxValue}>
