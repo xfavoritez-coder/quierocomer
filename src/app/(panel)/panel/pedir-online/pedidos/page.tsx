@@ -114,20 +114,37 @@ function OrderCard({
 }: {
   order: Order;
   isNew: boolean;
-  onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
+  onStatusChange: (id: string, status: OrderStatus, reason?: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [showCancelForm, setShowCancelForm] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
   const statusColor = STATUS_COLOR[order.status];
 
   const handleAction = async (status: OrderStatus) => {
+    if (status === "CANCELLED") {
+      setShowCancelForm(true);
+      return;
+    }
     setBusy(true);
     try {
       await onStatusChange(order.id, status);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancelReason.trim()) return;
+    setBusy(true);
+    try {
+      await onStatusChange(order.id, "CANCELLED", cancelReason.trim());
+    } finally {
+      setBusy(false);
+      setShowCancelForm(false);
     }
   };
 
@@ -227,6 +244,51 @@ function OrderCard({
                 {action.label}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Cancel reason form */}
+        {showCancelForm && (
+          <div style={{ padding: "0 16px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: RED, margin: 0 }}>
+              ¿Por qué se cancela este pedido?
+            </p>
+            <textarea
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              placeholder="Ej: No hay stock del producto, local cerrado, fuera de zona de reparto..."
+              rows={2}
+              style={{
+                width: "100%", padding: "8px 10px", borderRadius: 8, boxSizing: "border-box",
+                border: `1.5px solid ${RED}44`, background: "var(--adm-input, var(--adm-hover))",
+                color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", resize: "none", outline: "none",
+              }}
+            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                disabled={!cancelReason.trim() || busy}
+                onClick={handleCancelConfirm}
+                style={{
+                  padding: "7px 16px", borderRadius: 8, border: "none",
+                  background: RED, color: "#fff", fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
+                  cursor: !cancelReason.trim() || busy ? "not-allowed" : "pointer",
+                  opacity: !cancelReason.trim() || busy ? 0.5 : 1,
+                }}
+              >
+                Confirmar cancelación
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowCancelForm(false); setCancelReason(""); }}
+                style={{
+                  padding: "7px 14px", borderRadius: 8, border: "1.5px solid var(--adm-card-border)",
+                  background: "none", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                Volver
+              </button>
+            </div>
           </div>
         )}
 
@@ -493,11 +555,11 @@ export default function PedidosPage() {
     return () => { supabase.removeChannel(channel); };
   }, [selectedRestaurantId, playNotification, markOrderAsNew]);
 
-  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
+  const handleStatusChange = async (orderId: string, status: OrderStatus, reason?: string) => {
     const res = await fetch("/api/panel/orders", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId, status }),
+      body: JSON.stringify({ orderId, status, ...(reason ? { cancellationReason: reason } : {}) }),
     });
     if (res.ok) {
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));

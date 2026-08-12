@@ -24,6 +24,7 @@ interface OrderData {
   paymentMethod: string;
   status: string;
   notes: string | null;
+  cancellationReason: string | null;
   estimatedTime: string | null;
   createdAt: string;
   updatedAt: string;
@@ -193,6 +194,11 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
         <div style={{ textAlign: "center", maxWidth: 320 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>😔</div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: RED, margin: "0 0 8px" }}>Pedido cancelado</h2>
+          {order.cancellationReason && (
+            <p style={{ fontFamily: FONT, fontSize: "0.88rem", color: "#fca5a5", margin: "8px 0 0", lineHeight: 1.5 }}>
+              Motivo: {order.cancellationReason}
+            </p>
+          )}
           <p style={{ fontSize: 14, color: "#666", margin: "0 0 20px", lineHeight: 1.6 }}>
             Lamentamos informarte que tu pedido fue cancelado.
           </p>

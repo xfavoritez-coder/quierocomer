@@ -415,6 +415,7 @@ model OnlineOrder {
   items           Json // CartItem[]
   total           Int
   notes           String?
+  cancellationReason String?
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status String @default("PENDING")

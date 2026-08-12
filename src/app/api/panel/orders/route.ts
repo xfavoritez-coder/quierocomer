@@ -46,6 +46,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "orderId y status requeridos" }, { status: 400 });
   }
 
+  const { cancellationReason } = body;
+
   const order = await prisma.onlineOrder.findUnique({
     where: { id: body.orderId },
     select: { id: true, restaurantId: true, status: true, customerName: true, customerEmail: true, total: true, orderType: true },
@@ -60,9 +62,16 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: `No se puede pasar de ${order.status} a ${body.status}` }, { status: 422 });
   }
 
+  if (body.status === "CANCELLED" && (!cancellationReason || typeof cancellationReason !== "string" || !cancellationReason.trim())) {
+    return NextResponse.json({ error: "Se requiere el motivo de cancelación" }, { status: 422 });
+  }
+
   const updated = await prisma.onlineOrder.update({
     where: { id: order.id },
-    data: { status: body.status },
+    data: {
+      status: body.status,
+      ...(body.status === "CANCELLED" && cancellationReason ? { cancellationReason: cancellationReason.trim() } : {}),
+    },
   });
 
   // Send email to customer on status changes
