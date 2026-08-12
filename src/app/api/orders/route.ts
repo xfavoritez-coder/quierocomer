@@ -18,6 +18,30 @@ export async function POST(req: NextRequest) {
       resId = r.id;
     }
 
+    // Business hours check (Chile timezone)
+    const restaurant = await prisma.restaurant.findUnique({ where: { id: resId }, select: { orderingBusinessHours: true } });
+    const rawBH = (restaurant as any)?.orderingBusinessHours;
+    if (rawBH && typeof rawBH === "object") {
+      const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+      const day = String(chileNow.getDay());
+      const dayConfig = (rawBH as any)[day];
+      if (!dayConfig || !dayConfig.open) {
+        return NextResponse.json({ error: "El local está cerrado" }, { status: 409 });
+      } else {
+        const nowMins = chileNow.getHours() * 60 + chileNow.getMinutes();
+        const parseMins = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+        const fromMins = parseMins(dayConfig.from || "00:00");
+        const rawTo = dayConfig.to || "23:59";
+        const toMins = rawTo === "00:00" ? 1440 : parseMins(rawTo);
+        const isClosed = fromMins <= toMins
+          ? nowMins < fromMins || nowMins >= toMins
+          : nowMins < fromMins && nowMins >= toMins;
+        if (isClosed) {
+          return NextResponse.json({ error: "El local está cerrado" }, { status: 409 });
+        }
+      }
+    }
+
     const order = await prisma.onlineOrder.create({
       data: {
         restaurantId: resId,

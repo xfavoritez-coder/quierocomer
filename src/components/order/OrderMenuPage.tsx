@@ -887,7 +887,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
               })}
             </div>
             <div style={{ flexShrink: 0, paddingRight: 8, paddingLeft: 4, display: "flex", alignItems: "center", gap: 4 }}>
-              <button onClick={() => setCartOpen(true)} style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", background: count > 0 ? accent : "transparent", display: "grid", placeItems: "center", cursor: "pointer" }}>
+              <button onClick={() => !isClosed && setCartOpen(true)} style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", background: count > 0 && !isClosed ? accent : "transparent", display: "grid", placeItems: "center", cursor: isClosed ? "default" : "pointer" }}>
                 <ShoppingCart size={16} color={count > 0 ? "#fff" : "var(--carta-text2)"} />
                 {count > 0 && <span style={{ position: "absolute", top: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
               </button>

@@ -150,10 +150,19 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     if (!dayConfig || !dayConfig.open) {
       isClosed = true;
     } else {
-      const hhmm = `${String(chileNow.getHours()).padStart(2, "0")}:${String(chileNow.getMinutes()).padStart(2, "0")}`;
-      const from: string = dayConfig.from || "00:00";
-      const to: string = dayConfig.to || "23:59";
-      isClosed = to === "00:00" ? hhmm < from : hhmm < from || hhmm > to;
+      const nowMins = chileNow.getHours() * 60 + chileNow.getMinutes();
+      const parseMins = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+      const fromMins = parseMins(dayConfig.from || "00:00");
+      const rawTo = dayConfig.to || "23:59";
+      // "00:00" as closing time means midnight (end of day) = 1440 mins
+      const toMins = rawTo === "00:00" ? 1440 : parseMins(rawTo);
+      if (fromMins <= toMins) {
+        // Normal range (e.g. 17:00 → 23:00 or 17:00 → 00:00=1440)
+        isClosed = nowMins < fromMins || nowMins >= toMins;
+      } else {
+        // Crosses midnight (e.g. 22:00 → 02:00): open if nowMins >= fromMins OR nowMins < toMins
+        isClosed = nowMins < fromMins && nowMins >= toMins;
+      }
     }
   }
 
