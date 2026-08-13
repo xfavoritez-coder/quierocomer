@@ -109,9 +109,9 @@ function statusLabel(s: MovementStatus): string {
 // ─── Category select for inline panels ───────────────────────────────────────
 
 function CategorySelect({
-  categories, value, onChange, isExpense,
+  categories, agents = [], value, onChange, isExpense,
 }: {
-  categories: Category[]; value: string; onChange: (v: string) => void; isExpense: boolean;
+  categories: Category[]; agents?: CashAgent[]; value: string; onChange: (v: string) => void; isExpense: boolean;
 }) {
   const type = isExpense ? "EXPENSE" : "INCOME";
   const cats = categories.filter(c => c.type === type);
@@ -143,6 +143,11 @@ function CategorySelect({
             ))
         : cats.map(c => <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ""}{c.name}</option>)
       }
+      {agents.length > 0 && (
+        <optgroup label="👤 Agente">
+          {agents.map(a => <option key={a.id} value={`agent:${a.id}`}>{a.name}</option>)}
+        </optgroup>
+      )}
     </select>
   );
 }
@@ -176,10 +181,7 @@ function MovRow({
   const [mode, setMode] = useState<PanelMode>("simple");
   const [saving, setSaving] = useState(false);
 
-  // Agent assignment
-  const [selAgent, setSelAgent] = useState("");
-
-  // Simple categorize
+  // Simple categorize — value is categoryId or "agent:{agentId}"
   const [selCat, setSelCat] = useState("");
 
   // Split
@@ -200,9 +202,10 @@ function MovRow({
   const remaining = absAmount - splitTotal;
 
   async function doAssignAgent() {
-    if (!selAgent) return;
+    const agentId = selCat.replace("agent:", "");
+    if (!agentId) return;
     setSaving(true);
-    await onAction(m.id, { action: "assign_agent", agentId: selAgent });
+    await onAction(m.id, { action: "assign_agent", agentId });
     setSaving(false);
     setOpen(false);
   }
@@ -255,7 +258,6 @@ function MovRow({
     setOpen(v => !v);
     setMode("simple");
     setSelCat("");
-    setSelAgent("");
   };
 
   const statusBadge = (
@@ -371,44 +373,14 @@ function MovRow({
 
           {mode === "simple" && (
             <div>
-              {/* Agente — si hay agentes activos, ofrecer asignar */}
-              {agents.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  <p style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3,#aaa)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>
-                    ¿Es un retiro a agente?
-                  </p>
-                  <select
-                    value={selAgent}
-                    onChange={e => { setSelAgent(e.target.value); if (e.target.value) setSelCat(""); }}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${selAgent ? "#f59e0b" : "var(--adm-card-border,#e5e7eb)"}`, background: selAgent ? "#f59e0b11" : "var(--adm-input,#f9fafb)", color: "var(--adm-text,#111)", fontFamily: FB, fontSize: "0.85rem", outline: "none" }}
-                  >
-                    <option value="">Sin agente — categorizar normalmente</option>
-                    {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
-                  {selAgent && (
-                    <button
-                      onClick={doAssignAgent}
-                      disabled={saving}
-                      style={{ marginTop: 8, padding: "8px 20px", borderRadius: 8, border: "none", background: "#f59e0b", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                    >
-                      {saving ? "Guardando..." : "Asignar a agente"}
-                    </button>
-                  )}
-                  {!selAgent && <div style={{ margin: "10px 0", borderTop: "1px solid var(--adm-card-border,#e5e7eb)" }} />}
-                </div>
-              )}
-              {!selAgent && (
-                <>
-                  <CategorySelect categories={categories} value={selCat} onChange={v => { setSelCat(v); setSelAgent(""); }} isExpense={isExpense} />
-                  <button
-                    onClick={doSimple}
-                    disabled={!selCat || saving}
-                    style={{ marginTop: 10, padding: "8px 20px", borderRadius: 8, border: "none", background: selCat ? "#F4A623" : "var(--adm-card-border,#e5e7eb)", color: selCat ? "#fff" : "var(--adm-text3,#aaa)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: selCat ? "pointer" : "default" }}
-                  >
-                    {saving ? "Guardando..." : "Guardar"}
-                  </button>
-                </>
-              )}
+              <CategorySelect categories={categories} agents={agents} value={selCat} onChange={setSelCat} isExpense={isExpense} />
+              <button
+                onClick={() => selCat.startsWith("agent:") ? doAssignAgent() : doSimple()}
+                disabled={!selCat || saving}
+                style={{ marginTop: 10, padding: "8px 20px", borderRadius: 8, border: "none", background: selCat ? "#F4A623" : "var(--adm-card-border,#e5e7eb)", color: selCat ? "#fff" : "var(--adm-text3,#aaa)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: selCat ? "pointer" : "default" }}
+              >
+                {saving ? "Guardando..." : "Guardar"}
+              </button>
             </div>
           )}
 
