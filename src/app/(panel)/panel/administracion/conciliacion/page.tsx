@@ -495,6 +495,13 @@ export default function ConciliacionPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; autoSuggested?: number } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  type PreviewData = {
+    total: number; newCount: number; duplicateCount: number;
+    agentCount: number; suggestedCount: number; pendingCount: number;
+    rows: { date: string; description: string; debit: number | null; credit: number | null; isNew: boolean; agentName?: string; suggestedCategory?: string }[];
+  };
+  const [preview, setPreview] = useState<PreviewData | null>(null);
 
   const [tab, setTab] = useState<TabKey>("PENDING");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -520,25 +527,49 @@ export default function ConciliacionPage() {
     if (restaurantId) load(restaurantId, month);
   }, [restaurantId, month, load]);
 
+  // Paso 1: previsualizar sin guardar
   const handleFile = async (file: File) => {
     if (!restaurantId) return;
     setImporting(true);
     setImportResult(null);
     setImportError(null);
+    setPreview(null);
     try {
       const fd = new FormData();
       fd.append("restaurantId", restaurantId);
       fd.append("file", file);
-      const res = await fetch("/api/admin/financial/movements", { method: "POST", body: fd });
+      const res = await fetch("/api/admin/financial/movements/preview", { method: "POST", body: fd });
       const data = await res.json();
-      if (!res.ok) { setImportError(data.error || "Error al importar"); return; }
-      setImportResult(data);
-      await load(restaurantId, month);
+      if (!res.ok) { setImportError(data.error || "Error al analizar el archivo"); return; }
+      setPendingFile(file);
+      setPreview(data);
     } catch {
       setImportError("Error al procesar el archivo");
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  // Paso 2: confirmar importación
+  const confirmImport = async () => {
+    if (!restaurantId || !pendingFile) return;
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append("restaurantId", restaurantId);
+      fd.append("file", pendingFile);
+      const res = await fetch("/api/admin/financial/movements", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { setImportError(data.error || "Error al importar"); return; }
+      setImportResult(data);
+      setPreview(null);
+      setPendingFile(null);
+      await load(restaurantId, month);
+    } catch {
+      setImportError("Error al importar");
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -616,7 +647,7 @@ export default function ConciliacionPage() {
           style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", borderRadius: 10, border: "none", background: importing ? "var(--adm-card-border,#e5e7eb)" : "#F4A623", color: importing ? "var(--adm-text3,#aaa)" : "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: importing ? "default" : "pointer", flexShrink: 0 }}
         >
           {importing ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={15} />}
-          {importing ? "Importando..." : "Importar XLSX"}
+          {importing ? "Analizando..." : "Importar XLSX"}
         </button>
         <input ref={fileRef} type="file" accept=".xlsx" style={{ display: "none" }} onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
       </div>
@@ -638,6 +669,76 @@ export default function ConciliacionPage() {
           </span>
         )}
       </div>
+
+      {/* ── PREVIEW MODAL ── */}
+      {preview && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "var(--adm-card)", borderRadius: 16, width: "100%", maxWidth: 600, maxHeight: "85vh", display: "flex", flexDirection: "column", overflow: "hidden", border: "1px solid var(--adm-card-border)" }}>
+            {/* Header */}
+            <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--adm-card-border)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Confirmar importación</h3>
+                <button onClick={() => { setPreview(null); setPendingFile(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)" }}><X size={18} /></button>
+              </div>
+              {/* Resumen de stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
+                {[
+                  { label: "Total en archivo", value: preview.total, color: "var(--adm-text)" },
+                  { label: "Nuevos", value: preview.newCount, color: "#16a34a" },
+                  { label: "Ya existían", value: preview.duplicateCount, color: "var(--adm-text3)" },
+                  { label: "→ Agente", value: preview.agentCount, color: "#f59e0b" },
+                  { label: "→ Auto-sugeridos", value: preview.suggestedCount, color: "#3b82f6" },
+                  { label: "→ Pendientes", value: preview.pendingCount, color: "#9ca3af" },
+                ].map(item => (
+                  <div key={item.label} style={{ background: "var(--adm-hover)", borderRadius: 8, padding: "8px 10px" }}>
+                    <p style={{ fontFamily: FB, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{item.label}</p>
+                    <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: item.color, margin: 0 }}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Lista de movimientos nuevos */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+              {preview.rows.filter(r => r.isNew).map((row, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 20px", borderBottom: "1px solid var(--adm-card-border)" }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0, minWidth: 50 }}>
+                    {new Date(row.date).toLocaleDateString("es-CL", { day: "2-digit", month: "short" })}
+                  </span>
+                  <span style={{ flex: 1, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {row.description}
+                  </span>
+                  <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: row.debit ? "#ef4444" : "#22c55e", flexShrink: 0 }}>
+                    {row.debit ? `-$${row.debit.toLocaleString("es-CL")}` : `+$${(row.credit ?? 0).toLocaleString("es-CL")}`}
+                  </span>
+                  {row.agentName && (
+                    <span style={{ fontFamily: FB, fontSize: "0.68rem", background: "#fef3c7", color: "#92400e", padding: "2px 6px", borderRadius: 4, flexShrink: 0 }}>👤 {row.agentName}</span>
+                  )}
+                  {row.suggestedCategory && !row.agentName && (
+                    <span style={{ fontFamily: FB, fontSize: "0.68rem", background: "#eff6ff", color: "#1d4ed8", padding: "2px 6px", borderRadius: 4, flexShrink: 0 }}>⚡ {row.suggestedCategory}</span>
+                  )}
+                  {!row.agentName && !row.suggestedCategory && (
+                    <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", flexShrink: 0 }}>·</span>
+                  )}
+                </div>
+              ))}
+              {preview.rows.filter(r => !r.isNew).length > 0 && (
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", padding: "10px 20px", margin: 0 }}>
+                  + {preview.rows.filter(r => !r.isNew).length} movimientos ya existentes (no se importarán de nuevo)
+                </p>
+              )}
+            </div>
+            {/* Footer con botones */}
+            <div style={{ padding: "14px 20px", borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => { setPreview(null); setPendingFile(null); }} style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.875rem", cursor: "pointer" }}>
+                Cancelar
+              </button>
+              <button onClick={confirmImport} disabled={importing} style={{ padding: "9px 18px", borderRadius: 8, border: "none", background: "#F4A623", color: "#fff", fontFamily: FB, fontSize: "0.875rem", fontWeight: 700, cursor: importing ? "wait" : "pointer", opacity: importing ? 0.7 : 1 }}>
+                {importing ? "Importando..." : `Importar ${preview.newCount} movimientos`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Import feedback */}
       {importResult && (

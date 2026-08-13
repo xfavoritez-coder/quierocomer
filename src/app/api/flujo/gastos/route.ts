@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
             type: cat.type,
             date: new Date(),
             description: comentario,
-            source: "MANUAL",
+            source: "FLUJO",
           },
         });
       }

@@ -2662,7 +2662,8 @@ enum FinancialType {
 }
 
 enum EntrySource {
-  MANUAL
+  MANUAL      // ingresado a mano desde el panel /panel flujo
+  FLUJO       // registrado por un agente desde /flujo (ej: Carlos Gómez)
   BANK_CSV
   BANK_API
 }

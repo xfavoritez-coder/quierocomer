@@ -36,11 +36,11 @@ export async function GET(req: NextRequest) {
     select: { agentId: true, debit: true },
   });
 
-  // Lo reportado en /flujo (FinancialEntry MANUAL del mes)
+  // Lo reportado en /flujo (FinancialEntry source FLUJO del mes — solo lo que Carlos registró)
   const reported = await prisma.financialEntry.aggregate({
     where: {
       restaurantId,
-      source: "MANUAL",
+      source: "FLUJO",
       date: { gte: start, lt: end },
     },
     _sum: { amount: true },
