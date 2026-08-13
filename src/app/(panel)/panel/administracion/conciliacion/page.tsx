@@ -420,7 +420,15 @@ function MovRow({
 
 // ─── Agents tab content ───────────────────────────────────────────────────────
 
-function AgentsTab({ movements, agents }: { movements: Movement[]; agents: CashAgent[] }) {
+function AgentsTab({ movements, agents, restaurantId, month }: { movements: Movement[]; agents: CashAgent[]; restaurantId: string; month: string }) {
+  const [resumen, setResumen] = useState<{ totalRetirado: number; totalReportado: number; sinJustificar: number } | null>(null);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/flujo/resumen?restaurantId=${restaurantId}&month=${month}`)
+      .then(r => r.json()).then(setResumen).catch(() => {});
+  }, [restaurantId, month]);
+
   const grouped = useMemo(() => {
     const map: Record<string, { agent: CashAgent; movements: Movement[]; total: number }> = {};
     for (const ag of agents) {
@@ -454,9 +462,9 @@ function AgentsTab({ movements, agents }: { movements: Movement[]; agents: CashA
             <User size={14} color="#d97706" />
             <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: "var(--adm-text,#111)", flex: 1 }}>{agent.name}</span>
             <div style={{ display: "flex", gap: 16 }}>
-              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Banco: <b style={{ color: total < 0 ? "#ef4444" : "#22c55e" }}>{total < 0 ? "- " : "+ "}{fmtClp(Math.abs(total))}</b></span>
-              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3,#aaa)" }}>Flujo: <b>—</b></span>
-              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3,#aaa)" }}>Sin justificar: <b>—</b></span>
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Retirado banco: <b style={{ color: "#ef4444" }}>{fmtClp(Math.abs(total))}</b></span>
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Reportado /flujo: <b style={{ color: "#22c55e" }}>{resumen ? fmtClp(resumen.totalReportado) : "—"}</b></span>
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: resumen && resumen.sinJustificar > 0 ? "#ef4444" : "var(--adm-text3,#aaa)" }}>Sin justificar: <b>{resumen ? (resumen.sinJustificar > 0 ? fmtClp(resumen.sinJustificar) : "✓ OK") : "—"}</b></span>
             </div>
           </div>
           {/* Movements */}
@@ -829,7 +837,7 @@ export default function ConciliacionPage() {
 
           {/* Tab content */}
           {tab === "AGENTS" ? (
-            <AgentsTab movements={agentMovements} agents={agents} />
+            <AgentsTab movements={agentMovements} agents={agents} restaurantId={restaurantId ?? ""} month={month} />
           ) : activeMovements.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--adm-text3,#aaa)" }}>
               <Check size={28} style={{ margin: "0 auto 10px", display: "block", opacity: 0.25 }} />
