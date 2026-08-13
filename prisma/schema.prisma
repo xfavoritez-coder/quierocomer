@@ -2547,6 +2547,7 @@ model FinancialCategory {
   restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name         String
   type         FinancialType    // INCOME | EXPENSE
+  group        String?          // "Proveedores", "Operaciones", "Administración", etc.
   color        String?          // hex, ej: "#22c55e"
   icon         String?          // emoji
   position     Int              @default(0)

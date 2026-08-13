@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   const categories = await prisma.financialCategory.findMany({
     where: { restaurantId, isActive: true },
-    orderBy: [{ type: "asc" }, { position: "asc" }],
+    orderBy: [{ type: "asc" }, { group: "asc" }, { position: "asc" }],
   });
   return NextResponse.json(categories);
 }
