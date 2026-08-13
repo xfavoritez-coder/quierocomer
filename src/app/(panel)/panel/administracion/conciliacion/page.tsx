@@ -816,12 +816,12 @@ export default function ConciliacionPage() {
     IGNORED: ignored,
   };
 
-  const tabs: { key: TabKey; label: string; count: number }[] = [
-    { key: "PENDING", label: "Pendientes", count: pending.length },
-    { key: "SUGGESTED", label: "Sugeridos", count: suggested.length },
-    { key: "AGENTS", label: "Agentes", count: agentMovements.length },
-    { key: "RECONCILED", label: "Conciliados", count: reconciled.length },
-    { key: "IGNORED", label: "Ignorados", count: ignored.length },
+  const tabs: { key: TabKey; label: string; count: number; needsAction: boolean }[] = [
+    { key: "PENDING", label: "Pendientes", count: pending.length, needsAction: true },
+    { key: "SUGGESTED", label: "Sugeridos", count: suggested.length, needsAction: true },
+    { key: "AGENTS", label: "Agentes", count: agentMovements.length, needsAction: false },
+    { key: "RECONCILED", label: "Conciliados", count: reconciled.length, needsAction: false },
+    { key: "IGNORED", label: "Ignorados", count: ignored.length, needsAction: false },
   ];
 
   const activeMovements = tabMovements[tab];
@@ -1008,27 +1008,38 @@ export default function ConciliacionPage() {
         <>
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 2, marginBottom: 16, borderBottom: "2px solid var(--adm-card-border,#f0f0f0)", overflowX: "auto" }}>
-            {tabs.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                style={{
-                  fontFamily: F, fontSize: "0.8rem", fontWeight: tab === t.key ? 700 : 400,
-                  padding: "8px 14px", background: "none", border: "none",
-                  borderBottom: tab === t.key ? "2px solid #F4A623" : "2px solid transparent",
-                  marginBottom: -2,
-                  color: tab === t.key ? "#b45309" : "var(--adm-text2,#888)",
-                  cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6,
-                }}
-              >
-                {t.label}
-                {t.count > 0 && (
-                  <span style={{ background: tab === t.key ? "#F4A62322" : "var(--adm-card-border,#f0f0f0)", color: tab === t.key ? "#b45309" : "var(--adm-text3,#aaa)", borderRadius: 20, padding: "1px 7px", fontSize: "0.7rem", fontWeight: 700 }}>
-                    {t.count}
-                  </span>
-                )}
-              </button>
-            ))}
+            {tabs.map(t => {
+              const isActive = tab === t.key;
+              // Badges: needsAction + count > 0 → naranja/rojo notorio; el resto → tenue o sin badge
+              const badgeBg = isActive
+                ? (t.needsAction ? "#F4A62322" : "var(--adm-card-border,#f0f0f0)")
+                : (t.needsAction && t.count > 0 ? "#ef444418" : "transparent");
+              const badgeColor = isActive
+                ? (t.needsAction ? "#b45309" : "var(--adm-text3,#aaa)")
+                : (t.needsAction && t.count > 0 ? "#dc2626" : "var(--adm-text3,#aaa)");
+              const badgeBorder = !isActive && t.needsAction && t.count > 0 ? "1px solid #ef444433" : "1px solid transparent";
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  style={{
+                    fontFamily: F, fontSize: "0.8rem", fontWeight: isActive ? 700 : 400,
+                    padding: "8px 14px", background: "none", border: "none",
+                    borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
+                    marginBottom: -2,
+                    color: isActive ? "#b45309" : "var(--adm-text2,#888)",
+                    cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6,
+                  }}
+                >
+                  {t.label}
+                  {t.count > 0 && (
+                    <span style={{ background: badgeBg, color: badgeColor, border: badgeBorder, borderRadius: 20, padding: "1px 7px", fontSize: "0.7rem", fontWeight: 700 }}>
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Tab content */}
