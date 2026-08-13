@@ -60,17 +60,17 @@ export default function FlujoPage() {
       .catch(() => {});
   }, []);
 
-  // Ordenar categorías: recientes primero, luego por posición
-  const sortedCats = [...categories].sort((a, b) => {
-    const ai = recentIds.indexOf(a.id);
-    const bi = recentIds.indexOf(b.id);
-    if (ai !== -1 && bi === -1) return -1;
-    if (bi !== -1 && ai === -1) return 1;
-    if (ai !== -1 && bi !== -1) return ai - bi;
-    return a.position - b.position;
-  });
-  const expenseCats = sortedCats.filter(c => c.type === "EXPENSE");
-  const incomeCats = sortedCats.filter(c => c.type === "INCOME");
+  // Solo egresos, recientes primero, luego por posición
+  const expenseCats = [...categories]
+    .filter(c => c.type === "EXPENSE")
+    .sort((a, b) => {
+      const ai = recentIds.indexOf(a.id);
+      const bi = recentIds.indexOf(b.id);
+      if (ai !== -1 && bi === -1) return -1;
+      if (bi !== -1 && ai === -1) return 1;
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      return a.position - b.position;
+    });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -116,8 +116,6 @@ export default function FlujoPage() {
     <main style={{ background: BG, minHeight: "100vh", padding: "0 0 80px", fontFamily: F_BODY }}>
       <style>{`
         .flujo-input::placeholder, .flujo-textarea::placeholder { color: rgba(240,234,214,0.2) !important; }
-        .flujo-chip { transition: all 0.15s ease; }
-        .flujo-chip:active { transform: scale(0.96); }
       `}</style>
 
       {/* Header */}
@@ -149,62 +147,23 @@ export default function FlujoPage() {
             autoFocus
           />
 
-          {/* Categoría — chips */}
+          {/* Categoría — select */}
           {expenseCats.length > 0 && (
             <div style={{ marginTop: 18 }}>
               <label style={labelS}>Categoría de gasto</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                {expenseCats.map(cat => {
-                  const isSelected = cat.id === categoryId;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      className="flujo-chip"
-                      onClick={() => setCategoryId(isSelected ? "" : cat.id)}
-                      style={{
-                        padding: "6px 12px", borderRadius: 999, border: `1px solid ${isSelected ? (cat.color || ACCENT) : BORDER}`,
-                        background: isSelected ? (cat.color ? `${cat.color}22` : "rgba(244,166,35,0.12)") : "rgba(255,255,255,0.04)",
-                        color: isSelected ? (cat.color || ACCENT) : MUTED,
-                        fontFamily: F_BODY, fontSize: "0.8rem", fontWeight: isSelected ? 700 : 400,
-                        cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-                      }}
-                    >
-                      {cat.icon && <span style={{ fontSize: 13 }}>{cat.icon}</span>}
-                      {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
-              {/* Ingresos también disponibles */}
-              {incomeCats.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <p style={{ fontFamily: F_DISPLAY, fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, margin: "0 0 7px", opacity: 0.6 }}>Ingresos</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                    {incomeCats.map(cat => {
-                      const isSelected = cat.id === categoryId;
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          className="flujo-chip"
-                          onClick={() => setCategoryId(isSelected ? "" : cat.id)}
-                          style={{
-                            padding: "6px 12px", borderRadius: 999, border: `1px solid ${isSelected ? "#22c55e" : BORDER}`,
-                            background: isSelected ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
-                            color: isSelected ? "#22c55e" : MUTED,
-                            fontFamily: F_BODY, fontSize: "0.8rem", fontWeight: isSelected ? 700 : 400,
-                            cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-                          }}
-                        >
-                          {cat.icon && <span style={{ fontSize: 13 }}>{cat.icon}</span>}
-                          {cat.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              <select
+                value={categoryId}
+                onChange={e => setCategoryId(e.target.value)}
+                className="flujo-input"
+                style={selectS}
+              >
+                <option value="">— Sin categoría</option>
+                {expenseCats.map(cat => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.icon ? `${cat.icon} ${cat.name}` : cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -289,5 +248,6 @@ const montoInputS: React.CSSProperties = { width: "100%", padding: "14px 16px", 
 const textareaS: React.CSSProperties = { width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: `1px solid ${BORDER}`, borderRadius: "12px", color: TEXT, fontFamily: F_BODY, fontSize: "0.95rem", outline: "none", boxSizing: "border-box", resize: "none", lineHeight: 1.5, transition: "border-color 0.2s" };
 const btnS: React.CSSProperties = { width: "100%", marginTop: "20px", padding: "15px", background: ACCENT, border: "none", borderRadius: "12px", fontFamily: F_DISPLAY, fontSize: "0.85rem", letterSpacing: "0.1em", textTransform: "uppercase", color: BG, fontWeight: 700, cursor: "pointer", transition: "background 0.2s" };
 const rowS: React.CSSProperties = { display: "flex", alignItems: "flex-start", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "14px 16px" };
+const selectS: React.CSSProperties = { width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: `1px solid ${BORDER}`, borderRadius: "12px", color: TEXT, fontFamily: F_BODY, fontSize: "0.95rem", outline: "none", boxSizing: "border-box", cursor: "pointer", appearance: "auto" };
 const focusIn = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = ACCENT; };
 const focusOut = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = BORDER; };
