@@ -36,7 +36,7 @@ type Movement = {
   suggestedCategory: { id: string; name: string; color: string | null; icon: string | null; type: string } | null;
 };
 
-type CashAgent = { id: string; name: string };
+type CashAgent = { id: string; name: string; isActive: boolean };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -914,9 +914,9 @@ export default function ConciliacionPage() {
       )}
 
       {/* Agent strip */}
-      {loaded && agents.length > 0 && agentMovements.length > 0 && (
+      {loaded && agents.some(a => a.isActive) && agentMovements.length > 0 && (
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-          {agents.map(ag => {
+          {agents.filter(a => a.isActive).map(ag => {
             const ms = agentMovements.filter(m => m.agent?.id === ag.id);
             if (!ms.length) return null;
             // Solo contar los no-conciliados (los RECONCILED son sueldos u otros categorizados directamente)
@@ -974,7 +974,7 @@ export default function ConciliacionPage() {
           {/* Tab content */}
           {tab === "AGENTS" ? (
             <AgentsTab
-              movements={agentMovements} agents={agents}
+              movements={agentMovements} agents={agents.filter(a => a.isActive)}
               resumen={resumen}
               categories={categories} onAction={handleAction} onDelete={handleDelete}
               restaurantId={restaurantId ?? ""} month={month}
