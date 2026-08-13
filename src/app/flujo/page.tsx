@@ -157,9 +157,9 @@ export default function FlujoPage() {
                 className="flujo-input"
                 style={selectS}
               >
-                <option value="">— Sin categoría</option>
+                <option value="" style={{ background: "#1a1000", color: "#f0ead6" }}>— Sin categoría</option>
                 {expenseCats.map(cat => (
-                  <option key={cat.id} value={cat.id}>
+                  <option key={cat.id} value={cat.id} style={{ background: "#1a1000", color: "#f0ead6" }}>
                     {cat.icon ? `${cat.icon} ${cat.name}` : cat.name}
                   </option>
                 ))}
@@ -248,6 +248,6 @@ const montoInputS: React.CSSProperties = { width: "100%", padding: "14px 16px", 
 const textareaS: React.CSSProperties = { width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: `1px solid ${BORDER}`, borderRadius: "12px", color: TEXT, fontFamily: F_BODY, fontSize: "0.95rem", outline: "none", boxSizing: "border-box", resize: "none", lineHeight: 1.5, transition: "border-color 0.2s" };
 const btnS: React.CSSProperties = { width: "100%", marginTop: "20px", padding: "15px", background: ACCENT, border: "none", borderRadius: "12px", fontFamily: F_DISPLAY, fontSize: "0.85rem", letterSpacing: "0.1em", textTransform: "uppercase", color: BG, fontWeight: 700, cursor: "pointer", transition: "background 0.2s" };
 const rowS: React.CSSProperties = { display: "flex", alignItems: "flex-start", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "14px 16px" };
-const selectS: React.CSSProperties = { width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: `1px solid ${BORDER}`, borderRadius: "12px", color: TEXT, fontFamily: F_BODY, fontSize: "0.95rem", outline: "none", boxSizing: "border-box", cursor: "pointer", appearance: "auto" };
+const selectS: React.CSSProperties = { width: "100%", padding: "12px 14px", background: "#1a1000", border: `1px solid ${BORDER}`, borderRadius: "12px", color: TEXT, fontFamily: F_BODY, fontSize: "0.95rem", outline: "none", boxSizing: "border-box", cursor: "pointer", appearance: "auto" };
 const focusIn = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = ACCENT; };
 const focusOut = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = BORDER; };
