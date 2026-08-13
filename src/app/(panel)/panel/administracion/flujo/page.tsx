@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useSession } from "@/lib/admin/SessionContext";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { ChevronLeft, ChevronRight, Plus, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const F = "var(--font-display, system-ui)";
@@ -207,7 +207,7 @@ function RecentEntries({ entries, onDelete }: { entries: Entry[]; onDelete: (id:
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function FlujoFinancieroPage() {
-  const { selectedRestaurantId } = useSession();
+  const { selectedRestaurantId } = usePanelSession();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
