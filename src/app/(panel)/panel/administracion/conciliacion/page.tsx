@@ -732,15 +732,18 @@ export default function ConciliacionPage() {
   }, [restaurantId]);
 
   // KPI calculations
-  const totalAbonos = useMemo(() => movements.filter(m => (m.credit ?? 0) > 0).reduce((s, m) => s + (m.credit ?? 0), 0), [movements]);
-  const totalCargos = useMemo(() => movements.filter(m => (m.debit ?? 0) > 0).reduce((s, m) => s + (m.debit ?? 0), 0), [movements]);
-  const pending = useMemo(() => movements.filter(m => m.status === "PENDING"), [movements]);
-  const suggested = useMemo(() => movements.filter(m => m.status === "SUGGESTED"), [movements]);
-  const reconciled = useMemo(() => movements.filter(m => m.status === "RECONCILED"), [movements]);
-  const ignored = useMemo(() => movements.filter(m => m.status === "IGNORED"), [movements]);
+  // Movimientos de agentes viven solo en el tab Agentes — no en tabs generales ni KPIs
   const agentMovements = useMemo(() => movements.filter(m => m.agent !== null), [movements]);
+  const nonAgentMovements = useMemo(() => movements.filter(m => m.agent === null), [movements]);
 
-  const pctReconciled = movements.length > 0 ? Math.round(reconciled.length / movements.length * 100) : 0;
+  const totalAbonos = useMemo(() => nonAgentMovements.filter(m => (m.credit ?? 0) > 0).reduce((s, m) => s + (m.credit ?? 0), 0), [nonAgentMovements]);
+  const totalCargos = useMemo(() => nonAgentMovements.filter(m => (m.debit ?? 0) > 0).reduce((s, m) => s + (m.debit ?? 0), 0), [nonAgentMovements]);
+  const pending = useMemo(() => nonAgentMovements.filter(m => m.status === "PENDING"), [nonAgentMovements]);
+  const suggested = useMemo(() => nonAgentMovements.filter(m => m.status === "SUGGESTED"), [nonAgentMovements]);
+  const reconciled = useMemo(() => nonAgentMovements.filter(m => m.status === "RECONCILED"), [nonAgentMovements]);
+  const ignored = useMemo(() => nonAgentMovements.filter(m => m.status === "IGNORED"), [nonAgentMovements]);
+
+  const pctReconciled = nonAgentMovements.length > 0 ? Math.round(reconciled.length / nonAgentMovements.length * 100) : 0;
   const pendingCount = pending.length + suggested.length;
   // Monto total aún sin categorizar (suma de débitos + créditos de PENDING y SUGGESTED)
   const pendingAmount = useMemo(() => {
