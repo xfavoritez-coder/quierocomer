@@ -185,7 +185,7 @@ function MovRow({
 
   const amount = movAmount(m);
   const isExpense = amount < 0;
-  const absAmount = Math.abs(amount);
+  const absAmount = Math.round(Math.abs(amount)); // redondear para evitar problemas de float
 
   const splitTotal = splits.reduce((s, r) => {
     const n = parseInt(r.amount.replace(/\D/g, ""), 10);
@@ -420,7 +420,14 @@ function MovRow({
 
 // ─── Agents tab content ───────────────────────────────────────────────────────
 
-function AgentsTab({ movements, agents, restaurantId, month }: { movements: Movement[]; agents: CashAgent[]; restaurantId: string; month: string }) {
+function AgentsTab({
+  movements, agents, restaurantId, month, categories, onAction, onDelete,
+}: {
+  movements: Movement[]; agents: CashAgent[]; restaurantId: string; month: string;
+  categories: Category[];
+  onAction: (movementId: string, params: Record<string, unknown>) => Promise<void>;
+  onDelete: (id: string) => void;
+}) {
   const [resumen, setResumen] = useState<{ totalRetirado: number; totalReportado: number; sinJustificar: number } | null>(null);
 
   useEffect(() => {
@@ -437,8 +444,11 @@ function AgentsTab({ movements, agents, restaurantId, month }: { movements: Move
     for (const m of movements) {
       if (m.agent && map[m.agent.id]) {
         map[m.agent.id].movements.push(m);
-        const amt = movAmount(m);
-        map[m.agent.id].total += amt;
+        // Solo contar retiros aún no conciliados (RECONCILED = categorizado directamente, ej: sueldo)
+        if (m.status !== "RECONCILED") {
+          const amt = movAmount(m);
+          map[m.agent.id].total += amt;
+        }
       }
     }
     return Object.values(map).filter(g => g.movements.length > 0);
@@ -467,19 +477,10 @@ function AgentsTab({ movements, agents, restaurantId, month }: { movements: Move
               <span style={{ fontFamily: FB, fontSize: "0.78rem", color: resumen && resumen.sinJustificar > 0 ? "#ef4444" : "var(--adm-text3,#aaa)" }}>Sin justificar: <b>{resumen ? (resumen.sinJustificar > 0 ? fmtClp(resumen.sinJustificar) : "✓ OK") : "—"}</b></span>
             </div>
           </div>
-          {/* Movements */}
-          {ms.map(m => {
-            const amt = movAmount(m);
-            const isEx = amt < 0;
-            return (
-              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderBottom: "1px solid var(--adm-card-border,#f5f5f5)" }}>
-                <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3,#aaa)", minWidth: 48 }}>{fmtDate(m.date)}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text,#111)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.description}</span>
-                <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.85rem", color: isEx ? "#ef4444" : "#22c55e" }}>{isEx ? "- " : "+ "}{fmtClp(Math.abs(amt))}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.68rem", padding: "2px 6px", borderRadius: 20, background: statusColor(m.status) + "22", color: statusColor(m.status) }}>{statusLabel(m.status)}</span>
-              </div>
-            );
-          })}
+          {/* Movements — full MovRow so se pueden categorizar directamente (ej: sueldo) */}
+          {ms.map(m => (
+            <MovRow key={m.id} m={m} categories={categories} onAction={onAction} onDelete={onDelete} />
+          ))}
         </div>
       ))}
     </div>
@@ -784,7 +785,8 @@ export default function ConciliacionPage() {
           {agents.map(ag => {
             const ms = agentMovements.filter(m => m.agent?.id === ag.id);
             if (!ms.length) return null;
-            const total = ms.reduce((s, m) => s + movAmount(m), 0);
+            // Solo contar los no-conciliados (los RECONCILED son sueldos u otros categorizados directamente)
+            const total = ms.filter(m => m.status !== "RECONCILED").reduce((s, m) => s + movAmount(m), 0);
             return (
               <div key={ag.id} style={{ padding: "10px 16px", background: "var(--adm-card,#fff)", border: "1px solid var(--adm-card-border,#f0f0f0)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
                 <User size={14} color="#d97706" />
@@ -837,7 +839,11 @@ export default function ConciliacionPage() {
 
           {/* Tab content */}
           {tab === "AGENTS" ? (
-            <AgentsTab movements={agentMovements} agents={agents} restaurantId={restaurantId ?? ""} month={month} />
+            <AgentsTab
+              movements={agentMovements} agents={agents}
+              restaurantId={restaurantId ?? ""} month={month}
+              categories={categories} onAction={handleAction} onDelete={handleDelete}
+            />
           ) : activeMovements.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--adm-text3,#aaa)" }}>
               <Check size={28} style={{ margin: "0 auto 10px", display: "block", opacity: 0.25 }} />

@@ -26,12 +26,13 @@ export async function GET(req: NextRequest) {
 
   const agentIds = agents.map((a) => a.id);
 
-  // Retiros del banco por agente (sum of debit)
+  // Retiros del banco por agente (sum of debit) — excluir RECONCILED (ej: sueldo categorizado directamente)
   const bankMovements = await prisma.bankMovement.findMany({
     where: {
       restaurantId,
       agentId: { in: agentIds },
       date: { gte: start, lt: end },
+      status: { not: "RECONCILED" },
     },
     select: { agentId: true, debit: true },
   });

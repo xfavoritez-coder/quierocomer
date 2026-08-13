@@ -11,8 +11,9 @@ export async function GET(req: NextRequest) {
     await assertOwnsRestaurant(req, restaurantId);
   } catch (e: any) { return authErrorResponse(e); }
 
+  const all = req.nextUrl.searchParams.get("all") === "true";
   const categories = await prisma.financialCategory.findMany({
-    where: { restaurantId, isActive: true },
+    where: { restaurantId, ...(all ? {} : { isActive: true }) },
     orderBy: [{ type: "asc" }, { group: "asc" }, { position: "asc" }],
   });
   return NextResponse.json(categories);
@@ -43,7 +44,7 @@ export async function PUT(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
   const body = await req.json();
-  const { id, restaurantId, name, color, icon, position, isActive } = body;
+  const { id, restaurantId, name, color, icon, position, isActive, group } = body;
   if (!id || !restaurantId) return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
   try {
     await assertOwnsRestaurant(req, restaurantId);
@@ -57,6 +58,7 @@ export async function PUT(req: NextRequest) {
       ...(icon !== undefined && { icon }),
       ...(position !== undefined && { position }),
       ...(isActive !== undefined && { isActive }),
+      ...(group !== undefined && { group: group || null }),
     },
   });
   return NextResponse.json(category);
