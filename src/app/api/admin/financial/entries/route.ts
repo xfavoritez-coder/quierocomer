@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   const entries = await prisma.financialEntry.findMany({
     where: { restaurantId, date: { gte: from, lt: to } },
-    include: { category: { select: { id: true, name: true, type: true, color: true, icon: true } } },
+    include: { category: { select: { id: true, name: true, type: true, color: true, icon: true, group: true } } },
     orderBy: { date: "asc" },
   });
   return NextResponse.json(entries);
@@ -61,6 +61,23 @@ export async function DELETE(req: NextRequest) {
     await assertOwnsRestaurant(req, restaurantId);
   } catch (e: any) { return authErrorResponse(e); }
 
+  // Si la entrada viene del banco, revertir el BankMovement a PENDING
+  const entry = await prisma.financialEntry.findUnique({
+    where: { id },
+    select: { source: true, bankMovementId: true },
+  });
+  if (entry?.source === "BANK_CSV" && entry.bankMovementId) {
+    // Contar cuántas entradas quedan para ese movimiento (splits)
+    const remaining = await prisma.financialEntry.count({
+      where: { bankMovementId: entry.bankMovementId, id: { not: id } },
+    });
+    if (remaining === 0) {
+      await prisma.bankMovement.update({
+        where: { id: entry.bankMovementId },
+        data: { status: "PENDING" },
+      });
+    }
+  }
   await prisma.financialEntry.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, source: entry?.source });
 }

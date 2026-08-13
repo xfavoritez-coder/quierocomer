@@ -12,9 +12,12 @@ type Category = {
   id: string; name: string; type: FinancialType;
   group: string | null; color: string | null; icon: string | null; position: number;
 };
+type EntrySource = "MANUAL" | "BANK_CSV" | "FLUJO";
+
 type Entry = {
   id: string; categoryId: string; amount: number; type: FinancialType;
-  date: string; description: string | null; category: Category;
+  date: string; description: string | null; source: EntrySource;
+  category: Category;
 };
 
 const GROUP_ORDER = ["Proveedores", "Operaciones", "Administración", "Marketing", "RRHH", "Inversiones", "Dinero temporal", "Impuestos", "Amortizaciones"];
@@ -304,18 +307,36 @@ function Spacer() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Recent Entries
 // ─────────────────────────────────────────────────────────────────────────────
+const SOURCE_LABEL: Record<EntrySource, string> = {
+  MANUAL: "Manual",
+  BANK_CSV: "Banco",
+  FLUJO: "/flujo",
+};
+const SOURCE_COLOR: Record<EntrySource, string> = {
+  MANUAL: "#94a3b8",
+  BANK_CSV: "#3b82f6",
+  FLUJO: "#f59e0b",
+};
+const SOURCE_CONFIRM: Record<EntrySource, string | null> = {
+  MANUAL: null, // sin confirmación
+  BANK_CSV: "Este movimiento viene de la conciliación bancaria. Al eliminarlo, el movimiento del banco volverá a estar Pendiente en Conciliación. ¿Continuar?",
+  FLUJO: "Este movimiento fue reportado por el agente en /flujo. Al eliminarlo, se reducirá el total justificado del mes. ¿Continuar?",
+};
+
 function RecentEntries({ entries, restaurantId, onDelete }: { entries: Entry[]; restaurantId: string; onDelete: (id: string) => void }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  // Exclude historical imports (description = "Mes 2026")
+
   const recent = [...entries]
     .filter(e => !e.description?.match(/^(Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre) 2026$/))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 15);
+    .slice(0, 20);
 
-  async function del(id: string) {
-    setDeletingId(id);
-    await fetch("/api/admin/financial/entries", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, restaurantId }) });
-    onDelete(id);
+  async function del(e: Entry) {
+    const msg = SOURCE_CONFIRM[e.source];
+    if (msg && !confirm(msg)) return;
+    setDeletingId(e.id);
+    await fetch("/api/admin/financial/entries", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: e.id, restaurantId }) });
+    onDelete(e.id);
     setDeletingId(null);
   }
 
@@ -323,7 +344,9 @@ function RecentEntries({ entries, restaurantId, onDelete }: { entries: Entry[]; 
 
   return (
     <div style={{ marginTop: 24 }}>
-      <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3,#aaa)", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 10px" }}>Movimientos ingresados manualmente</p>
+      <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3,#aaa)", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 10px" }}>
+        Movimientos recientes
+      </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {recent.map(e => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, background: "var(--adm-card,#fff)", border: "1px solid var(--adm-card-border,#f0f0f0)" }}>
@@ -332,16 +355,23 @@ function RecentEntries({ entries, restaurantId, onDelete }: { entries: Entry[]; 
               <p style={{ margin: 0, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text,#111)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {e.category.name}{e.description ? ` — ${e.description}` : ""}
               </p>
-              <p style={{ margin: "1px 0 0", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3,#999)" }}>
+              <p style={{ margin: "1px 0 0", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3,#999)", display: "flex", alignItems: "center", gap: 6 }}>
                 {new Date(e.date).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
-                {e.category.group && <span style={{ marginLeft: 6, opacity: 0.6 }}>· {e.category.group}</span>}
+                {e.category.group && <span style={{ opacity: 0.6 }}>· {e.category.group}</span>}
+                <span style={{ padding: "1px 5px", borderRadius: 4, background: SOURCE_COLOR[e.source] + "22", color: SOURCE_COLOR[e.source], fontWeight: 600, fontSize: "0.68rem" }}>
+                  {SOURCE_LABEL[e.source]}
+                </span>
               </p>
             </div>
             <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: e.type === "INCOME" ? "#16a34a" : "#dc2626", flexShrink: 0 }}>
               {e.type === "INCOME" ? "+" : "-"}{clp(e.amount)}
             </span>
-            <button onClick={() => del(e.id)} disabled={deletingId === e.id}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3,#ccc)", padding: 4, flexShrink: 0 }}>
+            <button
+              onClick={() => del(e)}
+              disabled={deletingId === e.id}
+              title={e.source === "BANK_CSV" ? "Eliminar (el movimiento bancario vuelve a Pendiente)" : e.source === "FLUJO" ? "Eliminar (reduce lo justificado por el agente)" : "Eliminar"}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3,#ccc)", padding: 4, flexShrink: 0, opacity: deletingId === e.id ? 0.4 : 1 }}
+            >
               <X size={14} />
             </button>
           </div>

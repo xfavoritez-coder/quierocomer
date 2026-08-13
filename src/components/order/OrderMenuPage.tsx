@@ -519,11 +519,11 @@ function ClosedBanner({ businessHours, inline, isDark, accent }: { businessHours
       {showModal && (
         <div
           onClick={() => setShowModal(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflowY: "auto", padding: 16 }}
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: modalBg, borderRadius: 20, width: "calc(100% - 32px)", maxWidth: 400, padding: "24px 20px 28px", margin: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
+            style={{ background: modalBg, borderRadius: 20, width: "100%", maxWidth: 400, padding: "24px 20px 28px", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", margin: "auto", flexShrink: 0 }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <h3 style={{ fontFamily: FB, fontSize: "1rem", fontWeight: 700, color: titleColor, margin: 0 }}>🕐 Horarios de atención</h3>
