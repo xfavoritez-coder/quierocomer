@@ -54,7 +54,9 @@ function fmtClp(n: number) {
 }
 
 function fmtDate(iso: string) {
-  const d = new Date(iso + "T12:00:00");
+  // Accepts full ISO ("2026-08-01T03:00:00.000Z") or date-only ("2026-08-01")
+  const datePart = iso.length > 10 ? iso.slice(0, 10) : iso;
+  const d = new Date(datePart + "T12:00:00");
   return d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
 }
 
@@ -843,7 +845,7 @@ export default function ConciliacionPage() {
               {preview.rows.filter(r => r.isNew).map((row, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 20px", borderBottom: "1px solid var(--adm-card-border)" }}>
                   <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0, minWidth: 50 }}>
-                    {new Date(row.date).toLocaleDateString("es-CL", { day: "2-digit", month: "short" })}
+                    {fmtDate(row.date)}
                   </span>
                   <span style={{ flex: 1, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {row.description}

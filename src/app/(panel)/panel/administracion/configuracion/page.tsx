@@ -383,17 +383,20 @@ function SectionTitle({ icon, title, count }: { icon: React.ReactNode; title: st
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Gestión de grupos (renombrar / disolver)
+// Gestión de grupos (renombrar / disolver / crear)
 // ─────────────────────────────────────────────────────────────────────────────
-function GroupsSection({ restaurantId, groups, onRenamed, onDissolved }: {
+function GroupsSection({ restaurantId, groups, onRenamed, onDissolved, onCreated }: {
   restaurantId: string;
   groups: string[]; // lista de grupos existentes
   onRenamed: (oldName: string, newName: string) => void;
   onDissolved: (groupName: string) => void;
+  onCreated: (name: string) => void;
 }) {
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showNewGroup, setShowNewGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
 
   async function rename(oldName: string) {
     if (!newName.trim() || newName.trim() === oldName) { setEditingGroup(null); return; }
@@ -417,7 +420,14 @@ function GroupsSection({ restaurantId, groups, onRenamed, onDissolved }: {
     onDissolved(groupName);
   }
 
-  if (groups.length === 0) return null;
+  function createGroup() {
+    const name = newGroupName.trim();
+    if (!name) return;
+    if (groups.includes(name)) { setNewGroupName(""); setShowNewGroup(false); return; }
+    onCreated(name);
+    setNewGroupName("");
+    setShowNewGroup(false);
+  }
 
   return (
     <section style={{ marginBottom: 40 }}>
@@ -425,41 +435,72 @@ function GroupsSection({ restaurantId, groups, onRenamed, onDissolved }: {
       <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", marginBottom: 16, marginTop: -8 }}>
         Renombra o disuelve grupos. Al disolver, sus categorías quedan sin grupo.
       </p>
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
-        {groups.map((g, i) => (
-          <div key={g} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: i < groups.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
-            {editingGroup === g ? (
-              <>
-                <input
-                  autoFocus
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") rename(g); if (e.key === "Escape") { setEditingGroup(null); setNewName(""); } }}
-                  style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.875rem", outline: "none" }}
-                />
-                <button onClick={() => rename(g)} disabled={saving} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
-                  {saving ? "…" : "Guardar"}
-                </button>
-                <button onClick={() => { setEditingGroup(null); setNewName(""); }} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
-                  Cancelar
-                </button>
-              </>
-            ) : (
-              <>
-                <span style={{ flex: 1, fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, color: "var(--adm-text)" }}>{g}</span>
-                <button onClick={() => { setEditingGroup(g); setNewName(g); }} title="Renombrar" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}
-                  onMouseOver={e => (e.currentTarget.style.color = "#1a5f3f")} onMouseOut={e => (e.currentTarget.style.color = "var(--adm-text3)")}>
-                  <Edit2 size={13} />
-                </button>
-                <button onClick={() => dissolve(g)} title="Disolver grupo" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}
-                  onMouseOver={e => (e.currentTarget.style.color = "#ef4444")} onMouseOut={e => (e.currentTarget.style.color = "var(--adm-text3)")}>
-                  <Trash2 size={13} />
-                </button>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+      {groups.length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden", marginBottom: 10 }}>
+          {groups.map((g, i) => (
+            <div key={g} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: i < groups.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
+              {editingGroup === g ? (
+                <>
+                  <input
+                    autoFocus
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") rename(g); if (e.key === "Escape") { setEditingGroup(null); setNewName(""); } }}
+                    style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.875rem", outline: "none" }}
+                  />
+                  <button onClick={() => rename(g)} disabled={saving} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
+                    {saving ? "…" : "Guardar"}
+                  </button>
+                  <button onClick={() => { setEditingGroup(null); setNewName(""); }} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span style={{ flex: 1, fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, color: "var(--adm-text)" }}>{g}</span>
+                  <button onClick={() => { setEditingGroup(g); setNewName(g); }} title="Renombrar" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}
+                    onMouseOver={e => (e.currentTarget.style.color = "#1a5f3f")} onMouseOut={e => (e.currentTarget.style.color = "var(--adm-text3)")}>
+                    <Edit2 size={13} />
+                  </button>
+                  <button onClick={() => dissolve(g)} title="Disolver grupo" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}
+                    onMouseOver={e => (e.currentTarget.style.color = "#ef4444")} onMouseOut={e => (e.currentTarget.style.color = "var(--adm-text3)")}>
+                    <Trash2 size={13} />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Agregar nuevo grupo */}
+      {showNewGroup ? (
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            autoFocus
+            value={newGroupName}
+            onChange={e => setNewGroupName(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") createGroup(); if (e.key === "Escape") { setShowNewGroup(false); setNewGroupName(""); } }}
+            placeholder="Nombre del grupo"
+            style={{ flex: 1, padding: "7px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.875rem", outline: "none" }}
+          />
+          <button onClick={createGroup} disabled={!newGroupName.trim()} style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer", opacity: newGroupName.trim() ? 1 : 0.5 }}>
+            Agregar
+          </button>
+          <button onClick={() => { setShowNewGroup(false); setNewGroupName(""); }} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
+            Cancelar
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowNewGroup(true)}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, border: "1.5px dashed var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.85rem", cursor: "pointer" }}
+          onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a5f3f"; (e.currentTarget as HTMLButtonElement).style.color = "#1a5f3f"; }}
+          onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--adm-card-border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--adm-text2)"; }}
+        >
+          <Plus size={13} /> Agregar grupo
+        </button>
+      )}
     </section>
   );
 }
@@ -671,6 +712,7 @@ export default function ConfiguracionFinanciera() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
+  const [extraGroups, setExtraGroups] = useState<string[]>([]);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -736,6 +778,7 @@ export default function ConfiguracionFinanciera() {
   }
 
   const allGroups = Array.from(new Set(categories.map(c => c.group).filter(Boolean) as string[]));
+  const allGroupsComputed = [...allGroups, ...extraGroups.filter(g => !allGroups.includes(g))];
 
   function getGroupMeta(cats: Category[]) {
     const first = cats.find(c => c.icon || c.color) || cats[0];
@@ -768,7 +811,7 @@ export default function ConfiguracionFinanciera() {
 
       {showCreateForm && restaurantId && (
         <CategoryForm
-          existingGroups={allGroups}
+          existingGroups={allGroupsComputed}
           restaurantId={restaurantId}
           onSaved={handleCreated}
           onCancel={() => setShowCreateForm(false)}
@@ -778,7 +821,7 @@ export default function ConfiguracionFinanciera() {
       {editingCat && restaurantId && (
         <CategoryForm
           initial={editingCat}
-          existingGroups={allGroups}
+          existingGroups={allGroupsComputed}
           restaurantId={restaurantId}
           onSaved={handleEdited}
           onCancel={() => setEditingCat(null)}
@@ -860,12 +903,13 @@ export default function ConfiguracionFinanciera() {
       <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "8px 0 36px" }} />
 
       {/* Gestión de grupos */}
-      {restaurantId && allGroups.length > 0 && (
+      {restaurantId && (
         <GroupsSection
           restaurantId={restaurantId}
-          groups={allGroups}
+          groups={allGroupsComputed}
           onRenamed={handleGroupRenamed}
           onDissolved={handleGroupDissolved}
+          onCreated={name => setExtraGroups(prev => [...prev, name])}
         />
       )}
 
