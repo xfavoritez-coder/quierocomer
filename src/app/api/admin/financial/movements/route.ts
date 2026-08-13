@@ -395,6 +395,22 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // ── ASIGNAR A AGENTE ──
+  if (action === "assign_agent") {
+    const { agentId } = body;
+    if (!agentId) return NextResponse.json({ error: "agentId requerido" }, { status: 400 });
+    // Verificar que el agente pertenece al restaurante
+    const agent = await prisma.cashAgent.findFirst({ where: { id: agentId, restaurantId } });
+    if (!agent) return NextResponse.json({ error: "Agente no encontrado" }, { status: 404 });
+    // Borrar entries si las había, quitar categorización
+    await prisma.financialEntry.deleteMany({ where: { bankMovementId: movementId } });
+    await prisma.bankMovement.update({
+      where: { id: movementId },
+      data: { agentId, status: "PENDING", suggestedCatId: null },
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
 }
 

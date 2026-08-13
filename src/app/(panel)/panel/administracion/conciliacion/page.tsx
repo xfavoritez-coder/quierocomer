@@ -164,16 +164,20 @@ function KPI({ label, value, color, sub }: { label: string; value: string; color
 type PanelMode = "simple" | "split";
 
 function MovRow({
-  m, categories, onAction, onDelete,
+  m, categories, agents, onAction, onDelete,
 }: {
   m: Movement;
   categories: Category[];
+  agents: CashAgent[];
   onAction: (movementId: string, params: Record<string, unknown>) => Promise<void>;
   onDelete: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<PanelMode>("simple");
   const [saving, setSaving] = useState(false);
+
+  // Agent assignment
+  const [selAgent, setSelAgent] = useState("");
 
   // Simple categorize
   const [selCat, setSelCat] = useState("");
@@ -194,6 +198,14 @@ function MovRow({
     return s + (isNaN(n) ? 0 : n);
   }, 0);
   const remaining = absAmount - splitTotal;
+
+  async function doAssignAgent() {
+    if (!selAgent) return;
+    setSaving(true);
+    await onAction(m.id, { action: "assign_agent", agentId: selAgent });
+    setSaving(false);
+    setOpen(false);
+  }
 
   async function doSimple() {
     if (!selCat) return;
@@ -243,6 +255,7 @@ function MovRow({
     setOpen(v => !v);
     setMode("simple");
     setSelCat("");
+    setSelAgent("");
   };
 
   const statusBadge = (
@@ -358,14 +371,44 @@ function MovRow({
 
           {mode === "simple" && (
             <div>
-              <CategorySelect categories={categories} value={selCat} onChange={setSelCat} isExpense={isExpense} />
-              <button
-                onClick={doSimple}
-                disabled={!selCat || saving}
-                style={{ marginTop: 10, padding: "8px 20px", borderRadius: 8, border: "none", background: selCat ? "#F4A623" : "var(--adm-card-border,#e5e7eb)", color: selCat ? "#fff" : "var(--adm-text3,#aaa)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: selCat ? "pointer" : "default" }}
-              >
-                {saving ? "Guardando..." : "Guardar"}
-              </button>
+              {/* Agente — si hay agentes activos, ofrecer asignar */}
+              {agents.length > 0 && (
+                <div style={{ marginBottom: 10 }}>
+                  <p style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3,#aaa)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>
+                    ¿Es un retiro a agente?
+                  </p>
+                  <select
+                    value={selAgent}
+                    onChange={e => { setSelAgent(e.target.value); if (e.target.value) setSelCat(""); }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${selAgent ? "#f59e0b" : "var(--adm-card-border,#e5e7eb)"}`, background: selAgent ? "#f59e0b11" : "var(--adm-input,#f9fafb)", color: "var(--adm-text,#111)", fontFamily: FB, fontSize: "0.85rem", outline: "none" }}
+                  >
+                    <option value="">Sin agente — categorizar normalmente</option>
+                    {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                  {selAgent && (
+                    <button
+                      onClick={doAssignAgent}
+                      disabled={saving}
+                      style={{ marginTop: 8, padding: "8px 20px", borderRadius: 8, border: "none", background: "#f59e0b", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
+                    >
+                      {saving ? "Guardando..." : "Asignar a agente"}
+                    </button>
+                  )}
+                  {!selAgent && <div style={{ margin: "10px 0", borderTop: "1px solid var(--adm-card-border,#e5e7eb)" }} />}
+                </div>
+              )}
+              {!selAgent && (
+                <>
+                  <CategorySelect categories={categories} value={selCat} onChange={v => { setSelCat(v); setSelAgent(""); }} isExpense={isExpense} />
+                  <button
+                    onClick={doSimple}
+                    disabled={!selCat || saving}
+                    style={{ marginTop: 10, padding: "8px 20px", borderRadius: 8, border: "none", background: selCat ? "#F4A623" : "var(--adm-card-border,#e5e7eb)", color: selCat ? "#fff" : "var(--adm-text3,#aaa)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: selCat ? "pointer" : "default" }}
+                  >
+                    {saving ? "Guardando..." : "Guardar"}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -526,18 +569,15 @@ function AgentTimeline({ agentId, restaurantId, month }: { agentId: string; rest
 // ─── Agents tab content ───────────────────────────────────────────────────────
 
 function AgentsTab({
-  movements, agents, resumen, categories, onAction, onDelete, restaurantId, month,
+  movements, agents, resumen, restaurantId, month,
 }: {
   movements: Movement[]; agents: CashAgent[];
   resumen: { totalRetirado: number; totalReportado: number; sinJustificar: number } | null;
-  categories: Category[];
-  onAction: (movementId: string, params: Record<string, unknown>) => Promise<void>;
-  onDelete: (id: string) => void;
   restaurantId: string;
   month: string;
 }) {
 
-  const [openCategorize, setOpenCategorize] = useState<Record<string, boolean>>({});
+  const [openRetiros, setOpenRetiros] = useState<Record<string, boolean>>({});
 
   const grouped = useMemo(() => {
     const map: Record<string, { agent: CashAgent; movements: Movement[]; total: number }> = {};
@@ -569,7 +609,7 @@ function AgentsTab({
   return (
     <div>
       {grouped.map(({ agent, movements: ms, total }) => {
-        const isCatOpen = openCategorize[agent.id] ?? false;
+        const isOpen = openRetiros[agent.id] ?? false;
         return (
           <div key={agent.id} style={{ marginBottom: 20, background: "var(--adm-card,#fff)", border: "1px solid var(--adm-card-border,#f0f0f0)", borderRadius: 12, overflow: "hidden" }}>
             {/* Agent header */}
@@ -586,10 +626,10 @@ function AgentsTab({
             {/* Cash flow timeline */}
             <AgentTimeline agentId={agent.id} restaurantId={restaurantId} month={month} />
 
-            {/* Collapsible categorize section — bank movements for direct categorization */}
+            {/* Collapsible retiros — solo informativo, sin acción de categorizar */}
             <div>
               <button
-                onClick={() => setOpenCategorize(prev => ({ ...prev, [agent.id]: !prev[agent.id] }))}
+                onClick={() => setOpenRetiros(prev => ({ ...prev, [agent.id]: !prev[agent.id] }))}
                 style={{
                   width: "100%", padding: "8px 14px", background: "none",
                   border: "none", borderTop: "1px solid var(--adm-card-border,#f0f0f0)",
@@ -597,12 +637,29 @@ function AgentsTab({
                   fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3,#aaa)",
                 }}
               >
-                <span style={{ transform: isCatOpen ? "rotate(90deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.15s" }}>▶</span>
-                Ver movimientos para categorizar ({ms.length})
+                <span style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.15s" }}>▶</span>
+                Ver retiros del banco ({ms.length})
               </button>
-              {isCatOpen && ms.map(m => (
-                <MovRow key={m.id} m={m} categories={categories} onAction={onAction} onDelete={onDelete} />
-              ))}
+              {isOpen && (
+                <div>
+                  {ms.map(m => {
+                    const amt = movAmount(m);
+                    return (
+                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderTop: "1px solid var(--adm-card-border,#f0f0f0)" }}>
+                        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3,#999)", minWidth: 48, flexShrink: 0, textTransform: "capitalize" }}>
+                          {fmtDate(m.date)}
+                        </span>
+                        <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text,#111)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {m.description}
+                        </span>
+                        <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: amt < 0 ? "#ef4444" : "#22c55e", flexShrink: 0 }}>
+                          {amt < 0 ? "- " : "+ "}{fmtClp(Math.abs(amt))}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -979,7 +1036,6 @@ export default function ConciliacionPage() {
             <AgentsTab
               movements={agentMovements} agents={agents.filter(a => a.isActive)}
               resumen={resumen}
-              categories={categories} onAction={handleAction} onDelete={handleDelete}
               restaurantId={restaurantId ?? ""} month={month}
             />
           ) : activeMovements.length === 0 ? (
@@ -994,6 +1050,7 @@ export default function ConciliacionPage() {
                   key={m.id}
                   m={m}
                   categories={categories}
+                  agents={agents.filter(a => a.isActive)}
                   onAction={handleAction}
                   onDelete={handleDelete}
                 />
