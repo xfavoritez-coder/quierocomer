@@ -421,20 +421,14 @@ function MovRow({
 // ─── Agents tab content ───────────────────────────────────────────────────────
 
 function AgentsTab({
-  movements, agents, restaurantId, month, categories, onAction, onDelete,
+  movements, agents, resumen, categories, onAction, onDelete,
 }: {
-  movements: Movement[]; agents: CashAgent[]; restaurantId: string; month: string;
+  movements: Movement[]; agents: CashAgent[];
+  resumen: { totalRetirado: number; totalReportado: number; sinJustificar: number } | null;
   categories: Category[];
   onAction: (movementId: string, params: Record<string, unknown>) => Promise<void>;
   onDelete: (id: string) => void;
 }) {
-  const [resumen, setResumen] = useState<{ totalRetirado: number; totalReportado: number; sinJustificar: number } | null>(null);
-
-  useEffect(() => {
-    if (!restaurantId) return;
-    fetch(`/api/flujo/resumen?restaurantId=${restaurantId}&month=${month}`)
-      .then(r => r.json()).then(setResumen).catch(() => {});
-  }, [restaurantId, month]);
 
   const grouped = useMemo(() => {
     const map: Record<string, { agent: CashAgent; movements: Movement[]; total: number }> = {};
@@ -501,6 +495,9 @@ export default function ConciliacionPage() {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  type Resumen = { totalRetirado: number; totalReportado: number; sinJustificar: number };
+  const [resumen, setResumen] = useState<Resumen | null>(null);
+
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; autoSuggested?: number } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -518,14 +515,16 @@ export default function ConciliacionPage() {
   const load = useCallback(async (rid: string, m: string) => {
     setLoading(true);
     try {
-      const [movRes, catRes, agRes] = await Promise.all([
+      const [movRes, catRes, agRes, resumenRes] = await Promise.all([
         fetch(`/api/admin/financial/movements?restaurantId=${rid}&month=${m}`),
         fetch(`/api/admin/financial/categories?restaurantId=${rid}`),
         fetch(`/api/admin/financial/agents?restaurantId=${rid}`),
+        fetch(`/api/flujo/resumen?restaurantId=${rid}&month=${m}`),
       ]);
       if (movRes.ok) setMovements(await movRes.json());
       if (catRes.ok) setCategories(await catRes.json());
       if (agRes.ok) setAgents(await agRes.json());
+      if (resumenRes.ok) setResumen(await resumenRes.json());
     } finally {
       setLoading(false);
       setLoaded(true);
@@ -796,9 +795,9 @@ export default function ConciliacionPage() {
               <div key={ag.id} style={{ padding: "10px 16px", background: "var(--adm-card,#fff)", border: "1px solid var(--adm-card-border,#f0f0f0)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
                 <User size={14} color="#d97706" />
                 <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.82rem", color: "var(--adm-text,#111)" }}>{ag.name}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Retirado: <b style={{ color: total < 0 ? "#ef4444" : "#22c55e" }}>{fmtClp(Math.abs(total))}</b></span>
-                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3,#aaa)" }}>Reportado: <b>—</b></span>
-                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3,#aaa)" }}>Sin justificar: <b>—</b></span>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Retirado: <b style={{ color: "#ef4444" }}>{fmtClp(Math.abs(total))}</b></span>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Reportado: <b style={{ color: "#22c55e" }}>{resumen ? fmtClp(resumen.totalReportado) : "…"}</b></span>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: resumen && resumen.sinJustificar > 0 ? "#ef4444" : "var(--adm-text3,#aaa)" }}>Sin justificar: <b>{resumen ? (resumen.sinJustificar > 0 ? fmtClp(resumen.sinJustificar) : "✓ OK") : "…"}</b></span>
               </div>
             );
           })}
@@ -846,7 +845,7 @@ export default function ConciliacionPage() {
           {tab === "AGENTS" ? (
             <AgentsTab
               movements={agentMovements} agents={agents}
-              restaurantId={restaurantId ?? ""} month={month}
+              resumen={resumen}
               categories={categories} onAction={handleAction} onDelete={handleDelete}
             />
           ) : activeMovements.length === 0 ? (
