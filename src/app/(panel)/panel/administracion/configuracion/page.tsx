@@ -189,7 +189,8 @@ function CategoryForm({
   const isEdit = !!initial;
   const [name, setName] = useState(initial?.name ?? "");
   const [type, setType] = useState<FinancialType>(initial?.type ?? "EXPENSE");
-  const [group, setGroup] = useState(initial?.group ?? (existingGroups[0] || ""));
+  // En edición usar el grupo real (null → ""); en creación usar el primer grupo existente
+  const [group, setGroup] = useState(isEdit ? (initial?.group ?? "") : (existingGroups[0] || ""));
   const [newGroup, setNewGroup] = useState("");
   const [icon, setIcon] = useState(initial?.icon ?? "");
   const [color, setColor] = useState(initial?.color ?? "#64748b");
