@@ -176,7 +176,7 @@ function PLStatement({ categories, entries, monthStr }: {
     <div>
       {/* Título del estado */}
       <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 16, borderBottom: "2px solid var(--adm-card-border,#e5e7eb)" }}>
-        <p style={{ fontFamily: F, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--adm-text3,#aaa)", margin: "0 0 4px" }}>Estado de Resultados</p>
+        <p style={{ fontFamily: F, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--adm-text3,#aaa)", margin: "0 0 4px" }}>Flujo de Caja</p>
         <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text,#111)", textTransform: "capitalize", margin: 0 }}>{monthStr}</p>
       </div>
 
@@ -397,7 +397,7 @@ export default function FlujoFinancieroPage() {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
           <p style={{ fontFamily: F, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--adm-text3,#999)", margin: "0 0 2px" }}>Administración</p>
-          <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "var(--adm-text,#111)", margin: 0 }}>Flujo Financiero</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "var(--adm-text,#111)", margin: 0 }}>Flujo de Caja</h1>
         </div>
         <button onClick={() => setShowModal(true)}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", borderRadius: 10, border: "none", background: "#F4A623", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
