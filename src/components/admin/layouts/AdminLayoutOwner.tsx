@@ -113,6 +113,16 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
       ],
     }] : []),
+    ...(opts.hasFinancial ? [{
+      key: "administracion",
+      label: "Administración",
+      icon: TrendingUp,
+      items: [
+        { icon: TrendingUp, labelKey: "nav_flujo_financiero", href: `${base}/administracion/flujo` },
+        { icon: Landmark, labelKey: "nav_conciliacion", href: `${base}/administracion/conciliacion` },
+        { icon: Settings, labelKey: "nav_configuracion_financiera", href: `${base}/administracion/configuracion` },
+      ],
+    }] : []),
     {
       key: "config",
       label: "Configuración",
@@ -130,16 +140,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
       ],
     },
-    ...(opts.hasFinancial ? [{
-      key: "administracion",
-      label: "Administración",
-      icon: TrendingUp,
-      items: [
-        { icon: TrendingUp, labelKey: "nav_flujo_financiero", href: `${base}/administracion/flujo` },
-        { icon: Landmark, labelKey: "nav_conciliacion", href: `${base}/administracion/conciliacion` },
-        { icon: Settings, labelKey: "nav_configuracion_financiera", href: `${base}/administracion/configuracion` },
-      ],
-    }] : []),
     {
       key: "support",
       label: "Soporte",
