@@ -137,6 +137,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       items: [
         { icon: TrendingUp, labelKey: "nav_flujo_financiero", href: `${base}/administracion/flujo` },
         { icon: Landmark, labelKey: "nav_conciliacion", href: `${base}/administracion/conciliacion` },
+        { icon: Settings, labelKey: "nav_configuracion_financiera", href: `${base}/administracion/configuracion` },
       ],
     }] : []),
     {
