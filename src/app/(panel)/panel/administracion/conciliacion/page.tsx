@@ -780,17 +780,22 @@ export default function ConciliacionPage() {
     return uncategorized.reduce((s, m) => s + Math.abs(movAmount(m)), 0);
   }, [pending, suggested]);
 
+  // Pendientes y sugeridos en una sola lista ordenada por fecha
+  const pendingAll = useMemo(() =>
+    [...pending, ...suggested].sort((a, b) => a.date.localeCompare(b.date)),
+    [pending, suggested]
+  );
+
   const tabMovements: Record<TabKey, Movement[]> = {
-    PENDING: pending,
-    SUGGESTED: suggested,
+    PENDING: pendingAll,
+    SUGGESTED: [],
     AGENTS: agentMovements,
     RECONCILED: reconciled,
     IGNORED: ignored,
   };
 
   const tabs: { key: TabKey; label: string; count: number; needsAction: boolean }[] = [
-    { key: "PENDING", label: "Pendientes", count: pending.length, needsAction: true },
-    { key: "SUGGESTED", label: "Sugeridos", count: suggested.length, needsAction: true },
+    { key: "PENDING", label: "Pendientes", count: pendingAll.length, needsAction: true },
     { key: "AGENTS", label: "Agentes", count: agentMovements.length, needsAction: false },
     { key: "RECONCILED", label: "Conciliados", count: reconciled.length, needsAction: false },
     { key: "IGNORED", label: "Ignorados", count: ignored.length, needsAction: false },
@@ -801,7 +806,7 @@ export default function ConciliacionPage() {
   // Empty state messages
   const emptyMessages: Record<TabKey, string> = {
     PENDING: "Sin movimientos pendientes. ¡Todo al día!",
-    SUGGESTED: "Sin sugerencias automáticas este mes.",
+    SUGGESTED: "",
     AGENTS: "Sin movimientos de agentes en este mes.",
     RECONCILED: "Sin movimientos conciliados aún.",
     IGNORED: "Sin movimientos ignorados.",
