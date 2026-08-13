@@ -82,8 +82,8 @@ function EntryModal({ categories, restaurantId, defaultDate, onClose, onSaved }:
   };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg,#fff)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 520, padding: "24px 20px 36px" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg,#fff)", borderRadius: 20, width: "100%", maxWidth: 520, padding: "24px 20px 28px", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text,#111)", margin: 0 }}>Nuevo movimiento</h3>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3,#999)", fontSize: 20 }}>×</button>

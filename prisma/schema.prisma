@@ -398,6 +398,8 @@ model Restaurant {
   financialCategories        FinancialCategory[]
   financialEntries           FinancialEntry[]
   bankMovements              BankMovement[]
+  cashAgents                 CashAgent[]
+  categorizationRules        CategorizationRule[]
 
   commune     String?
   communeSlug String?
@@ -2559,40 +2561,99 @@ model FinancialCategory {
 }
 
 model FinancialEntry {
-  id           String            @id @default(cuid())
-  restaurantId String
-  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  categoryId   String
-  category     FinancialCategory @relation(fields: [categoryId], references: [id])
-  amount       Int               // CLP, siempre positivo
-  type         FinancialType
-  date         DateTime          // fecha del movimiento (no del ingreso al sistema)
-  description  String?
-  source       EntrySource       @default(MANUAL)
-  bankMovementId String?         @unique
-  bankMovement   BankMovement?   @relation(fields: [bankMovementId], references: [id])
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id             String            @id @default(cuid())
+  restaurantId   String
+  restaurant     Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       FinancialCategory @relation(fields: [categoryId], references: [id])
+  amount         Int               // CLP, siempre positivo
+  type           FinancialType
+  date           DateTime          // fecha del movimiento (no del ingreso al sistema)
+  description    String?
+  source         EntrySource       @default(MANUAL)
+  bankMovementId String?           // sin @unique — permite múltiples entries por movimiento (splits)
+  bankMovement   BankMovement?     @relation(fields: [bankMovementId], references: [id])
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([restaurantId, date])
   @@index([restaurantId, categoryId])
+  @@index([bankMovementId])
 }
 
 model BankMovement {
-  id           String         @id @default(cuid())
-  restaurantId String
-  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  date         DateTime
-  description  String
-  amount       Int            // positivo = abono, negativo = cargo
-  balance      Int?           // saldo después del movimiento
-  reference    String?        // referencia del banco
-  source       String         @default("CSV") // "CSV" | "FINTOC"
-  reconciledAt DateTime?
-  entry        FinancialEntry?
-  createdAt    DateTime       @default(now())
+  id              String          @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  date            DateTime
+  description     String
+  debit           Int?            // egreso en CLP (positivo)
+  credit          Int?            // ingreso en CLP (positivo)
+  balance         Int?            // saldo después del movimiento
+  source          String          @default("BCI_XLSX") // "BCI_XLSX" | "BANK_API"
+  externalKey     String?         // hash para dedup: evita reimportar mismo movimiento
+  status          MovementStatus  @default(PENDING)
+  agentId         String?         // → CashAgent si este movimiento es retiro a un agente
+  agent           CashAgent?      @relation(fields: [agentId], references: [id])
+  suggestedCatId  String?         // categoría sugerida automáticamente (single, no split)
+  entries         FinancialEntry[]
+  createdAt       DateTime        @default(now())
 
   @@index([restaurantId, date])
+  @@index([restaurantId, status])
+  @@unique([restaurantId, externalKey])
+}
+
+// Agente de compras: persona que retira plata de la cuenta y compra cosas (universal)
+model CashAgent {
+  id           String        @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String        // "Carlos Gómez"
+  bankPatterns String[]      // ["Carlos Gómez", "Carlos Gomez"] — substrings a buscar en descripción BCI
+  flujoToken   String?       @unique // token para /flujo (si tiene cuenta)
+  isActive     Boolean       @default(true)
+  movements    BankMovement[]
+  createdAt    DateTime      @default(now())
+
+  @@index([restaurantId])
+}
+
+// Regla de auto-categorización aprendida por uso
+model CategorizationRule {
+  id           String                   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant               @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  pattern      String                   // substring a buscar en la descripción del movimiento
+  isSplit      Boolean                  @default(false)
+  categoryId   String?                  // categoría para el caso simple (no split)
+  usageCount   Int                      @default(1)
+  confidence   Float                    @default(1.0) // 0-1, sube con cada confirmación
+  createdAt    DateTime                 @default(now())
+  lastUsedAt   DateTime                 @default(now())
+  splits       CategorizationRuleSplit[]
+
+  @@unique([restaurantId, pattern])
+  @@index([restaurantId])
+}
+
+// Porciones de una regla de split: cómo distribuir el monto entre categorías
+model CategorizationRuleSplit {
+  id         String              @id @default(cuid())
+  ruleId     String
+  rule       CategorizationRule  @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  categoryId String
+  ratio      Float               // 0.0-1.0, todos los splits de una regla deben sumar 1.0
+  label      String?             // etiqueta opcional: "Gastos operativos"
+
+  @@index([ruleId])
+}
+
+enum MovementStatus {
+  PENDING     // sin categoría asignada
+  SUGGESTED   // auto-detectado, esperando confirmación del usuario
+  RECONCILED  // categorizado y confirmado → tiene FinancialEntry(s)
+  IGNORED     // descartado (movimiento interno, duplicado, etc.)
 }
 
 enum FinancialType {

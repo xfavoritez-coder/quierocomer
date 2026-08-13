@@ -88,6 +88,73 @@ function Toggle({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Emoji picker grid
+// ─────────────────────────────────────────────────────────────────────────────
+const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
+  { label: "Proveedores / Alimentos", emojis: ["🥩","🐟","🥦","🧅","🍅","🥑","☕","🍵","🥛","🫙","🍄","🌾","🫒","🧄","🫚"] },
+  { label: "Operaciones", emojis: ["🔌","💧","🔥","🏠","📦","🧹","🪲","🔧","🛠️","📡","🔒","⚡","🧯","🚪","🪑"] },
+  { label: "Administración", emojis: ["📊","📋","🧾","💼","📑","🖊️","🗂️","🏦","💳","📬","📩","🔏","📎","🗃️","💰"] },
+  { label: "Marketing", emojis: ["📣","📢","🎯","📱","🌐","📸","🎨","✉️","⭐","💬","🤝","📰","🎁","🏷️","🎪"] },
+  { label: "RRHH", emojis: ["👥","👤","🎓","💪","🏆","🎖️","🩺","🧢","🚌","🎉","🤲","👔","🪪","🛡️","📅"] },
+  { label: "Inversiones", emojis: ["📈","🏗️","🛋️","🖥️","⚙️","🔬","🧪","🪛","🔑","🏢","💡","🎯","🚀","🏅","💎"] },
+  { label: "Dinero / Impuestos", emojis: ["💵","💶","💷","💴","🏧","⚖️","📜","🧮","💹","🪙","🏛️","📉","🗒️","📐","🔢"] },
+];
+
+function EmojiPicker({ selected, onSelect }: { selected: string; onSelect: (e: string) => void }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {selected && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: "1.6rem" }}>{selected}</span>
+          <span style={{ fontFamily: "var(--font-body,system-ui)", fontSize: "0.75rem", color: "var(--adm-text3)" }}>
+            seleccionado —{" "}
+            <button
+              type="button"
+              onClick={() => onSelect("")}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontFamily: "inherit", fontSize: "inherit", padding: 0 }}
+            >
+              quitar
+            </button>
+          </span>
+        </div>
+      )}
+      {EMOJI_GROUPS.map(group => (
+        <div key={group.label}>
+          <div style={{ fontFamily: "var(--font-body,system-ui)", fontSize: "0.7rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
+            {group.label}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {group.emojis.map(emoji => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => onSelect(emoji)}
+                title={emoji}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 7,
+                  border: selected === emoji ? "2px solid #1a5f3f" : "1.5px solid var(--adm-card-border)",
+                  background: selected === emoji ? "rgba(26,95,63,0.15)" : "var(--adm-bg)",
+                  fontSize: "1.1rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "border-color 0.1s, background 0.1s",
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Form para agregar nueva categoría
 // ─────────────────────────────────────────────────────────────────────────────
 function AddCategoryForm({
@@ -246,16 +313,9 @@ function AddCategoryForm({
         )}
 
         {/* Icono */}
-        <div>
-          <label style={labelStyle}>Ícono (emoji)</label>
-          <input
-            type="text"
-            value={icon}
-            onChange={e => setIcon(e.target.value)}
-            placeholder="Ej: 📣"
-            style={inputStyle}
-            maxLength={4}
-          />
+        <div style={{ gridColumn: "1 / -1" }}>
+          <label style={labelStyle}>Ícono</label>
+          <EmojiPicker selected={icon} onSelect={setIcon} />
         </div>
 
         {/* Color */}
