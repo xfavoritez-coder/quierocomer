@@ -35,6 +35,13 @@ function pushRecentCat(id: string) {
   localStorage.setItem(RECENT_KEY, JSON.stringify([id, ...prev].slice(0, MAX_RECENT)));
 }
 
+type Resumen = { totalRetirado: number; totalReportado: number; sinJustificar: number };
+
+function currentMonth() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function FlujoPage() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -46,18 +53,17 @@ export default function FlujoPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [resumen, setResumen] = useState<Resumen | null>(null);
   const montoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/flujo/gastos").then(r => r.json()).then(setGastos).catch(() => {});
-    // Cargar categorías de Horus (EXPENSE primero, que es lo más común en /flujo)
     fetch(`/api/admin/financial/categories?restaurantId=${HORUS_ID}`)
       .then(r => r.json())
-      .then((cats: Category[]) => {
-        setCategories(cats);
-        setRecentIds(getRecentCatIds());
-      })
+      .then((cats: Category[]) => { setCategories(cats); setRecentIds(getRecentCatIds()); })
       .catch(() => {});
+    fetch(`/api/flujo/resumen?restaurantId=${HORUS_ID}&month=${currentMonth()}`)
+      .then(r => r.json()).then(setResumen).catch(() => {});
   }, []);
 
   // Solo egresos, recientes primero, luego por posición
@@ -128,6 +134,37 @@ export default function FlujoPage() {
           </p>
         )}
       </div>
+
+      {/* Banner de reconciliación con el banco */}
+      {resumen && resumen.totalRetirado > 0 && (
+        <div style={{ padding: "12px 20px 0", maxWidth: "480px", margin: "0 auto" }}>
+          <div style={{
+            background: "rgba(255,255,255,0.03)",
+            border: `1px solid ${resumen.sinJustificar > 0 ? "rgba(239,68,68,0.3)" : "rgba(34,197,94,0.25)"}`,
+            borderRadius: 12, padding: "14px 16px",
+          }}>
+            <p style={{ fontFamily: F_DISPLAY, fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, margin: "0 0 10px" }}>
+              Este mes
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <div>
+                <p style={{ fontFamily: F_BODY, fontSize: "0.68rem", color: MUTED, margin: "0 0 2px" }}>Retirado</p>
+                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: TEXT, margin: 0 }}>{formatCLP(resumen.totalRetirado)}</p>
+              </div>
+              <div>
+                <p style={{ fontFamily: F_BODY, fontSize: "0.68rem", color: MUTED, margin: "0 0 2px" }}>Reportado</p>
+                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: "#22c55e", margin: 0 }}>{formatCLP(resumen.totalReportado)}</p>
+              </div>
+              <div>
+                <p style={{ fontFamily: F_BODY, fontSize: "0.68rem", color: MUTED, margin: "0 0 2px" }}>Por justificar</p>
+                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: resumen.sinJustificar > 0 ? "#ef4444" : "#22c55e", margin: 0 }}>
+                  {resumen.sinJustificar > 0 ? formatCLP(resumen.sinJustificar) : "✓ Todo OK"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: "24px 20px 0", maxWidth: "480px", margin: "0 auto" }}>
         <form onSubmit={handleSubmit} style={cardS}>

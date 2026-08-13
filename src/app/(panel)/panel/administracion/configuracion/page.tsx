@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { Plus, X, Check, ChevronDown } from "lucide-react";
+import { Plus, X, Check, ChevronDown, User, Zap, Trash2, Edit2 } from "lucide-react";
 
 const F = "var(--font-display, system-ui)";
 const FB = "var(--font-body, system-ui)";
@@ -465,6 +465,236 @@ function CategoryGroup({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Agentes de compras
+// ─────────────────────────────────────────────────────────────────────────────
+type CashAgent = { id: string; name: string; bankPatterns: string[]; isActive: boolean };
+type Rule = { id: string; pattern: string; categoryId: string | null; isSplit: boolean; usageCount: number; confidence: number };
+
+function SectionTitle({ icon, title, count }: { icon: React.ReactNode; title: string; count?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <span style={{ color: "var(--adm-text3)" }}>{icon}</span>
+      <h2 style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--adm-text)", margin: 0 }}>{title}</h2>
+      {count !== undefined && (
+        <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>{count}</span>
+      )}
+    </div>
+  );
+}
+
+function AgentsSection({ restaurantId }: { restaurantId: string }) {
+  const [agents, setAgents] = useState<CashAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [patterns, setPatterns] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/admin/financial/agents?restaurantId=${restaurantId}`)
+      .then(r => r.json()).then(setAgents).catch(() => {}).finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  async function save() {
+    if (!name.trim()) return;
+    setSaving(true);
+    const bankPatterns = patterns.split(",").map(p => p.trim()).filter(Boolean);
+    const method = editId ? "PUT" : "POST";
+    const body = editId
+      ? { id: editId, restaurantId, name: name.trim(), bankPatterns }
+      : { restaurantId, name: name.trim(), bankPatterns };
+    const res = await fetch("/api/admin/financial/agents", {
+      method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (editId) setAgents(prev => prev.map(a => a.id === editId ? data : a));
+    else setAgents(prev => [...prev, data]);
+    setShowForm(false); setEditId(null); setName(""); setPatterns("");
+    setSaving(false);
+  }
+
+  async function deactivate(id: string) {
+    await fetch("/api/admin/financial/agents", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, restaurantId }),
+    });
+    setAgents(prev => prev.map(a => a.id === id ? { ...a, isActive: false } : a));
+  }
+
+  function startEdit(a: CashAgent) {
+    setEditId(a.id); setName(a.name); setPatterns(a.bankPatterns.join(", "));
+    setShowForm(true);
+  }
+
+  const inp: React.CSSProperties = {
+    width: "100%", padding: "8px 10px", borderRadius: 8,
+    border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)",
+    color: "var(--adm-text)", fontFamily: FB, fontSize: "0.875rem",
+    outline: "none", boxSizing: "border-box",
+  };
+
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <SectionTitle icon={<User size={16} />} title="Agentes de compras" count={agents.filter(a => a.isActive).length} />
+      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", marginBottom: 16, marginTop: -8 }}>
+        Personas que retiran dinero del banco para comprar cosas. Sus transferencias se identifican automáticamente en la conciliación.
+      </p>
+
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
+        {loading ? (
+          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", padding: "16px", margin: 0 }}>Cargando...</p>
+        ) : agents.length === 0 ? (
+          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", padding: "16px", margin: 0 }}>Sin agentes configurados.</p>
+        ) : agents.map((a, i) => (
+          <div key={a.id} style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "11px 14px",
+            borderBottom: i < agents.length - 1 ? "1px solid var(--adm-card-border)" : "none",
+            opacity: a.isActive ? 1 : 0.45,
+          }}>
+            <span style={{ fontSize: "1.1rem" }}>👤</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, color: "var(--adm-text)" }}>{a.name}</p>
+              <p style={{ margin: "2px 0 0", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                Patrones: {a.bankPatterns.join(", ") || "—"}
+              </p>
+            </div>
+            <button onClick={() => startEdit(a)} title="Editar" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}>
+              <Edit2 size={13} />
+            </button>
+            {a.isActive && (
+              <button onClick={() => deactivate(a.id)} title="Desactivar" style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 4 }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {showForm ? (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 16, marginBottom: 8 }}>
+          <p style={{ fontFamily: F, fontWeight: 700, fontSize: "0.9rem", color: "var(--adm-text)", margin: "0 0 12px" }}>
+            {editId ? "Editar agente" : "Nuevo agente"}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div>
+              <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Nombre *</label>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Carlos Gómez" style={inp} />
+            </div>
+            <div>
+              <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
+                Patrones en banco <span style={{ textTransform: "none", fontWeight: 400 }}>(separados por coma)</span>
+              </label>
+              <input value={patterns} onChange={e => setPatterns(e.target.value)} placeholder="Carlos Gómez, Carlos Gomez, C GOMEZ" style={inp} />
+              <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+                Texto que aparece en la descripción de las transferencias del banco a esta persona.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <button onClick={save} disabled={saving || !name.trim()} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
+                {saving ? "Guardando..." : editId ? "Actualizar" : "Crear agente"}
+              </button>
+              <button onClick={() => { setShowForm(false); setEditId(null); setName(""); setPatterns(""); }} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.875rem", cursor: "pointer" }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowForm(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "1.5px dashed var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.85rem", cursor: "pointer" }}>
+          <Plus size={14} /> Agregar agente
+        </button>
+      )}
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reglas automáticas de categorización
+// ─────────────────────────────────────────────────────────────────────────────
+function RulesSection({ restaurantId, categories }: { restaurantId: string; categories: { id: string; name: string; icon: string | null }[] }) {
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const catById = new Map(categories.map(c => [c.id, c]));
+
+  useEffect(() => {
+    fetch(`/api/admin/financial/rules?restaurantId=${restaurantId}`)
+      .then(r => r.json()).then(data => { if (Array.isArray(data)) setRules(data); })
+      .catch(() => {}).finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  async function deleteRule(id: string) {
+    setDeletingId(id);
+    await fetch("/api/admin/financial/rules", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, restaurantId }),
+    });
+    setRules(prev => prev.filter(r => r.id !== id));
+    setDeletingId(null);
+  }
+
+  const pct = (n: number) => Math.round(n * 100);
+
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <SectionTitle icon={<Zap size={16} />} title="Reglas automáticas" count={rules.length} />
+      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", marginBottom: 16, marginTop: -8 }}>
+        Patrones aprendidos al categorizar movimientos bancarios. Se aplican automáticamente al importar el XLSX.
+      </p>
+
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
+        {loading ? (
+          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", padding: "16px", margin: 0 }}>Cargando...</p>
+        ) : rules.length === 0 ? (
+          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", padding: "16px", margin: 0 }}>
+            Sin reglas aún. Se crean automáticamente cuando categorizas movimientos bancarios.
+          </p>
+        ) : rules.map((rule, i) => {
+          const cat = rule.categoryId ? catById.get(rule.categoryId) : null;
+          return (
+            <div key={rule.id} style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+              borderBottom: i < rules.length - 1 ? "1px solid var(--adm-card-border)" : "none",
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <code style={{ fontFamily: "'Courier New', monospace", fontSize: "0.78rem", background: "var(--adm-hover)", padding: "2px 6px", borderRadius: 4, color: "var(--adm-text2)" }}>
+                    {rule.pattern}
+                  </code>
+                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>→</span>
+                  {rule.isSplit ? (
+                    <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "#3b82f6" }}>Split</span>
+                  ) : cat ? (
+                    <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>
+                      {cat.icon && `${cat.icon} `}{cat.name}
+                    </span>
+                  ) : (
+                    <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin categoría</span>
+                  )}
+                </div>
+                <p style={{ margin: "2px 0 0", fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
+                  Usada {rule.usageCount} {rule.usageCount === 1 ? "vez" : "veces"} · confianza {pct(rule.confidence)}%
+                </p>
+              </div>
+              <button
+                onClick={() => deleteRule(rule.id)}
+                disabled={deletingId === rule.id}
+                title="Eliminar regla"
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4, flexShrink: 0, opacity: deletingId === rule.id ? 0.4 : 1 }}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Page principal
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ConfiguracionFinanciera() {
@@ -703,18 +933,25 @@ export default function ConfiguracionFinanciera() {
           )}
 
           {categories.length === 0 && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "48px 0",
-                fontFamily: FB,
-                color: "var(--adm-text3)",
-              }}
-            >
+            <div style={{ textAlign: "center", padding: "48px 0", fontFamily: FB, color: "var(--adm-text3)" }}>
               No hay categorías configuradas aún.
             </div>
           )}
         </>
+      )}
+
+      {/* Separador */}
+      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "8px 0 36px" }} />
+
+      {/* Agentes de compras */}
+      {restaurantId && <AgentsSection restaurantId={restaurantId} />}
+
+      {/* Reglas automáticas */}
+      {restaurantId && (
+        <RulesSection
+          restaurantId={restaurantId}
+          categories={categories.map(c => ({ id: c.id, name: c.name, icon: c.icon }))}
+        />
       )}
     </div>
   );
