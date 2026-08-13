@@ -324,7 +324,7 @@ function MovRow({
         {m.status === "SUGGESTED" && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             {m.suggestedCategory && (
-              <span style={{ fontFamily: FB, fontSize: "0.7rem", padding: "2px 8px", borderRadius: 20, background: (m.suggestedCategory.color || "#3b82f6") + "22", border: `1px solid ${m.suggestedCategory.color || "#3b82f6"}55`, color: m.suggestedCategory.color || "#3b82f6" }}>
+              <span style={{ fontFamily: FB, fontSize: "0.7rem", padding: "2px 8px", borderRadius: 20, background: "var(--adm-card-border,#f0f0f0)", border: "1px solid transparent", color: "var(--adm-text2,#666)" }}>
                 {m.suggestedCategory.icon ? `${m.suggestedCategory.icon} ` : ""}{m.suggestedCategory.name}
               </span>
             )}
