@@ -209,7 +209,7 @@ function CategoryForm({
       const token = localStorage.getItem("qc_admin_token") || sessionStorage.getItem("qc_admin_token") || "";
       const method = isEdit ? "PUT" : "POST";
       const body = isEdit
-        ? { id: initial!.id, restaurantId, name: name.trim(), group: finalGroup || null, icon: icon.trim() || null, color: color || null }
+        ? { id: initial!.id, restaurantId, name: name.trim(), type, group: finalGroup || null, icon: icon.trim() || null, color: color || null }
         : { restaurantId, name: name.trim(), type, group: finalGroup || null, icon: icon.trim() || null, color: color || null };
 
       const res = await fetch("/api/admin/financial/categories", {
@@ -251,19 +251,17 @@ function CategoryForm({
           <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Meta Ads" style={inputStyle} required />
         </div>
 
-        {/* Tipo — solo en creación */}
-        {!isEdit && (
-          <div>
-            <label style={labelStyle}>Tipo</label>
-            <select value={type} onChange={e => setType(e.target.value as FinancialType)} style={inputStyle}>
-              <option value="EXPENSE">Egreso</option>
-              <option value="INCOME">Ingreso</option>
-            </select>
-          </div>
-        )}
+        {/* Tipo — siempre visible, incluso en edición */}
+        <div>
+          <label style={labelStyle}>Tipo</label>
+          <select value={type} onChange={e => setType(e.target.value as FinancialType)} style={inputStyle}>
+            <option value="EXPENSE">Egreso</option>
+            <option value="INCOME">Ingreso</option>
+          </select>
+        </div>
 
         {/* Grupo */}
-        <div style={isEdit ? { gridColumn: "1 / -1" } : {}}>
+        <div>
           <label style={labelStyle}>Grupo</label>
           <select value={group} onChange={e => setGroup(e.target.value)} style={inputStyle}>
             <option value="">Sin grupo</option>
@@ -380,6 +378,88 @@ function SectionTitle({ icon, title, count }: { icon: React.ReactNode; title: st
       <h2 style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--adm-text)", margin: 0 }}>{title}</h2>
       {count !== undefined && <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>{count}</span>}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Gestión de grupos (renombrar / disolver)
+// ─────────────────────────────────────────────────────────────────────────────
+function GroupsSection({ restaurantId, groups, onRenamed, onDissolved }: {
+  restaurantId: string;
+  groups: string[]; // lista de grupos existentes
+  onRenamed: (oldName: string, newName: string) => void;
+  onDissolved: (groupName: string) => void;
+}) {
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function rename(oldName: string) {
+    if (!newName.trim() || newName.trim() === oldName) { setEditingGroup(null); return; }
+    setSaving(true);
+    await fetch("/api/admin/financial/groups", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId, oldName, newName: newName.trim() }),
+    });
+    onRenamed(oldName, newName.trim());
+    setEditingGroup(null); setNewName(""); setSaving(false);
+  }
+
+  async function dissolve(groupName: string) {
+    if (!confirm(`¿Disolver el grupo "${groupName}"? Sus categorías quedarán sin grupo.`)) return;
+    await fetch("/api/admin/financial/groups", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId, groupName }),
+    });
+    onDissolved(groupName);
+  }
+
+  if (groups.length === 0) return null;
+
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <SectionTitle icon={<span style={{ fontSize: "0.9rem" }}>🗂️</span>} title="Grupos de categorías" count={groups.length} />
+      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", marginBottom: 16, marginTop: -8 }}>
+        Renombra o disuelve grupos. Al disolver, sus categorías quedan sin grupo.
+      </p>
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
+        {groups.map((g, i) => (
+          <div key={g} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: i < groups.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
+            {editingGroup === g ? (
+              <>
+                <input
+                  autoFocus
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") rename(g); if (e.key === "Escape") { setEditingGroup(null); setNewName(""); } }}
+                  style={{ flex: 1, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.875rem", outline: "none" }}
+                />
+                <button onClick={() => rename(g)} disabled={saving} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
+                  {saving ? "…" : "Guardar"}
+                </button>
+                <button onClick={() => { setEditingGroup(null); setNewName(""); }} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.8rem", cursor: "pointer" }}>
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <span style={{ flex: 1, fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, color: "var(--adm-text)" }}>{g}</span>
+                <button onClick={() => { setEditingGroup(g); setNewName(g); }} title="Renombrar" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}
+                  onMouseOver={e => (e.currentTarget.style.color = "#1a5f3f")} onMouseOut={e => (e.currentTarget.style.color = "var(--adm-text3)")}>
+                  <Edit2 size={13} />
+                </button>
+                <button onClick={() => dissolve(g)} title="Disolver grupo" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}
+                  onMouseOver={e => (e.currentTarget.style.color = "#ef4444")} onMouseOut={e => (e.currentTarget.style.color = "var(--adm-text3)")}>
+                  <Trash2 size={13} />
+                </button>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -633,6 +713,14 @@ export default function ConfiguracionFinanciera() {
     setEditingCat(null);
   }
 
+  function handleGroupRenamed(oldName: string, newName: string) {
+    setCategories(prev => prev.map(c => c.group === oldName ? { ...c, group: newName } : c));
+  }
+
+  function handleGroupDissolved(groupName: string) {
+    setCategories(prev => prev.map(c => c.group === groupName ? { ...c, group: null } : c));
+  }
+
   const incomeCategories = categories.filter(c => c.type === "INCOME");
   const expenseCategories = categories.filter(c => c.type === "EXPENSE");
 
@@ -769,6 +857,16 @@ export default function ConfiguracionFinanciera() {
 
       {/* Separador */}
       <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "8px 0 36px" }} />
+
+      {/* Gestión de grupos */}
+      {restaurantId && allGroups.length > 0 && (
+        <GroupsSection
+          restaurantId={restaurantId}
+          groups={allGroups}
+          onRenamed={handleGroupRenamed}
+          onDissolved={handleGroupDissolved}
+        />
+      )}
 
       {/* Agentes de compras */}
       {restaurantId && <AgentsSection restaurantId={restaurantId} />}

@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
   const body = await req.json();
-  const { id, restaurantId, name, color, icon, position, isActive, group } = body;
+  const { id, restaurantId, name, color, icon, position, isActive, group, type } = body;
   if (!id || !restaurantId) return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
   try {
     await assertOwnsRestaurant(req, restaurantId);
@@ -59,6 +59,7 @@ export async function PUT(req: NextRequest) {
       ...(position !== undefined && { position }),
       ...(isActive !== undefined && { isActive }),
       ...(group !== undefined && { group: group || null }),
+      ...(type !== undefined && { type }),
     },
   });
   return NextResponse.json(category);

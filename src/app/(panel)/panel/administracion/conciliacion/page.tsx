@@ -418,17 +418,124 @@ function MovRow({
   );
 }
 
+// ─── Agent Timeline ───────────────────────────────────────────────────────────
+
+type TLItem =
+  | { kind: "transfer"; id: string; date: string; amount: number; description: string; status: string }
+  | { kind: "purchase"; id: string; date: string; amount: number; description: string; category: string | null; categoryIcon: string | null };
+
+type TLResponse = {
+  items: TLItem[];
+  runningBalance: number[];
+  totalTransferred: number;
+  totalSpent: number;
+  balance: number;
+};
+
+function AgentTimeline({ agentId, restaurantId, month }: { agentId: string; restaurantId: string; month: string }) {
+  const [data, setData] = useState<TLResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setData(null);
+    fetch(`/api/admin/financial/agents/timeline?restaurantId=${restaurantId}&agentId=${agentId}&month=${month}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [agentId, restaurantId, month]);
+
+  if (loading) {
+    return <div style={{ padding: "12px 14px", fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3,#aaa)" }}>Cargando timeline…</div>;
+  }
+
+  if (!data || data.items.length === 0) {
+    return (
+      <div style={{ padding: "12px 14px", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3,#aaa)", fontStyle: "italic" }}>
+        Sin gastos reportados en /flujo este mes.
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Timeline rows */}
+      <div style={{ padding: "8px 0" }}>
+        {data.items.map((item, i) => {
+          const bal = data.runningBalance[i];
+          const isTransfer = item.kind === "transfer";
+          return (
+            <div
+              key={item.id + i}
+              style={{
+                display: "flex", alignItems: "flex-start", gap: 10,
+                padding: "7px 14px",
+                borderLeft: `3px solid ${isTransfer ? "#22c55e" : "#ef4444"}`,
+                marginLeft: 14, marginBottom: 2,
+                background: isTransfer ? "#22c55e08" : "#ef444408",
+                borderRadius: "0 6px 6px 0",
+              }}
+            >
+              {/* Icon */}
+              <span style={{ fontSize: "0.85rem", marginTop: 1 }}>{isTransfer ? "🏦" : (item.categoryIcon || "🛒")}</span>
+              {/* Date */}
+              <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3,#aaa)", minWidth: 44, marginTop: 2 }}>
+                {fmtDate(item.date)}
+              </span>
+              {/* Description */}
+              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text,#111)", flex: 1, lineHeight: 1.35 }}>
+                {isTransfer ? item.description : (item.description || item.category || "Sin descripción")}
+                {!isTransfer && item.category && (
+                  <span style={{ marginLeft: 6, fontSize: "0.72rem", color: "var(--adm-text3,#aaa)", fontStyle: "italic" }}>{item.category}</span>
+                )}
+              </span>
+              {/* Amount */}
+              <span style={{ fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, color: isTransfer ? "#22c55e" : "#ef4444", whiteSpace: "nowrap" }}>
+                {isTransfer ? "+" : "-"}{fmtClp(item.amount)}
+              </span>
+              {/* Running balance */}
+              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: bal >= 0 ? "#22c55e" : "#ef4444", whiteSpace: "nowrap", minWidth: 68, textAlign: "right", marginTop: 2 }}>
+                {bal >= 0 ? `tiene ${fmtClp(bal)}` : `debe ${fmtClp(Math.abs(bal))}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary bar */}
+      <div style={{ display: "flex", gap: 16, padding: "10px 14px", borderTop: "1px solid var(--adm-card-border,#f0f0f0)", flexWrap: "wrap" }}>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>
+          Total recibido: <b style={{ color: "#22c55e" }}>{fmtClp(data.totalTransferred)}</b>
+        </span>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>
+          Total gastado: <b style={{ color: "#ef4444" }}>{fmtClp(data.totalSpent)}</b>
+        </span>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>
+          Balance: <b style={{ color: data.balance >= 0 ? "#22c55e" : "#ef4444" }}>
+            {data.balance >= 0 ? `tiene ${fmtClp(data.balance)}` : `debe ${fmtClp(Math.abs(data.balance))}`}
+          </b>
+        </span>
+      </div>
+
+    </div>
+  );
+}
+
 // ─── Agents tab content ───────────────────────────────────────────────────────
 
 function AgentsTab({
-  movements, agents, resumen, categories, onAction, onDelete,
+  movements, agents, resumen, categories, onAction, onDelete, restaurantId, month,
 }: {
   movements: Movement[]; agents: CashAgent[];
   resumen: { totalRetirado: number; totalReportado: number; sinJustificar: number } | null;
   categories: Category[];
   onAction: (movementId: string, params: Record<string, unknown>) => Promise<void>;
   onDelete: (id: string) => void;
+  restaurantId: string;
+  month: string;
 }) {
+
+  const [openCategorize, setOpenCategorize] = useState<Record<string, boolean>>({});
 
   const grouped = useMemo(() => {
     const map: Record<string, { agent: CashAgent; movements: Movement[]; total: number }> = {};
@@ -459,24 +566,45 @@ function AgentsTab({
 
   return (
     <div>
-      {grouped.map(({ agent, movements: ms, total }) => (
-        <div key={agent.id} style={{ marginBottom: 20, background: "var(--adm-card,#fff)", border: "1px solid var(--adm-card-border,#f0f0f0)", borderRadius: 12, overflow: "hidden" }}>
-          {/* Agent header */}
-          <div style={{ padding: "10px 14px", background: "#f59e0b0a", borderBottom: "1px solid var(--adm-card-border,#f0f0f0)", display: "flex", alignItems: "center", gap: 10 }}>
-            <User size={14} color="#d97706" />
-            <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: "var(--adm-text,#111)", flex: 1 }}>{agent.name}</span>
-            <div style={{ display: "flex", gap: 16 }}>
-              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Retirado banco: <b style={{ color: "#ef4444" }}>{fmtClp(Math.abs(total))}</b></span>
-              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Reportado /flujo: <b style={{ color: "#22c55e" }}>{resumen ? fmtClp(resumen.totalReportado) : "—"}</b></span>
-              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: resumen && resumen.sinJustificar > 0 ? "#ef4444" : "var(--adm-text3,#aaa)" }}>Sin justificar: <b>{resumen ? (resumen.sinJustificar > 0 ? fmtClp(resumen.sinJustificar) : "✓ OK") : "—"}</b></span>
+      {grouped.map(({ agent, movements: ms, total }) => {
+        const isCatOpen = openCategorize[agent.id] ?? false;
+        return (
+          <div key={agent.id} style={{ marginBottom: 20, background: "var(--adm-card,#fff)", border: "1px solid var(--adm-card-border,#f0f0f0)", borderRadius: 12, overflow: "hidden" }}>
+            {/* Agent header */}
+            <div style={{ padding: "10px 14px", background: "#f59e0b0a", borderBottom: "1px solid var(--adm-card-border,#f0f0f0)", display: "flex", alignItems: "center", gap: 10 }}>
+              <User size={14} color="#d97706" />
+              <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.88rem", color: "var(--adm-text,#111)", flex: 1 }}>{agent.name}</span>
+              <div style={{ display: "flex", gap: 16 }}>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Retirado banco: <b style={{ color: "#ef4444" }}>{fmtClp(Math.abs(total))}</b></span>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)" }}>Reportado /flujo: <b style={{ color: "#22c55e" }}>{resumen ? fmtClp(resumen.totalReportado) : "—"}</b></span>
+                <span style={{ fontFamily: FB, fontSize: "0.78rem", color: resumen && resumen.sinJustificar > 0 ? "#ef4444" : "var(--adm-text3,#aaa)" }}>Sin justificar: <b>{resumen ? (resumen.sinJustificar > 0 ? fmtClp(resumen.sinJustificar) : "✓ OK") : "—"}</b></span>
+              </div>
+            </div>
+
+            {/* Cash flow timeline */}
+            <AgentTimeline agentId={agent.id} restaurantId={restaurantId} month={month} />
+
+            {/* Collapsible categorize section — bank movements for direct categorization */}
+            <div>
+              <button
+                onClick={() => setOpenCategorize(prev => ({ ...prev, [agent.id]: !prev[agent.id] }))}
+                style={{
+                  width: "100%", padding: "8px 14px", background: "none",
+                  border: "none", borderTop: "1px solid var(--adm-card-border,#f0f0f0)",
+                  textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                  fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3,#aaa)",
+                }}
+              >
+                <span style={{ transform: isCatOpen ? "rotate(90deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.15s" }}>▶</span>
+                Ver movimientos para categorizar ({ms.length})
+              </button>
+              {isCatOpen && ms.map(m => (
+                <MovRow key={m.id} m={m} categories={categories} onAction={onAction} onDelete={onDelete} />
+              ))}
             </div>
           </div>
-          {/* Movements — full MovRow so se pueden categorizar directamente (ej: sueldo) */}
-          {ms.map(m => (
-            <MovRow key={m.id} m={m} categories={categories} onAction={onAction} onDelete={onDelete} />
-          ))}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -847,6 +975,7 @@ export default function ConciliacionPage() {
               movements={agentMovements} agents={agents}
               resumen={resumen}
               categories={categories} onAction={handleAction} onDelete={handleDelete}
+              restaurantId={restaurantId ?? ""} month={month}
             />
           ) : activeMovements.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--adm-text3,#aaa)" }}>
