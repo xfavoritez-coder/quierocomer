@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+const HORUS_ID = "cmo31qnls0000k004o6ry1wgq";
 
 export async function GET() {
   const gastos = await prisma.$queryRaw<
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const monto = parseInt(body.monto, 10);
   const comentario = (body.comentario ?? "").trim();
+  const categoryId: string | null = body.categoryId || null;
 
   if (!monto || monto <= 0) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
   if (!comentario) return NextResponse.json({ error: "Comentario requerido" }, { status: 400 });
@@ -23,6 +24,27 @@ export async function POST(req: NextRequest) {
     VALUES (gen_random_uuid(), ${monto}, ${comentario}, NOW())
     RETURNING id, monto, comentario, "createdAt"
   `;
+
+  // Si viene con categoría, también registrar en el módulo financiero
+  if (categoryId) {
+    try {
+      const cat = await prisma.financialCategory.findUnique({ where: { id: categoryId }, select: { type: true } });
+      if (cat) {
+        await prisma.financialEntry.create({
+          data: {
+            restaurantId: HORUS_ID,
+            categoryId,
+            amount: monto,
+            type: cat.type,
+            date: new Date(),
+            description: comentario,
+            source: "MANUAL",
+          },
+        });
+      }
+    } catch { /* no bloquear si falla */ }
+  }
+
   return NextResponse.json(gasto, { status: 201 });
 }
 

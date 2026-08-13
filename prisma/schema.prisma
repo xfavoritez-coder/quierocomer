@@ -393,6 +393,11 @@ model Restaurant {
   mermas                     Merma[]
   ventasDia                  VentaDia[]
   hojasImpresas              HojaImpresa[]
+  // Módulo Financiero
+  financialEnabled           Boolean                  @default(false)
+  financialCategories        FinancialCategory[]
+  financialEntries           FinancialEntry[]
+  bankMovements              BankMovement[]
 
   commune     String?
   communeSlug String?
@@ -2532,4 +2537,70 @@ model PageHit {
 
   @@index([restaurantId, page, createdAt])
   @@index([restaurantId, createdAt])
+}
+
+// ── Módulo Financiero ─────────────────────────────────────────────────────────
+
+model FinancialCategory {
+  id           String           @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  type         FinancialType    // INCOME | EXPENSE
+  color        String?          // hex, ej: "#22c55e"
+  icon         String?          // emoji
+  position     Int              @default(0)
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  entries      FinancialEntry[]
+
+  @@index([restaurantId, type])
+}
+
+model FinancialEntry {
+  id           String            @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     FinancialCategory @relation(fields: [categoryId], references: [id])
+  amount       Int               // CLP, siempre positivo
+  type         FinancialType
+  date         DateTime          // fecha del movimiento (no del ingreso al sistema)
+  description  String?
+  source       EntrySource       @default(MANUAL)
+  bankMovementId String?         @unique
+  bankMovement   BankMovement?   @relation(fields: [bankMovementId], references: [id])
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([restaurantId, date])
+  @@index([restaurantId, categoryId])
+}
+
+model BankMovement {
+  id           String         @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  date         DateTime
+  description  String
+  amount       Int            // positivo = abono, negativo = cargo
+  balance      Int?           // saldo después del movimiento
+  reference    String?        // referencia del banco
+  source       String         @default("CSV") // "CSV" | "FINTOC"
+  reconciledAt DateTime?
+  entry        FinancialEntry?
+  createdAt    DateTime       @default(now())
+
+  @@index([restaurantId, date])
+}
+
+enum FinancialType {
+  INCOME
+  EXPENSE
+}
+
+enum EntrySource {
+  MANUAL
+  BANK_CSV
+  BANK_API
 }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -42,7 +42,7 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const isStore = opts.profileType === "STORE";
 
@@ -130,6 +130,15 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Store, labelKey: "nav_restaurant", href: `${base}/mi-restaurante` },
       ],
     },
+    ...(opts.hasFinancial ? [{
+      key: "administracion",
+      label: "Administración",
+      icon: TrendingUp,
+      items: [
+        { icon: TrendingUp, labelKey: "nav_flujo_financiero", href: `${base}/administracion/flujo` },
+        { icon: Landmark, labelKey: "nav_conciliacion", href: `${base}/administracion/conciliacion` },
+      ],
+    }] : []),
     {
       key: "support",
       label: "Soporte",
@@ -162,8 +171,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
   const hasControl = !!(selected as any)?.hasControl;
+  const hasFinancial = !!(selected as any)?.hasFinancial;
   const profileType = (selected as any)?.profileType || "RESTAURANT";
-  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, slug: selected?.slug, hasLoyalty, profileType });
+  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType });
 
   // Accordion state
   const [openSections, setOpenSections] = useState<Set<string>>(() => getActiveSectionKeys(pathname, SECTIONS, basePath));
