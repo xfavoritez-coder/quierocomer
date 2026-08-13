@@ -69,7 +69,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       icon: QrCode,
       items: [
         { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/analytics` },
-        { icon: ContactRound, labelKey: "nav_clients", href: `${base}/clientes` },
         { icon: Tag, labelKey: "nav_offers", href: `${base}/promociones` },
         { icon: Megaphone, labelKey: "nav_announcements", href: `${base}/anuncios` },
         ...(opts.hasControl && !CONTROL_HIDDEN.includes(opts.slug ?? "") ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
