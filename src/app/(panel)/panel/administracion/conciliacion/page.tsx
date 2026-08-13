@@ -613,6 +613,11 @@ export default function ConciliacionPage() {
 
   const pctReconciled = movements.length > 0 ? Math.round(reconciled.length / movements.length * 100) : 0;
   const pendingCount = pending.length + suggested.length;
+  // Monto total aún sin categorizar (suma de débitos + créditos de PENDING y SUGGESTED)
+  const pendingAmount = useMemo(() => {
+    const uncategorized = [...pending, ...suggested];
+    return uncategorized.reduce((s, m) => s + Math.abs(movAmount(m)), 0);
+  }, [pending, suggested]);
 
   const tabMovements: Record<TabKey, Movement[]> = {
     PENDING: pending,
@@ -774,7 +779,7 @@ export default function ConciliacionPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
           <KPI label="Abonos" value={fmtClp(totalAbonos)} color="#22c55e" />
           <KPI label="Cargos" value={fmtClp(totalCargos)} color="#ef4444" />
-          <KPI label="Por categorizar" value={`${pendingCount}`} color="#f59e0b" sub={`de ${movements.length}`} />
+          <KPI label="Por categorizar" value={fmtClp(pendingAmount)} color="#f59e0b" sub={`${pendingCount} movimientos`} />
           <KPI label="% Conciliado" value={`${pctReconciled}%`} color="#6366f1" sub={`${reconciled.length} de ${movements.length}`} />
         </div>
       )}
