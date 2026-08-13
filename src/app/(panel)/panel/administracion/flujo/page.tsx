@@ -17,9 +17,11 @@ type Entry = {
   date: string; description: string | null; category: Category;
 };
 
-const GROUP_ORDER = ["Proveedores", "Operaciones", "Administración"];
+const GROUP_ORDER = ["Proveedores", "Operaciones", "Administración", "Marketing", "RRHH", "Inversiones", "Dinero temporal", "Impuestos", "Amortizaciones"];
 const GROUP_ICONS: Record<string, string> = {
   Proveedores: "🛒", Operaciones: "⚙️", Administración: "📋",
+  Marketing: "📣", RRHH: "👥", Inversiones: "🏗️",
+  "Dinero temporal": "💸", Impuestos: "🏛️", Amortizaciones: "📉",
 };
 
 function clp(n: number) {
@@ -27,7 +29,8 @@ function clp(n: number) {
 }
 function pct(part: number, total: number) {
   if (!total || !part) return "—";
-  return Math.round((part / total) * 100) + "%";
+  const v = (part / total) * 100;
+  return (v < 0.1 ? "0.0" : v.toFixed(1)) + "%";
 }
 function toDateStr(d: Date) { return d.toISOString().split("T")[0]; }
 function monthLabel(y: number, m: number) {
