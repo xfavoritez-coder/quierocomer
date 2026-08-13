@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const categoryId: string | null = body.categoryId || null;
 
   if (!monto || monto <= 0) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
-  if (!comentario) return NextResponse.json({ error: "Comentario requerido" }, { status: 400 });
+  if (!categoryId) return NextResponse.json({ error: "Categoría requerida" }, { status: 400 });
 
   const [gasto] = await prisma.$queryRaw<{ id: string; monto: number; comentario: string; createdAt: Date }[]>`
     INSERT INTO "GastoFlujo" (id, monto, comentario, "createdAt")

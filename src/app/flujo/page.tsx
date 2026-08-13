@@ -77,7 +77,7 @@ export default function FlujoPage() {
     setError("");
     const montoNum = parseInt(monto.replace(/\D/g, ""), 10);
     if (!montoNum || montoNum <= 0) return setError("Ingresa un monto válido.");
-    if (!comentario.trim()) return setError("Agrega un comentario.");
+    if (!categoryId) return setError("Selecciona una categoría.");
     setLoading(true);
     try {
       const res = await fetch("/api/flujo/gastos", {
@@ -168,7 +168,7 @@ export default function FlujoPage() {
           )}
 
           {/* Detalle */}
-          <label style={{ ...labelS, marginTop: "18px" }}>Detalle del movimiento</label>
+          <label style={{ ...labelS, marginTop: "18px" }}>Detalle <span style={{ opacity: 0.45, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(opcional)</span></label>
           <textarea
             placeholder={selectedCat ? `Detalle de ${selectedCat.name}... ej: proveedor, referencia` : "¿Qué fue? Ej: Ferretería — 2 llaves y cinta"}
             value={comentario}
