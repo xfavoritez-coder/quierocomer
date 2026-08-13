@@ -192,7 +192,7 @@ export default function ConciliacionPage() {
           {importing ? "Importando..." : "Subir CSV de BCI"}
         </p>
         <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3,#999)", margin: 0 }}>
-          Desde BCI web → Cartola → Descargar CSV. Arrastrá o hacé click.
+          Desde BCI web → Cartola → Descargar CSV. Arrastra o haz clic.
         </p>
       </div>
 
@@ -216,7 +216,7 @@ export default function ConciliacionPage() {
       {movements.length === 0 && loaded && (
         <div style={{ textAlign: "center", padding: 40, color: "var(--adm-text3,#999)", fontFamily: FB, fontSize: "0.88rem" }}>
           <Landmark size={32} style={{ margin: "0 auto 12px", display: "block", opacity: 0.3 }} />
-          Sin movimientos para este mes. Subí el CSV de BCI.
+          Sin movimientos para este mes. Sube el CSV de BCI.
         </div>
       )}
 
