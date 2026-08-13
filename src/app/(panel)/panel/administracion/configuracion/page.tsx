@@ -408,21 +408,17 @@ function CategoryGroup({
 // Page principal
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ConfiguracionFinanciera() {
-  const { restaurantId, token } = usePanelSession();
+  const { selectedRestaurantId: restaurantId } = usePanelSession();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
 
-  // Cargar todas (incluyendo inactivas) — el API solo devuelve activas,
-  // así que usamos un flag extra para incluir inactivas en el admin.
   useEffect(() => {
-    if (!restaurantId || !token) return;
+    if (!restaurantId) return;
     setLoading(true);
-    fetch(`/api/admin/financial/categories?restaurantId=${restaurantId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`/api/admin/financial/categories?restaurantId=${restaurantId}`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setCategories(data);
@@ -430,7 +426,7 @@ export default function ConfiguracionFinanciera() {
       })
       .catch(() => setError("Error de red"))
       .finally(() => setLoading(false));
-  }, [restaurantId, token]);
+  }, [restaurantId]);
 
   async function handleToggleActive(id: string, value: boolean) {
     if (toggling.has(id)) return;
@@ -440,7 +436,7 @@ export default function ConfiguracionFinanciera() {
     try {
       const res = await fetch("/api/admin/financial/categories", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, restaurantId, isActive: value }),
       });
       if (!res.ok) throw new Error();
