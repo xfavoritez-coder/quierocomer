@@ -1190,7 +1190,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
 
       {selectedDish && <OrderItemModal dish={selectedDish} onClose={() => setSelectedDish(null)} onAdd={handleAddItem} isClosed={isClosed} />}
       {cartOpen && !checkoutOpen && <OrderCart onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
-      {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
+      {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} orderingMode={orderingConfig.orderingMode} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
 
       {/* Modal Identificarse — login del cliente por código OTP (reutiliza QRUser) */}
       {identifyOpen && (
