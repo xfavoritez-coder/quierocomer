@@ -729,19 +729,9 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
 
   async function openWidget() {
     setError("");
-
-    // 1. Obtener widget_token del servidor
     const tok = getToken();
-    const wtRes = await fetch("/api/admin/financial/fintoc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${tok}` },
-      body: JSON.stringify({ restaurantId, action: "widget_token" }),
-    });
-    const wtData = await wtRes.json();
-    if (!wtRes.ok) { setError(wtData.error || "Error al iniciar conexión bancaria"); return; }
-    const widgetToken: string = wtData.widget_token;
 
-    // 2. Cargar script de Fintoc si no está cargado
+    // Cargar script de Fintoc si no está cargado
     if (!document.getElementById("fintoc-script")) {
       const script = document.createElement("script");
       script.id = "fintoc-script";
@@ -755,9 +745,11 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
     const w = (window as any).Fintoc;
     if (!w) { setError("No se pudo cargar el widget de Fintoc"); return; }
 
-    // 3. Abrir widget con widget_token (API actual de Fintoc)
-    w.create({
-      widgetToken,
+    const widget = w.create({
+      publicKey: "pk_live_JKV5GfnDdMmyk7J2sdWux4h4P1PxTzZrAvMAzXMKJ88",
+      holderType: "individual",
+      product: "movements",
+      country: "cl",
       onSuccess: async (data: { link_token: string; account_id?: string }) => {
         const r2 = await fetch("/api/admin/financial/fintoc", {
           method: "POST",
@@ -771,7 +763,8 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
       },
       onExit: () => {},
       onError: (err: any) => setError(err?.message || "Error en el widget"),
-    }).open();
+    });
+    widget.open();
   }
 
   async function handleSync() {
