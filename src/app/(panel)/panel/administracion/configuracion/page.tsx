@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { Plus, X, ChevronDown, User, Zap, Trash2, Edit2, Link, RefreshCw, Unlink } from "lucide-react";
+import { Plus, X, ChevronDown, User, Zap, Trash2, Edit2 } from "lucide-react";
 
 const F = "var(--font-display, system-ui)";
 const FB = "var(--font-body, system-ui)";
@@ -702,174 +702,6 @@ function RulesSection({ restaurantId, categories }: { restaurantId: string; cate
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Fintoc — conexión bancaria automática
-// ─────────────────────────────────────────────────────────────────────────────
-function FintocSection({ restaurantId }: { restaurantId: string }) {
-  const [status, setStatus] = useState<{ connected: boolean; lastSync: string | null } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ created: number; skipped: number } | null>(null);
-  const [error, setError] = useState("");
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
-
-  function getToken() {
-    return localStorage.getItem("qc_admin_token") || sessionStorage.getItem("qc_admin_token") || "";
-  }
-
-  useEffect(() => {
-    const token = getToken();
-    fetch(`/api/admin/financial/fintoc?restaurantId=${restaurantId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(d => setStatus({ connected: d.connected, lastSync: d.lastSync }))
-      .catch(() => setError("Error al cargar estado de conexión"))
-      .finally(() => setLoading(false));
-  }, [restaurantId]);
-
-  async function openWidget() {
-    setError("");
-    const tok = getToken();
-
-    // Cargar script de Fintoc si no está cargado
-    if (!document.getElementById("fintoc-script")) {
-      const script = document.createElement("script");
-      script.id = "fintoc-script";
-      script.src = "https://js.fintoc.com/v1/";
-      script.async = true;
-      document.head.appendChild(script);
-      scriptRef.current = script;
-      await new Promise(resolve => { script.onload = resolve; });
-    }
-
-    const w = (window as any).Fintoc;
-    if (!w) { setError("No se pudo cargar el widget de Fintoc"); return; }
-
-    const widget = w.create({
-      publicKey: "pk_live_JKV5GfnDdMmyk7J2sdWux4h4P1PxTzZrAvMAzXMKJ88",
-      holderType: "individual",
-      product: "movements",
-      country: "cl",
-      onSuccess: async (data: { link_token: string; account_id?: string }) => {
-        const r2 = await fetch("/api/admin/financial/fintoc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${tok}` },
-          body: JSON.stringify({ restaurantId, action: "connect", link_token: data.link_token, account_id: data.account_id }),
-        });
-        if (r2.ok) {
-          setStatus({ connected: true, lastSync: null });
-          await handleSync();
-        }
-      },
-      onExit: () => {},
-      onError: (err: any) => setError(err?.message || "Error en el widget"),
-    });
-    widget.open();
-  }
-
-  async function handleSync() {
-    setSyncing(true); setError(""); setSyncResult(null);
-    const token = getToken();
-    const r = await fetch("/api/admin/financial/fintoc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ restaurantId, action: "sync" }),
-    });
-    const d = await r.json();
-    if (r.ok) {
-      setSyncResult({ created: d.created, skipped: d.skipped });
-      setStatus(prev => prev ? { ...prev, lastSync: new Date().toISOString() } : prev);
-    } else {
-      setError(d.error || "Error al sincronizar");
-    }
-    setSyncing(false);
-  }
-
-  async function handleDisconnect() {
-    if (!confirm("¿Desconectar el banco? Dejarás de recibir movimientos automáticos.")) return;
-    const token = getToken();
-    await fetch("/api/admin/financial/fintoc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ restaurantId, action: "disconnect" }),
-    });
-    setStatus({ connected: false, lastSync: null });
-    setSyncResult(null);
-  }
-
-  function fmtDate(iso: string | null) {
-    if (!iso) return "Nunca";
-    const d = new Date(iso);
-    return d.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  }
-
-  return (
-    <section style={{ marginBottom: 40 }}>
-      <SectionTitle icon={<Link size={16} />} title="Conexión bancaria automática" />
-      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", marginBottom: 16, marginTop: -8 }}>
-        Conecta tu banco para sincronizar movimientos automáticamente cada día. Powered by Fintoc.
-      </p>
-
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 16 }}>
-        {loading ? (
-          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Cargando...</p>
-        ) : status?.connected ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0, display: "inline-block" }} />
-              <span style={{ fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, color: "var(--adm-text)" }}>Banco conectado</span>
-              <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", marginLeft: "auto" }}>
-                Última sync: {fmtDate(status.lastSync)}
-              </span>
-            </div>
-
-            {syncResult && (
-              <div style={{ background: "var(--adm-hover)", borderRadius: 8, padding: "8px 12px", fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)" }}>
-                Sync completada — {syncResult.created} nuevos, {syncResult.skipped} duplicados
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.85rem", fontWeight: 600, cursor: syncing ? "not-allowed" : "pointer", opacity: syncing ? 0.7 : 1 }}
-              >
-                <RefreshCw size={14} style={{ animation: syncing ? "spin 1s linear infinite" : "none" }} />
-                {syncing ? "Sincronizando..." : "Sincronizar ahora"}
-              </button>
-              <button
-                onClick={handleDisconnect}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "none", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.85rem", cursor: "pointer" }}
-              >
-                <Unlink size={14} /> Desconectar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--adm-text3)", flexShrink: 0, display: "inline-block" }} />
-              <span style={{ fontFamily: FB, fontSize: "0.875rem", color: "var(--adm-text2)" }}>Sin banco conectado</span>
-            </div>
-            <button
-              onClick={openWidget}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", alignSelf: "flex-start" }}
-            >
-              <Link size={14} /> Conectar banco
-            </button>
-          </div>
-        )}
-
-        {error && <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#ef4444", margin: "10px 0 0" }}>{error}</p>}
-      </div>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Page principal
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ConfiguracionFinanciera() {
@@ -1014,11 +846,6 @@ export default function ConfiguracionFinanciera() {
           Gestiona las categorías de ingresos y egresos de tu local.
         </p>
       </div>
-
-      {/* Conexión bancaria Fintoc — primero */}
-      {restaurantId && <FintocSection restaurantId={restaurantId} />}
-
-      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "4px 0 28px" }} />
 
       {/* Formulario crear */}
       {!showCreateForm && !editingCat && (
