@@ -711,8 +711,8 @@ export default function ConciliacionPage() {
       if (!res.ok) { setImportError(data.error || "Error al analizar el archivo"); return; }
       setPendingFile(file);
       setPreview(data);
-    } catch {
-      setImportError("Error al procesar el archivo");
+    } catch (e: any) {
+      setImportError(`Error al procesar el archivo: ${e?.message || "error de red"}`)
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";

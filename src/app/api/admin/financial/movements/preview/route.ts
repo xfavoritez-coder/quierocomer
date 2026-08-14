@@ -16,8 +16,14 @@ export async function POST(req: NextRequest) {
   try { await assertOwnsRestaurant(req, restaurantId); } catch (e: any) { return authErrorResponse(e); }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const rows = await parseBankFile(buffer, file.name);
-  if (rows.length === 0) return NextResponse.json({ error: "No se encontraron movimientos válidos en el archivo" }, { status: 422 });
+  let rows;
+  try {
+    rows = await parseBankFile(buffer, file.name);
+  } catch (e: any) {
+    console.error("parseBankFile error:", e);
+    return NextResponse.json({ error: `Error al leer el archivo: ${e.message || e}` }, { status: 422 });
+  }
+  if (rows.length === 0) return NextResponse.json({ error: "No se encontraron movimientos válidos en el archivo. Verifica que sea un estado de cuenta BCI con el formato correcto." }, { status: 422 });
 
   // Obtener todos los externalKeys ya existentes para este restaurante
   const existingKeys = new Set(
