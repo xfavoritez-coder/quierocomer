@@ -37,29 +37,6 @@ export async function POST(req: NextRequest) {
   if (!restaurantId || !action) return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
   try { await assertOwnsRestaurant(req, restaurantId); } catch (e: any) { return authErrorResponse(e); }
 
-  // ── Obtener widget token para iniciar el widget de Fintoc ──
-  if (action === "widget_token") {
-    try {
-      const res = await fetch("https://api.fintoc.com/v1/widget_tokens", {
-        method: "POST",
-        headers: {
-          "Authorization": process.env.FINTOC_SECRET_KEY!,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ product: "movements" }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail || `Fintoc API error ${res.status}`);
-      }
-      const data = await res.json();
-      return NextResponse.json({ widget_token: data.widget_token });
-    } catch (e: any) {
-      console.error("Fintoc widget_token error:", e);
-      return NextResponse.json({ error: e.message || "Error creando widget token" }, { status: 500 });
-    }
-  }
-
   // ── Guardar link_token tras conexión exitosa ──
   if (action === "connect") {
     const { link_token, account_id } = body;
