@@ -727,7 +727,7 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
       .finally(() => setLoading(false));
   }, [restaurantId]);
 
-  async function openWidget(holderType: "individual" | "business") {
+  async function openWidget() {
     setError("");
 
     // Cargar script de Fintoc si no está cargado
@@ -745,7 +745,7 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
     if (!w) { setError("No se pudo cargar el widget de Fintoc"); return; }
 
     w.create({
-      holderType,
+      holderType: "individual",
       product: "movements",
       country: "cl",
       publicKey: process.env.NEXT_PUBLIC_FINTOC_PUBLIC_KEY || "pk_live_JKV5GfnDdMmyk7J2sdWux4h4P1PxTzZrAvMAzXMKJ88",
@@ -852,23 +852,12 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--adm-text3)", flexShrink: 0, display: "inline-block" }} />
               <span style={{ fontFamily: FB, fontSize: "0.875rem", color: "var(--adm-text2)" }}>Sin banco conectado</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>¿Qué tipo de cuenta usas?</span>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => openWidget("individual")}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}
-                >
-                  <Link size={14} /> Cuenta personal
-                </button>
-                <button
-                  onClick={() => openWidget("business")}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, border: "1px solid #1a5f3f", background: "none", color: "#1a5f3f", fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}
-                >
-                  <Link size={14} /> Cuenta empresa
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={openWidget}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, border: "none", background: "#1a5f3f", color: "#fff", fontFamily: FB, fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", alignSelf: "flex-start" }}
+            >
+              <Link size={14} /> Conectar banco
+            </button>
           </div>
         )}
 
