@@ -334,6 +334,29 @@ export default function PedirOnlinePage() {
     setSaving(false);
   };
 
+  // Auto-guardado del toggle de banner destacados (consistente con los demás toggles del panel)
+  const toggleFeatured = async () => {
+    if (!rid) return;
+    const newVal = !showFeatured;
+    setShowFeatured(newVal);
+    try {
+      const res = await fetch(`/api/admin/locales/${rid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderingShowFeatured: newVal }),
+      });
+      if (res.ok) {
+        toast.success(newVal ? "Banner de destacados activado" : "Banner de destacados oculto");
+      } else {
+        setShowFeatured(!newVal); // revertir
+        toast.error(t("ordering_error_save"));
+      }
+    } catch {
+      setShowFeatured(!newVal);
+      toast.error(t("ordering_error_connection"));
+    }
+  };
+
   const saveBusinessHours = async () => {
     if (!rid) return;
     setSavingHours(true);
@@ -617,7 +640,7 @@ export default function PedirOnlinePage() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button
               type="button"
-              onClick={() => setShowFeatured(v => !v)}
+              onClick={toggleFeatured}
               style={{
                 width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0,
                 background: showFeatured ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s",
