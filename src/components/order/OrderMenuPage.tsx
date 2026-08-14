@@ -529,6 +529,101 @@ function checkIsClosedNow(bh: Record<string, BHDay> | null | undefined): boolean
   } catch { return false; }
 }
 
+// ── Modal Identificarse: login del cliente por código OTP (reutiliza QRUser + cookie qr_user_id) ──
+function IdentifyModal({
+  customer, accent, accentFg, themeVars, onClose, onSuccess, onLogout,
+}: {
+  customer: { name: string | null; email: string } | null;
+  accent: string;
+  accentFg: string;
+  themeVars: React.CSSProperties;
+  onClose: () => void;
+  onSuccess: (u: { name: string | null; email: string }) => void;
+  onLogout: () => void;
+}) {
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const sendCode = async () => {
+    const clean = email.toLowerCase().trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean)) { setError("Ingresa un email válido."); return; }
+    setError(""); setLoading(true);
+    try {
+      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: clean }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "No pudimos enviar el código.");
+      if (d.devCode) setCode(d.devCode); // solo en entorno local (sin Resend)
+      setStep("code");
+    } catch (e: any) { setError(e.message || "Error al enviar el código."); }
+    finally { setLoading(false); }
+  };
+
+  const verify = async () => {
+    const clean = code.trim();
+    if (!/^\d{6}$/.test(clean)) { setError("El código son 6 dígitos."); return; }
+    setError(""); setLoading(true);
+    try {
+      const res = await fetch("/api/qr/user/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.toLowerCase().trim(), code: clean }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Código incorrecto.");
+      onSuccess(d.user);
+    } catch (e: any) { setError(e.message || "Código incorrecto."); }
+    finally { setLoading(false); }
+  };
+
+  const logout = async () => {
+    setLoading(true);
+    try { await fetch("/api/qr/user/logout", { method: "DELETE" }); } catch {}
+    setLoading(false);
+    onLogout();
+  };
+
+  const inputStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "12px 14px", borderRadius: 12, border: "1px solid var(--carta-border)", background: "var(--carta-surface)", color: "var(--carta-text)", fontSize: 16, outline: "none" };
+  const btnStyle: React.CSSProperties = { width: "100%", padding: 13, borderRadius: 12, border: "none", background: accent, color: accentFg, fontSize: "0.95rem", fontWeight: 800, cursor: loading ? "wait" : "pointer", opacity: loading ? 0.6 : 1 };
+
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--carta-bg)", color: "var(--carta-text)", width: "100%", maxWidth: 440, borderRadius: "20px 20px 0 0", padding: "22px 20px calc(24px + env(safe-area-inset-bottom))", boxShadow: "0 -8px 40px rgba(0,0,0,0.4)", fontFamily: FB, ...themeVars }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <h3 style={{ margin: 0, fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.25rem", fontWeight: 800 }}>
+            {customer ? "Mi cuenta" : step === "email" ? "Identifícate" : "Ingresa tu código"}
+          </h3>
+          <button onClick={onClose} style={{ background: "var(--carta-surface)", border: "1px solid var(--carta-border)", width: 30, height: 30, borderRadius: "50%", cursor: "pointer", color: "var(--carta-text2)", display: "grid", placeItems: "center" }}><X size={16} /></button>
+        </div>
+
+        {customer ? (
+          <>
+            <p style={{ margin: "0 0 4px", fontSize: "1rem", fontWeight: 700 }}>{customer.name || "¡Hola!"}</p>
+            <p style={{ margin: "0 0 18px", color: "var(--carta-text2)", fontSize: "0.88rem" }}>{customer.email}</p>
+            <button onClick={logout} disabled={loading} style={{ ...btnStyle, background: "transparent", color: "var(--carta-text)", border: "1px solid var(--carta-border)" }}>Cerrar sesión</button>
+          </>
+        ) : step === "email" ? (
+          <>
+            <p style={{ margin: "0 0 16px", color: "var(--carta-text2)", fontSize: "0.9rem", lineHeight: 1.5 }}>Inicia sesión con tu email. Te enviaremos un código para ingresar.</p>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-text2)", marginBottom: 6 }}>Email</label>
+            <input type="email" inputMode="email" autoFocus value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && sendCode()} placeholder="tucorreo@email.com" style={{ ...inputStyle, marginBottom: error ? 8 : 14 }} />
+            {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 12px" }}>{error}</p>}
+            <button onClick={sendCode} disabled={loading} style={btnStyle}>{loading ? "Enviando…" : "Enviar código"}</button>
+          </>
+        ) : (
+          <>
+            <p style={{ margin: "0 0 16px", color: "var(--carta-text2)", fontSize: "0.9rem", lineHeight: 1.5 }}>Enviamos un código de 6 dígitos a <strong>{email.toLowerCase().trim()}</strong>. Revisa también spam.</p>
+            <input inputMode="numeric" autoFocus value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={e => e.key === "Enter" && verify()} placeholder="000000" style={{ ...inputStyle, textAlign: "center", letterSpacing: 8, fontSize: 22, fontWeight: 800, marginBottom: error ? 8 : 14 }} />
+            {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "0 0 12px" }}>{error}</p>}
+            <button onClick={verify} disabled={loading} style={btnStyle}>{loading ? "Verificando…" : "Ingresar"}</button>
+            <button onClick={() => { setStep("email"); setCode(""); setError(""); }} style={{ width: "100%", marginTop: 10, background: "none", border: "none", color: "var(--carta-text2)", fontSize: "0.82rem", cursor: "pointer", fontFamily: FB }}>← Cambiar email</button>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function OrderMenuPage({ restaurant, orderingConfig, popularDishIds, isClosed: isClosedProp = false, businessHours }: Props) {
   const { items, count, addItem } = useCart();
   const [selectedDish, setSelectedDish] = useState<DishForOrder | null>(null);
@@ -546,6 +641,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   // solo para la carta mesa (/qr), que usa componentes aparte.
   const isImpact: boolean = false;
   const [identifyOpen, setIdentifyOpen] = useState(false);
+  const [customer, setCustomer] = useState<{ name: string | null; email: string } | null>(null);
+  useEffect(() => {
+    fetch("/api/qr/user/me").then(r => r.json()).then(d => { if (d?.user) setCustomer({ name: d.user.name, email: d.user.email }); }).catch(() => {});
+  }, []);
   const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
   const accent = orderingConfig.cartaAccentColor || "#F4A623";
   const accentFg = accentContrast(accent);
@@ -888,8 +987,8 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           <span style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.08rem", fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurant.name}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <button onClick={() => setIdentifyOpen(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, border: "1px solid var(--carta-border)", background: "transparent", color: "var(--carta-text)", cursor: "pointer", fontFamily: FB, fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>
-            <User size={15} /> Identificarse
+          <button onClick={() => setIdentifyOpen(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, border: customer ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", background: customer ? `color-mix(in srgb, ${accent} 12%, transparent)` : "transparent", color: customer ? accent : "var(--carta-text)", cursor: "pointer", fontFamily: FB, fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+            <User size={15} /> {customer ? (customer.name?.trim().split(" ")[0] || "Mi cuenta") : "Identificarse"}
           </button>
           <button onClick={() => !isClosed && setCartOpen(true)} style={{ position: "relative", width: 38, height: 38, borderRadius: "50%", border: "1px solid var(--carta-border)", background: count > 0 && !isClosed ? accent : "transparent", display: "grid", placeItems: "center", cursor: isClosed ? "default" : "pointer", flexShrink: 0 }}>
             <ShoppingCart size={17} color={count > 0 && !isClosed ? accentFg : "var(--carta-text2)"} />
@@ -984,22 +1083,17 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {cartOpen && !checkoutOpen && <OrderCart onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
       {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
 
-      {/* Modal Identificarse (login de cliente por email — flujo OTP completo en fase siguiente) */}
-      {identifyOpen && typeof document !== "undefined" && createPortal(
-        <div onClick={() => setIdentifyOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--carta-bg)", color: "var(--carta-text)", width: "100%", maxWidth: 440, borderRadius: "20px 20px 0 0", padding: "22px 20px calc(24px + env(safe-area-inset-bottom))", boxShadow: "0 -8px 40px rgba(0,0,0,0.4)", fontFamily: FB, ...themeVars }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-              <h3 style={{ margin: 0, fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.25rem", fontWeight: 800 }}>Identifícate</h3>
-              <button onClick={() => setIdentifyOpen(false)} style={{ background: "var(--carta-surface)", border: "1px solid var(--carta-border)", width: 30, height: 30, borderRadius: "50%", cursor: "pointer", color: "var(--carta-text2)", display: "grid", placeItems: "center" }}><X size={16} /></button>
-            </div>
-            <p style={{ margin: "0 0 16px", color: "var(--carta-text2)", fontSize: "0.9rem", lineHeight: 1.5 }}>Inicia sesión con tu email para guardar tus datos y direcciones y ver el historial de tus pedidos.</p>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-text2)", marginBottom: 6 }}>Email</label>
-            <input type="email" inputMode="email" placeholder="tucorreo@email.com" style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", borderRadius: 12, border: "1px solid var(--carta-border)", background: "var(--carta-surface)", color: "var(--carta-text)", fontSize: 16, outline: "none", marginBottom: 14 }} />
-            <button onClick={() => setIdentifyOpen(false)} style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: accent, color: accentFg, fontSize: "0.95rem", fontWeight: 800, cursor: "pointer" }}>Enviar código</button>
-            <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: "0.72rem", color: "var(--carta-text3)" }}>El inicio de sesión con código estará disponible muy pronto.</p>
-          </div>
-        </div>,
-        document.body,
+      {/* Modal Identificarse — login del cliente por código OTP (reutiliza QRUser) */}
+      {identifyOpen && (
+        <IdentifyModal
+          customer={customer}
+          accent={accent}
+          accentFg={accentFg}
+          themeVars={themeVars}
+          onClose={() => setIdentifyOpen(false)}
+          onSuccess={u => { setCustomer(u); setIdentifyOpen(false); }}
+          onLogout={() => { setCustomer(null); setIdentifyOpen(false); }}
+        />
       )}
     </div>
   );

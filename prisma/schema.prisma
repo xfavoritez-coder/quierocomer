@@ -1133,12 +1133,14 @@ model QRMagicToken {
   id        String    @id @default(cuid())
   userId    String
   token     String    @unique @default(cuid())
+  code      String? // código OTP de 6 dígitos (login por código en /pedir)
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
   user      QRUser    @relation(fields: [userId], references: [id])
 
   @@index([token])
+  @@index([userId])
 }
 
 model BannerVariant {
