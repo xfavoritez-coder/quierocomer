@@ -6,12 +6,9 @@ import Link from "next/link";
 const NAV = [
   { icon: "📊", label: "Dashboard", href: "/admin" },
   { icon: "🔄", label: "Lifecycle", href: "/admin/lifecycle" },
-  { icon: "🧑‍💼", label: "Clientes", href: "/admin/clientes" },
   { icon: "👤", label: "Owners", href: "/admin/owners" },
   { icon: "👥", label: "Usuarios", href: "/admin/usuarios" },
-  { icon: "🧪", label: "Tests A/B", href: "/admin/tests-ab" },
   { icon: "🎯", label: "Funnel", href: "/admin/funnel" },
-  { icon: "📣", label: "FB Ads", href: "/admin/facebook-ads" },
   { icon: "✉️", label: "Mail Marketing", href: "/admin/mailmarketing" },
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
   { icon: "🛒", label: "Pedidos Online", href: "/admin/pedidos-online" },
