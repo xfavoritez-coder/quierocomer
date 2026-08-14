@@ -294,6 +294,10 @@ function GridCard({ dish, onClick, onDirectAdd }: { dish: Dish; onClick: () => v
     ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : 0;
   const hasModifiers = dish.modifierTemplates?.some((t: any) => t.groups?.length > 0);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  // Imágenes cacheadas ya están "complete" antes de montar el handler → onLoad no dispara.
+  // Detectamos ese caso al montar para no dejarlas invisibles (opacity 0).
+  useEffect(() => { if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) setImgLoaded(true); }, []);
   const photo = dish.photos?.[0];
 
   return (
@@ -306,7 +310,7 @@ function GridCard({ dish, onClick, onDirectAdd }: { dish: Dish; onClick: () => v
         {photo ? (
           <>
             {!imgLoaded && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
-            <img src={photo} alt={dish.name} loading="lazy" onLoad={() => setImgLoaded(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
+            <img ref={imgRef} src={photo} alt={dish.name} loading="lazy" onLoad={() => setImgLoaded(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
           </>
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.4rem" }}>🍽️</div>
@@ -548,7 +552,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const popularSet = useMemo(() => new Set(popularDishIds || []), [popularDishIds]);
   const toggleFilter = (k: FilterKey) => setActiveFilters(f => f.includes(k) ? f.filter(x => x !== k) : [...f, k]);
 
-  const isImpact = (orderingConfig.cartaView || "lista") === "impact";
+  // El ecommerce /pedir SIEMPRE usa el layout de grid (2 cols mobile / 4 escritorio),
+  // sin importar el diseño de carta del restaurante. La vista "Impact" queda reservada
+  // solo para la carta mesa (/qr), que usa componentes aparte.
+  const isImpact: boolean = false;
   const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
   const accent = orderingConfig.cartaAccentColor || "#F4A623";
   const accentFg = accentContrast(accent);
