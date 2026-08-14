@@ -344,6 +344,9 @@ model Restaurant {
   orderingMode               String                   @default("whatsapp") // "whatsapp" | "panel"
   orderingBusinessHours      Json?                    // { "0": { open: bool, from: "HH:mm", to: "HH:mm" }, ..., "6": ... } (0=Dom)
   orderingShowFeatured       Boolean                  @default(true) // mostrar el banner/hero de productos destacados en /pedir
+  orderingColumns            String                   @default("one") // grid de productos en /pedir: "one" (1 col) | "two" (2 col)
+  orderingShowIdentify       Boolean                  @default(false) // mostrar el botón "Identificarse" en /pedir (oculto por defecto)
+  orderingCategoryPhotos     Boolean                  @default(true) // categorías con foto (true) o solo chips sin foto (false)
   // Valoraciones
   reviewMode                 String                   @default("off") // "off" | "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña

@@ -33,6 +33,7 @@ const OWNER_EDITABLE_FIELDS = [
   "orderingPaymentMethods", "orderingMode",
   "orderingBannerUrl", "orderingTheme", "orderingAccentColor",
   "orderingBusinessHours", "orderingShowFeatured",
+  "orderingColumns", "orderingShowIdentify", "orderingCategoryPhotos",
   "filterBarEnabled",
 ];
 
