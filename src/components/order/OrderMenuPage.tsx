@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { ShoppingCart, Search, X, Plus } from "lucide-react";
 import { useCart } from "./OrderCartContext";
 import OrderItemModal, { type DishForOrder } from "./OrderItemModal";
@@ -516,7 +517,7 @@ function ClosedBanner({ businessHours, inline, isDark, accent }: { businessHours
         </span>
       </div>
 
-      {showModal && (
+      {showModal && typeof document !== "undefined" && createPortal(
         <div
           onClick={() => setShowModal(false)}
           style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px" }}
@@ -547,7 +548,8 @@ function ClosedBanner({ businessHours, inline, isDark, accent }: { businessHours
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
