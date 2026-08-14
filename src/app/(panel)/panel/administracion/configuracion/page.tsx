@@ -747,7 +747,8 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
     w.create({
       holderType: "individual",
       product: "movements",
-      publicKey: process.env.NEXT_PUBLIC_FINTOC_PUBLIC_KEY,
+      country: "cl",
+      publicKey: process.env.NEXT_PUBLIC_FINTOC_PUBLIC_KEY || "pk_test_CJiA7kB-xmWyzvRazbVXtsmKSAbqgC_mXxdUFXCtk7x",
       onSuccess: async (data: { link_token: string; account_id?: string }) => {
         const tok = getToken();
         const r2 = await fetch("/api/admin/financial/fintoc", {
