@@ -748,7 +748,7 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
       holderType: "individual",
       product: "movements",
       country: "cl",
-      publicKey: process.env.NEXT_PUBLIC_FINTOC_PUBLIC_KEY || "pk_test_CJiA7kB-xmWyzvRazbVXtsmKSAbqgC_mXxdUFXCtk7x",
+      publicKey: process.env.NEXT_PUBLIC_FINTOC_PUBLIC_KEY || "pk_live_JKV5GfnDdMmyk7J2sdWux4h4P1PxTzZrAvMAzXMKJ88",
       onSuccess: async (data: { link_token: string; account_id?: string }) => {
         const tok = getToken();
         const r2 = await fetch("/api/admin/financial/fintoc", {
