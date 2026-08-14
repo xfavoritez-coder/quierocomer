@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/expiry-notify",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/fintoc-sync",
+      "schedule": "0 7 * * *"
     }
   ]
 }

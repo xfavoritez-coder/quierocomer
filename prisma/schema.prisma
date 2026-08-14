@@ -400,6 +400,9 @@ model Restaurant {
   bankMovements              BankMovement[]
   cashAgents                 CashAgent[]
   categorizationRules        CategorizationRule[]
+  fintocLinkToken            String?
+  fintocAccountId            String?
+  fintocLastSync             DateTime?
 
   commune     String?
   communeSlug String?
