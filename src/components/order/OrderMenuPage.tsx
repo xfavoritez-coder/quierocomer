@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ShoppingCart, Search, X, Plus } from "lucide-react";
+import { ShoppingCart, Search, X, Plus, User } from "lucide-react";
 import { useCart } from "./OrderCartContext";
 import OrderItemModal, { type DishForOrder } from "./OrderItemModal";
 import OrderCart from "./OrderCart";
@@ -210,7 +210,6 @@ function ListaHero({
   const dish = heroDishes[current] ?? null;
   const accentFg = accentContrast(accent);
   const bgSrc = dish?.photos?.[0] || restaurant.bannerUrl || null;
-  const logoSrc = restaurant.logoUrl;
 
   return (
     <>
@@ -237,18 +236,6 @@ function ListaHero({
             <span style={{ fontSize: "5rem", opacity: 0.35 }}>🍽️</span>
           </div>
         )}
-
-        {/* Logo + nombre */}
-        <div style={{ position: "absolute", top: 10, left: 14, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          {logoSrc ? (
-            <img src={logoSrc} alt={restaurant.name} style={{ width: 28, height: 28, borderRadius: "50%" }} />
-          ) : (
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e" }}>
-              {restaurant.name.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <span style={{ color: "white", fontSize: "1.17rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}>{restaurant.name}</span>
-        </div>
 
         {/* Dish info */}
         {dish && (
@@ -558,6 +545,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   // sin importar el diseño de carta del restaurante. La vista "Impact" queda reservada
   // solo para la carta mesa (/qr), que usa componentes aparte.
   const isImpact: boolean = false;
+  const [identifyOpen, setIdentifyOpen] = useState(false);
   const isDark = (orderingConfig.cartaColorMode || "LIGHT") === "DARK";
   const accent = orderingConfig.cartaAccentColor || "#F4A623";
   const accentFg = accentContrast(accent);
@@ -889,43 +877,56 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {/* Banner de cerrado */}
       {isClosed && <ClosedBanner innerRef={closedBannerRef} businessHours={businessHours} isDark={isDark} accent={accent} />}
 
+      {/* Header: logo + identificarse + carrito (siempre visible, independiente del banner) */}
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 14px", background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+          {restaurant.logoUrl ? (
+            <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", fontWeight: 800, color: accentFg, flexShrink: 0 }}>{restaurant.name.charAt(0).toUpperCase()}</div>
+          )}
+          <span style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.08rem", fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurant.name}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <button onClick={() => setIdentifyOpen(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, border: "1px solid var(--carta-border)", background: "transparent", color: "var(--carta-text)", cursor: "pointer", fontFamily: FB, fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+            <User size={15} /> Identificarse
+          </button>
+          <button onClick={() => !isClosed && setCartOpen(true)} style={{ position: "relative", width: 38, height: 38, borderRadius: "50%", border: "1px solid var(--carta-border)", background: count > 0 && !isClosed ? accent : "transparent", display: "grid", placeItems: "center", cursor: isClosed ? "default" : "pointer", flexShrink: 0 }}>
+            <ShoppingCart size={17} color={count > 0 && !isClosed ? accentFg : "var(--carta-text2)"} />
+            {count > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 17, height: 17, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: accent, color: accentFg, fontSize: "0.6rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--carta-bg)" }}>{count}</span>}
+          </button>
+        </div>
+      </header>
+
       {/* Hero / banner de productos destacados (se puede ocultar desde config de Pedidos online) */}
       {orderingConfig.showFeatured !== false && (
         <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
       )}
 
-      {/* Sticky nav (se pega debajo del banner de cerrado si existe) */}
+      {/* Buscador de productos (debajo del banner) */}
+      <div style={{ padding: "10px 14px 4px", background: "var(--carta-bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 12, background: "var(--carta-surface)", border: "1px solid var(--carta-border)" }}>
+          <Search size={17} color="var(--carta-text3)" style={{ flexShrink: 0 }} />
+          <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar productos..." style={{ flex: 1, minWidth: 0, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent" }} />
+          {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", padding: 2, cursor: "pointer", display: "flex", flexShrink: 0 }}><X size={16} color="var(--carta-text3)" /></button>}
+        </div>
+      </div>
+
+      {/* Sticky nav: categorías (se pega debajo del banner de cerrado si existe) */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: closedBannerH, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
-        {searchOpen ? (
-          <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
-            <Search size={16} color="var(--carta-text2)" style={{ flexShrink: 0 }} />
-            <input autoFocus type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar platos..." style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent" }} />
-            <button onClick={() => { setSearchOpen(false); setSearch(""); }} style={{ background: "none", border: "none", padding: 4, cursor: "pointer" }}><X size={18} color="var(--carta-text2)" /></button>
+        <nav style={{ display: "flex", alignItems: "center" }}>
+          <div ref={catScrollRef} style={{ flex: 1, paddingLeft: 12, paddingRight: 12, paddingTop: 8, paddingBottom: 8, display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", maskImage: "linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)" }}>
+            {grouped.map(({ category: cat }) => {
+              const isActive = cat.id === activeCategory;
+              return (
+                <button key={cat.id} ref={isActive ? activeCatRef : null}
+                  onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }}
+                  style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "9px 18px", borderRadius: 999, fontSize: 15, fontWeight: isActive ? 700 : 500, color: isActive ? accent : "var(--carta-text3)", background: isActive ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent", border: isActive ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", cursor: "pointer", transition: "all 0.15s ease" }}
+                >{cat.name}</button>
+              );
+            })}
           </div>
-        ) : (
-          <nav style={{ display: "flex", alignItems: "center" }}>
-            <div ref={catScrollRef} style={{ flex: 1, paddingLeft: 12, paddingRight: 8, paddingTop: 8, paddingBottom: 8, display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", maskImage: "linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%)" }}>
-              {grouped.map(({ category: cat }) => {
-                const isActive = cat.id === activeCategory;
-                return (
-                  <button key={cat.id} ref={isActive ? activeCatRef : null}
-                    onClick={() => { setActiveCategory(cat.id); scrollToCategory(cat.id); }}
-                    style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "9px 18px", borderRadius: 999, fontSize: 15, fontWeight: isActive ? 700 : 500, color: isActive ? accent : "var(--carta-text3)", background: isActive ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent", border: isActive ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", cursor: "pointer", transition: "all 0.15s ease" }}
-                  >{cat.name}</button>
-                );
-              })}
-            </div>
-            <div style={{ flexShrink: 0, paddingRight: 8, paddingLeft: 4, display: "flex", alignItems: "center", gap: 4 }}>
-              <button onClick={() => !isClosed && setCartOpen(true)} style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", background: count > 0 && !isClosed ? accent : "transparent", display: "grid", placeItems: "center", cursor: isClosed ? "default" : "pointer" }}>
-                <ShoppingCart size={16} color={count > 0 ? "#fff" : "var(--carta-text2)"} />
-                {count > 0 && <span style={{ position: "absolute", top: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}
-              </button>
-              <button onClick={() => setSearchOpen(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: 4, cursor: "pointer" }}>
-                <Search size={17} color="var(--carta-text2)" />
-              </button>
-            </div>
-          </nav>
-        )}
+        </nav>
       </div>
 
       {/* Filter bar */}
@@ -982,6 +983,24 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {selectedDish && <OrderItemModal dish={selectedDish} onClose={() => setSelectedDish(null)} onAdd={handleAddItem} isClosed={isClosed} />}
       {cartOpen && !checkoutOpen && <OrderCart onClose={() => setCartOpen(false)} onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }} />}
       {checkoutOpen && <OrderCheckout restaurantName={restaurant.name} restaurantSlug={restaurant.slug} orderingConfig={orderingConfig} onBack={() => { setCheckoutOpen(false); setCartOpen(true); }} onClose={() => setCheckoutOpen(false)} />}
+
+      {/* Modal Identificarse (login de cliente por email — flujo OTP completo en fase siguiente) */}
+      {identifyOpen && typeof document !== "undefined" && createPortal(
+        <div onClick={() => setIdentifyOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--carta-bg)", color: "var(--carta-text)", width: "100%", maxWidth: 440, borderRadius: "20px 20px 0 0", padding: "22px 20px calc(24px + env(safe-area-inset-bottom))", boxShadow: "0 -8px 40px rgba(0,0,0,0.4)", fontFamily: FB, ...themeVars }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <h3 style={{ margin: 0, fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.25rem", fontWeight: 800 }}>Identifícate</h3>
+              <button onClick={() => setIdentifyOpen(false)} style={{ background: "var(--carta-surface)", border: "1px solid var(--carta-border)", width: 30, height: 30, borderRadius: "50%", cursor: "pointer", color: "var(--carta-text2)", display: "grid", placeItems: "center" }}><X size={16} /></button>
+            </div>
+            <p style={{ margin: "0 0 16px", color: "var(--carta-text2)", fontSize: "0.9rem", lineHeight: 1.5 }}>Inicia sesión con tu email para guardar tus datos y direcciones y ver el historial de tus pedidos.</p>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-text2)", marginBottom: 6 }}>Email</label>
+            <input type="email" inputMode="email" placeholder="tucorreo@email.com" style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", borderRadius: 12, border: "1px solid var(--carta-border)", background: "var(--carta-surface)", color: "var(--carta-text)", fontSize: 16, outline: "none", marginBottom: 14 }} />
+            <button onClick={() => setIdentifyOpen(false)} style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: accent, color: accentFg, fontSize: "0.95rem", fontWeight: 800, cursor: "pointer" }}>Enviar código</button>
+            <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: "0.72rem", color: "var(--carta-text3)" }}>El inicio de sesión con código estará disponible muy pronto.</p>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
