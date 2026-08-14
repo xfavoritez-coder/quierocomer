@@ -694,6 +694,7 @@ export default function ConciliacionPage() {
     if (restaurantId) load(restaurantId, month);
   }, [restaurantId, month, load]);
 
+
   // Paso 1: previsualizar sin guardar
   const handleFile = async (file: File) => {
     if (!restaurantId) return;
@@ -802,6 +803,16 @@ export default function ConciliacionPage() {
   ];
 
   const activeMovements = tabMovements[tab];
+
+  // Si el tab activo queda vacío tras cargar, saltar al primero con contenido
+  useEffect(() => {
+    if (!loaded) return;
+    if ((tabMovements[tab]?.length ?? 0) > 0) return;
+    const first = (["PENDING", "AGENTS", "RECONCILED", "IGNORED"] as TabKey[]).find(
+      k => (tabMovements[k]?.length ?? 0) > 0
+    );
+    if (first) setTab(first);
+  }, [loaded, movements]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Empty state messages
   const emptyMessages: Record<TabKey, string> = {
