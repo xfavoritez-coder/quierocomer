@@ -452,7 +452,7 @@ function fmt12(hhmm: string) {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function ClosedBanner({ businessHours, inline, isDark, accent }: { businessHours?: Record<string, BHDay> | null; inline?: boolean; isDark?: boolean; accent?: string }) {
+function ClosedBanner({ businessHours, inline, isDark, accent, innerRef }: { businessHours?: Record<string, BHDay> | null; inline?: boolean; isDark?: boolean; accent?: string; innerRef?: React.Ref<HTMLDivElement> }) {
   const [showModal, setShowModal] = useState(false);
   const bg = isDark ? "#111" : "#1a1a1a";
   const modalBg = isDark ? "#1e1e1e" : "#fff";
@@ -465,6 +465,7 @@ function ClosedBanner({ businessHours, inline, isDark, accent }: { businessHours
   return (
     <>
       <div
+        ref={innerRef}
         onClick={() => setShowModal(true)}
         style={{
           position: inline ? "relative" : "sticky", top: 0, zIndex: inline ? undefined : 100,
@@ -621,6 +622,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const [stickyNavH, setStickyNavH] = useState(50);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const activeCatRef = useRef<HTMLButtonElement>(null);
+  // Banner "cerrado": medimos su altura para que el nav sticky se pegue DEBAJO y no quede tapado.
+  const closedBannerRef = useRef<HTMLDivElement>(null);
+  const [closedBannerH, setClosedBannerH] = useState(0);
 
   useEffect(() => {
     if (!isImpact) return;
@@ -641,6 +645,16 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
     setStickyNavH(el.offsetHeight);
     return () => obs.disconnect();
   }, [isImpact]);
+
+  useEffect(() => {
+    if (isImpact || !isClosed) { setClosedBannerH(0); return; }
+    const el = closedBannerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(() => setClosedBannerH(el.offsetHeight));
+    obs.observe(el);
+    setClosedBannerH(el.offsetHeight);
+    return () => obs.disconnect();
+  }, [isImpact, isClosed]);
 
   useEffect(() => {
     if (!isImpact) return;
@@ -685,7 +699,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
     const prefix = isImpact ? "impact-cat" : "lista-cat";
     const el = document.getElementById(`${prefix}-${catId}`);
     if (!el) return;
-    const offset = isImpact ? impactHeaderH + 10 : stickyNavH + 8;
+    const offset = isImpact ? impactHeaderH + 10 : stickyNavH + closedBannerH + 8;
     window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset, behavior: "smooth" });
   };
 
@@ -872,16 +886,13 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       `}</style>
 
       {/* Banner de cerrado */}
-      {isClosed && <ClosedBanner businessHours={businessHours} isDark={isDark} accent={accent} />}
+      {isClosed && <ClosedBanner innerRef={closedBannerRef} businessHours={businessHours} isDark={isDark} accent={accent} />}
 
       {/* Hero con fotos de platos */}
       <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
 
-      {/* Categories grid */}
-      <CategoriesSection grouped={grouped} accent={accent} isDark={isDark} scrollToCategory={scrollToCategory} />
-
-      {/* Sticky nav */}
-      <div ref={stickyNavRef} style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
+      {/* Sticky nav (se pega debajo del banner de cerrado si existe) */}
+      <div ref={stickyNavRef} style={{ position: "sticky", top: closedBannerH, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text2)" style={{ flexShrink: 0 }} />
