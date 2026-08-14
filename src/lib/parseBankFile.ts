@@ -73,14 +73,13 @@ export function parseBCIXLSX(buffer: Buffer): ParsedRow[] {
 // El signo (cargo/abono) se determina comparando el saldo con la fila siguiente.
 export async function parseBCIPDF(buffer: Buffer): Promise<ParsedRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PDFParse } = require("pdf-parse");
-  const parser = new PDFParse({ data: buffer });
-  const data = await parser.getText();
+  const { extractText } = require("unpdf");
+  const { text } = await extractText(new Uint8Array(buffer), { mergePages: true });
 
   // Formato: YYYY-MM-DD YYYY-MM-DD Descripción $1.234.567 $9.876.543
   const ROW_RE = /^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})\s+(.+?)\s+\$(\d{1,3}(?:\.\d{3})*)\s+\$(\d{1,3}(?:\.\d{3})*)$/;
 
-  const lines: string[] = data.text
+  const lines: string[] = text
     .split("\n")
     .map((l: string) => l.trim())
     .filter(Boolean);
