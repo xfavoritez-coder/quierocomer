@@ -68,80 +68,66 @@ export function parseBCIXLSX(buffer: Buffer): ParsedRow[] {
 }
 
 // ── PDF de BCI ──────────────────────────────────────────────────────────────
-// Estrategia: extraer texto, buscar líneas con fecha DD/MM/YYYY,
-// extraer números en formato chileno y usar cambio de saldo para determinar egreso/ingreso.
+// Formato BCI: "YYYY-MM-DD YYYY-MM-DD Descripción $Monto $Saldo"
+// Las filas vienen de más reciente a más antigua.
+// El signo (cargo/abono) se determina comparando el saldo con la fila siguiente.
 export async function parseBCIPDF(buffer: Buffer): Promise<ParsedRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require("pdf-parse");
-  const data = await pdfParse(buffer);
+  const { PDFParse } = require("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
+  const data = await parser.getText();
 
-  // Regex para número chileno (ej: "1.234.567" o "50.000")
-  const CLP_RE = /\d{1,3}(?:\.\d{3})+/g;
-  // Regex para fecha chilena
-  const DATE_RE = /^(\d{2})\/(\d{2})\/(\d{4})\s+(.*)/;
+  // Formato: YYYY-MM-DD YYYY-MM-DD Descripción $1.234.567 $9.876.543
+  const ROW_RE = /^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})\s+(.+?)\s+\$(\d{1,3}(?:\.\d{3})*)\s+\$(\d{1,3}(?:\.\d{3})*)$/;
 
   const lines: string[] = data.text
     .split("\n")
     .map((l: string) => l.trim())
     .filter(Boolean);
 
-  type RawItem = {
-    date: Date;
-    description: string;
-    amounts: number[];
-  };
-
+  type RawItem = { date: Date; description: string; amount: number; balance: number };
   const items: RawItem[] = [];
 
   for (const line of lines) {
-    const dm = line.match(DATE_RE);
-    if (!dm) continue;
-    const [, dd, mm, yyyy, rest] = dm;
-    const date = new Date(Date.UTC(+yyyy, +mm - 1, +dd, 12, 0, 0));
-
-    // Extraer todos los montos en formato chileno
-    const amounts = [...rest.matchAll(CLP_RE)].map((m) => parseCLP(m[0]));
-    if (amounts.length === 0) continue;
-
-    // Descripción: texto antes del primer número
-    const firstNumIdx = rest.search(CLP_RE);
-    const description = (firstNumIdx > 0 ? rest.slice(0, firstNumIdx) : rest).trim().replace(/\s+/g, " ");
-    if (!description) continue;
-
-    items.push({ date, description, amounts });
+    const m = line.match(ROW_RE);
+    if (!m) continue;
+    const [, dateStr, , desc, amtStr, balStr] = m;
+    const [yyyy, mm, dd] = dateStr.split("-").map(Number);
+    const date = new Date(Date.UTC(yyyy, mm - 1, dd, 12, 0, 0));
+    items.push({
+      date,
+      description: desc.trim(),
+      amount: parseCLP(amtStr),
+      balance: parseCLP(balStr),
+    });
   }
+
+  if (items.length === 0) return [];
 
   const result: ParsedRow[] = [];
 
   for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const { date, description, amounts } = item;
+    const { date, description, amount, balance } = items[i];
+    // La fila siguiente tiene el saldo ANTES de esta transacción
+    const prevBalance = i + 1 < items.length ? items[i + 1].balance : null;
 
-    // El último número suele ser el saldo; el anterior es el monto de la transacción
-    const balance = amounts.length >= 1 ? amounts[amounts.length - 1] : null;
-    const txAmount = amounts.length >= 2 ? amounts[amounts.length - 2] : (amounts[0] ?? null);
-
-    if (!txAmount) continue;
-
-    // Determinar signo usando cambio de saldo con la fila siguiente (si existe)
     let debit: number | null = null;
     let credit: number | null = null;
 
-    const prevBalance = i > 0 ? (result[result.length - 1]?.balance ?? null) : null;
-
-    if (prevBalance !== null && balance !== null) {
-      const diff = balance - prevBalance;
-      if (diff < 0) {
-        debit = txAmount;
-      } else if (diff > 0) {
-        credit = txAmount;
+    if (prevBalance !== null) {
+      if (balance < prevBalance) {
+        debit = amount;   // saldo bajó → cargo
       } else {
-        // Sin cambio neto, asumir egreso
-        debit = txAmount;
+        credit = amount;  // saldo subió → abono
       }
     } else {
-      // Sin balance previo para comparar, asumir egreso (más común)
-      debit = txAmount;
+      // Última fila sin referencia: inferir por descripción
+      const desc = description.toLowerCase();
+      if (desc.includes("abono") || desc.includes("pago recibido") || desc.includes("transferencia recibida")) {
+        credit = amount;
+      } else {
+        debit = amount;
+      }
     }
 
     result.push({
