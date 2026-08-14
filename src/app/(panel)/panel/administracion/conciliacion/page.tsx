@@ -556,7 +556,7 @@ function AgentsTab({
     for (const ag of agents) {
       map[ag.id] = { agent: ag, movements: [], total: 0 };
     }
-    for (const m of movements) {
+    for (const m of [...movements].sort((a, b) => b.date.localeCompare(a.date))) {
       if (m.agent && map[m.agent.id]) {
         map[m.agent.id].movements.push(m);
         // Solo contar retiros aún no conciliados (RECONCILED = categorizado directamente, ej: sueldo)
