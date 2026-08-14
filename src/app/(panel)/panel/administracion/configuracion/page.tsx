@@ -745,7 +745,7 @@ function FintocSection({ restaurantId }: { restaurantId: string }) {
     if (!w) { setError("No se pudo cargar el widget de Fintoc"); return; }
 
     w.create({
-      holderType: "individual",
+      holderType: "business",
       product: "movements",
       country: "cl",
       publicKey: process.env.NEXT_PUBLIC_FINTOC_PUBLIC_KEY || "pk_live_JKV5GfnDdMmyk7J2sdWux4h4P1PxTzZrAvMAzXMKJ88",
