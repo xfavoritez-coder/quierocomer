@@ -287,84 +287,46 @@ function ListaHero({
 }
 
 // ── Impact card ───────────────────────────────────────────────────────────────
-function ImpactCard({
-  dish, onClick, onDirectAdd,
-}: { dish: Dish; onClick: () => void; onDirectAdd: (e: React.MouseEvent) => void }) {
+// ── Grid card (vertical: foto arriba, texto abajo) — para el grid ecommerce 4/2 ──
+function GridCard({ dish, onClick, onDirectAdd }: { dish: Dish; onClick: () => void; onDirectAdd: (e: React.MouseEvent) => void }) {
   const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
   const discountPct = dish.discountPrice != null && dish.discountPrice < dish.price
     ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : 0;
   const hasModifiers = dish.modifierTemplates?.some((t: any) => t.groups?.length > 0);
-
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: "100%", display: "grid", gridTemplateColumns: "118px 1fr",
-        gap: 16, padding: 10, marginBottom: 11, borderRadius: 26,
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
-        border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
-        position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-      }}
-    >
-      <div style={{ position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: dish.photos?.[0] ? "#222" : "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))" }}>
-        {dish.photos?.[0] ? (
-          <img src={dish.photos[0]} alt={dish.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>
-        )}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
-        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h4>
-        {dish.description && (
-          <p style={{ margin: "0 0 8px", color: "var(--carta-text2)", fontSize: 13, lineHeight: 1.42, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          {discountPct > 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>-{discountPct}%</span>}
-          <b style={{ color: "var(--carta-accent)", fontSize: 16 }}>{formatCLP(effectivePrice)}</b>
-          {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3, #666)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
-        </div>
-      </div>
-      <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "color-mix(in srgb, var(--carta-accent) 18%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px color-mix(in srgb, var(--carta-accent) 50%, transparent)", pointerEvents: hasModifiers ? "none" : "auto" }}>
-        <Plus size={16} color="var(--carta-plus-icon, #fff)" />
-      </div>
-    </button>
-  );
-}
-
-// ── Lista card (replica DishListCard) ─────────────────────────────────────────
-function ListaCard({ dish, onClick }: { dish: Dish; onClick: () => void }) {
-  const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
-  const discountPct = dish.discountPrice != null && dish.discountPrice < dish.price
-    ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : 0;
   const [imgLoaded, setImgLoaded] = useState(false);
   const photo = dish.photos?.[0];
 
   return (
     <button
       onClick={onClick}
-      style={{ width: "100%", display: "flex", gap: 0, padding: 0, overflow: "hidden", background: "var(--carta-surface)", borderRadius: 14, border: "1px solid var(--carta-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", textAlign: "left", cursor: "pointer", fontFamily: "inherit" }}
+      style={{ display: "flex", flexDirection: "column", width: "100%", padding: 0, overflow: "hidden", background: "var(--carta-surface)", borderRadius: 16, border: "1px solid var(--carta-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", textAlign: "left", cursor: "pointer", fontFamily: "inherit", position: "relative" }}
     >
-      {/* Foto IZQUIERDA */}
-      <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "var(--carta-photo-bg)" : "linear-gradient(135deg, var(--carta-bg), var(--carta-photo-bg))" }}>
+      {/* Foto ARRIBA (cuadrada) */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", overflow: "hidden", flexShrink: 0, background: photo ? "var(--carta-photo-bg)" : "linear-gradient(135deg, var(--carta-bg), var(--carta-photo-bg))" }}>
         {photo ? (
           <>
             {!imgLoaded && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
             <img src={photo} alt={dish.name} loading="lazy" onLoad={() => setImgLoaded(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
           </>
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🍽️</div>
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.4rem" }}>🍽️</div>
         )}
-        {discountPct > 0 && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "11px", fontWeight: 800, color: "white", background: "var(--carta-accent)", padding: "3px 9px", borderRadius: 50 }}>-{discountPct}%</span>}
+        {discountPct > 0 && <span style={{ position: "absolute", top: 8, left: 8, fontSize: "11px", fontWeight: 800, color: "white", background: "var(--carta-accent)", padding: "3px 9px", borderRadius: 50 }}>-{discountPct}%</span>}
       </div>
-      {/* Texto DERECHA */}
-      <div style={{ flex: 1, minWidth: 0, padding: "10px 12px" }}>
-        <h3 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.1rem", fontWeight: 600, color: "var(--carta-text)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h3>
+      {/* Texto ABAJO */}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, padding: "10px 12px 12px" }}>
+        <h3 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "0.98rem", fontWeight: 600, color: "var(--carta-text)", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h3>
         {dish.description && (
-          <p style={{ fontSize: "0.82rem", color: "var(--carta-text2)", lineHeight: 1.45, marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
+          <p style={{ fontSize: "0.78rem", color: "var(--carta-text2)", lineHeight: 1.4, margin: "0 0 8px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: "0.94rem", fontWeight: 700, color: "var(--carta-accent)" }}>{formatCLP(effectivePrice)}</span>
-          {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+            <span style={{ fontSize: "0.98rem", fontWeight: 700, color: "var(--carta-accent)" }}>{formatCLP(effectivePrice)}</span>
+            {discountPct > 0 && <span style={{ fontSize: "0.72rem", color: "var(--carta-text3)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
+          </div>
+          <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", background: "color-mix(in srgb, var(--carta-accent) 16%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent) 50%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: hasModifiers ? "none" : "auto" }}>
+            <Plus size={17} color="var(--carta-plus-icon, #fff)" />
+          </div>
         </div>
       </div>
     </button>
@@ -748,7 +710,13 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   if (isImpact) {
     return (
       <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');`}</style>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+          @keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }
+          /* Grid ecommerce: 2 columnas en mobile, 4 en escritorio */
+          .qc-prod-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+          @media (min-width: 1024px) { .qc-prod-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
+        `}</style>
         {/* Ambient bg */}
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} ${isDark ? "28%" : "18%"}, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} ${isDark ? "15%" : "10%"}, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
         <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: isDark ? 0.22 : 0.12, backgroundImage: `linear-gradient(rgba(${isDark ? "255,255,255" : "0,0,0"},0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(${isDark ? "255,255,255" : "0,0,0"},0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
@@ -844,7 +812,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         </div>
 
         {/* Platos */}
-        <div style={{ position: "relative", zIndex: 1, padding: "0 14px 120px" }}>
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 14px 120px" }}>
           {grouped.length === 0 ? (
             <div style={{ padding: "64px 28px", textAlign: "center" }}>
               <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
@@ -855,9 +823,11 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
             grouped.map(({ category, dishes }) => (
               <div key={category.id} id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
                 <h3 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 20, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{category.name}</h3>
-                {dishes.map(dish => (
-                  <ImpactCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />
-                ))}
+                <div className="qc-prod-grid">
+                  {dishes.map(dish => (
+                    <GridCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />
+                  ))}
+                </div>
               </div>
             ))
           )}
@@ -886,7 +856,13 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   // ─── LISTA LAYOUT ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen" style={{ background: "var(--carta-bg)", fontFamily: FB, ...themeVars }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800;900&display=swap'); @keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800;900&display=swap');
+        @keyframes shimmer { 0%,100%{transform:translateX(-100%)} 50%{transform:translateX(100%)} }
+        /* Grid ecommerce: 2 columnas en mobile, 4 en escritorio */
+        .qc-prod-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        @media (min-width: 1024px) { .qc-prod-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
+      `}</style>
 
       {/* Banner de cerrado */}
       {isClosed && <ClosedBanner businessHours={businessHours} isDark={isDark} accent={accent} />}
@@ -957,12 +933,12 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         </div>
       ) : (
         grouped.map(({ category, dishes }, index) => (
-          <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: `${index === 0 ? 4 : 12}px 12px 0` }}>
+          <section key={category.id} id={`lista-cat-${category.id}`} style={{ maxWidth: 1200, margin: "0 auto", width: "100%", boxSizing: "border-box", padding: `${index === 0 ? 4 : 12}px 12px 0` }}>
             <div style={{ padding: "0 8px", margin: "14px 0 10px" }}>
               <h2 style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.3rem", fontWeight: 600, color: "var(--carta-text2)" }}>{category.name}</h2>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {dishes.map(dish => <ListaCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} />)}
+            <div className="qc-prod-grid">
+              {dishes.map(dish => <GridCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />)}
             </div>
           </section>
         ))
