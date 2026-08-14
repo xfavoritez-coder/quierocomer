@@ -1004,15 +1004,6 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
       )}
 
-      {/* Buscador de productos (debajo del banner) */}
-      <div style={{ padding: "10px 14px 4px", background: "var(--carta-bg)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 12, background: "var(--carta-surface)", border: "1px solid var(--carta-border)" }}>
-          <Search size={17} color="var(--carta-text3)" style={{ flexShrink: 0 }} />
-          <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar productos..." style={{ flex: 1, minWidth: 0, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent" }} />
-          {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", padding: 2, cursor: "pointer", display: "flex", flexShrink: 0 }}><X size={16} color="var(--carta-text3)" /></button>}
-        </div>
-      </div>
-
       {/* Sticky nav: categorías (se pega debajo del banner de cerrado si existe) */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: closedBannerH, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
         <nav style={{ display: "flex", alignItems: "center" }}>
@@ -1028,6 +1019,15 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
             })}
           </div>
         </nav>
+      </div>
+
+      {/* Buscador de productos (después de las categorías) */}
+      <div style={{ padding: "10px 14px 4px", background: "var(--carta-bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 12, background: "var(--carta-surface)", border: "1px solid var(--carta-border)" }}>
+          <Search size={17} color="var(--carta-text3)" style={{ flexShrink: 0 }} />
+          <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar productos..." style={{ flex: 1, minWidth: 0, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent" }} />
+          {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", padding: 2, cursor: "pointer", display: "flex", flexShrink: 0 }}><X size={16} color="var(--carta-text3)" /></button>}
+        </div>
       </div>
 
       {/* Filter bar */}
