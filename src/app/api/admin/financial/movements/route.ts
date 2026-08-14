@@ -1,81 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
-import * as XLSX from "xlsx";
+import { parseBankFile, type ParsedRow } from "@/lib/parseBankFile";
 import { createHash } from "crypto";
 
-// ── Convertir número serial de Excel a Date ──
-function excelDateToJS(serial: number): Date {
-  // Excel usa 1 = 1 ene 1900 (con bug de año bisiesto en 1900)
-  const utcDays = serial - 25569; // 25569 = días entre 1/1/1900 y 1/1/1970
-  const ms = utcDays * 86400 * 1000;
-  const d = new Date(ms);
-  // Fijar a mediodía UTC para evitar problemas de zona horaria
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
-}
-
-type ParsedRow = {
-  date: Date;
-  description: string;
-  debit: number | null;
-  credit: number | null;
-  balance: number | null;
-  externalKey: string;
-};
-
-// ── Parsear XLSX de BCI ──
-// Columnas: Fecha Transacción | Fecha Contable | Descripción | Egreso (-) | Ingreso (+) | Saldo
-function parseBCIXLSX(buffer: Buffer): ParsedRow[] {
-  const wb = XLSX.read(buffer, { type: "buffer" });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const raw: (string | number | null)[][] = XLSX.utils.sheet_to_json(ws, {
-    header: 1,
-    defval: null,
-  });
-
-  // Buscar fila header (contiene "Descripción" o "Fecha Transacción")
-  const headerIdx = raw.findIndex(
-    (r) => r && typeof r[2] === "string" && /descrip/i.test(r[2])
-  );
-  if (headerIdx === -1) return [];
-
-  const result: ParsedRow[] = [];
-
-  for (const row of raw.slice(headerIdx + 1)) {
-    if (!row || !row[0] || !row[2]) continue;
-
-    const dateRaw = row[0];
-    const desc = String(row[2]).trim();
-    if (!desc) continue;
-
-    let date: Date;
-    if (typeof dateRaw === "number") {
-      date = excelDateToJS(dateRaw);
-    } else {
-      // Intentar parsear DD/MM/YYYY
-      const s = String(dateRaw).trim();
-      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (m) date = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], 12, 0, 0));
-      else continue;
-    }
-
-    const debit = row[3] && row[3] !== "" ? Math.round(Number(row[3])) : null;
-    const credit = row[4] && row[4] !== "" ? Math.round(Number(row[4])) : null;
-    const balance = row[5] ? Math.round(Number(row[5])) : null;
-
-    if (!debit && !credit) continue;
-
-    const amount = debit ?? credit ?? 0;
-    const externalKey = createHash("sha1")
-      .update(`${date.toISOString()}|${desc}|${debit ?? ""}|${credit ?? ""}`)
-      .digest("hex")
-      .slice(0, 16);
-
-    result.push({ date, description: desc, debit, credit, balance, externalKey });
-  }
-
-  return result;
-}
 
 // ── Auto-categorizar un movimiento según reglas + agentes ──
 async function autoCategorizeSingle(
@@ -184,7 +112,7 @@ export async function POST(req: NextRequest) {
   try { await assertOwnsRestaurant(req, restaurantId); } catch (e: any) { return authErrorResponse(e); }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const rows = parseBCIXLSX(buffer);
+  const rows = await parseBankFile(buffer, file.name);
   if (rows.length === 0) {
     return NextResponse.json({ error: "No se encontraron movimientos válidos en el archivo" }, { status: 422 });
   }

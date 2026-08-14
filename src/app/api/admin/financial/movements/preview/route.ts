@@ -1,49 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
-import * as XLSX from "xlsx";
-import { createHash } from "crypto";
-
-function excelDateToJS(serial: number): Date {
-  const utcDays = serial - 25569;
-  const ms = utcDays * 86400 * 1000;
-  const d = new Date(ms);
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
-}
-
-function parseBCIXLSX(buffer: Buffer) {
-  const wb = XLSX.read(buffer, { type: "buffer" });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const raw: (string | number | null)[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-
-  const headerIdx = raw.findIndex(r => r && typeof r[2] === "string" && /descrip/i.test(r[2]));
-  if (headerIdx === -1) return [];
-
-  const result = [];
-  for (const row of raw.slice(headerIdx + 1)) {
-    if (!row || !row[0] || !row[2]) continue;
-    const dateRaw = row[0];
-    const desc = String(row[2]).trim();
-    if (!desc) continue;
-    let date: Date;
-    if (typeof dateRaw === "number") {
-      date = excelDateToJS(dateRaw);
-    } else {
-      const s = String(dateRaw).trim();
-      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (m) date = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1], 12, 0, 0));
-      else continue;
-    }
-    const debit = row[3] && row[3] !== "" ? Math.round(Number(row[3])) : null;
-    const credit = row[4] && row[4] !== "" ? Math.round(Number(row[4])) : null;
-    if (!debit && !credit) continue;
-    const externalKey = createHash("sha1")
-      .update(`${date.toISOString()}|${desc}|${debit ?? ""}|${credit ?? ""}`)
-      .digest("hex").slice(0, 16);
-    result.push({ date, description: desc, debit, credit, balance: row[5] ? Math.round(Number(row[5])) : null, externalKey });
-  }
-  return result;
-}
+import { parseBankFile } from "@/lib/parseBankFile";
 
 // POST /api/admin/financial/movements/preview
 // Recibe el XLSX, analiza qué hay nuevo vs duplicado vs auto-sugerido, SIN guardar nada.
@@ -58,8 +16,8 @@ export async function POST(req: NextRequest) {
   try { await assertOwnsRestaurant(req, restaurantId); } catch (e: any) { return authErrorResponse(e); }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const rows = parseBCIXLSX(buffer);
-  if (rows.length === 0) return NextResponse.json({ error: "No se encontraron movimientos válidos" }, { status: 422 });
+  const rows = await parseBankFile(buffer, file.name);
+  if (rows.length === 0) return NextResponse.json({ error: "No se encontraron movimientos válidos en el archivo" }, { status: 422 });
 
   // Obtener todos los externalKeys ya existentes para este restaurante
   const existingKeys = new Set(

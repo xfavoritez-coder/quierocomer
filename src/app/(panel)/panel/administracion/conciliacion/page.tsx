@@ -838,9 +838,9 @@ export default function ConciliacionPage() {
           style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", borderRadius: 10, border: "none", background: importing ? "var(--adm-card-border,#e5e7eb)" : "#F4A623", color: importing ? "var(--adm-text3,#aaa)" : "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: importing ? "default" : "pointer", flexShrink: 0 }}
         >
           {importing ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={15} />}
-          {importing ? "Analizando..." : "Importar XLSX"}
+          {importing ? "Analizando..." : "Importar archivo"}
         </button>
-        <input ref={fileRef} type="file" accept=".xlsx" style={{ display: "none" }} onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+        <input ref={fileRef} type="file" accept=".xlsx,.xls,.pdf" style={{ display: "none" }} onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
       </div>
 
       {/* Month navigation */}
@@ -987,7 +987,7 @@ export default function ConciliacionPage() {
         <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--adm-text3,#aaa)" }}>
           <Landmark size={36} style={{ margin: "0 auto 14px", display: "block", opacity: 0.25 }} />
           <p style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--adm-text2,#888)", margin: "0 0 6px" }}>Sin movimientos para este mes</p>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3,#aaa)", margin: 0 }}>Importa el XLSX de BCI para comenzar la conciliación.</p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3,#aaa)", margin: 0 }}>Importa el XLSX o PDF de BCI para comenzar la conciliación.</p>
         </div>
       )}
 
