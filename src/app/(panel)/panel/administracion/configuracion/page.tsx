@@ -952,10 +952,60 @@ export default function ConfiguracionFinanciera() {
     return { icon: first?.icon || null, color: first?.color || null };
   }
 
+  const [incomeOpen, setIncomeOpen] = useState(true);
+  const [expenseOpen, setExpenseOpen] = useState(true);
+
+  function CollapsibleTypeSection({ type, cats, open, onToggle }: {
+    type: FinancialType; cats: Category[]; open: boolean; onToggle: () => void;
+  }) {
+    const activeCount = cats.filter(c => c.isActive).length;
+    return (
+      <section style={{ marginBottom: 12 }}>
+        <button
+          onClick={onToggle}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 14px", background: "var(--adm-card)",
+            border: "1px solid var(--adm-card-border)", borderRadius: open ? "12px 12px 0 0" : 12,
+            cursor: "pointer", transition: "border-radius 0.15s",
+          }}
+        >
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: TYPE_COLOR[type], flexShrink: 0, display: "inline-block" }} />
+          <span style={{ fontFamily: F, fontWeight: 700, fontSize: "0.95rem", color: "var(--adm-text)", flex: 1, textAlign: "left" }}>
+            {TYPE_LABEL[type]}
+          </span>
+          <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", background: "var(--adm-hover)", borderRadius: 20, padding: "2px 8px" }}>
+            {activeCount}/{cats.length}
+          </span>
+          <ChevronDown size={15} color="var(--adm-text3)" style={{ transition: "transform 0.2s", transform: open ? "rotate(0deg)" : "rotate(-90deg)", flexShrink: 0 }} />
+        </button>
+
+        {open && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderTop: "none", borderRadius: "0 0 12px 12px", padding: "4px 8px 8px", marginBottom: 20 }}>
+            {Array.from(groupBy(cats)).map(([gName, gCats]) => {
+              const meta = getGroupMeta(gCats);
+              return (
+                <CategoryGroup
+                  key={gName}
+                  groupName={gName}
+                  groupIcon={meta.icon}
+                  groupColor={meta.color}
+                  categories={gCats}
+                  onToggleActive={handleToggleActive}
+                  onEdit={cat => { setEditingCat(cat); setShowCreateForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: F, fontWeight: 800, fontSize: "1.45rem", color: "var(--adm-text)", margin: 0 }}>
           Configuración financiera
         </h1>
@@ -968,7 +1018,7 @@ export default function ConfiguracionFinanciera() {
       {!showCreateForm && !editingCat && (
         <button
           onClick={() => setShowCreateForm(true)}
-          style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, border: "1.5px dashed var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.875rem", cursor: "pointer", marginBottom: 24, transition: "border-color 0.15s, color 0.15s" }}
+          style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, border: "1.5px dashed var(--adm-card-border)", background: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.875rem", cursor: "pointer", marginBottom: 20, transition: "border-color 0.15s, color 0.15s" }}
           onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a5f3f"; (e.currentTarget as HTMLButtonElement).style.color = "#1a5f3f"; }}
           onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--adm-card-border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--adm-text2)"; }}
         >
@@ -1002,72 +1052,35 @@ export default function ConfiguracionFinanciera() {
         </div>
       ) : error ? (
         <div style={{ fontFamily: FB, color: "#ef4444", padding: "16px 0" }}>{error}</div>
+      ) : categories.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 0", fontFamily: FB, color: "var(--adm-text3)" }}>
+          No hay categorías configuradas aún.
+        </div>
       ) : (
         <>
-          {/* INGRESOS */}
           {incomeCategories.length > 0 && (
-            <section style={{ marginBottom: 32 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: TYPE_COLOR.INCOME }} />
-                <h2 style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--adm-text)", margin: 0 }}>{TYPE_LABEL.INCOME}</h2>
-                <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>{incomeCategories.length} categorías</span>
-              </div>
-              <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden", padding: "8px" }}>
-                {Array.from(groupBy(incomeCategories)).map(([gName, gCats]) => {
-                  const meta = getGroupMeta(gCats);
-                  return (
-                    <CategoryGroup
-                      key={gName}
-                      groupName={gName}
-                      groupIcon={meta.icon}
-                      groupColor={meta.color}
-                      categories={gCats}
-                      onToggleActive={handleToggleActive}
-                      onEdit={cat => { setEditingCat(cat); setShowCreateForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    />
-                  );
-                })}
-              </div>
-            </section>
+            <CollapsibleTypeSection
+              type="INCOME" cats={incomeCategories}
+              open={incomeOpen} onToggle={() => setIncomeOpen(o => !o)}
+            />
           )}
-
-          {/* EGRESOS */}
           {expenseCategories.length > 0 && (
-            <section style={{ marginBottom: 32 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: TYPE_COLOR.EXPENSE }} />
-                <h2 style={{ fontFamily: F, fontWeight: 700, fontSize: "1rem", color: "var(--adm-text)", margin: 0 }}>{TYPE_LABEL.EXPENSE}</h2>
-                <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>{expenseCategories.length} categorías</span>
-              </div>
-              <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden", padding: "8px" }}>
-                {Array.from(groupBy(expenseCategories)).map(([gName, gCats]) => {
-                  const meta = getGroupMeta(gCats);
-                  return (
-                    <CategoryGroup
-                      key={gName}
-                      groupName={gName}
-                      groupIcon={meta.icon}
-                      groupColor={meta.color}
-                      categories={gCats}
-                      onToggleActive={handleToggleActive}
-                      onEdit={cat => { setEditingCat(cat); setShowCreateForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    />
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {categories.length === 0 && (
-            <div style={{ textAlign: "center", padding: "48px 0", fontFamily: FB, color: "var(--adm-text3)" }}>
-              No hay categorías configuradas aún.
-            </div>
+            <CollapsibleTypeSection
+              type="EXPENSE" cats={expenseCategories}
+              open={expenseOpen} onToggle={() => setExpenseOpen(o => !o)}
+            />
           )}
         </>
       )}
 
       {/* Separador */}
-      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "8px 0 36px" }} />
+      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "16px 0 32px" }} />
+
+      {/* Conexión bancaria Fintoc */}
+      {restaurantId && <FintocSection restaurantId={restaurantId} />}
+
+      {/* Separador */}
+      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "0 0 32px" }} />
 
       {/* Gestión de grupos */}
       {restaurantId && (
@@ -1079,9 +1092,6 @@ export default function ConfiguracionFinanciera() {
           onCreated={name => setExtraGroups(prev => [...prev, name])}
         />
       )}
-
-      {/* Conexión bancaria Fintoc */}
-      {restaurantId && <FintocSection restaurantId={restaurantId} />}
 
       {/* Agentes de compras */}
       {restaurantId && <AgentsSection restaurantId={restaurantId} />}
