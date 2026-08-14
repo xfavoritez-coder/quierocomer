@@ -1015,6 +1015,11 @@ export default function ConfiguracionFinanciera() {
         </p>
       </div>
 
+      {/* Conexión bancaria Fintoc — primero */}
+      {restaurantId && <FintocSection restaurantId={restaurantId} />}
+
+      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "4px 0 28px" }} />
+
       {/* Formulario crear */}
       {!showCreateForm && !editingCat && (
         <button
@@ -1076,12 +1081,6 @@ export default function ConfiguracionFinanciera() {
 
       {/* Separador */}
       <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "16px 0 32px" }} />
-
-      {/* Conexión bancaria Fintoc */}
-      {restaurantId && <FintocSection restaurantId={restaurantId} />}
-
-      {/* Separador */}
-      <div style={{ borderTop: "1px solid var(--adm-card-border)", margin: "0 0 32px" }} />
 
       {/* Gestión de grupos */}
       {restaurantId && (
