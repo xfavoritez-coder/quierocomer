@@ -32,7 +32,7 @@ const OWNER_EDITABLE_FIELDS = [
   "orderingMinAmount", "orderingWaitTime", "orderingNote",
   "orderingPaymentMethods", "orderingMode",
   "orderingBannerUrl", "orderingTheme", "orderingAccentColor",
-  "orderingBusinessHours",
+  "orderingBusinessHours", "orderingShowFeatured",
   "filterBarEnabled",
 ];
 

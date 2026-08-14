@@ -46,7 +46,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         id: true, slug: true, name: true, logoUrl: true, plan: true,
         orderingEnabled: true, orderingPhone: true, orderingDelivery: true,
         orderingMinAmount: true, orderingWaitTime: true, orderingNote: true, orderingPaymentMethods: true,
-        orderingBannerUrl: true, orderingMode: true,
+        orderingBannerUrl: true, orderingMode: true, orderingShowFeatured: true,
         whatsapp: true, address: true, phone: true,
         defaultView: true, cartaColorMode: true, cartaAccentColor: true,
         billingExempt: true, isDemo: true,
@@ -137,6 +137,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     cartaColorMode: (config as any).cartaColorMode || "LIGHT",
     cartaAccentColor: (config as any).cartaAccentColor || null,
     orderingMode: (config as any).orderingMode || "whatsapp",
+    showFeatured: (config as any).orderingShowFeatured ?? true,
   };
 
   // ── Business hours check ──────────────────────────────────────────────────

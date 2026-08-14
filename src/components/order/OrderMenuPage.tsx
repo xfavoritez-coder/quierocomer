@@ -51,6 +51,7 @@ interface OrderingConfig {
   cartaColorMode?: string;
   cartaAccentColor?: string | null;
   orderingMode?: string;
+  showFeatured?: boolean;
 }
 type BHDay = { open: boolean; from: string; to: string };
 interface Props {
@@ -888,8 +889,10 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       {/* Banner de cerrado */}
       {isClosed && <ClosedBanner innerRef={closedBannerRef} businessHours={businessHours} isDark={isDark} accent={accent} />}
 
-      {/* Hero con fotos de platos */}
-      <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
+      {/* Hero / banner de productos destacados (se puede ocultar desde config de Pedidos online) */}
+      {orderingConfig.showFeatured !== false && (
+        <ListaHero heroDishes={heroDishes} restaurant={restaurant} accent={accent} onDishSelect={d => setSelectedDish(d as unknown as DishForOrder)} onDirectAdd={addDirectly} />
+      )}
 
       {/* Sticky nav (se pega debajo del banner de cerrado si existe) */}
       <div ref={stickyNavRef} style={{ position: "sticky", top: closedBannerH, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>

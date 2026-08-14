@@ -171,6 +171,7 @@ interface OrderingData {
   orderingNote: string | null;
   orderingPaymentMethods: string;
   orderingBusinessHours?: BusinessHours | null;
+  orderingShowFeatured?: boolean;
   whatsapp: string | null;
   owner?: { whatsapp?: string | null } | null;
 }
@@ -214,6 +215,7 @@ export default function PedirOnlinePage() {
   const [waitTime, setWaitTime] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["efectivo", "transferencia", "tarjeta"]);
+  const [showFeatured, setShowFeatured] = useState(true);
   const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [savingHours, setSavingHours] = useState(false);
 
@@ -241,6 +243,7 @@ export default function PedirOnlinePage() {
         setWaitTime(d.orderingWaitTime || "");
         setNote(d.orderingNote || "");
         setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
+        setShowFeatured(d.orderingShowFeatured ?? true);
         // Business hours
         const bh: BusinessHours = {};
         const raw = d.orderingBusinessHours || {};
@@ -316,6 +319,7 @@ export default function PedirOnlinePage() {
           orderingWaitTime: waitTime.trim() || null,
           orderingNote: note.trim() || null,
           orderingPaymentMethods: paymentMethods.join(",") || "efectivo,transferencia,tarjeta",
+          orderingShowFeatured: showFeatured,
         }),
       });
       if (res.ok) {
@@ -602,6 +606,32 @@ export default function PedirOnlinePage() {
               style={{ ...inputStyle, resize: "vertical", minHeight: 72 }}
               placeholder="Ej: Solo hacemos delivery dentro de Providencia y Las Condes."
             />
+          </div>
+        </Field>
+
+        {/* Banner de productos destacados */}
+        <Field
+          label="Banner de destacados"
+          hint="Muestra el carrusel de platos destacados en la parte superior de tu página de pedidos."
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setShowFeatured(v => !v)}
+              style={{
+                width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0,
+                background: showFeatured ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s",
+              }}
+            >
+              <span style={{
+                display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff",
+                position: "absolute", top: 3, left: showFeatured ? 17 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </button>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>
+              {showFeatured ? "Visible" : "Oculto"}
+            </span>
           </div>
         </Field>
 

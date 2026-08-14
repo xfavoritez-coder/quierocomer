@@ -343,6 +343,7 @@ model Restaurant {
   orderingAccentColor        String? // color de acento hex
   orderingMode               String                   @default("whatsapp") // "whatsapp" | "panel"
   orderingBusinessHours      Json?                    // { "0": { open: bool, from: "HH:mm", to: "HH:mm" }, ..., "6": ... } (0=Dom)
+  orderingShowFeatured       Boolean                  @default(true) // mostrar el banner/hero de productos destacados en /pedir
   // Valoraciones
   reviewMode                 String                   @default("off") // "off" | "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
