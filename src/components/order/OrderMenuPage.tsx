@@ -971,6 +971,8 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         /* Grid ecommerce: 2 columnas en mobile, 4 en escritorio */
         .qc-prod-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
         @media (min-width: 1024px) { .qc-prod-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
+        /* En mobile mostramos solo el logo (sin el nombre del local) */
+        @media (max-width: 640px) { .qc-header-name { display: none; } }
       `}</style>
 
       {/* Banner de cerrado */}
@@ -984,7 +986,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           ) : (
             <div style={{ width: 34, height: 34, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", fontWeight: 800, color: accentFg, flexShrink: 0 }}>{restaurant.name.charAt(0).toUpperCase()}</div>
           )}
-          <span style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.08rem", fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurant.name}</span>
+          <span className="qc-header-name" style={{ fontFamily: "var(--font-playfair, Georgia, serif)", fontSize: "1.08rem", fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restaurant.name}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <button onClick={() => setIdentifyOpen(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, border: customer ? `1px solid color-mix(in srgb, ${accent} 45%, transparent)` : "1px solid var(--carta-border)", background: customer ? `color-mix(in srgb, ${accent} 12%, transparent)` : "transparent", color: customer ? accent : "var(--carta-text)", cursor: "pointer", fontFamily: FB, fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>
