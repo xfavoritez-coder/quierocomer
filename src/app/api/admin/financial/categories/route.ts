@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
+import { seedDefaultCategories } from "@/lib/defaultFinancialCategories";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -10,6 +11,10 @@ export async function GET(req: NextRequest) {
   try {
     await assertOwnsRestaurant(req, restaurantId);
   } catch (e: any) { return authErrorResponse(e); }
+
+  // Auto-seed si el restaurante no tiene categorías aún
+  const count = await prisma.financialCategory.count({ where: { restaurantId } });
+  if (count === 0) await seedDefaultCategories(prisma, restaurantId);
 
   const all = req.nextUrl.searchParams.get("all") === "true";
   const categories = await prisma.financialCategory.findMany({
