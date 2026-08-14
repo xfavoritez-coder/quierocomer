@@ -48,7 +48,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         orderingMinAmount: true, orderingWaitTime: true, orderingNote: true, orderingPaymentMethods: true,
         orderingBannerUrl: true, orderingMode: true, orderingShowFeatured: true,
         whatsapp: true, address: true, phone: true,
-        defaultView: true, cartaColorMode: true, cartaAccentColor: true,
+        defaultView: true, cartaColorMode: true, cartaAccentColor: true, filterBarEnabled: true,
         billingExempt: true, isDemo: true,
         subscriptionStatus: true, currentPeriodEnd: true, trialEndsAt: true,
         orderingBusinessHours: true,
@@ -115,6 +115,9 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   const visibleCatIds = new Set(filteredCats.map((c: any) => c.id));
   const scheduledRestaurant = {
     ...(restaurant as any),
+    // filterBarEnabled se lee del query `config` (sin caché) para que el toggle se refleje
+    // al instante; el `restaurant` viene de getRestaurantBySlug que cachea 5 min.
+    filterBarEnabled: (config as any).filterBarEnabled ?? true,
     categories: filteredCats,
     dishes: (restaurant as any).dishes.filter((d: any) => visibleCatIds.has(d.categoryId)),
   };

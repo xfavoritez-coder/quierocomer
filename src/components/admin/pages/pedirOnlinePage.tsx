@@ -172,6 +172,7 @@ interface OrderingData {
   orderingPaymentMethods: string;
   orderingBusinessHours?: BusinessHours | null;
   orderingShowFeatured?: boolean;
+  filterBarEnabled?: boolean;
   whatsapp: string | null;
   owner?: { whatsapp?: string | null } | null;
 }
@@ -216,6 +217,7 @@ export default function PedirOnlinePage() {
   const [note, setNote] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["efectivo", "transferencia", "tarjeta"]);
   const [showFeatured, setShowFeatured] = useState(true);
+  const [showFilters, setShowFilters] = useState(true);
   const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [savingHours, setSavingHours] = useState(false);
 
@@ -244,6 +246,7 @@ export default function PedirOnlinePage() {
         setNote(d.orderingNote || "");
         setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
         setShowFeatured(d.orderingShowFeatured ?? true);
+        setShowFilters(d.filterBarEnabled ?? true);
         // Business hours
         const bh: BusinessHours = {};
         const raw = d.orderingBusinessHours || {};
@@ -320,6 +323,7 @@ export default function PedirOnlinePage() {
           orderingNote: note.trim() || null,
           orderingPaymentMethods: paymentMethods.join(",") || "efectivo,transferencia,tarjeta",
           orderingShowFeatured: showFeatured,
+          filterBarEnabled: showFilters,
         }),
       });
       if (res.ok) {
@@ -353,6 +357,29 @@ export default function PedirOnlinePage() {
       }
     } catch {
       setShowFeatured(!newVal);
+      toast.error(t("ordering_error_connection"));
+    }
+  };
+
+  // Auto-guardado del toggle de barra de filtros
+  const toggleFilters = async () => {
+    if (!rid) return;
+    const newVal = !showFilters;
+    setShowFilters(newVal);
+    try {
+      const res = await fetch(`/api/admin/locales/${rid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filterBarEnabled: newVal }),
+      });
+      if (res.ok) {
+        toast.success(newVal ? "Filtros visibles" : "Filtros ocultos");
+      } else {
+        setShowFilters(!newVal);
+        toast.error(t("ordering_error_save"));
+      }
+    } catch {
+      setShowFilters(!newVal);
       toast.error(t("ordering_error_connection"));
     }
   };
@@ -654,6 +681,32 @@ export default function PedirOnlinePage() {
             </button>
             <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>
               {showFeatured ? "Visible" : "Oculto"}
+            </span>
+          </div>
+        </Field>
+
+        {/* Barra de filtros (Popular, Recomendado, Vegano…) */}
+        <Field
+          label="Barra de filtros"
+          hint="Muestra los filtros rápidos (Popular, Recomendado, Vegano, Sin gluten) sobre los productos."
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={toggleFilters}
+              style={{
+                width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0,
+                background: showFilters ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s",
+              }}
+            >
+              <span style={{
+                display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff",
+                position: "absolute", top: 3, left: showFilters ? 17 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }} />
+            </button>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>
+              {showFilters ? "Visible" : "Oculto"}
             </span>
           </div>
         </Field>
