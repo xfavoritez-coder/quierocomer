@@ -84,6 +84,20 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
 }
 
+const FINTOC_API = "https://api.fintoc.com/v1";
+
+async function fintocGet(path: string, linkToken: string) {
+  const sep = path.includes("?") ? "&" : "?";
+  const res = await fetch(`${FINTOC_API}${path}${sep}link_token=${linkToken}`, {
+    headers: { Authorization: process.env.FINTOC_SECRET_KEY! },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Fintoc API error ${res.status}`);
+  }
+  return res.json();
+}
+
 // ── Lógica compartida de sincronización (también usada por el cron) ──
 export async function syncFintocMovements(
   restaurantId: string,
@@ -91,20 +105,21 @@ export async function syncFintocMovements(
   accountId: string | null,
   lastSync: Date | null
 ) {
-  const link = await fintoc.links.get(linkToken);
-
-  // Listar cuentas y elegir la guardada o la primera disponible
-  const accountsList: any[] = await (link as any).accounts.list();
+  // Listar cuentas via REST API directa (el SDK tiene bug con link_token)
+  const accountsList: any[] = await fintocGet("/accounts", linkToken);
   if (!accountsList || accountsList.length === 0) throw new Error("No hay cuentas disponibles en este link");
 
-  const account = (accountId ? accountsList.find((a: any) => a.id === accountId) : null) || accountsList[0];
+  // Usar la cuenta CLP guardada, o la primera CLP disponible, o la primera
+  const account = (accountId ? accountsList.find((a: any) => a.id === accountId) : null)
+    || accountsList.find((a: any) => a.currency === "CLP" && a.type === "checking_account")
+    || accountsList[0];
 
   // Traer movimientos desde la última sync (o últimos 3 meses)
   const since = lastSync
     ? lastSync.toISOString().slice(0, 10)
     : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const movements: any[] = await account.movements.list({ since });
+  const movements: any[] = await fintocGet(`/accounts/${account.id}/movements?since=${since}`, linkToken);
 
   let created = 0;
   let skipped = 0;
