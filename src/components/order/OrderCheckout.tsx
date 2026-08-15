@@ -1,13 +1,7 @@
 "use client";
-import { useState, useRef, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
+import { useState } from "react";
 import { X, ChevronLeft, MessageCircle, MapPin, Clock, AlertTriangle, Package, Truck, Banknote, CreditCard, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { useCart } from "./OrderCartContext";
-
-const MapView = dynamic(() => import("@/app/a/components/LocationMapView"), {
-  ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100%", background: "var(--carta-surface, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--carta-text2, #999)" }}>Cargando mapa…</div>,
-});
 
 const F = "var(--font-display, 'Inter', sans-serif)";
 const FB = "var(--font-body, 'Inter', sans-serif)";
@@ -178,39 +172,9 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [addressSuggestions, setAddressSuggestions] = useState<{ display_name: string; place_id: string | number }[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [addressCoords, setAddressCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
   const phoneDigits = clientPhone.replace(/\D/g, "");
 
-  const handleAddressChange = useCallback((value: string) => {
-    setClientAddress(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (value.length < 3) {
-      setAddressSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(value)}&all=1`);
-        const data = await res.json();
-        setAddressSuggestions((Array.isArray(data) ? data : []).slice(0, 5));
-        setShowSuggestions(true);
-      } catch {
-        // ignore
-      }
-    }, 300);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
 
   const isValid =
     name.trim().length >= 2 &&
@@ -505,61 +469,21 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             </div>
           </div>
 
-          {/* Address for delivery — with autocomplete */}
+          {/* Address for delivery — texto plano. Las sugerencias (Nominatim/OSM, sin key de
+              Google) no daban direcciones exactas en Chile, así que el cliente la escribe completa. */}
           {orderType === "DELIVERY" && (
             <div style={{ marginBottom: 12 }}>
-            <div style={{ position: "relative" }}>
               <input
                 value={clientAddress}
-                onChange={e => handleAddressChange(e.target.value)}
-                onFocus={() => { if (addressSuggestions.length > 0) setShowSuggestions(true); }}
-                onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); }}
+                onChange={e => setClientAddress(e.target.value)}
                 className="oc-input"
                 style={inputStyle}
-                placeholder="Dirección de delivery *"
+                placeholder="Dirección exacta (calle, número, depto/casa) *"
                 autoComplete="off"
               />
-              {showSuggestions && addressSuggestions.length > 0 && (
-                <div style={{
-                  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 200,
-                  background: "var(--carta-bg, #fff)", border: "1.5px solid var(--carta-border, #e5e5e5)",
-                  borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.3)", overflow: "hidden",
-                }}>
-                  {addressSuggestions.map((s) => (
-                    <button
-                      key={s.place_id}
-                      type="button"
-                      onMouseDown={() => {
-                        setClientAddress(s.display_name);
-                        setShowSuggestions(false);
-                        setAddressSuggestions([]);
-                        // Fetch coordinates for map preview
-                        fetch(`/api/geo/place?place_id=${encodeURIComponent(String(s.place_id))}`)
-                          .then(r => r.json())
-                          .then(d => { if (d?.lat) setAddressCoords({ lat: Number(d.lat), lng: Number(d.lon) }); })
-                          .catch(() => {});
-                      }}
-                      style={{
-                        width: "100%", textAlign: "left", padding: "10px 14px", border: "none",
-                        background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.82rem",
-                        color: "var(--carta-text, #111)", borderBottom: "1px solid var(--carta-border, #f0f0f0)",
-                        transition: "background 0.1s",
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "var(--carta-surface, #f5f5f5)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-                    >
-                      📍 {s.display_name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* Map preview */}
-            {addressCoords && (
-              <div style={{ marginTop: 8, height: 160, borderRadius: 10, overflow: "hidden", border: "1.5px solid var(--carta-border, #e5e5e5)", position: "relative", zIndex: 0 }}>
-                <MapView lat={addressCoords.lat} lng={addressCoords.lng} onDragEnd={() => {}} />
-              </div>
-            )}
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--carta-text3, #888)", margin: "6px 2px 0", lineHeight: 1.4 }}>
+                Escribe tu dirección completa: calle, número y depto/casa (y referencias si ayudan).
+              </p>
             </div>
           )}
 
