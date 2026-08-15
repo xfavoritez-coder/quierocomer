@@ -289,7 +289,51 @@ function ListaHero({
   );
 }
 
-// ── Impact card ───────────────────────────────────────────────────────────────
+// ── Impact card (liquid glass: foto izquierda, texto derecha) — diseño impact ──
+function ImpactCard({
+  dish, onClick, onDirectAdd,
+}: { dish: Dish; onClick: () => void; onDirectAdd: (e: React.MouseEvent) => void }) {
+  const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
+  const discountPct = dish.discountPrice != null && dish.discountPrice < dish.price
+    ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : 0;
+  const hasModifiers = dish.modifierTemplates?.some((t: any) => t.groups?.length > 0);
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%", display: "grid", gridTemplateColumns: "118px 1fr",
+        gap: 16, padding: 10, marginBottom: 11, borderRadius: 26,
+        background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
+        border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
+        position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer", fontFamily: "inherit",
+      }}
+    >
+      <div style={{ position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: dish.photos?.[0] ? "#222" : "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))" }}>
+        {dish.photos?.[0] ? (
+          <img src={dish.photos[0]} alt={dish.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
+        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</h4>
+        {dish.description && (
+          <p style={{ margin: "0 0 8px", color: "var(--carta-text2)", fontSize: 13, lineHeight: 1.42, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{dish.description}</p>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {discountPct > 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "var(--carta-accent)", padding: "3px 10px", borderRadius: 50 }}>-{discountPct}%</span>}
+          <b style={{ color: "var(--carta-accent)", fontSize: 16 }}>{formatCLP(effectivePrice)}</b>
+          {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3, #666)", textDecoration: "line-through" }}>{formatCLP(dish.price)}</span>}
+        </div>
+      </div>
+      <div onClick={hasModifiers ? undefined : onDirectAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: "color-mix(in srgb, var(--carta-accent) 18%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px color-mix(in srgb, var(--carta-accent) 50%, transparent)", pointerEvents: hasModifiers ? "none" : "auto" }}>
+        <Plus size={16} color="var(--carta-plus-icon, #fff)" />
+      </div>
+    </button>
+  );
+}
+
 // ── Grid card (vertical: foto arriba, texto abajo) — para el grid ecommerce 4/2 ──
 function GridCard({ dish, onClick, onDirectAdd }: { dish: Dish; onClick: () => void; onDirectAdd: (e: React.MouseEvent) => void }) {
   const effectivePrice = dish.discountPrice != null && dish.discountPrice < dish.price ? dish.discountPrice : dish.price;
@@ -697,10 +741,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const popularSet = useMemo(() => new Set(popularDishIds || []), [popularDishIds]);
   const toggleFilter = (k: FilterKey) => setActiveFilters(f => f.includes(k) ? f.filter(x => x !== k) : [...f, k]);
 
-  // El ecommerce /pedir SIEMPRE usa el layout de grid (2 cols mobile / 4 escritorio),
-  // sin importar el diseño de carta del restaurante. La vista "Impact" queda reservada
-  // solo para la carta mesa (/qr), que usa componentes aparte.
-  const isImpact: boolean = false;
+  // El diseño de /pedir respeta el cartaView del restaurante: "impact" = diseño liquid glass
+  // (header semi-transparente, hero banner, tarjetas glass); cualquier otro = vista lista/grid.
+  const isImpact = (orderingConfig.cartaView || "lista") === "impact";
   const [identifyOpen, setIdentifyOpen] = useState(false);
   const [customer, setCustomer] = useState<{ name: string | null; email: string } | null>(null);
   useEffect(() => {
@@ -995,11 +1038,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
             grouped.map(({ category, dishes }) => (
               <div key={category.id} id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
                 <h3 style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 20, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", margin: "33px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{category.name}</h3>
-                <div className="qc-prod-grid">
-                  {dishes.map(dish => (
-                    <GridCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />
-                  ))}
-                </div>
+                {dishes.map(dish => (
+                  <ImpactCard key={dish.id} dish={dish} onClick={() => setSelectedDish(dish as unknown as DishForOrder)} onDirectAdd={e => { e.stopPropagation(); addDirectly(dish); }} />
+                ))}
               </div>
             ))
           )}
