@@ -1525,8 +1525,9 @@ export default function CartaImpact({
       )}
 
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
-        {/* Category chips + search */}
-        <div ref={menuAnchorRef} style={{ paddingTop: 6, paddingBottom: 6, marginBottom: 0 }}>
+        {/* Category chips — se desvanecen cuando aparecen los chips fijos del header,
+            para no verse duplicados a través del header glass al hacer scroll. */}
+        <div ref={menuAnchorRef} style={{ paddingTop: 6, paddingBottom: 6, marginBottom: 0, opacity: showFixedCatNav ? 0 : 1, pointerEvents: showFixedCatNav ? "none" : "auto", transition: "opacity 0.2s ease" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <div
