@@ -152,9 +152,9 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
                 {done ? "✓" : step.icon}
               </div>
               <span style={{
-                fontFamily: FONT, fontSize: 10, fontWeight: active ? 700 : 500,
+                fontFamily: FONT, fontSize: "clamp(8px, 2.5vw, 10px)", fontWeight: active ? 700 : 500,
                 color, marginTop: 4, textAlign: "center", lineHeight: 1.2,
-                maxWidth: 56, wordBreak: "break-word",
+                whiteSpace: "nowrap",
               }}>
                 {step.label}
               </span>

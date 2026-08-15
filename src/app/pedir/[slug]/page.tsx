@@ -66,7 +66,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     return (
       <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-body, sans-serif)", background: "#fafafa" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
-          {config.logoUrl && <img src={config.logoUrl} alt={config.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", marginBottom: 16 }} />}
+          {config.logoUrl && <img src={config.logoUrl} alt={config.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", display: "block", margin: "0 auto 16px" }} />}
           <h1 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px" }}>{config.name}</h1>
           <p style={{ fontSize: "0.85rem", color: "#666", lineHeight: 1.6 }}>Los pedidos online no están disponibles en este restaurante por el momento.</p>
         </div>
@@ -92,7 +92,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     return (
       <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-body, sans-serif)", background: "#fafafa" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
-          {config.logoUrl && <img src={config.logoUrl} alt={config.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", marginBottom: 16 }} />}
+          {config.logoUrl && <img src={config.logoUrl} alt={config.name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", display: "block", margin: "0 auto 16px" }} />}
           <h1 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px" }}>{config.name}</h1>
           <p style={{ fontSize: "0.85rem", color: "#666", lineHeight: 1.6 }}>Los pedidos online no están disponibles en este momento. Visítanos o contáctanos directamente.</p>
         </div>

@@ -1015,8 +1015,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           </div>
         </div>}
 
-        {/* Category chips */}
-        <div ref={menuAnchorRef} style={{ position: "relative", zIndex: 1, padding: "0 14px 6px" }}>
+        {/* Category chips inline — se desvanecen cuando aparecen los chips fijos del header,
+            para no verse "duplicados" a través del header glass al hacer scroll. */}
+        <div ref={menuAnchorRef} style={{ position: "relative", zIndex: 1, padding: "0 14px 6px", opacity: showFixedCatNav ? 0 : 1, pointerEvents: showFixedCatNav ? "none" : "auto", transition: "opacity 0.2s ease" }}>
           <div ref={chipsRef} style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", padding: "4px 0" }}>
             {grouped.map(({ category: cat }) => {
               const isActive = cat.id === activeCategory;
