@@ -140,7 +140,7 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
         const timeLabel = (done || active) ? getStepTime(i, statusHistory, createdAt) : null;
 
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", flex: i < steps.length - 1 ? 1 : "none" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 56 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: "50%",
@@ -148,6 +148,7 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
                 border: `2px solid ${color}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 16, flexShrink: 0,
+                color: done ? "#fff" : undefined,
               }}>
                 {done ? "✓" : step.icon}
               </div>
@@ -168,7 +169,7 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
               <div style={{
                 flex: 1, height: 2,
                 background: i < currentStep ? GREEN : theme.border,
-                marginBottom: 28, minWidth: 8,
+                marginTop: 17, minWidth: 8,
               }} />
             )}
           </div>
