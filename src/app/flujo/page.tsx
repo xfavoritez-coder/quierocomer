@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 
 type Gasto = { id: string; monto: number; comentario: string; createdAt: string };
 type Category = { id: string; name: string; type: string; color: string | null; icon: string | null; position: number };
+type CatStat = { categoryId: string; uses: number };
 
 const ACCENT = "#F4A623";
 const BG = "#0a0500";
@@ -14,8 +15,8 @@ const F_DISPLAY = "var(--font-display, 'Space Grotesk', sans-serif)";
 const F_BODY = "var(--font-body, 'Inter', sans-serif)";
 const HORUS_ID = "cmo31qnls0000k004o6ry1wgq";
 
-const RECENT_KEY = "flujo_recent_cats";
-const MAX_RECENT = 4;
+// Categorías que siempre aparecen en "Más usadas" independiente del historial
+const PINNED_PATTERNS = ["colac", "sueldo", "bebest", "materia prima"];
 
 function formatCLP(n: number) { return "$" + n.toLocaleString("es-CL"); }
 function formatFecha(iso: string) {
@@ -27,15 +28,58 @@ function totalDelDia(gastos: Gasto[]) {
   const hoy = new Date().toDateString();
   return gastos.filter(g => new Date(g.createdAt).toDateString() === hoy).reduce((s, g) => s + g.monto, 0);
 }
-function getRecentCatIds(): string[] {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
+function isPinned(name: string) {
+  const n = name.toLowerCase();
+  return PINNED_PATTERNS.some(p => n.includes(p));
 }
-function pushRecentCat(id: string) {
-  const prev = getRecentCatIds().filter(x => x !== id);
-  localStorage.setItem(RECENT_KEY, JSON.stringify([id, ...prev].slice(0, MAX_RECENT)));
+function catLabel(cat: Category) {
+  return cat.icon ? `${cat.icon} ${cat.name}` : cat.name;
 }
 
 type Resumen = { totalRetirado: number; totalReportado: number; sinJustificar: number };
+
+const TOP_N = 10;
+
+function buildCatGroups(categories: Category[], stats: CatStat[]) {
+  const expenseCats = categories.filter(c => c.type === "EXPENSE");
+  if (expenseCats.length === 0) return { topCats: [], restCats: [] };
+
+  const usageMap = new Map(stats.map(s => [s.categoryId, s.uses]));
+
+  // Separar pinned y no pinned
+  const pinned = expenseCats.filter(c => isPinned(c.name));
+  const unpinned = expenseCats.filter(c => !isPinned(c.name));
+
+  // Ordenar no pinned por uso DESC, luego nombre ASC
+  const unpinnedSorted = [...unpinned].sort((a, b) => {
+    const ua = usageMap.get(a.id) ?? 0;
+    const ub = usageMap.get(b.id) ?? 0;
+    if (ub !== ua) return ub - ua;
+    return a.name.localeCompare(b.name, "es");
+  });
+
+  // Top: pinned siempre + completar hasta TOP_N con los más usados no pinned
+  const slotsLeft = Math.max(0, TOP_N - pinned.length);
+  const topFromUnpinned = unpinnedSorted.filter(c => (usageMap.get(c.id) ?? 0) > 0).slice(0, slotsLeft);
+  const topIds = new Set([...pinned.map(c => c.id), ...topFromUnpinned.map(c => c.id)]);
+
+  // Ordenar pinned entre sí: por uso DESC, luego nombre
+  const pinnedSorted = [...pinned].sort((a, b) => {
+    const ua = usageMap.get(a.id) ?? 0;
+    const ub = usageMap.get(b.id) ?? 0;
+    if (ub !== ua) return ub - ua;
+    return a.name.localeCompare(b.name, "es");
+  });
+
+  const topCats = [...pinnedSorted, ...topFromUnpinned];
+
+  // El resto: todo lo que no está en top, orden alfabético
+  const restCats = expenseCats
+    .filter(c => !topIds.has(c.id))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+  return { topCats, restCats };
+}
 
 function currentMonth() {
   const n = new Date();
@@ -45,10 +89,10 @@ function currentMonth() {
 export default function FlujoPage() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catStats, setCatStats] = useState<CatStat[]>([]);
   const [monto, setMonto] = useState("");
   const [comentario, setComentario] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [recentIds, setRecentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -60,23 +104,16 @@ export default function FlujoPage() {
     fetch("/api/flujo/gastos").then(r => r.json()).then(setGastos).catch(() => {});
     fetch(`/api/admin/financial/categories?restaurantId=${HORUS_ID}`)
       .then(r => r.json())
-      .then((cats: Category[]) => { setCategories(cats); setRecentIds(getRecentCatIds()); })
+      .then((cats: Category[]) => setCategories(cats))
       .catch(() => {});
+    fetch("/api/flujo/category-stats")
+      .then(r => r.json()).then(setCatStats).catch(() => {});
     fetch(`/api/flujo/resumen?restaurantId=${HORUS_ID}&month=${currentMonth()}`)
       .then(r => r.json()).then(setResumen).catch(() => {});
   }, []);
 
-  // Solo egresos, recientes primero, luego por posición
-  const expenseCats = [...categories]
-    .filter(c => c.type === "EXPENSE")
-    .sort((a, b) => {
-      const ai = recentIds.indexOf(a.id);
-      const bi = recentIds.indexOf(b.id);
-      if (ai !== -1 && bi === -1) return -1;
-      if (bi !== -1 && ai === -1) return 1;
-      if (ai !== -1 && bi !== -1) return ai - bi;
-      return a.position - b.position;
-    });
+  // Construye los dos grupos del select
+  const { topCats, restCats } = buildCatGroups(categories, catStats);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,7 +131,12 @@ export default function FlujoPage() {
       if (!res.ok) { const d = await res.json(); setError(d.error ?? "Error"); setLoading(false); return; }
       const nuevo = await res.json();
       setGastos(prev => [nuevo, ...prev]);
-      if (categoryId) { pushRecentCat(categoryId); setRecentIds(getRecentCatIds()); }
+      // Actualizar stats localmente sumando 1 al uso de la categoría elegida
+      setCatStats(prev => {
+        const existing = prev.find(s => s.categoryId === categoryId);
+        if (existing) return prev.map(s => s.categoryId === categoryId ? { ...s, uses: s.uses + 1 } : s);
+        return [...prev, { categoryId, uses: 1 }];
+      });
       setMonto(""); setComentario(""); setCategoryId("");
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
@@ -184,8 +226,8 @@ export default function FlujoPage() {
             autoFocus
           />
 
-          {/* Categoría — select */}
-          {expenseCats.length > 0 && (
+          {/* Categoría — select dinámico */}
+          {(topCats.length > 0 || restCats.length > 0) && (
             <div style={{ marginTop: 18 }}>
               <label style={labelS}>Categoría de gasto</label>
               <select
@@ -195,11 +237,24 @@ export default function FlujoPage() {
                 style={selectS}
               >
                 <option value="" style={{ background: "#1a1000", color: "#f0ead6" }}>— Sin categoría</option>
-                {expenseCats.map(cat => (
-                  <option key={cat.id} value={cat.id} style={{ background: "#1a1000", color: "#f0ead6" }}>
-                    {cat.icon ? `${cat.icon} ${cat.name}` : cat.name}
-                  </option>
-                ))}
+                {topCats.length > 0 && (
+                  <optgroup label="── Más usadas ──">
+                    {topCats.map(cat => (
+                      <option key={cat.id} value={cat.id} style={{ background: "#1a1000", color: "#f0ead6" }}>
+                        {catLabel(cat)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {restCats.length > 0 && (
+                  <optgroup label="── Todas ──">
+                    {restCats.map(cat => (
+                      <option key={cat.id} value={cat.id} style={{ background: "#1a1000", color: "#f0ead6" }}>
+                        {catLabel(cat)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
           )}
