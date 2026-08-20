@@ -26,6 +26,11 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
   syncCycle()
   _syncTimer = setInterval(syncCycle, SYNC_INTERVAL_MS)
 
+  // Flush pending events immediately when connection returns
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', syncCycle)
+  }
+
   // Listen for Supabase Realtime events from other devices
   subscribeToRemoteEvents(restaurantId)
 }
@@ -35,8 +40,12 @@ export function stopSync() {
     clearInterval(_syncTimer)
     _syncTimer = null
   }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('online', syncCycle)
+  }
   unsubscribeFromRemoteEvents()
 }
+
 
 export async function forceSyncNow() {
   await syncCycle()
