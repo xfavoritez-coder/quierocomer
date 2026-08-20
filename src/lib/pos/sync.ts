@@ -28,7 +28,7 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
 
   // Flush pending events immediately when connection returns
   if (typeof window !== 'undefined') {
-    window.addEventListener('online', syncCycle)
+    window.addEventListener('online', handleOnline)
   }
 
   // Listen for Supabase Realtime events from other devices
@@ -41,7 +41,7 @@ export function stopSync() {
     _syncTimer = null
   }
   if (typeof window !== 'undefined') {
-    window.removeEventListener('online', syncCycle)
+    window.removeEventListener('online', handleOnline)
   }
   unsubscribeFromRemoteEvents()
 }
@@ -53,10 +53,20 @@ export async function forceSyncNow() {
 
 // ── Sync cycle: push then pull ───────────────────────────────────
 
+// Small delay after 'online' event — browser fires it before DNS/TCP is truly ready
+function handleOnline() {
+  setTimeout(syncCycle, 500)
+}
+
 async function syncCycle() {
   if (_isSyncing || !navigator.onLine) return
+
+  // Only show "sincronizando" if there's actually something to sync
+  const pendingCount = await posDb.syncQueue.count()
+  const hasPending = pendingCount > 0
+
   _isSyncing = true
-  _onSyncStatusChange?.(true)
+  if (hasPending) _onSyncStatusChange?.(true)
 
   try {
     await pushEvents()
@@ -109,7 +119,15 @@ async function pushEvents() {
 
   if (error) {
     console.error('[POS Sync] Push error:', error)
-    // Increment retry count
+
+    // FK violation (e.g. test-restaurant doesn't exist) — drop immediately, no point retrying
+    if (error.code === '23503') {
+      console.warn('[POS Sync] FK violation — dropping events (invalid restaurant_id?)')
+      await posDb.syncQueue.where('id').anyOf(pending.map(p => p.id!)).delete()
+      return
+    }
+
+    // Other errors: increment retry count
     for (const entry of pending) {
       if (entry.retries >= MAX_RETRIES) {
         await posDb.syncQueue.delete(entry.id!)
