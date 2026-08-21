@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { posDb } from './db'
+import { notifyDbChange } from './hooks'
 import type {
   PosEvent,
   PosEventType,
@@ -67,6 +68,8 @@ export async function createEvent(
 
   // Project the event into materialized state
   await projectEvent(event)
+
+  notifyDbChange()
 
   return event
 }

@@ -1,4 +1,5 @@
 import { posDb } from './db'
+import { notifyDbChange } from './hooks'
 import type { CachedProduct, CachedModifierTemplate, CachedModifierGroup, CachedModifierOption } from './types'
 
 // ── Load catalog via API route (uses Prisma with full relations) ──
@@ -96,6 +97,7 @@ export async function refreshCatalog(restaurantId: string): Promise<void> {
     })
 
     console.log(`[POS Catalog] Cached ${products.length} products from ${categories.length} categories`)
+    notifyDbChange()
   } catch (err) {
     console.error('[POS Catalog] Error:', err)
   }

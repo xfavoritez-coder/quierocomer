@@ -27,6 +27,7 @@ export { startSync, stopSync, forceSyncNow } from './sync'
 export { refreshCatalog, getCachedCategories, getCachedProducts } from './catalog'
 
 export {
+  notifyDbChange,
   useOnlineStatus,
   usePosSync,
   usePendingSyncCount,

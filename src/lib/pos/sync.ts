@@ -1,5 +1,6 @@
 import { posDb } from './db'
 import { projectEvent } from './events'
+import { notifyDbChange } from './hooks'
 import { supabase } from '@/lib/supabase'
 import type { PosEvent } from './types'
 
@@ -199,6 +200,7 @@ async function pullEvents() {
 
     await posDb.events.put(event)
     await projectEvent(event)
+    notifyDbChange()
   }
 }
 
@@ -241,6 +243,7 @@ function subscribeToRemoteEvents(restaurantId: string) {
 
         await posDb.events.put(event)
         await projectEvent(event)
+        notifyDbChange()
       }
     )
     .subscribe()
