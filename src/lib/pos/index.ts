@@ -24,6 +24,7 @@ export {
 } from './events'
 
 export { startSync, stopSync, forceSyncNow } from './sync'
+export { refreshCatalog, getCachedCategories, getCachedProducts } from './catalog'
 
 export {
   useOnlineStatus,
@@ -33,4 +34,6 @@ export {
   useAccount,
   useOpenCashSession,
   useRecentEvents,
+  useCatalog,
+  useCategoryProducts,
 } from './hooks'
