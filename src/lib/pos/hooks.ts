@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync } from './sync'
-import type { Account, CashSession, CachedProduct } from './types'
+import type { Account, CashSession } from './types'
+import type { CachedProduct } from './types'
 import { refreshCatalog } from './catalog'
 import { useLiveQuery } from 'dexie-react-hooks'
 
@@ -82,47 +83,48 @@ export function useOpenCashSession(): CashSession | undefined {
 // ── Catalog ──────────────────────────────────────────────────────
 
 export function useCatalog(restaurantId: string) {
-  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const online = useOnlineStatus()
 
+  // Refresh catalog from server when online
   useEffect(() => {
-    if (!restaurantId) return
+    if (!restaurantId || !online) return
     let cancelled = false
 
-    async function load() {
-      setLoading(true)
+    async function refresh() {
+      setRefreshing(true)
       try {
-        // Check if we have cached data
-        const count = await posDb.products.where('restaurant_id').equals(restaurantId).count()
-        if (count === 0 || online) {
-          await refreshCatalog(restaurantId)
-        }
+        await refreshCatalog(restaurantId)
       } catch (err) {
-        console.error('[POS] Catalog load error:', err)
+        console.error('[POS] Catalog refresh error:', err)
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setRefreshing(false)
       }
     }
 
-    load()
+    refresh()
     return () => { cancelled = true }
   }, [restaurantId, online])
 
-  const products = useLiveQuery(
-    () => posDb.products.where('restaurant_id').equals(restaurantId).toArray(),
+  // Live query — automatically updates when IndexedDB changes
+  const products: CachedProduct[] = useLiveQuery(
+    () => restaurantId
+      ? posDb.products.where('restaurant_id').equals(restaurantId).toArray()
+      : Promise.resolve([] as CachedProduct[]),
     [restaurantId],
-    []
-  )
+    [] as CachedProduct[]
+  ) ?? []
 
-  // Derive categories from products
-  const categories = useLiveQuery(
+  type CatalogCategory = { id: string; name: string; position: number }
+  const categories: CatalogCategory[] = useLiveQuery(
     () => {
+      if (!restaurantId) return Promise.resolve([] as CatalogCategory[])
       return posDb.products
         .where('restaurant_id')
         .equals(restaurantId)
         .toArray()
         .then(prods => {
-          const catMap = new Map<string, { id: string; name: string; position: number }>()
+          const catMap = new Map<string, CatalogCategory>()
           for (const p of prods) {
             if (!catMap.has(p.category_id)) {
               catMap.set(p.category_id, {
@@ -136,8 +138,11 @@ export function useCatalog(restaurantId: string) {
         })
     },
     [restaurantId],
-    []
-  )
+    [] as CatalogCategory[]
+  ) ?? []
+
+  // Loading = no products yet AND still refreshing
+  const loading = products.length === 0 && refreshing
 
   return { products, categories, loading }
 }
