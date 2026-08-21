@@ -98,36 +98,38 @@ export function useOpenCashSession(): CashSession | undefined {
 
 // ── Catalog ──────────────────────────────────────────────────────
 
+type CatalogCategory = { id: string; name: string; position: number }
+
 export function useCatalog(restaurantId: string) {
+  const [refreshCount, setRefreshCount] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const online = useOnlineStatus()
 
+  // Step 1: refresh catalog from server (writes to IndexedDB)
   useEffect(() => {
     if (!restaurantId || !online) return
     let cancelled = false
 
-    async function refresh() {
-      setRefreshing(true)
-      try {
-        await refreshCatalog(restaurantId)
-      } catch (err) {
-        console.error('[POS] Catalog refresh error:', err)
-      } finally {
-        if (!cancelled) setRefreshing(false)
-      }
-    }
+    setRefreshing(true)
+    refreshCatalog(restaurantId)
+      .catch(err => console.error('[POS] Catalog refresh error:', err))
+      .finally(() => {
+        if (!cancelled) {
+          setRefreshCount(c => c + 1)
+          setRefreshing(false)
+        }
+      })
 
-    refresh()
     return () => { cancelled = true }
   }, [restaurantId, online])
 
+  // Step 2: read products from IndexedDB (re-runs when refreshCount bumps)
   const products: CachedProduct[] = useDexieQuery(
     () => posDb.products.where('restaurant_id').equals(restaurantId).toArray(),
-    [restaurantId],
+    [restaurantId, refreshCount],
     [] as CachedProduct[]
   )
 
-  type CatalogCategory = { id: string; name: string; position: number }
   const categories: CatalogCategory[] = useDexieQuery(
     () => posDb.products
       .where('restaurant_id')
@@ -146,7 +148,7 @@ export function useCatalog(restaurantId: string) {
         }
         return Array.from(catMap.values()).sort((a, b) => a.position - b.position)
       }),
-    [restaurantId],
+    [restaurantId, refreshCount],
     [] as CatalogCategory[]
   )
 
