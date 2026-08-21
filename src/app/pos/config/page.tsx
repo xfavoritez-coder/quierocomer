@@ -7,198 +7,182 @@ import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest } from '@/lib/po
 
 export default function PosConfigPage() {
   const router = useRouter()
-  const [bridgeUrl, setBridgeUrlState] = useState('')
   const [status, setStatus] = useState<any>(null)
   const [checking, setChecking] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [testMsg, setTestMsg] = useState('')
 
+  // Al entrar, buscar el puente automáticamente
   useEffect(() => {
-    setBridgeUrlState(getBridgeUrl())
+    autoDetect()
   }, [])
 
-  const handleCheck = async () => {
+  const autoDetect = async () => {
     setChecking(true)
     setStatus(null)
-    const s = await getBridgeStatus()
-    setStatus(s)
+    // Intentar localhost primero, luego la URL guardada
+    const urls = ['http://localhost:7777', getBridgeUrl()].filter(Boolean)
+    for (const url of [...new Set(urls)]) {
+      setBridgeUrl(url)
+      const s = await getBridgeStatus()
+      if (s.ok) {
+        setStatus({ ...s, url })
+        setChecking(false)
+        return
+      }
+    }
+    setStatus({ ok: false, error: 'Puente no encontrado. ¿Está abierto pos-bridge.exe?' })
     setChecking(false)
-  }
-
-  const handleSave = () => {
-    setBridgeUrl(bridgeUrl.trim())
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
   }
 
   const handleTest = async () => {
     setTesting(true)
+    setTestMsg('')
     const r = await printTest()
-    if (!r.ok) alert('Error al imprimir prueba: ' + r.error)
-    else alert('Comanda de prueba enviada. Revisa la impresora.')
+    setTestMsg(r.ok ? '✓ Revisa la impresora' : '✗ ' + r.error)
     setTesting(false)
   }
 
-  const printerOk = status?.printer?.ok
-  const printerError = status?.printer?.error
-  const availablePrinters = status?.printer?.availablePrinters
+  const configured = status?.ok && status?.configured
+  const printerName = status?.connection?.printerName || status?.connection?.ip
 
   return (
     <div className="pos-shell">
       <PosHeader
         mode="back"
         eyebrow="Configuración"
-        subtitle="Impresora y puente"
+        subtitle="Impresora"
         onBack={() => router.push('/pos')}
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px', maxWidth: 560, margin: '0 auto', width: '100%' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 16px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
 
-        {/* Puente */}
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink-3)', textTransform: 'uppercase', margin: '0 0 10px' }}>
-            Puente de impresión
-          </h2>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <label style={{ fontSize: '0.78rem', color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>
-                URL del puente (IP o localhost)
-              </label>
-              <input
-                value={bridgeUrl}
-                onChange={e => setBridgeUrlState(e.target.value)}
-                placeholder="http://localhost:7777"
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  padding: '10px 12px', borderRadius: 10,
-                  border: '1px solid var(--line)', background: 'var(--sunk)',
-                  fontFamily: 'var(--mono)', fontSize: '0.85rem', color: 'var(--ink)',
-                  outline: 'none',
-                }}
-              />
-              <p style={{ fontSize: '0.72rem', color: 'var(--ink-3)', margin: '5px 0 0' }}>
-                Si el puente está en este PC usa localhost. Si está en otro PC de la red, usa su IP local (ej: http://192.168.1.10:7777)
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={handleSave}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
-                  background: saved ? 'var(--jade)' : 'var(--amber)', color: '#fff',
-                  fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
-                }}
-              >
-                {saved ? 'Guardado' : 'Guardar'}
-              </button>
-              <button
-                onClick={handleCheck}
-                disabled={checking}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 10,
-                  border: '1px solid var(--line)', background: 'var(--sunk)',
-                  fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', color: 'var(--ink)',
-                }}
-              >
-                {checking ? 'Verificando...' : 'Verificar estado'}
-              </button>
-            </div>
+        {checking ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, paddingTop: 40 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: 'var(--amber)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ color: 'var(--ink-2)', fontSize: '0.88rem' }}>Buscando puente de impresión...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
-        </section>
-
-        {/* Estado */}
-        {status && (
-          <section style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink-3)', textTransform: 'uppercase', margin: '0 0 10px' }}>
-              Estado
-            </h2>
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: 16 }}>
-              <StatusRow label="Puente" value={status.ok ? `Conectado (v${status.bridge?.version})` : 'No responde'} ok={status.ok} />
-              {status.printer && (
-                <StatusRow label="Impresora" value={printerOk ? `OK (${status.printer.mode})` : (printerError || 'Error')} ok={printerOk} />
-              )}
-              {status.queue && (
-                <StatusRow label="Cola" value={status.queue.pending === 0 ? 'Sin pendientes' : `${status.queue.pending} pendiente(s)`} ok={status.queue.pending === 0} />
-              )}
-
-              {/* Si el nombre de impresora no se encontró, mostrar las disponibles */}
-              {availablePrinters && availablePrinters.length > 0 && (
-                <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--sunk)', borderRadius: 10 }}>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-2)', margin: '0 0 6px' }}>
-                    Impresoras disponibles en este PC:
-                  </p>
-                  {availablePrinters.map((name: string) => (
-                    <p key={name} style={{ fontSize: '0.78rem', fontFamily: 'var(--mono)', color: 'var(--ink)', margin: '2px 0' }}>
-                      • {name}
-                    </p>
-                  ))}
-                  <p style={{ fontSize: '0.72rem', color: 'var(--ink-3)', margin: '8px 0 0' }}>
-                    Copia el nombre exacto al config.json del puente (campo "printerName")
-                  </p>
-                </div>
-              )}
+        ) : configured ? (
+          /* ── ESTADO: CONECTADO Y CONFIGURADO ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{
+              background: 'var(--jade-tint)', border: '1.5px solid var(--jade)',
+              borderRadius: 18, padding: '24px 20px', textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🖨️</div>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--ink)', marginBottom: 4 }}>
+                {printerName}
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--jade)', fontWeight: 600 }}>
+                ✓ Impresora conectada
+              </div>
             </div>
-          </section>
-        )}
 
-        {/* Prueba */}
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink-3)', textTransform: 'uppercase', margin: '0 0 10px' }}>
-            Prueba de impresión
-          </h2>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: 16 }}>
-            <p style={{ fontSize: '0.82rem', color: 'var(--ink-2)', margin: '0 0 12px' }}>
-              Imprime una comanda de prueba para verificar que la impresora está funcionando.
-            </p>
             <button
               onClick={handleTest}
               disabled={testing}
               style={{
-                width: '100%', padding: '12px 0', borderRadius: 10, border: 'none',
+                padding: '16px', borderRadius: 14, border: 'none',
                 background: 'var(--amber)', color: '#fff',
-                fontWeight: 700, fontSize: '0.9rem', cursor: testing ? 'not-allowed' : 'pointer',
+                fontWeight: 700, fontSize: '0.95rem',
+                cursor: testing ? 'not-allowed' : 'pointer',
                 opacity: testing ? 0.7 : 1,
               }}
             >
-              {testing ? 'Imprimiendo...' : 'Imprimir comanda de prueba'}
+              {testing ? 'Imprimiendo...' : '🖨️  Imprimir comanda de prueba'}
+            </button>
+
+            {testMsg && (
+              <p style={{
+                textAlign: 'center', fontWeight: 600, fontSize: '0.88rem',
+                color: testMsg.startsWith('✓') ? 'var(--jade)' : '#e05252'
+              }}>
+                {testMsg}
+              </p>
+            )}
+
+            <button
+              onClick={autoDetect}
+              style={{
+                padding: '12px', borderRadius: 12,
+                border: '1px solid var(--line)', background: 'var(--sunk)',
+                color: 'var(--ink-2)', fontSize: '0.82rem', cursor: 'pointer'
+              }}
+            >
+              Cambiar impresora
             </button>
           </div>
-        </section>
 
-        {/* Instrucciones */}
-        <section>
-          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink-3)', textTransform: 'uppercase', margin: '0 0 10px' }}>
-            Configurar el puente
-          </h2>
-          <div style={{ background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 14, padding: 16 }}>
-            <ol style={{ margin: 0, padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {[
-                'Descarga pos-bridge.exe (o corre node src/index.js en la carpeta print-bridge)',
-                'Abre config.json y ajusta printerName al nombre exacto de tu impresora en Windows',
-                'Para USB: deja type "usb". Para red/Ethernet: cambia a type "tcp" e ingresa la IP',
-                'Doble clic en pos-bridge.exe — debe mostrar "Listo. Esperando comandas..."',
-                'Vuelve aquí, ingresa la URL del puente y haz clic en Verificar estado',
-              ].map((step, i) => (
-                <li key={i} style={{ fontSize: '0.80rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{step}</li>
-              ))}
-            </ol>
+        ) : status?.ok && !status?.configured ? (
+          /* ── PUENTE ACTIVO PERO SIN IMPRESORA CONFIGURADA ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{
+              background: 'var(--amber-tint-2)', border: '1.5px solid var(--amber)',
+              borderRadius: 18, padding: '24px 20px', textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>⚠️</div>
+              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 6 }}>
+                Puente activo, sin impresora
+              </div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>
+                Abre <b>http://localhost:7777</b> en el PC conectado a la impresora y elige tu impresora ahí.
+              </p>
+            </div>
+            <button onClick={autoDetect} style={{ padding: '14px', borderRadius: 12, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+              Verificar de nuevo
+            </button>
           </div>
-        </section>
+
+        ) : (
+          /* ── PUENTE NO ENCONTRADO ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{
+              background: 'var(--sunk)', border: '1px solid var(--line)',
+              borderRadius: 18, padding: '28px 20px'
+            }}>
+              <div style={{ fontSize: '2rem', textAlign: 'center', marginBottom: 12 }}>🔌</div>
+              <h2 style={{ fontSize: '1rem', fontWeight: 700, textAlign: 'center', marginBottom: 16 }}>
+                Cómo conectar la impresora
+              </h2>
+              {[
+                { n: 1, t: 'Descarga pos-bridge.exe en el PC conectado a la impresora' },
+                { n: 2, t: 'Haz doble clic para abrirlo — se abre el navegador solo' },
+                { n: 3, t: 'Elige tu impresora de la lista que aparece' },
+                { n: 4, t: 'Vuelve aquí y toca "Buscar de nuevo"' },
+              ].map(s => (
+                <div key={s.n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+                  <span style={{
+                    minWidth: 28, height: 28, borderRadius: '50%',
+                    background: 'var(--amber)', color: '#fff',
+                    fontWeight: 700, fontSize: '0.82rem',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>{s.n}</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--ink-2)', lineHeight: 1.5, paddingTop: 4 }}>{s.t}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={autoDetect}
+              style={{
+                padding: '16px', borderRadius: 14, border: 'none',
+                background: 'var(--amber)', color: '#fff',
+                fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer',
+              }}
+            >
+              Buscar de nuevo
+            </button>
+
+            {status?.error && (
+              <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-3)' }}>
+                {status.error}
+              </p>
+            )}
+          </div>
+        )}
 
       </div>
-    </div>
-  )
-}
-
-function StatusRow({ label, value, ok }: { label: string; value: string; ok: boolean }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
-      <span style={{ fontSize: '0.82rem', color: 'var(--ink-2)' }}>{label}</span>
-      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: ok ? 'var(--jade)' : '#e05252', display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: ok ? 'var(--jade)' : '#e05252', display: 'inline-block' }} />
-        {value}
-      </span>
     </div>
   )
 }

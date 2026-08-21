@@ -1,75 +1,90 @@
 // Cola de impresión con reintentos exponenciales
-// In-memory (se pierde al reiniciar el bridge, intencional para v1)
+const net = require('net');
+const fs  = require('fs');
+const os  = require('os');
+const path = require('path');
+const { execFile } = require('child_process');
 
-const printer = require('./printer');
+const PS_SCRIPT = path.join(__dirname, '..', 'raw-print.ps1');
+const MAX_RETRIES  = 5;
+const BASE_DELAY   = 3000;
 
 const _queue = [];
-let _processing = false;
+let   _busy  = false;
 
-const MAX_RETRIES = 5;
-const BASE_DELAY_MS = 3000;
-
-/**
- * Agrega un trabajo a la cola y procesa
- * @param {Buffer} data - buffer ESC/POS listo para imprimir
- * @param {string} jobId - ID único del trabajo
- */
-function enqueue(data, jobId) {
-  _queue.push({ data, jobId, retries: 0, addedAt: new Date() });
-  processNext();
+function enqueue(data, jobId, printerName, connection) {
+  _queue.push({ data, jobId, printerName, connection, retries: 0, addedAt: new Date() });
+  process();
 }
 
-function processNext() {
-  if (_processing || _queue.length === 0) return;
-  _processing = true;
+function process() {
+  if (_busy || _queue.length === 0) return;
+  _busy = true;
   const job = _queue[0];
 
-  printer.print(job.data)
+  printJob(job)
     .then(() => {
       console.log(`[Queue] OK: ${job.jobId}`);
       _queue.shift();
-      _processing = false;
-      processNext();
+      _busy = false;
+      process();
     })
     .catch((err) => {
       job.retries++;
-      console.error(`[Queue] Error en ${job.jobId} (intento ${job.retries}/${MAX_RETRIES}):`, err.message);
-
+      console.error(`[Queue] Error ${job.jobId} (intento ${job.retries}/${MAX_RETRIES}): ${err.message}`);
       if (job.retries >= MAX_RETRIES) {
-        console.error(`[Queue] Descartando ${job.jobId} tras ${MAX_RETRIES} intentos`);
+        console.error(`[Queue] Descartando ${job.jobId}`);
         _queue.shift();
-        _processing = false;
-        processNext();
-        return;
+        _busy = false;
+        process();
+      } else {
+        const delay = BASE_DELAY * Math.pow(2, job.retries - 1);
+        setTimeout(() => { _busy = false; process(); }, delay);
       }
-
-      const delay = BASE_DELAY_MS * Math.pow(2, job.retries - 1);
-      console.log(`[Queue] Reintentando ${job.jobId} en ${delay}ms...`);
-      setTimeout(() => {
-        _processing = false;
-        processNext();
-      }, delay);
     });
 }
 
-function getStatus() {
-  return {
-    pending: _queue.length,
-    jobs: _queue.map(j => ({
-      jobId: j.jobId,
-      retries: j.retries,
-      addedAt: j.addedAt,
-    })),
-  };
-}
-
-function remove(jobId) {
-  const idx = _queue.findIndex(j => j.jobId === jobId);
-  if (idx > 0) { // no remover el que está procesándose (idx 0)
-    _queue.splice(idx, 1);
-    return true;
+function printJob(job) {
+  const { connection, data, printerName } = job;
+  if (connection?.type === 'tcp') {
+    return printTCP(data, connection.ip, connection.port || 9100);
   }
-  return false;
+  return printUSB(data, printerName);
 }
 
-module.exports = { enqueue, getStatus, remove };
+function printUSB(data, printerName) {
+  return new Promise((resolve, reject) => {
+    const tmp = path.join(os.tmpdir(), `pos_${Date.now()}.bin`);
+    fs.writeFileSync(tmp, data);
+    execFile('powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+       '-File', PS_SCRIPT, tmp, printerName],
+      { timeout: 12000 },
+      (err, stdout, stderr) => {
+        try { fs.unlinkSync(tmp); } catch {}
+        if (err) return reject(new Error(stderr?.trim() || err.message));
+        if ((stdout || '').trim().startsWith('OK')) resolve();
+        else reject(new Error(stderr?.trim() || 'Error desconocido'));
+      }
+    );
+  });
+}
+
+function printTCP(data, ip, port) {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host: ip, port }, () => {
+      socket.write(data, (err) => {
+        if (err) { socket.destroy(); return reject(err); }
+        socket.end(); resolve();
+      });
+    });
+    socket.on('error', (err) => { socket.destroy(); reject(err); });
+    socket.setTimeout(8000, () => { socket.destroy(); reject(new Error('Timeout TCP')); });
+  });
+}
+
+function getQueueStatus() {
+  return { pending: _queue.length };
+}
+
+module.exports = { enqueue, printTCP, getQueueStatus };
