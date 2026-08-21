@@ -4,14 +4,14 @@ import type { CachedProduct, CachedModifierTemplate, CachedModifierGroup, Cached
 
 // ── Load catalog via API route (uses Prisma with full relations) ──
 
-export async function refreshCatalog(restaurantId: string): Promise<void> {
-  if (!navigator.onLine) return
+export async function refreshCatalog(restaurantId: string): Promise<CachedProduct[]> {
+  if (!navigator.onLine) return []
 
   try {
     const res = await fetch(`/api/pos/catalog?restaurantId=${encodeURIComponent(restaurantId)}`)
     if (!res.ok) {
       console.error('[POS Catalog] API error:', res.status, await res.text())
-      return
+      return []
     }
 
     const { categories, dishes } = await res.json() as {
@@ -98,8 +98,10 @@ export async function refreshCatalog(restaurantId: string): Promise<void> {
 
     console.log(`[POS Catalog] Cached ${products.length} products from ${categories.length} categories`)
     notifyDbChange()
+    return products
   } catch (err) {
     console.error('[POS Catalog] Error:', err)
+    return []
   }
 }
 

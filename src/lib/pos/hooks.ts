@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useSyncExternalStore } from 'react'
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync } from './sync'
 import type { Account, CashSession } from './types'
@@ -101,60 +101,58 @@ export function useOpenCashSession(): CashSession | undefined {
 type CatalogCategory = { id: string; name: string; position: number }
 
 export function useCatalog(restaurantId: string) {
-  const [refreshCount, setRefreshCount] = useState(0)
-  const [refreshing, setRefreshing] = useState(false)
+  const [products, setProducts] = useState<CachedProduct[]>([])
+  const [categories, setCategories] = useState<CatalogCategory[]>([])
+  const [loading, setLoading] = useState(true)
   const online = useOnlineStatus()
+  const abortRef = useRef<AbortController | null>(null)
 
-  // Step 1: refresh catalog from server (writes to IndexedDB)
   useEffect(() => {
-    if (!restaurantId || !online) return
-    let cancelled = false
+    if (!restaurantId) return
 
-    setRefreshing(true)
-    refreshCatalog(restaurantId)
-      .catch(err => console.error('[POS] Catalog refresh error:', err))
-      .finally(() => {
-        if (!cancelled) {
-          setRefreshCount(c => c + 1)
-          setRefreshing(false)
+    // Abort any previous in-flight load
+    abortRef.current?.abort()
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
+
+    async function load() {
+      try {
+        if (online) {
+          const fresh = await refreshCatalog(restaurantId)
+          if (ctrl.signal.aborted) return
+
+          setProducts(fresh)
+          setCategories(deriveCategories(fresh))
         }
-      })
 
-    return () => { cancelled = true }
+        setLoading(false)
+      } catch (err) {
+        if (!ctrl.signal.aborted) {
+          console.error('[POS] Catalog load error:', err)
+          setLoading(false)
+        }
+      }
+    }
+
+    load()
+    return () => ctrl.abort()
   }, [restaurantId, online])
 
-  // Step 2: read products from IndexedDB (re-runs when refreshCount bumps)
-  const products: CachedProduct[] = useDexieQuery(
-    () => posDb.products.where('restaurant_id').equals(restaurantId).toArray(),
-    [restaurantId, refreshCount],
-    [] as CachedProduct[]
-  )
-
-  const categories: CatalogCategory[] = useDexieQuery(
-    () => posDb.products
-      .where('restaurant_id')
-      .equals(restaurantId)
-      .toArray()
-      .then(prods => {
-        const catMap = new Map<string, CatalogCategory>()
-        for (const p of prods) {
-          if (!catMap.has(p.category_id)) {
-            catMap.set(p.category_id, {
-              id: p.category_id,
-              name: p.category_name,
-              position: p.category_position,
-            })
-          }
-        }
-        return Array.from(catMap.values()).sort((a, b) => a.position - b.position)
-      }),
-    [restaurantId, refreshCount],
-    [] as CatalogCategory[]
-  )
-
-  const loading = products.length === 0 && refreshing
-
   return { products, categories, loading }
+}
+
+function deriveCategories(prods: CachedProduct[]): CatalogCategory[] {
+  const catMap = new Map<string, CatalogCategory>()
+  for (const p of prods) {
+    if (!catMap.has(p.category_id)) {
+      catMap.set(p.category_id, {
+        id: p.category_id,
+        name: p.category_name,
+        position: p.category_position,
+      })
+    }
+  }
+  return Array.from(catMap.values()).sort((a, b) => a.position - b.position)
 }
 
 export function useCategoryProducts(restaurantId: string, categoryId: string | null): CachedProduct[] {

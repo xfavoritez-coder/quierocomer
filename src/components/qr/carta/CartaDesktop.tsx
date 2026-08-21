@@ -212,16 +212,18 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
       <header style={{ background: "white", borderBottom: "1px solid #e8e4dc" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 0" }}>
+            <a href={"/" + (restaurant as any).slug} style={{ display: "flex", alignItems: "center", gap: 16, textDecoration: "none", flex: 1 }}>
             {restaurant.logoUrl ? (
-              <img src={restaurant.logoUrl} alt="" loading="lazy" style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #e8e4dc" }} />
+              <img src={restaurant.logoUrl} alt="" loading="lazy" style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #e8e4dc", flexShrink: 0 }} />
             ) : (
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 700, color: "white" }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 700, color: "white", flexShrink: 0 }}>
                 {restaurant.name.charAt(0)}
               </div>
             )}
             <h1 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 700, color: "#1a1a1a", flex: 1 }}>
               {restaurant.name}
             </h1>
+            </a>
             {/* Search */}
             <div style={{ position: "relative", width: 260 }}>
               <input

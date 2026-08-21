@@ -1218,6 +1218,7 @@ export default function CartaImpact({
       }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <a href={"/" + (restaurant as any).slug} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           {(restaurant as any).logoUrl ? (
             <img
               src={(restaurant as any).logoUrl} alt={restaurant.name}
@@ -1232,6 +1233,7 @@ export default function CartaImpact({
           <span style={{ fontWeight: 800, fontSize: 18, color: showFixedCatNav ? "var(--carta-text)" : "var(--carta-text, white)", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
             {restaurant.name}
           </span>
+          </a>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {enabledLangs.length > 1 && (

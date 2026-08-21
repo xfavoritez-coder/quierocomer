@@ -859,7 +859,20 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
           e.stopPropagation();
           const next = !entry.billingExempt;
           if (next && !confirm(`Marcar ${entry.name} como bonificado? No se le cobrará.`)) return;
-          updateRestaurant({ billingExempt: next });
+          const updates: Record<string, any> = { billingExempt: next };
+          if (next) {
+            updates.plan = entry.plan === "FREE" ? "GOLD" : entry.plan;
+            updates.subscriptionStatus = "ACTIVE";
+            updates.currentPeriodEnd = "2099-12-31T00:00:00.000Z";
+            updates.loyaltyStatus = "ACTIVE";
+            updates.loyaltyPeriodEnd = "2099-12-31T00:00:00.000Z";
+          } else {
+            updates.plan = "FREE";
+            updates.subscriptionStatus = "NONE";
+            updates.loyaltyStatus = "NONE";
+            updates.loyaltyPeriodEnd = null;
+          }
+          updateRestaurant(updates);
         }} disabled={saving} style={{
           padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
           background: entry.billingExempt ? "rgba(74,222,128,.1)" : "transparent",

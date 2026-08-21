@@ -373,6 +373,7 @@ export default function CartaEsencial({
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           {/* logo circle */}
+          <a href={"/" + (restaurant as any).slug} style={{ display: "flex", flexShrink: 0 }}>
           <div style={{
             width: 30, height: 30, borderRadius: "50%",
             background: isDark ? "#1c1c19" : "#10251a", display: "flex", alignItems: "center", justifyContent: "center",
@@ -385,6 +386,7 @@ export default function CartaEsencial({
               <span style={{ color: C.gold, fontSize: 20 }}>🍽</span>
             )}
           </div>
+          </a>
           <div style={{ minWidth: 0 }}>
             <div style={{
               fontFamily: "Georgia, 'Times New Roman', serif",

@@ -10,7 +10,7 @@ function isReal(url: string | null | undefined): boolean {
 }
 
 interface HeroSlimProps {
-  restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl" | "instagram" | "website" | "whatsapp"> & { id: string };
+  restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl" | "instagram" | "website" | "whatsapp" | "slug"> & { id: string };
   heroDishes: Dish[];
   onDishSelect?: (dish: Dish) => void;
 }
@@ -93,10 +93,10 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
         )}
 
         {/* Top left: logo + name */}
-        <button
-          onClick={(e) => { e.stopPropagation(); window.location.reload(); }}
+        <a
+          href={"/" + restaurant.slug}
           className="absolute z-10 flex items-center gap-2"
-          style={{ top: 10, left: 14, height: 40, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          style={{ top: 10, left: 14, height: 40, textDecoration: "none", padding: 0 }}
         >
           {logoSrc ? (
             <img src={logoSrc} alt={restaurant.name} loading="lazy" style={{ width: 28, height: 28, borderRadius: "50%", border: "none" }} />
@@ -114,7 +114,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
           >
             {restaurant.name}
           </span>
-        </button>
+        </a>
 
 
         {/* Left-aligned content */}

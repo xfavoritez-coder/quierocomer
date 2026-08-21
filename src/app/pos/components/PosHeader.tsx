@@ -3,52 +3,53 @@
 import { useOnlineStatus, usePendingSyncCount } from '@/lib/pos'
 
 interface PosHeaderProps {
-  title: string
+  mode?: 'brand' | 'back'
+  eyebrow?: string
+  subtitle?: string
   syncing?: boolean
   onBack?: () => void
+  rightSlot?: React.ReactNode
 }
 
-export default function PosHeader({ title, syncing, onBack }: PosHeaderProps) {
+export default function PosHeader({ mode = 'brand', eyebrow, subtitle, syncing, onBack, rightSlot }: PosHeaderProps) {
   const online = useOnlineStatus()
   const pendingCount = usePendingSyncCount()
 
-  return (
-    <header className="sticky top-0 z-30 flex items-center justify-between px-4 h-14 bg-white/80 backdrop-blur-lg border-b border-stone-100">
-      <div className="flex items-center gap-3">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-stone-100 transition-colors -ml-2"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        )}
-        <h1
-          className="text-lg font-semibold tracking-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          {title}
-        </h1>
-      </div>
+  const dotClass = syncing ? 'dot syncing' : online ? 'dot' : 'dot offline'
 
-      <div className="flex items-center gap-3">
-        {pendingCount > 0 && (
-          <span className="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full text-xs font-medium tabular-nums">
-            {pendingCount}
-          </span>
-        )}
-        {syncing && (
-          <div className="w-4 h-4 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
-        )}
-        <div className="flex items-center gap-1.5">
-          <div
-            className={`w-2 h-2 rounded-full transition-colors ${
-              online ? 'bg-emerald-500' : 'bg-red-400'
-            }`}
-          />
+  return (
+    <header className="pos-bar">
+      {mode === 'brand' ? (
+        <div className="pos-brand">
+          <span className="mk">Q</span>
+          QuieroComer
+          <small>POS</small>
         </div>
+      ) : (
+        <div className="pos-back">
+          {onBack && (
+            <button className="bk" onClick={onBack}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+          )}
+          <div>
+            {eyebrow && <div className="pos-back-title">{eyebrow}</div>}
+            {subtitle && <div className="pos-back-sub">{subtitle}</div>}
+          </div>
+        </div>
+      )}
+
+      <div className="pos-bar-right">
+        {pendingCount > 0 && (
+          <span className="pos-tip">{pendingCount} pend.</span>
+        )}
+        <div className="pos-live">
+          <span className={dotClass} />
+          {online ? 'En linea' : 'Sin conexion'}
+        </div>
+        {rightSlot}
       </div>
     </header>
   )

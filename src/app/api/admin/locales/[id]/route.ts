@@ -108,6 +108,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.enabledLangs !== undefined && { enabledLangs: body.enabledLangs }),
         ...(body.plan !== undefined && { plan: body.plan }),
         ...(body.billingExempt !== undefined && { billingExempt: body.billingExempt }),
+        ...(body.subscriptionStatus !== undefined && { subscriptionStatus: body.subscriptionStatus }),
+        ...(body.currentPeriodEnd !== undefined && { currentPeriodEnd: body.currentPeriodEnd ? new Date(body.currentPeriodEnd) : null }),
+        ...(body.loyaltyStatus !== undefined && { loyaltyStatus: body.loyaltyStatus }),
+        ...(body.loyaltyPeriodEnd !== undefined && { loyaltyPeriodEnd: body.loyaltyPeriodEnd ? new Date(body.loyaltyPeriodEnd) : null }),
         ...(body.mpPayerEmail !== undefined && { mpPayerEmail: body.mpPayerEmail || null }),
         // Toteat POS integration fields (super-admin only)
         ...(body.toteatRestaurantId !== undefined && { toteatRestaurantId: body.toteatRestaurantId || null }),
