@@ -5,7 +5,7 @@ import { posDb } from './db'
 import { startSync, stopSync } from './sync'
 import type { Account, CashSession } from './types'
 import type { CachedProduct } from './types'
-import { refreshCatalog } from './catalog'
+import { refreshCatalog, getCachedProducts, getCachedCategories } from './catalog'
 import { notifyDbChange, getDbVersion, subscribeDbChange } from './notify'
 
 function useDbVersion(): number {
@@ -120,9 +120,17 @@ export function useCatalog(restaurantId: string) {
         if (online) {
           const fresh = await refreshCatalog(restaurantId)
           if (ctrl.signal.aborted) return
-
           setProducts(fresh)
           setCategories(deriveCategories(fresh))
+        } else {
+          // Offline: leer del caché local en IndexedDB
+          const [cached, cats] = await Promise.all([
+            getCachedProducts(restaurantId),
+            getCachedCategories(restaurantId),
+          ])
+          if (ctrl.signal.aborted) return
+          setProducts(cached)
+          setCategories(cats)
         }
 
         setLoading(false)
