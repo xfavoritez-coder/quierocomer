@@ -297,11 +297,38 @@ app.get('/printers', async (req, res) => {
   res.json({ ok: true, printers });
 });
 
+// ── Auto-arranque con Windows ──────────────────────────────────────
+// Solo cuando corre como .exe empaquetado (pkg define SEA_ASSET_PATH o process.pkg)
+
+function registerAutostart() {
+  if (process.platform !== 'win32') return;
+  if (!process.pkg && !process.env.PKG_EXECPATH) return; // solo en exe empaquetado
+
+  const exePath = process.execPath;
+  const regKey  = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+  const regName = 'PosBridgeQC';
+
+  // Verificar si ya está registrado con el mismo exe
+  execFile('reg', ['query', regKey, '/v', regName], (err, stdout) => {
+    const alreadySet = !err && stdout.includes(exePath);
+    if (alreadySet) return;
+
+    execFile('reg', ['add', regKey, '/v', regName, '/t', 'REG_SZ', '/d', `"${exePath}"`, '/f'],
+      (err2) => {
+        if (err2) console.warn('[Bridge] No se pudo registrar en inicio de Windows:', err2.message);
+        else console.log('[Bridge] Registrado en inicio automático de Windows');
+      }
+    );
+  });
+}
+
 // ── Start ─────────────────────────────────────────────────────────
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\nPOS QuieroComer — Puente de impresión`);
   console.log(`→ Abre http://localhost:${PORT} para configurar tu impresora\n`);
+
+  registerAutostart();
 
   // Abrir el navegador automáticamente
   const url = `http://localhost:${PORT}`;
