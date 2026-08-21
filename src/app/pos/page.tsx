@@ -17,7 +17,7 @@ import {
 import PosHeader from './components/PosHeader'
 
 // TODO: will come from auth/context
-const TEST_RESTAURANT_ID = 'test-restaurant'
+const TEST_RESTAURANT_ID = 'cmo31qnls0000k004o6ry1wgq' // Horus Vegan
 const TEST_USER_ID = 'test-garzon'
 
 export default function PosHomePage() {

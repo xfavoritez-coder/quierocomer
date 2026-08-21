@@ -18,7 +18,7 @@ import ModifierModal from '../components/ModifierModal'
 import OrderPanel from '../components/OrderPanel'
 
 // TODO: will come from auth/context
-const TEST_RESTAURANT_ID = 'test-restaurant'
+const TEST_RESTAURANT_ID = 'cmo31qnls0000k004o6ry1wgq' // Horus Vegan
 const TEST_USER_ID = 'test-garzon'
 
 export default function ComanderoPage() {
