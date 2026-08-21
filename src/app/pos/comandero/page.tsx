@@ -44,6 +44,10 @@ export default function ComanderoPage() {
     setUserId(TEST_USER_ID)
   })
 
+  // DEBUG — remove after fixing
+  console.log('[POS DEBUG] products:', products.length, 'categories:', categories.length, 'loading:', loading, 'restaurantId:', TEST_RESTAURANT_ID)
+  if (products.length > 0) console.log('[POS DEBUG] first product:', products[0].name, products[0].id)
+
   // Filter products by category
   const filteredProducts = selectedCategory
     ? products.filter(p => p.category_id === selectedCategory).sort((a, b) => a.position - b.position)

@@ -15,12 +15,19 @@ function useDexieLiveQuery<T>(querier: () => Promise<T>, deps: unknown[], defaul
   const [value, setValue] = useState<T>(defaultValue)
 
   useEffect(() => {
+    console.log('[DexieLQ] subscribing, deps:', deps)
     const observable = liveQuery(querier)
     const subscription = observable.subscribe({
-      next: (result) => setValue(result),
-      error: (err) => console.error('[Dexie LiveQuery]', err),
+      next: (result) => {
+        console.log('[DexieLQ] got result:', Array.isArray(result) ? `array(${(result as unknown[]).length})` : result)
+        setValue(result)
+      },
+      error: (err) => console.error('[DexieLQ] error:', err),
     })
-    return () => subscription.unsubscribe()
+    return () => {
+      console.log('[DexieLQ] unsubscribing')
+      subscription.unsubscribe()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
