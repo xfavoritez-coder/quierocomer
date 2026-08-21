@@ -73,7 +73,7 @@ async function syncCycle() {
     await pushEvents()
     await pullEvents()
   } catch (err) {
-    console.error('[POS Sync] Error:', err)
+    console.error('[POS Sync] Unhandled error in sync cycle:', err)
   } finally {
     _isSyncing = false
     _onSyncStatusChange?.(false)
@@ -83,6 +83,8 @@ async function syncCycle() {
 // ── Push: local → Supabase ───────────────────────────────────────
 
 async function pushEvents() {
+  if (!supabase) return // Supabase not configured (missing env vars)
+
   const pending = await posDb.syncQueue
     .orderBy('id')
     .limit(BATCH_SIZE)
@@ -100,6 +102,7 @@ async function pushEvents() {
   if (events.length === 0) {
     // Events were deleted but queue entries remain — clean up
     await posDb.syncQueue.where('id').anyOf(pending.map(p => p.id!)).delete()
+    notifyDbChange()
     return
   }
 
@@ -119,24 +122,29 @@ async function pushEvents() {
     .upsert(rows, { onConflict: 'event_id', ignoreDuplicates: true })
 
   if (error) {
-    console.error('[POS Sync] Push error:', error)
+    console.error('[POS Sync] Push error:', error.code, error.message, error.details)
 
-    // FK violation (e.g. test-restaurant doesn't exist) — drop immediately, no point retrying
-    if (error.code === '23503') {
-      console.warn('[POS Sync] FK violation — dropping events (invalid restaurant_id?)')
+    // FK violation or any unrecoverable error — drop immediately
+    const unrecoverable = ['23503', '42P01', '42703']
+    if (unrecoverable.includes(error.code)) {
+      console.warn('[POS Sync] Unrecoverable error — dropping events:', error.code, error.message)
       await posDb.syncQueue.where('id').anyOf(pending.map(p => p.id!)).delete()
+      notifyDbChange()
       return
     }
 
-    // Other errors: increment retry count
+    // Recoverable errors: increment retry count, drop if exhausted
+    let changed = false
     for (const entry of pending) {
       if (entry.retries >= MAX_RETRIES) {
         await posDb.syncQueue.delete(entry.id!)
         console.warn(`[POS Sync] Dropped event ${entry.event_id} after ${MAX_RETRIES} retries`)
+        changed = true
       } else {
         await posDb.syncQueue.update(entry.id!, { retries: entry.retries + 1 })
       }
     }
+    if (changed) notifyDbChange()
     return
   }
 
