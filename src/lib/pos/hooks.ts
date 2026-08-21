@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync } from './sync'
-import type { Account, CashSession } from './types'
+import type { Account, CashSession, PosTable } from './types'
 import type { CachedProduct } from './types'
 import { refreshCatalog, getCachedProducts, getCachedCategories } from './catalog'
 import { notifyDbChange, getDbVersion, subscribeDbChange } from './notify'
@@ -83,6 +83,16 @@ export function useAccount(accountId: string | null): Account | undefined {
     () => accountId ? posDb.accounts.get(accountId).then(a => a ?? undefined) : Promise.resolve(undefined),
     [accountId],
     undefined
+  )
+}
+
+// ── Tables ───────────────────────────────────────────────────────
+
+export function useTables(restaurantId: string): PosTable[] {
+  return useDexieQuery(
+    () => posDb.posTables.where('restaurant_id').equals(restaurantId).filter(t => t.active).sortBy('number'),
+    [restaurantId],
+    []
   )
 }
 

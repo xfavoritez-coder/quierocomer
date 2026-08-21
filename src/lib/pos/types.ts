@@ -17,6 +17,7 @@ export type PosEventType =
   | 'account_voided'
   | 'cash_session_opened'
   | 'cash_session_closed'
+  | 'bill_requested'
 
 export interface PosEvent {
   event_id: string        // UUID v4 generado en cliente
@@ -96,6 +97,10 @@ export interface AccountClosedPayload {
 export interface AccountVoidedPayload {
   account_id: string
   reason: string
+}
+
+export interface BillRequestedPayload {
+  account_id: string
 }
 
 export interface CashSessionOpenedPayload {

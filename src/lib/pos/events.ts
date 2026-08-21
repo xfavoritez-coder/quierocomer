@@ -12,6 +12,7 @@ import type {
   AccountVoidedPayload,
   CashSessionOpenedPayload,
   CashSessionClosedPayload,
+  BillRequestedPayload,
 } from './types'
 
 // ── Device & user context ────────────────────────────────────────
@@ -98,6 +99,10 @@ export async function closeAccount(payload: AccountClosedPayload) {
 
 export async function voidAccount(payload: AccountVoidedPayload) {
   return createEvent('account_voided', payload as unknown as Record<string, unknown>)
+}
+
+export async function requestBill(payload: BillRequestedPayload) {
+  return createEvent('bill_requested', payload as unknown as Record<string, unknown>)
 }
 
 export async function openCashSession(payload: CashSessionOpenedPayload) {
@@ -267,6 +272,12 @@ export async function projectEvent(event: PosEvent): Promise<void> {
         note: d.note,
         is_open: false,
       })
+      break
+    }
+
+    case 'bill_requested': {
+      const d = p as unknown as BillRequestedPayload
+      await posDb.accounts.update(d.account_id, { status: 'cuenta_pedida' })
       break
     }
   }

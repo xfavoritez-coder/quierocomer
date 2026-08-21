@@ -19,6 +19,7 @@ export {
   voidAccount,
   openCashSession,
   closeCashSession,
+  requestBill,
   projectEvent,
   rebuildFromEvents,
 } from './events'
@@ -37,4 +38,6 @@ export {
   useRecentEvents,
   useCatalog,
   useCategoryProducts,
+  useTables,
 } from './hooks'
+export { saveTables } from './tables'
