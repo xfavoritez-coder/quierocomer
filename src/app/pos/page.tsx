@@ -46,24 +46,24 @@ export default function PosHomePage() {
     setUserId(TEST_USER_ID)
   })
 
-  const handleMostrador = async () => {
+  const handleMostrador = () => {
     const id = uuidv4()
-    await openAccount({ account_id: id, account_type: 'mostrador' })
     router.push(`/pos/cuenta/${id}`)
+    openAccount({ account_id: id, account_type: 'mostrador' })
   }
 
-  const handleRetiro = async () => {
+  const handleRetiro = () => {
     const id = uuidv4()
-    await openAccount({ account_id: id, account_type: 'retiro', customer_name: 'Cliente' })
     router.push(`/pos/cuenta/${id}`)
+    openAccount({ account_id: id, account_type: 'retiro', customer_name: 'Cliente' })
   }
 
-  const handleMesaClick = async (tableId: string, tableNumber: number) => {
+  const handleMesaClick = (tableId: string, tableNumber: number) => {
     const { status, accountId } = getTableStatus(tableId, accounts)
     if (status === 'libre') {
       const id = uuidv4()
-      await openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
       router.push(`/pos/cuenta/${id}`)
+      openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
     } else if (accountId) {
       router.push(`/pos/cuenta/${accountId}`)
     }
