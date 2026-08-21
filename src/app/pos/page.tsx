@@ -48,13 +48,13 @@ export default function PosHomePage() {
 
   const handleMostrador = () => {
     const id = uuidv4()
-    router.push(`/pos/cuenta/${id}`)
+    router.push(`/pos/cuenta?id=${id}`)
     openAccount({ account_id: id, account_type: 'mostrador' })
   }
 
   const handleRetiro = () => {
     const id = uuidv4()
-    router.push(`/pos/cuenta/${id}`)
+    router.push(`/pos/cuenta?id=${id}`)
     openAccount({ account_id: id, account_type: 'retiro', customer_name: 'Cliente' })
   }
 
@@ -62,10 +62,10 @@ export default function PosHomePage() {
     const { status, accountId } = getTableStatus(tableId, accounts)
     if (status === 'libre') {
       const id = uuidv4()
-      router.push(`/pos/cuenta/${id}`)
+      router.push(`/pos/cuenta?id=${id}`)
       openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
     } else if (accountId) {
-      router.push(`/pos/cuenta/${accountId}`)
+      router.push(`/pos/cuenta?id=${accountId}`)
     }
   }
 

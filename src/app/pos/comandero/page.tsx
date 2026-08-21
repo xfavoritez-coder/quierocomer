@@ -132,7 +132,7 @@ export default function ComanderoPage() {
 
       setOrderItems([])
       setShowOrder(false)
-      router.push(`/pos/cuenta/${targetAccountId}`)
+      router.push(`/pos/cuenta?id=${targetAccountId}`)
     } catch (err) {
       toast.error('Error al enviar: ' + String(err))
     } finally {
