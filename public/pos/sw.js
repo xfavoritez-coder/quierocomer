@@ -1,7 +1,7 @@
-// POS QuieroComer — Service Worker v4
-// Cachea navegación directa Y requests RSC de Next.js App Router
+// POS QuieroComer — Service Worker v5
+// Toda la navegación POS usa location.assign (navigate mode) → sin problemas de RSC offline
 
-const CACHE_NAME = 'pos-qc-v4'
+const CACHE_NAME = 'pos-qc-v5'
 
 // Rutas a pre-cachear en install
 const APP_SHELL = ['/pos', '/pos/comandero', '/pos/cuenta']

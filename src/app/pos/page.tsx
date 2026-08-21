@@ -46,26 +46,26 @@ export default function PosHomePage() {
     setUserId(TEST_USER_ID)
   })
 
-  const handleMostrador = () => {
+  const handleMostrador = async () => {
     const id = uuidv4()
-    router.push(`/pos/cuenta?id=${id}`)
-    openAccount({ account_id: id, account_type: 'mostrador' })
+    await openAccount({ account_id: id, account_type: 'mostrador' })
+    location.assign(`/pos/cuenta?id=${id}`)
   }
 
-  const handleRetiro = () => {
+  const handleRetiro = async () => {
     const id = uuidv4()
-    router.push(`/pos/cuenta?id=${id}`)
-    openAccount({ account_id: id, account_type: 'retiro', customer_name: 'Cliente' })
+    await openAccount({ account_id: id, account_type: 'retiro', customer_name: 'Cliente' })
+    location.assign(`/pos/cuenta?id=${id}`)
   }
 
-  const handleMesaClick = (tableId: string, tableNumber: number) => {
+  const handleMesaClick = async (tableId: string, tableNumber: number) => {
     const { status, accountId } = getTableStatus(tableId, accounts)
     if (status === 'libre') {
       const id = uuidv4()
-      router.push(`/pos/cuenta?id=${id}`)
-      openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
+      await openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
+      location.assign(`/pos/cuenta?id=${id}`)
     } else if (accountId) {
-      router.push(`/pos/cuenta?id=${accountId}`)
+      location.assign(`/pos/cuenta?id=${accountId}`)
     }
   }
 
@@ -179,7 +179,7 @@ export default function PosHomePage() {
                     <button
                       key={account.id}
                       className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
-                      onClick={() => router.push(`/pos/cuenta/${account.id}`)}
+                      onClick={() => location.assign(`/pos/cuenta?id=${account.id}`)}
                     >
                       <div className="pos-rail" />
                       <div className="pos-ticket-body">

@@ -180,7 +180,7 @@ function CuentaPageInner() {
 
       {!isClosed && (
         <div style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', display: 'flex', gap: 10 }}>
-          <button onClick={() => router.push(`/pos/comandero?cuenta=${accountId}`)}
+          <button onClick={() => location.assign(`/pos/comandero?cuenta=${accountId}`)}
             style={{ flex: 1, padding: '13px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)' }}>
             + Nueva ronda
           </button>
@@ -191,7 +191,7 @@ function CuentaPageInner() {
             </button>
           )}
           {activeItems.length > 0 && (
-            <button onClick={() => router.push(`/pos/cobro?cuenta=${accountId}`)}
+            <button onClick={() => location.assign(`/pos/cobro?cuenta=${accountId}`)}
               style={{ padding: '13px 18px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
               Cobrar
             </button>
