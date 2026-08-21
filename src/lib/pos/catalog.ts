@@ -1,5 +1,5 @@
 import { posDb } from './db'
-import { notifyDbChange } from './hooks'
+import { notifyDbChange } from './notify'
 import type { CachedProduct, CachedModifierTemplate, CachedModifierGroup, CachedModifierOption } from './types'
 
 // ── Load catalog via API route (uses Prisma with full relations) ──

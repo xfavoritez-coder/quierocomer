@@ -6,29 +6,13 @@ import { startSync, stopSync } from './sync'
 import type { Account, CashSession } from './types'
 import type { CachedProduct } from './types'
 import { refreshCatalog } from './catalog'
-
-// ── DB change notifier ───────────────────────────────────────────
-// Simple event emitter: any write to IndexedDB calls notifyDbChange()
-// All query hooks re-run when the version bumps.
-
-let _dbVersion = 0
-const _listeners = new Set<() => void>()
-
-export function notifyDbChange() {
-  _dbVersion++
-  _listeners.forEach(cb => cb())
-}
+import { notifyDbChange, getDbVersion, subscribeDbChange } from './notify'
 
 function useDbVersion(): number {
-  return useSyncExternalStore(
-    (cb) => {
-      _listeners.add(cb)
-      return () => _listeners.delete(cb)
-    },
-    () => _dbVersion,
-    () => 0
-  )
+  return useSyncExternalStore(subscribeDbChange, getDbVersion, () => 0)
 }
+
+export { notifyDbChange }
 
 function useDexieQuery<T>(querier: () => Promise<T>, deps: unknown[], defaultValue: T): T {
   const [value, setValue] = useState<T>(defaultValue)

@@ -1,6 +1,6 @@
 import { posDb } from './db'
 import { projectEvent } from './events'
-import { notifyDbChange } from './hooks'
+import { notifyDbChange } from './notify'
 import { supabase } from '@/lib/supabase'
 import type { PosEvent } from './types'
 

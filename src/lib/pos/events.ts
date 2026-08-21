@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { posDb } from './db'
-import { notifyDbChange } from './hooks'
+import { notifyDbChange } from './notify'
 import type {
   PosEvent,
   PosEventType,
