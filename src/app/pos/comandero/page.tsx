@@ -12,6 +12,7 @@ import {
   sendRound,
   openAccount,
 } from '@/lib/pos'
+import { printComanda, getBridgeUrl } from '@/lib/pos/bridge'
 import type { CachedProduct, RoundItem, ItemModifier } from '@/lib/pos/types'
 import PosHeader from '../components/PosHeader'
 import ModifierModal from '../components/ModifierModal'
@@ -102,8 +103,33 @@ export default function ComanderoPage() {
         targetAccountId = uuidv4()
         await openAccount({ account_id: targetAccountId, account_type: 'mostrador' })
       }
-      await sendRound({ round_id: uuidv4(), account_id: targetAccountId, items: orderItems })
-      toast.success(`Enviado a cocina (${orderItems.length} ítems)`)
+      const roundId = uuidv4()
+      await sendRound({ round_id: roundId, account_id: targetAccountId, items: orderItems })
+
+      // Imprimir comanda si el puente está configurado
+      if (getBridgeUrl()) {
+        const printResult = await printComanda({
+          jobId: roundId,
+          type: 'mostrador',
+          accountId: targetAccountId,
+          roundNumber: 1,
+          sentBy: TEST_USER_ID,
+          items: orderItems.map(i => ({
+            quantity: i.quantity,
+            dish_name: i.dish_name,
+            modifiers: i.modifiers.map(m => ({ name: m.name, price_adjustment: m.price_adjustment })),
+            note: i.note,
+          })),
+        })
+        if (!printResult.ok) {
+          toast.warning(`Enviado a cocina, pero fallo la impresion: ${printResult.error}`)
+        } else {
+          toast.success(`Enviado a cocina (${orderItems.length} ítems)`)
+        }
+      } else {
+        toast.success(`Enviado a cocina (${orderItems.length} ítems)`)
+      }
+
       setOrderItems([])
       setShowOrder(false)
     } catch (err) {

@@ -1,0 +1,21 @@
+{
+  "name": "pos-print-bridge",
+  "version": "1.0.0",
+  "description": "Puente de impresión ESC/POS para POS QuieroComer",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "build:exe": "pkg . --targets node18-win-x64 --output dist/pos-bridge.exe --compress GZip"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "assets": ["config.json", "raw-print.ps1"],
+    "targets": ["node18-win-x64"]
+  }
+}

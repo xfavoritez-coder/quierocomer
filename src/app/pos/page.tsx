@@ -83,6 +83,12 @@ export default function PosHomePage() {
               </span>
               <span className="lb">Comandero</span>
             </button>
+            <button className="pos-act" onClick={() => router.push('/pos/config')}>
+              <span className="ic">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 0-1.41-1.41M5.34 5.34A10 10 0 0 0 4.93 6.7M4.93 17.3a10 10 0 0 0 1.41 1.41M18.66 18.66A10 10 0 0 0 19.07 17M20 12h1M3 12H2M12 20v1M12 3V2M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z"/></svg>
+              </span>
+              <span className="lb">Impresora</span>
+            </button>
           </div>
 
           {/* ── Open accounts ──────────────────────────── */}

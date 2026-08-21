@@ -1,0 +1,16 @@
+{
+  "port": 7777,
+  "cors_origin": "*",
+  "connection": {
+    "type": "usb",
+    "printerName": "XP-80mm"
+  },
+  "printer": {
+    "width": 48,
+    "encoding": "PC850"
+  },
+  "queue": {
+    "maxRetries": 5,
+    "retryDelayMs": 3000
+  }
+}
