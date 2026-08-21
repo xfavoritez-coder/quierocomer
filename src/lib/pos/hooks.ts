@@ -1,12 +1,31 @@
 'use client'
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync } from './sync'
 import type { Account, CashSession } from './types'
 import type { CachedProduct } from './types'
 import { refreshCatalog } from './catalog'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { liveQuery } from 'dexie'
+
+// ── Dexie live query hook (React 19 compatible) ──────────────────
+// dexie-react-hooks can have issues with React 19, so we use our own
+
+function useDexieLiveQuery<T>(querier: () => Promise<T>, deps: unknown[], defaultValue: T): T {
+  const [value, setValue] = useState<T>(defaultValue)
+
+  useEffect(() => {
+    const observable = liveQuery(querier)
+    const subscription = observable.subscribe({
+      next: (result) => setValue(result),
+      error: (err) => console.error('[Dexie LiveQuery]', err),
+    })
+    return () => subscription.unsubscribe()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+
+  return value
+}
 
 // ── Online status ────────────────────────────────────────────────
 
@@ -49,13 +68,13 @@ export function usePosSync(restaurantId: string) {
 // ── Pending sync count ───────────────────────────────────────────
 
 export function usePendingSyncCount(): number {
-  return useLiveQuery(() => posDb.syncQueue.count(), [], 0)
+  return useDexieLiveQuery(() => posDb.syncQueue.count(), [], 0)
 }
 
 // ── Accounts ─────────────────────────────────────────────────────
 
 export function useOpenAccounts(): Account[] {
-  return useLiveQuery(
+  return useDexieLiveQuery(
     () => posDb.accounts.where('status').anyOf(['abierta', 'con_pedidos', 'cuenta_pedida', 'pagada_parcial']).toArray(),
     [],
     []
@@ -63,8 +82,8 @@ export function useOpenAccounts(): Account[] {
 }
 
 export function useAccount(accountId: string | null): Account | undefined {
-  return useLiveQuery(
-    () => accountId ? posDb.accounts.get(accountId) : undefined,
+  return useDexieLiveQuery(
+    () => accountId ? posDb.accounts.get(accountId).then(a => a ?? undefined) : Promise.resolve(undefined),
     [accountId],
     undefined
   )
@@ -73,8 +92,8 @@ export function useAccount(accountId: string | null): Account | undefined {
 // ── Cash session ─────────────────────────────────────────────────
 
 export function useOpenCashSession(): CashSession | undefined {
-  return useLiveQuery(
-    () => posDb.cashSessions.filter(s => s.is_open).first(),
+  return useDexieLiveQuery(
+    () => posDb.cashSessions.filter(s => s.is_open).first().then(s => s ?? undefined),
     [],
     undefined
   )
@@ -107,7 +126,7 @@ export function useCatalog(restaurantId: string) {
   }, [restaurantId, online])
 
   // Live query — automatically updates when IndexedDB changes
-  const products: CachedProduct[] = useLiveQuery(
+  const products: CachedProduct[] = useDexieLiveQuery(
     () => restaurantId
       ? posDb.products.where('restaurant_id').equals(restaurantId).toArray()
       : Promise.resolve([] as CachedProduct[]),
@@ -116,7 +135,7 @@ export function useCatalog(restaurantId: string) {
   ) ?? []
 
   type CatalogCategory = { id: string; name: string; position: number }
-  const categories: CatalogCategory[] = useLiveQuery(
+  const categories: CatalogCategory[] = useDexieLiveQuery(
     () => {
       if (!restaurantId) return Promise.resolve([] as CatalogCategory[])
       return posDb.products
@@ -148,7 +167,7 @@ export function useCatalog(restaurantId: string) {
 }
 
 export function useCategoryProducts(restaurantId: string, categoryId: string | null): CachedProduct[] {
-  return useLiveQuery(
+  return useDexieLiveQuery(
     () => {
       if (!categoryId) {
         return posDb.products
@@ -169,7 +188,7 @@ export function useCategoryProducts(restaurantId: string, categoryId: string | n
 // ── Events (for debug UI) ────────────────────────────────────────
 
 export function useRecentEvents(limit = 20) {
-  return useLiveQuery(
+  return useDexieLiveQuery(
     () => posDb.events.orderBy('created_at_local').reverse().limit(limit).toArray(),
     [limit],
     []
