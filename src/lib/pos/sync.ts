@@ -147,6 +147,9 @@ async function pushEvents() {
     }
     await posDb.syncQueue.where('id').anyOf(pending.map(p => p.id!)).delete()
   })
+
+  // Notify React so usePendingSyncCount re-reads the queue
+  notifyDbChange()
 }
 
 // ── Pull: Supabase → local ───────────────────────────────────────
