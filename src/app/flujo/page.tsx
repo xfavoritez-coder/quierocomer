@@ -104,7 +104,7 @@ export default function FlujoPage() {
     fetch("/api/flujo/gastos").then(r => r.json()).then(setGastos).catch(() => {});
     fetch(`/api/admin/financial/categories?restaurantId=${HORUS_ID}`)
       .then(r => r.json())
-      .then((cats: Category[]) => setCategories(cats))
+      .then((data: any) => { if (Array.isArray(data)) setCategories(data); })
       .catch(() => {});
     fetch("/api/flujo/category-stats")
       .then(r => r.json()).then(setCatStats).catch(() => {});
