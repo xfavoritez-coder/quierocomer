@@ -117,7 +117,7 @@ export default function ComanderoPage() {
           items: orderItems.map(i => ({
             quantity: i.quantity,
             dish_name: i.dish_name,
-            modifiers: i.modifiers.map(m => ({ name: m.name, price_adjustment: m.price_adjustment })),
+            modifiers: i.modifiers.map(m => ({ name: m.option_name, price_adjustment: m.price_adjustment })),
             note: i.note,
           })),
         })
