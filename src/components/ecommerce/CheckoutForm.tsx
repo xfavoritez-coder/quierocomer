@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Loader2 } from "lucide-react";
 import { toast, Toaster } from "sonner";
@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { storeFontVars, shortAddr } from "./StoreFront";
 import StoreStyles from "./StoreStyles";
+import AccompanimentsSection from "./AccompanimentsSection";
 
 const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?: boolean }> = {
   webpay: { label: "Webpay", hint: "Paga online con tarjeta", Icon: CreditCard, online: true },
@@ -28,6 +29,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [email, setEmail] = useState("");
   const [payment, setPayment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [accom, setAccom] = useState<{ pending: string[]; notesPart: string }>({ pending: [], notesPart: "" });
+  const onAccomResolve = useCallback((r: { pending: string[]; notesPart: string }) => setAccom(r), []);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -43,6 +46,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   async function placeOrder() {
     if (!isValid || sending) return;
     if (isDelivery && !deliveryAddress?.address) { toast.error("Falta la dirección de entrega"); return; }
+    if (accom.pending.length > 0) { toast.error(`Indica tu preferencia para: ${accom.pending.join(", ")}`); return; }
     setSending(true);
     try {
       const res = await fetch("/api/ecommerce/checkout", {
@@ -59,7 +63,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           deliveryLat: isDelivery ? deliveryAddress?.lat : null,
           deliveryLng: isDelivery ? deliveryAddress?.lng : null,
           items,
-          notes: notes.trim() || null,
+          notes: [notes.trim(), accom.notesPart].filter(Boolean).join(" · ") || null,
           paymentMethod: payment,
         }),
       });
@@ -177,6 +181,9 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
               {!methods.length && <p className="text-sm text-gray-400">Esta tienda aún no tiene métodos de pago configurados.</p>}
             </div>
           </section>
+
+          {/* Acompañamientos */}
+          <AccompanimentsSection config={tenant.accompaniments} items={items} subtotal={subtotal} primaryColor={primaryColor} onResolve={onAccomResolve} />
 
           {/* Notas */}
           {tenant.notesEnabled && (

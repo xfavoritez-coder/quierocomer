@@ -99,6 +99,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
         { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
         { icon: Truck, labelKey: "nav_ecommerce_delivery", href: `${base}/ecommerce/delivery` },
+        { icon: UtensilsCrossed, labelKey: "nav_ecommerce_accomp", href: `${base}/ecommerce/acompanamientos` },
         { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
       ],
     }] : []),
