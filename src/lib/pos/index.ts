@@ -43,6 +43,6 @@ export {
   useSectors,
   useStaff,
 } from './hooks'
-export { saveTables, saveSectors, updateTableSector, updateTableLabel } from './tables'
-export { saveGarzon, deleteGarzon, seedDefaultGarzones } from './staff'
+export { saveTables, saveSectors, updateTableSector, updateTableLabel, migrateLocalTablesToEvents } from './tables'
+export { saveGarzon, deleteGarzon, seedDefaultGarzones, migrateLocalStaffToEvents } from './staff'
 export { updateAccountCovers, updateAccountGarzon } from './account-meta'

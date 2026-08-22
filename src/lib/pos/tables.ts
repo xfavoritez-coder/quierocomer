@@ -3,6 +3,22 @@ import { posDb } from './db'
 import { configureTables, configureSectors } from './events'
 import type { PosTable, PosSector } from './types'
 
+// ── One-time migration: emit events for tables/sectors created before sync ──
+
+export async function migrateLocalTablesToEvents(restaurantId: string): Promise<void> {
+  const hasEvent = await posDb.events
+    .where('restaurant_id').equals(restaurantId)
+    .filter(e => e.type === 'tables_configured' || e.type === 'sectors_configured')
+    .first()
+  if (hasEvent) return
+
+  const tables = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
+  const sectors = await posDb.posSectors.where('restaurant_id').equals(restaurantId).toArray()
+
+  if (sectors.length > 0) await configureSectors({ sectors })
+  if (tables.length > 0) await configureTables({ tables })
+}
+
 export async function saveTables(restaurantId: string, tables: { number: number; label?: string; sector_id?: string }[]): Promise<void> {
   const rows: PosTable[] = tables.map((t, i) => ({
     id: uuidv4(),

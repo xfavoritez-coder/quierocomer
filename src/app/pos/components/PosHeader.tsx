@@ -46,7 +46,7 @@ export default function PosHeader({
       )}
 
       <div className="pos-bar-right">
-        {pendingCount > 0 && (
+        {mode === 'brand' && pendingCount > 0 && (
           <button
             className="pos-pending-btn"
             onClick={onPendingClick}
@@ -59,10 +59,12 @@ export default function PosHeader({
             {pendingCount} pend.
           </button>
         )}
-        <div className="pos-live">
-          <span className={dotClass} />
-          {online ? 'En línea' : 'Sin conexión'}
-        </div>
+        {mode === 'brand' && (
+          <div className="pos-live">
+            <span className={dotClass} />
+            {online ? 'En línea' : 'Sin conexión'}
+          </div>
+        )}
         {rightSlot}
         {onMenu && (
           <button className="pos-hamburger" onClick={onMenu} aria-label="Menú">

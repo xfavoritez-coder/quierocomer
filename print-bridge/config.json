@@ -3,7 +3,7 @@
   "cors_origin": "*",
   "connection": {
     "type": "usb",
-    "printerName": "XP-80mm"
+    "printerName": "Xprinter POS80"
   },
   "printer": {
     "width": 48,

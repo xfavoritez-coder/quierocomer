@@ -14,6 +14,8 @@ import {
   setUserId,
   openAccount,
   seedDefaultGarzones,
+  migrateLocalTablesToEvents,
+  migrateLocalStaffToEvents,
 } from '@/lib/pos'
 import type { Account, PosStaff } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
@@ -356,6 +358,8 @@ export default function PosHomePage() {
   useState(() => {
     setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
+    migrateLocalTablesToEvents(restaurantId)
+    migrateLocalStaffToEvents(restaurantId)
     seedDefaultGarzones(restaurantId)
   })
 

@@ -1,0 +1,499 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POS QuieroComer — Sistema de diseño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* ---- COLOR ---- */
+  --bg:#F5F4F1;            /* paper cálido, más limpio que crema */
+  --surface:#FFFFFF;
+  --sunk:#FAF9F7;
+  --ink:#1B1A17;          /* casi negro cálido */
+  --ink-2:#6E6B64;
+  --ink-3:#A19D94;
+  --line:#EAE8E2;
+  --line-strong:#DCD9D1;
+  --amber:#DE7C00;        /* acento primario: ámbar profundo, premium */
+  --amber-press:#B86500;
+  --amber-tint:#FBEED6;
+  --amber-tint-2:#FDF7EC;
+  --jade:#2F8F6B;         /* estado libre / disponible, apagado */
+  --jade-tint:#E7F1EC;
+  --slate:#3B6FB0;        /* mostrador / retiro, apagado */
+  --slate-tint:#EAF0F8;
+  /* ---- FORMA ---- */
+  --r-card:16px; --r-btn:12px; --r-chip:999px;
+  --sh-1:0 1px 2px rgba(27,26,23,.04), 0 1px 3px rgba(27,26,23,.03);
+  --sh-2:0 2px 4px rgba(27,26,23,.05), 0 6px 16px rgba(27,26,23,.06);
+  /* ---- FUENTES ---- */
+  --sans:'Inter',system-ui,sans-serif;   /* PALABRAS */
+  --mono:'IBM Plex Mono',monospace;       /* NÚMEROS, etiquetas, meta */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{padding:22px 18px 60px;max-width:1180px;margin:0 auto}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- switcher ---------- */
+.switch{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-chip);padding:4px;gap:2px;box-shadow:var(--sh-1);margin-bottom:22px}
+.switch button{border:0;background:transparent;font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink-2);padding:8px 18px;border-radius:var(--r-chip);cursor:pointer;transition:.18s}
+.switch button.on{background:var(--ink);color:#fff}
+
+/* ---------- device frame ---------- */
+.screen{display:none}
+.screen.show{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh-2)}
+
+/* ---------- top bar ---------- */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
+.brand .mk{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;box-shadow:0 2px 6px rgba(222,124,0,.35)}
+.brand small{font-family:var(--mono);font-weight:500;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
+.bar-right{display:flex;align-items:center;gap:16px}
+.live{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.live .dot{width:7px;height:7px;border-radius:50%;background:var(--jade);box-shadow:0 0 0 3px var(--jade-tint)}
+.caja{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink)}
+.caja .who{width:28px;height:28px;border-radius:50%;background:var(--amber-tint);color:var(--amber-press);display:grid;place-items:center;font-size:11px;font-weight:700;font-family:var(--mono)}
+
+/* ---------- home ---------- */
+.pad{padding:20px}
+.actions{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:12px;margin-bottom:26px}
+.act{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-card);padding:18px 16px;display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;transition:.16s;box-shadow:var(--sh-1)}
+.act:hover{transform:translateY(-2px);box-shadow:var(--sh-2);border-color:var(--line-strong)}
+.act .ic{width:22px;height:22px;color:var(--ink-2)}
+.act .lb{font-weight:600;font-size:14.5px}
+.act.primary{background:var(--amber);border-color:var(--amber);color:#fff;box-shadow:0 2px 4px rgba(222,124,0,.18),0 8px 20px rgba(222,124,0,.22)}
+.act.primary .ic{color:#fff}
+.act.primary:hover{background:var(--amber-press);border-color:var(--amber-press)}
+
+.eyebrow{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.eyebrow b{color:var(--amber-press);font-weight:600}
+
+.tickets{display:flex;flex-direction:column;gap:9px}
+.ticket{display:flex;align-items:stretch;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;cursor:pointer;transition:.16s;box-shadow:var(--sh-1)}
+.ticket:hover{transform:translateY(-1px);box-shadow:var(--sh-2);border-color:var(--line-strong)}
+.rail{width:4px;flex:none}
+.ticket.active .rail{background:var(--amber)}
+.ticket.idle .rail{background:var(--line-strong)}
+.ticket-body{flex:1;display:flex;align-items:center;justify-content:space-between;padding:15px 18px;gap:16px}
+.t-left{display:flex;align-items:center;gap:14px;min-width:0}
+.chip{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-family:var(--mono);font-weight:600;font-size:13px;flex:none}
+.chip.mo{background:var(--slate-tint);color:var(--slate)}
+.chip.re{background:var(--slate-tint);color:var(--slate)}
+.chip.on{background:var(--amber-tint);color:var(--amber-press)}
+.t-name{font-weight:600;font-size:15px;letter-spacing:-.01em}
+.t-meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px;display:flex;gap:7px}
+.t-meta .sep{opacity:.5}
+.t-total{font-family:var(--mono);font-weight:600;font-size:19px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;flex:none}
+.t-total.zero{color:var(--ink-3);font-weight:500}
+.t-total.big{color:var(--ink)}
+
+/* ---------- comandero ---------- */
+.cmd{display:grid;grid-template-columns:158px 1fr 300px;min-height:560px}
+.cats{border-right:1px solid var(--line);background:var(--sunk);padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.cat{padding:11px 13px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);cursor:pointer;transition:.14s;position:relative}
+.cat:hover{background:var(--surface);color:var(--ink)}
+.cat.on{background:var(--amber-tint-2);color:var(--amber-press);font-weight:600}
+.cat.on::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--amber)}
+
+.grid{padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-content:start;overflow:auto}
+.prod{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:.16s;box-shadow:var(--sh-1)}
+.prod:hover{transform:translateY(-3px);box-shadow:var(--sh-2);border-color:var(--line-strong)}
+.prod:active{transform:translateY(-1px) scale(.99)}
+.ph{aspect-ratio:4/3;position:relative;overflow:hidden}
+.ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.04))}
+.prod .info{padding:11px 12px 13px}
+.prod .pn{font-weight:600;font-size:13.5px;letter-spacing:-.01em;line-height:1.25}
+.prod .pp{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--amber-press);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* ticket panel */
+.order{border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column}
+.order-h{padding:16px 18px 14px;border-bottom:1px dashed var(--line-strong)}
+.order-h .ti{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.order-h .tbl{font-weight:700;font-size:16px;margin-top:4px;letter-spacing:-.01em}
+.order-list{flex:1;overflow:auto;padding:8px 10px}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--ink-3);gap:12px;padding:24px}
+.empty .ring{width:52px;height:52px;border-radius:50%;border:2px dashed var(--line-strong);display:grid;place-items:center;color:var(--ink-3)}
+.empty p{font-size:13px;max-width:180px;line-height:1.5}
+.oi{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 12px;border-radius:10px;gap:10px}
+.oi:hover{background:var(--sunk)}
+.oi .q{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--amber-press);flex:none;width:24px}
+.oi .on{flex:1;font-size:13.5px;font-weight:500;line-height:1.3}
+.oi .op{font-family:var(--mono);font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.order-f{border-top:1px solid var(--line);padding:14px 16px 16px;background:var(--sunk)}
+.sumrow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.sumrow .l{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.sumrow .v{font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.send{width:100%;border:0;background:var(--amber);color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;padding:15px;border-radius:var(--r-btn);cursor:pointer;transition:.16s;box-shadow:0 2px 4px rgba(222,124,0,.2),0 8px 18px rgba(222,124,0,.24);display:flex;align-items:center;justify-content:center;gap:9px}
+.send:hover{background:var(--amber-press)}
+.send:disabled{background:var(--line-strong);color:var(--ink-3);box-shadow:none;cursor:default}
+.cmd-back{display:flex;align-items:center;gap:8px}
+.cmd-back .bk{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+.cmd-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.cmd-sub{font-weight:700;font-size:15px;letter-spacing:-.01em;margin-top:1px}
+
+/* ---------- tokens legend ---------- */
+.legend{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;box-shadow:var(--sh-1)}
+.legend h3{font-size:12px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px}
+.legend .grp{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.sw{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.sw i{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);display:block}
+.tset{display:flex;gap:26px;flex-wrap:wrap}
+.tset div{font-size:13px;color:var(--ink-2)}
+.tset b{color:var(--ink);font-weight:600}
+.tset .mono{font-size:15px;color:var(--ink)}
+/* ---------- cobro ---------- */
+.cobro{display:grid;grid-template-columns:1fr 320px;min-height:560px}
+.cobro-main{padding:18px 20px}
+.seg{display:inline-flex;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-chip);padding:4px;gap:2px;margin-bottom:20px}
+.seg button{border:0;background:transparent;font-family:var(--sans);font-weight:600;font-size:13px;color:var(--ink-2);padding:9px 16px;border-radius:var(--r-chip);cursor:pointer;transition:.16s}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
+.bill{display:flex;flex-direction:column}
+.bill-row{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;border-bottom:1px solid var(--line);gap:14px;transition:.16s}
+.bill-row .bl{display:flex;align-items:center;gap:14px}
+.bill-row .bq{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--amber-press);width:26px}
+.bill-row .bn{font-weight:500;font-size:15px}
+.bill-row .bp{font-family:var(--mono);font-weight:500;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.bill-row.paid{opacity:.4}
+.bill-row.paid .bn{text-decoration:line-through}
+.bill-row.paid .bp{color:var(--jade)}
+.cobro-side{border-left:1px solid var(--line);background:var(--sunk);display:flex;flex-direction:column;padding:18px 18px 20px}
+.side-h{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:14px;color:var(--ink-2)}
+.srow .sv{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.tip{display:inline-flex;align-items:center;gap:6px;background:var(--amber-tint-2);color:var(--amber-press);border:1px solid var(--amber-tint);border-radius:var(--r-chip);padding:3px 10px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer}
+.saldo{margin-top:8px;padding-top:16px;border-top:1px dashed var(--line-strong);display:flex;justify-content:space-between;align-items:baseline}
+.saldo .sl{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.saldo .sn{font-family:var(--mono);font-weight:600;font-size:30px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}
+.m{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-btn);padding:11px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2);transition:.14s}
+.m:hover{border-color:var(--line-strong)}
+.m.on{border-color:var(--amber);background:var(--amber-tint-2);color:var(--amber-press)}
+.m svg{width:18px;height:18px}
+.m.wide{grid-column:1/-1}
+.pay{width:100%;border:0;background:var(--amber);color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;padding:15px;border-radius:var(--r-btn);cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 8px 18px rgba(222,124,0,.24);transition:.16s}
+.pay:hover{background:var(--amber-press)}
+
+/* ---------- caja ---------- */
+.caja-wrap{padding:22px 24px;max-width:720px}
+.caja-open{display:flex;align-items:center;justify-content:space-between;background:var(--amber-tint-2);border:1px solid var(--amber-tint);border-radius:var(--r-card);padding:14px 18px;margin-bottom:22px}
+.caja-open .co-l{display:flex;align-items:center;gap:12px}
+.caja-open .co-ic{width:34px;height:34px;border-radius:10px;background:var(--amber-tint);color:var(--amber-press);display:grid;place-items:center}
+.caja-open .co-t{font-weight:600;font-size:14px}
+.caja-open .co-s{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-top:2px}
+.caja-open .co-v{font-family:var(--mono);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;box-shadow:var(--sh-1)}
+.mcard .ml{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+.mcard .mv{font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mcard .mc{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:4px}
+.arqueo{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;box-shadow:var(--sh-1);margin-bottom:20px}
+.arqueo h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px}
+.aqr{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink-2)}
+.aqr:last-child{border:0}
+.aqr .av{font-family:var(--mono);font-weight:500;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.aqr.diff{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line-strong);border-bottom:0}
+.aqr.diff .al{font-weight:600;color:var(--ink)}
+.aqr.diff .av{font-weight:600;font-size:16px}
+.ok-tag{display:inline-flex;align-items:center;gap:5px;background:var(--jade-tint);color:var(--jade);border-radius:var(--r-chip);padding:3px 10px;font-family:var(--mono);font-size:11px;font-weight:600}
+.caja-btns{display:flex;gap:10px}
+.caja-btns .close{flex:1;border:0;background:var(--amber);color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;padding:15px;border-radius:var(--r-btn);cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 8px 18px rgba(222,124,0,.24);transition:.16s}
+.caja-btns .close:hover{background:var(--amber-press)}
+.caja-btns .print{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-family:var(--sans);font-weight:600;font-size:14px;padding:15px 20px;border-radius:var(--r-btn);cursor:pointer;display:flex;align-items:center;gap:8px}
+.caja-btns .print:hover{background:var(--sunk)}
+
+@media(max-width:840px){
+  .cobro{grid-template-columns:1fr}
+  .cobro-side{border-left:0;border-top:1px solid var(--line)}
+  .mgrid{grid-template-columns:1fr 1fr}
+  .cmd{grid-template-columns:1fr}
+  .cats{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .cat.on::before{display:none}
+  .order{border-left:0;border-top:1px solid var(--line)}
+  .grid{grid-template-columns:1fr 1fr}
+  .actions{grid-template-columns:1fr}
+}
+</style>
+<body>
+
+<div class="switch">
+  <button class="on" onclick="show(0,this)">Inicio · Cuentas</button>
+  <button onclick="show(1,this)">Comandero</button>
+  <button onclick="show(2,this)">Cobro</button>
+  <button onclick="show(3,this)">Caja</button>
+</div>
+
+<!-- ============ SCREEN 0: HOME ============ -->
+<div class="screen show" id="s0">
+  <div class="app">
+    <div class="bar">
+      <div class="brand"><span class="mk">Q</span>QuieroComer <small>POS</small></div>
+      <div class="bar-right">
+        <div class="live"><span class="dot"></span>En línea</div>
+        <div class="caja"><span class="who">JC</span>Caja abierta</div>
+      </div>
+    </div>
+    <div class="pad">
+      <div class="actions">
+        <div class="act">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
+          <span class="lb">Mostrador</span>
+        </div>
+        <div class="act">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <span class="lb">Retiro</span>
+        </div>
+        <div class="act primary">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a3 3 0 0 1 6 0v1M9 11h6M9 15h4"/></svg>
+          <span class="lb">Comandero</span>
+        </div>
+      </div>
+
+      <div class="eyebrow">Cuentas abiertas <b>· 3</b></div>
+      <div class="tickets">
+        <div class="ticket active">
+          <div class="rail"></div>
+          <div class="ticket-body">
+            <div class="t-left">
+              <div class="chip on">MO</div>
+              <div>
+                <div class="t-name">Mostrador</div>
+                <div class="t-meta"><span>6 ítems</span><span class="sep">·</span><span>2 rondas</span><span class="sep">·</span><span>ahora</span></div>
+              </div>
+            </div>
+            <div class="t-total big">$93.100</div>
+          </div>
+        </div>
+        <div class="ticket idle">
+          <div class="rail"></div>
+          <div class="ticket-body">
+            <div class="t-left">
+              <div class="chip re">RE</div>
+              <div>
+                <div class="t-name">Retiro · Cliente</div>
+                <div class="t-meta"><span>0 ítems</span><span class="sep">·</span><span>0 rondas</span><span class="sep">·</span><span>42 min</span></div>
+              </div>
+            </div>
+            <div class="t-total zero">$0</div>
+          </div>
+        </div>
+        <div class="ticket idle">
+          <div class="rail"></div>
+          <div class="ticket-body">
+            <div class="t-left">
+              <div class="chip mo">MO</div>
+              <div>
+                <div class="t-name">Mostrador</div>
+                <div class="t-meta"><span>0 ítems</span><span class="sep">·</span><span>0 rondas</span><span class="sep">·</span><span>42 min</span></div>
+              </div>
+            </div>
+            <div class="t-total zero">$0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 1: COMANDERO ============ -->
+<div class="screen" id="s1">
+  <div class="app">
+    <div class="bar">
+      <div class="cmd-back">
+        <div class="bk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+        <div><div class="cmd-title">Comandero</div><div class="cmd-sub">Mostrador · Cuenta #4</div></div>
+      </div>
+      <div class="bar-right"><div class="live"><span class="dot"></span>En línea</div></div>
+    </div>
+
+    <div class="cmd">
+      <div class="cats">
+        <div class="cat">Todo</div>
+        <div class="cat">Para compartir</div>
+        <div class="cat">Sushi</div>
+        <div class="cat on">Fondos</div>
+        <div class="cat">Mocktails</div>
+        <div class="cat">Bebidas</div>
+        <div class="cat">Postres</div>
+        <div class="cat">Café</div>
+      </div>
+
+      <div class="grid" id="grid"></div>
+
+      <div class="order">
+        <div class="order-h">
+          <div class="ti">Pedido actual</div>
+          <div class="tbl">Ronda 1</div>
+        </div>
+        <div class="order-list" id="olist">
+          <div class="empty" id="empty">
+            <div class="ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg></div>
+            <p>Toca un producto para agregarlo a la comanda</p>
+          </div>
+        </div>
+        <div class="order-f">
+          <div class="sumrow"><span class="l">Total</span><span class="v" id="tot">$0</span></div>
+          <button class="send" id="send" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 4h16v5H4zM4 13h16v7H4zM8 17h4"/></svg>
+            Enviar a cocina
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 2: COBRO ============ -->
+<div class="screen" id="s2">
+  <div class="app">
+    <div class="bar">
+      <div class="cmd-back">
+        <div class="bk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+        <div><div class="cmd-title">Cobro</div><div class="cmd-sub">Mostrador · Cuenta #4</div></div>
+      </div>
+      <div class="bar-right"><div class="live"><span class="dot"></span>En línea</div></div>
+    </div>
+    <div class="cobro">
+      <div class="cobro-main">
+        <div class="seg">
+          <button class="on">Pagar todo</button>
+          <button>Dividir por ítems</button>
+          <button>Dividir en partes</button>
+        </div>
+        <div class="bill">
+          <div class="bill-row paid"><div class="bl"><span class="bq">1×</span><span class="bn">Pharaon</span></div><span class="bp">$10.900</span></div>
+          <div class="bill-row paid"><div class="bl"><span class="bq">1×</span><span class="bn">Anubis</span></div><span class="bp">$11.900</span></div>
+          <div class="bill-row"><div class="bl"><span class="bq">2×</span><span class="bn">HFC</span></div><span class="bp">$21.800</span></div>
+          <div class="bill-row"><div class="bl"><span class="bq">1×</span><span class="bn">Manglar</span></div><span class="bp">$12.900</span></div>
+          <div class="bill-row"><div class="bl"><span class="bq">3×</span><span class="bn">Mocktail Nilo</span></div><span class="bp">$17.700</span></div>
+          <div class="bill-row"><div class="bl"><span class="bq">2×</span><span class="bn">Palta Parrillera</span></div><span class="bp">$16.400</span></div>
+        </div>
+      </div>
+      <div class="cobro-side">
+        <div class="side-h">Pago 2 de 4</div>
+        <div class="srow"><span>Subtotal restante</span><span class="sv">$68.700</span></div>
+        <div class="srow"><span>Propina <span class="tip">10% · editar</span></span><span class="sv">$6.870</span></div>
+        <div class="saldo"><span class="sl">Saldo a cobrar</span><span class="sn">$75.570</span></div>
+        <div class="methods">
+          <div class="m on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>Efectivo</div>
+          <div class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>Débito</div>
+          <div class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>Crédito</div>
+          <div class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M14 6l6 6-6 6"/></svg>Transfer.</div>
+          <div class="m wide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>App de pago</div>
+        </div>
+        <button class="pay">Registrar pago · $75.570</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 3: CAJA ============ -->
+<div class="screen" id="s3">
+  <div class="app">
+    <div class="bar">
+      <div class="cmd-back">
+        <div class="bk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+        <div><div class="cmd-title">Caja</div><div class="cmd-sub">Cierre de turno · Hoy</div></div>
+      </div>
+      <div class="bar-right"><div class="live"><span class="dot"></span>En línea</div></div>
+    </div>
+    <div class="caja-wrap">
+      <div class="caja-open">
+        <div class="co-l">
+          <div class="co-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/></svg></div>
+          <div><div class="co-t">Apertura de caja</div><div class="co-s">Hoy · 12:30 · Jaime C.</div></div>
+        </div>
+        <div class="co-v">$50.000</div>
+      </div>
+
+      <div class="mgrid">
+        <div class="mcard"><div class="ml">Efectivo</div><div class="mv">$184.300</div><div class="mc">14 pagos</div></div>
+        <div class="mcard"><div class="ml">Débito</div><div class="mv">$421.900</div><div class="mc">28 pagos</div></div>
+        <div class="mcard"><div class="ml">Crédito</div><div class="mv">$312.500</div><div class="mc">19 pagos</div></div>
+        <div class="mcard"><div class="ml">Transferencia</div><div class="mv">$96.800</div><div class="mc">6 pagos</div></div>
+        <div class="mcard"><div class="ml">App de pago</div><div class="mv">$54.200</div><div class="mc">4 pagos</div></div>
+        <div class="mcard"><div class="ml">Propinas</div><div class="mv">$71.400</div><div class="mc">Total turno</div></div>
+      </div>
+
+      <div class="arqueo">
+        <h4>Arqueo de efectivo</h4>
+        <div class="aqr"><span>Apertura</span><span class="av">$50.000</span></div>
+        <div class="aqr"><span>Ventas en efectivo</span><span class="av">$184.300</span></div>
+        <div class="aqr"><span>Efectivo esperado en caja</span><span class="av">$234.300</span></div>
+        <div class="aqr"><span>Efectivo contado</span><span class="av">$234.300</span></div>
+        <div class="aqr diff"><span class="al">Diferencia</span><span class="av"><span class="ok-tag"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Cuadrado</span> $0</span></div>
+      </div>
+
+      <div class="caja-btns">
+        <button class="close">Cerrar caja</button>
+        <button class="print"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg>Imprimir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOKENS ============ -->
+<div class="legend">
+  <h3>Sistema de diseño · tokens</h3>
+  <div class="grp">
+    <div class="sw"><i style="background:#F5F4F1"></i>bg</div>
+    <div class="sw"><i style="background:#FFFFFF"></i>surface</div>
+    <div class="sw"><i style="background:#1B1A17"></i>ink</div>
+    <div class="sw"><i style="background:#6E6B64"></i>ink-2</div>
+    <div class="sw"><i style="background:#DE7C00"></i>amber</div>
+    <div class="sw"><i style="background:#FBEED6"></i>amber-tint</div>
+    <div class="sw"><i style="background:#2F8F6B"></i>jade · libre</div>
+    <div class="sw"><i style="background:#3B6FB0"></i>slate · mostrador/retiro</div>
+    <div class="sw"><i style="background:#EAE8E2"></i>line</div>
+  </div>
+  <div class="tset">
+    <div><b>Palabras</b> → Inter · <span style="font-family:var(--sans)">Aa nombre de plato</span></div>
+    <div><b>Números</b> → IBM Plex Mono · <span class="mono">$93.100 · 6 ítems · 21:34</span></div>
+    <div><b>Radios</b> → card 16 · botón 12 · chip 999</div>
+  </div>
+</div>
+
+<script>
+function show(i,btn){
+  document.querySelectorAll('.screen').forEach((s,n)=>s.classList.toggle('show',n===i));
+  document.querySelectorAll('.switch button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+// productos demo (nombres/precios reales de las capturas)
+const P=[
+  ["HFC",10900,"#3a5a44,#6b8f5e"],["Manglar",12900,"#c98a3a,#e0b25f"],
+  ["Tofu Finger",10900,"#b8923f,#d8b56a"],["Champi furai",10900,"#7a9d5c,#a8c17e"],
+  ["Gran Flor",11900,"#9c3f4a,#c86a5a"],["Pharaon",10900,"#c9a13a,#e0c25f"],
+  ["Anubis",11900,"#5c7d9d,#7ea3c1"],["Palta Parrillera",8200,"#6b8f4e,#98b56a"],
+  ["Nigiri Mix",13900,"#8a5c3a,#c1926a"]
+];
+const money=n=>"$"+n.toLocaleString("es-CL");
+const grid=document.getElementById('grid');
+P.forEach(([n,pr,g])=>{
+  const [c1,c2]=g.split(",");
+  const el=document.createElement('div');
+  el.className='prod';
+  el.innerHTML=`<div class="ph" style="background:linear-gradient(140deg,${c1},${c2})"></div>
+    <div class="info"><div class="pn">${n}</div><div class="pp">${money(pr)}</div></div>`;
+  el.onclick=()=>add(n,pr);
+  grid.appendChild(el);
+});
+// carrito demo
+let cart={};
+function add(n,pr){cart[n]=cart[n]||{pr,q:0};cart[n].q++;render();}
+function render(){
+  const list=document.getElementById('olist');
+  const keys=Object.keys(cart);
+  if(!keys.length){location.reload();return;}
+  let tot=0,html="";
+  keys.forEach(n=>{const{pr,q}=cart[n];tot+=pr*q;
+    html+=`<div class="oi"><span class="q">${q}×</span><span class="on">${n}</span><span class="op">${money(pr*q)}</span></div>`;});
+  list.innerHTML=html;
+  document.getElementById('tot').textContent=money(tot);
+  const s=document.getElementById('send');s.disabled=false;
+}
+</script>
+</body>

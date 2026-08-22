@@ -3,6 +3,21 @@ import { posDb } from './db'
 import { saveStaff, deleteStaff } from './events'
 import type { PosStaff } from './types'
 
+// ── One-time migration: emit events for staff created before sync ──
+
+export async function migrateLocalStaffToEvents(restaurantId: string): Promise<void> {
+  const hasEvent = await posDb.events
+    .where('restaurant_id').equals(restaurantId)
+    .filter(e => e.type === 'staff_saved')
+    .first()
+  if (hasEvent) return
+
+  const staff = await posDb.staff.where('restaurant_id').equals(restaurantId).toArray()
+  for (const s of staff) {
+    await saveStaff({ staff: { id: s.id, name: s.name, pin_hash: s.pin_hash, role: s.role, active: s.active } })
+  }
+}
+
 export async function saveGarzon(restaurantId: string, name: string): Promise<PosStaff> {
   const garzon: PosStaff = {
     id: uuidv4(),
