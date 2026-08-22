@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import {
   useCatalog,
   usePosSync,
+  useAccount,
   setRestaurantId,
   setUserId,
   sendRound,
@@ -29,8 +30,10 @@ export default function ComanderoPage() {
 
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const { products, categories, loading } = useCatalog(TEST_RESTAURANT_ID)
+  const account = useAccount(accountId)
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
   const [orderItems, setOrderItems] = useState<RoundItem[]>([])
   const [modalProduct, setModalProduct] = useState<CachedProduct | null>(null)
   const [sending, setSending] = useState(false)
@@ -44,12 +47,14 @@ export default function ComanderoPage() {
     setUserId(TEST_USER_ID)
   })
 
-  const filteredProducts = selectedCategory
+  const searchQuery = search.trim().toLowerCase()
+  const filteredProducts = (selectedCategory
     ? products.filter(p => p.category_id === selectedCategory).sort((a, b) => a.position - b.position)
     : products.sort((a, b) => {
         if (a.category_position !== b.category_position) return a.category_position - b.category_position
         return a.position - b.position
       })
+  ).filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery))
 
   const quickAdd = useCallback((product: CachedProduct) => {
     if (product.modifier_templates.some(t => t.groups.length > 0)) {
@@ -147,14 +152,24 @@ export default function ComanderoPage() {
     return sum + i.quantity * (i.unit_price + modExtra)
   }, 0)
 
+  const accountName = account
+    ? account.type === 'mesa'
+      ? account.table_label || `Mesa ${account.table_number}`
+      : account.type === 'retiro' || account.type === 'mostrador'
+        ? `Para llevar · ${account.customer_name || ''}`
+        : account.type === 'delivery'
+          ? `Delivery · ${account.customer_name || ''}`
+          : `Cuenta #${accountId?.slice(-4)}`
+    : accountId ? `#${accountId.slice(-4)}` : 'Nueva cuenta'
+
   return (
     <div className="pos-shell">
       <PosHeader
         mode="back"
         eyebrow="Comandero"
-        subtitle={accountId ? `Mostrador · Cuenta #${accountId.slice(-4)}` : 'Nueva cuenta'}
+        subtitle={accountName}
         syncing={syncing}
-        onBack={() => navigate('/pos')}
+        onBack={() => accountId ? navigate(`/pos/cuenta?id=${accountId}`) : navigate('/pos')}
       />
 
       {loading ? (
@@ -186,6 +201,19 @@ export default function ComanderoPage() {
 
             {/* Grid */}
             <div className="pos-grid-wrap">
+              {/* Search */}
+              <div style={{ padding: '10px 16px 4px', borderBottom: '1px solid var(--line)' }}>
+                <div style={{ position: 'relative' }}>
+                  <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                  <input
+                    type="search"
+                    placeholder="Buscar producto..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    style={{ width: '100%', padding: '9px 10px 9px 32px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 13, fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
               <div className="pos-grid">
                 {filteredProducts.length === 0 ? (
                   <div className="pos-empty" style={{ gridColumn: '1/-1' }}>

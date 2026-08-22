@@ -85,9 +85,12 @@ function CuentaPageInner() {
   }
 
   const accountName = account.type === 'mesa'
-    ? `Mesa ${account.table_number}`
-    : account.type === 'mostrador' ? 'Mostrador'
-    : `Retiro · ${account.customer_name}`
+    ? account.table_label || `Mesa ${account.table_number}`
+    : account.type === 'retiro' || account.type === 'mostrador'
+      ? `Para llevar${account.customer_name ? ` · ${account.customer_name}` : ''}`
+      : account.type === 'delivery'
+        ? `Delivery${account.customer_name ? ` · ${account.customer_name}` : ''}`
+        : 'Cuenta'
 
   const statusLabel: Record<string, string> = {
     abierta: 'Abierta',
@@ -118,6 +121,29 @@ function CuentaPageInner() {
 
       <div className="pos-scroll">
         <div style={{ padding: '20px 20px 120px' }}>
+          {/* Info row: comensales · hora apertura · garzón */}
+          {(account.covers || account.opened_by_name || account.opened_at) && (
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20, padding: '10px 14px', background: 'var(--sunk)', borderRadius: 12, border: '1px solid var(--line)' }}>
+              {account.covers && (
+                <span style={{ fontSize: 13, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  {account.covers} {account.covers === 1 ? 'comensal' : 'comensales'}
+                </span>
+              )}
+              {account.opened_at && (
+                <span style={{ fontSize: 13, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {new Date(account.opened_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+              {account.opened_by_name && (
+                <span style={{ fontSize: 13, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  {account.opened_by_name}
+                </span>
+              )}
+            </div>
+          )}
           {account.rounds.length === 0 ? (
             <div className="pos-empty" style={{ minHeight: 160 }}>
               <div className="ring">

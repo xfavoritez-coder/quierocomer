@@ -39,10 +39,13 @@ export interface AccountOpenedPayload {
   account_type: AccountType
   table_id?: string
   table_number?: number
-  customer_name?: string    // retiro + delivery
-  pickup_time?: string      // retiro
-  customer_phone?: string   // delivery
-  delivery_address?: string // delivery
+  table_label?: string       // etiqueta legible de la mesa (A1, Barra, etc.)
+  covers?: number            // número de comensales
+  opened_by_name?: string    // nombre del garzón que abre
+  customer_name?: string     // retiro + delivery
+  pickup_time?: string       // retiro
+  customer_phone?: string    // delivery
+  delivery_address?: string  // delivery
 }
 
 export interface RoundSentPayload {
@@ -126,6 +129,9 @@ export interface Account {
   status: AccountStatus
   table_id?: string
   table_number?: number
+  table_label?: string
+  covers?: number
+  opened_by_name?: string
   customer_name?: string
   pickup_time?: string
   customer_phone?: string

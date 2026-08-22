@@ -8,19 +8,21 @@ import {
   useOpenCashSession,
   useTables,
   useSectors,
+  useStaff,
   usePendingSyncCount,
   setRestaurantId,
   setUserId,
   openAccount,
+  seedDefaultGarzones,
 } from '@/lib/pos'
-import type { Account } from '@/lib/pos'
+import type { Account, PosStaff } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
 import { usePosNav } from './lib/usePosNav'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery' | 'online'
+type Tab = 'todos' | 'mesas' | 'retiro' | 'delivery' | 'online'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -38,8 +40,9 @@ const statusLabel: Record<TableStatus, string> = {
 }
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'todos', label: 'Todos' },
   { id: 'mesas', label: 'Mesas' },
-  { id: 'retiro', label: 'Retiro' },
+  { id: 'retiro', label: 'Para llevar' },
   { id: 'delivery', label: 'Delivery' },
   { id: 'online', label: 'Online' },
 ]
@@ -133,6 +136,87 @@ function PendingModal({ count, onClose }: { count: number; onClose: () => void }
   )
 }
 
+// ── Mesa open modal ───────────────────────────────────────────────
+
+function MesaOpenModal({
+  tableLabel,
+  garzones,
+  onClose,
+  onConfirm,
+}: {
+  tableLabel: string
+  garzones: PosStaff[]
+  onClose: () => void
+  onConfirm: (covers: number, garzonName: string) => void
+}) {
+  const [covers, setCovers] = useState(2)
+  const [garzon, setGarzon] = useState(garzones[0]?.name ?? '')
+
+  const QUICK = [1, 2, 3, 4, 5, 6, 8]
+
+  return (
+    <div className="pos-modal-overlay" onClick={onClose}>
+      <div className="pos-modal" onClick={e => e.stopPropagation()}>
+        <div className="pos-modal-title">Abrir {tableLabel}</div>
+
+        <label className="pos-modal-label">Comensales</label>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+          {QUICK.map(n => (
+            <button
+              key={n}
+              onClick={() => setCovers(n)}
+              style={{
+                width: 44, height: 44, borderRadius: 10, border: covers === n ? 0 : '1px solid var(--line)',
+                background: covers === n ? 'var(--amber)' : 'var(--sunk)',
+                color: covers === n ? '#fff' : 'var(--ink-2)',
+                fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+              }}
+            >{n}</button>
+          ))}
+          <input
+            type="number" min={1} max={50}
+            value={covers > 8 ? covers : ''}
+            placeholder="9+"
+            onChange={e => { const v = parseInt(e.target.value); if (v > 0) setCovers(v) }}
+            style={{ width: 56, height: 44, borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink)', textAlign: 'center', outline: 'none' }}
+          />
+        </div>
+
+        {garzones.length > 0 && (
+          <>
+            <label className="pos-modal-label">Garzón</label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {garzones.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => setGarzon(g.name)}
+                  style={{
+                    padding: '10px 16px', borderRadius: 10, border: garzon === g.name ? 0 : '1px solid var(--line)',
+                    background: garzon === g.name ? 'var(--amber)' : 'var(--sunk)',
+                    color: garzon === g.name ? '#fff' : 'var(--ink-2)',
+                    fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)',
+                  }}
+                >{g.name}</button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="pos-modal-actions">
+          <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
+          <button
+            className="pos-modal-ok"
+            disabled={!covers}
+            onClick={() => onConfirm(covers, garzon)}
+          >
+            Abrir mesa →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Menu drawer ───────────────────────────────────────────────────
 
 function PosMenuDrawer({ cashSession, onClose, onNavigate }: { cashSession: boolean; onClose: () => void; onNavigate: (url: string) => void }) {
@@ -146,6 +230,11 @@ function PosMenuDrawer({ cashSession, onClose, onNavigate }: { cashSession: bool
       label: 'Configurar mesas',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
       href: '/pos/config/mesas',
+    },
+    {
+      label: 'Garzones',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>,
+      href: '/pos/config/garzones',
     },
     {
       label: 'Impresora',
@@ -246,6 +335,7 @@ export default function PosHomePage() {
   const cashSession = useOpenCashSession()
   const tables = useTables(TEST_RESTAURANT_ID)
   const sectors = useSectors(TEST_RESTAURANT_ID)
+  const garzones = useStaff(TEST_RESTAURANT_ID)
   const pendingCount = usePendingSyncCount()
 
   const [tab, setTab] = useState<Tab>('mesas')
@@ -254,31 +344,49 @@ export default function PosHomePage() {
   const [retiroModal, setRetiroModal] = useState(false)
   const [deliveryModal, setDeliveryModal] = useState(false)
   const [pendingModal, setPendingModal] = useState(false)
+  const [mesaOpenModal, setMesaOpenModal] = useState<{ tableId: string; tableNumber: number; tableLabel: string } | null>(null)
 
   useState(() => {
     setRestaurantId(TEST_RESTAURANT_ID)
     setUserId(TEST_USER_ID)
+    seedDefaultGarzones(TEST_RESTAURANT_ID)
   })
 
   // Tab counts for badges
+  const openAccounts = accounts.filter(a => !['cerrada', 'anulada'].includes(a.status))
   const retiroAccounts = accounts.filter(a => a.type === 'retiro' || a.type === 'mostrador')
   const deliveryAccounts = accounts.filter(a => a.type === 'delivery')
 
   const tabCounts: Partial<Record<Tab, number>> = {
+    todos: openAccounts.length,
     retiro: retiroAccounts.length,
     delivery: deliveryAccounts.length,
   }
 
-  // Handlers — openAccount fire-and-forget + navigate inmediato (optimistic)
-  const handleMesaClick = (tableId: string, tableNumber: number) => {
+  // Handlers
+  const handleMesaClick = (tableId: string, tableNumber: number, tableLabel?: string) => {
     const { status, accountId } = getTableStatus(tableId, accounts)
     if (status === 'libre') {
-      const id = uuidv4()
-      openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
-      navigate(`/pos/cuenta?id=${id}`)
+      setMesaOpenModal({ tableId, tableNumber, tableLabel: tableLabel ?? `Mesa ${tableNumber}` })
     } else if (accountId) {
       navigate(`/pos/cuenta?id=${accountId}`)
     }
+  }
+
+  const handleMesaConfirm = (covers: number, garzonName: string) => {
+    if (!mesaOpenModal) return
+    const id = uuidv4()
+    openAccount({
+      account_id: id,
+      account_type: 'mesa',
+      table_id: mesaOpenModal.tableId,
+      table_number: mesaOpenModal.tableNumber,
+      table_label: mesaOpenModal.tableLabel,
+      covers,
+      opened_by_name: garzonName || undefined,
+    })
+    setMesaOpenModal(null)
+    navigate(`/pos/comandero?cuenta=${id}`)
   }
 
   const handleNewMostrador = () => {
@@ -334,6 +442,24 @@ export default function PosHomePage() {
       <div className="pos-scroll">
         <div className="pos-pad">
 
+          {/* TODOS */}
+          {tab === 'todos' && (
+            openAccounts.length === 0 ? (
+              <div className="pos-empty" style={{ minHeight: 200 }}>
+                <div className="ring">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+                </div>
+                <p>Sin cuentas abiertas</p>
+              </div>
+            ) : (
+              <div className="pos-tickets">
+                {[...openAccounts].sort((a, b) => a.opened_at.localeCompare(b.opened_at)).map(a => (
+                  <AccountCard key={a.id} account={a} onNavigate={navigate} />
+                ))}
+              </div>
+            )
+          )}
+
           {/* MESAS */}
           {tab === 'mesas' && (() => {
             const filteredTables = sectorFilter === 'all'
@@ -384,7 +510,7 @@ export default function PosHomePage() {
                       <button
                         key={table.id}
                         className={`pos-mesa ${status}`}
-                        onClick={() => handleMesaClick(table.id, table.number)}
+                        onClick={() => handleMesaClick(table.id, table.number, table.label)}
                       >
                         <span className="mn">{table.label || table.number}</span>
                         {acc && acc.items.filter(i => !i.voided).length > 0 ? (
@@ -489,6 +615,14 @@ export default function PosHomePage() {
       {retiroModal && <RetiroModal onClose={() => setRetiroModal(false)} onConfirm={handleNewRetiro} />}
       {deliveryModal && <DeliveryModal onClose={() => setDeliveryModal(false)} onConfirm={handleNewDelivery} />}
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
+      {mesaOpenModal && (
+        <MesaOpenModal
+          tableLabel={mesaOpenModal.tableLabel}
+          garzones={garzones}
+          onClose={() => setMesaOpenModal(null)}
+          onConfirm={handleMesaConfirm}
+        />
+      )}
 
       {/* ── Drawer ──────────────────────────────────────────── */}
       {menuOpen && <PosMenuDrawer cashSession={!!cashSession} onClose={() => setMenuOpen(false)} onNavigate={navigate} />}
