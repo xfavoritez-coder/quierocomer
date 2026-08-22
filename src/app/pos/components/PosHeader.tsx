@@ -26,8 +26,10 @@ export default function PosHeader({
       {mode === 'brand' ? (
         <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
           <span className="mk">Q</span>
-          QuieroComer
-          <small>{restaurant?.name ?? 'POS'}</small>
+          <div className="pos-brand-text">
+            <span>QuieroComer</span>
+            <small>{restaurant?.name ?? 'POS'}</small>
+          </div>
         </div>
       ) : (
         <div className="pos-back">
